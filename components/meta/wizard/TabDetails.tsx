@@ -409,7 +409,7 @@ export default function TabDetails({
             {(t as Record<string, string>).whatsappPhoneLabel}
           </label>
           <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
-            WhatsApp numaras\u0131 Facebook sayfa ayarlar\u0131ndan otomatik olarak kullan\u0131lacakt\u0131r. Meta, sayfan\u0131za ba\u011fl\u0131 WhatsApp numaras\u0131n\u0131 otomatik belirler.
+            WhatsApp numarası Facebook sayfa ayarlarından otomatik olarak kullanılacaktır. Meta, sayfanıza bağlı WhatsApp numarasını otomatik belirler.
           </p>
         </div>
       )}
