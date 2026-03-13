@@ -106,7 +106,7 @@ const VALID_OPTIMIZATION_GOALS: Record<string, string[]> = {
  * Sales + WEBSITE: promoted_object = { pixel_id, custom_event_type } (page_id YOK).
  * Leads + ON_AD: promoted_object = { page_id, leadgen_form_id }.
  * App Promotion + APP: promoted_object = { application_id, object_store_url }.
- * WhatsApp: promoted_object = { page_id, whatsapp_phone_number } — phone number at AD SET level, NOT in call_to_action.value
+ * WhatsApp: promoted_object = { page_id, whatsapp_phone_number } — actual phone number (not ID) at AD SET level
  */
 function resolveDestinationConfig(
   objective: string,
@@ -114,7 +114,7 @@ function resolveDestinationConfig(
   pageId?: string,
   leadGenFormId?: string | null,
   instagramAccountId?: string,
-  whatsappPhoneNumberId?: string
+  whatsappPhoneNumber?: string
 ) {
   let promotedObject: Record<string, string> | undefined
   let needsDestinationType = true
@@ -129,7 +129,7 @@ function resolveDestinationConfig(
     case 'WHATSAPP':
       if (pageId) {
         promotedObject = { page_id: pageId }
-        if (whatsappPhoneNumberId?.trim()) promotedObject.whatsapp_phone_number = whatsappPhoneNumberId.trim()
+        if (whatsappPhoneNumber?.trim()) promotedObject.whatsapp_phone_number = whatsappPhoneNumber.trim()
       }
       break
     case 'INSTAGRAM_DIRECT':
@@ -536,13 +536,39 @@ export async function POST(request: Request) {
       destinationType === 'WHATSAPP'
         ? (dd?.messaging?.whatsappPhoneNumberId ?? dd?.messaging?.whatsapp_phone_number_id ?? body.whatsappPhoneNumberId ?? body.whatsapp_phone_number_id ?? '').toString().trim()
         : undefined
+
+    // Meta promoted_object.whatsapp_phone_number expects the ACTUAL phone number,
+    // not the phone number ID. Resolve ID → display_phone_number via Graph API.
+    let whatsappPhoneNumber: string | undefined
+    if (whatsappPhoneNumberId) {
+      // Try frontend-provided display phone first (avoids extra API call)
+      const frontendDisplayPhone = (dd?.messaging?.whatsappDisplayPhone ?? dd?.messaging?.displayPhone ?? '').toString().trim()
+      if (frontendDisplayPhone) {
+        whatsappPhoneNumber = frontendDisplayPhone
+      } else {
+        // Resolve from Meta Graph API
+        try {
+          const phoneRes = await ctx.client.get<{ display_phone_number?: string }>(
+            `/${whatsappPhoneNumberId}`,
+            { fields: 'display_phone_number' }
+          )
+          if (phoneRes.ok && phoneRes.data?.display_phone_number) {
+            whatsappPhoneNumber = phoneRes.data.display_phone_number
+          }
+        } catch {
+          console.warn(`[AdSet Create][${requestId}] Failed to resolve WhatsApp phone number ID ${whatsappPhoneNumberId}`)
+        }
+      }
+      if (DEBUG) console.log(`[AdSet Create][${requestId}] WhatsApp phone resolved: ID=${whatsappPhoneNumberId} → number=${whatsappPhoneNumber ?? '(unresolved)'}`)
+    }
+
     const destConfig = resolveDestinationConfig(
       campaignObjective,
       destinationType,
       pageId,
       leadGenFormId || undefined,
       instagramAccountIdParam,
-      whatsappPhoneNumberId || undefined
+      whatsappPhoneNumber || undefined
     )
 
     // 4. Form data: camelCase -> snake_case. Budget/bid ad account currency minor unit (factor 100 or 1 for zero-decimal).
