@@ -1,0 +1,99 @@
+'use client'
+
+import { useEffect, useRef } from 'react'
+import { useRouter } from 'next/navigation'
+
+export default function MetaFinalizePage() {
+  const router = useRouter()
+  const ranRef = useRef(false)
+
+  useEffect(() => {
+    // Prevent double-run in React strict mode
+    if (ranRef.current) return
+    ranRef.current = true
+
+    async function finalize() {
+      try {
+        // 1. Status check – if ad account already set (e.g. multi-account wizard flow), go directly
+        const statusRes = await fetch('/api/meta/status', { cache: 'no-store' })
+        const status = await statusRes.json()
+
+        console.log('[FINALIZE] status:', status)
+
+        if (status.connected && status.adAccountId) {
+          console.log('[DASHBOARD_LOAD] connected=true adAccountId=' + status.adAccountId)
+          router.replace('/meta-ads')
+          return
+        }
+
+        if (!status.connected) {
+          router.replace('/dashboard/entegrasyon?meta=error&reason=finalize_failed')
+          return
+        }
+
+        // 2. Token exists but no ad account yet – fetch accounts
+        const accountsRes = await fetch('/api/meta/adaccounts', { cache: 'no-store' })
+        const accountsData = await accountsRes.json()
+        const accounts: { id: string; name: string }[] = accountsData.accounts || []
+
+        console.log('[FINALIZE] AD_ACCOUNTS_FETCHED count=' + accounts.length)
+
+        if (accounts.length === 0) {
+          // No ad accounts – send to wizard to show the empty state
+          router.replace('/connect/meta')
+          return
+        }
+
+        if (accounts.length > 1) {
+          // Multiple accounts – wizard handles manual selection
+          router.replace('/connect/meta')
+          return
+        }
+
+        // 3. Single account – auto-select
+        const account = accounts[0]
+        const selectRes = await fetch('/api/meta/select-adaccount', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ adAccountId: account.id }),
+        })
+        const selectData = await selectRes.json()
+
+        if (!selectRes.ok) {
+          console.error('[FINALIZE] select-adaccount failed:', selectData)
+          router.replace('/connect/meta')
+          return
+        }
+
+        console.log('[FINALIZE] AD_ACCOUNT_SELECTED (auto) id=' + selectData.account_id)
+
+        // Also write to active-account for cross-platform consistency
+        await fetch('/api/active-account', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            platform: 'meta',
+            account_id: selectData.account_id,
+            account_name: selectData.account_name,
+          }),
+        }).catch(() => {})
+
+        router.replace('/meta-ads')
+      } catch (err) {
+        console.error('[FINALIZE] Unexpected error:', err)
+        router.replace('/connect/meta')
+      }
+    }
+
+    finalize()
+  }, [router])
+
+  return (
+    <div className="min-h-screen flex items-center justify-center bg-gray-50">
+      <div className="text-center">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" />
+        <p className="text-gray-700 font-medium">Finalizing connection...</p>
+      </div>
+    </div>
+  )
+}

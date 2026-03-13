@@ -1,0 +1,30 @@
+/**
+ * Shared Google Ads constants. Single source of truth for version, base URL, and cookie names.
+ */
+
+export const GOOGLE_ADS_API_VERSION = process.env.GOOGLE_ADS_API_VERSION ?? 'v23'
+export const GOOGLE_ADS_API_HOST = 'https://googleads.googleapis.com'
+export const GOOGLE_ADS_BASE = `${GOOGLE_ADS_API_HOST}/${GOOGLE_ADS_API_VERSION}`
+export const GOOGLE_TOKEN_URL = 'https://oauth2.googleapis.com/token'
+
+/** Cookie names used for Google Ads session */
+export const COOKIE = {
+  REFRESH_TOKEN: 'google_refresh_token',
+  CUSTOMER_ID: 'google_ads_customer_id',
+  LOGIN_CUSTOMER_ID: 'google_ads_login_customer_id',
+  ACCOUNT_NAME: 'google_ads_account_name',
+  CUSTOMER_NAME: 'google_ads_customer_name',
+} as const
+
+/** Micros conversion factor: 1 currency unit = 1,000,000 micros */
+export const MICROS = 1_000_000
+
+/** Max rows for paginated GAQL search */
+export const MAX_SEARCH_ROWS = 10_000
+
+/** Default retry config for fetchWithRetry */
+export const RETRY = {
+  MAX_RETRIES: 4,
+  BASE_DELAY_MS: 1000,
+  JITTER_MS: 200,
+} as const

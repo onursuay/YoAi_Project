@@ -1,0 +1,440 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+/* Remove default browser blue focus outline — Tailwind ring utilities handle focus */
+@layer base {
+  input:focus,
+  select:focus,
+  textarea:focus,
+  button:focus {
+    outline: none;
+  }
+}
+
+/* Global scale: 85% of browser default (16px → 13.6px) */
+html {
+  font-size: 85%;
+}
+
+:root {
+  --space-card: 14px;
+  --btn-h: 30px;
+  --btn-h-sm: 26px;
+  --chip-h: 26px;
+  --row-h: 34px;
+}
+
+body {
+  font-family: 'Montserrat', -apple-system, BlinkMacSystemFont, 'Segoe UI', 'Roboto',
+    'Helvetica Neue', sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+@keyframes light-sweep {
+  0%   { transform: translateX(-100%) skewX(-15deg); opacity: 0; }
+  10%  { opacity: 1; }
+  90%  { opacity: 1; }
+  100% { transform: translateX(400%) skewX(-15deg); opacity: 0; }
+}
+
+.light-sweep-wrapper {
+  position: relative;
+  overflow: hidden;
+}
+
+.light-sweep-wrapper::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 40%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(43, 182, 115, 0.10) 35%,
+    rgba(43, 182, 115, 0.25) 50%,
+    rgba(43, 182, 115, 0.10) 65%,
+    transparent 100%
+  );
+  animation: light-sweep 3s ease-in-out infinite;
+  pointer-events: none;
+}
+
+/* Typography utilities — scaled to 85% */
+.text-body { font-size: 0.875rem; line-height: 1.5; }
+.text-ui { font-size: 0.875rem; line-height: 1.5; }
+.text-caption { font-size: 0.75rem; line-height: 1.4; }
+.text-page-title { font-size: 1.25rem; line-height: 1.4; font-weight: 600; }
+.text-section-title { font-size: 0.875rem; line-height: 1.5; font-weight: 600; }
+
+/* Form inputs */
+.input-h {
+  min-height: 30px;
+  font-size: 0.875rem;
+}
+
+/* Spacing: card padding, buttons, chips, table rows */
+.cardPad { padding: var(--space-card); }
+.btn-h { min-height: var(--btn-h); }
+.btn-h-sm { min-height: var(--btn-h-sm); }
+.chip-h { min-height: var(--chip-h); }
+.table-row-h { min-height: var(--row-h); }
+
+/* Table: consistent row height */
+table th,
+table td {
+  padding-top: 6px;
+  padding-bottom: 6px;
+}
+table tbody tr {
+  min-height: var(--row-h);
+}
+
+@keyframes border-glow-sweep {
+  0% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 0 0 0 rgba(34, 197, 94, 0) inset;
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(34, 197, 94, 0.6), 0 0 4px 1px rgba(34, 197, 94, 0.3) inset;
+  }
+  100% {
+    box-shadow: 0 0 0 0 rgba(34, 197, 94, 0), 0 0 0 0 rgba(34, 197, 94, 0) inset;
+  }
+}
+
+.border-glow-animate {
+  animation: border-glow-sweep 3s ease-in-out infinite;
+}
+
+@keyframes shimmer-sweep {
+  0% {
+    transform: translateX(-100%);
+  }
+  100% {
+    transform: translateX(400%);
+  }
+}
+
+.animate-shimmer-sweep {
+  animation: shimmer-sweep 1.4s linear infinite;
+}
+
+
+/* Tasarim gallery animations — contained within overflow:hidden */
+@keyframes gallery-float {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.04); }
+}
+
+@keyframes gallery-zoom {
+  0%, 100% { transform: scale(1); }
+  50% { transform: scale(1.06); }
+}
+
+@keyframes gallery-drift {
+  0%, 100% { transform: scale(1) rotate(0deg); }
+  50% { transform: scale(1.05) rotate(0.5deg); }
+}
+
+.animate-gallery-float {
+  animation: gallery-float 4s ease-in-out infinite;
+}
+
+.animate-gallery-zoom {
+  animation: gallery-zoom 5s ease-in-out infinite;
+}
+
+.animate-gallery-drift {
+  animation: gallery-drift 6s ease-in-out infinite;
+}
+
+/* Smooth fade transition for gallery shuffle */
+@keyframes gallery-swap-in {
+  0% { opacity: 0; transform: scale(0.9); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+.gallery-thumb {
+  animation: gallery-swap-in 0.5s ease-out;
+}
+
+/* AI Generation loading animation */
+@keyframes ai-pulse-ring {
+  0% { transform: scale(0.8); opacity: 0; }
+  50% { opacity: 0.3; }
+  100% { transform: scale(2.5); opacity: 0; }
+}
+
+@keyframes ai-orbit {
+  0% { transform: rotate(0deg) translateX(60px) rotate(0deg); }
+  100% { transform: rotate(360deg) translateX(60px) rotate(-360deg); }
+}
+
+@keyframes ai-glow {
+  0%, 100% { opacity: 0.4; filter: blur(20px); }
+  50% { opacity: 0.8; filter: blur(30px); }
+}
+
+@keyframes ai-grid-flow {
+  0% { background-position: 0% 0%; }
+  100% { background-position: 100% 100%; }
+}
+
+@keyframes ai-shimmer {
+  0% { transform: translateX(-100%); }
+  100% { transform: translateX(100%); }
+}
+
+@keyframes ai-progress {
+  0% { width: 0%; }
+  50% { width: 70%; }
+  90% { width: 95%; }
+  100% { width: 98%; }
+}
+
+.ai-generating-bg {
+  background: linear-gradient(135deg, #0f0f1a 0%, #1a1a2e 30%, #16213e 60%, #0f0f1a 100%);
+  overflow: hidden;
+}
+
+.ai-generating-bg::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(circle at 30% 40%, rgba(99, 102, 241, 0.15) 0%, transparent 50%),
+    radial-gradient(circle at 70% 60%, rgba(139, 92, 246, 0.1) 0%, transparent 50%),
+    radial-gradient(circle at 50% 50%, rgba(59, 130, 246, 0.08) 0%, transparent 60%);
+  animation: ai-glow 3s ease-in-out infinite;
+}
+
+.ai-generating-bg::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(99, 102, 241, 0.03) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(99, 102, 241, 0.03) 1px, transparent 1px);
+  background-size: 40px 40px;
+  animation: ai-grid-flow 20s linear infinite;
+}
+
+/* Magic Scan sweep animation */
+@keyframes scan-sweep {
+  0% {
+    transform: translate3d(0, -4px, 0);
+    opacity: 0;
+  }
+  8% {
+    opacity: 0.6;
+  }
+  92% {
+    opacity: 0.6;
+  }
+  100% {
+    transform: translate3d(0, 200px, 0);
+    opacity: 0;
+  }
+}
+
+.animate-scan-sweep {
+  animation: scan-sweep 2.4s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-scan-sweep {
+    animation: none;
+    opacity: 0.35;
+    top: 40%;
+  }
+}
+
+/* ═══════════════════════════════════════════════════════════════════════
+   Magic Scan Results — Premium AI Dashboard Animations
+   ═══════════════════════════════════════════════════════════════════════ */
+
+/* Card staggered entrance */
+@keyframes card-enter {
+  0% {
+    opacity: 0;
+    transform: translateY(24px) scale(0.97);
+  }
+  100% {
+    opacity: 1;
+    transform: translateY(0) scale(1);
+  }
+}
+
+.animate-card-enter {
+  animation: card-enter 0.5s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  animation-delay: calc(var(--card-index, 0) * 80ms);
+  opacity: 0;
+}
+
+/* High-risk pulse glow */
+@keyframes risk-pulse {
+  0%, 100% {
+    box-shadow: 0 0 0 0 rgba(239, 68, 68, 0);
+  }
+  50% {
+    box-shadow: 0 0 8px 2px rgba(239, 68, 68, 0.3);
+  }
+}
+
+.animate-risk-pulse {
+  animation: risk-pulse 2s ease-in-out infinite;
+}
+
+/* AI badge glow */
+@keyframes ai-glow {
+  0%, 100% {
+    box-shadow: 0 0 4px 0 rgba(139, 92, 246, 0.3);
+  }
+  50% {
+    box-shadow: 0 0 16px 4px rgba(139, 92, 246, 0.5);
+  }
+}
+
+.animate-ai-glow {
+  animation: ai-glow 2.5s ease-in-out infinite;
+}
+
+/* Hero mesh grid breathing */
+@keyframes mesh-breathe {
+  0%, 100% {
+    opacity: 0.05;
+  }
+  50% {
+    opacity: 0.12;
+  }
+}
+
+.animate-mesh-breathe {
+  animation: mesh-breathe 4s ease-in-out infinite;
+}
+
+/* Smooth expand/collapse */
+@keyframes expand-in {
+  0% {
+    opacity: 0;
+    max-height: 0;
+  }
+  100% {
+    opacity: 1;
+    max-height: 600px;
+  }
+}
+
+.animate-expand-in {
+  animation: expand-in 0.35s ease-out forwards;
+  overflow: hidden;
+}
+
+/* Detail popup scale-in */
+@keyframes popup-scale {
+  0% {
+    opacity: 0;
+    transform: scale(0.92);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-popup-scale {
+  animation: popup-scale 0.3s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+}
+
+/* Backdrop fade-in */
+@keyframes fade-in {
+  0% { opacity: 0; }
+  100% { opacity: 1; }
+}
+
+.animate-fade-in {
+  animation: fade-in 0.2s ease-out forwards;
+}
+
+/* Rotating glow border */
+@keyframes glow-spin {
+  0% { transform: rotate(0deg); }
+  100% { transform: rotate(360deg); }
+}
+
+.animate-glow-spin {
+  animation: glow-spin 3s linear infinite;
+}
+
+.animate-glow-border {
+  box-shadow:
+    0 0 20px color-mix(in srgb, var(--glow-color) 20%, transparent),
+    0 0 60px color-mix(in srgb, var(--glow-color) 10%, transparent);
+}
+
+/* Stat counter pop-in */
+@keyframes stat-pop {
+  0% {
+    opacity: 0;
+    transform: scale(0.5);
+  }
+  60% {
+    transform: scale(1.1);
+  }
+  100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+.animate-stat-pop {
+  animation: stat-pop 0.4s cubic-bezier(0.22, 1, 0.36, 1) forwards;
+  opacity: 0;
+}
+
+/* Floating particle dots in hero */
+@keyframes float-particle {
+  0%, 100% {
+    transform: translateY(0) translateX(0);
+    opacity: 0.3;
+  }
+  25% {
+    transform: translateY(-10px) translateX(5px);
+    opacity: 0.7;
+  }
+  50% {
+    transform: translateY(-5px) translateX(-3px);
+    opacity: 0.4;
+  }
+  75% {
+    transform: translateY(-15px) translateX(8px);
+    opacity: 0.6;
+  }
+}
+
+.animate-float-particle {
+  animation: float-particle 6s ease-in-out infinite;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .animate-card-enter,
+  .animate-risk-pulse,
+  .animate-ai-glow,
+  .animate-mesh-breathe,
+  .animate-expand-in,
+  .animate-stat-pop,
+  .animate-float-particle {
+    animation: none !important;
+    opacity: 1 !important;
+  }
+}
+
+/* KPI card main value */
+.kpiValue {
+  font-size: 1.4rem;
+  line-height: 1.25;
+  font-weight: 700;
+}
