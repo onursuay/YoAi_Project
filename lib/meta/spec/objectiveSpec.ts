@@ -469,7 +469,7 @@ const SPEC: Record<ObjectiveId, ObjectiveSpec3D> = {
         },
       },
       WHATSAPP: {
-        defaultOptimizationGoal: REPLIES,
+        defaultOptimizationGoal: CONVERSATIONS,
         optimizationGoals: {
           [CONVERSATIONS]: leaf(
             { campaign: ['name', 'objective'], adset: ['name', 'pageId', 'optimizationGoal'], ad: ['name', 'primaryText'] },

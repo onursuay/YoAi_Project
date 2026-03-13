@@ -257,7 +257,7 @@ export async function POST(request: Request) {
 
     // ── [DIAG] RUNTIME TEŞHİS — request body + route identity ─────────────────────
     const DIAG_ROUTE = 'app/api/meta/adsets/create/route.ts'
-    const DIAG_VERSION = 'DIAG_ADSETS_CREATE_V2_REPLIES_NO_BID_2025'
+    const DIAG_VERSION = 'DIAG_ADSETS_CREATE_V3_ENGAGEMENT_CONVERSATIONS_2025'
     console.log(`[DIAG][${requestId}] === ROUTE HIT ===`, DIAG_VERSION, '| route:', DIAG_ROUTE)
     console.log(`[DIAG][${requestId}] REQUEST BODY (masked):`, JSON.stringify(maskPiiForDebug({
       campaignId: body.campaignId,
@@ -503,12 +503,14 @@ export async function POST(request: Request) {
     }
 
     // 2. Optimization goal belirleme
-    // WhatsApp: force REPLIES — CONVERSATIONS causes Meta subcode 1487246
+    // WhatsApp + ENGAGEMENT → CONVERSATIONS (Messenger/IG Direct ile tutarlı)
+    // WhatsApp + LEADS/SALES → REPLIES
+    // Not: bid_strategy zaten WhatsApp için gönderilmiyor (subcode 1487246 kaynağıydı)
     const validGoals = VALID_OPTIMIZATION_GOALS[campaignObjective] || []
     const defaultGoal = getDefaultOptimizationGoal(campaignObjective, destinationType)
     const finalOptimizationGoal =
       destinationType === 'WHATSAPP'
-        ? 'REPLIES'
+        ? (campaignObjective === 'OUTCOME_ENGAGEMENT' ? 'CONVERSATIONS' : 'REPLIES')
         : (optimizationGoal && validGoals.includes(optimizationGoal))
           ? optimizationGoal
           : defaultGoal
@@ -987,7 +989,8 @@ export async function POST(request: Request) {
       }
 
       console.error(`[AdSet Create][${requestId}] Meta Error - code:${errorCode} subcode:${result.error?.subcode} trace:${fbtrace_id}`)
-      if (DEBUG) {
+      // Always log full error for 1487246 (WhatsApp param issues) to aid debugging
+      if (DEBUG || metaSubcode === 1487246) {
         console.error(`[AdSet Create][${requestId}] Full error:`, JSON.stringify(result.error, null, 2))
       }
 
