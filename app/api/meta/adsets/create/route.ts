@@ -684,6 +684,9 @@ export async function POST(request: Request) {
       const bt = (budgetType ?? '').toString().toLowerCase()
       const budgetNum = budget != null ? Number(budget) : bt === 'lifetime' ? Number(lifetimeBudget) : Number(dailyBudget)
       if (bt !== 'lifetime' && budgetNum > 0) {
+        // Convert ad-account-currency budget to TRY for comparison with TRY-denominated minimum
+        // Frontend sends tryToAd(userTryInput) = userTryInput / fxRate, so budgetNum is in ad account currency
+        const budgetTry = budgetNum * guardFxRate
         const minResult = await getMinDailyBudgetTry({
           client: ctx.client,
           adAccountId: ctx.accountId,
@@ -694,12 +697,12 @@ export async function POST(request: Request) {
           fxRate: guardFxRate,
           usdTryRate: guardUsdTryRate,
         })
-        if (minResult.ok && budgetNum < minResult.minDailyBudgetTry) {
-          if (DEBUG) console.log(`[AdSet Create][${requestId}] Budget guard: ${budgetNum} TRY < min ${minResult.minDailyBudgetTry} TRY`)
+        if (minResult.ok && budgetTry < minResult.minDailyBudgetTry) {
+          if (DEBUG) console.log(`[AdSet Create][${requestId}] Budget guard: ${budgetTry} TRY (raw ${budgetNum} ${accountCurrency}) < min ${minResult.minDailyBudgetTry} TRY`)
           return NextResponse.json(
             buildMinBudgetErrorPayload({
               minBudgetTry: minResult.minDailyBudgetTry,
-              enteredBudgetTry: budgetNum,
+              enteredBudgetTry: budgetTry,
               usdTryRate: guardUsdTryRate,
               budgetLevel: 'adset',
               message: `Meta minimum günlük bütçe: ${Math.ceil(minResult.minDailyBudgetTry)} TRY (≈ 1 USD). Daha düşük bütçe kabul edilmez.`,
