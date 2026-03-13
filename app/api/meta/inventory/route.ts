@@ -137,6 +137,10 @@ interface MetaPageItem {
   leadgen_tos_accepted?: boolean
   /** Page access token (for leadgen_forms); only present when requested in fields */
   access_token?: string
+  /** Page's linked WhatsApp number (actual phone string, e.g. "+905...") */
+  whatsapp_number?: string
+  has_whatsapp_number?: boolean
+  has_whatsapp_business_number?: boolean
 }
 
 interface GraphResult<T = unknown> {
@@ -264,7 +268,7 @@ async function fetchTokenPermissions(requestId: string): Promise<InventoryTokenP
 async function fetchPages(client: { get: (...args: unknown[]) => Promise<GraphResult<{ data?: MetaPageItem[] }>> }, accountId: string): Promise<MetaPageItem[]> {
   let pages: MetaPageItem[] = []
 
-  const pageFields = 'id,name,picture{url},instagram_business_account{id,username,profile_picture_url},leadgen_tos_accepted,access_token'
+  const pageFields = 'id,name,picture{url},instagram_business_account{id,username,profile_picture_url},leadgen_tos_accepted,access_token,whatsapp_number,has_whatsapp_number,has_whatsapp_business_number'
 
   // 1. /me/accounts (access_token needed for leadgen_forms per page)
   const userPages = await client.get('/me/accounts', {
@@ -612,8 +616,9 @@ export async function GET(request: Request) {
 
     // lead_terms_accepted: ONLY use per-page fetch result (never trust batch /me/accounts leadgen_tos_accepted — it often returns true for all)
     const DEBUG_LEAD = DEBUG && (process.env.DEBUG_INVENTORY_LEAD === '1' || process.env.DEBUG_INVENTORY_LEAD === 'true')
-    // has_whatsapp: true ONLY for the queried page when it has page-linked WABA numbers.
-    // No guessing for other pages — they must be queried individually.
+    // has_whatsapp: use the page's own has_whatsapp_number/has_whatsapp_business_number fields
+    // These come directly from /{pageId}?fields=has_whatsapp_number — no WABA permission needed.
+    // Also check WABA phone numbers for the queried page as secondary signal.
     const pageLinkedNumbers = whatsappResult.numbers
     const pages: InventoryPage[] = rawPages.map((p) => {
       const leadTosRaw = leadTermsMap[p.id]
@@ -626,8 +631,11 @@ export async function GET(request: Request) {
       } else {
         leadTermsAccepted = null
       }
-      // Only the queried page gets has_whatsapp=true, and only if it has page-linked numbers
-      const pageHasWhatsApp = pageId ? (p.id === pageId && pageLinkedNumbers.length > 0) : false
+      // Primary: page's own has_whatsapp_number field (from /me/accounts fields)
+      // Secondary: WABA phone numbers (only for queried page)
+      const pageHasWhatsApp = p.has_whatsapp_number === true
+        || p.has_whatsapp_business_number === true
+        || (pageId === p.id && pageLinkedNumbers.length > 0)
       const out: InventoryPage = {
         page_id: p.id,
         name: p.name,

@@ -257,7 +257,7 @@ export async function POST(request: Request) {
 
     // ── [DIAG] RUNTIME TEŞHİS — request body + route identity ─────────────────────
     const DIAG_ROUTE = 'app/api/meta/adsets/create/route.ts'
-    const DIAG_VERSION = 'DIAG_ADSETS_CREATE_V4_WA_PAGE_LINKAGE_2025'
+    const DIAG_VERSION = 'DIAG_ADSETS_CREATE_V5_WA_PAGE_FIELD_2025'
     console.log(`[DIAG][${requestId}] === ROUTE HIT ===`, DIAG_VERSION, '| route:', DIAG_ROUTE)
     console.log(`[DIAG][${requestId}] REQUEST BODY (masked):`, JSON.stringify(maskPiiForDebug({
       campaignId: body.campaignId,
@@ -537,20 +537,54 @@ export async function POST(request: Request) {
         ? (dd?.messaging?.whatsappPhoneNumberId ?? dd?.messaging?.whatsapp_phone_number_id ?? body.whatsappPhoneNumberId ?? body.whatsapp_phone_number_id ?? '').toString().trim()
         : undefined
 
-    // ── WhatsApp Phone Resolution — Page-Linked WABA Only ───────────────────
-    // Meta promoted_object.whatsapp_phone_number expects the ACTUAL phone number
-    // (E.164 format) linked to the selected Facebook Page's own WABA.
-    // NO fallback to business-level WABA or phone ID resolution.
-    // If the page has no linked WABA or the number isn't found, block the request.
+    // ── WhatsApp Phone Resolution — Multi-Layer Page Discovery ──────────────
+    // Discovery chain (in order):
+    //   1. /{pageId}?fields=whatsapp_number,has_whatsapp_number,has_whatsapp_business_number
+    //      → Page's own linked WhatsApp number (actual phone string, not ID)
+    //   2. /{pageId}?fields=whatsapp_business_account{id,name,phone_numbers{id,display_phone_number}}
+    //      → Page's linked WABA (requires whatsapp_business_management permission)
+    // NO business-level fallback. If neither source yields a number, block.
     let whatsappPhoneNumber: string | undefined
-    let pageLinkedPhones: { id: string; display_phone_number?: string }[] = []
 
     if (destinationType === 'WHATSAPP' && pageId) {
-      // Step 1: Query page's directly linked WABA and phone numbers
-      let pageWabaId: string | undefined
-      let pageWabaName: string | undefined
+      // ── Layer 1: Page field whatsapp_number (most reliable, no WABA permission needed) ──
+      let pageFieldNumber: string | undefined
+      let pageHasWa: boolean | undefined
+      let pageHasWaBusiness: boolean | undefined
+      let pageFieldError: string | undefined
       try {
-        const pageWabaRes = await ctx.client.get<{
+        const pageFieldRes = await ctx.client.get<{
+          whatsapp_number?: string
+          has_whatsapp_number?: boolean
+          has_whatsapp_business_number?: boolean
+        }>(`/${pageId}`, {
+          fields: 'whatsapp_number,has_whatsapp_number,has_whatsapp_business_number',
+        })
+        if (pageFieldRes.ok) {
+          pageFieldNumber = pageFieldRes.data?.whatsapp_number ?? undefined
+          pageHasWa = pageFieldRes.data?.has_whatsapp_number
+          pageHasWaBusiness = pageFieldRes.data?.has_whatsapp_business_number
+        } else {
+          pageFieldError = pageFieldRes.error?.message ?? `code=${pageFieldRes.error?.code}`
+        }
+      } catch (e) {
+        pageFieldError = e instanceof Error ? e.message : String(e)
+      }
+      console.log(`[AdSet Create][${requestId}] WA_LAYER1_PAGE_FIELD`, JSON.stringify({
+        pageId,
+        whatsapp_number: pageFieldNumber ?? null,
+        has_whatsapp_number: pageHasWa ?? null,
+        has_whatsapp_business_number: pageHasWaBusiness ?? null,
+        error: pageFieldError ?? null,
+      }))
+
+      // ── Layer 2: Page's linked WABA (needs whatsapp_business_management) ──
+      let wabaId: string | undefined
+      let wabaName: string | undefined
+      let wabaPhones: { id: string; display_phone_number?: string }[] = []
+      let wabaError: string | undefined
+      try {
+        const wabaRes = await ctx.client.get<{
           whatsapp_business_account?: {
             id: string
             name?: string
@@ -559,25 +593,52 @@ export async function POST(request: Request) {
         }>(`/${pageId}`, {
           fields: 'whatsapp_business_account{id,name,phone_numbers{id,display_phone_number}}',
         })
-        if (pageWabaRes.ok && pageWabaRes.data?.whatsapp_business_account) {
-          const waba = pageWabaRes.data.whatsapp_business_account
-          pageWabaId = waba.id
-          pageWabaName = waba.name
-          pageLinkedPhones = Array.isArray(waba.phone_numbers?.data) ? waba.phone_numbers!.data! : []
+        if (wabaRes.ok && wabaRes.data?.whatsapp_business_account) {
+          const waba = wabaRes.data.whatsapp_business_account
+          wabaId = waba.id
+          wabaName = waba.name
+          wabaPhones = Array.isArray(waba.phone_numbers?.data) ? waba.phone_numbers!.data! : []
+        } else if (!wabaRes.ok) {
+          wabaError = wabaRes.error?.message ?? `code=${wabaRes.error?.code}`
         }
       } catch (e) {
-        console.error(`[AdSet Create][${requestId}] Failed to query page WABA:`, e instanceof Error ? e.message : e)
+        wabaError = e instanceof Error ? e.message : String(e)
+      }
+      console.log(`[AdSet Create][${requestId}] WA_LAYER2_PAGE_WABA`, JSON.stringify({
+        pageId,
+        wabaId: wabaId ?? null,
+        wabaName: wabaName ?? null,
+        wabaPhoneCount: wabaPhones.length,
+        wabaPhones: wabaPhones.map(p => ({ id: p.id, number: p.display_phone_number ?? '?' })),
+        error: wabaError ?? null,
+      }))
+
+      // ── Resolve: pick best available source ──
+      let sourceUsed: 'page_field' | 'waba_match' | 'waba_first' | 'none' = 'none'
+
+      // Priority 1: Page field whatsapp_number (authoritative, actual phone string)
+      if (pageFieldNumber?.trim()) {
+        whatsappPhoneNumber = pageFieldNumber.trim()
+        sourceUsed = 'page_field'
+      }
+      // Priority 2: WABA phone matching UI selection
+      else if (wabaPhones.length > 0 && whatsappPhoneNumberId) {
+        const match = wabaPhones.find(p => p.id === whatsappPhoneNumberId)
+        if (match?.display_phone_number) {
+          whatsappPhoneNumber = match.display_phone_number
+          sourceUsed = 'waba_match'
+        }
+      }
+      // Priority 3: WABA has phones but no UI match — use first available
+      if (!whatsappPhoneNumber && wabaPhones.length > 0) {
+        const first = wabaPhones.find(p => p.display_phone_number?.trim())
+        if (first?.display_phone_number) {
+          whatsappPhoneNumber = first.display_phone_number
+          sourceUsed = 'waba_first'
+        }
       }
 
-      // Step 2: Match selected phone number ID against page-linked phones
-      const pageLinkedMatch = whatsappPhoneNumberId
-        ? pageLinkedPhones.find(p => p.id === whatsappPhoneNumberId)
-        : undefined
-      if (pageLinkedMatch?.display_phone_number) {
-        whatsappPhoneNumber = pageLinkedMatch.display_phone_number
-      }
-
-      // Step 3: Normalize to E.164
+      // ── Normalize to E.164 ──
       const rawResolvedValue = whatsappPhoneNumber
       if (whatsappPhoneNumber) {
         whatsappPhoneNumber = whatsappPhoneNumber.replace(/[\s\-()]/g, '')
@@ -586,77 +647,61 @@ export async function POST(request: Request) {
         }
       }
 
-      // Step 4: Comprehensive debug log (ALWAYS logged)
-      console.log(`[AdSet Create][${requestId}] WHATSAPP_DEBUG`, JSON.stringify({
-        selected_page_id: pageId,
-        selected_page_waba_id: pageWabaId ?? null,
-        selected_page_waba_name: pageWabaName ?? null,
+      // ── Final debug log (ALWAYS) ──
+      console.log(`[AdSet Create][${requestId}] WHATSAPP_RESOLVED`, JSON.stringify({
+        source_used: sourceUsed,
+        raw_resolved: rawResolvedValue ?? null,
+        normalized_final: whatsappPhoneNumber ?? null,
         phone_number_id_from_ui: whatsappPhoneNumberId ?? null,
-        source_scope: pageLinkedMatch ? 'PAGE_LINKED' : (pageWabaId ? 'NOT_IN_PAGE_WABA' : 'NO_PAGE_WABA'),
-        page_linked_phones_count: pageLinkedPhones.length,
-        page_linked_phone_ids: pageLinkedPhones.map(p => p.id),
-        page_linked_phone_numbers: pageLinkedPhones.map(p => p.display_phone_number ?? '?'),
-        raw_resolved_value: rawResolvedValue ?? null,
-        normalized_final_value: whatsappPhoneNumber ?? null,
         promoted_object_preview: whatsappPhoneNumber
-          ? JSON.stringify({ page_id: pageId, whatsapp_phone_number: whatsappPhoneNumber })
-          : JSON.stringify({ page_id: pageId }),
+          ? { page_id: pageId, whatsapp_phone_number: whatsappPhoneNumber }
+          : { page_id: pageId },
         destination_type: destinationType,
         optimization_goal: finalOptimizationGoal,
       }))
 
-      // Step 5: Guard — page has no linked WABA at all
-      if (!pageWabaId) {
-        console.error(`[AdSet Create][${requestId}] WHATSAPP_PAGE_GUARD: page ${pageId} has NO linked WABA. Blocking.`)
+      // ── Guard: no number resolved from any page-linked source ──
+      if (!whatsappPhoneNumber) {
+        const hasPageLink = pageHasWa === true || pageHasWaBusiness === true
+        console.error(`[AdSet Create][${requestId}] WHATSAPP_RESOLVE_FAILED: no number from any source. pageHasWa=${pageHasWa} wabaId=${wabaId} wabaPhones=${wabaPhones.length}`)
         return NextResponse.json(
           {
             ok: false,
-            error: 'whatsapp_no_page_waba',
-            message: 'Bu Facebook sayfasına bağlı WhatsApp Business Account bulunamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.',
-            request_id: requestId,
-            debug: { pageId, pageWabaId: null },
-          },
-          { status: 400, headers: PATCH_HEADERS }
-        )
-      }
-
-      // Step 6: Guard — selected phone number not in page's WABA
-      if (whatsappPhoneNumberId && !pageLinkedMatch) {
-        console.error(`[AdSet Create][${requestId}] WHATSAPP_LINKAGE_GUARD: phone ${whatsappPhoneNumberId} NOT in page ${pageId} WABA ${pageWabaId}. Page phones: [${pageLinkedPhones.map(p => p.id).join(',')}]. Blocking.`)
-        return NextResponse.json(
-          {
-            ok: false,
-            error: 'whatsapp_phone_not_linked',
-            message: 'Seçilen WhatsApp numarası bu sayfanın WABA\'sında bulunamadı. Sayfayı yenileyip tekrar deneyin.',
+            error: 'whatsapp_phone_unresolved',
+            message: hasPageLink
+              ? 'WhatsApp numarası sayfada bağlı görünüyor ancak API üzerinden okunamadı. Lütfen Meta Business Suite\'ten bağlantıyı kontrol edin.'
+              : 'Bu Facebook sayfasına bağlı WhatsApp numarası bulunamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.',
             request_id: requestId,
             debug: {
-              phoneNumberId: whatsappPhoneNumberId,
               pageId,
-              pageWabaId,
-              pageLinkedPhoneIds: pageLinkedPhones.map(p => p.id),
+              pageFieldNumber: pageFieldNumber ?? null,
+              pageHasWa,
+              pageHasWaBusiness,
+              pageFieldError: pageFieldError ?? null,
+              wabaId: wabaId ?? null,
+              wabaError: wabaError ?? null,
+              wabaPhoneCount: wabaPhones.length,
             },
           },
           { status: 400, headers: PATCH_HEADERS }
         )
       }
 
-      // Step 7: Guard — E.164 format validation
-      if (whatsappPhoneNumber) {
-        const looksLikeId = /^\d{15,}$/.test(whatsappPhoneNumber)
-        const looksLikePhone = /^\+\d{7,15}$/.test(whatsappPhoneNumber)
-        if (looksLikeId || !looksLikePhone) {
-          console.error(`[AdSet Create][${requestId}] WHATSAPP_FORMAT_GUARD: "${whatsappPhoneNumber}" is not E.164. Blocking.`)
-          return NextResponse.json(
-            {
-              ok: false,
-              error: 'whatsapp_phone_invalid',
-              message: 'WhatsApp telefon numarası geçersiz format. Lütfen sayfayı yenileyip tekrar deneyin.',
-              request_id: requestId,
-              debug: { phoneNumberId: whatsappPhoneNumberId, resolvedValue: whatsappPhoneNumber },
-            },
-            { status: 400, headers: PATCH_HEADERS }
-          )
-        }
+      // ── Guard: E.164 format ──
+      const looksLikeId = /^\d{15,}$/.test(whatsappPhoneNumber)
+      const looksLikePhone = /^\+\d{7,15}$/.test(whatsappPhoneNumber)
+      if (looksLikeId || !looksLikePhone) {
+        console.error(`[AdSet Create][${requestId}] WHATSAPP_FORMAT_GUARD: "${whatsappPhoneNumber}" is not E.164. Blocking.`)
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'whatsapp_phone_invalid',
+            message: 'WhatsApp telefon numarası geçersiz format. Lütfen sayfayı yenileyip tekrar deneyin.',
+            request_id: requestId,
+            debug: { resolvedValue: whatsappPhoneNumber, source: sourceUsed },
+          },
+          { status: 400, headers: PATCH_HEADERS }
+        )
       }
     }
     // ── End WhatsApp Phone Resolution ─────────────────────────────────────────
