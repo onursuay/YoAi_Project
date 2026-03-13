@@ -559,7 +559,37 @@ export async function POST(request: Request) {
           console.warn(`[AdSet Create][${requestId}] Failed to resolve WhatsApp phone number ID ${whatsappPhoneNumberId}`)
         }
       }
-      if (DEBUG) console.log(`[AdSet Create][${requestId}] WhatsApp phone resolved: ID=${whatsappPhoneNumberId} → number=${whatsappPhoneNumber ?? '(unresolved)'}`)
+
+      // Normalize to E.164: strip spaces/dashes/parens, ensure leading +
+      if (whatsappPhoneNumber) {
+        whatsappPhoneNumber = whatsappPhoneNumber.replace(/[\s\-()]/g, '')
+        if (/^\d{7,15}$/.test(whatsappPhoneNumber)) {
+          whatsappPhoneNumber = '+' + whatsappPhoneNumber
+        }
+      }
+
+      // Always log both values (source ID + resolved number)
+      console.log(`[AdSet Create][${requestId}] WhatsApp phone resolved: ID=${whatsappPhoneNumberId} → number=${whatsappPhoneNumber ?? '(unresolved)'}`)
+
+      // Assert: reject if resolved value looks like a raw numeric ID (no + prefix, >14 digits)
+      // and allow only real phone-number-shaped strings
+      if (whatsappPhoneNumber) {
+        const looksLikeId = /^\d{15,}$/.test(whatsappPhoneNumber)
+        const looksLikePhone = /^\+\d{7,15}$/.test(whatsappPhoneNumber)
+        if (looksLikeId || !looksLikePhone) {
+          console.error(`[AdSet Create][${requestId}] WHATSAPP_PHONE_GUARD: resolved value "${whatsappPhoneNumber}" does not look like a phone number (looksLikeId=${looksLikeId} looksLikePhone=${looksLikePhone}). Blocking send.`)
+          return NextResponse.json(
+            {
+              ok: false,
+              error: 'whatsapp_phone_invalid',
+              message: 'WhatsApp telefon numarası çözümlenemedi. Lütfen tekrar deneyin veya farklı bir numara seçin.',
+              request_id: requestId,
+              phoneNumberId: whatsappPhoneNumberId,
+            },
+            { status: 400, headers: PATCH_HEADERS }
+          )
+        }
+      }
     }
 
     const destConfig = resolveDestinationConfig(
