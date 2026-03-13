@@ -395,10 +395,10 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     // Reset → loading (value null: no stale UI)
     setMinDailyBudgetTry({ value: undefined, status: 'loading' })
     const timer = setTimeout(() => {
-      // WhatsApp backend forces REPLIES — min budget API must use same goal
+      // WhatsApp: backend normalizes goal — ENGAGEMENT → CONVERSATIONS, others → REPLIES
       const effGoal =
         state.adset.conversionLocation === 'WHATSAPP'
-          ? 'REPLIES'
+          ? (state.campaign.objective === 'OUTCOME_ENGAGEMENT' ? 'CONVERSATIONS' : 'REPLIES')
           : (state.adset.optimizationGoal ?? 'LINK_CLICKS')
       const params = new URLSearchParams({
         optimizationGoal: effGoal,
@@ -1319,9 +1319,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         return
       }
     }
-    if (step === 1 && !validateStep1()) return
-    if (step === 2 && !validateStep2()) return
-    if (step === 3 && !validateStep3()) return
+    if (step === 1 && !validateStep1()) { onToast?.(t.validationErrorStep1 ?? 'Kampanya bilgilerini kontrol edin.', 'error'); return }
+    if (step === 2 && !validateStep2()) { onToast?.(t.validationErrorStep2 ?? 'Reklam seti bilgilerini kontrol edin.', 'error'); return }
+    if (step === 3 && !validateStep3()) { onToast?.(t.validationErrorStep3 ?? 'Reklam bilgilerini kontrol edin.', 'error'); return }
     if (step < 4) {
       setState((prev) => ({ ...prev, currentStep: (prev.currentStep + 1) as 1 | 2 | 3 | 4 }))
     }
@@ -1751,7 +1751,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   }
 
   const handleSaveDraft = async () => {
-    if (!validateStep1() || !validateStep2() || !validateStep3()) return
+    if (!validateStep1()) { onToast?.(t.validationErrorStep1 ?? 'Kampanya bilgilerini kontrol edin.', 'error'); return }
+    if (!validateStep2()) { onToast?.(t.validationErrorStep2 ?? 'Reklam seti bilgilerini kontrol edin.', 'error'); return }
+    if (!validateStep3()) { onToast?.(t.validationErrorStep3 ?? 'Reklam bilgilerini kontrol edin.', 'error'); return }
     // Preflight: ek katman — mevcut validation geçtiyse inventory gating + field check
     if (!runPreflight()) return
     setIsSubmitting(true)
@@ -1769,7 +1771,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   }
 
   const handlePublish = async () => {
-    if (!validateStep1() || !validateStep2() || !validateStep3()) return
+    if (!validateStep1()) { onToast?.(t.validationErrorStep1 ?? 'Kampanya bilgilerini kontrol edin.', 'error'); return }
+    if (!validateStep2()) { onToast?.(t.validationErrorStep2 ?? 'Reklam seti bilgilerini kontrol edin.', 'error'); return }
+    if (!validateStep3()) { onToast?.(t.validationErrorStep3 ?? 'Reklam bilgilerini kontrol edin.', 'error'); return }
     // Preflight: ek katman — mevcut validation geçtiyse inventory gating + field check
     if (!runPreflight()) return
     setIsSubmitting(true)

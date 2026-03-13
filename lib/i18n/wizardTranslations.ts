@@ -140,6 +140,11 @@ const translations = {
     publishFailed: 'Yayınlama başarısız',
     invalidCombination: 'Bu hedef ve dönüşüm konumu kombinasyonu Meta tarafından desteklenmiyor. Lütfen hedef veya dönüşüm konumunu değiştirin.',
 
+    // Step validation toasts
+    validationErrorStep1: 'Kampanya bilgilerini kontrol edin.',
+    validationErrorStep2: 'Reklam seti bilgilerini kontrol edin.',
+    validationErrorStep3: 'Reklam bilgilerini kontrol edin.',
+
     // Validation
     campaignNameRequired: 'Kampanya adı zorunludur',
     adsetNameRequired: 'Reklam seti adı zorunludur',
@@ -689,6 +694,11 @@ const translations = {
     saveFailed: 'Save failed',
     publishFailed: 'Publish failed',
     invalidCombination: 'This objective and conversion location combination is not supported by Meta. Please change the objective or conversion location.',
+
+    // Step validation toasts
+    validationErrorStep1: 'Please check campaign details.',
+    validationErrorStep2: 'Please check ad set details.',
+    validationErrorStep3: 'Please check ad details.',
 
     // Validation
     campaignNameRequired: 'Campaign name is required',
