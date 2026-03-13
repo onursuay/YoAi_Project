@@ -104,7 +104,7 @@ export interface AccountInventory {
   apps: { app_id: string; name?: string }[]
   catalogs: InventoryCatalog[]
   product_sets: Record<string, InventoryProductSet[]>
-  /** WhatsApp Business phone numbers (Business → WABA → phone_numbers). Empty if permission missing or no numbers. */
+  /** WhatsApp Business phone numbers from the Page's directly linked WABA only. Empty if page has no linked WABA or no numbers. */
   whatsapp_phone_numbers: InventoryWhatsAppNumber[]
   /** Set when WhatsApp fetch failed; UI can show stage/status/code/subcode/request_id */
   whatsapp_error?: InventoryWhatsAppError
@@ -454,8 +454,11 @@ async function fetchPageBusinessMapping(
 }
 
 /**
- * Fetch WhatsApp Business phone numbers: Page -> Business -> WABA -> phone_numbers.
- * If Page -> Business mapping is missing, falls back to global business scan and reports diagnostics.
+ * Fetch WhatsApp Business phone numbers ONLY from the Page's directly linked WABA.
+ * /{pageId}?fields=whatsapp_business_account{id,name,phone_numbers{...}}
+ *
+ * NO business-level fallback: if the page has no linked WABA, returns empty.
+ * This ensures only page-linked numbers are shown in the UI and used in promoted_object.
  */
 async function fetchWhatsAppPhoneNumbers(
   client: { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{ data?: unknown[]; owner_business?: { id?: string }; business?: { id?: string } }>> },
@@ -470,104 +473,77 @@ async function fetchWhatsAppPhoneNumbers(
     wabas_scanned: 0,
   }
 
+  if (!pageId) {
+    console.warn(`[Inventory][${requestId}] WhatsApp: no pageId provided — cannot determine page-linked WABA`)
+    return {
+      numbers: [],
+      diagnostics,
+      error: {
+        reason: 'waba_not_found',
+        stage: 'page_business_mapping',
+        message: 'Page ID belirtilmedi. WhatsApp numaraları yalnızca sayfa bazında listelenebilir.',
+        request_id: requestId,
+      },
+    }
+  }
+
   try {
-    let targetBusinesses: { id: string; name?: string }[] = []
-
-    if (pageId) {
-      const mapping = await fetchPageBusinessMapping(client as never, pageId)
-      if (mapping.error) {
-        return { numbers: [], error: mapping.error, diagnostics }
+    // PRIMARY & ONLY source: Page's directly linked WABA
+    const pageWabaRes = await (client as { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{
+      whatsapp_business_account?: {
+        id: string
+        name?: string
+        phone_numbers?: { data?: PhoneNumberNode[] }
       }
-      if (mapping.businessId) {
-        diagnostics.business_id = mapping.businessId
-        diagnostics.mapping_source = mapping.source
-        targetBusinesses = [{ id: mapping.businessId }]
-      } else {
-        diagnostics.mode = 'global_scan'
-        diagnostics.mapping_source = 'fallback_scan'
-        diagnostics.mapping_fallback_used = true
-        diagnostics.mapping_warning = 'Page->Business mapping bulunamadı, global tarama yapıldı.'
-      }
-    }
+    }>> }).get(`/${pageId}`, {
+      fields: 'whatsapp_business_account{id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}}',
+    })
 
-    if (targetBusinesses.length === 0) {
-      const globalBusinesses = await fetchBusinesses(client as never)
-      if (globalBusinesses.error) {
-        return { numbers: [], error: globalBusinesses.error, diagnostics }
-      }
-      targetBusinesses = globalBusinesses.businesses
-    }
-
-    diagnostics.businesses_scanned = targetBusinesses.length
-
-    const allWabas: WabaNode[] = []
-    for (const biz of targetBusinesses) {
-      const wabaRes = await client.get(`/${biz.id}/client_whatsapp_business_accounts`, {
-        fields: 'id,name',
-        limit: '50',
-      }) as GraphResult<{ data?: WabaNode[] }>
-
-      if (!wabaRes.ok) {
-        return {
-          numbers: [],
-          error: toWhatsAppError(
-            'list_wabas',
-            wabaRes,
-            'Business altındaki WhatsApp Business hesapları listelenemedi.',
-          ),
-          diagnostics,
-        }
-      }
-
-      const wabas = Array.isArray(wabaRes.data?.data) ? wabaRes.data.data : []
-      allWabas.push(...wabas)
-    }
-
-    diagnostics.wabas_scanned = allWabas.length
-    if (allWabas.length === 0) {
+    if (!pageWabaRes.ok) {
+      console.warn(`[Inventory][${requestId}] Page ${pageId} WABA query failed:`, pageWabaRes.error?.message)
       return {
         numbers: [],
-        diagnostics,
+        diagnostics: { ...diagnostics, mode: 'page_scoped' },
+        error: toWhatsAppError(
+          'page_business_mapping',
+          pageWabaRes as GraphResult,
+          'Sayfa WhatsApp Business Account bilgisi alınamadı.',
+        ),
+      }
+    }
+
+    const waba = pageWabaRes.data?.whatsapp_business_account
+    if (!waba) {
+      console.log(`[Inventory][${requestId}] Page ${pageId} has NO linked WABA (whatsapp_business_account is null)`)
+      return {
+        numbers: [],
+        diagnostics: { ...diagnostics, mode: 'page_scoped', wabas_scanned: 0 },
         error: {
           reason: 'waba_not_found',
-          stage: 'list_wabas',
-          message: 'Seçilen Business altında WhatsApp Business Account (WABA) bulunamadı.',
+          stage: 'page_business_mapping',
+          message: 'Bu Facebook sayfasına bağlı bir WhatsApp Business Account bulunamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.',
           request_id: requestId,
         },
       }
     }
 
-    for (const waba of allWabas) {
-      const phoneRes = await client.get(`/${waba.id}/phone_numbers`, {
-        fields: 'id,display_phone_number,verified_name,quality_rating,code_verification_status',
-        limit: '50',
-      }) as GraphResult<{ data?: PhoneNumberNode[] }>
+    diagnostics.wabas_scanned = 1
+    diagnostics.business_id = waba.id
+    diagnostics.mapping_source = 'owner_business'
 
-      if (!phoneRes.ok) {
-        return {
-          numbers: [],
-          error: toWhatsAppError(
-            'list_phone_numbers',
-            phoneRes,
-            'WABA phone_numbers endpoint çağrısı başarısız oldu.',
-            'endpoint_or_access',
-          ),
-          diagnostics,
-        }
-      }
+    const phoneList = Array.isArray(waba.phone_numbers?.data) ? waba.phone_numbers!.data! : []
+    console.log(`[Inventory][${requestId}] Page ${pageId} → WABA ${waba.id} (${waba.name ?? '?'}) → ${phoneList.length} phone(s): [${phoneList.map(p => `${p.id}:${p.display_phone_number ?? '?'}`).join(', ')}]`)
 
-      const phoneList = Array.isArray(phoneRes.data?.data) ? phoneRes.data.data : []
-      for (const ph of phoneList) {
-        numbers.push({
-          wabaId: waba.id,
-          wabaName: waba.name,
-          phoneNumberId: ph.id,
-          displayPhone: ph.display_phone_number,
-          verifiedName: ph.verified_name,
-          qualityRating: ph.quality_rating,
-          status: ph.code_verification_status,
-        })
-      }
+    for (const ph of phoneList) {
+      numbers.push({
+        wabaId: waba.id,
+        wabaName: waba.name,
+        phoneNumberId: ph.id,
+        displayPhone: ph.display_phone_number,
+        verifiedName: ph.verified_name,
+        qualityRating: ph.quality_rating,
+        status: ph.code_verification_status,
+      })
     }
 
     if (numbers.length === 0) {
@@ -577,7 +553,7 @@ async function fetchWhatsAppPhoneNumbers(
         error: {
           reason: 'no_phone_numbers',
           stage: 'list_phone_numbers',
-          message: 'WABA bulundu ancak phone_numbers altında numara yok.',
+          message: 'Sayfanın WABA\'sı bulundu ancak altında telefon numarası yok.',
           request_id: requestId,
         },
       }
@@ -636,7 +612,9 @@ export async function GET(request: Request) {
 
     // lead_terms_accepted: ONLY use per-page fetch result (never trust batch /me/accounts leadgen_tos_accepted — it often returns true for all)
     const DEBUG_LEAD = DEBUG && (process.env.DEBUG_INVENTORY_LEAD === '1' || process.env.DEBUG_INVENTORY_LEAD === 'true')
-    const hasWhatsAppNumbers = whatsappResult.numbers.length > 0
+    // has_whatsapp: true ONLY for the queried page when it has page-linked WABA numbers.
+    // No guessing for other pages — they must be queried individually.
+    const pageLinkedNumbers = whatsappResult.numbers
     const pages: InventoryPage[] = rawPages.map((p) => {
       const leadTosRaw = leadTermsMap[p.id]
       const hasField = leadTermsMap[p.id] !== undefined
@@ -648,7 +626,8 @@ export async function GET(request: Request) {
       } else {
         leadTermsAccepted = null
       }
-      const pageHasWhatsApp = pageId ? (p.id === pageId && hasWhatsAppNumbers) : hasWhatsAppNumbers
+      // Only the queried page gets has_whatsapp=true, and only if it has page-linked numbers
+      const pageHasWhatsApp = pageId ? (p.id === pageId && pageLinkedNumbers.length > 0) : false
       const out: InventoryPage = {
         page_id: p.id,
         name: p.name,
