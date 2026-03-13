@@ -406,52 +406,11 @@ export default function TabDetails({
       {state.conversionLocation === 'WHATSAPP' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            {(t as Record<string, string>).whatsappPhoneLabel} <span className="text-red-500">*</span>
+            {(t as Record<string, string>).whatsappPhoneLabel}
           </label>
-          {(inventory?.whatsapp_phone_numbers?.length ?? 0) > 0 ? (
-            <select
-              value={state.destinationDetails?.messaging?.whatsappPhoneNumberId ?? ''}
-              onChange={(e) =>
-                onChange({
-                  destinationDetails: {
-                    ...state.destinationDetails,
-                    messaging: {
-                      ...state.destinationDetails?.messaging,
-                      channel: 'WHATSAPP',
-                      whatsappPhoneNumberId: e.target.value || undefined,
-                    },
-                  },
-                })
-              }
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-            >
-              <option value="">{t.selectOption}</option>
-              {inventory!.whatsapp_phone_numbers!.map((p) => (
-                <option key={p.phoneNumberId} value={p.phoneNumberId}>
-                  {p.displayPhone ?? p.verifiedName ?? p.phoneNumberId}
-                </option>
-              ))}
-            </select>
-          ) : (
-            <input
-              type="tel"
-              value={state.destinationDetails?.messaging?.whatsappPhoneNumberId ?? ''}
-              onChange={(e) =>
-                onChange({
-                  destinationDetails: {
-                    ...state.destinationDetails,
-                    messaging: {
-                      ...state.destinationDetails?.messaging,
-                      channel: 'WHATSAPP',
-                      whatsappPhoneNumberId: e.target.value || undefined,
-                    },
-                  },
-                })
-              }
-              placeholder={t.phoneNumberPlaceholder}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-            />
-          )}
+          <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
+            WhatsApp numaras\u0131 Facebook sayfa ayarlar\u0131ndan otomatik olarak kullan\u0131lacakt\u0131r. Meta, sayfan\u0131za ba\u011fl\u0131 WhatsApp numaras\u0131n\u0131 otomatik belirler.
+          </p>
         </div>
       )}
 

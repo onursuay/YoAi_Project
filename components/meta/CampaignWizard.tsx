@@ -701,28 +701,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (igDmLink) updateAd({ websiteUrl: igDmLink })
   }, [igVerifyStatus, igVerifyUsername, igVerifyIgUserId, state.adset.conversionLocation])
 
-  // WHATSAPP: inventory'den ilk phone number'ı otomatik set et (whatsappPhoneNumberId boşsa)
-  useEffect(() => {
-    if (!isOpen) return
-    if (state.adset.conversionLocation !== 'WHATSAPP') return
-    if (state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId?.trim()) return
-    if (!inventory?.whatsapp_phone_numbers?.length) return
-    const firstPhone = inventory.whatsapp_phone_numbers[0]
-    setState((prev) => ({
-      ...prev,
-      adset: {
-        ...prev.adset,
-        destinationDetails: {
-          ...prev.adset.destinationDetails,
-          messaging: {
-            ...prev.adset.destinationDetails?.messaging,
-            channel: 'WHATSAPP',
-            whatsappPhoneNumberId: firstPhone.phoneNumberId,
-          },
-        },
-      },
-    }))
-  }, [isOpen, state.adset.conversionLocation, state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId, inventory])
+  // WHATSAPP: phone number auto-fill DISABLED — Meta resolves page-linked number server-side.
+  // Inventory whatsapp_phone_numbers come from WABA (may differ from page-settings number).
+  // promoted_object only sends page_id; whatsapp_phone_number is optional per Meta docs.
 
   // When capabilities load and current destination is locked, switch to first unlocked
   useEffect(() => {
@@ -1161,13 +1142,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: WhatsApp numara seçimi zorunlu (ama mesaj şablonu opsiyonel)
-    if ((state.adset.conversionLocation === 'WHATSAPP') &&
-        (state.campaign.objective === 'OUTCOME_TRAFFIC' || state.campaign.objective === 'OUTCOME_ENGAGEMENT' || state.campaign.objective === 'OUTCOME_LEADS' || state.campaign.objective === 'OUTCOME_SALES')) {
-      if (!state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId?.trim()) {
-        err.whatsapp_phone_number = t.whatsappPhoneRequired
-      }
-    }
+    // WHATSAPP: phone number validation REMOVED — Meta resolves page-linked number server-side.
+    // promoted_object only needs page_id; whatsapp_phone_number is optional per Meta docs.
     // CALL: telefon numarası zorunlu
     if (state.adset.conversionLocation === 'CALL') {
       if (!state.adset.destinationDetails?.calls?.phoneNumber?.trim()) {
@@ -1491,10 +1467,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       const formId = state.ad.leadFormId?.trim() || state.adset.leadGenFormId?.trim()
       if (formId) adsetPayload.lead_gen_form_id = formId
     }
-    // WhatsApp: promoted_object needs whatsapp_phone_number at ad set level
-    if (state.adset.conversionLocation === 'WHATSAPP' && state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
-      adsetPayload.destinationDetails = state.adset.destinationDetails
-    }
+    // WhatsApp: promoted_object uses only page_id — no whatsapp_phone_number needed.
+    // Meta resolves page-linked WhatsApp number server-side.
 
     const ADSET_ENDPOINT = '/api/meta/adsets/create'
     console.log('[DIAG][CampaignWizard] Calling adset create:', ADSET_ENDPOINT, '| payload keys:', Object.keys(adsetPayload), '| conversionLocation:', adsetPayload.destination_type, '| optimizationGoal:', adsetPayload.optimizationGoal, '| bidStrategy:', adsetPayload.bidStrategy)
@@ -1714,11 +1688,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         adBody.instagram_user_id = resolvedIgUserId
       }
     }
-    // WHATSAPP: backend ads/create zorunlu tutuyor
-    if (state.adset.conversionLocation === 'WHATSAPP') {
-      const waPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId?.trim()
-      if (waPhoneId) adBody.whatsappPhoneNumberId = waPhoneId
-    }
+    // WHATSAPP: phone number NOT sent — Meta resolves from page settings server-side.
     const leadFormIdVal = state.ad.leadFormId?.trim() || state.adset.destinationDetails?.leads?.leadFormId?.trim()
     const chatGreetingVal = state.ad.chatGreeting?.trim() || state.adset.destinationDetails?.messaging?.messageTemplate?.trim()
     const phoneNumberVal = state.ad.phoneNumber?.trim() || state.adset.destinationDetails?.calls?.phoneNumber?.trim()
