@@ -1199,23 +1199,22 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
           validationResult: 'PASS',
         }))
       } else {
-        // No phone selected — check if there are numbers available to select
+        // No phone selected — only block if WABA numbers are available but not picked.
+        // page_whatsapp_number is NOT a blocking signal — Graph API often returns null
+        // even when the page truly has WhatsApp linked (permission/field access issues).
+        // If no WABA numbers are available, let it through — Meta resolves from page settings.
         const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
         if (wabaNumbers.length > 0) {
           err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
-        } else {
-          // No WABA numbers available and no selection — but page might still have WhatsApp
-          const hasPageWhatsapp = !!inventory?.page_whatsapp_number
-          if (!hasPageWhatsapp) {
-            err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
-          }
-          // If hasPageWhatsapp but no WABA numbers, let it pass — Meta resolves from page settings
         }
+        // else: no WABA numbers and no selection — NOT blocking.
+        // page_whatsapp_number null does NOT mean page has no WhatsApp.
+        // Meta will resolve from page settings at adset create time.
         console.log('[CampaignWizard] WHATSAPP_VALIDATION:', JSON.stringify({
           selectedPageId: state.adset.pageId,
           selectedWhatsappPhoneNumberId: '(none)',
-          wabaNumbersCount: inventory?.whatsapp_phone_numbers?.length ?? 0,
-          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null)',
+          wabaNumbersCount: wabaNumbers.length,
+          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null — diagnostic only, not blocking)',
           validationResult: err.whatsapp_phone ? 'FAIL' : 'PASS',
           validationFailureReason: err.whatsapp_phone ?? '(none)',
         }))

@@ -202,15 +202,20 @@ export function preflight(
     }
   }
 
-  // Messaging destinations: check WhatsApp connectivity AND explicit phone selection
+  // Messaging destinations: WhatsApp validation
+  // Source of truth: selectedPageId (required) + selectedWhatsappPhoneNumberId (required when WABA numbers available)
+  // has_whatsapp and page_whatsapp_number are diagnostic only — Graph API often returns false/null
+  // even when the page truly has WhatsApp linked (permission/field access issues).
   if (destination === 'WHATSAPP') {
-    const selectedPage = inventory.pages.find((p) => p.page_id === form.adset.pageId)
-    if (selectedPage && !selectedPage.has_whatsapp) {
-      return { ok: false, blocked_reason: 'NO_WHATSAPP', blocked_message: BLOCKED_MESSAGES.NO_WHATSAPP }
-    }
-    // Enforce explicit phone number selection — no silent fallback
-    if (!form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
-      // Check if WABA numbers exist in inventory
+    const hasSelectedPhone = !!form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+    // If user already selected a phone → no further blocking needed
+    if (!hasSelectedPhone) {
+      const selectedPage = inventory.pages.find((p) => p.page_id === form.adset.pageId)
+      // Only block on has_whatsapp if user has NOT selected a phone AND page explicitly says no WhatsApp
+      if (selectedPage && !selectedPage.has_whatsapp) {
+        return { ok: false, blocked_reason: 'NO_WHATSAPP', blocked_message: BLOCKED_MESSAGES.NO_WHATSAPP }
+      }
+      // Check if WABA numbers exist but user hasn't picked one
       const wabaNumbers = (inventory as unknown as Record<string, unknown>).whatsapp_phone_numbers as unknown[] | undefined
       if (wabaNumbers && wabaNumbers.length > 0) {
         return {

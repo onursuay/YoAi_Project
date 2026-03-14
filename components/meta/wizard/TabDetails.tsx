@@ -490,11 +490,12 @@ export default function TabDetails({
             </div>
           ) : null}
 
-          {/* Guardrail: no numbers at all — block publish */}
+          {/* Diagnostic: no numbers resolved from Graph API — NOT blocking */}
+          {/* Graph API often returns null for page_whatsapp_number and empty WABA due to permission issues */}
           {hasNoNumbers && (
-            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 font-medium">
-              Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz. Meta Business Suite'ten WhatsApp bağlantısını kontrol edin.
-            </p>
+            <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+              WhatsApp numarası bilgisi alınamadı (Meta Graph API erişim kısıtlaması). Sayfa ayarlarında WhatsApp bağlı ise Meta reklam oluşturma sırasında otomatik çözecektir.
+            </div>
           )}
 
           {/* Guardrail: mismatch between page-linked and selected WABA number */}
