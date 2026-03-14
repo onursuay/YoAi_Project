@@ -108,6 +108,8 @@ export interface AccountInventory {
   whatsapp_phone_numbers: InventoryWhatsAppNumber[]
   /** Page-level whatsapp_number field (from /{pageId}?fields=whatsapp_number). May differ from WABA numbers. */
   page_whatsapp_number?: string | null
+  /** Source of page_whatsapp_number: 'me_accounts_field' | 'page_access_token' | 'direct_user_token' | 'none' */
+  page_whatsapp_number_source?: string
   /** Set when WhatsApp fetch failed; UI can show stage/status/code/subcode/request_id */
   whatsapp_error?: InventoryWhatsAppError
   /** WhatsApp page mapping diagnostics */
@@ -669,9 +671,64 @@ export async function GET(request: Request) {
       pixel_events[px.pixel_id] = STANDARD_PIXEL_EVENTS
     }
 
-    // Page-level whatsapp_number (from /me/accounts fields) — distinct from WABA phone numbers
+    // Page-level whatsapp_number — try multiple strategies:
+    // 1. From /me/accounts fields (user token) — already fetched
+    // 2. Direct /{pageId}?fields=whatsapp_number with Page Access Token (may reveal page-settings number)
+    // 3. Direct /{pageId}?fields=whatsapp_number with User token (fallback)
     const selectedPage = rawPages.find((p) => p.id === pageId)
-    const pageWhatsappNumber = selectedPage?.whatsapp_number ?? null
+    let pageWhatsappNumber: string | null = selectedPage?.whatsapp_number ?? null
+    let pageWhatsappSource: string = pageWhatsappNumber ? 'me_accounts_field' : 'none'
+
+    // Strategy 2: try with Page Access Token (page-settings linked number may only be visible to page token)
+    if (!pageWhatsappNumber && pageId && selectedPage?.access_token) {
+      try {
+        const pageTokenUrl = `https://graph.facebook.com/v24.0/${pageId}?fields=whatsapp_number,has_whatsapp_number,has_whatsapp_business_number&access_token=${selectedPage.access_token}`
+        const pageTokenRes = await fetch(pageTokenUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({})) as {
+          whatsapp_number?: string
+          has_whatsapp_number?: boolean
+          has_whatsapp_business_number?: boolean
+          error?: { message?: string; code?: number }
+        }
+        console.log(`[Inventory][${requestId}] WA_PAGE_TOKEN_QUERY`, JSON.stringify({
+          pageId,
+          whatsapp_number: pageTokenRes.whatsapp_number ?? null,
+          has_whatsapp_number: pageTokenRes.has_whatsapp_number ?? null,
+          has_whatsapp_business_number: pageTokenRes.has_whatsapp_business_number ?? null,
+          error: pageTokenRes.error?.message ?? null,
+        }))
+        if (pageTokenRes.whatsapp_number) {
+          pageWhatsappNumber = pageTokenRes.whatsapp_number
+          pageWhatsappSource = 'page_access_token'
+        }
+      } catch (e) {
+        console.warn(`[Inventory][${requestId}] Page token WA query failed:`, e instanceof Error ? e.message : e)
+      }
+    }
+
+    // Strategy 3: try direct query with user token (different from /me/accounts batch)
+    if (!pageWhatsappNumber && pageId) {
+      try {
+        const directRes = await (client as { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{ whatsapp_number?: string; has_whatsapp_number?: boolean; has_whatsapp_business_number?: boolean }>> }).get(`/${pageId}`, {
+          fields: 'whatsapp_number,has_whatsapp_number,has_whatsapp_business_number',
+        })
+        console.log(`[Inventory][${requestId}] WA_DIRECT_USER_TOKEN_QUERY`, JSON.stringify({
+          pageId,
+          ok: directRes.ok,
+          whatsapp_number: directRes.data?.whatsapp_number ?? null,
+          has_whatsapp_number: directRes.data?.has_whatsapp_number ?? null,
+          has_whatsapp_business_number: directRes.data?.has_whatsapp_business_number ?? null,
+          error: directRes.error?.message ?? null,
+        }))
+        if (directRes.ok && directRes.data?.whatsapp_number) {
+          pageWhatsappNumber = directRes.data.whatsapp_number
+          pageWhatsappSource = 'direct_user_token'
+        }
+      } catch (e) {
+        console.warn(`[Inventory][${requestId}] Direct user token WA query failed:`, e instanceof Error ? e.message : e)
+      }
+    }
+
+    console.log(`[Inventory][${requestId}] WA_PAGE_NUMBER_FINAL: ${pageWhatsappNumber ?? 'null'} (source: ${pageWhatsappSource})`)
 
     const inventory: AccountInventory = {
       pages,
@@ -684,6 +741,7 @@ export async function GET(request: Request) {
       product_sets: {},
       whatsapp_phone_numbers: whatsappResult.numbers,
       page_whatsapp_number: pageWhatsappNumber,
+      page_whatsapp_number_source: pageWhatsappSource,
       whatsapp_diagnostics: whatsappResult.diagnostics,
       ...(whatsappResult.error && { whatsapp_error: whatsappResult.error }),
       token_permissions: tokenPermissions,

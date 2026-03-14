@@ -410,10 +410,12 @@ export default function TabDetails({
           </label>
           {/* Page field: whatsapp_number (sayfa ayarlarından gelen numara) */}
           {typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string' && (
-            <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
-              <span className="font-medium text-blue-700">Sayfa WhatsApp Numarası:</span>{' '}
-              <span className="text-blue-900">{String((inventory as Record<string, unknown>).page_whatsapp_number)}</span>
-              <span className="text-blue-500 text-xs ml-1">(page.whatsapp_number)</span>
+            <div className="mb-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm">
+              <span className="font-medium text-green-700">Sayfaya Bağlı WhatsApp Numarası:</span>{' '}
+              <span className="text-green-900 font-semibold">{String((inventory as Record<string, unknown>).page_whatsapp_number)}</span>
+              <span className="text-green-500 text-xs ml-1">
+                (kaynak: {String((inventory as Record<string, unknown>).page_whatsapp_number_source ?? 'unknown')})
+              </span>
             </div>
           )}
           {/* WABA phone numbers */}
