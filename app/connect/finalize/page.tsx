@@ -14,21 +14,36 @@ export default function MetaFinalizePage() {
 
     async function finalize() {
       try {
-        // 1. Status check – if ad account already set (e.g. multi-account wizard flow), go directly
+        console.log('[FINALIZE] META_CONNECT_FINALIZE_START')
+
+        // 1. Status check – if ad account already set, go directly
         const statusRes = await fetch('/api/meta/status', { cache: 'no-store' })
         const status = await statusRes.json()
 
-        console.log('[FINALIZE] status:', status)
+        console.log('[FINALIZE] META_SESSION_READY:', JSON.stringify({
+          connected: status.connected,
+          hasAdAccount: !!status.adAccountId,
+        }))
 
         if (status.connected && status.adAccountId) {
-          console.log('[DASHBOARD_LOAD] connected=true adAccountId=' + status.adAccountId)
+          console.log('[FINALIZE] DASHBOARD_LOAD: already has adAccountId=' + status.adAccountId)
           router.replace('/meta-ads')
           return
         }
 
         if (!status.connected) {
-          router.replace('/dashboard/entegrasyon?meta=error&reason=finalize_failed')
-          return
+          console.error('[FINALIZE] META_SESSION_NOT_READY: connected=false — token cookie may not have propagated')
+          // Wait briefly and retry — cookie propagation race condition
+          await new Promise(r => setTimeout(r, 500))
+          const retryRes = await fetch('/api/meta/status', { cache: 'no-store' })
+          const retryStatus = await retryRes.json()
+          console.log('[FINALIZE] META_SESSION_RETRY:', JSON.stringify({ connected: retryStatus.connected }))
+
+          if (!retryStatus.connected) {
+            router.replace('/dashboard/entegrasyon?meta=error&reason=finalize_failed')
+            return
+          }
+          // If retry succeeded, continue with account fetch
         }
 
         // 2. Token exists but no ad account yet – fetch accounts
@@ -36,16 +51,18 @@ export default function MetaFinalizePage() {
         const accountsData = await accountsRes.json()
         const accounts: { id: string; name: string }[] = accountsData.accounts || []
 
-        console.log('[FINALIZE] AD_ACCOUNTS_FETCHED count=' + accounts.length)
+        console.log('[FINALIZE] STEP3_FETCH_SUCCESS: count=' + accounts.length)
 
         if (accounts.length === 0) {
           // No ad accounts – send to wizard to show the empty state
+          console.log('[FINALIZE] STEP3_FETCH_EMPTY: redirecting to /connect/meta')
           router.replace('/connect/meta')
           return
         }
 
         if (accounts.length > 1) {
           // Multiple accounts – wizard handles manual selection
+          console.log('[FINALIZE] MULTIPLE_ACCOUNTS: count=' + accounts.length + ' → /connect/meta')
           router.replace('/connect/meta')
           return
         }
@@ -92,7 +109,7 @@ export default function MetaFinalizePage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" />
-        <p className="text-gray-700 font-medium">Finalizing connection...</p>
+        <p className="text-gray-700 font-medium">Bağlantı tamamlanıyor...</p>
       </div>
     </div>
   )

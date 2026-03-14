@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ROUTES } from '@/lib/routes'
@@ -12,6 +12,10 @@ interface AdAccount {
   currency?: string
 }
 
+type Step3Phase = 'waiting_session' | 'fetching' | 'done' | 'error' | 'empty'
+
+const RETRY_DELAYS = [300, 800, 1500] // ms — max 3 retries
+
 export default function MetaConnectWizard() {
   const t = useTranslations('wizard')
   const router = useRouter()
@@ -20,46 +24,154 @@ export default function MetaConnectWizard() {
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([])
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [step3Phase, setStep3Phase] = useState<Step3Phase>('waiting_session')
+  const [fetchError, setFetchError] = useState<string | null>(null)
+  const mountedRef = useRef(true)
 
-  useEffect(() => {
-    checkConnection()
-  }, [])
+  // Session-aware account fetch with retry
+  const fetchAdAccountsWithRetry = useCallback(async (): Promise<AdAccount[]> => {
+    for (let attempt = 0; attempt <= RETRY_DELAYS.length; attempt++) {
+      if (!mountedRef.current) return []
 
-  const checkConnection = async () => {
-    try {
-      const response = await fetch('/api/meta/status')
-      if (response.ok) {
-        const data = await response.json()
-        if (data.connected) {
-          setIsConnected(true)
-          setStep(3)
-          await fetchAdAccounts()
+      // Re-check session readiness before each attempt
+      if (attempt > 0) {
+        console.log(`[STEP3] STEP3_FETCH_RETRY: attempt=${attempt + 1}, checking session...`)
+        const sessionReady = await checkSessionReady()
+        if (!sessionReady) {
+          console.warn(`[STEP3] STEP3_FETCH_BLOCKED_WAITING_FOR_SESSION: attempt=${attempt + 1}`)
+          if (attempt < RETRY_DELAYS.length) {
+            await sleep(RETRY_DELAYS[attempt])
+            continue
+          }
+          return []
         }
       }
-    } catch (error) {
-      console.error('Connection check failed:', error)
-    }
-  }
 
-  const fetchAdAccounts = async () => {
-    setIsLoading(true)
-    try {
-      const response = await fetch('/api/meta/adaccounts')
-      if (response.ok) {
+      console.log(`[STEP3] STEP3_FETCH_ATTEMPT: attempt=${attempt + 1}`)
+
+      try {
+        const response = await fetch('/api/meta/adaccounts', { cache: 'no-store' })
+
+        if (!response.ok) {
+          const errorData = await response.json().catch(() => ({}))
+          console.warn(`[STEP3] STEP3_FETCH_ERROR: status=${response.status}, error=${errorData.error ?? 'unknown'}, reason=${errorData.reason ?? 'unknown'}`)
+
+          // 401 = token not ready yet — retry
+          if (response.status === 401 && attempt < RETRY_DELAYS.length) {
+            await sleep(RETRY_DELAYS[attempt])
+            continue
+          }
+          return []
+        }
+
         const data = await response.json()
         const accounts: AdAccount[] = data.accounts || []
-        setAdAccounts(accounts)
-        if (accounts.length > 0) setSelectedAccount(accounts[0].id)
+        console.log(`[STEP3] STEP3_FETCH_SUCCESS: rawCount=${accounts.length}`)
+        return accounts
+      } catch (error) {
+        console.error(`[STEP3] STEP3_FETCH_ERROR: attempt=${attempt + 1}`, error)
+        if (attempt < RETRY_DELAYS.length) {
+          await sleep(RETRY_DELAYS[attempt])
+          continue
+        }
+        return []
       }
-    } catch (error) {
-      console.error('Failed to fetch ad accounts:', error)
-    } finally {
-      setIsLoading(false)
     }
-  }
+    return []
+  }, [])
+
+  // Check if Meta session is ready (token cookie exists and is valid)
+  const checkSessionReady = useCallback(async (): Promise<boolean> => {
+    try {
+      const res = await fetch('/api/meta/status', { cache: 'no-store' })
+      if (!res.ok) return false
+      const data = await res.json()
+      console.log(`[STEP3] META_SESSION_READY: connected=${data.connected}`)
+      return !!data.connected
+    } catch {
+      return false
+    }
+  }, [])
+
+  // Main Step 3 initialization flow
+  const initStep3 = useCallback(async () => {
+    console.log('[STEP3] STEP3_MOUNT')
+    setStep3Phase('waiting_session')
+    setFetchError(null)
+
+    // 1. Wait for session
+    const sessionReady = await checkSessionReady()
+    if (!mountedRef.current) return
+
+    if (!sessionReady) {
+      console.warn('[STEP3] STEP3_FETCH_BLOCKED_WAITING_FOR_SESSION: initial check failed, will retry')
+      // Try waiting a bit — cookie might still be propagating after OAuth redirect
+      await sleep(500)
+      const retrySession = await checkSessionReady()
+      if (!mountedRef.current) return
+      if (!retrySession) {
+        setStep3Phase('error')
+        setFetchError('Meta bağlantısı doğrulanamadı. Sayfayı yenileyin.')
+        console.error('[STEP3] STEP3_FETCH_BLOCKED_WAITING_FOR_SESSION: session never became ready')
+        return
+      }
+    }
+
+    setIsConnected(true)
+    setStep(3)
+
+    // 2. Fetch accounts with retry
+    setStep3Phase('fetching')
+    const accounts = await fetchAdAccountsWithRetry()
+    if (!mountedRef.current) return
+
+    setAdAccounts(accounts)
+    if (accounts.length > 0) {
+      setSelectedAccount(accounts[0].id)
+      setStep3Phase('done')
+      console.log('[STEP3] STEP3_RENDER:', JSON.stringify({
+        loading: false, hasSession: true, hasToken: true,
+        rawCount: accounts.length, error: null,
+      }))
+    } else {
+      setStep3Phase('empty')
+      console.log('[STEP3] STEP3_FETCH_EMPTY: no ad accounts found after all retries')
+    }
+  }, [checkSessionReady, fetchAdAccountsWithRetry])
+
+  // On mount: check connection and init Step 3 if connected
+  useEffect(() => {
+    mountedRef.current = true
+
+    async function init() {
+      try {
+        console.log('[STEP3] WIZARD_MOUNT: checking connection...')
+        const res = await fetch('/api/meta/status', { cache: 'no-store' })
+        if (!res.ok) return
+        const data = await res.json()
+
+        if (!mountedRef.current) return
+
+        if (data.connected) {
+          await initStep3()
+        }
+        // else: stay on Step 1 (not connected)
+      } catch (error) {
+        console.error('[STEP3] Connection check failed:', error)
+      }
+    }
+
+    init()
+    return () => { mountedRef.current = false }
+  }, [initStep3])
 
   const handleConnect = () => {
     window.location.href = '/api/meta/login'
+  }
+
+  const handleRetryFetch = async () => {
+    setFetchError(null)
+    await initStep3()
   }
 
   const handleSelectAccount = async () => {
@@ -215,12 +327,63 @@ export default function MetaConnectWizard() {
                 </p>
               </div>
 
-              {isLoading ? (
+              {/* Phase: waiting for session */}
+              {step3Phase === 'waiting_session' && (
+                <div className="text-center py-12">
+                  <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
+                  <p className="text-gray-500 mt-4">Bağlantı hazırlanıyor...</p>
+                </div>
+              )}
+
+              {/* Phase: fetching accounts */}
+              {step3Phase === 'fetching' && (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto"></div>
                   <p className="text-gray-600 mt-4">{t('loadingAccounts')}</p>
                 </div>
-              ) : (
+              )}
+
+              {/* Phase: error */}
+              {step3Phase === 'error' && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
+                    </svg>
+                  </div>
+                  <p className="text-red-600 font-medium mb-2">{fetchError || 'Hesaplar yüklenemedi'}</p>
+                  <button
+                    onClick={handleRetryFetch}
+                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium mt-2"
+                  >
+                    Tekrar Dene
+                  </button>
+                </div>
+              )}
+
+              {/* Phase: empty result */}
+              {step3Phase === 'empty' && (
+                <div className="text-center py-8">
+                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
+                    </svg>
+                  </div>
+                  <p className="text-gray-700 font-medium mb-1">Reklam hesabı bulunamadı</p>
+                  <p className="text-gray-500 text-sm mb-4">
+                    Meta Business Suite üzerinden en az bir reklam hesabınız olmalıdır.
+                  </p>
+                  <button
+                    onClick={handleRetryFetch}
+                    className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
+                  >
+                    Tekrar Dene
+                  </button>
+                </div>
+              )}
+
+              {/* Phase: done — show account list */}
+              {step3Phase === 'done' && (
                 <>
                   <div className="space-y-3 mb-6">
                     {adAccounts.map((account) => (
@@ -252,7 +415,7 @@ export default function MetaConnectWizard() {
                     disabled={!selectedAccount || isLoading}
                     className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {t('continue')}
+                    {isLoading ? 'Seçiliyor...' : t('continue')}
                   </button>
                 </>
               )}
@@ -280,4 +443,8 @@ export default function MetaConnectWizard() {
       </div>
     </div>
   )
+}
+
+function sleep(ms: number): Promise<void> {
+  return new Promise((resolve) => setTimeout(resolve, ms))
 }

@@ -2,6 +2,8 @@ import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { metaGraphFetch } from "@/lib/metaGraph";
 
+export const dynamic = 'force-dynamic'
+
 const DEBUG = process.env.NODE_ENV !== 'production'
 
 export async function GET() {

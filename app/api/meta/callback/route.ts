@@ -83,7 +83,7 @@ export async function GET(request: Request) {
     )
   }
 
-  console.log(`[Meta Callback][${requestId}] CALLBACK_RECEIVED`)
+  console.log(`[Meta Callback][${requestId}] META_CONNECT_CALLBACK_START: code_length=${code.length}`)
 
   if (DEBUG) console.log(`[Meta Callback][${requestId}] Short-lived token received`)
 
@@ -185,7 +185,7 @@ export async function GET(request: Request) {
     maxAge: cookieMaxAge,
   })
 
-  console.log(`[Meta Callback][${requestId}] Success - token_type:${isLongLived ? 'long_lived' : 'short_lived'} expires_in:${Math.round(tokenExpiresIn/86400)}d`)
+  console.log(`[Meta Callback][${requestId}] META_CONNECT_CALLBACK_SUCCESS: token_type=${isLongLived ? 'long_lived' : 'short_lived'} expires_in=${Math.round(tokenExpiresIn/86400)}d redirect=/connect/finalize`)
 
   return response
 }
