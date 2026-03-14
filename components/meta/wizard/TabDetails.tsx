@@ -409,7 +409,7 @@ export default function TabDetails({
             {(t as Record<string, string>).whatsappPhoneLabel}
           </label>
           {/* Page field: whatsapp_number (sayfa ayarlarından gelen numara) */}
-          {(inventory as Record<string, unknown>)?.page_whatsapp_number && (
+          {typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string' && (
             <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm">
               <span className="font-medium text-blue-700">Sayfa WhatsApp Numarası:</span>{' '}
               <span className="text-blue-900">{String((inventory as Record<string, unknown>).page_whatsapp_number)}</span>
@@ -431,7 +431,7 @@ export default function TabDetails({
               </ul>
             </div>
           )}
-          {!(inventory as Record<string, unknown>)?.page_whatsapp_number && (inventory?.whatsapp_phone_numbers?.length ?? 0) === 0 && (
+          {typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number !== 'string' && (inventory?.whatsapp_phone_numbers?.length ?? 0) === 0 && (
             <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
               Bu sayfaya bağlı WhatsApp numarası bulunamadı.
             </p>
