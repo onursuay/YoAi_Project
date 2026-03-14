@@ -556,7 +556,17 @@ export async function POST(request: Request) {
     // 1. User-selected WABA phone number (whatsapp_phone_number from UI dropdown)
     // 2. Fallback to page_id only if no WABA number selected (Meta resolves server-side)
     // NEVER silently fallback — log every resolution path.
-    const whatsappPhoneNumber = (body.whatsapp_phone_number ?? dd?.messaging?.whatsappDisplayPhone ?? '').toString().trim() || undefined
+    // WhatsApp phone number: prefer phoneNumberId (digits-only), fallback to display phone stripped to digits
+    // Meta API requires ONLY digits in promoted_object.whatsapp_phone_number (e.g. "905382343200")
+    // Sending formatted display phone ("+90 (538) 234-3200") causes subcode 2490487
+    const rawWhatsappPhone = (
+      body.whatsapp_phone_number_id
+      ?? dd?.messaging?.whatsappPhoneNumberId
+      ?? body.whatsapp_phone_number
+      ?? dd?.messaging?.whatsappDisplayPhone
+      ?? ''
+    ).toString().trim()
+    const whatsappPhoneNumber = rawWhatsappPhone.replace(/\D/g, '') || undefined
     const whatsappPhoneNumberId = (body.whatsapp_phone_number_id ?? dd?.messaging?.whatsappPhoneNumberId ?? '').toString().trim() || undefined
     const whatsappSourceLayer = dd?.messaging?.whatsappSourceLayer ?? (whatsappPhoneNumber ? 'waba_selected' : 'page_fallback')
 
@@ -799,11 +809,19 @@ export async function POST(request: Request) {
     let sentBidAmount: string | null = null
 
     if (isWhatsApp) {
-      // WhatsApp: always LOWEST_COST_WITHOUT_CAP — no bid cap, no cost cap
-      // This explicitly overrides any campaign-level bid inheritance
-      formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
-      sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
-      console.log(`[AdSet Create][${requestId}] WHATSAPP_BID_OVERRIDE: forcing LOWEST_COST_WITHOUT_CAP (campaign had: ${campaignBidStrategy || 'none'})`)
+      // WhatsApp: LOWEST_COST_WITHOUT_CAP — no bid cap, no cost cap
+      // CBO (Campaign Budget Optimization) aktifken bid_strategy kampanya seviyesinde kalmalı.
+      // Adset seviyesinde gönderilmesi subcode 1487246 hatasına neden olur.
+      if (campaignHasBudget) {
+        // CBO: do NOT send bid_strategy at adset level — campaign handles it
+        sentBidStrategy = '(CBO — campaign-level, omitted at adset)'
+        console.log(`[AdSet Create][${requestId}] WHATSAPP_BID_CBO: bid_strategy omitted at adset level (CBO active, campaign bid: ${campaignBidStrategy || 'LOWEST_COST_WITHOUT_CAP'})`)
+      } else {
+        // ABO: send bid_strategy at adset level
+        formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
+        sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
+        console.log(`[AdSet Create][${requestId}] WHATSAPP_BID_ABO: forcing LOWEST_COST_WITHOUT_CAP at adset level`)
+      }
     } else if (hasBid) {
       if (uiBidStrategyNorm === 'COST_CAP') {
         formData.append('bid_strategy', uiBidStrategyNorm)
@@ -817,8 +835,13 @@ export async function POST(request: Request) {
         sentBidAmount = String(minorBid)
       }
     } else {
-      formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
-      sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
+      // Default: LOWEST_COST_WITHOUT_CAP — but only at adset level when ABO
+      if (!campaignHasBudget) {
+        formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
+        sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
+      } else {
+        sentBidStrategy = '(CBO — campaign-level, omitted at adset)'
+      }
     }
 
     // ── BUDGET GUARD — main unit mistakenly sent to Meta? ──────────────────────
@@ -941,7 +964,13 @@ export async function POST(request: Request) {
     console.log(`[AdSet Create][${requestId}] RAW META OUTBOUND KEYS:`, outboundKeys.join(', '))
     if (destinationType === 'WHATSAPP') {
       const waBid = formData.get('bid_strategy')?.toString() ?? ''
-      if (waBid && waBid !== 'LOWEST_COST_WITHOUT_CAP') {
+      if (campaignHasBudget && waBid) {
+        // CBO: remove any bid_strategy at adset level — campaign handles it
+        console.log(`[AdSet Create][${requestId}] WHATSAPP GUARD (CBO): removing adset bid_strategy=${waBid} — CBO active`)
+        formData.delete('bid_strategy')
+        formData.delete('bid_amount')
+        formData.delete('cost_cap')
+      } else if (waBid && waBid !== 'LOWEST_COST_WITHOUT_CAP') {
         console.error(`[AdSet Create][${requestId}] WHATSAPP GUARD: unexpected bid_strategy=${waBid} — forcing LOWEST_COST_WITHOUT_CAP`)
         formData.set('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
         formData.delete('bid_amount')
