@@ -106,6 +106,8 @@ export interface AccountInventory {
   product_sets: Record<string, InventoryProductSet[]>
   /** WhatsApp Business phone numbers from the Page's directly linked WABA only. Empty if page has no linked WABA or no numbers. */
   whatsapp_phone_numbers: InventoryWhatsAppNumber[]
+  /** Page-level whatsapp_number field (from /{pageId}?fields=whatsapp_number). May differ from WABA numbers. */
+  page_whatsapp_number?: string | null
   /** Set when WhatsApp fetch failed; UI can show stage/status/code/subcode/request_id */
   whatsapp_error?: InventoryWhatsAppError
   /** WhatsApp page mapping diagnostics */
@@ -667,6 +669,10 @@ export async function GET(request: Request) {
       pixel_events[px.pixel_id] = STANDARD_PIXEL_EVENTS
     }
 
+    // Page-level whatsapp_number (from /me/accounts fields) — distinct from WABA phone numbers
+    const selectedPage = rawPages.find((p) => p.id === pageId)
+    const pageWhatsappNumber = selectedPage?.whatsapp_number ?? null
+
     const inventory: AccountInventory = {
       pages,
       ig_accounts,
@@ -677,6 +683,7 @@ export async function GET(request: Request) {
       catalogs: [],
       product_sets: {},
       whatsapp_phone_numbers: whatsappResult.numbers,
+      page_whatsapp_number: pageWhatsappNumber,
       whatsapp_diagnostics: whatsappResult.diagnostics,
       ...(whatsappResult.error && { whatsapp_error: whatsappResult.error }),
       token_permissions: tokenPermissions,
