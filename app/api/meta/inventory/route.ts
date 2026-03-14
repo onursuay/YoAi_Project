@@ -592,6 +592,11 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const pageId = url.searchParams.get('page_id') || undefined
 
+    console.log(`[Inventory][${requestId}] INVENTORY_REQUEST_INCOMING:`, JSON.stringify({
+      pageId: pageId ?? '(none)',
+      queryParams: Object.fromEntries(url.searchParams.entries()),
+    }))
+
     const metaClient = await createMetaClient()
     if (!metaClient) {
       return NextResponse.json(
@@ -747,9 +752,17 @@ export async function GET(request: Request) {
       token_permissions: tokenPermissions,
     }
 
-    if (DEBUG) {
-      console.log(`[Inventory][${requestId}] page_id:${pageId || '-'} pages:${pages.length} ig:${ig_accounts.length} pixels:${pixels.length} lead_forms:${Object.keys(lead_forms).length} whatsapp_numbers:${whatsappResult.numbers.length}`)
-    }
+    console.log(`[Inventory][${requestId}] INVENTORY_RESPONSE_SUMMARY:`, JSON.stringify({
+      pageId: pageId ?? '(none)',
+      pagesCount: pages.length,
+      igCount: ig_accounts.length,
+      pixelsCount: pixels.length,
+      wabaNumbersCount: whatsappResult.numbers.length,
+      pageWhatsappNumber: pageWhatsappNumber ?? '(null)',
+      pageWhatsappSource: pageWhatsappSource,
+      wabaId: whatsappResult.diagnostics?.business_id ?? '(none)',
+      whatsappError: whatsappResult.error?.reason ?? '(none)',
+    }))
 
     return NextResponse.json(
       { ok: true, data: inventory },

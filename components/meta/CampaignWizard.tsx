@@ -489,6 +489,41 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     return () => { cancelled = true }
   }, [isOpen])
 
+  // ── Page-scoped inventory re-fetch: WhatsApp numbers depend on selected page ──
+  // Initial inventory fetch has no page_id → WABA/WhatsApp numbers are empty.
+  // When user selects a page, re-fetch with page_id to get page-linked WhatsApp data.
+  const lastFetchedPageIdRef = useRef<string | undefined>(undefined)
+  useEffect(() => {
+    const pageId = state.adset.pageId
+    if (!isOpen || !pageId || pageId === lastFetchedPageIdRef.current) return
+    lastFetchedPageIdRef.current = pageId
+    console.log(`[CampaignWizard] INVENTORY_REFETCH_FOR_PAGE: page_id=${pageId}`)
+    let cancelled = false
+    fetch(`/api/meta/inventory?page_id=${encodeURIComponent(pageId)}`, { cache: 'no-store' })
+      .then((res) => res.json())
+      .then((data) => {
+        if (cancelled || !data.ok || !data.data) return
+        const inv = data.data as AccountInventory
+        setInventory((prev) => {
+          if (!prev) return { ...inv, adAccountId: capabilities?.adAccountId ?? undefined } as AccountInventory
+          // Merge: keep existing pages/pixels/ig but update WhatsApp-specific fields
+          return {
+            ...prev,
+            whatsapp_phone_numbers: inv.whatsapp_phone_numbers,
+            page_whatsapp_number: (inv as Record<string, unknown>).page_whatsapp_number as string | undefined,
+            page_whatsapp_number_source: (inv as Record<string, unknown>).page_whatsapp_number_source as string | undefined,
+            whatsapp_diagnostics: (inv as Record<string, unknown>).whatsapp_diagnostics,
+            whatsapp_error: (inv as Record<string, unknown>).whatsapp_error as AccountInventory['whatsapp_error'],
+          } as AccountInventory
+        })
+        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${inv.whatsapp_phone_numbers?.length ?? 0}, page_wa=${(inv as Record<string, unknown>).page_whatsapp_number ?? 'null'}`)
+      })
+      .catch((e) => {
+        if (!cancelled) console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
+      })
+    return () => { cancelled = true }
+  }, [isOpen, state.adset.pageId])
+
   // Derive Instagram account from inventory when pageId changes
   useEffect(() => {
     if (!state.adset.pageId || !inventory) {
@@ -1143,17 +1178,23 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: explicit phone number selection required — no silent Meta server-side resolution
+    // WHATSAPP: pageId + explicit phone number selection required
     if (state.adset.conversionLocation === 'WHATSAPP') {
-      const wabaNumbers = (capabilities as any)?.assets?.whatsapp?.phoneNumbers ?? (inventory as any)?.whatsapp_phone_numbers ?? []
-      const hasPageWhatsapp = !!(inventory as any)?.page_whatsapp_number
-      // If WABA numbers exist, user must explicitly select one
-      if (wabaNumbers.length > 0 && !state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
-        err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
-      }
-      // If no WABA numbers and no page-linked number, block
-      if (wabaNumbers.length === 0 && !hasPageWhatsapp) {
-        err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
+      // Guardrail: pageId is required for WhatsApp number resolution
+      if (!state.adset.pageId) {
+        err.whatsapp_phone = 'WhatsApp numarasını belirlemek için geçerli bir Facebook Sayfası seçilmelidir.'
+        console.warn('[CampaignWizard] INVENTORY_REQUEST_SKIPPED_NO_PAGE_ID: WhatsApp destination selected but no pageId in state')
+      } else {
+        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
+        const hasPageWhatsapp = !!(inventory as any)?.page_whatsapp_number
+        // If WABA numbers exist, user must explicitly select one
+        if (wabaNumbers.length > 0 && !state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
+          err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
+        }
+        // If no WABA numbers and no page-linked number, block
+        if (wabaNumbers.length === 0 && !hasPageWhatsapp) {
+          err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
+        }
       }
     }
     // CALL: telefon numarası zorunlu
