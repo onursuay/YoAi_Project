@@ -367,7 +367,7 @@ export async function POST(request: Request) {
 
     // 1. Kampanyanın objective + budget + bid_strategy bilgisini Meta API'den çek
     // field listesi minimal tutuldu: campaign objesinde olmayan alanlar (bid_amount, cost_cap vb.) YOK
-    const CAMPAIGN_GET_FIELDS = 'objective,daily_budget,lifetime_budget,bid_strategy'
+    const CAMPAIGN_GET_FIELDS = 'objective,daily_budget,lifetime_budget,bid_strategy,buying_type,smart_promotion_type,special_ad_categories,configured_status,status'
     if (process.env.META_DEBUG === 'true') {
       console.log(`[AdSet Create][${requestId}] Campaign GET fields: "${CAMPAIGN_GET_FIELDS}"`)
     }
@@ -377,6 +377,11 @@ export async function POST(request: Request) {
       daily_budget?: string
       lifetime_budget?: string
       bid_strategy?: string
+      buying_type?: string
+      smart_promotion_type?: string
+      special_ad_categories?: string[]
+      configured_status?: string
+      status?: string
     }>(
       `/${campaignId}`,
       { fields: CAMPAIGN_GET_FIELDS }
@@ -430,14 +435,21 @@ export async function POST(request: Request) {
 
     if (DEBUG) console.log(`[AdSet Create][${requestId}] Campaign objective:`, campaignObjective, 'campaignHasBudget:', campaignHasBudget, 'campaignBidStrategy:', campaignBidStrategy || '(not set)')
 
-    if (process.env.META_DEBUG === 'true') {
-      console.log(`[AdSet Create][${requestId}] META_DEBUG campaign:`, JSON.stringify({
-        campaign_id: campaignId,
-        objective: campaignObjective,
-        bid_strategy: campaignResult.data.bid_strategy ?? '(not set)',
-        campaignHasBudget,
-      }, null, 2))
-    }
+    // ── CAMPAIGN DIAGNOSTIC DUMP — all inherited fields ──
+    console.log(`[AdSet Create][${requestId}] CAMPAIGN_INHERITED_FIELDS:`, JSON.stringify({
+      campaign_id: campaignId,
+      objective: campaignObjective,
+      bid_strategy: campaignResult.data.bid_strategy ?? '(not set)',
+      buying_type: campaignResult.data.buying_type ?? '(not set)',
+      smart_promotion_type: campaignResult.data.smart_promotion_type ?? '(not set)',
+      special_ad_categories: campaignResult.data.special_ad_categories ?? [],
+      configured_status: campaignResult.data.configured_status ?? '(not set)',
+      status: campaignResult.data.status ?? '(not set)',
+      daily_budget: campaignResult.data.daily_budget ?? '(not set)',
+      lifetime_budget: campaignResult.data.lifetime_budget ?? '(not set)',
+      campaignHasBudget,
+      is_CBO: campaignHasBudget,
+    }))
 
     // CAP modundaki kampanyalar: bid değeri zorunlu; yoksa adset create bloklanır
     if (CAMPAIGN_CAP_STRATEGIES.has(campaignBidStrategy)) {
@@ -762,10 +774,15 @@ export async function POST(request: Request) {
       }
     }
 
-    // ── BID SANİTİZASYONU + KILL SWITCH (tek geçiş, Meta POST'undan hemen önce) ──
-    // WhatsApp: do NOT send explicit bid_strategy (causes subcode 1487246)
-    const skipBidStrategy = destinationType === 'WHATSAPP'
-    console.log(`[DIAG][${requestId}] skipBidStrategy:`, skipBidStrategy, '| destinationType:', destinationType)
+    // ── BID SANİTİZASYONU (tek geçiş, Meta POST'undan hemen önce) ──
+    // WhatsApp: ALWAYS send LOWEST_COST_WITHOUT_CAP explicitly.
+    // Previous approach (omit bid entirely) caused subcode 2490487 when campaign
+    // has inherited bid strategy (CAP). Explicit LOWEST_COST_WITHOUT_CAP overrides
+    // campaign-level inheritance and is compatible with CONVERSATIONS/REPLIES goals.
+    // Note: previous subcode 1487246 was caused by sending CAP bid for WhatsApp,
+    // not by sending LOWEST_COST_WITHOUT_CAP.
+    const isWhatsApp = destinationType === 'WHATSAPP'
+    console.log(`[DIAG][${requestId}] isWhatsApp:`, isWhatsApp, '| destinationType:', destinationType, '| campaignBidStrategy:', campaignBidStrategy || '(not set)')
 
     formData.delete('bid_strategy')
     formData.delete('bid_amount')
@@ -781,25 +798,27 @@ export async function POST(request: Request) {
     let sentBidStrategy: string
     let sentBidAmount: string | null = null
 
-    if (!skipBidStrategy) {
-      if (hasBid) {
-        if (uiBidStrategyNorm === 'COST_CAP') {
-          formData.append('bid_strategy', uiBidStrategyNorm)
-          formData.append('cost_cap', String(minorBid))
-          sentBidStrategy = uiBidStrategyNorm
-          sentBidAmount = String(minorBid)
-        } else {
-          formData.append('bid_strategy', uiBidStrategyNorm)
-          formData.append('bid_amount', String(minorBid))
-          sentBidStrategy = uiBidStrategyNorm
-          sentBidAmount = String(minorBid)
-        }
+    if (isWhatsApp) {
+      // WhatsApp: always LOWEST_COST_WITHOUT_CAP — no bid cap, no cost cap
+      // This explicitly overrides any campaign-level bid inheritance
+      formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
+      sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
+      console.log(`[AdSet Create][${requestId}] WHATSAPP_BID_OVERRIDE: forcing LOWEST_COST_WITHOUT_CAP (campaign had: ${campaignBidStrategy || 'none'})`)
+    } else if (hasBid) {
+      if (uiBidStrategyNorm === 'COST_CAP') {
+        formData.append('bid_strategy', uiBidStrategyNorm)
+        formData.append('cost_cap', String(minorBid))
+        sentBidStrategy = uiBidStrategyNorm
+        sentBidAmount = String(minorBid)
       } else {
-        formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
-        sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
+        formData.append('bid_strategy', uiBidStrategyNorm)
+        formData.append('bid_amount', String(minorBid))
+        sentBidStrategy = uiBidStrategyNorm
+        sentBidAmount = String(minorBid)
       }
     } else {
-      sentBidStrategy = '(omitted for WhatsApp)'
+      formData.append('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
+      sentBidStrategy = 'LOWEST_COST_WITHOUT_CAP'
     }
 
     // ── BUDGET GUARD — main unit mistakenly sent to Meta? ──────────────────────
@@ -920,11 +939,14 @@ export async function POST(request: Request) {
     const outboundKeys = Array.from(formData.keys())
     console.log(`[AdSet Create][${requestId}] RAW META OUTBOUND BODY (pre-send):`, rawOutboundBody)
     console.log(`[AdSet Create][${requestId}] RAW META OUTBOUND KEYS:`, outboundKeys.join(', '))
-    if (destinationType === 'WHATSAPP' && formData.has('bid_strategy')) {
-      console.error(`[AdSet Create][${requestId}] WHATSAPP GUARD: bid_strategy present in outbound (bug) — removing`)
-      formData.delete('bid_strategy')
-      formData.delete('bid_amount')
-      formData.delete('cost_cap')
+    if (destinationType === 'WHATSAPP') {
+      const waBid = formData.get('bid_strategy')?.toString() ?? ''
+      if (waBid && waBid !== 'LOWEST_COST_WITHOUT_CAP') {
+        console.error(`[AdSet Create][${requestId}] WHATSAPP GUARD: unexpected bid_strategy=${waBid} — forcing LOWEST_COST_WITHOUT_CAP`)
+        formData.set('bid_strategy', 'LOWEST_COST_WITHOUT_CAP')
+        formData.delete('bid_amount')
+        formData.delete('cost_cap')
+      }
     }
     // ─────────────────────────────────────────────────────────────────────────
 
