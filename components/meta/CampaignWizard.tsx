@@ -1180,21 +1180,45 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     }
     // WHATSAPP: pageId + explicit phone number selection required
     if (state.adset.conversionLocation === 'WHATSAPP') {
+      const selectedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+      const selectedDisplayPhone = state.adset.destinationDetails?.messaging?.whatsappDisplayPhone
+
       // Guardrail: pageId is required for WhatsApp number resolution
       if (!state.adset.pageId) {
         err.whatsapp_phone = 'WhatsApp numarasını belirlemek için geçerli bir Facebook Sayfası seçilmelidir.'
         console.warn('[CampaignWizard] INVENTORY_REQUEST_SKIPPED_NO_PAGE_ID: WhatsApp destination selected but no pageId in state')
+      } else if (selectedPhoneId) {
+        // User has selected a phone from the dropdown → valid
+        // No further blocking needed — the phone_number_id is the source of truth
+        console.log('[CampaignWizard] WHATSAPP_VALIDATION_PASS:', JSON.stringify({
+          selectedPageId: state.adset.pageId,
+          selectedWhatsappPhoneNumberId: selectedPhoneId,
+          selectedWhatsappNumber: selectedDisplayPhone ?? '(none)',
+          wabaNumbersCount: inventory?.whatsapp_phone_numbers?.length ?? 0,
+          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null)',
+          validationResult: 'PASS',
+        }))
       } else {
+        // No phone selected — check if there are numbers available to select
         const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        const hasPageWhatsapp = !!inventory?.page_whatsapp_number
-        // If WABA numbers exist, user must explicitly select one
-        if (wabaNumbers.length > 0 && !state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
+        if (wabaNumbers.length > 0) {
           err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
+        } else {
+          // No WABA numbers available and no selection — but page might still have WhatsApp
+          const hasPageWhatsapp = !!inventory?.page_whatsapp_number
+          if (!hasPageWhatsapp) {
+            err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
+          }
+          // If hasPageWhatsapp but no WABA numbers, let it pass — Meta resolves from page settings
         }
-        // If no WABA numbers and no page-linked number, block
-        if (wabaNumbers.length === 0 && !hasPageWhatsapp) {
-          err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
-        }
+        console.log('[CampaignWizard] WHATSAPP_VALIDATION:', JSON.stringify({
+          selectedPageId: state.adset.pageId,
+          selectedWhatsappPhoneNumberId: '(none)',
+          wabaNumbersCount: inventory?.whatsapp_phone_numbers?.length ?? 0,
+          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null)',
+          validationResult: err.whatsapp_phone ? 'FAIL' : 'PASS',
+          validationFailureReason: err.whatsapp_phone ?? '(none)',
+        }))
       }
     }
     // CALL: telefon numarası zorunlu
@@ -2138,6 +2162,7 @@ const messagingOk = true
                     discoveryPatch={discoveryPatch}
                     capabilities={capabilities}
                     accountInventoryLeadForms={inventory?.lead_forms}
+                    accountInventory={inventory}
                   />
                   {state.adset.conversionLocation === 'INSTAGRAM_DIRECT' && igVerifyStatus === 'verifying' && (
                     <p className="mt-2 text-caption text-gray-500 flex items-center gap-1">

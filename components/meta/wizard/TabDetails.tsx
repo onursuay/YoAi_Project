@@ -131,6 +131,12 @@ interface TabDetailsProps {
   instagramLoading?: boolean
   capabilities?: MetaCapabilities | null
   accountInventoryLeadForms?: Record<string, { form_id: string; name: string; status: string }[]>
+  /** Real inventory from CampaignWizard — contains page-scoped WhatsApp data after re-fetch */
+  accountInventory?: {
+    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
+    page_whatsapp_number?: string | null
+    page_whatsapp_number_source?: string
+  } | null
 }
 
 export default function TabDetails({
@@ -146,6 +152,7 @@ export default function TabDetails({
   instagramLoading = false,
   capabilities = null,
   accountInventoryLeadForms,
+  accountInventory = null,
 }: TabDetailsProps) {
   const showEmptyPages = pagesInitialLoadDone && !pagesLoading && pages.length === 0 && !pagesError
   const t = getWizardTranslations(getLocaleFromCookie())
@@ -404,11 +411,17 @@ export default function TabDetails({
       )}
 
       {state.conversionLocation === 'WHATSAPP' && (() => {
-        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        const pageWhatsappNumber = typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
-          ? String((inventory as Record<string, unknown>).page_whatsapp_number)
-          : null
-        const pageWhatsappSource = String((inventory as Record<string, unknown> | null)?.page_whatsapp_number_source ?? 'unknown')
+        // Primary: accountInventory (page-scoped re-fetch with real WhatsApp data)
+        // Fallback: capabilities-derived local inventory (initial load, no page_id)
+        const wabaNumbers = (accountInventory?.whatsapp_phone_numbers?.length ?? 0) > 0
+          ? accountInventory!.whatsapp_phone_numbers!
+          : (inventory?.whatsapp_phone_numbers ?? [])
+        const pageWhatsappNumber = accountInventory?.page_whatsapp_number
+          ?? (typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
+            ? String((inventory as Record<string, unknown>).page_whatsapp_number)
+            : null)
+        const pageWhatsappSource = accountInventory?.page_whatsapp_number_source
+          ?? String((inventory as Record<string, unknown> | null)?.page_whatsapp_number_source ?? 'unknown')
         const selectedPhoneId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
         const selectedDisplayPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
 
