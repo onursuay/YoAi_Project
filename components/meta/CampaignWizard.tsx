@@ -1670,6 +1670,16 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         conversionLocation: state.adset.conversionLocation,
         optimizationGoal: state.adset.optimizationGoal,
       }
+      // WhatsApp: include phone number fields for promoted_object
+      if (state.adset.conversionLocation === 'WHATSAPP') {
+        const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+        if (wpId) {
+          adBody.whatsappPhoneNumberId = wpId
+          adBody.whatsapp_phone_number_id = wpId
+        }
+        adBody.destinationDetails = state.adset.destinationDetails
+        console.log('[AD_CREATE_EXISTING_POST] WhatsApp fields:', { whatsappPhoneNumberId: wpId, destinationDetails: state.adset.destinationDetails })
+      }
 
       const adRes = await fetch('/api/meta/ads/create', {
         method: 'POST',
@@ -1772,6 +1782,16 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       conversionLocation: state.adset.conversionLocation,
       optimizationGoal: state.adset.optimizationGoal,
     }
+    // WhatsApp: include phone number fields for promoted_object
+    if (state.adset.conversionLocation === 'WHATSAPP') {
+      const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+      if (wpId) {
+        adBody.whatsappPhoneNumberId = wpId
+        adBody.whatsapp_phone_number_id = wpId
+      }
+      adBody.destinationDetails = state.adset.destinationDetails
+      console.log('[AD_CREATE_NEW] WhatsApp fields:', { whatsappPhoneNumberId: wpId, destinationDetails: state.adset.destinationDetails })
+    }
     // Pass verify result for backend page_id_mismatch guard
     if (state.adset.conversionLocation === 'INSTAGRAM_DIRECT') {
       const resolvedIgUserId = igVerifyIgUserId || state.adset.instagramAccountId || null
@@ -1781,7 +1801,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         adBody.instagram_user_id = resolvedIgUserId
       }
     }
-    // WHATSAPP: phone number NOT sent — Meta resolves from page settings server-side.
+    // WHATSAPP: phone number is sent above via whatsappPhoneNumberId + destinationDetails
     const leadFormIdVal = state.ad.leadFormId?.trim() || state.adset.destinationDetails?.leads?.leadFormId?.trim()
     const chatGreetingVal = state.ad.chatGreeting?.trim() || state.adset.destinationDetails?.messaging?.messageTemplate?.trim()
     const phoneNumberVal = state.ad.phoneNumber?.trim() || state.adset.destinationDetails?.calls?.phoneNumber?.trim()
