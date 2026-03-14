@@ -67,6 +67,7 @@ export type BlockedReason =
   | 'NO_CATALOG'
   | 'NO_WHATSAPP'
   | 'NO_MESSENGER'
+  | 'WHATSAPP_PHONE_NOT_SELECTED'
   | 'MIN_BUDGET'
 
 export interface MissingField {
@@ -92,6 +93,7 @@ const BLOCKED_MESSAGES: Record<BlockedReason, string> = {
   NO_CATALOG: 'Reklam hesabınızda ürün kataloğu bulunamadı.',
   NO_WHATSAPP: 'Bu sayfa için WhatsApp Business bağlantısı bulunamadı.',
   NO_MESSENGER: 'Bu sayfa için Messenger bağlantısı bulunamadı.',
+  WHATSAPP_PHONE_NOT_SELECTED: 'Reklamda kullanılacak WhatsApp numarasını seçin.',
   MIN_BUDGET: 'Bütçe minimum tutarın altında.',
 }
 
