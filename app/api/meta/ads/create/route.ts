@@ -74,6 +74,9 @@ export async function POST(request: Request) {
       ? JSON.parse(body.destinationDetails)
       : (body.destinationDetails ?? body.destination_details ?? null)
 
+    console.log('[Ad Create] RAW_DD:', JSON.stringify(body.destinationDetails ?? null))
+    console.log('[Ad Create] RAW_BODY_KEYS:', Object.keys(body))
+
     // Fallback: doğrudan body'den oku
     const whatsappPhoneNumberIdResolved =
       body.whatsappPhoneNumberId ||
@@ -238,6 +241,7 @@ export async function POST(request: Request) {
         whatsappDisplayPhone: whatsappDisplayPhoneResolved ?? '(none)',
         sourceLayer: dd?.messaging?.whatsappSourceLayer ?? '(unknown)',
       }))
+      console.log('[Ad Create] WHATSAPP_DD_FULL:', JSON.stringify(dd ?? null))
     }
     if (((objective === 'OUTCOME_LEADS' || objective === 'OUTCOME_ENGAGEMENT') && conversionLocation === 'CALL') && !phoneNumber) {
       return NextResponse.json(
