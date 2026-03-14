@@ -1664,16 +1664,11 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       // WhatsApp: include ONLY page-linked phone number
       if (state.adset.conversionLocation === 'WHATSAPP') {
         const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        const isPageLinked = wpId && wabaNumbers.some(n => n.phoneNumberId === wpId)
-        if (wpId && isPageLinked) {
+        if (wpId) {
           adBody.whatsappPhoneNumberId = wpId
           adBody.whatsapp_phone_number_id = wpId
           adBody.destinationDetails = state.adset.destinationDetails
-        } else if (wpId) {
-          console.error('[AD_CREATE_EXISTING_POST] BLOCKED: whatsappPhoneNumberId not in page WABA list — not sending', { wpId, availableIds: wabaNumbers.map(n => n.phoneNumberId) })
         }
-        console.log('[AD_CREATE_EXISTING_POST] WhatsApp publish:', { whatsappPhoneNumberId: wpId, isPageLinked, wabaCount: wabaNumbers.length })
       }
 
       const adRes = await fetch('/api/meta/ads/create', {
@@ -1777,19 +1772,14 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       conversionLocation: state.adset.conversionLocation,
       optimizationGoal: state.adset.optimizationGoal,
     }
-    // WhatsApp: include ONLY page-linked phone number
+    // WhatsApp: wabaCount=0 olsa bile ID varsa gönder — page_id yeterli, whatsapp_phone_number_id opsiyonel
     if (state.adset.conversionLocation === 'WHATSAPP') {
       const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-      const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-      const isPageLinked = wpId && wabaNumbers.some(n => n.phoneNumberId === wpId)
-      if (wpId && isPageLinked) {
+      if (wpId) {
         adBody.whatsappPhoneNumberId = wpId
         adBody.whatsapp_phone_number_id = wpId
         adBody.destinationDetails = state.adset.destinationDetails
-      } else if (wpId) {
-        console.error('[AD_CREATE_NEW] BLOCKED: whatsappPhoneNumberId not in page WABA list — not sending', { wpId, availableIds: wabaNumbers.map(n => n.phoneNumberId) })
       }
-      console.log('[AD_CREATE_NEW] WhatsApp publish:', { whatsappPhoneNumberId: wpId, isPageLinked, wabaCount: wabaNumbers.length })
     }
     // Pass verify result for backend page_id_mismatch guard
     if (state.adset.conversionLocation === 'INSTAGRAM_DIRECT') {
