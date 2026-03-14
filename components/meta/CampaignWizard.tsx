@@ -506,14 +506,21 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         const inv = data.data as AccountInventory
         setInventory((prev) => {
           if (!prev) return { ...inv, adAccountId: capabilities?.adAccountId ?? undefined } as AccountInventory
-          // Merge: keep existing pages/pixels/ig but update WhatsApp-specific fields
+          const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
+          const pageHasWhatsApp = newWabaNumbers.length > 0 || !!inv.page_whatsapp_number
           return {
             ...prev,
-            whatsapp_phone_numbers: inv.whatsapp_phone_numbers,
+            whatsapp_phone_numbers: newWabaNumbers,
             page_whatsapp_number: inv.page_whatsapp_number,
             page_whatsapp_number_source: inv.page_whatsapp_number_source,
             whatsapp_diagnostics: inv.whatsapp_diagnostics,
             whatsapp_error: inv.whatsapp_error,
+            // Seçili sayfanın has_whatsapp'ını da güncelle
+            pages: prev.pages.map(p =>
+              p.page_id === pageId
+                ? { ...p, has_whatsapp: pageHasWhatsApp || p.has_whatsapp }
+                : p
+            ),
           }
         })
         // Clear stale WhatsApp selection if it's not in the new page's WABA numbers
