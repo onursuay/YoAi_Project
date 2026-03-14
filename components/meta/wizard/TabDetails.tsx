@@ -490,11 +490,10 @@ export default function TabDetails({
             </div>
           ) : null}
 
-          {/* No page-linked WABA numbers resolved — BLOCKING */}
+          {/* No page-linked WABA numbers resolved — info only */}
           {hasNoNumbers && (
-            <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg text-sm text-red-700">
-              <span className="font-semibold">Bu Facebook sayfasına bağlı WhatsApp numarası doğrulanamadı.</span>{' '}
-              Meta Business Suite → Ayarlar → WhatsApp bölümünden sayfanıza bir WhatsApp Business numarası bağlayın. Bağlantı olmadan WhatsApp reklamı yayınlanamaz.
+            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              Bu Facebook sayfasına bağlı WhatsApp numarası görünmüyor. İsterseniz Meta Business Suite → Ayarlar → WhatsApp bölümünden sayfanıza bir numara bağlayabilirsiniz.
             </div>
           )}
 

@@ -1206,20 +1206,6 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: check actual inventory data (WABA numbers + page_whatsapp_number) instead of
-    // has_whatsapp flag which may be stale from the initial pageless fetch.
-    if (state.adset.conversionLocation === 'WHATSAPP') {
-      if (!state.adset.pageId) {
-        err.whatsapp_phone = 'WhatsApp için geçerli bir Facebook Sayfası seçilmelidir.'
-      } else {
-        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        const pageWaNum = inventory?.page_whatsapp_number
-        const hasWhatsApp = wabaNumbers.length > 0 || !!pageWaNum
-        if (!hasWhatsApp) {
-          err.whatsapp_phone = 'Bu Facebook sayfasına bağlı WhatsApp numarası bulunamadı.'
-        }
-      }
-    }
     // CALL: telefon numarası zorunlu
     if (state.adset.conversionLocation === 'CALL') {
       if (!state.adset.destinationDetails?.calls?.phoneNumber?.trim()) {

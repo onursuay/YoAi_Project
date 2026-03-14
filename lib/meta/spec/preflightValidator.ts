@@ -202,19 +202,6 @@ export function preflight(
     }
   }
 
-  // WhatsApp validation: page must have WhatsApp linked.
-  // Phone number selection is optional — Meta resolves from page settings if not provided.
-  if (destination === 'WHATSAPP') {
-    const page = inventory.pages.find((p) => p.page_id === form.adset.pageId)
-    if (page && !page.has_whatsapp) {
-      return {
-        ok: false,
-        blocked_reason: 'NO_WHATSAPP',
-        blocked_message: 'Bu Facebook sayfasına bağlı WhatsApp numarası bulunamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.',
-      }
-    }
-  }
-
   // ── Field-level validation ──
 
   // Step 1: Campaign
