@@ -1108,7 +1108,19 @@ export async function POST(request: Request) {
       )
     }
 
-    if (DEBUG) console.log(`[AdSet Create][${requestId}] Success:`, result.data?.id)
+    // ── SUCCESS LOG — full context for debugging ──
+    console.log(`[AdSet Create][${requestId}] META_ADSET_CREATE_SUCCESS:`, JSON.stringify({
+      adsetId: result.data?.id,
+      campaignId,
+      destinationType,
+      optimizationGoal: finalOptimizationGoal,
+      sentBidStrategy,
+      sentBidAmount,
+      campaignBidStrategy: campaignBidStrategy || '(not set)',
+      billingEvent: formData.get('billing_event') ?? '(not set)',
+      dailyBudget: formData.get('daily_budget') ?? '(not set)',
+      promotedObject: formData.get('promoted_object') ?? '(not set)',
+    }))
 
     return NextResponse.json(
       {

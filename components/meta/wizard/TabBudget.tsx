@@ -303,6 +303,20 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
           {t.bidStrategy}
           {bidRequirementMode && <span className="text-red-500 ml-0.5">*</span>}
         </label>
+        {state.conversionLocation === 'WHATSAPP' ? (
+          <>
+            <select
+              value={AUTOMATIC_LOWEST_COST}
+              disabled
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
+            >
+              <option value={AUTOMATIC_LOWEST_COST}>{t.bidStrategyAuto ?? 'Otomatik (En Düşük Maliyet)'}</option>
+            </select>
+            <p className="mt-1 text-xs text-gray-400">
+              WhatsApp reklamlarında teklif stratejisi otomatik olarak En Düşük Maliyet (LOWEST_COST_WITHOUT_CAP) kullanılır.
+            </p>
+          </>
+        ) : (
         <select
           value={effectiveSelectValue}
           onChange={(e) => {
@@ -319,9 +333,10 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
             <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
           ))}
         </select>
+        )}
       </div>
 
-      {showBidBlock && (
+      {showBidBlock && state.conversionLocation !== 'WHATSAPP' && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
             {t.bidCapAmount} <span className="text-caption font-normal text-gray-500">(TRY)</span> <span className="text-red-500">*</span>
