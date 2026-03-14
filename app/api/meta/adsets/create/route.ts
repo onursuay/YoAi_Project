@@ -564,6 +564,7 @@ export async function POST(request: Request) {
       ?? dd?.messaging?.whatsappPhoneNumberId
       ?? body.whatsapp_phone_number
       ?? dd?.messaging?.whatsappDisplayPhone
+      ?? body.page_whatsapp_number          // fallback: page-level whatsapp number from inventory
       ?? ''
     ).toString().trim()
     const whatsappPhoneNumber = rawWhatsappPhone.replace(/\D/g, '') || undefined

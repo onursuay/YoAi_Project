@@ -1199,51 +1199,16 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: pageId + page-linked phone number selection required
-    // Only page-linked WABA numbers are valid for CTWA ads.
-    // A phone_number_id NOT in the current page's WABA list will cause PERMISSION_DENIED.
+    // WHATSAPP: page must have WhatsApp linked. Phone number selection is optional —
+    // Meta resolves from page settings if not provided, and inventory now uses Page Access Token.
     if (state.adset.conversionLocation === 'WHATSAPP') {
-      const selectedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-      const selectedDisplayPhone = state.adset.destinationDetails?.messaging?.whatsappDisplayPhone
-      const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-
       if (!state.adset.pageId) {
-        err.whatsapp_phone = 'WhatsApp numarasını belirlemek için geçerli bir Facebook Sayfası seçilmelidir.'
-        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: no pageId')
-      } else if (wabaNumbers.length === 0) {
-        // No page-linked WABA numbers resolved — hard block
-        err.whatsapp_phone = 'Bu Facebook sayfasına bağlı WhatsApp numarası doğrulanamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.'
-        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: no page-linked WABA numbers', JSON.stringify({
-          pageId: state.adset.pageId,
-          wabaNumbersCount: 0,
-          staleSelectedPhoneId: selectedPhoneId ?? '(none)',
-          whatsappError: inventory?.whatsapp_error ?? '(none)',
-        }))
-      } else if (!selectedPhoneId) {
-        // WABA numbers exist but none selected
-        err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
-        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: WABA numbers available but not selected', JSON.stringify({
-          pageId: state.adset.pageId,
-          wabaNumbersCount: wabaNumbers.length,
-        }))
-      } else if (!wabaNumbers.some(n => n.phoneNumberId === selectedPhoneId)) {
-        // Selected phone is NOT in current page's WABA list — stale/wrong source
-        err.whatsapp_phone = 'Seçilen WhatsApp numarası bu sayfaya bağlı değil. Lütfen sayfaya bağlı bir numara seçin.'
-        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: selectedPhoneId not in page WABA list', JSON.stringify({
-          pageId: state.adset.pageId,
-          selectedPhoneId,
-          selectedDisplayPhone: selectedDisplayPhone ?? '(none)',
-          availablePhoneIds: wabaNumbers.map(n => n.phoneNumberId),
-        }))
+        err.whatsapp_phone = 'WhatsApp için geçerli bir Facebook Sayfası seçilmelidir.'
       } else {
-        // Valid: selectedPhoneId is in current page's WABA numbers
-        console.log('[CampaignWizard] WHATSAPP_VALIDATION_PASS:', JSON.stringify({
-          pageId: state.adset.pageId,
-          selectedPhoneId,
-          selectedDisplayPhone: selectedDisplayPhone ?? '(none)',
-          wabaNumbersCount: wabaNumbers.length,
-          validationResult: 'PASS',
-        }))
+        const page = inventory?.pages?.find(p => p.page_id === state.adset.pageId)
+        if (page && !page.has_whatsapp) {
+          err.whatsapp_phone = 'Bu Facebook sayfasına bağlı WhatsApp numarası bulunamadı.'
+        }
       }
     }
     // CALL: telefon numarası zorunlu
@@ -1579,12 +1544,17 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       if (selectedPhoneId) {
         adsetPayload.whatsapp_phone_number_id = selectedPhoneId
       }
+      // Fallback: page-level whatsapp number from inventory
+      if (!selectedDisplayPhone && !selectedPhoneId && inventory?.page_whatsapp_number) {
+        adsetPayload.page_whatsapp_number = inventory.page_whatsapp_number
+      }
       // Pass destinationDetails for server-side logging
       adsetPayload.destinationDetails = state.adset.destinationDetails
       console.log('[DIAG][CampaignWizard] WHATSAPP_PAYLOAD:', {
         pageId: state.adset.pageId,
         whatsapp_phone_number: selectedDisplayPhone ?? '(none)',
         whatsapp_phone_number_id: selectedPhoneId ?? '(none)',
+        page_whatsapp_number: (!selectedDisplayPhone && !selectedPhoneId) ? (inventory?.page_whatsapp_number ?? '(none)') : '(not needed)',
         sourceLayer: state.adset.destinationDetails?.messaging?.whatsappSourceLayer ?? '(none)',
       })
     }
