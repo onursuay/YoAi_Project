@@ -701,9 +701,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (igDmLink) updateAd({ websiteUrl: igDmLink })
   }, [igVerifyStatus, igVerifyUsername, igVerifyIgUserId, state.adset.conversionLocation])
 
-  // WHATSAPP: phone number auto-fill DISABLED — Meta resolves page-linked number server-side.
-  // Inventory whatsapp_phone_numbers come from WABA (may differ from page-settings number).
-  // promoted_object only sends page_id; whatsapp_phone_number is optional per Meta docs.
+  // WHATSAPP: phone number is explicitly selected by user from WABA numbers.
+  // No auto-fill, no silent fallback. User must pick a number from the dropdown.
+  // Selected number is sent in promoted_object.whatsapp_phone_number for explicit control.
 
   // When capabilities load and current destination is locked, switch to first unlocked
   useEffect(() => {
@@ -1142,8 +1142,19 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: phone number validation REMOVED — Meta resolves page-linked number server-side.
-    // promoted_object only needs page_id; whatsapp_phone_number is optional per Meta docs.
+    // WHATSAPP: explicit phone number selection required — no silent Meta server-side resolution
+    if (state.adset.conversionLocation === 'WHATSAPP') {
+      const wabaNumbers = (capabilities as any)?.assets?.whatsapp?.phoneNumbers ?? (inventory as any)?.whatsapp_phone_numbers ?? []
+      const hasPageWhatsapp = !!(inventory as any)?.page_whatsapp_number
+      // If WABA numbers exist, user must explicitly select one
+      if (wabaNumbers.length > 0 && !state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
+        err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
+      }
+      // If no WABA numbers and no page-linked number, block
+      if (wabaNumbers.length === 0 && !hasPageWhatsapp) {
+        err.whatsapp_phone = 'Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz.'
+      }
+    }
     // CALL: telefon numarası zorunlu
     if (state.adset.conversionLocation === 'CALL') {
       if (!state.adset.destinationDetails?.calls?.phoneNumber?.trim()) {
@@ -1467,8 +1478,25 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       const formId = state.ad.leadFormId?.trim() || state.adset.leadGenFormId?.trim()
       if (formId) adsetPayload.lead_gen_form_id = formId
     }
-    // WhatsApp: promoted_object uses only page_id — no whatsapp_phone_number needed.
-    // Meta resolves page-linked WhatsApp number server-side.
+    // WhatsApp: send explicitly selected phone number to promoted_object
+    if (state.adset.conversionLocation === 'WHATSAPP') {
+      const selectedDisplayPhone = state.adset.destinationDetails?.messaging?.whatsappDisplayPhone
+      const selectedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+      if (selectedDisplayPhone) {
+        adsetPayload.whatsapp_phone_number = selectedDisplayPhone
+      }
+      if (selectedPhoneId) {
+        adsetPayload.whatsapp_phone_number_id = selectedPhoneId
+      }
+      // Pass destinationDetails for server-side logging
+      adsetPayload.destinationDetails = state.adset.destinationDetails
+      console.log('[DIAG][CampaignWizard] WHATSAPP_PAYLOAD:', {
+        pageId: state.adset.pageId,
+        whatsapp_phone_number: selectedDisplayPhone ?? '(none)',
+        whatsapp_phone_number_id: selectedPhoneId ?? '(none)',
+        sourceLayer: state.adset.destinationDetails?.messaging?.whatsappSourceLayer ?? '(none)',
+      })
+    }
 
     const ADSET_ENDPOINT = '/api/meta/adsets/create'
     console.log('[DIAG][CampaignWizard] Calling adset create:', ADSET_ENDPOINT, '| payload keys:', Object.keys(adsetPayload), '| conversionLocation:', adsetPayload.destination_type, '| optimizationGoal:', adsetPayload.optimizationGoal, '| bidStrategy:', adsetPayload.bidStrategy)

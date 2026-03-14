@@ -38,7 +38,7 @@ export interface PreflightFormState {
     appStore?: string
     instagramAccountId?: string
     destinationDetails?: {
-      messaging?: { whatsappPhoneNumberId?: string; messengerPageId?: string }
+      messaging?: { whatsappPhoneNumberId?: string; whatsappDisplayPhone?: string; whatsappSourceLayer?: string; messengerPageId?: string }
       calls?: { phoneNumber?: string }
     }
   }
@@ -200,12 +200,23 @@ export function preflight(
     }
   }
 
-  // Messaging destinations: check connectivity (Traffic + Engagement + WHATSAPP)
-  // Kullanici zaten bir WhatsApp numarasi secmisse inventory block'u atla
-  if (destination === 'WHATSAPP' && !form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
+  // Messaging destinations: check WhatsApp connectivity AND explicit phone selection
+  if (destination === 'WHATSAPP') {
     const selectedPage = inventory.pages.find((p) => p.page_id === form.adset.pageId)
     if (selectedPage && !selectedPage.has_whatsapp) {
       return { ok: false, blocked_reason: 'NO_WHATSAPP', blocked_message: BLOCKED_MESSAGES.NO_WHATSAPP }
+    }
+    // Enforce explicit phone number selection — no silent fallback
+    if (!form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
+      // Check if WABA numbers exist in inventory
+      const wabaNumbers = (inventory as Record<string, unknown>).whatsapp_phone_numbers as unknown[] | undefined
+      if (wabaNumbers && wabaNumbers.length > 0) {
+        return {
+          ok: false,
+          blocked_reason: 'WHATSAPP_PHONE_NOT_SELECTED',
+          blocked_message: 'Reklamda kullanılacak WhatsApp numarasını seçin. WABA numaraları mevcut ancak henüz seçim yapılmadı.',
+        }
+      }
     }
   }
 

@@ -83,6 +83,10 @@ export interface WizardState {
       messaging?: {
         channel?: 'MESSENGER' | 'WHATSAPP' | 'INSTAGRAM_DIRECT'
         whatsappPhoneNumberId?: string
+        /** Actual display phone number (e.g. "+905...") — sent to Meta promoted_object.whatsapp_phone_number */
+        whatsappDisplayPhone?: string
+        /** Source layer: 'waba_selected' | 'page_linked' — for debug/guardrail */
+        whatsappSourceLayer?: 'waba_selected' | 'page_linked'
         messageTemplate?: string
         faqEnabled?: boolean
         faqItems?: { q: string; a: string }[]

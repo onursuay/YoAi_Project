@@ -403,46 +403,102 @@ export default function TabDetails({
       </div>
       )}
 
-      {state.conversionLocation === 'WHATSAPP' && (
+      {state.conversionLocation === 'WHATSAPP' && (() => {
+        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
+        const pageWhatsappNumber = typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
+          ? String((inventory as Record<string, unknown>).page_whatsapp_number)
+          : null
+        const pageWhatsappSource = String((inventory as Record<string, unknown> | null)?.page_whatsapp_number_source ?? 'unknown')
+        const selectedPhoneId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
+        const selectedDisplayPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
+
+        // Mismatch guardrail: page-linked number vs selected WABA number
+        const selectedWabaPhone = wabaNumbers.find(p => p.phoneNumberId === selectedPhoneId)
+        const hasMismatch = pageWhatsappNumber && selectedWabaPhone?.displayPhone
+          && !pageWhatsappNumber.replace(/\s/g, '').endsWith(selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').slice(-7))
+          && !selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').endsWith(pageWhatsappNumber.replace(/[\s+\-()]/g, '').slice(-7))
+
+        const hasNoNumbers = !pageWhatsappNumber && wabaNumbers.length === 0
+
+        return (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            {(t as Record<string, string>).whatsappPhoneLabel}
+            {(t as Record<string, string>).whatsappPhoneLabel} <span className="text-red-500">*</span>
           </label>
-          {/* Page field: whatsapp_number (sayfa ayarlarından gelen numara) */}
-          {typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string' && (
+
+          {/* Page field: whatsapp_number (sayfa ayarlarından gelen numara — referans) */}
+          {pageWhatsappNumber && (
             <div className="mb-2 px-3 py-2 bg-green-50 border border-green-200 rounded-lg text-sm">
               <span className="font-medium text-green-700">Sayfaya Bağlı WhatsApp Numarası:</span>{' '}
-              <span className="text-green-900 font-semibold">{String((inventory as Record<string, unknown>).page_whatsapp_number)}</span>
+              <span className="text-green-900 font-semibold">{pageWhatsappNumber}</span>
               <span className="text-green-500 text-xs ml-1">
-                (kaynak: {String((inventory as Record<string, unknown>).page_whatsapp_number_source ?? 'unknown')})
+                (kaynak: {pageWhatsappSource})
               </span>
             </div>
           )}
-          {/* WABA phone numbers */}
-          {(inventory?.whatsapp_phone_numbers?.length ?? 0) > 0 && (
-            <div className="mb-2 px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg text-sm">
-              <span className="font-medium text-gray-700">WABA Numaraları:</span>
-              <ul className="mt-1">
-                {inventory!.whatsapp_phone_numbers!.map((p) => (
-                  <li key={p.phoneNumberId} className="text-gray-600">
+
+          {/* WABA phone numbers — SELECTABLE dropdown */}
+          {wabaNumbers.length > 0 ? (
+            <div className="mb-2">
+              <select
+                value={selectedPhoneId ?? ''}
+                onChange={(e) => {
+                  const phoneId = e.target.value || undefined
+                  const phone = wabaNumbers.find(p => p.phoneNumberId === phoneId)
+                  onChange({
+                    destinationDetails: {
+                      ...state.destinationDetails,
+                      messaging: {
+                        ...state.destinationDetails?.messaging,
+                        whatsappPhoneNumberId: phoneId,
+                        whatsappDisplayPhone: phone?.displayPhone ?? undefined,
+                        whatsappSourceLayer: phoneId ? 'waba_selected' : undefined,
+                      },
+                    },
+                  })
+                }}
+                className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary text-sm ${
+                  errors.whatsapp_phone ? 'border-red-500' : 'border-gray-300'
+                }`}
+              >
+                <option value="">— WhatsApp numarası seçin —</option>
+                {wabaNumbers.map((p) => (
+                  <option key={p.phoneNumberId} value={p.phoneNumberId}>
                     {p.displayPhone ?? p.phoneNumberId}
-                    {p.verifiedName && <span className="text-gray-400 text-xs ml-1">({p.verifiedName})</span>}
-                    <span className="text-gray-400 text-xs ml-1">ID: {p.phoneNumberId}</span>
-                  </li>
+                    {p.verifiedName ? ` (${p.verifiedName})` : ''}
+                  </option>
                 ))}
-              </ul>
+              </select>
+              {errors.whatsapp_phone && <p className="mt-1 text-sm text-red-600">{errors.whatsapp_phone}</p>}
             </div>
-          )}
-          {typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number !== 'string' && (inventory?.whatsapp_phone_numbers?.length ?? 0) === 0 && (
-            <p className="text-sm text-amber-600 bg-amber-50 border border-amber-200 rounded-lg px-3 py-2.5">
-              Bu sayfaya bağlı WhatsApp numarası bulunamadı.
+          ) : pageWhatsappNumber ? (
+            <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              WABA numarası bulunamadı. Meta, sayfaya bağlı numarayı ({pageWhatsappNumber}) otomatik kullanacaktır.
+            </div>
+          ) : null}
+
+          {/* Guardrail: no numbers at all — block publish */}
+          {hasNoNumbers && (
+            <p className="text-sm text-red-600 bg-red-50 border border-red-200 rounded-lg px-3 py-2.5 font-medium">
+              Bu sayfaya bağlı WhatsApp numarası bulunamadı. Reklam yayınlanamaz. Meta Business Suite'ten WhatsApp bağlantısını kontrol edin.
             </p>
           )}
-          <p className="mt-1 text-xs text-gray-400">
-            Not: Meta, promoted_object için sayfaya bağlı numarayı otomatik kullanır. Bu bilgiler sadece referans amaçlıdır.
-          </p>
+
+          {/* Guardrail: mismatch between page-linked and selected WABA number */}
+          {hasMismatch && (
+            <div className="mt-2 px-3 py-2 bg-amber-50 border border-amber-300 rounded-lg text-sm text-amber-800">
+              <span className="font-semibold">⚠ Numara Uyuşmazlığı:</span> Seçilen WABA numarası ({selectedWabaPhone?.displayPhone}) ile sayfaya bağlı WhatsApp numarası ({pageWhatsappNumber}) farklı görünüyor. Meta tarafındaki Sayfa bağlantısını kontrol edin. Reklamda yanlış numara kullanılabilir.
+            </div>
+          )}
+
+          {wabaNumbers.length > 0 && (
+            <p className="mt-1 text-xs text-gray-400">
+              Reklamda kullanılacak WhatsApp numarasını seçin. Bu numara Meta'ya promoted_object içinde gönderilir.
+            </p>
+          )}
         </div>
-      )}
+        )
+      })()}
 
       {/* CALL: Telefon numarası */}
       {state.conversionLocation === 'CALL' && (isEngagement || isLeads || isTraffic) && (

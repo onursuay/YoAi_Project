@@ -106,10 +106,11 @@ const VALID_OPTIMIZATION_GOALS: Record<string, string[]> = {
  * Sales + WEBSITE: promoted_object = { pixel_id, custom_event_type } (page_id YOK).
  * Leads + ON_AD: promoted_object = { page_id, leadgen_form_id }.
  * App Promotion + APP: promoted_object = { application_id, object_store_url }.
- * WhatsApp: promoted_object = { page_id } — whatsapp_phone_number is OPTIONAL per Meta docs.
- *   Meta uses the page's own linked WhatsApp number automatically.
- *   The linked number cannot be reliably read via Graph API (page.whatsapp_number returns
- *   WABA number, not the page-settings-linked ad delivery number), so we do NOT send it.
+ * WhatsApp: promoted_object = { page_id, whatsapp_phone_number? }
+ *   whatsapp_phone_number is OPTIONAL per Meta docs, but we send it EXPLICITLY when user selects
+ *   a WABA number from the UI dropdown. This ensures the number shown in YoAi matches what
+ *   Meta Ads Manager displays. Without explicit number, Meta resolves server-side from Page Settings
+ *   which can cause mismatch with what the user sees in YoAi.
  */
 function resolveDestinationConfig(
   objective: string,
@@ -117,6 +118,7 @@ function resolveDestinationConfig(
   pageId?: string,
   leadGenFormId?: string | null,
   instagramAccountId?: string,
+  whatsappPhoneNumber?: string,
 ) {
   let promotedObject: Record<string, string> | undefined
   let needsDestinationType = true
@@ -129,8 +131,13 @@ function resolveDestinationConfig(
       if (pageId) promotedObject = { page_id: pageId }
       break
     case 'WHATSAPP':
-      // Only page_id — Meta resolves the page-linked WhatsApp number server-side
-      if (pageId) promotedObject = { page_id: pageId }
+      // Explicit WhatsApp phone number in promoted_object when user selected one
+      if (pageId) {
+        promotedObject = { page_id: pageId }
+        if (whatsappPhoneNumber) {
+          promotedObject.whatsapp_phone_number = whatsappPhoneNumber
+        }
+      }
       break
     case 'INSTAGRAM_DIRECT':
       if (pageId) promotedObject = { page_id: pageId }
@@ -532,19 +539,46 @@ export async function POST(request: Request) {
       destinationType === 'ON_AD'
         ? (bodyLeadGenFormId ?? (body as Record<string, unknown>).lead_gen_form_id ?? '').toString().trim()
         : undefined
-    // ── WhatsApp: promoted_object uses ONLY page_id ─────────────────────────
-    // Meta docs: whatsapp_phone_number is OPTIONAL in promoted_object.
-    // The page-settings-linked WhatsApp number CANNOT be reliably read via Graph API:
-    //   - page.whatsapp_number returns WABA number (wrong)
-    //   - page.whatsapp_business_account requires whatsapp_business_management (often null)
-    //   - page_whatsapp_number_verification is POST-only (no read)
-    // Solution: send ONLY page_id. Meta resolves the correct number server-side.
+    // ── WhatsApp: promoted_object with EXPLICIT phone number ─────────────────
+    // Source of truth priority:
+    // 1. User-selected WABA phone number (whatsapp_phone_number from UI dropdown)
+    // 2. Fallback to page_id only if no WABA number selected (Meta resolves server-side)
+    // NEVER silently fallback — log every resolution path.
+    const whatsappPhoneNumber = (body.whatsapp_phone_number ?? dd?.messaging?.whatsappDisplayPhone ?? '').toString().trim() || undefined
+    const whatsappPhoneNumberId = (body.whatsapp_phone_number_id ?? dd?.messaging?.whatsappPhoneNumberId ?? '').toString().trim() || undefined
+    const whatsappSourceLayer = dd?.messaging?.whatsappSourceLayer ?? (whatsappPhoneNumber ? 'waba_selected' : 'page_fallback')
+
     if (destinationType === 'WHATSAPP' && pageId) {
-      console.log(`[AdSet Create][${requestId}] WHATSAPP_PROMOTED_OBJECT: page_id only (no whatsapp_phone_number — Meta resolves server-side)`, {
+      // ── DEBUG LOG: PAGE_WHATSAPP_RESOLVED ──
+      console.log(`[AdSet Create][${requestId}] PAGE_WHATSAPP_RESOLVED:`, JSON.stringify({
+        campaignId,
         pageId,
+        sourceLayer: 'page_id',
+      }))
+
+      // ── DEBUG LOG: WABA_PHONE_RESOLVED ──
+      console.log(`[AdSet Create][${requestId}] WABA_PHONE_RESOLVED:`, JSON.stringify({
+        campaignId,
+        pageId,
+        whatsappPhoneNumber: whatsappPhoneNumber ?? '(none)',
+        whatsappPhoneNumberId: whatsappPhoneNumberId ?? '(none)',
+        sourceLayer: whatsappSourceLayer,
+      }))
+
+      // ── DEBUG LOG: FINAL_WHATSAPP_SOURCE ──
+      console.log(`[AdSet Create][${requestId}] FINAL_WHATSAPP_SOURCE:`, JSON.stringify({
+        campaignId,
+        pageId,
+        whatsappPhoneNumber: whatsappPhoneNumber ?? '(none — Meta will resolve server-side)',
+        whatsappPhoneNumberId: whatsappPhoneNumberId ?? '(none)',
+        sourceLayer: whatsappSourceLayer,
         optimization_goal: finalOptimizationGoal,
-        ui_phone_number_id: dd?.messaging?.whatsappPhoneNumberId ?? '(none)',
-      })
+        willSendExplicitNumber: !!whatsappPhoneNumber,
+      }))
+
+      if (!whatsappPhoneNumber) {
+        console.warn(`[AdSet Create][${requestId}] WHATSAPP_SOURCE_MISMATCH: No explicit phone number provided. Meta will resolve server-side from page settings. This may cause number mismatch between YoAi UI and Ads Manager.`)
+      }
     }
 
     const destConfig = resolveDestinationConfig(
@@ -553,6 +587,7 @@ export async function POST(request: Request) {
       pageId,
       leadGenFormId || undefined,
       instagramAccountIdParam,
+      whatsappPhoneNumber,
     )
 
     // 4. Form data: camelCase -> snake_case. Budget/bid ad account currency minor unit (factor 100 or 1 for zero-decimal).
@@ -627,6 +662,17 @@ export async function POST(request: Request) {
 
     if (destConfig.promotedObject != null) {
       formData.append('promoted_object', JSON.stringify(destConfig.promotedObject))
+      // ── DEBUG LOG: ADSET_PROMOTED_OBJECT_RESOLVED ──
+      if (destinationType === 'WHATSAPP') {
+        console.log(`[AdSet Create][${requestId}] ADSET_PROMOTED_OBJECT_RESOLVED:`, JSON.stringify({
+          campaignId,
+          pageId,
+          wabaId: whatsappPhoneNumberId ?? '(none)',
+          whatsappPhoneNumber: destConfig.promotedObject.whatsapp_phone_number ?? '(not in payload — Meta resolves)',
+          sourceLayer: whatsappSourceLayer,
+          payloadSnapshot: destConfig.promotedObject,
+        }))
+      }
     }
 
     // instagram_actor_id is no longer sent at adset level.
