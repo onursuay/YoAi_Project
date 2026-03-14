@@ -70,7 +70,22 @@ export async function POST(request: Request) {
     const userAccessToken = cookieStore.get('meta_access_token')?.value
 
     const body = await request.json()
-    const dd = body.destination_details ?? body.destinationDetails
+    const dd = typeof body.destinationDetails === 'string'
+      ? JSON.parse(body.destinationDetails)
+      : (body.destinationDetails ?? body.destination_details ?? null)
+
+    // Fallback: doğrudan body'den oku
+    const whatsappPhoneNumberIdResolved =
+      body.whatsappPhoneNumberId ||
+      body.whatsapp_phone_number_id ||
+      dd?.messaging?.whatsappPhoneNumberId ||
+      undefined
+
+    const whatsappDisplayPhoneResolved =
+      body.whatsappDisplayPhone ||
+      dd?.messaging?.whatsappDisplayPhone ||
+      undefined
+
     const { adsetId, name, pageId, creative, status = 'PAUSED', objective, conversionLocation, optimizationGoal, existingPostId, callToAction, websiteUrl } = body
 
     // ── Existing Post (Post Promote) Flow ──
@@ -216,12 +231,11 @@ export async function POST(request: Request) {
     }
 
     if (conversionLocation === 'WHATSAPP') {
-      const whatsappDisplayPhone = (dd?.messaging?.whatsappDisplayPhone ?? '').toString().trim()
       console.log(`[Ad Create] WHATSAPP_AD_VALIDATION:`, JSON.stringify({
         adsetId,
         pageId,
-        whatsappPhoneNumberId,
-        whatsappDisplayPhone: whatsappDisplayPhone || '(none)',
+        whatsappPhoneNumberId: whatsappPhoneNumberIdResolved ?? '(none)',
+        whatsappDisplayPhone: whatsappDisplayPhoneResolved ?? '(none)',
         sourceLayer: dd?.messaging?.whatsappSourceLayer ?? '(unknown)',
       }))
     }
