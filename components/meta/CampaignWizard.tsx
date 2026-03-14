@@ -205,6 +205,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     NO_CATALOG: t.preflightNoCatalog,
     NO_WHATSAPP: t.preflightNoWhatsapp,
     NO_MESSENGER: t.preflightNoMessenger,
+    WHATSAPP_PHONE_NOT_SELECTED: t.preflightWhatsappPhoneNotSelected,
     MIN_BUDGET: t.preflightMinBudget,
   }
   const [state, setState] = useState<WizardState>(initialWizardState)

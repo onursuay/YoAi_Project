@@ -424,6 +424,7 @@ const translations = {
     preflightNoCatalog: 'Reklam hesabınızda ürün kataloğu bulunamadı.',
     preflightNoWhatsapp: 'Bu sayfa için WhatsApp Business bağlantısı bulunamadı.',
     preflightNoMessenger: 'Bu sayfa için Messenger bağlantısı bulunamadı.',
+    preflightWhatsappPhoneNotSelected: 'Reklamda kullanılacak WhatsApp numarasını seçin.',
     preflightMinBudget: 'Bütçe minimum tutarın altında.',
     preflightMissingResource: 'Eksik kaynak.',
 
@@ -979,6 +980,7 @@ const translations = {
     preflightNoCatalog: 'No product catalog found in your ad account.',
     preflightNoWhatsapp: 'No WhatsApp Business connection found for this page.',
     preflightNoMessenger: 'No Messenger connection found for this page.',
+    preflightWhatsappPhoneNotSelected: 'Please select a WhatsApp phone number for the ad.',
     preflightMinBudget: 'Budget is below the minimum amount.',
     preflightMissingResource: 'Missing resource.',
 
