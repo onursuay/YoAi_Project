@@ -471,7 +471,8 @@ async function fetchPageBusinessMapping(
 async function fetchWhatsAppPhoneNumbers(
   client: { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{ data?: unknown[]; owner_business?: { id?: string }; business?: { id?: string } }>> },
   requestId: string,
-  pageId?: string
+  pageId?: string,
+  pageAccessToken?: string
 ): Promise<{ numbers: InventoryWhatsAppNumber[]; error?: InventoryWhatsAppError; diagnostics: InventoryWhatsAppDiagnostics }> {
   const numbers: InventoryWhatsAppNumber[] = []
   const diagnostics: InventoryWhatsAppDiagnostics = {
@@ -495,8 +496,47 @@ async function fetchWhatsAppPhoneNumbers(
     }
   }
 
+  // ── PRIORITY SOURCE: Page Access Token → whatsapp_business_account ──
+  // Meta API returns whatsapp_business_account field ONLY with Page Access Token.
+  // User Token typically returns null for this field, causing empty phone numbers.
+  if (pageAccessToken) {
+    try {
+      const pageTokenUrl = `https://graph.facebook.com/v24.0/${pageId}?fields=whatsapp_business_account{id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}}&access_token=${encodeURIComponent(pageAccessToken)}`
+      const pageTokenRes = await fetch(pageTokenUrl, { cache: 'no-store' })
+        .then(r => r.json())
+        .catch(() => ({})) as {
+          whatsapp_business_account?: { id: string; name?: string; phone_numbers?: { data?: PhoneNumberNode[] } }
+          error?: { message?: string; code?: number }
+        }
+      console.log(`[Inventory][${requestId}] WA_PAGE_TOKEN_WABA: pageId=${pageId}, waba=${pageTokenRes.whatsapp_business_account?.id ?? 'null'}, error=${pageTokenRes.error?.message ?? 'none'}`)
+      if (pageTokenRes.whatsapp_business_account) {
+        const waba = pageTokenRes.whatsapp_business_account
+        diagnostics.wabas_scanned = 1
+        diagnostics.business_id = waba.id
+        diagnostics.mapping_source = 'owner_business'
+        const phoneList = Array.isArray(waba.phone_numbers?.data) ? waba.phone_numbers!.data! : []
+        for (const ph of phoneList) {
+          numbers.push({
+            wabaId: waba.id,
+            wabaName: waba.name,
+            phoneNumberId: ph.id,
+            displayPhone: ph.display_phone_number,
+            verifiedName: ph.verified_name,
+            qualityRating: ph.quality_rating,
+            status: ph.code_verification_status,
+          })
+        }
+        if (numbers.length > 0) {
+          return { numbers, diagnostics }
+        }
+      }
+    } catch (e) {
+      console.warn(`[Inventory][${requestId}] WA_PAGE_TOKEN_WABA failed:`, e instanceof Error ? e.message : e)
+    }
+  }
+
   try {
-    // PRIMARY & ONLY source: Page's directly linked WABA
+    // FALLBACK: User Token query (may return null for whatsapp_business_account)
     const pageWabaRes = await (client as { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{
       whatsapp_business_account?: {
         id: string
@@ -607,13 +647,23 @@ export async function GET(request: Request) {
 
     const { client, accountId } = metaClient
 
-    // Fetch pages + pixels + token permission snapshot + WhatsApp phone numbers.
-    const [rawPages, pixels, tokenPermissions, whatsappResult] = await Promise.all([
+    // Fetch pages + pixels + token permission snapshot in parallel.
+    // WhatsApp fetch needs page access token (from fetchPages result), so it runs after.
+    const [rawPages, pixels, tokenPermissions] = await Promise.all([
       fetchPages(client as never, accountId),
       fetchPixels(client as never, accountId),
       fetchTokenPermissions(requestId),
-      fetchWhatsAppPhoneNumbers(client as never, requestId, pageId),
     ])
+
+    const selectedPageRaw = pageId ? rawPages.find((p) => p.id === pageId) : undefined
+    const pageAccessToken = selectedPageRaw?.access_token
+
+    const whatsappResult = await fetchWhatsAppPhoneNumbers(
+      client as never,
+      requestId,
+      pageId,
+      pageAccessToken
+    )
 
     const pageIds = rawPages.map((p) => p.id)
 
