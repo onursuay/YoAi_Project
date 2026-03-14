@@ -510,13 +510,13 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
           return {
             ...prev,
             whatsapp_phone_numbers: inv.whatsapp_phone_numbers,
-            page_whatsapp_number: (inv as Record<string, unknown>).page_whatsapp_number as string | undefined,
-            page_whatsapp_number_source: (inv as Record<string, unknown>).page_whatsapp_number_source as string | undefined,
-            whatsapp_diagnostics: (inv as Record<string, unknown>).whatsapp_diagnostics,
-            whatsapp_error: (inv as Record<string, unknown>).whatsapp_error as AccountInventory['whatsapp_error'],
-          } as AccountInventory
+            page_whatsapp_number: inv.page_whatsapp_number,
+            page_whatsapp_number_source: inv.page_whatsapp_number_source,
+            whatsapp_diagnostics: inv.whatsapp_diagnostics,
+            whatsapp_error: inv.whatsapp_error,
+          }
         })
-        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${inv.whatsapp_phone_numbers?.length ?? 0}, page_wa=${(inv as Record<string, unknown>).page_whatsapp_number ?? 'null'}`)
+        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${inv.whatsapp_phone_numbers?.length ?? 0}, page_wa=${inv.page_whatsapp_number ?? 'null'}`)
       })
       .catch((e) => {
         if (!cancelled) console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
@@ -1186,7 +1186,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         console.warn('[CampaignWizard] INVENTORY_REQUEST_SKIPPED_NO_PAGE_ID: WhatsApp destination selected but no pageId in state')
       } else {
         const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        const hasPageWhatsapp = !!(inventory as any)?.page_whatsapp_number
+        const hasPageWhatsapp = !!inventory?.page_whatsapp_number
         // If WABA numbers exist, user must explicitly select one
         if (wabaNumbers.length > 0 && !state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
           err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
