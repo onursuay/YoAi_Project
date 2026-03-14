@@ -516,7 +516,28 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
             whatsapp_error: inv.whatsapp_error,
           }
         })
-        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${inv.whatsapp_phone_numbers?.length ?? 0}, page_wa=${inv.page_whatsapp_number ?? 'null'}`)
+        // Clear stale WhatsApp selection if it's not in the new page's WABA numbers
+        const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
+        const currentPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+        if (currentPhoneId && !newWabaNumbers.some(n => n.phoneNumberId === currentPhoneId)) {
+          console.warn(`[CampaignWizard] WHATSAPP_SELECTION_CLEARED: stale phoneId=${currentPhoneId} not in page ${pageId} WABA numbers (count=${newWabaNumbers.length})`)
+          setState(prev => ({
+            ...prev,
+            adset: {
+              ...prev.adset,
+              destinationDetails: {
+                ...prev.adset.destinationDetails,
+                messaging: {
+                  ...prev.adset.destinationDetails?.messaging,
+                  whatsappPhoneNumberId: undefined,
+                  whatsappDisplayPhone: undefined,
+                  whatsappSourceLayer: undefined,
+                },
+              },
+            },
+          }))
+        }
+        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${newWabaNumbers.length}, page_wa=${inv.page_whatsapp_number ?? 'null'}`)
       })
       .catch((e) => {
         if (!cancelled) console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
@@ -1178,45 +1199,50 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: pageId + explicit phone number selection required
+    // WHATSAPP: pageId + page-linked phone number selection required
+    // Only page-linked WABA numbers are valid for CTWA ads.
+    // A phone_number_id NOT in the current page's WABA list will cause PERMISSION_DENIED.
     if (state.adset.conversionLocation === 'WHATSAPP') {
       const selectedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
       const selectedDisplayPhone = state.adset.destinationDetails?.messaging?.whatsappDisplayPhone
+      const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
 
-      // Guardrail: pageId is required for WhatsApp number resolution
       if (!state.adset.pageId) {
         err.whatsapp_phone = 'WhatsApp numarasını belirlemek için geçerli bir Facebook Sayfası seçilmelidir.'
-        console.warn('[CampaignWizard] INVENTORY_REQUEST_SKIPPED_NO_PAGE_ID: WhatsApp destination selected but no pageId in state')
-      } else if (selectedPhoneId) {
-        // User has selected a phone from the dropdown → valid
-        // No further blocking needed — the phone_number_id is the source of truth
-        console.log('[CampaignWizard] WHATSAPP_VALIDATION_PASS:', JSON.stringify({
-          selectedPageId: state.adset.pageId,
-          selectedWhatsappPhoneNumberId: selectedPhoneId,
-          selectedWhatsappNumber: selectedDisplayPhone ?? '(none)',
-          wabaNumbersCount: inventory?.whatsapp_phone_numbers?.length ?? 0,
-          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null)',
-          validationResult: 'PASS',
+        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: no pageId')
+      } else if (wabaNumbers.length === 0) {
+        // No page-linked WABA numbers resolved — hard block
+        err.whatsapp_phone = 'Bu Facebook sayfasına bağlı WhatsApp numarası doğrulanamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.'
+        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: no page-linked WABA numbers', JSON.stringify({
+          pageId: state.adset.pageId,
+          wabaNumbersCount: 0,
+          staleSelectedPhoneId: selectedPhoneId ?? '(none)',
+          whatsappError: inventory?.whatsapp_error ?? '(none)',
+        }))
+      } else if (!selectedPhoneId) {
+        // WABA numbers exist but none selected
+        err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
+        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: WABA numbers available but not selected', JSON.stringify({
+          pageId: state.adset.pageId,
+          wabaNumbersCount: wabaNumbers.length,
+        }))
+      } else if (!wabaNumbers.some(n => n.phoneNumberId === selectedPhoneId)) {
+        // Selected phone is NOT in current page's WABA list — stale/wrong source
+        err.whatsapp_phone = 'Seçilen WhatsApp numarası bu sayfaya bağlı değil. Lütfen sayfaya bağlı bir numara seçin.'
+        console.warn('[CampaignWizard] WHATSAPP_VALIDATION_FAIL: selectedPhoneId not in page WABA list', JSON.stringify({
+          pageId: state.adset.pageId,
+          selectedPhoneId,
+          selectedDisplayPhone: selectedDisplayPhone ?? '(none)',
+          availablePhoneIds: wabaNumbers.map(n => n.phoneNumberId),
         }))
       } else {
-        // No phone selected — only block if WABA numbers are available but not picked.
-        // page_whatsapp_number is NOT a blocking signal — Graph API often returns null
-        // even when the page truly has WhatsApp linked (permission/field access issues).
-        // If no WABA numbers are available, let it through — Meta resolves from page settings.
-        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
-        if (wabaNumbers.length > 0) {
-          err.whatsapp_phone = (t as Record<string, string>).whatsappPhoneRequired ?? 'Reklamda kullanılacak WhatsApp numarasını seçin.'
-        }
-        // else: no WABA numbers and no selection — NOT blocking.
-        // page_whatsapp_number null does NOT mean page has no WhatsApp.
-        // Meta will resolve from page settings at adset create time.
-        console.log('[CampaignWizard] WHATSAPP_VALIDATION:', JSON.stringify({
-          selectedPageId: state.adset.pageId,
-          selectedWhatsappPhoneNumberId: '(none)',
+        // Valid: selectedPhoneId is in current page's WABA numbers
+        console.log('[CampaignWizard] WHATSAPP_VALIDATION_PASS:', JSON.stringify({
+          pageId: state.adset.pageId,
+          selectedPhoneId,
+          selectedDisplayPhone: selectedDisplayPhone ?? '(none)',
           wabaNumbersCount: wabaNumbers.length,
-          pageLinkedWhatsappNumber: inventory?.page_whatsapp_number ?? '(null — diagnostic only, not blocking)',
-          validationResult: err.whatsapp_phone ? 'FAIL' : 'PASS',
-          validationFailureReason: err.whatsapp_phone ?? '(none)',
+          validationResult: 'PASS',
         }))
       }
     }
@@ -1670,15 +1696,19 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         conversionLocation: state.adset.conversionLocation,
         optimizationGoal: state.adset.optimizationGoal,
       }
-      // WhatsApp: include phone number fields for promoted_object
+      // WhatsApp: include ONLY page-linked phone number
       if (state.adset.conversionLocation === 'WHATSAPP') {
         const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-        if (wpId) {
+        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
+        const isPageLinked = wpId && wabaNumbers.some(n => n.phoneNumberId === wpId)
+        if (wpId && isPageLinked) {
           adBody.whatsappPhoneNumberId = wpId
           adBody.whatsapp_phone_number_id = wpId
+          adBody.destinationDetails = state.adset.destinationDetails
+        } else if (wpId) {
+          console.error('[AD_CREATE_EXISTING_POST] BLOCKED: whatsappPhoneNumberId not in page WABA list — not sending', { wpId, availableIds: wabaNumbers.map(n => n.phoneNumberId) })
         }
-        adBody.destinationDetails = state.adset.destinationDetails
-        console.log('[AD_CREATE_EXISTING_POST] WhatsApp fields:', { whatsappPhoneNumberId: wpId, destinationDetails: state.adset.destinationDetails })
+        console.log('[AD_CREATE_EXISTING_POST] WhatsApp publish:', { whatsappPhoneNumberId: wpId, isPageLinked, wabaCount: wabaNumbers.length })
       }
 
       const adRes = await fetch('/api/meta/ads/create', {
@@ -1782,15 +1812,19 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       conversionLocation: state.adset.conversionLocation,
       optimizationGoal: state.adset.optimizationGoal,
     }
-    // WhatsApp: include phone number fields for promoted_object
+    // WhatsApp: include ONLY page-linked phone number
     if (state.adset.conversionLocation === 'WHATSAPP') {
       const wpId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-      if (wpId) {
+      const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
+      const isPageLinked = wpId && wabaNumbers.some(n => n.phoneNumberId === wpId)
+      if (wpId && isPageLinked) {
         adBody.whatsappPhoneNumberId = wpId
         adBody.whatsapp_phone_number_id = wpId
+        adBody.destinationDetails = state.adset.destinationDetails
+      } else if (wpId) {
+        console.error('[AD_CREATE_NEW] BLOCKED: whatsappPhoneNumberId not in page WABA list — not sending', { wpId, availableIds: wabaNumbers.map(n => n.phoneNumberId) })
       }
-      adBody.destinationDetails = state.adset.destinationDetails
-      console.log('[AD_CREATE_NEW] WhatsApp fields:', { whatsappPhoneNumberId: wpId, destinationDetails: state.adset.destinationDetails })
+      console.log('[AD_CREATE_NEW] WhatsApp publish:', { whatsappPhoneNumberId: wpId, isPageLinked, wabaCount: wabaNumbers.length })
     }
     // Pass verify result for backend page_id_mismatch guard
     if (state.adset.conversionLocation === 'INSTAGRAM_DIRECT') {

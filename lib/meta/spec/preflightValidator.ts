@@ -202,27 +202,35 @@ export function preflight(
     }
   }
 
-  // Messaging destinations: WhatsApp validation
-  // Source of truth: selectedPageId (required) + selectedWhatsappPhoneNumberId (required when WABA numbers available)
-  // has_whatsapp and page_whatsapp_number are diagnostic only — Graph API often returns false/null
-  // even when the page truly has WhatsApp linked (permission/field access issues).
+  // WhatsApp validation: only page-linked WABA numbers are valid for CTWA ads.
+  // A phone_number_id not in the page's WABA list causes PERMISSION_DENIED at Meta API.
   if (destination === 'WHATSAPP') {
-    const hasSelectedPhone = !!form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-    // If user already selected a phone → no further blocking needed
-    if (!hasSelectedPhone) {
-      const selectedPage = inventory.pages.find((p) => p.page_id === form.adset.pageId)
-      // Only block on has_whatsapp if user has NOT selected a phone AND page explicitly says no WhatsApp
-      if (selectedPage && !selectedPage.has_whatsapp) {
-        return { ok: false, blocked_reason: 'NO_WHATSAPP', blocked_message: BLOCKED_MESSAGES.NO_WHATSAPP }
+    const selectedPhoneId = form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+    const wabaNumbers = (inventory as unknown as Record<string, unknown>).whatsapp_phone_numbers as { phoneNumberId?: string }[] | undefined
+    const wabaCount = Array.isArray(wabaNumbers) ? wabaNumbers.length : 0
+
+    if (wabaCount === 0) {
+      // No page-linked WABA numbers — hard block
+      return {
+        ok: false,
+        blocked_reason: 'NO_WHATSAPP',
+        blocked_message: 'Bu Facebook sayfasına bağlı WhatsApp numarası doğrulanamadı. Meta Business Suite\'ten WhatsApp bağlantısını kontrol edin.',
       }
-      // Check if WABA numbers exist but user hasn't picked one
-      const wabaNumbers = (inventory as unknown as Record<string, unknown>).whatsapp_phone_numbers as unknown[] | undefined
-      if (wabaNumbers && wabaNumbers.length > 0) {
-        return {
-          ok: false,
-          blocked_reason: 'WHATSAPP_PHONE_NOT_SELECTED',
-          blocked_message: 'Reklamda kullanılacak WhatsApp numarasını seçin. WABA numaraları mevcut ancak henüz seçim yapılmadı.',
-        }
+    }
+    if (!selectedPhoneId) {
+      return {
+        ok: false,
+        blocked_reason: 'WHATSAPP_PHONE_NOT_SELECTED',
+        blocked_message: 'Reklamda kullanılacak WhatsApp numarasını seçin.',
+      }
+    }
+    // Verify selectedPhoneId is in the current page's WABA list
+    const isInPageWaba = wabaNumbers!.some(n => n.phoneNumberId === selectedPhoneId)
+    if (!isInPageWaba) {
+      return {
+        ok: false,
+        blocked_reason: 'WHATSAPP_PHONE_NOT_SELECTED',
+        blocked_message: 'Seçilen WhatsApp numarası bu sayfaya bağlı değil. Lütfen sayfaya bağlı bir numara seçin.',
       }
     }
   }

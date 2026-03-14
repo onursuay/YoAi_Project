@@ -490,11 +490,11 @@ export default function TabDetails({
             </div>
           ) : null}
 
-          {/* Diagnostic: no numbers resolved from Graph API — NOT blocking */}
-          {/* Graph API often returns null for page_whatsapp_number and empty WABA due to permission issues */}
+          {/* No page-linked WABA numbers resolved — BLOCKING */}
           {hasNoNumbers && (
-            <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-              WhatsApp numarası bilgisi alınamadı (Meta Graph API erişim kısıtlaması). Sayfa ayarlarında WhatsApp bağlı ise Meta reklam oluşturma sırasında otomatik çözecektir.
+            <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg text-sm text-red-700">
+              <span className="font-semibold">Bu Facebook sayfasına bağlı WhatsApp numarası doğrulanamadı.</span>{' '}
+              Meta Business Suite → Ayarlar → WhatsApp bölümünden sayfanıza bir WhatsApp Business numarası bağlayın. Bağlantı olmadan WhatsApp reklamı yayınlanamaz.
             </div>
           )}
 
