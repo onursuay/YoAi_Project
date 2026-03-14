@@ -209,7 +209,7 @@ export function preflight(
     // Enforce explicit phone number selection — no silent fallback
     if (!form.adset.destinationDetails?.messaging?.whatsappPhoneNumberId) {
       // Check if WABA numbers exist in inventory
-      const wabaNumbers = (inventory as Record<string, unknown>).whatsapp_phone_numbers as unknown[] | undefined
+      const wabaNumbers = (inventory as unknown as Record<string, unknown>).whatsapp_phone_numbers as unknown[] | undefined
       if (wabaNumbers && wabaNumbers.length > 0) {
         return {
           ok: false,
