@@ -1206,14 +1206,16 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // WHATSAPP: page must have WhatsApp linked. Phone number selection is optional —
-    // Meta resolves from page settings if not provided, and inventory now uses Page Access Token.
+    // WHATSAPP: check actual inventory data (WABA numbers + page_whatsapp_number) instead of
+    // has_whatsapp flag which may be stale from the initial pageless fetch.
     if (state.adset.conversionLocation === 'WHATSAPP') {
       if (!state.adset.pageId) {
         err.whatsapp_phone = 'WhatsApp için geçerli bir Facebook Sayfası seçilmelidir.'
       } else {
-        const page = inventory?.pages?.find(p => p.page_id === state.adset.pageId)
-        if (page && !page.has_whatsapp) {
+        const wabaNumbers = inventory?.whatsapp_phone_numbers ?? []
+        const pageWaNum = inventory?.page_whatsapp_number
+        const hasWhatsApp = wabaNumbers.length > 0 || !!pageWaNum
+        if (!hasWhatsApp) {
           err.whatsapp_phone = 'Bu Facebook sayfasına bağlı WhatsApp numarası bulunamadı.'
         }
       }
