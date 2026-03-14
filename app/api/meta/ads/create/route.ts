@@ -378,8 +378,8 @@ export async function POST(request: Request) {
     // object_story_spec oluştur
     const objectStorySpec: Record<string, unknown> = {
       page_id: pageId,
-      // instagram_user_id resolved server-side — NOT instagram_actor_id
-      ...(igUserId ? { instagram_user_id: igUserId } : {}),
+      // instagram_user_id: WHATSAPP destination için GÖNDERİLMEZ (Meta PERMISSION_DENIED code 1)
+      ...(igUserId && conversionLocation !== 'WHATSAPP' ? { instagram_user_id: igUserId } : {}),
     }
 
     // Awareness/Engagement: link_url opsiyonel; boşsa CTA NO_BUTTON. Leads: lead_gen_form_id. App Promotion/Traffic+APP: store URL + INSTALL_MOBILE_APP. Traffic+MESSENGER/INSTAGRAM_DIRECT: link yok, SEND_MESSAGE

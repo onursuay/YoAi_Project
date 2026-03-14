@@ -1761,8 +1761,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       displayUrl: state.ad.displayUrl || undefined,
       callToAction: state.ad.callToAction,
       carouselCards: carouselCardsWithHashes,
-      // Also embed here so backend can read it from creative when resolving adcreative fields
-      instagramActorId: igAccountForAd,
+      // instagramActorId: WHATSAPP için gönderme (Meta kabul etmiyor → PERMISSION_DENIED code 1)
+      instagramActorId: state.adset.conversionLocation === 'WHATSAPP' ? undefined : igAccountForAd,
       urlParameters: state.ad.urlParameters,
       pixelId: state.ad.pixelId || undefined,
     }
