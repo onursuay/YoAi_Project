@@ -243,7 +243,7 @@ export default function TabDetails({
     const all = getConversionLocationsForObjective('OUTCOME_ENGAGEMENT')
     return all.filter((loc) => {
       if (loc.value === 'MESSENGER') return selectedPage?.has_messaging === true
-      if (loc.value === 'WHATSAPP') return selectedPage?.has_whatsapp === true
+      if (loc.value === 'WHATSAPP') return true
       if (loc.value === 'INSTAGRAM_DIRECT') return hasIgAccountsForPage
       if (loc.value === 'WEBSITE') return (inventory?.pixels?.length ?? 0) > 0
       if (loc.value === 'APP') return (inventory?.apps?.length ?? 0) > 0
@@ -257,7 +257,7 @@ export default function TabDetails({
     return all.filter((loc) => {
       if (loc.value === 'WEBSITE') return (inventory?.pixels?.length ?? 0) > 0
       if (loc.value === 'MESSENGER') return selectedPage?.has_messaging === true
-      if (loc.value === 'WHATSAPP') return selectedPage?.has_whatsapp === true
+      if (loc.value === 'WHATSAPP') return true
       return true // ON_AD, CALL
     })
   }
@@ -270,7 +270,7 @@ export default function TabDetails({
       if (loc.value === 'CATALOG') return (inventory?.catalogs?.length ?? 0) > 0
       if (loc.value === 'APP') return (inventory?.apps?.length ?? 0) > 0
       if (loc.value === 'MESSENGER') return selectedPage?.has_messaging === true
-      if (loc.value === 'WHATSAPP') return selectedPage?.has_whatsapp === true
+      if (loc.value === 'WHATSAPP') return true
       return true
     })
   }
