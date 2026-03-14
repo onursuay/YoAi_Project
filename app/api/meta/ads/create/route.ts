@@ -215,12 +215,6 @@ export async function POST(request: Request) {
       }
     }
 
-    if (conversionLocation === 'WHATSAPP' && !whatsappPhoneNumberId) {
-      return NextResponse.json(
-        { ok: false, error: 'validation_error', message: 'WhatsApp reklamı için WhatsApp telefon numarası seçimi zorunludur. Lütfen adset adımında bir numara seçin.', field: 'whatsappPhoneNumberId' },
-        { status: 400 }
-      )
-    }
     if (conversionLocation === 'WHATSAPP') {
       const whatsappDisplayPhone = (dd?.messaging?.whatsappDisplayPhone ?? '').toString().trim()
       console.log(`[Ad Create] WHATSAPP_AD_VALIDATION:`, JSON.stringify({
