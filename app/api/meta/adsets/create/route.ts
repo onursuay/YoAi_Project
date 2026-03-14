@@ -118,7 +118,7 @@ function resolveDestinationConfig(
   pageId?: string,
   leadGenFormId?: string | null,
   instagramAccountId?: string,
-  whatsappPhoneNumber?: string,
+  whatsappDisplayPhone?: string,
 ) {
   let promotedObject: Record<string, string> | undefined
   let needsDestinationType = true
@@ -134,9 +134,19 @@ function resolveDestinationConfig(
       // Explicit WhatsApp phone number in promoted_object when user selected one
       if (pageId) {
         promotedObject = { page_id: pageId }
-        if (whatsappPhoneNumber) {
-          promotedObject.whatsapp_phone_number = whatsappPhoneNumber
+        // whatsapp_phone_number: display phone'u digits-only yap (ID değil)
+        // Client'tan gelen: body.whatsapp_phone_number = "+90 539 672 61 47" (display)
+        //                   body.whatsapp_phone_number_id = "108428661888121" (ID)
+        // Meta promoted_object: whatsapp_phone_number = gerçek numara rakamları (905396726147)
+        //                       whatsapp_phone_number_id = ID (opsiyonel, gönderme)
+        const displayPhone = whatsappDisplayPhone // "+90 539 672 61 47"
+        if (displayPhone && typeof displayPhone === 'string') {
+          const digitsOnly = displayPhone.replace(/\D/g, '') // "905396726147"
+          if (digitsOnly.length >= 7) {
+            promotedObject.whatsapp_phone_number = digitsOnly
+          }
         }
+        // whatsapp_phone_number_id'yi promoted_object'e EKLEME — Meta bunu desteklemiyor
       }
       break
     case 'INSTAGRAM_DIRECT':
@@ -556,18 +566,15 @@ export async function POST(request: Request) {
     // 1. User-selected WABA phone number (whatsapp_phone_number from UI dropdown)
     // 2. Fallback to page_id only if no WABA number selected (Meta resolves server-side)
     // NEVER silently fallback — log every resolution path.
-    // WhatsApp phone number: prefer phoneNumberId (digits-only), fallback to display phone stripped to digits
-    // Meta API requires ONLY digits in promoted_object.whatsapp_phone_number (e.g. "905382343200")
-    // Sending formatted display phone ("+90 (538) 234-3200") causes subcode 2490487
-    const rawWhatsappPhone = (
-      body.whatsapp_phone_number_id
-      ?? dd?.messaging?.whatsappPhoneNumberId
-      ?? body.whatsapp_phone_number
+    // WhatsApp phone number: DO NOT use phoneNumberId as a phone number.
+    // Meta promoted_object.whatsapp_phone_number expects digits-only phone number (e.g. "905382343200"),
+    // NOT a WABA phone number ID ("108428661888121"). Using ID triggers subcode 1487246.
+    const whatsappPhoneNumber = (
+      body.whatsapp_phone_number
       ?? dd?.messaging?.whatsappDisplayPhone
-      ?? body.page_whatsapp_number          // fallback: page-level whatsapp number from inventory
+      ?? body.page_whatsapp_number // fallback: page-level whatsapp number from inventory (display-ish)
       ?? ''
-    ).toString().trim()
-    const whatsappPhoneNumber = rawWhatsappPhone.replace(/\D/g, '') || undefined
+    ).toString().trim() || undefined
     const whatsappPhoneNumberId = (body.whatsapp_phone_number_id ?? dd?.messaging?.whatsappPhoneNumberId ?? '').toString().trim() || undefined
     const whatsappSourceLayer = dd?.messaging?.whatsappSourceLayer ?? (whatsappPhoneNumber ? 'waba_selected' : 'page_fallback')
 
