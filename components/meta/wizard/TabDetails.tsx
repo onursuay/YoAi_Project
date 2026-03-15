@@ -189,7 +189,49 @@ export default function TabDetails({
     { value: 'OTHER', label: t.convEventOther },
   ]
 
-  const conversionLocationOptions = getDestinationsWithLockInfo(campaignObjective, capabilities, DESTINATION_LABELS)
+  // WHATSAPP lock: source of truth = page-linked numbers for selected page (not capabilities/WABA).
+  // If selected page has page-linked number(s), WHATSAPP must be selectable; else locked with helper text.
+  const conversionLocationOptions = React.useMemo(() => {
+    const base = getDestinationsWithLockInfo(campaignObjective, capabilities, DESTINATION_LABELS)
+    const whatsappOpt = base.find((o) => o.value === 'WHATSAPP')
+    if (!whatsappOpt) return base
+
+    const selectedPageId = state.pageId ?? null
+    const pageLinkedCount = accountInventory?.whatsapp_phone_numbers?.length ?? 0
+    const hasPageLinkedNumber = pageLinkedCount > 0 || !!accountInventory?.page_whatsapp_number
+
+    let locked = whatsappOpt.locked
+    let reason: string | undefined = whatsappOpt.reason
+
+    if (selectedPageId) {
+      if (hasPageLinkedNumber) {
+        locked = false
+        reason = undefined
+      } else {
+        locked = true
+        reason = 'Bu sayfaya bağlı WhatsApp numarası yok'
+      }
+    }
+
+    if (process.env.NODE_ENV !== 'production') {
+      console.log('[TabDetails] WHATSAPP_LOCK_DEBUG:', {
+        campaignObjective,
+        selectedPageId,
+        destination: 'WHATSAPP',
+        capabilitiesWhatsapp: capabilities?.assets?.whatsapp
+          ? { available: capabilities.assets.whatsapp.available, reason: capabilities.assets.whatsapp.reason }
+          : null,
+        canCTWA: capabilities?.features?.canCTWA,
+        accountInventory_whatsapp_phone_numbers_length: pageLinkedCount,
+        page_whatsapp_number: accountInventory?.page_whatsapp_number ?? null,
+        hasPageLinkedNumber,
+        computed_locked: locked,
+        computed_reason: reason,
+      })
+    }
+
+    return base.map((o) => (o.value === 'WHATSAPP' ? { ...o, locked, reason } : o))
+  }, [campaignObjective, capabilities, state.pageId, accountInventory?.whatsapp_phone_numbers?.length, accountInventory?.page_whatsapp_number])
 
   function getConversionLocationsForObjective(objective: string): { value: string; label: string }[] {
     const allowed = getAllowedDestinations(objective)
