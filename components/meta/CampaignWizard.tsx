@@ -496,20 +496,73 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   // When user selects a page, re-fetch with page_id to get page-linked WhatsApp data.
   const lastFetchedPageIdRef = useRef<string | undefined>(undefined)
 
+  // Reset ref when modal closes so next open can refetch for same page
+  useEffect(() => {
+    if (!isOpen) {
+      lastFetchedPageIdRef.current = undefined
+      console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'modal_closed' })
+    }
+  }, [isOpen])
+
   useEffect(() => {
     if (!state.adset.pageId) {
+      lastFetchedPageIdRef.current = undefined
       setInventoryStatus('idle')
       setInventoryPageId(null)
+      console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'pageId_cleared' })
       return
     }
   }, [state.adset.pageId])
 
   useEffect(() => {
     const pageId = state.adset.pageId
-    if (!isOpen || !pageId || pageId === lastFetchedPageIdRef.current) return
+    const lastFetched = lastFetchedPageIdRef.current
+    const statusLoaded = inventoryStatus === 'loaded'
+    const statusLoading = inventoryStatus === 'loading'
+    const pageIdMatches = inventoryPageId === pageId
+
+    // Skip only when: open, pageId set, and (already loaded for this page | already loading for this page)
+    const alreadyLoadedForPage = !!pageId && lastFetched === pageId && statusLoaded && pageIdMatches === true
+    const alreadyLoadingForPage = !!pageId && lastFetched === pageId && statusLoading
+    const willSkip =
+      isOpen &&
+      !!pageId &&
+      (alreadyLoadedForPage || alreadyLoadingForPage)
+
+    const skipReason = !isOpen
+      ? 'modal_closed'
+      : !pageId
+        ? 'no_pageId'
+        : alreadyLoadedForPage
+          ? 'all_conditions_met'
+          : alreadyLoadingForPage
+            ? 'already_loading'
+            : lastFetched !== pageId
+              ? 'different_or_no_previous_fetch'
+              : !statusLoaded
+                ? 'status_not_loaded'
+                : pageIdMatches !== true
+                  ? 'inventoryPageId_mismatch'
+                  : 'unknown'
+
+    console.log('[CampaignWizard] INVENTORY_FETCH_GUARD', {
+      isOpen,
+      pageId: pageId ?? null,
+      lastFetchedPageIdRef: lastFetched ?? null,
+      inventoryStatus,
+      inventoryPageId: inventoryPageId ?? null,
+      willSkip,
+      skipReason,
+    })
+
+    if (willSkip) return
+
+    if (!isOpen || !pageId) return
+
     lastFetchedPageIdRef.current = pageId
     setInventoryStatus('loading')
-    console.log(`[CampaignWizard] INVENTORY_REFETCH_FOR_PAGE: page_id=${pageId}`)
+    console.log('[CampaignWizard] INVENTORY_FETCH_START', { pageId })
+
     let cancelled = false
     fetch(`/api/meta/inventory?page_id=${encodeURIComponent(pageId)}`, { cache: 'no-store' })
       .then((res) => res.json())
@@ -517,6 +570,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         if (cancelled) return
         if (!data.ok || !data.data) {
           setInventoryStatus('error')
+          console.log('[CampaignWizard] INVENTORY_FETCH_ERROR', { pageId, reason: 'response_not_ok' })
           return
         }
         const inv = data.data as AccountInventory
@@ -584,16 +638,17 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
           }
           return next
         })
-        console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${newWabaNumbers.length}, page_wa=${inv.page_whatsapp_number ?? 'null'}`)
+
+        console.log('[CampaignWizard] INVENTORY_FETCH_SUCCESS', { pageId, wa_count: newWabaNumbers.length, page_wa: inv.page_whatsapp_number ?? 'null' })
       })
       .catch((e) => {
         if (!cancelled) {
           setInventoryStatus('error')
-          console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
+          console.log('[CampaignWizard] INVENTORY_FETCH_ERROR', { pageId, reason: 'fetch_failed', error: e instanceof Error ? e.message : String(e) })
         }
       })
     return () => { cancelled = true }
-  }, [isOpen, state.adset.pageId])
+  }, [isOpen, state.adset.pageId, inventoryStatus, inventoryPageId])
 
   // Derive Instagram account from inventory when pageId changes
   useEffect(() => {
