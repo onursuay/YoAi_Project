@@ -189,22 +189,30 @@ export default function TabDetails({
     { value: 'OTHER', label: t.convEventOther },
   ]
 
-  // WHATSAPP lock: source of truth = page-linked numbers for selected page (not capabilities/WABA).
-  // If selected page has page-linked number(s), WHATSAPP must be selectable; else locked with helper text.
+  // WHATSAPP lock: ONLY page-linked numbers for selected page. Capabilities/stale inventory are NOT used when page is selected.
   const conversionLocationOptions = React.useMemo(() => {
     const base = getDestinationsWithLockInfo(campaignObjective, capabilities, DESTINATION_LABELS)
     const whatsappOpt = base.find((o) => o.value === 'WHATSAPP')
     if (!whatsappOpt) return base
 
     const selectedPageId = state.pageId ?? null
-    const pageLinkedCount = accountInventory?.whatsapp_phone_numbers?.length ?? 0
-    const hasPageLinkedNumber = pageLinkedCount > 0 || !!accountInventory?.page_whatsapp_number
+    const waNumbers = accountInventory?.whatsapp_phone_numbers
+    const pageLinkedCount = Array.isArray(waNumbers) ? waNumbers.length : 0
+    const pageWhatsappNumber = accountInventory?.page_whatsapp_number ?? null
+    const hasPageLinkedNumber = pageLinkedCount > 0 || !!pageWhatsappNumber
+    const hasInventoryForPage = accountInventory != null
 
-    let locked = whatsappOpt.locked
-    let reason: string | undefined = whatsappOpt.reason
+    let locked: boolean
+    let reason: string | undefined
 
-    if (selectedPageId) {
-      if (hasPageLinkedNumber) {
+    if (!selectedPageId) {
+      locked = whatsappOpt.locked
+      reason = whatsappOpt.reason
+    } else {
+      if (!hasInventoryForPage) {
+        locked = false
+        reason = undefined
+      } else if (hasPageLinkedNumber) {
         locked = false
         reason = undefined
       } else {
@@ -213,25 +221,21 @@ export default function TabDetails({
       }
     }
 
-    if (process.env.NODE_ENV !== 'production') {
-      console.log('[TabDetails] WHATSAPP_LOCK_DEBUG:', {
-        campaignObjective,
-        selectedPageId,
-        destination: 'WHATSAPP',
-        capabilitiesWhatsapp: capabilities?.assets?.whatsapp
-          ? { available: capabilities.assets.whatsapp.available, reason: capabilities.assets.whatsapp.reason }
-          : null,
-        canCTWA: capabilities?.features?.canCTWA,
-        accountInventory_whatsapp_phone_numbers_length: pageLinkedCount,
-        page_whatsapp_number: accountInventory?.page_whatsapp_number ?? null,
-        hasPageLinkedNumber,
-        computed_locked: locked,
-        computed_reason: reason,
-      })
-    }
+    console.log('[TabDetails] WHATSAPP_LOCK:', {
+      selectedPageId: selectedPageId ?? '(null)',
+      accountInventory: hasInventoryForPage ? 'set' : 'null',
+      whatsapp_phone_numbers_length: pageLinkedCount,
+      page_whatsapp_number: pageWhatsappNumber ?? '(null)',
+      hasPageLinkedNumber,
+      capabilities_canCTWA: capabilities?.features?.canCTWA,
+      capabilities_whatsapp_available: capabilities?.assets?.whatsapp?.available,
+      broken_capabilities_lock: whatsappOpt.locked,
+      computed_locked: locked,
+      computed_reason: reason ?? '(none)',
+    })
 
     return base.map((o) => (o.value === 'WHATSAPP' ? { ...o, locked, reason } : o))
-  }, [campaignObjective, capabilities, state.pageId, accountInventory?.whatsapp_phone_numbers?.length, accountInventory?.page_whatsapp_number])
+  }, [campaignObjective, capabilities, state.pageId, accountInventory])
 
   function getConversionLocationsForObjective(objective: string): { value: string; label: string }[] {
     const allowed = getAllowedDestinations(objective)
