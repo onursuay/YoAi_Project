@@ -643,10 +643,18 @@ async function fetchPageLevelWhatsApp(
   requestId: string,
   pageId: string,
   selectedPage?: MetaPageItem | null,
-): Promise<{ pageWhatsappNumber: string | null; pageHasWhatsApp: boolean; pageWhatsappSource: string }> {
+): Promise<{
+  pageWhatsappNumber: string | null
+  pageHasWhatsApp: boolean
+  pageWhatsappSource: string
+  has_whatsapp_number?: boolean
+  has_whatsapp_business_number?: boolean
+}> {
   let pageWhatsappNumber: string | null = selectedPage?.whatsapp_number ?? null
   let pageHasWhatsApp = selectedPage?.has_whatsapp_number === true || selectedPage?.has_whatsapp_business_number === true
   let pageWhatsappSource: string = pageWhatsappNumber ? 'me_accounts_field' : 'none'
+  let has_whatsapp_number: boolean | undefined = selectedPage?.has_whatsapp_number
+  let has_whatsapp_business_number: boolean | undefined = selectedPage?.has_whatsapp_business_number
 
   if (!pageWhatsappNumber && pageId && selectedPage?.access_token) {
     try {
@@ -671,6 +679,8 @@ async function fetchPageLevelWhatsApp(
       if (pageTokenRes.has_whatsapp_number === true || pageTokenRes.has_whatsapp_business_number === true) {
         pageHasWhatsApp = true
       }
+      if (pageTokenRes.has_whatsapp_number !== undefined) has_whatsapp_number = pageTokenRes.has_whatsapp_number
+      if (pageTokenRes.has_whatsapp_business_number !== undefined) has_whatsapp_business_number = pageTokenRes.has_whatsapp_business_number
     } catch (e) {
       console.warn(`[Inventory][${requestId}] Page token WA query failed:`, e instanceof Error ? e.message : e)
     }
@@ -696,12 +706,14 @@ async function fetchPageLevelWhatsApp(
       if (directRes.ok && (directRes.data?.has_whatsapp_number === true || directRes.data?.has_whatsapp_business_number === true)) {
         pageHasWhatsApp = true
       }
+      if (directRes.ok && directRes.data?.has_whatsapp_number !== undefined) has_whatsapp_number = directRes.data.has_whatsapp_number
+      if (directRes.ok && directRes.data?.has_whatsapp_business_number !== undefined) has_whatsapp_business_number = directRes.data.has_whatsapp_business_number
     } catch (e) {
       console.warn(`[Inventory][${requestId}] Direct user token WA query failed:`, e instanceof Error ? e.message : e)
     }
   }
 
-  return { pageWhatsappNumber, pageHasWhatsApp, pageWhatsappSource }
+  return { pageWhatsappNumber, pageHasWhatsApp, pageWhatsappSource, has_whatsapp_number, has_whatsapp_business_number }
 }
 
 // ── Route Handler ──
@@ -812,6 +824,11 @@ export async function GET(request: Request) {
     const pageWhatsappNumber = pageLevelResult?.pageWhatsappNumber ?? null
     const pageWhatsappSource = pageLevelResult?.pageWhatsappSource ?? 'none'
     const pageHasWhatsApp = pageLevelResult?.pageHasWhatsApp ?? false
+    const has_whatsapp_number = pageLevelResult?.has_whatsapp_number
+    const has_whatsapp_business_number = pageLevelResult?.has_whatsapp_business_number
+
+    const wabaCount = whatsappResult.numbers.length
+    const finalHasPageWhatsApp = pageHasWhatsApp || !!pageWhatsappNumber || wabaCount > 0
 
     console.log(`[Inventory][${requestId}] WA_PAGE_NUMBER_FINAL: ${pageWhatsappNumber ?? 'null'} (source: ${pageWhatsappSource}), page_has_whatsapp: ${pageHasWhatsApp}`)
 
@@ -866,8 +883,23 @@ export async function GET(request: Request) {
       console.log(`[Inventory][${requestId}] INVENTORY_RESPONSE_SAMPLE (page-linked):`, JSON.stringify(responseSample))
     }
 
+    const responseBody: { ok: boolean; data: AccountInventory; debug_whatsapp?: Record<string, unknown> } = {
+      ok: true,
+      data: inventory,
+    }
+    if (pageId) {
+      responseBody.debug_whatsapp = {
+        pageId,
+        whatsapp_number: pageWhatsappNumber ? maskPhoneForLog(pageWhatsappNumber) : null,
+        has_whatsapp_number: has_whatsapp_number ?? null,
+        has_whatsapp_business_number: has_whatsapp_business_number ?? null,
+        whatsapp_phone_numbers_length: wabaCount,
+        finalHasPageWhatsApp,
+      }
+    }
+
     return NextResponse.json(
-      { ok: true, data: inventory },
+      responseBody,
       { headers: { 'Cache-Control': 'no-store, private' } }
     )
   } catch (error) {
