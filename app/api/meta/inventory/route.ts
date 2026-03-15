@@ -174,6 +174,14 @@ function truncateRaw(raw: unknown, max = 320): string | undefined {
   return asString.length > max ? `${asString.slice(0, max)}...` : asString
 }
 
+/** Mask phone for logging (last 4 digits visible). */
+function maskPhoneForLog(phone: string | undefined): string {
+  if (!phone || typeof phone !== 'string') return '(empty)'
+  const digits = phone.replace(/\D/g, '')
+  if (digits.length <= 4) return '****'
+  return '*'.repeat(digits.length - 4) + digits.slice(-4)
+}
+
 function isTokenOrAuthError(code?: number): boolean {
   return code === 190 || code === 102
 }
@@ -813,6 +821,25 @@ export async function GET(request: Request) {
       wabaId: whatsappResult.diagnostics?.business_id ?? '(none)',
       whatsappError: whatsappResult.error?.reason ?? '(none)',
     }))
+
+    // ── VALIDATION: Real inventory response sample (page-linked proof) ──
+    if (pageId) {
+      const responseSample = {
+        ok: true,
+        page_id: pageId,
+        whatsapp_phone_numbers: whatsappResult.numbers.map((n) => ({
+          phoneNumberId: n.phoneNumberId,
+          displayPhone: maskPhoneForLog(n.displayPhone),
+          verifiedName: n.verifiedName ? `${n.verifiedName.slice(0, 8)}...` : undefined,
+          wabaId: n.wabaId,
+        })),
+        page_whatsapp_number: pageWhatsappNumber ? maskPhoneForLog(pageWhatsappNumber) : null,
+        page_whatsapp_number_source: pageWhatsappSource,
+        whatsapp_diagnostics: whatsappResult.diagnostics,
+        whatsapp_error: whatsappResult.error?.reason ?? null,
+      }
+      console.log(`[Inventory][${requestId}] INVENTORY_RESPONSE_SAMPLE (page-linked):`, JSON.stringify(responseSample))
+    }
 
     return NextResponse.json(
       { ok: true, data: inventory },
