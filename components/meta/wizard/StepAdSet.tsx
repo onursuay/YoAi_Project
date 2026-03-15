@@ -34,6 +34,7 @@ interface StepAdSetProps {
     whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
+    page_has_whatsapp?: boolean
   } | null
   accountInventoryPageId?: string | null
   accountInventoryStatus?: 'idle' | 'loading' | 'loaded' | 'error'

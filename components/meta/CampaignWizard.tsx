@@ -521,7 +521,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         }
         const inv = data.data as AccountInventory
         const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
-        const hasPageLinkedWhatsApp = newWabaNumbers.length > 0 || !!inv.page_whatsapp_number
+        const hasPageLinkedWhatsApp = newWabaNumbers.length > 0 || !!inv.page_whatsapp_number || inv.page_has_whatsapp === true
 
         setInventory((prev) => {
           if (!prev) return { ...inv, adAccountId: capabilities?.adAccountId ?? undefined } as AccountInventory
@@ -531,6 +531,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
             whatsapp_phone_numbers: newWabaNumbers,
             page_whatsapp_number: inv.page_whatsapp_number,
             page_whatsapp_number_source: inv.page_whatsapp_number_source,
+            page_has_whatsapp: inv.page_has_whatsapp,
             whatsapp_diagnostics: inv.whatsapp_diagnostics,
             whatsapp_error: inv.whatsapp_error,
             pages: prev.pages.map(p =>

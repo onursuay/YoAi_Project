@@ -136,6 +136,7 @@ interface TabDetailsProps {
     whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
+    page_has_whatsapp?: boolean
   } | null
   accountInventoryPageId?: string | null
   accountInventoryStatus?: 'idle' | 'loading' | 'loaded' | 'error'
@@ -213,7 +214,8 @@ export default function TabDetails({
     const waNumbers = accountInventory?.whatsapp_phone_numbers
     const pageLinkedCount = Array.isArray(waNumbers) ? waNumbers.length : 0
     const pageWhatsappNumber = accountInventory?.page_whatsapp_number ?? null
-    const hasPageLinkedNumber = pageLinkedCount > 0 || !!pageWhatsappNumber
+    const pageHasWhatsApp = accountInventory?.page_has_whatsapp === true
+    const hasPageLinkedNumber = pageLinkedCount > 0 || !!pageWhatsappNumber || pageHasWhatsApp
 
     let locked: boolean
     let reason: string | undefined
@@ -511,10 +513,11 @@ export default function TabDetails({
             : null)
         const pageWhatsappSource = accountInventory?.page_whatsapp_number_source
           ?? String((inventory as Record<string, unknown> | null)?.page_whatsapp_number_source ?? 'unknown')
+        const pageHasWhatsAppInline = accountInventory?.page_has_whatsapp === true
         const selectedPhoneId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
         const selectedDisplayPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
 
-        // Validation: selectedPhoneId must be in page's allowed list (page-linked only)
+        // Validation: selectedPhoneId must be in page's allowed list when WABA list exists; else phoneNumberId optional
         const isSelectionValid = !selectedPhoneId || pageLinkedNumbers.some(p => p.phoneNumberId === selectedPhoneId)
         const selectedWabaPhone = pageLinkedNumbers.find(p => p.phoneNumberId === selectedPhoneId)
 
@@ -523,8 +526,8 @@ export default function TabDetails({
           && !pageWhatsappNumber.replace(/\s/g, '').endsWith(selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').slice(-7))
           && !selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').endsWith(pageWhatsappNumber.replace(/[\s+\-()]/g, '').slice(-7))
 
-        // No page-linked numbers and no display number → blocking error
-        const hasNoNumbers = !pageWhatsappNumber && pageLinkedNumbers.length === 0
+        // Blocking only when no page-level WA signal (page_whatsapp_number, page_has_whatsapp, or WABA list)
+        const hasNoNumbers = !pageWhatsappNumber && pageLinkedNumbers.length === 0 && !pageHasWhatsAppInline
 
         return (
         <div>
@@ -583,6 +586,10 @@ export default function TabDetails({
           ) : pageWhatsappNumber ? (
             <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
               Meta, sayfaya bağlı numarayı ({pageWhatsappNumber}) otomatik kullanacaktır.
+            </div>
+          ) : pageHasWhatsAppInline ? (
+            <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+              Meta, sayfa ayarlarındaki WhatsApp numarasını kullanacaktır.
             </div>
           ) : null}
 
