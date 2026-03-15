@@ -472,11 +472,14 @@ async function fetchPageBusinessMapping(
 }
 
 /**
- * Fetch WhatsApp Business phone numbers ONLY from the Page's directly linked WABA.
+ * Fetch WhatsApp Business phone numbers from the Page's linked WABA.
  * /{pageId}?fields=whatsapp_business_account{id,name,phone_numbers{...}}
  *
- * NO business-level fallback: if the page has no linked WABA, returns empty.
- * This ensures only page-linked numbers are shown in the UI and used in promoted_object.
+ * Primary: Page's directly linked WABA (/{pageId}?fields=whatsapp_business_account).
+ * Fallback: Business-level WABA scan when page-level link doesn't exist in Graph API.
+ * Many pages have WhatsApp linked via Facebook Settings (not Business Manager),
+ * which doesn't create the whatsapp_business_account edge. The business scan
+ * finds these WABAs by going through the page's owning business.
  */
 async function fetchWhatsAppPhoneNumbers(
   client: { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{ data?: unknown[]; owner_business?: { id?: string }; business?: { id?: string } }>> },
@@ -572,10 +575,135 @@ async function fetchWhatsAppPhoneNumbers(
 
     const waba = pageWabaRes.data?.whatsapp_business_account
     if (!waba) {
-      console.log(`[Inventory][${requestId}] Page ${pageId} has NO linked WABA (whatsapp_business_account is null)`)
+      console.log(`[Inventory][${requestId}] Page ${pageId} has NO linked WABA (whatsapp_business_account is null) — trying business-level fallback`)
+
+      // ── BUSINESS-LEVEL FALLBACK ──────────────────────────────────────────────
+      // Many pages have WhatsApp linked via Facebook Settings (not Business Manager).
+      // This doesn't create the whatsapp_business_account edge on the page node.
+      // Fallback: find page's business → scan that business's WABAs.
+      console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_START: pageId=${pageId}`)
+
+      // Step 1: Try to find the page's owning business
+      let fallbackBusinessId: string | null = null
+
+      // 1a: Try with page access token
+      if (pageAccessToken) {
+        try {
+          const bizUrl = `https://graph.facebook.com/v24.0/${pageId}?fields=owner_business{id,name},business{id,name}&access_token=${encodeURIComponent(pageAccessToken)}`
+          const bizRes = await fetch(bizUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({}))
+          fallbackBusinessId = (bizRes as any)?.owner_business?.id || (bizRes as any)?.business?.id || null
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_TOKEN: businessId=${fallbackBusinessId ?? 'null'}`)
+        } catch (e) {
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_TOKEN failed:`, e)
+        }
+      }
+
+      // 1b: Try with user token
+      if (!fallbackBusinessId) {
+        try {
+          const bizRes = await client.get(`/${pageId}`, { fields: 'owner_business{id,name},business{id,name}' })
+          fallbackBusinessId = (bizRes.data as any)?.owner_business?.id || (bizRes.data as any)?.business?.id || null
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_TOKEN: businessId=${fallbackBusinessId ?? 'null'}`)
+        } catch (e) {
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_TOKEN failed:`, e)
+        }
+      }
+
+      // Step 2: If business found, scan that business's WABAs only
+      if (fallbackBusinessId) {
+        try {
+          const wabaRes = await client.get(`/${fallbackBusinessId}/owned_whatsapp_business_accounts`, {
+            fields: 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}',
+            limit: '50',
+          })
+          const wabas = Array.isArray((wabaRes.data as any)?.data) ? (wabaRes.data as any).data : []
+
+          for (const w of wabas) {
+            const phones = Array.isArray(w.phone_numbers?.data) ? w.phone_numbers.data : []
+            for (const ph of phones) {
+              numbers.push({
+                wabaId: w.id,
+                wabaName: w.name,
+                phoneNumberId: ph.id,
+                displayPhone: ph.display_phone_number,
+                verifiedName: ph.verified_name,
+                qualityRating: ph.quality_rating,
+                status: ph.code_verification_status,
+              })
+            }
+          }
+
+          diagnostics.businesses_scanned = 1
+          diagnostics.wabas_scanned = wabas.length
+          diagnostics.business_id = fallbackBusinessId
+          diagnostics.mapping_source = 'fallback_scan'
+          diagnostics.mapping_fallback_used = true
+
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_RESULT: businessId=${fallbackBusinessId}, wabas=${wabas.length}, phones=${numbers.length}`)
+
+          if (numbers.length > 0) {
+            return { numbers, diagnostics }
+          }
+        } catch (e) {
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_WABA_SCAN failed:`, e)
+        }
+      }
+
+      // Step 3: No business found (or business scan returned nothing) — scan ALL businesses
+      if (!fallbackBusinessId || numbers.length === 0) {
+        try {
+          const bizListRes = await client.get('/me/businesses', { fields: 'id,name', limit: '25' })
+          const businesses = Array.isArray((bizListRes.data as any)?.data) ? (bizListRes.data as any).data : []
+
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_BIZ: count=${businesses.length}`)
+
+          for (const biz of businesses) {
+            try {
+              const wabaRes = await client.get(`/${biz.id}/owned_whatsapp_business_accounts`, {
+                fields: 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}',
+                limit: '50',
+              })
+              const wabas = Array.isArray((wabaRes.data as any)?.data) ? (wabaRes.data as any).data : []
+              diagnostics.wabas_scanned += wabas.length
+
+              for (const w of wabas) {
+                const phones = Array.isArray(w.phone_numbers?.data) ? w.phone_numbers.data : []
+                for (const ph of phones) {
+                  numbers.push({
+                    wabaId: w.id,
+                    wabaName: w.name,
+                    phoneNumberId: ph.id,
+                    displayPhone: ph.display_phone_number,
+                    verifiedName: ph.verified_name,
+                    qualityRating: ph.quality_rating,
+                    status: ph.code_verification_status,
+                  })
+                }
+              }
+            } catch {
+              // skip individual business errors
+            }
+          }
+
+          diagnostics.businesses_scanned = businesses.length
+          diagnostics.mapping_source = 'fallback_scan'
+          diagnostics.mapping_fallback_used = true
+          diagnostics.mapping_warning = 'business_management missing — scanned all businesses'
+
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_RESULT: businesses=${businesses.length}, total_phones=${numbers.length}`)
+
+          if (numbers.length > 0) {
+            return { numbers, diagnostics }
+          }
+        } catch (e) {
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL failed:`, e)
+        }
+      }
+
+      // All fallbacks exhausted — return waba_not_found
       return {
         numbers: [],
-        diagnostics: { ...diagnostics, mode: 'page_scoped', wabas_scanned: 0 },
+        diagnostics: { ...diagnostics, mode: 'page_scoped', wabas_scanned: diagnostics.wabas_scanned },
         error: {
           reason: 'waba_not_found',
           stage: 'page_business_mapping',
