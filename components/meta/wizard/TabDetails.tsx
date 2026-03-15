@@ -219,7 +219,7 @@ export default function TabDetails({
     // WHATSAPP lock: only selectedPageId + inventory status + page-linked numbers (capabilities not used).
     let whatsappLocked: boolean
     let whatsappReason: string | undefined
-    if (!selectedPageId) {
+    if (!selectedPageId && !invLoaded) {
       whatsappLocked = true
       whatsappReason = 'Önce bir Facebook sayfası seçin'
     } else if (invLoading) {
