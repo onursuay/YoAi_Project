@@ -89,3 +89,46 @@ Eşitsizlik görürsen: Backend log'unda `INVENTORY_RESPONSE_SAMPLE` ile gelen `
 | **Page-linked numbers sample** | Aynı log'daki `whatsapp_phone_numbers` dizisi; tek kaynak = `/{pageId}?fields=whatsapp_business_account{...}`. |
 | **Ads Manager vs YoAi equality check** | Yukarıdaki 4. maddede adım adım karşılaştırma kuralı. |
 | **Backend resolution proof** | Yukarıdaki 2. ve 3. maddeler: tek Graph kaynağı, fallback zinciri, business/portfolio kullanılmıyor. |
+
+---
+
+## 6) `page_welcome_message` — Düz string değil, JSON object gönderilmeli
+
+### Sorun
+`page_welcome_message` alanı düz string olarak gönderildiğinde Meta API `PERMISSION_DENIED` hatası döndürür.
+
+### Çözüm (commit `4a1ddb3`)
+`app/api/meta/ads/create/route.ts` içinde `buildPageWelcomeMessage` helper'ı eklendi.
+`linkData`, `videoData` ve `carouselLinkData` içindeki tüm `page_welcome_message` atamaları bu helper ile sarmalandı.
+
+```typescript
+function buildPageWelcomeMessage(greeting: unknown) {
+  if (typeof greeting !== 'string') return greeting
+  return {
+    type: 'VISUAL_EDITOR',
+    version: 2,
+    landing_screen_type: 'welcome_message',
+    media_type: 'text',
+    text_format: {
+      customer_action_type: 'autofill_message',
+      message: {
+        autofill_message: { content: greeting },
+        text: greeting,
+      },
+    },
+  }
+}
+```
+
+### Etkilenen satırlar
+```diff
+- linkData.page_welcome_message = chatGreeting
++ linkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
+
+- videoData.page_welcome_message = chatGreeting
++ videoData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
+
+- carouselLinkData.page_welcome_message = chatGreeting
++ carouselLinkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
+```
+
