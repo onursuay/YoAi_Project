@@ -131,22 +131,11 @@ function resolveDestinationConfig(
       if (pageId) promotedObject = { page_id: pageId }
       break
     case 'WHATSAPP':
-      // Explicit WhatsApp phone number in promoted_object when user selected one
+      // Only send page_id. Do NOT send whatsapp_phone_number.
+      // Meta resolves the phone server-side from page's linked WhatsApp.
+      // Sending explicit number causes subcode 1487246.
       if (pageId) {
         promotedObject = { page_id: pageId }
-        // whatsapp_phone_number: display phone'u digits-only yap (ID değil)
-        // Client'tan gelen: body.whatsapp_phone_number = "+90 539 672 61 47" (display)
-        //                   body.whatsapp_phone_number_id = "108428661888121" (ID)
-        // Meta promoted_object: whatsapp_phone_number = gerçek numara rakamları (905396726147)
-        //                       whatsapp_phone_number_id = ID (opsiyonel, gönderme)
-        const displayPhone = whatsappDisplayPhone // "+90 539 672 61 47"
-        if (displayPhone && typeof displayPhone === 'string') {
-          const digitsOnly = displayPhone.replace(/\D/g, '') // "905396726147"
-          if (digitsOnly.length >= 7) {
-            promotedObject.whatsapp_phone_number = digitsOnly
-          }
-        }
-        // whatsapp_phone_number_id'yi promoted_object'e EKLEME — Meta bunu desteklemiyor
       }
       break
     case 'INSTAGRAM_DIRECT':
