@@ -476,8 +476,8 @@ export async function POST(request: Request) {
     // Meta call_to_action.value: link, phone_number, lead_gen_form_id supported. whatsapp_phone_number is INVALID — goes in ad set promoted_object only
     let ctaValue: { link?: string; phone_number?: string } | undefined
     if (conversionLocation === 'WHATSAPP') {
-      // WhatsApp: call_to_action has NO value — Meta resolves destination from promoted_object
-      ctaValue = undefined
+      // CTWA ads require app_destination in CTA value — NOT a link, NOT undefined
+      ctaValue = { app_destination: 'WHATSAPP' } as any
     } else if (isIgDirect) {
       const igLink = igUserId ? `https://ig.me/m/${igUserId}` : igDmLink
       if (!igLink) {
