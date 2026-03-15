@@ -435,7 +435,6 @@ export default function TabDetails({
               title={loc.locked ? t[mapReasonToKey(loc.reason)] : undefined}
             >
               {loc.label}
-              {loc.locked && loc.reason ? ` — ${t[mapReasonToKey(loc.reason)]}` : ''}
             </option>
           ))}
         </select>
