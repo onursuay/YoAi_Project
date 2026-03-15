@@ -452,6 +452,22 @@ export async function POST(request: Request) {
                 : (creative.callToAction ||
                   (isLeadsOnAd ? 'SIGN_UP' : isLeads && conversionLocation === 'WEBSITE' ? 'LEARN_MORE' : isAppPromotion || isTrafficApp || isEngagementApp || isSalesApp ? 'INSTALL_MOBILE_APP' : 'LEARN_MORE'))
 
+    const isWhatsApp = conversionLocation === 'WHATSAPP'
+
+    // ── BRANCH DECISION AUDIT LOG (always emitted for debuggability) ──
+    const finalCreativeBranch = isWhatsApp ? 'WHATSAPP' : isIgDirect ? 'INSTAGRAM_DIRECT' : 'STANDARD'
+    console.log('[Ad Create] BRANCH_DECISION:', JSON.stringify({
+      conversionLocation,
+      objective,
+      optimizationGoal,
+      isWhatsApp,
+      isIgDirect,
+      isEngagementMessaging: isEngagement && (conversionLocation === 'MESSENGER' || isWhatsApp),
+      isLeadsMessaging: isLeads && (conversionLocation === 'MESSENGER' || isWhatsApp),
+      isSalesMessaging: isSales && (conversionLocation === 'MESSENGER' || isWhatsApp),
+      finalCreativeBranch,
+    }))
+
     // INSTAGRAM_DIRECT RULE: always force INSTAGRAM_MESSAGE.
     // SEND_MESSAGE = Messenger; INSTAGRAM_MESSAGE = Instagram Direct.
     // Any other CTA type causes Meta error_subcode=2875003 "Eylem Çağrısı Desteklenmiyor".
@@ -482,27 +498,33 @@ export async function POST(request: Request) {
     // WhatsApp: NO value in call_to_action — whatsapp_phone_number belongs in ad set promoted_object
     // Messenger/IG Direct: link in ctaValue when we have one (ig.me or m.me)
 
-    // Link resolution by conversation location. NEVER use chatGreeting as link — it's a message.
-    // MESSENGER: m.me/PageID (creative_link_required fix). INSTAGRAM_DIRECT: ig.me. WHATSAPP: facebook.com fallback.
+    // Link resolution by conversion location.
+    // WHATSAPP: link_data.link = facebook.com page URL (Meta requires a link field even for WA creatives)
+    // Without link_data.link, Meta returns subcode 2061015 "link field required".
+    // The link does NOT change the ad destination — routing is via promoted_object.
+    const waFallbackLink = pageId ? `https://www.facebook.com/${pageId}` : ''
     const messengerLink = pageId ? `https://m.me/${pageId}` : ''
     const resolvedLinkByLocation =
-      isIgDirect && igDmLink
-        ? igDmLink
-        : conversionLocation === 'MESSENGER' || conversionLocation === 'INSTAGRAM_DIRECT'
-          ? (isIgDirect ? igDmLink : messengerLink)
-          : hasLink
-            ? linkUrl
-            : isLeadsOnAd
-              ? `https://www.facebook.com/${pageId}`
-              : ''
-    const effectiveLinkUrl = conversionLocation === 'WHATSAPP' ? '' : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
-    const effectiveHasLink = conversionLocation === 'WHATSAPP' ? false : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation.length > 0 : hasLink)
+      isWhatsApp
+        ? waFallbackLink  // WHATSAPP: always use fb page URL as required link field
+        : isIgDirect && igDmLink
+          ? igDmLink
+          : conversionLocation === 'MESSENGER' || conversionLocation === 'INSTAGRAM_DIRECT'
+            ? (isIgDirect ? igDmLink : messengerLink)
+            : hasLink
+              ? linkUrl
+              : isLeadsOnAd
+                ? `https://www.facebook.com/${pageId}`
+                : ''
+    const effectiveLinkUrl = isWhatsApp ? waFallbackLink : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
+    const effectiveHasLink = effectiveLinkUrl.length > 0
 
     if (creative.format === 'single_image' && creative.imageHash) {
-      // INSTAGRAM_DIRECT: ig.me link. MESSENGER: m.me link. WhatsApp: NO link. NEVER chatGreeting as link.
-      const resolvedLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedLinkByLocation || (effectiveHasLink ? linkUrl : ''))
-      // WhatsApp: do not include link in link_data — Meta uses promoted_object for WhatsApp routing
-      const finalLink = conversionLocation === 'WHATSAPP' ? '' : resolvedLink
+      // WHATSAPP: link_data.link = fb page URL (Meta requires it, subcode 2061015 without it)
+      // INSTAGRAM_DIRECT: ig.me link. MESSENGER: m.me link. NEVER chatGreeting as link.
+      const resolvedLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : '')
+      // finalLink: use resolvedLink for all cases including WHATSAPP (fb page URL set above)
+      const finalLink = resolvedLink
       // name/headline: NEVER use websiteUrl. If headline looks like URL, use empty.
       const safeHeadline = (creative.headline ?? '').trim()
       const headlineIsUrl = safeHeadline.startsWith('http://') || safeHeadline.startsWith('https://')
@@ -517,9 +539,9 @@ export async function POST(request: Request) {
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = chatGreeting
       objectStorySpec.link_data = linkData
     } else if (creative.format === 'single_video' && creative.videoId) {
-      const resolvedVideoLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined)))
-      // WhatsApp: do not include link in video_data — Meta uses promoted_object for WhatsApp routing
-      const finalVideoLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedVideoLink ?? '')
+      // WHATSAPP: video_data.link = fb page URL (Meta requires it). All other routing via promoted_object.
+      const resolvedVideoLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined))
+      const finalVideoLink = resolvedVideoLink ?? ''
       const safeVideoTitle = (creative.headline ?? '').trim()
       const videoTitleIsUrl = safeVideoTitle.startsWith('http://') || safeVideoTitle.startsWith('https://')
       const videoData: Record<string, unknown> = {
@@ -533,9 +555,9 @@ export async function POST(request: Request) {
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = chatGreeting
       objectStorySpec.video_data = videoData
     } else if (creative.format === 'carousel' && creative.carouselCards?.length >= 2) {
-      const carouselLink = conversionLocation === 'WHATSAPP' ? '' : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
-      // WhatsApp: do not include link in carousel link_data — Meta uses promoted_object for WhatsApp routing
-      const finalCarouselLink = conversionLocation === 'WHATSAPP' ? '' : (carouselLink || '')
+      // WHATSAPP: carouselLink = fb page URL (Meta requires link field). Routing via promoted_object.
+      const carouselLink = isWhatsApp ? waFallbackLink : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
+      const finalCarouselLink = carouselLink || ''
       const childAttachments = creative.carouselCards.map((card: { imageHash: string; headline: string; description: string; link: string }) => {
         const cardHeadline = (card.headline ?? '').trim()
         const cardHeadlineIsUrl = cardHeadline.startsWith('http://') || cardHeadline.startsWith('https://')
@@ -561,6 +583,7 @@ export async function POST(request: Request) {
 
     if (conversionLocation === 'WHATSAPP') {
       const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
+      const finalCtaValue = spec.link_data?.call_to_action?.value ?? spec.video_data?.call_to_action?.value
       console.log('[Ad Create] WHATSAPP_CREATIVE_SPEC:', JSON.stringify({
         page_id: spec.page_id,
         has_instagram_user_id: !!spec.instagram_user_id,
@@ -568,9 +591,12 @@ export async function POST(request: Request) {
         link_data_link: spec.link_data?.link ?? '(none)',
         link_data_has_message: !!spec.link_data?.message,
         cta_type: spec.link_data?.call_to_action?.type ?? spec.video_data?.call_to_action?.type ?? '(none)',
-        cta_value: spec.link_data?.call_to_action?.value ?? spec.video_data?.call_to_action?.value ?? '(none)',
+        cta_value: finalCtaValue ?? '(none — correct)',
+        cta_value_link: finalCtaValue?.link ?? '(none — correct)',
         has_page_welcome_message: !!spec.link_data?.page_welcome_message || !!spec.video_data?.page_welcome_message,
       }))
+      console.log('[Ad Create] FINAL_CTA_PAYLOAD:', JSON.stringify({ ctaType, ctaValue }))
+      console.log('[Ad Create] FINAL_OBJECT_STORY_SPEC:', JSON.stringify(objectStorySpec))
     }
 
     if (process.env.META_DEBUG === 'true') {
@@ -628,11 +654,14 @@ export async function POST(request: Request) {
         (typeof metaError.message === 'string' && /link.*required/i.test(metaError.message))
 
       if (isLinkRequired) {
+        const isWhatsAppFlow = conversionLocation === 'WHATSAPP'
         return NextResponse.json(
           {
             ok: false,
             error: 'creative_link_required',
-            message: 'Instagram Direct için Hedef URL zorunlu.',
+            message: isWhatsAppFlow
+              ? 'WhatsApp creative oluşturulamadı — link_data.link eksik. Lütfen bildirin (bug).'
+              : 'Instagram Direct için Hedef URL zorunlu.',
             error_subcode: subcode,
             fbtrace_id: metaError.fbtrace_id,
           },
