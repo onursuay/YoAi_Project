@@ -493,10 +493,13 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
 
   // ── Page-scoped inventory re-fetch: WhatsApp numbers depend on selected page ──
   // Single source of truth: /api/meta/inventory?page_id=X. No capabilities/canCTWA.
+  // Early fetch: when pages loaded but user hasn't selected, pre-fetch for first page so step 2 WhatsApp is ready.
   const lastFetchedPageIdRef = useRef<string | undefined>(undefined)
+  const defaultPageId = pagesInitialLoadDone && pages.length >= 1 ? pages[0].id : null
+  const effectivePageId = state.adset.pageId || defaultPageId
 
   useEffect(() => {
-    const pageId = state.adset.pageId
+    const pageId = effectivePageId
     if (!isOpen || !pageId) {
       lastFetchedPageIdRef.current = undefined
       setInventoryStatus('idle')
@@ -544,7 +547,9 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         setInventoryPageId(pageId)
         setInventoryStatus('loaded')
 
+        // Only adjust conversionLocation/phone when this fetch is for the user-selected page (not pre-fetch)
         setState((prev) => {
+          if (prev.adset.pageId !== pageId) return prev
           let next = prev
           if (!hasPageLinkedWhatsApp && prev.adset.conversionLocation === 'WHATSAPP') {
             const allowed = getAllowedDestinations(prev.campaign.objective ?? '')
@@ -595,8 +600,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
           console.log('[CampaignWizard] INVENTORY_FETCH_ERROR', { pageId, reason: 'fetch_failed', error: e instanceof Error ? e.message : String(e) })
         }
       })
-    return () => { cancelled = true }
-  }, [isOpen, state.adset.pageId])
+    return () =&gt; { cancelled = true }
+  }, [isOpen, state.adset.pageId, pagesInitialLoadDone, pages, effectivePageId])
 
   // Derive Instagram account from inventory when pageId changes
   useEffect(() => {
