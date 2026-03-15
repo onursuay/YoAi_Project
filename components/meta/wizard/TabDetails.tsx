@@ -219,25 +219,8 @@ export default function TabDetails({
     // WHATSAPP lock: only selectedPageId + inventory status + page-linked numbers (capabilities not used).
     let whatsappLocked: boolean
     let whatsappReason: string | undefined
-    if (!selectedPageId && !invLoaded) {
-      whatsappLocked = true
-      whatsappReason = 'Önce bir Facebook sayfası seçin'
-    } else if (invLoading) {
-      whatsappLocked = true
-      whatsappReason = 'WhatsApp bilgisi yükleniyor…'
-    } else if (invStale) {
-      whatsappLocked = true
-      whatsappReason = 'Sayfa değişti, bilgi güncelleniyor'
-    } else if (invError) {
-      whatsappLocked = true
-      whatsappReason = 'WhatsApp bilgisi yüklenemedi'
-    } else if (invLoaded) {
-      whatsappLocked = false
-      whatsappReason = undefined
-    } else {
-      whatsappLocked = true
-      whatsappReason = 'Bilgi yükleniyor…'
-    }
+    whatsappLocked = !selectedPageId
+    whatsappReason = !selectedPageId ? 'Önce bir Facebook sayfası seçin' : undefined
 
     const inventoryStatus = accountInventoryStatus ?? 'idle'
 
