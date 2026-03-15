@@ -459,7 +459,10 @@ export async function POST(request: Request) {
 
     // Meta call_to_action.value: link, phone_number, lead_gen_form_id supported. whatsapp_phone_number is INVALID — goes in ad set promoted_object only
     let ctaValue: { link?: string; phone_number?: string } | undefined
-    if (isIgDirect) {
+    if (conversionLocation === 'WHATSAPP') {
+      // WhatsApp: call_to_action has NO value — Meta resolves destination from promoted_object
+      ctaValue = undefined
+    } else if (isIgDirect) {
       const igLink = igUserId ? `https://ig.me/m/${igUserId}` : igDmLink
       if (!igLink) {
         return NextResponse.json(
@@ -471,9 +474,6 @@ export async function POST(request: Request) {
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
       ctaValue = { phone_number: rawNumber }
-    } else if (conversionLocation === 'WHATSAPP') {
-      // WhatsApp: NO value in call_to_action at all. Meta resolves from promoted_object.
-      ctaValue = undefined
     } else if (hasLink) {
       ctaValue = { link: linkUrl }
     } else if (conversionLocation === 'MESSENGER' && pageId) {
@@ -499,8 +499,8 @@ export async function POST(request: Request) {
     const effectiveHasLink = conversionLocation === 'WHATSAPP' ? false : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation.length > 0 : hasLink)
 
     if (creative.format === 'single_image' && creative.imageHash) {
-      // INSTAGRAM_DIRECT: ig.me link. MESSENGER: m.me link. WhatsApp: facebook.com. NEVER chatGreeting as link.
-      const resolvedLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : '')
+      // INSTAGRAM_DIRECT: ig.me link. MESSENGER: m.me link. WhatsApp: NO link. NEVER chatGreeting as link.
+      const resolvedLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedLinkByLocation || (effectiveHasLink ? linkUrl : ''))
       // WhatsApp: do not include link in link_data — Meta uses promoted_object for WhatsApp routing
       const finalLink = conversionLocation === 'WHATSAPP' ? '' : resolvedLink
       // name/headline: NEVER use websiteUrl. If headline looks like URL, use empty.
@@ -517,7 +517,7 @@ export async function POST(request: Request) {
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = chatGreeting
       objectStorySpec.link_data = linkData
     } else if (creative.format === 'single_video' && creative.videoId) {
-      const resolvedVideoLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined))
+      const resolvedVideoLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined)))
       // WhatsApp: do not include link in video_data — Meta uses promoted_object for WhatsApp routing
       const finalVideoLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedVideoLink ?? '')
       const safeVideoTitle = (creative.headline ?? '').trim()
@@ -533,7 +533,7 @@ export async function POST(request: Request) {
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = chatGreeting
       objectStorySpec.video_data = videoData
     } else if (creative.format === 'carousel' && creative.carouselCards?.length >= 2) {
-      const carouselLink = (isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl
+      const carouselLink = conversionLocation === 'WHATSAPP' ? '' : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
       // WhatsApp: do not include link in carousel link_data — Meta uses promoted_object for WhatsApp routing
       const finalCarouselLink = conversionLocation === 'WHATSAPP' ? '' : (carouselLink || '')
       const childAttachments = creative.carouselCards.map((card: { imageHash: string; headline: string; description: string; link: string }) => {
@@ -558,6 +558,20 @@ export async function POST(request: Request) {
     }
 
     creativeFormData.append('object_story_spec', JSON.stringify(objectStorySpec))
+
+    if (conversionLocation === 'WHATSAPP') {
+      const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
+      console.log('[Ad Create] WHATSAPP_CREATIVE_SPEC:', JSON.stringify({
+        page_id: spec.page_id,
+        has_instagram_user_id: !!spec.instagram_user_id,
+        has_link_data: !!spec.link_data,
+        link_data_link: spec.link_data?.link ?? '(none)',
+        link_data_has_message: !!spec.link_data?.message,
+        cta_type: spec.link_data?.call_to_action?.type ?? spec.video_data?.call_to_action?.type ?? '(none)',
+        cta_value: spec.link_data?.call_to_action?.value ?? spec.video_data?.call_to_action?.value ?? '(none)',
+        has_page_welcome_message: !!spec.link_data?.page_welcome_message || !!spec.video_data?.page_welcome_message,
+      }))
+    }
 
     if (process.env.META_DEBUG === 'true') {
       const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
