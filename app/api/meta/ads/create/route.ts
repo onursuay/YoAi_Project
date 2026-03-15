@@ -21,6 +21,23 @@ function appendUtmParams(url: string, utmParams?: { utmSource?: string; utmMediu
   return `${url}${separator}${paramString}`
 }
 
+function buildPageWelcomeMessage(greeting: unknown) {
+  if (typeof greeting !== 'string') return greeting
+  return {
+    type: 'VISUAL_EDITOR',
+    version: 2,
+    landing_screen_type: 'welcome_message',
+    media_type: 'text',
+    text_format: {
+      customer_action_type: 'autofill_message',
+      message: {
+        autofill_message: { content: greeting },
+        text: greeting,
+      },
+    },
+  }
+}
+
 export async function POST(request: Request) {
   try {
     const MOCK_META = process.env.MOCK_META === 'true'
@@ -536,7 +553,7 @@ export async function POST(request: Request) {
         description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
       }
-      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = chatGreeting
+      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.link_data = linkData
     } else if (creative.format === 'single_video' && creative.videoId) {
       // WHATSAPP: video_data.link = fb page URL (Meta requires it). All other routing via promoted_object.
@@ -552,7 +569,7 @@ export async function POST(request: Request) {
         link_description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
       }
-      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = chatGreeting
+      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.video_data = videoData
     } else if (creative.format === 'carousel' && creative.carouselCards?.length >= 2) {
       // WHATSAPP: carouselLink = fb page URL (Meta requires link field). Routing via promoted_object.
@@ -575,7 +592,7 @@ export async function POST(request: Request) {
         message: creative.primaryText,
         child_attachments: childAttachments,
       }
-      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) carouselLinkData.page_welcome_message = chatGreeting
+      if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) carouselLinkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.link_data = carouselLinkData
     }
 
