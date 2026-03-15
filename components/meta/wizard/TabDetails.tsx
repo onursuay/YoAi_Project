@@ -4,7 +4,7 @@ import * as React from 'react'
 import type { WizardState } from './types'
 import { getAllowedOptimizationGoals, getAllowedDestinations, hasConversionLocation } from '@/lib/meta/spec/objectiveSpec'
 import { getLocaleFromCookie, getWizardTranslations } from '@/lib/i18n/wizardTranslations'
-import { getDestinationsWithLockInfo } from '@/lib/meta/capabilityRules'
+import { explainLockedOption } from '@/lib/meta/capabilityRules'
 import type { MetaCapabilities } from '@/lib/meta/capabilityRules'
 
 function mapReasonToKey(reason: string | undefined): 'metaNotConnected' | 'metaPermissionRequired' | 'metaUnknown' {
@@ -205,47 +205,62 @@ export default function TabDetails({
   const invError = accountInventoryStatus === 'error'
   const invStale = accountInventoryStatus === 'loaded' && isStale
 
-  // WHATSAPP lock: explicit state machine. loading ≠ null; page change → stale until new load.
+  // Conversion Location options: built locally. WHATSAPP lock ONLY from page-linked inventory (no capabilities/canCTWA).
   const conversionLocationOptions = React.useMemo(() => {
-    const base = getDestinationsWithLockInfo(campaignObjective, capabilities, DESTINATION_LABELS)
-    const whatsappOpt = base.find((o) => o.value === 'WHATSAPP')
-    if (!whatsappOpt) return base
+    const allowed = getAllowedDestinations(campaignObjective)
+    const options: { value: string; label: string; locked: boolean; reason?: string }[] = []
 
     const waNumbers = accountInventory?.whatsapp_phone_numbers
-    const pageLinkedCount = Array.isArray(waNumbers) ? waNumbers.length : 0
+    const whatsappPhoneCount = Array.isArray(waNumbers) ? waNumbers.length : 0
     const pageWhatsappNumber = accountInventory?.page_whatsapp_number ?? null
     const pageHasWhatsApp = accountInventory?.page_has_whatsapp === true
-    const hasPageLinkedNumber = pageLinkedCount > 0 || !!pageWhatsappNumber || pageHasWhatsApp
+    const hasPageLinkedNumber = whatsappPhoneCount > 0 || !!pageWhatsappNumber || pageHasWhatsApp
 
-    let locked: boolean
-    let reason: string | undefined
-
+    // WHATSAPP lock: only selectedPageId + inventory status + page-linked numbers (capabilities not used).
+    let whatsappLocked: boolean
+    let whatsappReason: string | undefined
     if (!selectedPageId) {
-      locked = whatsappOpt.locked
-      reason = whatsappOpt.reason
+      whatsappLocked = true
+      whatsappReason = 'Önce bir Facebook sayfası seçin'
     } else if (invLoading) {
-      locked = true
-      reason = 'WhatsApp bilgisi yükleniyor…'
+      whatsappLocked = true
+      whatsappReason = 'WhatsApp bilgisi yükleniyor…'
     } else if (invStale) {
-      locked = true
-      reason = 'Sayfa değişti, bilgi güncelleniyor'
+      whatsappLocked = true
+      whatsappReason = 'Sayfa değişti, bilgi güncelleniyor'
     } else if (invError) {
-      locked = true
-      reason = whatsappOpt.reason ?? 'WhatsApp bilgisi yüklenemedi'
+      whatsappLocked = true
+      whatsappReason = 'WhatsApp bilgisi yüklenemedi'
     } else if (invLoaded) {
-      if (hasPageLinkedNumber) {
-        locked = false
-        reason = undefined
-      } else {
-        locked = true
-        reason = 'Bu sayfaya bağlı WhatsApp numarası yok'
-      }
+      whatsappLocked = !hasPageLinkedNumber
+      whatsappReason = hasPageLinkedNumber ? undefined : 'Bu sayfaya bağlı WhatsApp numarası yok'
     } else {
-      locked = whatsappOpt.locked
-      reason = whatsappOpt.reason
+      whatsappLocked = true
+      whatsappReason = 'Bilgi yükleniyor…'
     }
 
-    return base.map((o) => (o.value === 'WHATSAPP' ? { ...o, locked, reason } : o))
+    const inventoryStatus = accountInventoryStatus ?? 'idle'
+
+    for (const value of allowed) {
+      const label = DESTINATION_LABELS[value] ?? value
+      if (value === 'WHATSAPP') {
+        options.push({ value, label, locked: whatsappLocked, reason: whatsappReason })
+      } else {
+        const { locked, reason } = explainLockedOption(value, capabilities)
+        options.push({ value, label, locked, reason })
+      }
+    }
+
+    console.log('CONVERSION_LOCATION_OPTIONS_FINAL', {
+      selectedPageId,
+      inventoryStatus,
+      whatsappPhoneCount,
+      whatsappLocked,
+      whatsappReason,
+      source: 'page_linked_rule',
+    })
+
+    return options
   }, [campaignObjective, capabilities, selectedPageId, accountInventory, accountInventoryPageId, accountInventoryStatus])
 
   function getConversionLocationsForObjective(objective: string): { value: string; label: string }[] {
