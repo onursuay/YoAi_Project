@@ -228,6 +228,43 @@ export default function TabDetails({
   const selectedPage = state.pageId ? inventory?.pages?.find((p) => p.page_id === state.pageId) : undefined
   const hasIgAccountsForPage = (instagramAccounts?.length ?? 0) > 0
 
+  // WhatsApp: auto-select single page-linked number; clear selection if not in page's allowed list
+  React.useEffect(() => {
+    if (state.conversionLocation !== 'WHATSAPP') return
+    const pageLinked = accountInventory?.whatsapp_phone_numbers ?? []
+    const selectedId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
+    if (pageLinked.length === 1) {
+      const single = pageLinked[0]
+      if (selectedId !== single.phoneNumberId) {
+        onChange({
+          destinationDetails: {
+            ...state.destinationDetails,
+            messaging: {
+              ...state.destinationDetails?.messaging,
+              whatsappPhoneNumberId: single.phoneNumberId,
+              whatsappDisplayPhone: single.displayPhone ?? undefined,
+              whatsappSourceLayer: 'page_linked',
+            },
+          },
+        })
+      }
+      return
+    }
+    if (selectedId && pageLinked.length > 0 && !pageLinked.some((p) => p.phoneNumberId === selectedId)) {
+      onChange({
+        destinationDetails: {
+          ...state.destinationDetails,
+          messaging: {
+            ...state.destinationDetails?.messaging,
+            whatsappPhoneNumberId: undefined,
+            whatsappDisplayPhone: undefined,
+            whatsappSourceLayer: undefined,
+          },
+        },
+      })
+    }
+  }, [state.conversionLocation, state.pageId, state.destinationDetails, accountInventory?.whatsapp_phone_numbers, onChange])
+
   function getTrafficDestinationsFiltered(): { value: string; label: string }[] {
     const all = getConversionLocationsForObjective('OUTCOME_TRAFFIC')
     return all.filter((loc) => {
@@ -411,11 +448,9 @@ export default function TabDetails({
       )}
 
       {state.conversionLocation === 'WHATSAPP' && (() => {
-        // Primary: accountInventory (page-scoped re-fetch with real WhatsApp data)
-        // Fallback: capabilities-derived local inventory (initial load, no page_id)
-        const wabaNumbers = (accountInventory?.whatsapp_phone_numbers?.length ?? 0) > 0
-          ? accountInventory!.whatsapp_phone_numbers!
-          : (inventory?.whatsapp_phone_numbers ?? [])
+        // SOURCE OF TRUTH: Selected Facebook Page'e bağlı WhatsApp numaraları only (page-linked).
+        // WABA / business portfolio inventory is NOT used as selectable source — diagnostics only.
+        const pageLinkedNumbers = accountInventory?.whatsapp_phone_numbers ?? []
         const pageWhatsappNumber = accountInventory?.page_whatsapp_number
           ?? (typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
             ? String((inventory as Record<string, unknown>).page_whatsapp_number)
@@ -425,13 +460,17 @@ export default function TabDetails({
         const selectedPhoneId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
         const selectedDisplayPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
 
-        // Mismatch guardrail: page-linked number vs selected WABA number
-        const selectedWabaPhone = wabaNumbers.find(p => p.phoneNumberId === selectedPhoneId)
+        // Validation: selectedPhoneId must be in page's allowed list (page-linked only)
+        const isSelectionValid = !selectedPhoneId || pageLinkedNumbers.some(p => p.phoneNumberId === selectedPhoneId)
+        const selectedWabaPhone = pageLinkedNumbers.find(p => p.phoneNumberId === selectedPhoneId)
+
+        // Diagnostics only: mismatch between page display number and selected (edge case)
         const hasMismatch = pageWhatsappNumber && selectedWabaPhone?.displayPhone
           && !pageWhatsappNumber.replace(/\s/g, '').endsWith(selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').slice(-7))
           && !selectedWabaPhone.displayPhone.replace(/[\s+\-()]/g, '').endsWith(pageWhatsappNumber.replace(/[\s+\-()]/g, '').slice(-7))
 
-        const hasNoNumbers = !pageWhatsappNumber && wabaNumbers.length === 0
+        // No page-linked numbers and no display number → blocking error
+        const hasNoNumbers = !pageWhatsappNumber && pageLinkedNumbers.length === 0
 
         return (
         <div>
@@ -450,14 +489,14 @@ export default function TabDetails({
             </div>
           )}
 
-          {/* WABA phone numbers — SELECTABLE dropdown */}
-          {wabaNumbers.length > 0 ? (
+          {/* Page-linked numbers only — selectable dropdown (no business portfolio) */}
+          {pageLinkedNumbers.length > 0 ? (
             <div className="mb-2">
               <select
-                value={selectedPhoneId ?? ''}
+                value={isSelectionValid ? (selectedPhoneId ?? '') : ''}
                 onChange={(e) => {
                   const phoneId = e.target.value || undefined
-                  const phone = wabaNumbers.find(p => p.phoneNumberId === phoneId)
+                  const phone = pageLinkedNumbers.find(p => p.phoneNumberId === phoneId)
                   onChange({
                     destinationDetails: {
                       ...state.destinationDetails,
@@ -465,17 +504,17 @@ export default function TabDetails({
                         ...state.destinationDetails?.messaging,
                         whatsappPhoneNumberId: phoneId,
                         whatsappDisplayPhone: phone?.displayPhone ?? undefined,
-                        whatsappSourceLayer: phoneId ? 'waba_selected' : undefined,
+                        whatsappSourceLayer: phoneId ? 'page_linked' : undefined,
                       },
                     },
                   })
                 }}
                 className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary text-sm ${
-                  errors.whatsapp_phone ? 'border-red-500' : 'border-gray-300'
+                  errors.whatsapp_phone || !isSelectionValid ? 'border-red-500' : 'border-gray-300'
                 }`}
               >
                 <option value="">— WhatsApp numarası seçin —</option>
-                {wabaNumbers.map((p) => (
+                {pageLinkedNumbers.map((p) => (
                   <option key={p.phoneNumberId} value={p.phoneNumberId}>
                     {p.displayPhone ?? p.phoneNumberId}
                     {p.verifiedName ? ` (${p.verifiedName})` : ''}
@@ -483,17 +522,21 @@ export default function TabDetails({
                 ))}
               </select>
               {errors.whatsapp_phone && <p className="mt-1 text-sm text-red-600">{errors.whatsapp_phone}</p>}
+              {!isSelectionValid && selectedPhoneId && (
+                <p className="mt-1 text-sm text-red-600">Seçilen numara bu sayfaya bağlı değil. Lütfen listeden seçin.</p>
+              )}
             </div>
           ) : pageWhatsappNumber ? (
             <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-              WABA numarası bulunamadı. Meta, sayfaya bağlı numarayı ({pageWhatsappNumber}) otomatik kullanacaktır.
+              Meta, sayfaya bağlı numarayı ({pageWhatsappNumber}) otomatik kullanacaktır.
             </div>
           ) : null}
 
-          {/* No page-linked WABA numbers resolved — info only */}
+          {/* No page-linked numbers — blocking error (do not show business portfolio as selectable) */}
           {hasNoNumbers && (
-            <div className="px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
-              Bu Facebook sayfasına bağlı WhatsApp numarası görünmüyor. İsterseniz Meta Business Suite → Ayarlar → WhatsApp bölümünden sayfanıza bir numara bağlayabilirsiniz.
+            <div className="px-3 py-2 bg-red-50 border border-red-300 rounded-lg text-sm text-red-700">
+              <span className="font-semibold">Bu Facebook sayfasına bağlı WhatsApp numarası yok.</span>{' '}
+              Meta Business Suite → Ayarlar → WhatsApp bölümünden sayfanıza bir numara bağlayın.
             </div>
           )}
 
@@ -504,9 +547,9 @@ export default function TabDetails({
             </div>
           )}
 
-          {wabaNumbers.length > 0 && (
+          {pageLinkedNumbers.length > 0 && (
             <p className="mt-1 text-xs text-gray-400">
-              Reklamda kullanılacak WhatsApp numarasını seçin. Bu numara Meta'ya promoted_object içinde gönderilir.
+              Sadece bu sayfaya bağlı numaralar listelenir. Seçilen numara Meta'ya promoted_object içinde gönderilir.
             </p>
           )}
         </div>
