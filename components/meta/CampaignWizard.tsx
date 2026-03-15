@@ -248,6 +248,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   const [fxState, setFxState] = useState<{ status: 'loading' | 'ready' | 'error'; rate?: number; asOf?: string }>({ status: 'loading' })
   const budgetInputRef = useRef<HTMLInputElement | null>(null)
   const [inventory, setInventory] = useState<AccountInventory | null>(null)
+  const [inventoryPageId, setInventoryPageId] = useState<string | null>(null)
+  const [inventoryStatus, setInventoryStatus] = useState<'idle' | 'loading' | 'loaded' | 'error'>('idle')
   const [campaignMinBudgetError, setCampaignMinBudgetError] = useState<string | null>(null)
   const [adSetMinBudgetError, setAdSetMinBudgetError] = useState<string | null>(null)
   /** Campaign budget (step 1) min daily = 1 USD in TRY — from /api/fx/usdtry, only for CBO + daily */
@@ -493,21 +495,37 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   // Initial inventory fetch has no page_id → WABA/WhatsApp numbers are empty.
   // When user selects a page, re-fetch with page_id to get page-linked WhatsApp data.
   const lastFetchedPageIdRef = useRef<string | undefined>(undefined)
+
+  useEffect(() => {
+    if (!state.adset.pageId) {
+      setInventoryStatus('idle')
+      setInventoryPageId(null)
+      return
+    }
+  }, [state.adset.pageId])
+
   useEffect(() => {
     const pageId = state.adset.pageId
     if (!isOpen || !pageId || pageId === lastFetchedPageIdRef.current) return
     lastFetchedPageIdRef.current = pageId
+    setInventoryStatus('loading')
     console.log(`[CampaignWizard] INVENTORY_REFETCH_FOR_PAGE: page_id=${pageId}`)
     let cancelled = false
     fetch(`/api/meta/inventory?page_id=${encodeURIComponent(pageId)}`, { cache: 'no-store' })
       .then((res) => res.json())
       .then((data) => {
-        if (cancelled || !data.ok || !data.data) return
+        if (cancelled) return
+        if (!data.ok || !data.data) {
+          setInventoryStatus('error')
+          return
+        }
         const inv = data.data as AccountInventory
+        const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
+        const hasPageLinkedWhatsApp = newWabaNumbers.length > 0 || !!inv.page_whatsapp_number
+
         setInventory((prev) => {
           if (!prev) return { ...inv, adAccountId: capabilities?.adAccountId ?? undefined } as AccountInventory
-          const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
-          const pageHasWhatsApp = newWabaNumbers.length > 0 || !!inv.page_whatsapp_number
+          const pageHasWhatsApp = hasPageLinkedWhatsApp
           return {
             ...prev,
             whatsapp_phone_numbers: newWabaNumbers,
@@ -515,39 +533,63 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
             page_whatsapp_number_source: inv.page_whatsapp_number_source,
             whatsapp_diagnostics: inv.whatsapp_diagnostics,
             whatsapp_error: inv.whatsapp_error,
-            // Seçili sayfanın has_whatsapp'ını da güncelle
             pages: prev.pages.map(p =>
-              p.page_id === pageId
-                ? { ...p, has_whatsapp: pageHasWhatsApp || p.has_whatsapp }
-                : p
+              p.page_id === pageId ? { ...p, has_whatsapp: pageHasWhatsApp || p.has_whatsapp } : p
             ),
           }
         })
-        // Clear stale WhatsApp selection if it's not in the new page's WABA numbers
-        const newWabaNumbers = inv.whatsapp_phone_numbers ?? []
-        const currentPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
-        if (currentPhoneId && !newWabaNumbers.some(n => n.phoneNumberId === currentPhoneId)) {
-          console.warn(`[CampaignWizard] WHATSAPP_SELECTION_CLEARED: stale phoneId=${currentPhoneId} not in page ${pageId} WABA numbers (count=${newWabaNumbers.length})`)
-          setState(prev => ({
-            ...prev,
-            adset: {
-              ...prev.adset,
-              destinationDetails: {
-                ...prev.adset.destinationDetails,
-                messaging: {
-                  ...prev.adset.destinationDetails?.messaging,
-                  whatsappPhoneNumberId: undefined,
-                  whatsappDisplayPhone: undefined,
-                  whatsappSourceLayer: undefined,
+        setInventoryPageId(pageId)
+        setInventoryStatus('loaded')
+
+        setState((prev) => {
+          let next = prev
+          if (!hasPageLinkedWhatsApp && prev.adset.conversionLocation === 'WHATSAPP') {
+            const allowed = getAllowedDestinations(prev.campaign.objective ?? '')
+            const fallback = allowed.find((d) => d !== 'WHATSAPP') ?? allowed[0] ?? 'WEBSITE'
+            next = {
+              ...prev,
+              adset: {
+                ...prev.adset,
+                conversionLocation: fallback,
+                destinationDetails: {
+                  ...prev.adset.destinationDetails,
+                  messaging: {
+                    ...prev.adset.destinationDetails?.messaging,
+                    whatsappPhoneNumberId: undefined,
+                    whatsappDisplayPhone: undefined,
+                    whatsappSourceLayer: undefined,
+                  },
                 },
               },
-            },
-          }))
-        }
+            }
+          }
+          const currentPhoneId = next.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+          if (currentPhoneId && !newWabaNumbers.some((n) => n.phoneNumberId === currentPhoneId)) {
+            next = {
+              ...next,
+              adset: {
+                ...next.adset,
+                destinationDetails: {
+                  ...next.adset.destinationDetails,
+                  messaging: {
+                    ...next.adset.destinationDetails?.messaging,
+                    whatsappPhoneNumberId: undefined,
+                    whatsappDisplayPhone: undefined,
+                    whatsappSourceLayer: undefined,
+                  },
+                },
+              },
+            }
+          }
+          return next
+        })
         console.log(`[CampaignWizard] INVENTORY_REFETCH_DONE: page_id=${pageId}, wa_numbers=${newWabaNumbers.length}, page_wa=${inv.page_whatsapp_number ?? 'null'}`)
       })
       .catch((e) => {
-        if (!cancelled) console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
+        if (!cancelled) {
+          setInventoryStatus('error')
+          console.warn(`[CampaignWizard] INVENTORY_REFETCH_FAILED: page_id=${pageId}`, e)
+        }
       })
     return () => { cancelled = true }
   }, [isOpen, state.adset.pageId])
@@ -2171,6 +2213,8 @@ const messagingOk = true
                     capabilities={capabilities}
                     accountInventoryLeadForms={inventory?.lead_forms}
                     accountInventory={inventory}
+                    accountInventoryPageId={inventoryPageId}
+                    accountInventoryStatus={inventoryStatus}
                   />
                   {state.adset.conversionLocation === 'INSTAGRAM_DIRECT' && igVerifyStatus === 'verifying' && (
                     <p className="mt-2 text-caption text-gray-500 flex items-center gap-1">

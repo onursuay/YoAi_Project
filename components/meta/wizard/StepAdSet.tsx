@@ -35,6 +35,8 @@ interface StepAdSetProps {
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
   } | null
+  accountInventoryPageId?: string | null
+  accountInventoryStatus?: 'idle' | 'loading' | 'loaded' | 'error'
 }
 
 export default function StepAdSet({
@@ -53,6 +55,8 @@ export default function StepAdSet({
   capabilities,
   accountInventoryLeadForms,
   accountInventory = null,
+  accountInventoryPageId = null,
+  accountInventoryStatus = 'idle',
 }: StepAdSetProps) {
   const t = getWizardTranslations(getLocaleFromCookie())
   const [activeTab, setActiveTab] = useState('details')
@@ -102,6 +106,8 @@ export default function StepAdSet({
             capabilities={capabilities}
             accountInventoryLeadForms={accountInventoryLeadForms}
             accountInventory={accountInventory}
+            accountInventoryPageId={accountInventoryPageId}
+            accountInventoryStatus={accountInventoryStatus}
           />
         )}
         {activeTab === 'audience' && (

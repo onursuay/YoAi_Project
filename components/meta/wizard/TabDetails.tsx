@@ -137,6 +137,8 @@ interface TabDetailsProps {
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
   } | null
+  accountInventoryPageId?: string | null
+  accountInventoryStatus?: 'idle' | 'loading' | 'loaded' | 'error'
 }
 
 export default function TabDetails({
@@ -153,6 +155,8 @@ export default function TabDetails({
   capabilities = null,
   accountInventoryLeadForms,
   accountInventory = null,
+  accountInventoryPageId = null,
+  accountInventoryStatus = 'idle',
 }: TabDetailsProps) {
   const showEmptyPages = pagesInitialLoadDone && !pagesLoading && pages.length === 0 && !pagesError
   const t = getWizardTranslations(getLocaleFromCookie())
@@ -189,18 +193,27 @@ export default function TabDetails({
     { value: 'OTHER', label: t.convEventOther },
   ]
 
-  // WHATSAPP lock: ONLY page-linked numbers for selected page. Capabilities/stale inventory are NOT used when page is selected.
+  // Inventory state: loading / loaded / error / stale (page changed, inventory is for previous page).
+  const selectedPageId = state.pageId ?? null
+  const isStale =
+    selectedPageId != null &&
+    accountInventoryPageId != null &&
+    selectedPageId !== accountInventoryPageId
+  const invLoading = accountInventoryStatus === 'loading'
+  const invLoaded = accountInventoryStatus === 'loaded' && !isStale
+  const invError = accountInventoryStatus === 'error'
+  const invStale = accountInventoryStatus === 'loaded' && isStale
+
+  // WHATSAPP lock: explicit state machine. loading ≠ null; page change → stale until new load.
   const conversionLocationOptions = React.useMemo(() => {
     const base = getDestinationsWithLockInfo(campaignObjective, capabilities, DESTINATION_LABELS)
     const whatsappOpt = base.find((o) => o.value === 'WHATSAPP')
     if (!whatsappOpt) return base
 
-    const selectedPageId = state.pageId ?? null
     const waNumbers = accountInventory?.whatsapp_phone_numbers
     const pageLinkedCount = Array.isArray(waNumbers) ? waNumbers.length : 0
     const pageWhatsappNumber = accountInventory?.page_whatsapp_number ?? null
     const hasPageLinkedNumber = pageLinkedCount > 0 || !!pageWhatsappNumber
-    const hasInventoryForPage = accountInventory != null
 
     let locked: boolean
     let reason: string | undefined
@@ -208,34 +221,30 @@ export default function TabDetails({
     if (!selectedPageId) {
       locked = whatsappOpt.locked
       reason = whatsappOpt.reason
-    } else {
-      if (!hasInventoryForPage) {
-        locked = false
-        reason = undefined
-      } else if (hasPageLinkedNumber) {
+    } else if (invLoading) {
+      locked = true
+      reason = 'WhatsApp bilgisi yükleniyor…'
+    } else if (invStale) {
+      locked = true
+      reason = 'Sayfa değişti, bilgi güncelleniyor'
+    } else if (invError) {
+      locked = true
+      reason = whatsappOpt.reason ?? 'WhatsApp bilgisi yüklenemedi'
+    } else if (invLoaded) {
+      if (hasPageLinkedNumber) {
         locked = false
         reason = undefined
       } else {
         locked = true
         reason = 'Bu sayfaya bağlı WhatsApp numarası yok'
       }
+    } else {
+      locked = whatsappOpt.locked
+      reason = whatsappOpt.reason
     }
 
-    console.log('[TabDetails] WHATSAPP_LOCK:', {
-      selectedPageId: selectedPageId ?? '(null)',
-      accountInventory: hasInventoryForPage ? 'set' : 'null',
-      whatsapp_phone_numbers_length: pageLinkedCount,
-      page_whatsapp_number: pageWhatsappNumber ?? '(null)',
-      hasPageLinkedNumber,
-      capabilities_canCTWA: capabilities?.features?.canCTWA,
-      capabilities_whatsapp_available: capabilities?.assets?.whatsapp?.available,
-      broken_capabilities_lock: whatsappOpt.locked,
-      computed_locked: locked,
-      computed_reason: reason ?? '(none)',
-    })
-
     return base.map((o) => (o.value === 'WHATSAPP' ? { ...o, locked, reason } : o))
-  }, [campaignObjective, capabilities, state.pageId, accountInventory])
+  }, [campaignObjective, capabilities, selectedPageId, accountInventory, accountInventoryPageId, accountInventoryStatus])
 
   function getConversionLocationsForObjective(objective: string): { value: string; label: string }[] {
     const allowed = getAllowedDestinations(objective)
