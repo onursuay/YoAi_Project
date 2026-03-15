@@ -599,35 +599,54 @@ async function fetchWhatsAppPhoneNumbers(
       if (pageAccessToken) {
         try {
           const bizUrl = `https://graph.facebook.com/v24.0/${pageId}?fields=owner_business{id,name},business{id,name}&access_token=${encodeURIComponent(pageAccessToken)}`
-          const bizRes = await fetch(bizUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({}))
-          fallbackBusinessId = (bizRes as any)?.owner_business?.id || (bizRes as any)?.business?.id || null
-          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_TOKEN: businessId=${fallbackBusinessId ?? 'null'}`)
+          const bizRes = await fetch(bizUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({})) as {
+            owner_business?: { id?: string; name?: string }
+            business?: { id?: string; name?: string }
+            error?: { message?: string; code?: number }
+          }
+          fallbackBusinessId = bizRes?.owner_business?.id ?? bizRes?.business?.id ?? null
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_BIZ: id=${fallbackBusinessId ?? 'null'}, error=${bizRes?.error?.message ?? 'none'}`)
         } catch (e) {
-          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_TOKEN failed:`, e)
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_PAGE_BIZ failed:`, e instanceof Error ? e.message : e)
         }
       }
 
       // 1b: Try with user token
       if (!fallbackBusinessId) {
         try {
-          const bizRes = await client.get(`/${pageId}`, { fields: 'owner_business{id,name},business{id,name}' })
-          fallbackBusinessId = (bizRes.data as any)?.owner_business?.id || (bizRes.data as any)?.business?.id || null
-          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_TOKEN: businessId=${fallbackBusinessId ?? 'null'}`)
+          const bizRes2 = await (client as any).get(`/${pageId}`, { fields: 'owner_business,business' })
+          fallbackBusinessId = bizRes2?.data?.owner_business?.id ?? bizRes2?.data?.business?.id ?? null
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_BIZ: id=${fallbackBusinessId ?? 'null'}, ok=${bizRes2?.ok}`)
         } catch (e) {
-          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_TOKEN failed:`, e)
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_USER_BIZ failed:`, e instanceof Error ? e.message : e)
         }
       }
 
-      // Step 2: If business found, scan that business's WABAs only
+      // Step 2: If we have a specific business, scan only that one
       if (fallbackBusinessId) {
         try {
-          const wabaRes = await client.get(`/${fallbackBusinessId}/owned_whatsapp_business_accounts`, {
-            fields: 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}',
-            limit: '50',
-          })
-          const wabas = Array.isArray((wabaRes.data as any)?.data) ? (wabaRes.data as any).data : []
+          const wabaFields = 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}'
+          const wabaUrl = `https://graph.facebook.com/v24.0/${fallbackBusinessId}/owned_whatsapp_business_accounts?fields=${wabaFields}&limit=50&access_token=${encodeURIComponent(pageAccessToken ?? '')}`
+          let wabaData: { data?: { id: string; name?: string; phone_numbers?: { data?: PhoneNumberNode[] } }[]; error?: { message?: string } } | null = null
 
-          for (const w of wabas) {
+          if (pageAccessToken) {
+            wabaData = await fetch(wabaUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => null)
+            console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_WABAS_PAGE_TOKEN: count=${wabaData?.data?.length ?? 'err'}, error=${wabaData?.error?.message ?? 'none'}`)
+          }
+
+          if (!wabaData?.data) {
+            const wabaRes = await (client as any).get(`/${fallbackBusinessId}/owned_whatsapp_business_accounts`, {
+              fields: wabaFields,
+              limit: '50',
+            })
+            wabaData = wabaRes?.data ?? null
+            console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_WABAS_USER_TOKEN: count=${(wabaData as any)?.data?.length ?? 'err'}`)
+          }
+
+          const wabaList = Array.isArray((wabaData as any)?.data) ? (wabaData as any).data : []
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_WABAS: bizId=${fallbackBusinessId}, count=${wabaList.length}`)
+
+          for (const w of wabaList) {
             const phones = Array.isArray(w.phone_numbers?.data) ? w.phone_numbers.data : []
             for (const ph of phones) {
               numbers.push({
@@ -643,40 +662,49 @@ async function fetchWhatsAppPhoneNumbers(
           }
 
           diagnostics.businesses_scanned = 1
-          diagnostics.wabas_scanned = wabas.length
+          diagnostics.wabas_scanned = wabaList.length
           diagnostics.business_id = fallbackBusinessId
           diagnostics.mapping_source = 'fallback_scan'
           diagnostics.mapping_fallback_used = true
 
-          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_RESULT: businessId=${fallbackBusinessId}, wabas=${wabas.length}, phones=${numbers.length}`)
-
           if (numbers.length > 0) {
+            console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_SUCCESS: phones=${numbers.length}`)
             return { numbers, diagnostics }
           }
         } catch (e) {
-          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_WABA_SCAN failed:`, e)
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_BIZ_SCAN failed:`, e instanceof Error ? e.message : e)
         }
       }
 
-      // Step 3: No business found (or business scan returned nothing) — scan ALL businesses
-      if (!fallbackBusinessId || numbers.length === 0) {
-        try {
-          const bizListRes = await client.get('/me/businesses', { fields: 'id,name', limit: '25' })
-          const businesses = Array.isArray((bizListRes.data as any)?.data) ? (bizListRes.data as any).data : []
+      // Step 3: No specific business or scan returned 0 — scan ALL /me/businesses
+      // Use direct fetch with access token from cookies (mirrors how selfcheck works)
+      try {
+        const cookieStore = await cookies()
+        const accessToken = cookieStore.get('meta_access_token')?.value
 
-          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_BIZ: count=${businesses.length}`)
+        if (accessToken) {
+          const bizListUrl = `https://graph.facebook.com/v24.0/me/businesses?fields=id,name&limit=50&access_token=${encodeURIComponent(accessToken)}`
+          const bizListData = await fetch(bizListUrl, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })) as {
+            data?: { id: string; name?: string }[]
+            error?: { message?: string; code?: number }
+          }
 
+          const businesses = Array.isArray(bizListData?.data) ? bizListData.data : []
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_BIZ: count=${businesses.length}, error=${bizListData?.error?.message ?? 'none'}`)
+
+          const wabaFields = 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}'
           for (const biz of businesses) {
             try {
-              const wabaRes = await client.get(`/${biz.id}/owned_whatsapp_business_accounts`, {
-                fields: 'id,name,phone_numbers{id,display_phone_number,verified_name,quality_rating,code_verification_status}',
-                limit: '50',
-              })
-              const wabas = Array.isArray((wabaRes.data as any)?.data) ? (wabaRes.data as any).data : []
-              diagnostics.wabas_scanned += wabas.length
+              const wabaUrl2 = `https://graph.facebook.com/v24.0/${biz.id}/owned_whatsapp_business_accounts?fields=${wabaFields}&limit=50&access_token=${encodeURIComponent(accessToken)}`
+              const wabaData2 = await fetch(wabaUrl2, { cache: 'no-store' }).then(r => r.json()).catch(() => ({ data: [] })) as {
+                data?: { id: string; name?: string; phone_numbers?: { data?: PhoneNumberNode[] } }[]
+              }
 
-              for (const w of wabas) {
-                const phones = Array.isArray(w.phone_numbers?.data) ? w.phone_numbers.data : []
+              const wabaList2 = Array.isArray(wabaData2?.data) ? wabaData2.data : []
+              diagnostics.wabas_scanned += wabaList2.length
+
+              for (const w of wabaList2) {
+                const phones = Array.isArray(w.phone_numbers?.data) ? w.phone_numbers!.data! : []
                 for (const ph of phones) {
                   numbers.push({
                     wabaId: w.id,
@@ -690,7 +718,7 @@ async function fetchWhatsAppPhoneNumbers(
                 }
               }
             } catch {
-              // skip individual business errors
+              // Skip this business, continue to next
             }
           }
 
@@ -699,14 +727,16 @@ async function fetchWhatsAppPhoneNumbers(
           diagnostics.mapping_fallback_used = true
           diagnostics.mapping_warning = 'business_management missing — scanned all businesses'
 
-          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_RESULT: businesses=${businesses.length}, total_phones=${numbers.length}`)
+          console.log(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL_RESULT: biz=${businesses.length}, wabas=${diagnostics.wabas_scanned}, phones=${numbers.length}`)
 
           if (numbers.length > 0) {
             return { numbers, diagnostics }
           }
-        } catch (e) {
-          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL failed:`, e)
+        } else {
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL: no access token in cookies`)
         }
+      } catch (e) {
+        console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL failed:`, e instanceof Error ? e.message : e)
       }
 
       // All fallbacks exhausted — return waba_not_found
