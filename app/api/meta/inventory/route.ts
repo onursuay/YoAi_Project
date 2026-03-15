@@ -64,6 +64,8 @@ export interface InventoryWhatsAppNumber {
   verifiedName?: string
   qualityRating?: string
   status?: string
+  /** 'page_linked' = directly linked to the selected page; 'business_fallback' = found via business portfolio scan */
+  sourceLayer?: 'page_linked' | 'business_fallback'
 }
 
 export interface InventoryTokenPermissions {
@@ -538,6 +540,7 @@ async function fetchWhatsAppPhoneNumbers(
             verifiedName: ph.verified_name,
             qualityRating: ph.quality_rating,
             status: ph.code_verification_status,
+            sourceLayer: 'page_linked',
           })
         }
         if (numbers.length > 0) {
@@ -658,6 +661,7 @@ async function fetchWhatsAppPhoneNumbers(
                 verifiedName: ph.verified_name,
                 qualityRating: ph.quality_rating,
                 status: ph.code_verification_status,
+                sourceLayer: 'business_fallback',
               })
             }
           }
@@ -715,6 +719,7 @@ async function fetchWhatsAppPhoneNumbers(
                     verifiedName: ph.verified_name,
                     qualityRating: ph.quality_rating,
                     status: ph.code_verification_status,
+                    sourceLayer: 'business_fallback',
                   })
                 }
               }
@@ -769,6 +774,7 @@ async function fetchWhatsAppPhoneNumbers(
         verifiedName: ph.verified_name,
         qualityRating: ph.quality_rating,
         status: ph.code_verification_status,
+        sourceLayer: 'page_linked',
       })
     }
 

@@ -133,7 +133,7 @@ interface TabDetailsProps {
   accountInventoryLeadForms?: Record<string, { form_id: string; name: string; status: string }[]>
   /** Real inventory from CampaignWizard — contains page-scoped WhatsApp data after re-fetch */
   accountInventory?: {
-    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
+    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string; sourceLayer?: string }[]
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
     page_has_whatsapp?: boolean
@@ -529,7 +529,9 @@ export default function TabDetails({
       {state.conversionLocation === 'WHATSAPP' && (() => {
         // SOURCE OF TRUTH: Selected Facebook Page'e bağlı WhatsApp numaraları only (page-linked).
         // WABA / business portfolio inventory is NOT used as selectable source — diagnostics only.
-        const pageLinkedNumbers = accountInventory?.whatsapp_phone_numbers ?? []
+        // Filter: only show sourceLayer === 'page_linked' (or legacy entries without sourceLayer)
+        const allNumbers = accountInventory?.whatsapp_phone_numbers ?? []
+        const pageLinkedNumbers = allNumbers.filter(p => !p.sourceLayer || p.sourceLayer === 'page_linked')
         const pageWhatsappNumber = accountInventory?.page_whatsapp_number
           ?? (typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
             ? String((inventory as Record<string, unknown>).page_whatsapp_number)
