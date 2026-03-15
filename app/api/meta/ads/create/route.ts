@@ -471,6 +471,9 @@ export async function POST(request: Request) {
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
       ctaValue = { phone_number: rawNumber }
+    } else if (conversionLocation === 'WHATSAPP') {
+      // WhatsApp: NO value in call_to_action at all. Meta resolves from promoted_object.
+      ctaValue = undefined
     } else if (hasLink) {
       ctaValue = { link: linkUrl }
     } else if (conversionLocation === 'MESSENGER' && pageId) {
@@ -491,19 +494,21 @@ export async function POST(request: Request) {
             ? linkUrl
             : isLeadsOnAd
               ? `https://www.facebook.com/${pageId}`
-              : (conversionLocation === 'WHATSAPP' ? `https://www.facebook.com/${pageId}` : '')
-    const effectiveLinkUrl = (isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl
-    const effectiveHasLink = (isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation.length > 0 : hasLink
+              : ''
+    const effectiveLinkUrl = conversionLocation === 'WHATSAPP' ? '' : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
+    const effectiveHasLink = conversionLocation === 'WHATSAPP' ? false : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation.length > 0 : hasLink)
 
     if (creative.format === 'single_image' && creative.imageHash) {
       // INSTAGRAM_DIRECT: ig.me link. MESSENGER: m.me link. WhatsApp: facebook.com. NEVER chatGreeting as link.
       const resolvedLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : '')
+      // WhatsApp: do not include link in link_data — Meta uses promoted_object for WhatsApp routing
+      const finalLink = conversionLocation === 'WHATSAPP' ? '' : resolvedLink
       // name/headline: NEVER use websiteUrl. If headline looks like URL, use empty.
       const safeHeadline = (creative.headline ?? '').trim()
       const headlineIsUrl = safeHeadline.startsWith('http://') || safeHeadline.startsWith('https://')
       const linkData: Record<string, unknown> = {
         image_hash: creative.imageHash,
-        ...(resolvedLink ? { link: resolvedLink } : {}),
+        ...(finalLink ? { link: finalLink } : {}),
         message: creative.primaryText,
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
@@ -513,11 +518,13 @@ export async function POST(request: Request) {
       objectStorySpec.link_data = linkData
     } else if (creative.format === 'single_video' && creative.videoId) {
       const resolvedVideoLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined))
+      // WhatsApp: do not include link in video_data — Meta uses promoted_object for WhatsApp routing
+      const finalVideoLink = conversionLocation === 'WHATSAPP' ? '' : (resolvedVideoLink ?? '')
       const safeVideoTitle = (creative.headline ?? '').trim()
       const videoTitleIsUrl = safeVideoTitle.startsWith('http://') || safeVideoTitle.startsWith('https://')
       const videoData: Record<string, unknown> = {
         video_id: creative.videoId,
-        ...(resolvedVideoLink ? { link: resolvedVideoLink } : {}),
+        ...(finalVideoLink ? { link: finalVideoLink } : {}),
         message: creative.primaryText,
         title: videoTitleIsUrl ? '' : safeVideoTitle,
         link_description: creative.description,
@@ -527,10 +534,12 @@ export async function POST(request: Request) {
       objectStorySpec.video_data = videoData
     } else if (creative.format === 'carousel' && creative.carouselCards?.length >= 2) {
       const carouselLink = (isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl
+      // WhatsApp: do not include link in carousel link_data — Meta uses promoted_object for WhatsApp routing
+      const finalCarouselLink = conversionLocation === 'WHATSAPP' ? '' : (carouselLink || '')
       const childAttachments = creative.carouselCards.map((card: { imageHash: string; headline: string; description: string; link: string }) => {
         const cardHeadline = (card.headline ?? '').trim()
         const cardHeadlineIsUrl = cardHeadline.startsWith('http://') || cardHeadline.startsWith('https://')
-        const cardLink = card.link?.trim() || carouselLink
+        const cardLink = conversionLocation === 'WHATSAPP' ? '' : (card.link?.trim() || carouselLink)
         return {
           image_hash: card.imageHash,
           name: cardHeadlineIsUrl ? '' : cardHeadline,
@@ -540,7 +549,7 @@ export async function POST(request: Request) {
         }
       })
       const carouselLinkData: Record<string, unknown> = {
-        link: carouselLink || '',
+        link: finalCarouselLink,
         message: creative.primaryText,
         child_attachments: childAttachments,
       }
