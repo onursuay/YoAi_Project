@@ -3,7 +3,6 @@ import { cookies } from 'next/headers'
 import { createMetaClient } from '@/lib/meta/client'
 import { META_BASE_URL } from '@/lib/metaConfig'
 import { getCached, setCached } from '@/lib/meta/cache'
-import { runWhatsappSelfcheck } from '@/lib/meta/whatsappSelfcheck'
 
 export const dynamic = 'force-dynamic'
 
@@ -145,59 +144,16 @@ export async function GET() {
     assets.instagramAccounts = Array.from(igSet.values())
   }
 
-  // CTWA / WhatsApp: check scopes + attempt selfcheck for ALL pages (fix: was only checking pages[0])
-  if (assets.pages.length > 0 && hasAdsManagement && hasWhatsAppManagement && hasWhatsAppMessaging) {
-    let foundAvailable = false
-    let lastReason = 'WhatsApp Business hesabı yapılandırılmamış'
-    let matchedPageId: string | null = null
-    let collectedPhones: { phoneNumberId: string; displayPhone?: string; verifiedName?: string }[] = []
-
-    // Check only the selected page — not all pages — to avoid rate limiting
-    const cookieSelectedPageId = cookieStore.get('meta_selected_page_id')?.value
-    const pageToCheck = cookieSelectedPageId
-      ? assets.pages.find(p => String(p.id) === String(cookieSelectedPageId)) ?? assets.pages[0]
-      : assets.pages[0]
-
-    if (pageToCheck) {
-      const selfcheckRes = await runWhatsappSelfcheck(
-        client,
-        String(pageToCheck.id),
-        { adAccountId: accountId, grantedScopes },
-        pageToCheck.access_token
-      )
-      const wabaPhones = selfcheckRes.steps?.waba_to_phone_numbers ?? []
-      collectedPhones = []
-      for (const w of wabaPhones) {
-        if (w.step.ok && Array.isArray(w.step.data)) {
-          for (const p of w.step.data) {
-            if (p.id) {
-              collectedPhones.push({
-                phoneNumberId: String(p.id),
-                displayPhone: p.display_phone_number ?? undefined,
-                verifiedName: p.verified_name ?? undefined,
-              })
-            }
-          }
-        }
-      }
-      const hasPhones = collectedPhones.length > 0
-      if (hasPhones) {
-        foundAvailable = true
-        matchedPageId = String(pageToCheck.id)
-      } else {
-        lastReason = 'WhatsApp Business hesabı yapılandırılmamış'
-      }
-    }
-
-    assets.whatsapp = foundAvailable
-      ? { available: true, phoneNumbers: collectedPhones }
-      : { available: false, reason: lastReason, phoneNumbers: [] }
+  // WhatsApp: Real gating is per-page in TabDetails via /api/meta/inventory?page_id=X.
+  // capabilities.canCTWA = true always so WhatsApp stays in destination list; TabDetails locks/unlocks per page.
+  if (assets.pages.length > 0 && hasWhatsAppManagement && hasWhatsAppMessaging) {
+    assets.whatsapp = { available: true, reason: undefined, phoneNumbers: [] }
   } else if (assets.pages.length === 0) {
-    assets.whatsapp = { available: false, reason: 'Bağlı sayfa yok' }
+    assets.whatsapp = { available: false, reason: 'Bağlı sayfa yok', phoneNumbers: [] }
   } else if (!hasWhatsAppManagement || !hasWhatsAppMessaging) {
-    assets.whatsapp = { available: false, reason: 'WhatsApp izinleri onaysız (whatsapp_business_management / whatsapp_business_messaging)' }
+    assets.whatsapp = { available: false, reason: 'WhatsApp izinleri onaysız (whatsapp_business_management / whatsapp_business_messaging)', phoneNumbers: [] }
   } else {
-    assets.whatsapp = { available: false, reason: 'Gerekli izin yok' }
+    assets.whatsapp = { available: false, reason: 'Gerekli izin yok', phoneNumbers: [] }
   }
   if (!assets.whatsapp.available) reasons.ctwa = assets.whatsapp.reason ?? 'WhatsApp reklamları kullanılamıyor'
 

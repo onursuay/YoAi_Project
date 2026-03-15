@@ -492,72 +492,20 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
   }, [isOpen])
 
   // ── Page-scoped inventory re-fetch: WhatsApp numbers depend on selected page ──
-  // Initial inventory fetch has no page_id → WABA/WhatsApp numbers are empty.
-  // When user selects a page, re-fetch with page_id to get page-linked WhatsApp data.
+  // Single source of truth: /api/meta/inventory?page_id=X. No capabilities/canCTWA.
   const lastFetchedPageIdRef = useRef<string | undefined>(undefined)
-
-  // Reset ref when modal closes so next open can refetch for same page
-  useEffect(() => {
-    if (!isOpen) {
-      lastFetchedPageIdRef.current = undefined
-      console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'modal_closed' })
-    }
-  }, [isOpen])
-
-  useEffect(() => {
-    if (!state.adset.pageId) {
-      lastFetchedPageIdRef.current = undefined
-      setInventoryStatus('idle')
-      setInventoryPageId(null)
-      console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'pageId_cleared' })
-      return
-    }
-  }, [state.adset.pageId])
 
   useEffect(() => {
     const pageId = state.adset.pageId
-    const lastFetched = lastFetchedPageIdRef.current
-    const statusLoaded = inventoryStatus === 'loaded'
-    const statusLoading = inventoryStatus === 'loading'
-    const pageIdMatches = inventoryPageId === pageId
-
-    // Skip only when: open, pageId set, and (already loaded for this page | already loading for this page)
-    const alreadyLoadedForPage = !!pageId && lastFetched === pageId && statusLoaded && pageIdMatches === true
-    const alreadyLoadingForPage = !!pageId && lastFetched === pageId && statusLoading
-    const willSkip =
-      isOpen &&
-      !!pageId &&
-      (alreadyLoadedForPage || alreadyLoadingForPage)
-
-    const skipReason = !isOpen
-      ? 'modal_closed'
-      : !pageId
-        ? 'no_pageId'
-        : alreadyLoadedForPage
-          ? 'all_conditions_met'
-          : alreadyLoadingForPage
-            ? 'already_loading'
-            : lastFetched !== pageId
-              ? 'different_or_no_previous_fetch'
-              : !statusLoaded
-                ? 'status_not_loaded'
-                : pageIdMatches !== true
-                  ? 'inventoryPageId_mismatch'
-                  : 'unknown'
-
-    console.log('[CampaignWizard] INVENTORY_FETCH_GUARD', {
-      isOpen,
-      pageId: pageId ?? null,
-      lastFetchedPageIdRef: lastFetched ?? null,
-      inventoryStatus,
-      inventoryPageId: inventoryPageId ?? null,
-      willSkip,
-      skipReason,
-    })
-
-    if (willSkip) return
-
-    if (!isOpen || !pageId) return
+    if (!isOpen || !pageId) {
+      lastFetchedPageIdRef.current = undefined
+      setInventoryStatus('idle')
+      setInventoryPageId(null)
+      if (!isOpen) console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'modal_closed' })
+      else if (!pageId) console.log('[CampaignWizard] INVENTORY_FETCH_RESET', { reason: 'pageId_cleared' })
+      return
+    }
+    if (lastFetchedPageIdRef.current === pageId) return
 
     lastFetchedPageIdRef.current = pageId
     setInventoryStatus('loading')
@@ -648,7 +596,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         }
       })
     return () => { cancelled = true }
-  }, [isOpen, state.adset.pageId, inventoryStatus, inventoryPageId])
+  }, [isOpen, state.adset.pageId])
 
   // Derive Instagram account from inventory when pageId changes
   useEffect(() => {
@@ -873,7 +821,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     const objective = state.campaign.objective
     const allowedDests = getAllowedDestinations(objective)
     const capabilityFiltered = allowedDests.filter((d) => {
-      if (d === 'WHATSAPP' && !capabilities!.features!.canCTWA) return false
+      // WhatsApp: always allow in list; TabDetails locks/unlocks per-page via accountInventory
+      if (d === 'WHATSAPP') return true
       if (d === 'ON_AD' && !capabilities!.features!.canLeadFormsCreate && objective !== 'OUTCOME_LEADS') return false
       if (d === 'WEBSITE' && !capabilities!.features!.canWebsite) return false
       return true
@@ -1048,7 +997,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         const allowedDests = getAllowedDestinations(objective)
         const capabilityFiltered = capabilities?.features
           ? allowedDests.filter((d) => {
-              if (d === 'WHATSAPP' && !capabilities!.features!.canCTWA) return false
+              if (d === 'WHATSAPP') return true // TabDetails locks/unlocks per-page via accountInventory
               if (d === 'ON_AD' && !capabilities!.features!.canLeadFormsCreate && objective !== 'OUTCOME_LEADS') return false
               if (d === 'WEBSITE' && !capabilities!.features!.canWebsite) return false
               return true

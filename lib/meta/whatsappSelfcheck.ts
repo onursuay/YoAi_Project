@@ -1,3 +1,9 @@
+/**
+ * WhatsApp selfcheck — DIAGNOSTICS ONLY (used by /api/meta/whatsapp/selfcheck endpoint).
+ * NOT used as source-of-truth for WhatsApp availability in the wizard.
+ * Source of truth: /api/meta/inventory?page_id=X → page-scoped WABA + page-level fields.
+ * The business-level fallback below may return numbers from other pages' WABAs — acceptable for diagnostics.
+ */
 import type { MetaGraphClient } from '@/lib/meta/client'
 
 export interface StepError {

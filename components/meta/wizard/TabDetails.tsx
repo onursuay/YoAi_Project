@@ -270,13 +270,21 @@ export default function TabDetails({
 
   const inventory = capabilities?.assets
     ? {
-        pages: (capabilities.assets.pages ?? []).map((p) => ({
-          page_id: p.id,
-          name: p.name,
-          has_messaging: true,
-          has_whatsapp: capabilities?.assets?.whatsapp?.available ?? false,
-          lead_terms_accepted: null as boolean | null,
-        })),
+        pages: (capabilities.assets.pages ?? []).map((p) => {
+          const hasPageWhatsApp =
+            p.id === state.pageId && accountInventory
+              ? (accountInventory.whatsapp_phone_numbers?.length ?? 0) > 0 ||
+                !!accountInventory.page_whatsapp_number ||
+                accountInventory.page_has_whatsapp === true
+              : false
+          return {
+            page_id: p.id,
+            name: p.name,
+            has_messaging: true,
+            has_whatsapp: hasPageWhatsApp,
+            lead_terms_accepted: null as boolean | null,
+          }
+        }),
         pixels: (capabilities.assets.pixels ?? []).map((p) => ({ pixel_id: p.id, name: p.name })),
         apps: [] as { app_id: string; name: string }[],
         catalogs: [] as { catalog_id: string; name: string }[],
