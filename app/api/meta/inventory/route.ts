@@ -634,6 +634,15 @@ async function fetchWhatsAppPhoneNumbers(
   }
 }
 
+/** Result of page-level WhatsApp resolution (shared type for fetch and fallback). */
+interface PageLevelWhatsAppResult {
+  pageWhatsappNumber: string | null
+  pageHasWhatsApp: boolean
+  pageWhatsappSource: string
+  has_whatsapp_number?: boolean
+  has_whatsapp_business_number?: boolean
+}
+
 /**
  * Page-level whatsapp_number / has_whatsapp_number (no WABA field).
  * Primary source for WhatsApp availability when WABA whatsapp_business_account fails (#100).
@@ -643,13 +652,7 @@ async function fetchPageLevelWhatsApp(
   requestId: string,
   pageId: string,
   selectedPage?: MetaPageItem | null,
-): Promise<{
-  pageWhatsappNumber: string | null
-  pageHasWhatsApp: boolean
-  pageWhatsappSource: string
-  has_whatsapp_number?: boolean
-  has_whatsapp_business_number?: boolean
-}> {
+): Promise<PageLevelWhatsAppResult> {
   let pageWhatsappNumber: string | null = selectedPage?.whatsapp_number ?? null
   let pageHasWhatsApp = selectedPage?.has_whatsapp_number === true || selectedPage?.has_whatsapp_business_number === true
   let pageWhatsappSource: string = pageWhatsappNumber ? 'me_accounts_field' : 'none'
@@ -754,7 +757,7 @@ export async function GET(request: Request) {
     // Run both in parallel so page-level resolution is not blocked by WABA (#100) errors.
     const [whatsappResult, pageLevelResult] = await Promise.all([
       fetchWhatsAppPhoneNumbers(client as never, requestId, pageId, pageAccessToken),
-      pageId ? fetchPageLevelWhatsApp(client as never, requestId, pageId, selectedPageRaw) : Promise.resolve({ pageWhatsappNumber: null, pageHasWhatsApp: false, pageWhatsappSource: 'none' }),
+      pageId ? fetchPageLevelWhatsApp(client as never, requestId, pageId, selectedPageRaw) : Promise.resolve<PageLevelWhatsAppResult>({ pageWhatsappNumber: null, pageHasWhatsApp: false, pageWhatsappSource: 'none', has_whatsapp_number: undefined, has_whatsapp_business_number: undefined }),
     ])
 
     const pageIds = rawPages.map((p) => p.id)
