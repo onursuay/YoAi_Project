@@ -413,10 +413,9 @@ export default function TabDetails({
       {state.conversionLocation === 'WHATSAPP' && (() => {
         // Primary: accountInventory (page-scoped re-fetch with real WhatsApp data)
         // Fallback: capabilities-derived local inventory (initial load, no page_id)
-        const wabaNumbers: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string; adUsability?: string; adUsabilityReason?: string }[] =
-          (accountInventory?.whatsapp_phone_numbers?.length ?? 0) > 0
-            ? accountInventory!.whatsapp_phone_numbers!
-            : (inventory?.whatsapp_phone_numbers ?? [])
+        const wabaNumbers = (accountInventory?.whatsapp_phone_numbers?.length ?? 0) > 0
+          ? accountInventory!.whatsapp_phone_numbers!
+          : (inventory?.whatsapp_phone_numbers ?? [])
         const pageWhatsappNumber = accountInventory?.page_whatsapp_number
           ?? (typeof (inventory as Record<string, unknown> | null)?.page_whatsapp_number === 'string'
             ? String((inventory as Record<string, unknown>).page_whatsapp_number)
