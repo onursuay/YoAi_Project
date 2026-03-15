@@ -54,6 +54,14 @@ export interface InventoryProductSet {
   name: string
 }
 
+/** Ad usability classification for WhatsApp phone numbers */
+export type WhatsAppAdUsability =
+  | 'usable'             // Matches page-linked number → safe to use
+  | 'page_mismatch'      // In WABA but doesn't match page-linked number
+  | 'unknown'            // No page-linked number available to compare
+  | 'permission_denied'  // Cached: Meta returned OAuthException code 1
+  | 'invalid_for_page'   // Cached: Meta returned code 100 / subcode 1487246
+
 /** WhatsApp Business Account phone number (for Click to WhatsApp / WhatsApp Leads) */
 export interface InventoryWhatsAppNumber {
   wabaId: string
@@ -63,6 +71,10 @@ export interface InventoryWhatsAppNumber {
   verifiedName?: string
   qualityRating?: string
   status?: string
+  /** Ad usability classification — indicates whether this number can be used in promoted_object */
+  adUsability?: WhatsAppAdUsability
+  /** Human-readable reason when adUsability is not 'usable' */
+  adUsabilityReason?: string
 }
 
 export interface InventoryTokenPermissions {
@@ -624,6 +636,63 @@ async function fetchWhatsAppPhoneNumbers(
   }
 }
 
+// ── WhatsApp Ad Usability Classification ──
+
+/**
+ * Cross-reference WABA phone numbers with page-linked WhatsApp number.
+ * Sets adUsability on each number:
+ *   'usable'        — digits match the page-linked number
+ *   'page_mismatch' — in WABA but doesn't match page link
+ *   'unknown'       — no page-linked number available to compare (all numbers get this)
+ */
+function classifyWhatsAppNumbers(
+  numbers: InventoryWhatsAppNumber[],
+  pageWhatsappNumber: string | null | undefined,
+  requestId: string,
+): InventoryWhatsAppNumber[] {
+  if (numbers.length === 0) return numbers
+
+  // Normalize page number to digits-only for comparison
+  const pageDigits = pageWhatsappNumber
+    ? pageWhatsappNumber.replace(/\D/g, '')
+    : null
+
+  const classified = numbers.map((num) => {
+    const numDigits = num.displayPhone
+      ? num.displayPhone.replace(/\D/g, '')
+      : null
+
+    let adUsability: WhatsAppAdUsability
+    let adUsabilityReason: string | undefined
+
+    if (!pageDigits) {
+      // No page-linked number resolved — can't confirm, mark unknown
+      adUsability = 'unknown'
+      adUsabilityReason = 'Sayfaya bağlı WhatsApp numarası doğrulanamadı. Numara kullanılabilir ancak garanti edilemez.'
+    } else if (numDigits && (pageDigits.endsWith(numDigits.slice(-7)) || numDigits.endsWith(pageDigits.slice(-7)))) {
+      // Last 7 digits match — page-linked number
+      adUsability = 'usable'
+    } else {
+      // Digits don't match — this WABA number is not linked to the page
+      adUsability = 'page_mismatch'
+      adUsabilityReason = `Bu numara sayfaya bağlı WhatsApp numarası (${pageWhatsappNumber}) ile eşleşmiyor. Reklamda kullanılamayabilir.`
+    }
+
+    return { ...num, adUsability, adUsabilityReason }
+  })
+
+  // Log classification results
+  console.log(`[Inventory][${requestId}] WA_USABILITY_CLASSIFICATION:`, JSON.stringify(
+    classified.map(n => ({
+      phoneNumberId: n.phoneNumberId,
+      displayPhone: n.displayPhone ?? '(unknown)',
+      adUsability: n.adUsability,
+    }))
+  ))
+
+  return classified
+}
+
 // ── Route Handler ──
 
 export async function GET(request: Request) {
@@ -785,6 +854,10 @@ export async function GET(request: Request) {
 
     console.log(`[Inventory][${requestId}] WA_PAGE_NUMBER_FINAL: ${pageWhatsappNumber ?? 'null'} (source: ${pageWhatsappSource})`)
 
+    // ── WhatsApp Ad Usability Classification ──
+    // Cross-reference WABA numbers with page-linked number to classify each for ad use
+    const classifiedNumbers = classifyWhatsAppNumbers(whatsappResult.numbers, pageWhatsappNumber, requestId)
+
     const inventory: AccountInventory = {
       pages,
       ig_accounts,
@@ -794,7 +867,7 @@ export async function GET(request: Request) {
       apps: [],
       catalogs: [],
       product_sets: {},
-      whatsapp_phone_numbers: whatsappResult.numbers,
+      whatsapp_phone_numbers: classifiedNumbers,
       page_whatsapp_number: pageWhatsappNumber,
       page_whatsapp_number_source: pageWhatsappSource,
       whatsapp_diagnostics: whatsappResult.diagnostics,

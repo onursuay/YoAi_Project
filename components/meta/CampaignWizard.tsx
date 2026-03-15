@@ -1632,6 +1632,50 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         throw new Error(REQUIRES_BID_AMOUNT)
       }
 
+      // ── WhatsApp error caching: mark the selected number as unusable ──
+      if (state.adset.conversionLocation === 'WHATSAPP') {
+        const failedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+        if (failedPhoneId && inventory) {
+          // code 1 = PERMISSION_DENIED, code 100 + subcode 1487246 = invalid for page
+          const usability = errorCode === 1 ? 'permission_denied'
+            : (errorCode === 100 && errorSubcode === 1487246) ? 'invalid_for_page'
+            : undefined
+          if (usability) {
+            const reason = usability === 'permission_denied'
+              ? 'Bu numara için yetki yok (OAuthException). Meta Business Suite\'ten erişim izinlerini kontrol edin.'
+              : 'Bu numara seçili sayfa/reklam hesabı ile uyumsuz. Farklı bir numara seçin.'
+            console.warn(`[CampaignWizard] WA_NUMBER_USABILITY_CACHED: phoneId=${failedPhoneId} usability=${usability}`)
+            setInventory((prev) => {
+              if (!prev) return prev
+              return {
+                ...prev,
+                whatsapp_phone_numbers: prev.whatsapp_phone_numbers.map((n) =>
+                  n.phoneNumberId === failedPhoneId
+                    ? { ...n, adUsability: usability, adUsabilityReason: reason }
+                    : n
+                ),
+              }
+            })
+            // Clear the failed selection so user must pick another number
+            setState((prev) => ({
+              ...prev,
+              adset: {
+                ...prev.adset,
+                destinationDetails: {
+                  ...prev.adset.destinationDetails,
+                  messaging: {
+                    ...prev.adset.destinationDetails?.messaging,
+                    whatsappPhoneNumberId: undefined,
+                    whatsappDisplayPhone: undefined,
+                    whatsappSourceLayer: undefined,
+                  },
+                },
+              },
+            }))
+          }
+        }
+      }
+
       // ── Fallback: show error on Summary, do NOT reset step ──
       if (route.field) {
         setStepErrors((prev) => ({ ...prev, [route.field!]: route.message }))
@@ -1844,6 +1888,32 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         adData.error === 'page_id_mismatch'
       ) {
         setStepErrors((prev) => ({ ...prev, ig_account: adData.message }))
+      }
+
+      // ── WhatsApp error caching (ad create path) ──
+      if (state.adset.conversionLocation === 'WHATSAPP') {
+        const failedPhoneId = state.adset.destinationDetails?.messaging?.whatsappPhoneNumberId
+        const adErrorCode: number | undefined = adData.error?.code ?? adData.code
+        const adErrorSubcode: number | undefined = adData.error?.error_subcode ?? adData.error?.subcode
+        if (failedPhoneId && inventory) {
+          const usability = adErrorCode === 1 ? 'permission_denied' as const
+            : (adErrorCode === 100 && adErrorSubcode === 1487246) ? 'invalid_for_page' as const
+            : undefined
+          if (usability) {
+            console.warn(`[CampaignWizard] WA_NUMBER_USABILITY_CACHED (ad create): phoneId=${failedPhoneId} usability=${usability}`)
+            setInventory((prev) => {
+              if (!prev) return prev
+              return {
+                ...prev,
+                whatsapp_phone_numbers: prev.whatsapp_phone_numbers.map((n) =>
+                  n.phoneNumberId === failedPhoneId
+                    ? { ...n, adUsability: usability, adUsabilityReason: usability === 'permission_denied' ? 'Yetki yok' : 'Sayfa ile uyumsuz' }
+                    : n
+                ),
+              }
+            })
+          }
+        }
       }
 
       const errorMsg = adData.error_user_msg || adData.message || t.adCreateFailed
