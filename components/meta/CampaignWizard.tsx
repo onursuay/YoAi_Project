@@ -600,7 +600,7 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
           console.log('[CampaignWizard] INVENTORY_FETCH_ERROR', { pageId, reason: 'fetch_failed', error: e instanceof Error ? e.message : String(e) })
         }
       })
-    return () =&gt; { cancelled = true }
+    return () => { cancelled = true }
   }, [isOpen, state.adset.pageId, pagesInitialLoadDone, pages, effectivePageId])
 
   // Derive Instagram account from inventory when pageId changes
