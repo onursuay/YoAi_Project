@@ -131,11 +131,15 @@ function resolveDestinationConfig(
       if (pageId) promotedObject = { page_id: pageId }
       break
     case 'WHATSAPP':
-      // Only send page_id. Do NOT send whatsapp_phone_number.
-      // Meta resolves the phone server-side from page's linked WhatsApp.
-      // Sending explicit number causes subcode 1487246.
       if (pageId) {
-        promotedObject = { page_id: pageId }
+        // Clean display phone to digits-only for Meta API
+        // Meta expects "905382343200" NOT "+90 538 234 32 00"
+        const cleanedPhone = whatsappDisplayPhone
+          ? whatsappDisplayPhone.replace(/\D/g, '')
+          : undefined
+        promotedObject = cleanedPhone
+          ? { page_id: pageId, whatsapp_phone_number: cleanedPhone }
+          : { page_id: pageId }
       }
       break
     case 'INSTAGRAM_DIRECT':
