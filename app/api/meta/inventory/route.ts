@@ -561,19 +561,28 @@ async function fetchWhatsAppPhoneNumbers(
     })
 
     if (!pageWabaRes.ok) {
-      console.warn(`[Inventory][${requestId}] Page ${pageId} WABA query failed:`, pageWabaRes.error?.message)
-      return {
-        numbers: [],
-        diagnostics: { ...diagnostics, mode: 'page_scoped' },
-        error: toWhatsAppError(
-          'page_business_mapping',
-          pageWabaRes as GraphResult,
-          'Sayfa WhatsApp Business Account bilgisi alınamadı.',
-        ),
+      const graphCode = pageWabaRes.error?.code
+      const isNonexistingField = graphCode === 100
+      console.warn(`[Inventory][${requestId}] Page ${pageId} WABA query failed (code=${graphCode}):`, pageWabaRes.error?.message)
+
+      if (!isNonexistingField) {
+        // Real error (auth, permission, etc.) — return immediately
+        return {
+          numbers: [],
+          diagnostics: { ...diagnostics, mode: 'page_scoped' },
+          error: toWhatsAppError(
+            'page_business_mapping',
+            pageWabaRes as GraphResult,
+            'Sayfa WhatsApp Business Account bilgisi alınamadı.',
+          ),
+        }
       }
+      // Code 100 = whatsapp_business_account field not accessible with this token
+      // Fall through to business-level fallback below
+      console.log(`[Inventory][${requestId}] Page ${pageId} whatsapp_business_account field not accessible (code 100) — falling through to business fallback`)
     }
 
-    const waba = pageWabaRes.data?.whatsapp_business_account
+    const waba = pageWabaRes.ok ? pageWabaRes.data?.whatsapp_business_account : undefined
     if (!waba) {
       console.log(`[Inventory][${requestId}] Page ${pageId} has NO linked WABA (whatsapp_business_account is null) — trying business-level fallback`)
 
