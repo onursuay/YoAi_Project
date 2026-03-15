@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { createMetaClient } from '@/lib/meta/client'
 import { META_BASE_URL } from '@/lib/metaConfig'
+import { runWhatsappSelfcheck } from '@/lib/meta/whatsappSelfcheck'
 
 export const dynamic = 'force-dynamic'
 
@@ -922,10 +923,68 @@ export async function GET(request: Request) {
 
     // WABA fetch is auxiliary; page-level whatsapp_number/has_whatsapp_number is primary.
     // Run both in parallel so page-level resolution is not blocked by WABA (#100) errors.
-    const [whatsappResult, pageLevelResult] = await Promise.all([
+    let [whatsappResult, pageLevelResult] = await Promise.all([
       fetchWhatsAppPhoneNumbers(client as never, requestId, pageId, pageAccessToken),
       pageId ? fetchPageLevelWhatsApp(client as never, requestId, pageId, selectedPageRaw) : Promise.resolve<PageLevelWhatsAppResult>({ pageWhatsappNumber: null, pageHasWhatsApp: false, pageWhatsappSource: 'none', has_whatsapp_number: undefined, has_whatsapp_business_number: undefined }),
     ])
+
+    // ── SELFCHECK FALLBACK ────────────────────────────────────────────────────
+    // If fetchWhatsAppPhoneNumbers returned empty, call runWhatsappSelfcheck which
+    // uses the full MetaGraphClient and scans all /me/businesses — proven to find
+    // Elysium Garden Otel WABA (ID 110219715041252) with phone +90 539 672 61 47.
+    if (pageId && whatsappResult.numbers.length === 0) {
+      console.log(`[Inventory][${requestId}] WA_SELFCHECK_FALLBACK_START: pageId=${pageId}`)
+      try {
+        const selfcheckResult = await runWhatsappSelfcheck(
+          client as never,
+          pageId,
+          { adAccountId: accountId, grantedScopes: [] },
+          pageAccessToken
+        )
+
+        if (selfcheckResult.ok && selfcheckResult.steps?.waba_to_phone_numbers) {
+          const fallbackNumbers: InventoryWhatsAppNumber[] = []
+
+          for (const wabaEntry of selfcheckResult.steps.waba_to_phone_numbers) {
+            if (wabaEntry.step.ok && Array.isArray(wabaEntry.step.data)) {
+              for (const phone of wabaEntry.step.data) {
+                if (phone.id) {
+                  fallbackNumbers.push({
+                    wabaId: wabaEntry.waba_id,
+                    wabaName: wabaEntry.waba_name,
+                    phoneNumberId: String(phone.id),
+                    displayPhone: phone.display_phone_number,
+                    verifiedName: phone.verified_name,
+                    qualityRating: phone.quality_rating,
+                    status: phone.code_verification_status,
+                  })
+                }
+              }
+            }
+          }
+
+          console.log(`[Inventory][${requestId}] WA_SELFCHECK_FALLBACK_RESULT: phones=${fallbackNumbers.length}`)
+
+          if (fallbackNumbers.length > 0) {
+            whatsappResult = {
+              numbers: fallbackNumbers,
+              diagnostics: {
+                ...whatsappResult.diagnostics,
+                businesses_scanned: selfcheckResult.steps.waba_to_phone_numbers.length,
+                wabas_scanned: selfcheckResult.steps.waba_to_phone_numbers.length,
+                mapping_source: 'fallback_scan',
+                mapping_fallback_used: true,
+                mapping_warning: 'Used runWhatsappSelfcheck as fallback — fetched all business WABAs',
+              },
+            }
+          }
+        } else {
+          console.log(`[Inventory][${requestId}] WA_SELFCHECK_FALLBACK_EMPTY: ok=${selfcheckResult.ok}, error=${selfcheckResult.error ?? 'none'}`)
+        }
+      } catch (e) {
+        console.warn(`[Inventory][${requestId}] WA_SELFCHECK_FALLBACK_ERROR:`, e instanceof Error ? e.message : e)
+      }
+    }
 
     const pageIds = rawPages.map((p) => p.id)
 
