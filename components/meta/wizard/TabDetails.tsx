@@ -133,7 +133,7 @@ interface TabDetailsProps {
   accountInventoryLeadForms?: Record<string, { form_id: string; name: string; status: string }[]>
   /** Real inventory from CampaignWizard — contains page-scoped WhatsApp data after re-fetch */
   accountInventory?: {
-    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string; adUsability?: string; adUsabilityReason?: string }[]
+    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
   } | null
@@ -450,7 +450,7 @@ export default function TabDetails({
             </div>
           )}
 
-          {/* WABA phone numbers — SELECTABLE dropdown with usability badges */}
+          {/* WABA phone numbers — SELECTABLE dropdown */}
           {wabaNumbers.length > 0 ? (
             <div className="mb-2">
               <select
@@ -458,10 +458,6 @@ export default function TabDetails({
                 onChange={(e) => {
                   const phoneId = e.target.value || undefined
                   const phone = wabaNumbers.find(p => p.phoneNumberId === phoneId)
-                  // Block selection of numbers with known errors
-                  if (phone && (phone.adUsability === 'permission_denied' || phone.adUsability === 'invalid_for_page')) {
-                    return
-                  }
                   onChange({
                     destinationDetails: {
                       ...state.destinationDetails,
@@ -479,48 +475,14 @@ export default function TabDetails({
                 }`}
               >
                 <option value="">— WhatsApp numarası seçin —</option>
-                {wabaNumbers.map((p) => {
-                  const badge = p.adUsability === 'usable' ? ' \u2714'
-                    : p.adUsability === 'permission_denied' ? ' \u2718 Yetki yok'
-                    : p.adUsability === 'invalid_for_page' ? ' \u2718 Sayfa ile uyumsuz'
-                    : p.adUsability === 'page_mismatch' ? ' \u26A0 Sayfa numaras\u0131 ile e\u015Fle\u015Fmiyor'
-                    : ''
-                  const isBlocked = p.adUsability === 'permission_denied' || p.adUsability === 'invalid_for_page'
-                  return (
-                    <option
-                      key={p.phoneNumberId}
-                      value={p.phoneNumberId}
-                      disabled={isBlocked}
-                    >
-                      {p.displayPhone ?? p.phoneNumberId}
-                      {p.verifiedName ? ` (${p.verifiedName})` : ''}
-                      {badge}
-                    </option>
-                  )
-                })}
+                {wabaNumbers.map((p) => (
+                  <option key={p.phoneNumberId} value={p.phoneNumberId}>
+                    {p.displayPhone ?? p.phoneNumberId}
+                    {p.verifiedName ? ` (${p.verifiedName})` : ''}
+                  </option>
+                ))}
               </select>
               {errors.whatsapp_phone && <p className="mt-1 text-sm text-red-600">{errors.whatsapp_phone}</p>}
-
-              {/* Usability warning for selected number */}
-              {selectedPhoneId && (() => {
-                const sel = wabaNumbers.find(p => p.phoneNumberId === selectedPhoneId)
-                if (!sel) return null
-                if (sel.adUsability === 'page_mismatch') {
-                  return (
-                    <div className="mt-1.5 px-3 py-2 bg-amber-50 border border-amber-300 rounded-lg text-xs text-amber-800">
-                      <span className="font-semibold">Dikkat:</span> {sel.adUsabilityReason || 'Bu numara sayfaya ba\u011Fl\u0131 WhatsApp numaras\u0131 ile e\u015Fle\u015Fmiyor.'}
-                    </div>
-                  )
-                }
-                if (sel.adUsability === 'unknown') {
-                  return (
-                    <div className="mt-1.5 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
-                      {sel.adUsabilityReason || 'Sayfaya ba\u011Fl\u0131 numara do\u011Frulanamad\u0131. Numara ge\u00E7erli olabilir.'}
-                    </div>
-                  )
-                }
-                return null
-              })()}
             </div>
           ) : pageWhatsappNumber ? (
             <div className="mb-2 px-3 py-2 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">

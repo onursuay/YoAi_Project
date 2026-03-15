@@ -31,7 +31,7 @@ interface StepAdSetProps {
   accountInventoryLeadForms?: Record<string, { form_id: string; name: string; status: string }[]>
   /** Real inventory with page-scoped WhatsApp data */
   accountInventory?: {
-    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string; adUsability?: string; adUsabilityReason?: string }[]
+    whatsapp_phone_numbers?: { phoneNumberId: string; displayPhone?: string; verifiedName?: string; wabaId?: string }[]
     page_whatsapp_number?: string | null
     page_whatsapp_number_source?: string
   } | null
