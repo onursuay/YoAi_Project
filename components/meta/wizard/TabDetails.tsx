@@ -232,8 +232,8 @@ export default function TabDetails({
       whatsappLocked = true
       whatsappReason = 'WhatsApp bilgisi yüklenemedi'
     } else if (invLoaded) {
-      whatsappLocked = !hasPageLinkedNumber
-      whatsappReason = hasPageLinkedNumber ? undefined : 'Bu sayfaya bağlı WhatsApp numarası yok'
+      whatsappLocked = false
+      whatsappReason = undefined
     } else {
       whatsappLocked = true
       whatsappReason = 'Bilgi yükleniyor…'
