@@ -506,9 +506,9 @@ export async function POST(request: Request) {
       ctaValue = { link: igLink }
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
-      const normalizedPhone = rawNumber.replace(/\D/g, '')
-      const telPhone = normalizedPhone.startsWith('90') ? normalizedPhone : `90${normalizedPhone.replace(/^0/, '')}`
-      ctaValue = { link: `tel:+${telPhone}` }
+      const digitsOnly = rawNumber.replace(/\D/g, '').replace(/^0/, '')
+      const withCountry = digitsOnly.startsWith('90') ? digitsOnly : `90${digitsOnly}`
+      ctaValue = { link: `tel:+${withCountry}` }
     } else if (hasLink) {
       ctaValue = { link: linkUrl }
     } else if (conversionLocation === 'MESSENGER' && pageId) {

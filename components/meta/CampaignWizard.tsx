@@ -1258,10 +1258,16 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // Traffic + CALL: telefon numarası zorunlu
-    if (state.campaign.objective === 'OUTCOME_TRAFFIC' && state.adset.conversionLocation === 'CALL') {
-      const phoneVal = state.adset.destinationDetails?.calls?.phoneNumber?.trim()
-      if (!phoneVal) err.phone_number = t.phoneNumberEnter
+    // CALL: telefon numarası zorunlu (tüm objective'ler)
+    if (state.adset.conversionLocation === 'CALL') {
+      const phoneVal = (
+        state.adset.destinationDetails?.calls?.phoneNumber?.trim() || ''
+      ).replace(/\D/g, '')
+      if (!phoneVal) {
+        err.phone_number = t.phoneNumberEnter ?? 'Telefon numarası girilmeli'
+      } else {
+        delete err.phone_number
+      }
     }
     // Leads + WEBSITE: pixel ve dönüşüm olayı
     if (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'WEBSITE') {
