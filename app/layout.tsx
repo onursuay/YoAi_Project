@@ -1,5 +1,5 @@
 import type { Metadata } from 'next'
-import { Montserrat } from 'next/font/google'
+import { Inter } from 'next/font/google'
 import { NextIntlClientProvider } from 'next-intl'
 import { getMessages } from 'next-intl/server'
 import { cookies } from 'next/headers'
@@ -7,10 +7,10 @@ import { CreditProvider } from '@/components/providers/CreditProvider'
 import { SubscriptionProvider } from '@/components/providers/SubscriptionProvider'
 import './globals.css'
 
-const montserrat = Montserrat({
+const inter = Inter({
   subsets: ['latin', 'latin-ext'],
   display: 'swap',
-  variable: '--font-montserrat',
+  variable: '--font-inter',
 })
 
 export const metadata: Metadata = {
@@ -29,7 +29,7 @@ export default async function RootLayout({
 
   return (
     <html lang={locale}>
-      <body className={`${montserrat.className} text-body`}>
+      <body className={`${inter.variable} ${inter.className} text-body`}>
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SubscriptionProvider>
             <CreditProvider>
