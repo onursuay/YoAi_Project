@@ -251,6 +251,7 @@ export default function MetaPage() {
 
   const [bulkDeleting, setBulkDeleting] = useState<{ ids: string[]; type: 'campaign' | 'adset' | 'ad' } | null>(null)
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [editQueue, setEditQueue] = useState<{ id: string; name: string; campaignId?: string; adsetId?: string }[]>([])
 
   // Duplicate state
   const [isDuplicatingCampaign, setIsDuplicatingCampaign] = useState(false)
@@ -2755,10 +2756,28 @@ export default function MetaPage() {
                 else setDeletingAd({ id: target.id, name: target.name })
               }
               const handleEditAction = () => {
-                if (!sel) return
-                if (activeTab === 'kampanyalar') setEditingCampaign({ id: sel.id, name: sel.name })
-                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: sel.id, name: sel.name, campaignId: (sel as AdSet).campaignId })
-                else setEditingAd({ id: sel.id, name: sel.name, adsetId: (sel as Ad).adsetId, campaignId: (sel as Ad).campaignId })
+                const idsToEdit = selectedIds.length > 0 ? selectedIds : (sel ? [sel.id] : [])
+                if (idsToEdit.length === 0) return
+                const items = idsToEdit.map(id => {
+                  const item = activeTab === 'kampanyalar' ? campaigns.find(c => c.id === id)
+                    : activeTab === 'reklam-setleri' ? filteredAdsets.find(a => a.id === id)
+                    : filteredAds.find(a => a.id === id)
+                  if (!item) return null
+                  return {
+                    id: item.id,
+                    name: item.name,
+                    campaignId: (item as { campaignId?: string }).campaignId,
+                    adsetId: (item as { adsetId?: string }).adsetId,
+                  }
+                }).filter(Boolean) as { id: string; name: string; campaignId?: string; adsetId?: string }[]
+
+                if (items.length === 0) return
+                // İlkini hemen aç, gerisini kuyruğa al
+                const [first, ...rest] = items
+                setEditQueue(rest)
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: first.id, name: first.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: first.id, name: first.name, campaignId: first.campaignId ?? '' })
+                else setEditingAd({ id: first.id, name: first.name, adsetId: first.adsetId ?? '', campaignId: first.campaignId ?? '' })
               }
               const clearSelection = () => {
                 if (activeTab === 'kampanyalar') { setSelectedCampaignId(null); setSelectedCampaignIds([]) }
@@ -3285,8 +3304,31 @@ export default function MetaPage() {
           campaignId={editingCampaign.id}
           campaignName={editingCampaign.name}
           open={!!editingCampaign}
-          onClose={() => setEditingCampaign(null)}
-          onSuccess={() => { triggerRefresh(); setEditingCampaign(null) }}
+          onClose={() => {
+            setEditingCampaign(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
+          }}
+          onSuccess={() => {
+            triggerRefresh()
+            setEditingCampaign(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
+          }}
           onToast={addToast}
           campaigns={treeData.campaigns}
           adsets={treeData.adsets}
@@ -3302,8 +3344,31 @@ export default function MetaPage() {
           adsetName={editingAdset.name}
           relatedCampaignId={editingAdset.campaignId}
           open={!!editingAdset}
-          onClose={() => setEditingAdset(null)}
-          onSuccess={() => { triggerRefresh(); setEditingAdset(null) }}
+          onClose={() => {
+            setEditingAdset(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
+          }}
+          onSuccess={() => {
+            triggerRefresh()
+            setEditingAdset(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
+          }}
           onToast={addToast}
           campaigns={treeData.campaigns}
           adsets={treeData.adsets}
@@ -3319,12 +3384,32 @@ export default function MetaPage() {
           adName={editingAd.name}
           relatedCampaignId={editingAd.campaignId}
           open={!!editingAd}
-          onClose={() => setEditingAd(null)}
+          onClose={() => {
+            setEditingAd(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
+          }}
           onSuccess={(data) => {
             if (data?.adId && data?.name) {
               setAds(prev => prev.map(a => a.id === data!.adId ? { ...a, name: data.name } : a))
             }
             setEditingAd(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => {
+                if (activeTab === 'kampanyalar') setEditingCampaign({ id: next.id, name: next.name })
+                else if (activeTab === 'reklam-setleri') setEditingAdset({ id: next.id, name: next.name, campaignId: next.campaignId ?? '' })
+                else setEditingAd({ id: next.id, name: next.name, adsetId: next.adsetId ?? '', campaignId: next.campaignId ?? '' })
+              }, 100)
+            }
             setTimeout(() => loadTabData('reklamlar', true), 10_000)
           }}
           onToast={addToast}
