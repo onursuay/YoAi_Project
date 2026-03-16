@@ -212,6 +212,10 @@ export async function POST(request: Request) {
       if (needsLink && !creative.websiteUrl?.trim()) {
         validationErrors['creative.websiteUrl'] = 'Web sitesi URL\'si zorunludur'
       }
+      // Leads ON_AD requires external website URL for creative (Meta subcode 1815316 otherwise)
+      if (objective === 'OUTCOME_LEADS' && conversionLocation === 'ON_AD' && !creative?.websiteUrl?.trim()) {
+        validationErrors['creative.websiteUrl'] = 'Potansiyel müşteri reklamı için gizlilik politikası veya web sitesi URL\'si zorunludur'
+      }
     }
 
     if (Object.keys(validationErrors).length > 0) {
@@ -536,7 +540,7 @@ export async function POST(request: Request) {
             : hasLink
               ? linkUrl
               : isLeadsOnAd
-                ? ''
+                ? (linkUrl || '')
                 : ''
     const effectiveLinkUrl = isWhatsApp ? waFallbackLink : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
     const effectiveHasLink = effectiveLinkUrl.length > 0
@@ -562,7 +566,7 @@ export async function POST(request: Request) {
       objectStorySpec.link_data = linkData
     } else if (creative.format === 'single_video' && creative.videoId) {
       // WHATSAPP: video_data.link = fb page URL (Meta requires it). All other routing via promoted_object.
-      const resolvedVideoLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : (isLeadsOnAd ? 'https://www.facebook.com' : undefined))
+      const resolvedVideoLink = resolvedLinkByLocation || (effectiveHasLink ? linkUrl : undefined)
       const finalVideoLink = resolvedVideoLink ?? ''
       const safeVideoTitle = (creative.headline ?? '').trim()
       const videoTitleIsUrl = safeVideoTitle.startsWith('http://') || safeVideoTitle.startsWith('https://')
