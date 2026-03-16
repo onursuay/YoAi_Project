@@ -1264,6 +1264,11 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.phone_number = t.phoneNumberRequired
       }
     }
+    // Traffic + CALL: telefon numarası zorunlu
+    if (state.campaign.objective === 'OUTCOME_TRAFFIC' && state.adset.conversionLocation === 'CALL') {
+      const phoneVal = state.adset.destinationDetails?.calls?.phoneNumber?.trim()
+      if (!phoneVal) err.phone_number = t.phoneNumberEnter
+    }
     // Leads + WEBSITE: pixel ve dönüşüm olayı
     if (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'WEBSITE') {
       if (!state.adset.pixelId?.trim()) err.pixel_id = t.pixelRequired
@@ -1300,6 +1305,14 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         }))
       }
       // err.performance_goal ASLA set edilmez — dropdown her zaman geçerli bir goal gösteriyor
+    }
+
+    if (
+      state.campaign.objective === 'OUTCOME_TRAFFIC' &&
+      state.adset.conversionLocation === 'CALL' &&
+      state.adset.destinationDetails?.calls?.phoneNumber?.trim()
+    ) {
+      delete err.phone_number
     }
 
     setStepErrors(err)
