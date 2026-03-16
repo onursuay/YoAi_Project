@@ -1588,7 +1588,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             }`}
                           >
                             <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive('ad', ad.id, ad.adGroupId) ? 'text-green-600' : 'text-gray-400'}`} />
-                            <span className="truncate" title={ad.name}>{ad.name}</span>
+                            <span className="break-all text-xs" title={ad.name}>{ad.name}</span>
                           </div>
                         ))}
                       </div>
