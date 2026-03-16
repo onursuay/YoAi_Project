@@ -1258,12 +1258,6 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         err.app_store_url = t.appStoreIosUrlRequired
       }
     }
-    // CALL: telefon numarası zorunlu
-    if (state.adset.conversionLocation === 'CALL') {
-      if (!state.adset.destinationDetails?.calls?.phoneNumber?.trim()) {
-        err.phone_number = t.phoneNumberRequired
-      }
-    }
     // Traffic + CALL: telefon numarası zorunlu
     if (state.campaign.objective === 'OUTCOME_TRAFFIC' && state.adset.conversionLocation === 'CALL') {
       const phoneVal = state.adset.destinationDetails?.calls?.phoneNumber?.trim()
