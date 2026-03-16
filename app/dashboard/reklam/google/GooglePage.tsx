@@ -283,17 +283,27 @@ export default function GooglePage() {
     else { setSelectedAdId(null); setSelectedIds([]) }
   }
 
-  const handleEditAction = () => {
-    const idsToEdit = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : [])
-    if (idsToEdit.length === 0) return
+  const handleEditAction = async () => {
+    if (!hasSelection) return
     if (activeTab === 'kampanyalar') {
-      setEditingCampaignId(idsToEdit[0])
+      const id = selectedIds.length > 0 ? selectedIds[0] : selectedCampaignId
+      if (!id) return
+      // Çoklu seçimde adGroups ve ads'i önceden yükle
+      if (selectedIds.length > 1) {
+        const promises: Promise<void>[] = []
+        if (data.adGroups.length === 0) promises.push(data.fetchAdGroups(kpis.dateFrom, kpis.dateTo))
+        if (data.ads.length === 0) promises.push(data.fetchAds(kpis.dateFrom, kpis.dateTo))
+        if (promises.length > 0) await Promise.all(promises)
+      }
+      setEditingCampaignId(id)
     } else if (activeTab === 'reklam-gruplari') {
-      const firstAg = data.adGroups.find((ag) => ag.adGroupId === idsToEdit[0])
-      if (firstAg) setEditingAdGroup({ id: firstAg.adGroupId, name: firstAg.adGroupName })
+      const id = selectedIds.length > 0 ? selectedIds[0] : selectedAdGroupId
+      const ag = data.adGroups.find((ag) => ag.adGroupId === id)
+      if (ag) setEditingAdGroup({ id: ag.adGroupId, name: ag.adGroupName })
     } else {
-      const firstAd = data.ads.find((a) => a.adId === idsToEdit[0])
-      if (firstAd) setEditingAd({ id: firstAd.adId, name: firstAd.adName, adGroupId: firstAd.adGroupId })
+      const id = selectedIds.length > 0 ? selectedIds[0] : selectedAdId
+      const ad = data.ads.find((a) => a.adId === id)
+      if (ad) setEditingAd({ id: ad.adId, name: ad.adName, adGroupId: ad.adGroupId })
     }
   }
 
