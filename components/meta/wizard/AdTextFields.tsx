@@ -160,11 +160,11 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
         </div>
       )}
 
-      {/* Leads ON_AD: Privacy Policy / Website URL — Meta requires external URL in creative (subcode 1815316) */}
+      {/* Leads ON_AD: Privacy Policy / Website URL zorunlu (Meta subcode 1815316) */}
       {isLeadsOnAd && (
         <div>
           <label className="block text-sm font-semibold text-gray-700 mb-1">
-            {t.websiteUrl} <span className="text-red-500">*</span>
+            Web Sitesi / Gizlilik Politikası URL <span className="text-red-500">*</span>
           </label>
           <input
             type="url"
@@ -173,8 +173,8 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             placeholder="https://siteniz.com/gizlilik-politikasi"
             className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
           />
-          <p className="mt-1 text-caption text-gray-400">{t.leadFormPrivacyHint ?? 'Potansiyel müşteri reklamları için gizlilik politikası veya web sitesi URL\'si zorunludur.'}</p>
-          {errors.websiteUrl && <p className="mt-1 text-sm text-red-600">{errors.websiteUrl}</p>}
+          <p className="mt-1 text-caption text-gray-400">Potansiyel müşteri reklamları için harici bir URL zorunludur.</p>
+          {errors['creative.websiteUrl'] && <p className="mt-1 text-sm text-red-600">{errors['creative.websiteUrl']}</p>}
         </div>
       )}
 
