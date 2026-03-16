@@ -69,9 +69,7 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
   const isActiveStatus = (status: string) => status === 'ACTIVE'
   const isEditingEntity = (type: string, id: string) => editingEntity.type === type && editingEntity.id === id
 
-  // Scope to related campaign only
   const scopedCampaigns = useMemo(() => {
-    // Çoklu seçimde tüm kampanyaları göster
     if (highlightedIds && highlightedIds.length > 1) {
       return campaigns.filter(c => isActiveStatus(c.status))
     }
@@ -85,22 +83,26 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
   // Scope adsets: only related campaign + ACTIVE only (always include editing entity)
   const scopedAdsets = useMemo(() => {
     let filtered = adsets
-    if (relatedCampaignId) {
+    if (highlightedIds && highlightedIds.length > 1) {
+      filtered = filtered.filter(a => highlightedIds.includes(a.campaignId))
+    } else if (relatedCampaignId) {
       filtered = filtered.filter(a => a.campaignId === relatedCampaignId)
     }
     return filtered.filter(a => isActiveStatus(a.status) || isEditingEntity('adset', a.id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [adsets, relatedCampaignId, editingEntity.id, editingEntity.type])
+  }, [adsets, relatedCampaignId, editingEntity.id, editingEntity.type, highlightedIds])
 
   // Scope ads: only related campaign + ACTIVE only (always include editing entity)
   const scopedAds = useMemo(() => {
     let filtered = ads
-    if (relatedCampaignId) {
+    if (highlightedIds && highlightedIds.length > 1) {
+      filtered = filtered.filter(a => highlightedIds.includes(a.campaignId))
+    } else if (relatedCampaignId) {
       filtered = filtered.filter(a => a.campaignId === relatedCampaignId)
     }
     return filtered.filter(a => isActiveStatus(a.status) || isEditingEntity('ad', a.id))
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [ads, relatedCampaignId, editingEntity.id, editingEntity.type])
+  }, [ads, relatedCampaignId, editingEntity.id, editingEntity.type, highlightedIds])
 
   // Auto-expand the path to the editing entity on mount
   useEffect(() => {
@@ -125,7 +127,6 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingEntity.id, editingEntity.type])
 
-  // Çoklu seçimde tüm highlight'lı kampanyaları otomatik aç
   useEffect(() => {
     if (!highlightedIds || highlightedIds.length <= 1) return
     setExpandedCampaigns(prev => {
@@ -133,7 +134,14 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
       highlightedIds.forEach(id => next.add(id))
       return next
     })
-  }, [highlightedIds])
+    setExpandedAdsets(prev => {
+      const next = new Set(prev)
+      adsets
+        .filter(a => highlightedIds.includes(a.campaignId) && isActiveStatus(a.status))
+        .forEach(a => next.add(a.id))
+      return next
+    })
+  }, [highlightedIds, adsets])
 
   const adsetsByCampaign = useMemo(() => {
     const map: Record<string, TreeAdset[]> = {}
