@@ -3,6 +3,7 @@ import { createMetaClient } from '@/lib/meta/client'
 import { validateAdPayload } from '@/lib/meta/spec/objectiveSpec'
 import { resolveInstagramUserId, type IgError } from '@/lib/meta/ig'
 import { buildIgDmLink } from '@/lib/meta/igLink'
+import { resolveLeadCreativeLink } from '@/lib/meta/resolveLeadCreativeLink'
 import { cookies } from 'next/headers'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
@@ -165,6 +166,8 @@ export async function POST(request: Request) {
     const adPixelId = typeof creative?.pixelId === 'string' ? creative.pixelId.trim() : undefined
 
     const leadFormId = (body.lead_gen_form_id ?? body.leadFormId ?? dd?.leads?.leadFormId ?? dd?.leads?.lead_form_id ?? '').toString().trim() || undefined
+    const pageWebsite = (body.pageWebsite ?? body.page_website ?? '').toString().trim() || undefined
+    const formPrivacyPolicyUrl = (body.formPrivacyPolicyUrl ?? body.form_privacy_policy_url ?? '').toString().trim() || undefined
     // chatGreeting = message template only. NEVER use websiteUrl — prevents URL-in-greeting corruption
     let chatGreeting = (body.chat_greeting ?? body.chatGreeting ?? dd?.messaging?.messageTemplate ?? dd?.messaging?.message_template ?? '').toString().trim()
     if (chatGreeting.startsWith('http://') || chatGreeting.startsWith('https://')) chatGreeting = ''
@@ -271,6 +274,30 @@ export async function POST(request: Request) {
         { ok: false, error: 'validation_error', message: 'Potansiyel müşteri formu (leadgen_form_id) zorunludur.', field: 'lead_form' },
         { status: 400 }
       )
+    }
+    // Leads ON_AD: resolve creative link via fallback chain; external HTTPS only (no facebook.com/fb.me)
+    let leadResolvedLink = ''
+    if (objective === 'OUTCOME_LEADS' && conversionLocation === 'ON_AD') {
+      const tenantDefaultLeadUrl = (body.tenantDefaultLeadUrl ?? body.tenant_default_lead_url) as string | undefined
+      const tenantPrivacyPolicyUrl = (body.tenantPrivacyPolicyUrl ?? body.tenant_privacy_policy_url) as string | undefined
+      leadResolvedLink = resolveLeadCreativeLink({
+        manualWebsiteUrl: creative?.websiteUrl?.trim() || undefined,
+        pageWebsite: pageWebsite || undefined,
+        tenantDefaultLeadUrl: tenantDefaultLeadUrl?.trim() || undefined,
+        tenantPrivacyPolicyUrl: tenantPrivacyPolicyUrl?.trim() || undefined,
+        formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
+      })
+      if (!leadResolvedLink) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'LEAD_CREATIVE_LINK_MISSING',
+            code: 'LEAD_CREATIVE_LINK_MISSING',
+            message: 'Lead Ads için geçerli bir HTTPS link bulunamadı.',
+          },
+          { status: 400 }
+        )
+      }
     }
     if (objective === 'OUTCOME_SALES' && conversionLocation === 'CATALOG') {
       return NextResponse.json(
@@ -440,7 +467,11 @@ export async function POST(request: Request) {
     const isEngagementApp = isEngagement && conversionLocation === 'APP'
     const isSalesApp = isSales && conversionLocation === 'APP'
     // ON_PAGE (PAGE_LIKES) için link yoksa otomatik olarak Facebook sayfa URL'si ata
+    // Leads ON_AD: use resolved external HTTPS link from fallback chain (no facebook.com/fb.me)
     let linkUrl = (creative.websiteUrl || '').trim()
+    if (isLeadsOnAd && leadResolvedLink) {
+      linkUrl = leadResolvedLink
+    }
     if (!linkUrl && conversionLocation === 'ON_PAGE' && pageId) {
       linkUrl = `https://www.facebook.com/${pageId}`
     }
@@ -505,8 +536,8 @@ export async function POST(request: Request) {
       }
       ctaValue = { link: igLink }
     } else if (isLeadsOnAd && leadFormId) {
-      // Leads ON_AD: lead_gen_form_id goes in CTA value, NOT as top-level ad field
-      ctaValue = { lead_gen_form_id: leadFormId }
+      // Leads ON_AD: link + lead_gen_form_id in CTA value; link same as creative link (resolved via fallback chain)
+      ctaValue = { link: linkUrl, lead_gen_form_id: leadFormId }
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
       const digitsOnly = rawNumber.replace(/\D/g, '').replace(/^0/, '')

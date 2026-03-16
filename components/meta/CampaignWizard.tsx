@@ -1339,12 +1339,14 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (!state.ad.primaryText.trim()) err.primaryText = t.primaryTextRequired
 
     // websiteUrl sadece destination gerektiriyorsa zorunlu
+    // Leads ON_AD: backend resolveLeadCreativeLink ile fallback chain kullanır — frontend zorunlu tutma
     const needsUrl = requiresWebsiteUrl(
       state.campaign.objective,
       state.adset.conversionLocation,
       state.adset.optimizationGoal
     )
-    if (needsUrl && !state.ad.websiteUrl.trim()) {
+    const isLeadsOnAd = state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'ON_AD'
+    if (needsUrl && !isLeadsOnAd && !state.ad.websiteUrl.trim()) {
       err.websiteUrl = t.websiteUrlRequired
     }
 
@@ -1852,6 +1854,10 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'ON_AD' && leadFormIdVal) {
       adBody.lead_gen_form_id = leadFormIdVal
       adBody.leadFormId = leadFormIdVal
+      adBody.pageWebsite = inventory?.pages?.find((p) => p.page_id === state.adset.pageId)?.website ?? undefined
+      adBody.formPrivacyPolicyUrl = inventory?.lead_forms?.[state.adset.pageId ?? '']?.find(
+        (f) => f.form_id === leadFormIdVal
+      )?.privacy_policy_url ?? undefined
     }
     if (state.campaign.objective === 'OUTCOME_LEADS') {
       if ((state.adset.conversionLocation === 'MESSENGER' || state.adset.conversionLocation === 'WHATSAPP') && chatGreetingVal) {
@@ -1899,6 +1905,10 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
         adData.error === 'page_id_mismatch'
       ) {
         setStepErrors((prev) => ({ ...prev, ig_account: adData.message }))
+      }
+      // Lead Ads: backend could not resolve creative link from fallback chain
+      if (adData.error === 'LEAD_CREATIVE_LINK_MISSING' || adData.code === 'LEAD_CREATIVE_LINK_MISSING') {
+        setStepErrors((prev) => ({ ...prev, 'creative.websiteUrl': adData.message || 'Lead Ads için geçerli bir HTTPS link bulunamadı.' }))
       }
 
       const errorMsg = adData.error_user_msg || adData.message || t.adCreateFailed
@@ -2118,7 +2128,7 @@ const messagingOk = true
       : state.currentStep === 3
       ? state.ad.name.trim().length > 0 &&
         state.ad.primaryText.trim().length > 0 &&
-        (!needsUrl || state.ad.websiteUrl.trim().length > 0) &&
+        (!needsUrl || state.ad.websiteUrl.trim().length > 0 || (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'ON_AD')) &&
         (state.campaign.objective !== 'OUTCOME_LEADS' ||
           state.adset.conversionLocation !== 'ON_AD' ||
           !!state.ad.leadFormId?.trim() ||

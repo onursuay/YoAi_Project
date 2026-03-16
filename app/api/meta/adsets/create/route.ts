@@ -104,7 +104,7 @@ const VALID_OPTIMIZATION_GOALS: Record<string, string[]> = {
  * Destination'a göre promoted_object tipi ve destination_type Meta API'ye ne gönderilmeli.
  * destinationDetails asla raw gönderilmez; sadece map edilmiş Meta parametreleri kullanılır.
  * Sales + WEBSITE: promoted_object = { pixel_id, custom_event_type } (page_id YOK).
- * Leads + ON_AD: promoted_object = { page_id, leadgen_form_id }.
+ * Leads + ON_AD: promoted_object = { page_id } — lead_gen_form_id is ad-level only.
  * App Promotion + APP: promoted_object = { application_id, object_store_url }.
  * WhatsApp: promoted_object = { page_id, whatsapp_phone_number? }
  *   whatsapp_phone_number is OPTIONAL per Meta docs, but we send it EXPLICITLY when user selects

@@ -15,6 +15,8 @@ export interface InventoryPage {
   page_id: string
   name: string
   picture?: string
+  /** Page website (external URL) — for Lead Ads creative link fallback */
+  website?: string | null
   /** true = accepted, false = not accepted, null = unknown (field missing or API didn't return) */
   lead_terms_accepted: boolean | null
   /** lead_terms_accepted source diagnostic */
@@ -151,6 +153,8 @@ interface MetaPageItem {
   whatsapp_number?: string
   has_whatsapp_number?: boolean
   has_whatsapp_business_number?: boolean
+  /** Page website (external URL) — for Lead Ads creative link fallback */
+  website?: string
 }
 
 interface GraphResult<T = unknown> {
@@ -286,7 +290,7 @@ async function fetchTokenPermissions(requestId: string): Promise<InventoryTokenP
 async function fetchPages(client: { get: (...args: unknown[]) => Promise<GraphResult<{ data?: MetaPageItem[] }>> }, accountId: string): Promise<MetaPageItem[]> {
   let pages: MetaPageItem[] = []
 
-  const pageFields = 'id,name,picture{url},instagram_business_account{id,username,profile_picture_url},leadgen_tos_accepted,access_token,whatsapp_number,has_whatsapp_number,has_whatsapp_business_number'
+  const pageFields = 'id,name,picture{url},instagram_business_account{id,username,profile_picture_url},leadgen_tos_accepted,access_token,whatsapp_number,has_whatsapp_number,has_whatsapp_business_number,website'
 
   // 1. /me/accounts (access_token needed for leadgen_forms per page)
   const userPages = await client.get('/me/accounts', {
@@ -1031,6 +1035,7 @@ export async function GET(request: Request) {
         page_id: p.id,
         name: p.name,
         picture: p.picture?.data?.url,
+        website: p.website?.trim() || undefined,
         lead_terms_accepted: leadTermsAccepted,
         lead_terms_source: hasField ? 'page_field' : 'missing',
         has_messaging: true, // Phase 2: detect from page features
