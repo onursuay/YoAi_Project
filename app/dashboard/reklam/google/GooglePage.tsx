@@ -123,6 +123,9 @@ export default function GooglePage() {
     setSelectedAdGroupId(null)
     setSelectedAdId(null)
     setSelectedIds([])
+    // Tabloyu başa sar
+    const tableEl = document.querySelector('.overflow-x-auto')
+    if (tableEl) tableEl.scrollLeft = 0
     data.setTableError(null)
     if (activeTab === 'kampanyalar') data.fetchCampaigns(kpis.dateFrom, kpis.dateTo, data.showInactive, true)
     else if (activeTab === 'reklam-gruplari') data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
