@@ -2524,7 +2524,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('amountSpent')}
               periodLabel={getDateRangeLabel()}
-              value={tryCurrencyFormatter.format(campaignKpis.spent)}
+              value={tryCurrencyFormatter.format(amountSpentTRY)}
               deltaDisplay=""
               chartData={insights?.series?.spend && insights.series.spend.length >= 2 ? insights.series.spend : [0, 0]}
               chartColor="red"
@@ -2536,7 +2536,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('reach')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(campaignKpis.reach)}
+              value={fmtInt(insights?.reach ?? 0)}
               deltaDisplay=""
               chartData={insights?.series?.reach && insights.series.reach.length >= 2 ? insights.series.reach : [0, 0]}
               chartColor="green"
@@ -2548,7 +2548,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('impressions')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(campaignKpis.impressions)}
+              value={fmtInt(insights?.impressions ?? 0)}
               deltaDisplay=""
               chartData={insights?.series?.impressions && insights.series.impressions.length >= 2 ? insights.series.impressions : [0, 0]}
               chartColor="green"
@@ -2560,7 +2560,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('engagement')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(campaignKpis.engagement)}
+              value={fmtInt(insights?.engagement ?? 0)}
               deltaDisplay=""
               chartData={insights?.series?.spend && insights.series.spend.length >= 2 ? insights.series.spend : [0, 0]}
               chartColor="green"
@@ -2572,7 +2572,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('clicks')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(campaignKpis.clicks)}
+              value={fmtInt(insights?.clicks ?? 0)}
               deltaDisplay=""
               chartData={insights?.series?.clicks && insights.series.clicks.length >= 2 ? insights.series.clicks : [0, 0]}
               chartColor="green"
