@@ -140,9 +140,8 @@ function resolveDestinationConfig(
       // instagram_actor_id is a top-level adset field, NOT inside promoted_object
       break
     case 'ON_AD':
-      if (pageId && leadGenFormId) {
-        promotedObject = { page_id: pageId, lead_gen_form_id: leadGenFormId }
-      } else if (pageId) {
+      // lead_gen_form_id is ad-level only, NOT adset promoted_object — Meta returns #100 if sent here
+      if (pageId) {
         promotedObject = { page_id: pageId }
       }
       break
