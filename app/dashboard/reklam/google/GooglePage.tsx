@@ -45,6 +45,10 @@ export default function GooglePage() {
   const [editingAdGroup, setEditingAdGroup] = useState<{ id: string; name: string } | null>(null)
   const [editingAd, setEditingAd] = useState<{ id: string; name: string; adGroupId: string } | null>(null)
 
+  const [bulkDeleting, setBulkDeleting] = useState<{ ids: string[]; type: 'campaign' | 'adgroup' | 'ad' } | null>(null)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+  const [editQueue, setEditQueue] = useState<Array<{ id: string; name: string; adGroupId?: string }>>([])
+
   const addToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
     setToasts((prev) => [...prev, { id, message, type }])
@@ -280,30 +284,76 @@ export default function GooglePage() {
   }
 
   const handleEditAction = () => {
-    if (!hasSelection) return
+    const idsToEdit = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : [])
+    if (idsToEdit.length === 0) return
     if (activeTab === 'kampanyalar') {
-      if (selectedCampaignId) setEditingCampaignId(selectedCampaignId)
+      const [first, ...rest] = idsToEdit
+      setEditQueue(rest.map((id) => {
+        const c = data.campaigns.find((c) => c.campaignId === id)
+        return { id, name: c?.campaignName ?? id }
+      }))
+      setEditingCampaignId(first)
     } else if (activeTab === 'reklam-gruplari') {
-      const ag = data.adGroups.find((ag) => ag.adGroupId === selectedAdGroupId)
-      if (ag) setEditingAdGroup({ id: ag.adGroupId, name: ag.adGroupName })
+      const [first, ...rest] = idsToEdit
+      const firstAg = data.adGroups.find((ag) => ag.adGroupId === first)
+      if (firstAg) setEditingAdGroup({ id: firstAg.adGroupId, name: firstAg.adGroupName })
+      setEditQueue(rest.map((id) => {
+        const ag = data.adGroups.find((ag) => ag.adGroupId === id)
+        return { id, name: ag?.adGroupName ?? id }
+      }))
     } else {
-      const ad = data.ads.find((a) => a.adId === selectedAdId)
-      if (ad) setEditingAd({ id: ad.adId, name: ad.adName, adGroupId: ad.adGroupId })
+      const [first, ...rest] = idsToEdit
+      const firstAd = data.ads.find((a) => a.adId === first)
+      if (firstAd) setEditingAd({ id: firstAd.adId, name: firstAd.adName, adGroupId: firstAd.adGroupId })
+      setEditQueue(rest.map((id) => {
+        const ad = data.ads.find((a) => a.adId === id)
+        return { id, name: ad?.adName ?? id, adGroupId: ad?.adGroupId }
+      }))
     }
   }
 
   const handleDeleteAction = () => {
     if (!hasSelection) return
+    const idsToDelete = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : [])
+    if (idsToDelete.length > 1) {
+      const type = activeTab === 'kampanyalar' ? 'campaign' as const
+        : activeTab === 'reklam-gruplari' ? 'adgroup' as const : 'ad' as const
+      setBulkDeleting({ ids: idsToDelete, type })
+      return
+    }
     if (activeTab === 'kampanyalar') {
-      const c = data.campaigns.find((c) => c.campaignId === selectedCampaignId)
+      const c = data.campaigns.find((c) => c.campaignId === (selectedIds[0] || selectedCampaignId))
       if (c) data.setDeletingItem({ type: 'campaign', id: c.campaignId, name: c.campaignName })
     } else if (activeTab === 'reklam-gruplari') {
-      const ag = data.adGroups.find((ag) => ag.adGroupId === selectedAdGroupId)
+      const ag = data.adGroups.find((ag) => ag.adGroupId === (selectedIds[0] || selectedAdGroupId))
       if (ag) data.setDeletingItem({ type: 'adgroup', id: ag.adGroupId, name: ag.adGroupName })
     } else {
-      const ad = data.ads.find((a) => a.adId === selectedAdId)
+      const ad = data.ads.find((a) => a.adId === (selectedIds[0] || selectedAdId))
       if (ad) data.setDeletingItem({ type: 'ad', id: ad.adId, name: ad.adName, adGroupId: ad.adGroupId })
     }
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    if (!bulkDeleting || isBulkDeleting) return
+    const { ids, type } = bulkDeleting
+    setIsBulkDeleting(true)
+    let successCount = 0
+    for (const id of ids) {
+      try {
+        const fakeItem = { type, id, name: id, adGroupId: '' }
+        data.setDeletingItem(fakeItem as { type: 'campaign' | 'adgroup' | 'ad'; id: string; name: string; adGroupId?: string })
+        await new Promise<void>((r) => setTimeout(r, 0))
+        await data.handleDeleteConfirm(kpis.dateFrom, kpis.dateTo)
+        successCount++
+      } catch { /* continue */ }
+    }
+    addToast(`${successCount}/${ids.length} öğe silindi`, successCount === ids.length ? 'success' : 'error')
+    setIsBulkDeleting(false)
+    setBulkDeleting(null)
+    setSelectedIds([])
+    if (type === 'campaign') data.fetchCampaigns(kpis.dateFrom, kpis.dateTo, data.showInactive, true)
+    else if (type === 'adgroup') data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
+    else data.fetchAds(kpis.dateFrom, kpis.dateTo, data.showInactive)
   }
 
   const handleDuplicateAction = () => {
@@ -663,6 +713,33 @@ export default function GooglePage() {
             </div>
           )}
 
+          {bulkDeleting && (
+            <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+              <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Toplu Silme</h3>
+                <p className="text-sm text-gray-600 mb-6">
+                  {bulkDeleting.ids.length} öğeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+                </p>
+                <div className="flex gap-3 justify-end">
+                  <button
+                    onClick={() => setBulkDeleting(null)}
+                    disabled={isBulkDeleting}
+                    className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+                  >
+                    İptal
+                  </button>
+                  <button
+                    onClick={handleBulkDeleteConfirm}
+                    disabled={isBulkDeleting}
+                    className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+                  >
+                    {isBulkDeleting ? 'Siliniyor...' : `${bulkDeleting.ids.length} Öğeyi Sil`}
+                  </button>
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Delete confirmation modal */}
           {data.deletingItem && (
             <div className="fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center">
@@ -718,10 +795,23 @@ export default function GooglePage() {
           adGroupId={editingAdGroup.id}
           adGroupName={editingAdGroup.name}
           open={true}
-          onClose={() => setEditingAdGroup(null)}
+          onClose={() => {
+            setEditingAdGroup(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => setEditingAdGroup({ id: next.id, name: next.name }), 100)
+            }
+          }}
           onSuccess={() => {
             setEditingAdGroup(null)
-            data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => setEditingAdGroup({ id: next.id, name: next.name }), 100)
+            } else {
+              data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
+            }
           }}
           onToast={addToast}
         />
@@ -732,10 +822,25 @@ export default function GooglePage() {
           adGroupId={editingAd.adGroupId}
           adName={editingAd.name}
           open={true}
-          onClose={() => setEditingAd(null)}
+          onClose={() => {
+            setEditingAd(null)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              const ad = data.ads.find((a) => a.adId === next.id)
+              setTimeout(() => setEditingAd({ id: next.id, name: next.name, adGroupId: next.adGroupId ?? ad?.adGroupId ?? '' }), 100)
+            }
+          }}
           onSuccess={() => {
             setEditingAd(null)
-            data.fetchAds(kpis.dateFrom, kpis.dateTo, data.showInactive)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              const ad = data.ads.find((a) => a.adId === next.id)
+              setTimeout(() => setEditingAd({ id: next.id, name: next.name, adGroupId: next.adGroupId ?? ad?.adGroupId ?? '' }), 100)
+            } else {
+              data.fetchAds(kpis.dateFrom, kpis.dateTo, data.showInactive)
+            }
           }}
           onToast={addToast}
         />
@@ -760,7 +865,13 @@ export default function GooglePage() {
           campaignId={editingCampaignId}
           onClose={() => {
             setEditingCampaignId(null)
-            data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
+            if (editQueue.length > 0) {
+              const [next, ...remaining] = editQueue
+              setEditQueue(remaining)
+              setTimeout(() => setEditingCampaignId(next.id), 100)
+            } else {
+              data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
+            }
           }}
           onToast={addToast}
         />
