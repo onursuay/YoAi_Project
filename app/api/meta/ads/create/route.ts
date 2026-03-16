@@ -456,6 +456,8 @@ export async function POST(request: Request) {
     const isEngagementIgDirect = isEngagement && isIgDirect
     const isEngagementMessaging =
       isEngagement && (conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP')
+    // OUTCOME_ENGAGEMENT + MESSENGER için Meta SEND_MESSAGE CTA'yı reddeder, MESSAGE_PAGE ister
+    const useMessagePageCta = isEngagement && conversionLocation === 'MESSENGER'
     const isLeadsMessaging =
       isLeads && (conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP')
     const isSalesMessaging =
@@ -494,7 +496,9 @@ export async function POST(request: Request) {
             : isEngagementMessaging || isLeadsMessaging || isSalesMessaging
               ? conversionLocation === 'WHATSAPP'
                 ? 'WHATSAPP_MESSAGE'
-                : 'SEND_MESSAGE'
+                : useMessagePageCta
+                  ? 'MESSAGE_PAGE'
+                  : 'SEND_MESSAGE'
               : isEngagementCall || isLeadsCall
                 ? 'CALL_NOW'
                 : (creative.callToAction ||
