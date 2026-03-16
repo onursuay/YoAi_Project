@@ -1045,6 +1045,10 @@ export default function MetaPage() {
     const init = async () => {
       // activeTab is already set from URL in useState initialization
       await loadTabData(activeTab)
+      // KPI kartları için kampanya verisini arka planda yükle
+      if (activeTab !== 'kampanyalar') {
+        loadTabData('kampanyalar')
+      }
     }
     init()
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -1063,6 +1067,9 @@ export default function MetaPage() {
     }
     loadTabData(activeTab, true)
       .finally(() => setIsUserLoading(false))
+    if (activeTab !== 'kampanyalar') {
+      loadTabData('kampanyalar', true)
+    }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, activeTab, selectedAdAccountId, refreshToken, rateLimitedUntil])
   
@@ -2524,7 +2531,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('amountSpent')}
               periodLabel={getDateRangeLabel()}
-              value={tryCurrencyFormatter.format(amountSpentTRY)}
+              value={tryCurrencyFormatter.format(campaignKpis.spent)}
               deltaDisplay=""
               chartData={insights?.series?.spend && insights.series.spend.length >= 2 ? insights.series.spend : [0, 0]}
               chartColor="red"
@@ -2536,7 +2543,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('reach')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(insights?.reach ?? 0)}
+              value={fmtInt(campaignKpis.reach)}
               deltaDisplay=""
               chartData={insights?.series?.reach && insights.series.reach.length >= 2 ? insights.series.reach : [0, 0]}
               chartColor="green"
@@ -2548,7 +2555,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('impressions')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(insights?.impressions ?? 0)}
+              value={fmtInt(campaignKpis.impressions)}
               deltaDisplay=""
               chartData={insights?.series?.impressions && insights.series.impressions.length >= 2 ? insights.series.impressions : [0, 0]}
               chartColor="green"
@@ -2560,7 +2567,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('engagement')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(insights?.engagement ?? 0)}
+              value={fmtInt(campaignKpis.engagement)}
               deltaDisplay=""
               chartData={insights?.series?.spend && insights.series.spend.length >= 2 ? insights.series.spend : [0, 0]}
               chartColor="green"
@@ -2572,7 +2579,7 @@ export default function MetaPage() {
             <DashboardKpiCard
               label={tMetrics('clicks')}
               periodLabel={getDateRangeLabel()}
-              value={fmtInt(insights?.clicks ?? 0)}
+              value={fmtInt(campaignKpis.clicks)}
               deltaDisplay=""
               chartData={insights?.series?.clicks && insights.series.clicks.length >= 2 ? insights.series.clicks : [0, 0]}
               chartColor="green"
