@@ -491,7 +491,7 @@ export async function POST(request: Request) {
     if (isIgDirect) ctaType = 'INSTAGRAM_MESSAGE'
 
     // Meta call_to_action.value: link, phone_number, lead_gen_form_id supported. whatsapp_phone_number is INVALID — goes in ad set promoted_object only
-    let ctaValue: { link?: string; phone_number?: string } | undefined
+    let ctaValue: { link?: string; phone_number?: string; lead_gen_form_id?: string } | undefined
     if (conversionLocation === 'WHATSAPP') {
       // CTWA ads require app_destination in CTA value — NOT a link, NOT undefined
       ctaValue = { app_destination: 'WHATSAPP' } as any
@@ -504,6 +504,9 @@ export async function POST(request: Request) {
         )
       }
       ctaValue = { link: igLink }
+    } else if (isLeadsOnAd && leadFormId) {
+      // Leads ON_AD: lead_gen_form_id goes in CTA value, NOT as top-level ad field
+      ctaValue = { lead_gen_form_id: leadFormId }
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
       const digitsOnly = rawNumber.replace(/\D/g, '').replace(/^0/, '')
@@ -760,8 +763,6 @@ export async function POST(request: Request) {
     if (adPixelId && objective !== 'OUTCOME_SALES' && objective !== 'OUTCOME_LEADS') {
       adFormData.append('tracking_specs', JSON.stringify([{ 'action.type': ['offsite_conversion'], 'fb_pixel': [adPixelId] }]))
     }
-    if (isLeadsOnAd && leadFormId) adFormData.append('lead_gen_form_id', leadFormId)
-
     const adResult = await metaClient.client.postForm(`/${metaClient.accountId}/ads`, adFormData)
 
     if (!adResult.ok) {
