@@ -581,7 +581,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
       <div className="w-80 flex-shrink-0 hidden lg:flex lg:flex-col">
         <div className="light-sweep-wrapper rounded-md w-fit mb-4">
           <h3 className="text-lg font-semibold text-gray-900">{t.adPreviewTitle}</h3>
-        </div><AdPreview state={state} placement={previewPlacement} onPlacementChange={setPreviewPlacement} />
+        </div><AdPreview state={state} placement={previewPlacement} onPlacementChange={setPreviewPlacement} conversionLocation={conversionLocation} />
       </div>
 
       {/* Existing Post Selector Modal */}
