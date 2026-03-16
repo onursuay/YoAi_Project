@@ -49,6 +49,9 @@ export default function GooglePage() {
   const [isBulkDeleting, setIsBulkDeleting] = useState(false)
   const [editQueue, setEditQueue] = useState<Array<{ id: string; name: string; adGroupId?: string }>>([])
 
+  const [multiEditAdGroups, setMultiEditAdGroups] = useState<Array<{ adGroupId: string; adGroupName: string; campaignId: string }>>([])
+  const [multiEditAds, setMultiEditAds] = useState<Array<{ adId: string; adName: string; adGroupId: string; campaignId: string }>>([])
+
   const addToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
     setToasts((prev) => [...prev, { id, message, type }])
@@ -288,12 +291,16 @@ export default function GooglePage() {
     if (activeTab === 'kampanyalar') {
       const id = selectedIds.length > 0 ? selectedIds[0] : selectedCampaignId
       if (!id) return
-      // Çoklu seçimde adGroups ve ads'i önceden yükle
       if (selectedIds.length > 1) {
-        const promises: Promise<void>[] = []
-        if (data.adGroups.length === 0) promises.push(data.fetchAdGroups(kpis.dateFrom, kpis.dateTo))
-        if (data.ads.length === 0) promises.push(data.fetchAds(kpis.dateFrom, kpis.dateTo))
-        if (promises.length > 0) await Promise.all(promises)
+        // Direkt API'den çek
+        const params = new URLSearchParams({ from: kpis.dateFrom, to: kpis.dateTo, showInactive: '1' })
+        const [agRes, adsRes] = await Promise.all([
+          fetch(`/api/integrations/google-ads/ad-groups?${params}`, { cache: 'no-store' }),
+          fetch(`/api/integrations/google-ads/ads?${params}`, { cache: 'no-store' }),
+        ])
+        const [agData, adsData] = await Promise.all([agRes.json(), adsRes.json()])
+        setMultiEditAdGroups(Array.isArray(agData.adGroups) ? agData.adGroups : [])
+        setMultiEditAds(Array.isArray(adsData.ads) ? adsData.ads : [])
       }
       setEditingCampaignId(id)
     } else if (activeTab === 'reklam-gruplari') {
@@ -861,10 +868,10 @@ export default function GooglePage() {
           allCampaignIds={selectedIds.length > 1 ? selectedIds : undefined}
           allCampaignData={selectedIds.length > 1 ? selectedIds.map((id) => {
             const c = data.campaigns.find((c) => c.campaignId === id)
-            const cAdGroups = data.adGroups
+            const cAdGroups = multiEditAdGroups
               .filter((ag) => ag.campaignId === id)
               .map((ag) => ({ id: ag.adGroupId, name: ag.adGroupName, campaignId: id }))
-            const cAds = data.ads
+            const cAds = multiEditAds
               .filter((a) => a.campaignId === id)
               .map((a) => ({ id: a.adId, name: a.adName, adGroupId: a.adGroupId, campaignId: id }))
             return { id, name: c?.campaignName ?? id, adGroups: cAdGroups, ads: cAds }
@@ -872,6 +879,8 @@ export default function GooglePage() {
           onSwitchCampaign={(id) => setEditingCampaignId(id)}
           onClose={() => {
             setEditingCampaignId(null)
+            setMultiEditAdGroups([])
+            setMultiEditAds([])
             data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
           }}
           onToast={addToast}
