@@ -125,6 +125,16 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [editingEntity.id, editingEntity.type])
 
+  // Çoklu seçimde tüm highlight'lı kampanyaları otomatik aç
+  useEffect(() => {
+    if (!highlightedIds || highlightedIds.length <= 1) return
+    setExpandedCampaigns(prev => {
+      const next = new Set(prev)
+      highlightedIds.forEach(id => next.add(id))
+      return next
+    })
+  }, [highlightedIds])
+
   const adsetsByCampaign = useMemo(() => {
     const map: Record<string, TreeAdset[]> = {}
     scopedAdsets.forEach(a => {
