@@ -15,6 +15,7 @@ interface CampaignEditOverlayProps {
   adsets: TreeAdset[]
   ads: TreeAd[]
   onEntitySelect: (type: 'campaign' | 'adset' | 'ad', id: string, name: string) => void
+  highlightedIds?: string[]
 }
 
 export default function CampaignEditOverlay({
@@ -28,6 +29,7 @@ export default function CampaignEditOverlay({
   adsets,
   ads,
   onEntitySelect,
+  highlightedIds,
 }: CampaignEditOverlayProps) {
   const [name, setName] = useState(campaignName)
   const [saving, setSaving] = useState(false)
@@ -67,6 +69,7 @@ export default function CampaignEditOverlay({
       ads={ads}
       editingEntity={{ type: 'campaign', id: campaignId }}
       onEntitySelect={onEntitySelect}
+      highlightedIds={highlightedIds}
     >
       <div className="p-8 max-w-2xl">
         <div>

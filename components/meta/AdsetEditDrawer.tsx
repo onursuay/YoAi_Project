@@ -18,6 +18,7 @@ interface AdsetEditDrawerProps {
   adsets: TreeAdset[]
   ads: TreeAd[]
   onEntitySelect: (type: 'campaign' | 'adset' | 'ad', id: string, name: string) => void
+  highlightedIds?: string[]
 }
 
 interface LocationResult {
@@ -56,7 +57,7 @@ const OPTIMIZATION_GOAL_VALUES = [
   'OFFSITE_CONVERSIONS', 'POST_ENGAGEMENT', 'THRUPLAY', 'LEAD_GENERATION',
 ]
 
-export default function AdsetEditDrawer({ adsetId, adsetName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect }: AdsetEditDrawerProps) {
+export default function AdsetEditDrawer({ adsetId, adsetName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect, highlightedIds }: AdsetEditDrawerProps) {
   const locale = getLocaleFromCookie()
   const t = getWizardTranslations(locale)
   const metaLocale = locale === 'en' ? 'en_US' : 'tr_TR'
@@ -629,6 +630,7 @@ export default function AdsetEditDrawer({ adsetId, adsetName, relatedCampaignId,
       editingEntity={{ type: 'adset', id: adsetId }}
       relatedCampaignId={relatedCampaignId}
       onEntitySelect={onEntitySelect}
+      highlightedIds={highlightedIds}
     >
         {loading ? (
           <div className="flex items-center justify-center h-64">

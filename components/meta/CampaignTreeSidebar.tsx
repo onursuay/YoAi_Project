@@ -14,9 +14,10 @@ interface CampaignTreeSidebarProps {
   editingEntity: { type: 'campaign' | 'adset' | 'ad'; id: string }
   relatedCampaignId?: string
   onEntitySelect: (type: 'campaign' | 'adset' | 'ad', id: string, name: string) => void
+  highlightedIds?: string[]
 }
 
-export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEntity, relatedCampaignId: explicitCampaignId, onEntitySelect }: CampaignTreeSidebarProps) {
+export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEntity, relatedCampaignId: explicitCampaignId, onEntitySelect, highlightedIds }: CampaignTreeSidebarProps) {
   const [search, setSearch] = useState('')
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set())
   const [expandedAdsets, setExpandedAdsets] = useState<Set<string>>(new Set())
@@ -70,16 +71,16 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
 
   // Scope to related campaign only
   const scopedCampaigns = useMemo(() => {
+    // Çoklu seçimde tüm kampanyaları göster
+    if (highlightedIds && highlightedIds.length > 1) {
+      return campaigns.filter(c => isActiveStatus(c.status))
+    }
     if (!relatedCampaignId) return campaigns.filter(c => isActiveStatus(c.status))
     const found = campaigns.filter(c => c.id === relatedCampaignId)
-    if (found.length === 0 && fetchedCampaign) {
-      return [fetchedCampaign]
-    }
-    if (found.length === 0) {
-      return [{ id: relatedCampaignId, name: relatedCampaignId, status: 'UNKNOWN' }]
-    }
+    if (found.length === 0 && fetchedCampaign) return [fetchedCampaign]
+    if (found.length === 0) return [{ id: relatedCampaignId, name: relatedCampaignId, status: 'UNKNOWN' }]
     return found
-  }, [campaigns, relatedCampaignId, fetchedCampaign])
+  }, [campaigns, relatedCampaignId, fetchedCampaign, highlightedIds])
 
   // Scope adsets: only related campaign + ACTIVE only (always include editing entity)
   const scopedAdsets = useMemo(() => {
@@ -178,7 +179,10 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
     })
   }
 
-  const isActive = (type: string, id: string) => editingEntity.type === type && editingEntity.id === id
+  const isActive = (type: string, id: string) => {
+    if (highlightedIds && highlightedIds.length > 0) return highlightedIds.includes(id)
+    return editingEntity.type === type && editingEntity.id === id
+  }
 
   return (
     <div className="w-[280px] border-r border-gray-200 flex flex-col flex-shrink-0 bg-gray-50/50 overflow-hidden">

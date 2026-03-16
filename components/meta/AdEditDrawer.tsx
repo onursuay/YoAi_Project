@@ -23,6 +23,7 @@ interface AdEditDrawerProps {
   adsets: TreeAdset[]
   ads: TreeAd[]
   onEntitySelect: (type: 'campaign' | 'adset' | 'ad', id: string, name: string) => void
+  highlightedIds?: string[]
 }
 
 const CTA_OPTIONS = [
@@ -36,7 +37,7 @@ const CTA_OPTIONS = [
   { value: 'BOOK_TRAVEL', label: 'Seyahat Rezervasyonu' },
 ]
 
-export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect }: AdEditDrawerProps) {
+export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect, highlightedIds }: AdEditDrawerProps) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -153,6 +154,7 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
       editingEntity={{ type: 'ad', id: adId }}
       relatedCampaignId={relatedCampaignId}
       onEntitySelect={onEntitySelect}
+      highlightedIds={highlightedIds}
     >
         {loading ? (
           <div className="flex items-center justify-center h-64">

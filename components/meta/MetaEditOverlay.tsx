@@ -19,6 +19,7 @@ interface MetaEditOverlayProps {
   editingEntity: { type: 'campaign' | 'adset' | 'ad'; id: string }
   relatedCampaignId?: string
   onEntitySelect: (type: 'campaign' | 'adset' | 'ad', id: string, name: string) => void
+  highlightedIds?: string[]
   children: React.ReactNode
 }
 
@@ -36,6 +37,7 @@ export default function MetaEditOverlay({
   editingEntity,
   relatedCampaignId,
   onEntitySelect,
+  highlightedIds,
   children,
 }: MetaEditOverlayProps) {
   // Lock body scroll & handle Escape key
@@ -96,6 +98,7 @@ export default function MetaEditOverlay({
           editingEntity={editingEntity}
           relatedCampaignId={relatedCampaignId}
           onEntitySelect={onEntitySelect}
+          highlightedIds={highlightedIds}
         />
         <div className="flex-1 overflow-y-auto">
           {children}

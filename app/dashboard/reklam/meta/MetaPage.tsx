@@ -3296,6 +3296,7 @@ export default function MetaPage() {
           onToast={addToast}
           campaigns={treeData.campaigns}
           adsets={treeData.adsets}
+          highlightedIds={selectedIds.length > 1 ? selectedIds : undefined}
           ads={treeData.ads}
           onEntitySelect={handleEntitySelect}
         />
@@ -3313,6 +3314,7 @@ export default function MetaPage() {
           onToast={addToast}
           campaigns={treeData.campaigns}
           adsets={treeData.adsets}
+          highlightedIds={selectedIds.length > 1 ? selectedIds : undefined}
           ads={treeData.ads}
           onEntitySelect={handleEntitySelect}
         />
@@ -3326,6 +3328,7 @@ export default function MetaPage() {
           relatedCampaignId={editingAd.campaignId}
           open={!!editingAd}
           onClose={() => setEditingAd(null)}
+          highlightedIds={selectedIds.length > 1 ? selectedIds : undefined}
           onSuccess={(data) => {
             if (data?.adId && data?.name) {
               setAds(prev => prev.map(a => a.id === data!.adId ? { ...a, name: data.name } : a))
