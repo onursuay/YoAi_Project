@@ -51,6 +51,7 @@ export default function GooglePage() {
 
   const [multiEditAdGroups, setMultiEditAdGroups] = useState<Array<{ adGroupId: string; adGroupName: string; campaignId: string }>>([])
   const [multiEditAds, setMultiEditAds] = useState<Array<{ adId: string; adName: string; adGroupId: string; campaignId: string }>>([])
+  const [refreshToken, setRefreshToken] = useState(0)
 
   const addToast = useCallback((message: string, type: ToastType = 'info') => {
     const id = `toast-${Date.now()}-${Math.random().toString(36).slice(2)}`
@@ -123,10 +124,8 @@ export default function GooglePage() {
     setSelectedAdGroupId(null)
     setSelectedAdId(null)
     setSelectedIds([])
-    // Tabloyu başa sar
-    const tableEl = document.querySelector('.overflow-x-auto')
-    if (tableEl) tableEl.scrollLeft = 0
     data.setTableError(null)
+    setRefreshToken((v) => v + 1)
     if (activeTab === 'kampanyalar') data.fetchCampaigns(kpis.dateFrom, kpis.dateTo, data.showInactive, true)
     else if (activeTab === 'reklam-gruplari') data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
     else data.fetchAds(kpis.dateFrom, kpis.dateTo, data.showInactive)
@@ -594,6 +593,7 @@ export default function GooglePage() {
                 <GoogleTableSkeleton columns={tableColumns} />
               ) : (
                 <GoogleTableReal
+                  key={`google-${refreshToken}`}
                   columns={tableColumns}
                   data={currentData}
                   activeTab={activeTab}
