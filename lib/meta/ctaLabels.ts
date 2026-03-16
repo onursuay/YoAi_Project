@@ -4,6 +4,7 @@ export const CTA_LABEL_TR: Record<string, string> = {
   LIKE_PAGE: 'Sayfayı Beğen',
   LEARN_MORE: 'Daha Fazla Bilgi',
   SEND_WHATSAPP_MESSAGE: "WhatsApp'ta Mesaj Gönder",
+  WHATSAPP_MESSAGE: "WhatsApp'ta Mesaj Gönder",
   SEND_MESSAGE: 'Mesaj Gönder',
   CONTACT_US: 'Bize Ulaşın',
   GET_QUOTE: 'Teklif Al',
