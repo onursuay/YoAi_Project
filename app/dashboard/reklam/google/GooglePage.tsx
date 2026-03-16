@@ -114,6 +114,15 @@ export default function GooglePage() {
   }, [activeTab, kpis.dateFrom, kpis.dateTo, data])
 
   const handleRefresh = useCallback(() => {
+    // Edit overlay'leri kapat
+    setEditingCampaignId(null)
+    setEditingAdGroup(null)
+    setEditingAd(null)
+    setMultiEditAdGroups([])
+    setMultiEditAds([])
+    // Seçimleri temizle
+    clearSelection()
+    // Veriyi yenile
     data.setTableError(null)
     if (activeTab === 'kampanyalar') data.fetchCampaigns(kpis.dateFrom, kpis.dateTo, data.showInactive, true)
     else if (activeTab === 'reklam-gruplari') data.fetchAdGroups(kpis.dateFrom, kpis.dateTo, data.showInactive)
