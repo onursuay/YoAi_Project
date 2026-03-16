@@ -873,7 +873,7 @@ export default function GooglePage() {
               .map((ag) => ({ id: ag.adGroupId, name: ag.adGroupName, campaignId: id }))
             const cAds = multiEditAds
               .filter((a) => a.campaignId === id)
-              .map((a) => ({ id: a.adId, name: a.adName, adGroupId: a.adGroupId, campaignId: id }))
+              .map((a) => ({ id: a.adId, name: a.adName || `Reklam #${a.adId}`, adGroupId: a.adGroupId, campaignId: id }))
             return { id, name: c?.campaignName ?? id, adGroups: cAdGroups, ads: cAds }
           }) : undefined}
           onSwitchCampaign={(id) => setEditingCampaignId(id)}
