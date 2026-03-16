@@ -75,6 +75,9 @@ interface Props {
   campaignId: string
   onClose: () => void
   onToast: (message: string, type: 'success' | 'error' | 'info') => void
+  allCampaignIds?: string[]
+  allCampaignNames?: Record<string, string>
+  onSwitchCampaign?: (id: string) => void
 }
 
 /* ═══════════════════════════════════════════
@@ -586,7 +589,7 @@ function PlacementsView({ data, isLoading, error, onFetch }: ViewComponentProps)
    Component
    ═══════════════════════════════════════════ */
 
-export default function CampaignEditPanel({ campaignId, onClose, onToast }: Props) {
+export default function CampaignEditPanel({ campaignId, onClose, onToast, allCampaignIds, allCampaignNames, onSwitchCampaign }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -1515,6 +1518,28 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast }: Prop
       <div className="flex flex-1 overflow-hidden">
         {/* ── LEFT TREE SIDEBAR ── */}
         <div className="w-[280px] border-r border-gray-200 flex flex-col flex-shrink-0 bg-gray-50/50 overflow-hidden">
+          {allCampaignIds && allCampaignIds.length > 1 && (
+            <div className="border-b border-gray-200">
+              <div className="px-3 py-2">
+                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Seçili Kampanyalar</p>
+                {allCampaignIds.map((id) => (
+                  <div
+                    key={id}
+                    onClick={() => id !== campaignId && onSwitchCampaign?.(id)}
+                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${
+                      id === campaignId
+                        ? 'bg-blue-50 text-blue-700 font-medium'
+                        : 'text-gray-600 hover:bg-gray-100'
+                    }`}
+                  >
+                    <span className="truncate" title={allCampaignNames?.[id] ?? id}>
+                      {allCampaignNames?.[id] ?? id}
+                    </span>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
           {/* Search */}
           <div className="p-3 border-b border-gray-100">
             <div className="relative">

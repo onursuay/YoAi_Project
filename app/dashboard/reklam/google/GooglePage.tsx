@@ -287,28 +287,13 @@ export default function GooglePage() {
     const idsToEdit = selectedIds.length > 0 ? selectedIds : (selectedId ? [selectedId] : [])
     if (idsToEdit.length === 0) return
     if (activeTab === 'kampanyalar') {
-      const [first, ...rest] = idsToEdit
-      setEditQueue(rest.map((id) => {
-        const c = data.campaigns.find((c) => c.campaignId === id)
-        return { id, name: c?.campaignName ?? id }
-      }))
-      setEditingCampaignId(first)
+      setEditingCampaignId(idsToEdit[0])
     } else if (activeTab === 'reklam-gruplari') {
-      const [first, ...rest] = idsToEdit
-      const firstAg = data.adGroups.find((ag) => ag.adGroupId === first)
+      const firstAg = data.adGroups.find((ag) => ag.adGroupId === idsToEdit[0])
       if (firstAg) setEditingAdGroup({ id: firstAg.adGroupId, name: firstAg.adGroupName })
-      setEditQueue(rest.map((id) => {
-        const ag = data.adGroups.find((ag) => ag.adGroupId === id)
-        return { id, name: ag?.adGroupName ?? id }
-      }))
     } else {
-      const [first, ...rest] = idsToEdit
-      const firstAd = data.ads.find((a) => a.adId === first)
+      const firstAd = data.ads.find((a) => a.adId === idsToEdit[0])
       if (firstAd) setEditingAd({ id: firstAd.adId, name: firstAd.adName, adGroupId: firstAd.adGroupId })
-      setEditQueue(rest.map((id) => {
-        const ad = data.ads.find((a) => a.adId === id)
-        return { id, name: ad?.adName ?? id, adGroupId: ad?.adGroupId }
-      }))
     }
   }
 
@@ -863,15 +848,17 @@ export default function GooglePage() {
       {editingCampaignId && (
         <CampaignEditPanel
           campaignId={editingCampaignId}
+          allCampaignIds={selectedIds.length > 1 ? selectedIds : undefined}
+          allCampaignNames={selectedIds.length > 1 ? Object.fromEntries(
+            selectedIds.map((id) => {
+              const c = data.campaigns.find((c) => c.campaignId === id)
+              return [id, c?.campaignName ?? id]
+            })
+          ) : undefined}
+          onSwitchCampaign={(id) => setEditingCampaignId(id)}
           onClose={() => {
             setEditingCampaignId(null)
-            if (editQueue.length > 0) {
-              const [next, ...remaining] = editQueue
-              setEditQueue(remaining)
-              setTimeout(() => setEditingCampaignId(next.id), 100)
-            } else {
-              data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
-            }
+            data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
           }}
           onToast={addToast}
         />
