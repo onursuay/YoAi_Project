@@ -552,7 +552,7 @@ export async function POST(request: Request) {
       const headlineIsUrl = safeHeadline.startsWith('http://') || safeHeadline.startsWith('https://')
       const linkData: Record<string, unknown> = {
         image_hash: creative.imageHash,
-        ...(finalLink ? { link: finalLink } : {}),
+        ...(!isLeadsOnAd && resolvedLink ? { link: resolvedLink } : isLeadsOnAd && linkUrl ? { link: linkUrl } : {}),
         message: creative.primaryText,
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
@@ -568,7 +568,7 @@ export async function POST(request: Request) {
       const videoTitleIsUrl = safeVideoTitle.startsWith('http://') || safeVideoTitle.startsWith('https://')
       const videoData: Record<string, unknown> = {
         video_id: creative.videoId,
-        ...(finalVideoLink ? { link: finalVideoLink } : {}),
+        ...(isLeadsOnAd ? (linkUrl ? { link: linkUrl } : {}) : (resolvedVideoLink ? { link: resolvedVideoLink } : {})),
         message: creative.primaryText,
         title: videoTitleIsUrl ? '' : safeVideoTitle,
         link_description: creative.description,
