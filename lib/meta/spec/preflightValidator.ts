@@ -359,6 +359,13 @@ export function preflight(
     }
   }
 
+  // Traffic + CALL: telefon numarası zorunlu
+  if (objective === 'OUTCOME_TRAFFIC' && destination === 'CALL') {
+    if (!form.ad.phoneNumber?.trim()) {
+      missing.push({ step: 3, field: 'phone_number', message: 'Telefon numarası girilmeli' })
+    }
+  }
+
   // Website URL required for certain objectives/destinations
   const needsUrl =
     (objective === 'OUTCOME_TRAFFIC' && destination === 'WEBSITE') ||
