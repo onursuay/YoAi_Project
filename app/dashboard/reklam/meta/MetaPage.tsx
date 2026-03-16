@@ -162,9 +162,15 @@ export default function MetaPage() {
   const [insights, setInsights] = useState<InsightsData | null>(null)
   const [adAccountName, setAdAccountName] = useState<string>('')
   const [dateRange, setDateRange] = useState(() => {
-    const end = new Date().toISOString().split('T')[0]
+    const toLocalISO = (d: Date) => {
+      const y = d.getFullYear()
+      const m = String(d.getMonth() + 1).padStart(2, '0')
+      const day = String(d.getDate()).padStart(2, '0')
+      return `${y}-${m}-${day}`
+    }
+    const end = new Date()
     const s = new Date(); s.setDate(s.getDate() - 30)
-    return { preset: 'last_30d', start: s.toISOString().split('T')[0], end }
+    return { preset: 'last_30d', start: toLocalISO(s), end: toLocalISO(end) }
   })
   const [showInactive, setShowInactive] = useState(false)
   const [searchQuery, setSearchQuery] = useState('')
