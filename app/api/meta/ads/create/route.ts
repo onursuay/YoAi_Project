@@ -683,7 +683,9 @@ export async function POST(request: Request) {
             error: 'creative_link_required',
             message: isWhatsAppFlow
               ? 'WhatsApp creative oluşturulamadı — link_data.link eksik. Lütfen bildirin (bug).'
-              : 'Instagram Direct için Hedef URL zorunlu.',
+              : conversionLocation === 'INSTAGRAM_DIRECT'
+                ? 'Instagram Direct için Hedef URL zorunlu.'
+                : 'Kreatif için geçerli bir bağlantı URL\'si zorunludur.',
             error_subcode: subcode,
             fbtrace_id: metaError.fbtrace_id,
           },
