@@ -48,6 +48,7 @@ export default function StepSummary({ state, accountCurrency = null, fxState }: 
 
   // Check if this is a messaging destination (WhatsApp/Messenger)
   const isMessagingDest = adset.conversionLocation === 'WHATSAPP' || adset.conversionLocation === 'MESSENGER'
+  const isLeadsOnAd = state?.campaign?.objective === 'OUTCOME_LEADS' && state?.adset?.conversionLocation === 'ON_AD'
 
   return (
     <div className="space-y-8">
@@ -155,7 +156,7 @@ export default function StepSummary({ state, accountCurrency = null, fxState }: 
                     <dd className="font-medium">{CTA_LABELS[ad.callToAction] || ad.callToAction}</dd>
                   </div>
                   {/* Don't show URL for messaging destinations (WhatsApp/Messenger) - it's internal */}
-                  {!isMessagingDest && ad.websiteUrl && (
+                  {!isMessagingDest && !isLeadsOnAd && ad.websiteUrl && (
                     <div>
                       <dt className="text-gray-500">{t.websiteUrl}</dt>
                       <dd className="font-medium truncate">{ad.websiteUrl}</dd>
@@ -175,8 +176,8 @@ export default function StepSummary({ state, accountCurrency = null, fxState }: 
                 <dt className="text-gray-500">{t.textPreview}</dt>
                 <dd className="font-medium line-clamp-2">{ad.primaryText || '—'}</dd>
               </div>
-              {/* Don't show URL for messaging destinations (WhatsApp/Messenger) */}
-              {!isMessagingDest && (
+              {/* Don't show URL for messaging destinations (WhatsApp/Messenger) or Leads ON_AD */}
+              {!isMessagingDest && !isLeadsOnAd && (
                 <div>
                   <dt className="text-gray-500">{t.targetUrl}</dt>
                   <dd className="font-medium truncate">{ad.websiteUrl || '—'}</dd>

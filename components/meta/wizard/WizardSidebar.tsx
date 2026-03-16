@@ -160,7 +160,7 @@ export default function WizardSidebar({ state, currentStep }: WizardSidebarProps
           </>
         )}
         <Row label="CTA" value={getCtaLabel(ad.callToAction)} />
-        {requiresWebsiteUrl(state.campaign.objective, state.adset.conversionLocation, state.adset.optimizationGoal) && <Row label="URL" value={ad.websiteUrl || notSet} muted={!ad.websiteUrl} />}
+        {requiresWebsiteUrl(state.campaign.objective, state.adset.conversionLocation, state.adset.optimizationGoal) && state.adset.conversionLocation !== 'ON_AD' && <Row label="URL" value={ad.websiteUrl || notSet} muted={!ad.websiteUrl} />}
       </SidebarCard>
 
       {currentStep === 4 && (

@@ -160,22 +160,9 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
         </div>
       )}
 
-      {/* Leads ON_AD: Privacy Policy / Website URL zorunlu (Meta subcode 1815316) */}
+      {/* Leads ON_AD: websiteUrl form privacy_policy_url'den otomatik doldurulur, UI'da gösterilmez */}
       {isLeadsOnAd && (
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            Web Sitesi / Gizlilik Politikası URL <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="url"
-            value={state.websiteUrl ?? ''}
-            onChange={(e) => onChange({ websiteUrl: e.target.value || undefined })}
-            placeholder="https://siteniz.com/gizlilik-politikasi"
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-          />
-          <p className="mt-1 text-caption text-gray-400">Potansiyel müşteri reklamları için harici bir URL zorunludur.</p>
-          {errors['creative.websiteUrl'] && <p className="mt-1 text-sm text-red-600">{errors['creative.websiteUrl']}</p>}
-        </div>
+        <input type="hidden" name="websiteUrl" value={state.websiteUrl ?? ''} readOnly />
       )}
 
       {!isCall && !isOnPage && (
