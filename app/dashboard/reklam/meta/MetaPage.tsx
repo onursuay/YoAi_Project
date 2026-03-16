@@ -249,6 +249,9 @@ export default function MetaPage() {
   const [deletingAd, setDeletingAd] = useState<{ id: string; name: string } | null>(null)
   const [isDeletingAd, setIsDeletingAd] = useState(false)
 
+  const [bulkDeleting, setBulkDeleting] = useState<{ ids: string[]; type: 'campaign' | 'adset' | 'ad' } | null>(null)
+  const [isBulkDeleting, setIsBulkDeleting] = useState(false)
+
   // Duplicate state
   const [isDuplicatingCampaign, setIsDuplicatingCampaign] = useState(false)
   const [isDuplicatingAdset, setIsDuplicatingAdset] = useState(false)
@@ -1386,6 +1389,40 @@ export default function MetaPage() {
       setDeletingCampaign(null)
       setSelectedCampaignId(prev => prev === campaignId ? null : prev)
     }
+  }
+
+  const handleBulkDeleteConfirm = async () => {
+    if (!bulkDeleting || isBulkDeleting) return
+    const { ids, type } = bulkDeleting
+    setIsBulkDeleting(true)
+    let successCount = 0
+    for (const id of ids) {
+      try {
+        const endpoint = type === 'campaign' ? '/api/meta/campaigns/delete'
+          : type === 'adset' ? '/api/meta/adsets/delete'
+          : '/api/meta/ads/delete'
+        const bodyKey = type === 'campaign' ? 'campaignId' : type === 'adset' ? 'adsetId' : 'adId'
+        const response = await metaFetch(endpoint, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ [bodyKey]: id }),
+          cache: 'no-store',
+        })
+        const data = await response.json()
+        if (response.ok && data.ok) {
+          successCount++
+          if (type === 'campaign') setCampaigns(prev => prev.filter(c => c.id !== id))
+          else if (type === 'adset') setAdsets(prev => prev.filter(a => a.id !== id))
+          else setAds(prev => prev.filter(a => a.id !== id))
+        }
+      } catch { /* continue */ }
+    }
+    addToast(`${successCount}/${ids.length} öğe silindi`, successCount === ids.length ? 'success' : 'error')
+    setIsBulkDeleting(false)
+    setBulkDeleting(null)
+    setSelectedCampaignIds([])
+    setSelectedAdsetIds([])
+    setSelectedAdIds([])
   }
 
   const handleDeleteAdConfirm = async () => {
@@ -2706,8 +2743,9 @@ export default function MetaPage() {
               }
               const handleDelete = () => {
                 if (selectedIds.length > 1) {
-                  // Çoklu silme — şimdilik sadece ilk seçili öğeyi sil (ileride toplu silme eklenebilir)
-                  alert(`${selectedIds.length} öğe seçili. Toplu silme yakında eklenecek.`)
+                  const type = activeTab === 'kampanyalar' ? 'campaign' as const
+                    : activeTab === 'reklam-setleri' ? 'adset' as const : 'ad' as const
+                  setBulkDeleting({ ids: selectedIds, type })
                   return
                 }
                 const target = sel
@@ -2880,6 +2918,32 @@ export default function MetaPage() {
         onToast={(message, type) => addToast(message, type)}
       />
 
+      {bulkDeleting && (
+        <div className="fixed inset-0 bg-black/50 flex items-center justify-center z-50">
+          <div className="bg-white rounded-xl p-6 max-w-md w-full mx-4 shadow-xl">
+            <h3 className="text-lg font-semibold text-gray-900 mb-2">Toplu Silme</h3>
+            <p className="text-sm text-gray-600 mb-6">
+              {bulkDeleting.ids.length} öğeyi silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.
+            </p>
+            <div className="flex gap-3 justify-end">
+              <button
+                onClick={() => setBulkDeleting(null)}
+                disabled={isBulkDeleting}
+                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 disabled:opacity-50"
+              >
+                İptal
+              </button>
+              <button
+                onClick={handleBulkDeleteConfirm}
+                disabled={isBulkDeleting}
+                className="px-4 py-2 text-sm font-medium text-white bg-red-600 rounded-lg hover:bg-red-700 disabled:opacity-50"
+              >
+                {isBulkDeleting ? 'Siliniyor...' : `${bulkDeleting.ids.length} Öğeyi Sil`}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Delete Campaign Confirmation */}
       {deletingCampaign && (
