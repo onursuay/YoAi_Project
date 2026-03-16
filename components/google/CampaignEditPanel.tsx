@@ -76,7 +76,12 @@ interface Props {
   onClose: () => void
   onToast: (message: string, type: 'success' | 'error' | 'info') => void
   allCampaignIds?: string[]
-  allCampaignNames?: Record<string, string>
+  allCampaignData?: Array<{
+    id: string
+    name: string
+    adGroups: Array<{ id: string; name: string; campaignId: string }>
+    ads: Array<{ id: string; name: string; adGroupId: string; campaignId: string }>
+  }>
   onSwitchCampaign?: (id: string) => void
 }
 
@@ -589,7 +594,7 @@ function PlacementsView({ data, isLoading, error, onFetch }: ViewComponentProps)
    Component
    ═══════════════════════════════════════════ */
 
-export default function CampaignEditPanel({ campaignId, onClose, onToast, allCampaignIds, allCampaignNames, onSwitchCampaign }: Props) {
+export default function CampaignEditPanel({ campaignId, onClose, onToast, allCampaignIds, allCampaignData, onSwitchCampaign }: Props) {
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -1518,26 +1523,38 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
       <div className="flex flex-1 overflow-hidden">
         {/* ── LEFT TREE SIDEBAR ── */}
         <div className="w-[280px] border-r border-gray-200 flex flex-col flex-shrink-0 bg-gray-50/50 overflow-hidden">
-          {allCampaignIds && allCampaignIds.length > 1 && (
-            <div className="border-b border-gray-200">
-              <div className="px-3 py-2">
-                <p className="text-xs font-medium text-gray-400 uppercase tracking-wide mb-1">Seçili Kampanyalar</p>
-                {allCampaignIds.map((id) => (
-                  <div
-                    key={id}
-                    onClick={() => id !== campaignId && onSwitchCampaign?.(id)}
-                    className={`flex items-center gap-2 px-2 py-1.5 rounded-lg cursor-pointer text-sm transition-colors ${
-                      id === campaignId
-                        ? 'bg-blue-50 text-blue-700 font-medium'
-                        : 'text-gray-600 hover:bg-gray-100'
-                    }`}
-                  >
-                    <span className="truncate" title={allCampaignNames?.[id] ?? id}>
-                      {allCampaignNames?.[id] ?? id}
-                    </span>
+          {allCampaignData && allCampaignData.length > 1 && (
+            <div className="border-b border-gray-200 overflow-y-auto max-h-[40%]">
+              {allCampaignData.map((c) => {
+                const isCurrent = c.id === campaignId
+                return (
+                  <div key={c.id}>
+                    <div
+                      onClick={() => !isCurrent && onSwitchCampaign?.(c.id)}
+                      className={`flex items-center gap-1.5 px-3 py-2 cursor-pointer text-sm transition-colors hover:bg-gray-100 ${
+                        isCurrent ? 'bg-blue-50 border-l-2 border-blue-500 text-blue-700 font-medium' : 'text-gray-700'
+                      }`}
+                    >
+                      <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? 'text-blue-500' : 'text-gray-400'}`} />
+                      <span className="truncate" title={c.name}>{c.name}</span>
+                    </div>
+                    {isCurrent && c.adGroups.map((ag) => (
+                      <div key={ag.id}>
+                        <div className="flex items-center gap-1.5 pl-7 pr-3 py-1.5 text-xs text-gray-500">
+                          <FolderOpen className="w-3 h-3 shrink-0 text-gray-400" />
+                          <span className="truncate">{ag.name}</span>
+                        </div>
+                        {c.ads.filter((a) => a.adGroupId === ag.id).map((ad) => (
+                          <div key={ad.id} className="flex items-center gap-1.5 pl-12 pr-3 py-1 text-xs text-gray-400">
+                            <FileText className="w-3 h-3 shrink-0" />
+                            <span className="truncate">{ad.name}</span>
+                          </div>
+                        ))}
+                      </div>
+                    ))}
                   </div>
-                ))}
-              </div>
+                )
+              })}
             </div>
           )}
           {/* Search */}

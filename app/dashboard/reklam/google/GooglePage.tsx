@@ -849,12 +849,16 @@ export default function GooglePage() {
         <CampaignEditPanel
           campaignId={editingCampaignId}
           allCampaignIds={selectedIds.length > 1 ? selectedIds : undefined}
-          allCampaignNames={selectedIds.length > 1 ? Object.fromEntries(
-            selectedIds.map((id) => {
-              const c = data.campaigns.find((c) => c.campaignId === id)
-              return [id, c?.campaignName ?? id]
-            })
-          ) : undefined}
+          allCampaignData={selectedIds.length > 1 ? selectedIds.map((id) => {
+            const c = data.campaigns.find((c) => c.campaignId === id)
+            const cAdGroups = data.adGroups
+              .filter((ag) => ag.campaignId === id)
+              .map((ag) => ({ id: ag.adGroupId, name: ag.adGroupName, campaignId: id }))
+            const cAds = data.ads
+              .filter((a) => a.campaignId === id)
+              .map((a) => ({ id: a.adId, name: a.adName, adGroupId: a.adGroupId, campaignId: id }))
+            return { id, name: c?.campaignName ?? id, adGroups: cAdGroups, ads: cAds }
+          }) : undefined}
           onSwitchCampaign={(id) => setEditingCampaignId(id)}
           onClose={() => {
             setEditingCampaignId(null)
