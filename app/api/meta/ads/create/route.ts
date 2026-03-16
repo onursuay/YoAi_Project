@@ -536,7 +536,7 @@ export async function POST(request: Request) {
             : hasLink
               ? linkUrl
               : isLeadsOnAd
-                ? `https://www.facebook.com/${pageId}`
+                ? ''
                 : ''
     const effectiveLinkUrl = isWhatsApp ? waFallbackLink : ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) ? resolvedLinkByLocation : linkUrl)
     const effectiveHasLink = effectiveLinkUrl.length > 0
