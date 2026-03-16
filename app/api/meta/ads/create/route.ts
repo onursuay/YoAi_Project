@@ -212,10 +212,6 @@ export async function POST(request: Request) {
       if (needsLink && !creative.websiteUrl?.trim()) {
         validationErrors['creative.websiteUrl'] = 'Web sitesi URL\'si zorunludur'
       }
-      // Leads ON_AD requires external website URL for creative (Meta subcode 1815316 otherwise)
-      if (objective === 'OUTCOME_LEADS' && conversionLocation === 'ON_AD' && !creative?.websiteUrl?.trim()) {
-        validationErrors['creative.websiteUrl'] = 'Potansiyel müşteri reklamı için gizlilik politikası veya web sitesi URL\'si zorunludur'
-      }
     }
 
     if (Object.keys(validationErrors).length > 0) {

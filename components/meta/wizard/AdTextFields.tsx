@@ -20,7 +20,7 @@ interface AdTextFieldsProps {
   isAppPromotion?: boolean
   isCatalog?: boolean
   isLeadsOnAd?: boolean
-  activeLeadForms?: Array<{ form_id: string; name: string }>
+  activeLeadForms?: Array<{ form_id: string; name: string; privacy_policy_url?: string }>
 }
 
 export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFFIC', conversionLocation = 'WEBSITE', optimizationGoal = 'LINK_CLICKS', onChange, errors = {}, isMessaging = false, isCall = false, isOnPage = false, isOnAd = false, isAppPromotion = false, isCatalog = false, isLeadsOnAd = false, activeLeadForms = [] }: AdTextFieldsProps) {
@@ -141,7 +141,16 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
           {activeLeadForms.length > 0 ? (
             <select
               value={state.leadFormId ?? ''}
-              onChange={(e) => onChange({ leadFormId: e.target.value || undefined })}
+              onChange={(e) => {
+              const selectedFormId = e.target.value || undefined
+              const selectedForm = activeLeadForms.find(f => f.form_id === selectedFormId)
+              onChange({
+                leadFormId: selectedFormId,
+                ...(selectedForm?.privacy_policy_url && !state.websiteUrl
+                  ? { websiteUrl: selectedForm.privacy_policy_url }
+                  : {}),
+              })
+            }}
               className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
             >
               <option value="">{t.selectForm}</option>

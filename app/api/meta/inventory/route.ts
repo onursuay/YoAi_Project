@@ -43,6 +43,7 @@ export interface InventoryLeadForm {
   form_id: string
   name: string
   status: string
+  privacy_policy_url?: string
 }
 
 export interface InventoryCatalog {
@@ -376,16 +377,17 @@ async function fetchLeadFormsWithPageTokens(
     pages.map(async (p): Promise<[string, InventoryLeadForm[]]> => {
       if (!p.access_token) return [p.id, []]
       try {
-        const url = `${META_BASE_URL}/${p.id}/leadgen_forms?fields=id,name,status&limit=50&access_token=${encodeURIComponent(p.access_token)}`
+        const url = `${META_BASE_URL}/${p.id}/leadgen_forms?fields=id,name,status,privacy_policy_url&limit=50&access_token=${encodeURIComponent(p.access_token)}`
         const res = await fetch(url, { cache: 'no-store' })
         const data = await res.json()
         const list = Array.isArray(data?.data) ? data.data : []
         const active = list
           .filter((f: { status?: string }) => String(f.status).toUpperCase() === 'ACTIVE')
-          .map((f: { id: string; name: string; status: string }) => ({
+          .map((f: { id: string; name: string; status: string; privacy_policy_url?: string }) => ({
             form_id: f.id,
             name: f.name || '',
             status: f.status || 'ACTIVE',
+            privacy_policy_url: f.privacy_policy_url || undefined,
           }))
         return [p.id, active]
       } catch (e) {
