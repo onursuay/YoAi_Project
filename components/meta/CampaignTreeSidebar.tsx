@@ -141,7 +141,7 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
         .forEach(a => next.add(a.id))
       return next
     })
-  }, [highlightedIds, adsets])
+  }, [highlightedIds, adsets, ads])
 
   const adsetsByCampaign = useMemo(() => {
     const map: Record<string, TreeAdset[]> = {}
