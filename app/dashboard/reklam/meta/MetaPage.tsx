@@ -2754,10 +2754,14 @@ export default function MetaPage() {
                 else if (activeTab === 'reklam-setleri') setDeletingAdset({ id: target.id, name: target.name })
                 else setDeletingAd({ id: target.id, name: target.name })
               }
-              const handleEditAction = () => {
-                // Çoklu seçimde sadece ilk öğeyi aç — sidebar'dan diğerlerine geçilebilir
+              const handleEditAction = async () => {
                 const targetId = selectedIds.length > 0 ? selectedIds[0] : sel?.id
                 if (!targetId) return
+                // Overlay açılmadan önce tüm data'yı yükle
+                const loadPromises: Promise<void>[] = []
+                if (adsets.length === 0) loadPromises.push(loadTabData('reklam-setleri'))
+                if (ads.length === 0) loadPromises.push(loadTabData('reklamlar'))
+                if (loadPromises.length > 0) await Promise.all(loadPromises)
                 const item = activeTab === 'kampanyalar' ? campaigns.find(c => c.id === targetId)
                   : activeTab === 'reklam-setleri' ? filteredAdsets.find(a => a.id === targetId)
                   : filteredAds.find(a => a.id === targetId)
