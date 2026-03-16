@@ -229,8 +229,10 @@ export default function MetaPage() {
   
   // Campaign row selection (for action bar + adset/ad filtering)
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
+  const [selectedCampaignIds, setSelectedCampaignIds] = useState<string[]>([])
   // Ad set row selection (for action bar + ad filtering)
   const [selectedAdsetId, setSelectedAdsetId] = useState<string | null>(null)
+  const [selectedAdsetIds, setSelectedAdsetIds] = useState<string[]>([])
 
   // Delete campaign confirmation state
   const [deletingCampaign, setDeletingCampaign] = useState<{ id: string; name: string } | null>(null)
@@ -242,6 +244,7 @@ export default function MetaPage() {
 
   // Ad row selection
   const [selectedAdId, setSelectedAdId] = useState<string | null>(null)
+  const [selectedAdIds, setSelectedAdIds] = useState<string[]>([])
   // Delete ad confirmation state
   const [deletingAd, setDeletingAd] = useState<{ id: string; name: string } | null>(null)
   const [isDeletingAd, setIsDeletingAd] = useState(false)
@@ -2491,6 +2494,12 @@ export default function MetaPage() {
   }
 
   const currentData = getCurrentData()
+  const selectedIds = activeTab === 'kampanyalar' ? selectedCampaignIds
+    : activeTab === 'reklam-setleri' ? selectedAdsetIds : selectedAdIds
+  const setSelectedIds = activeTab === 'kampanyalar' ? setSelectedCampaignIds
+    : activeTab === 'reklam-setleri' ? setSelectedAdsetIds : setSelectedAdIds
+  const toolbarCurrentData = activeTab === 'kampanyalar' ? filteredCampaigns
+    : activeTab === 'reklam-setleri' ? filteredAdsets : filteredAds
   const isFetchingActiveTab =
     activeTab === 'kampanyalar'
       ? isRefreshingCampaigns
@@ -2678,7 +2687,7 @@ export default function MetaPage() {
               const sel = activeTab === 'kampanyalar' ? (selectedCampaignId ? campaigns.find(c => c.id === selectedCampaignId) : null)
                 : activeTab === 'reklam-setleri' ? (selectedAdsetId ? adsets.find(a => a.id === selectedAdsetId) : null)
                 : (selectedAdId ? ads.find(a => a.id === selectedAdId) : null)
-              const hasSelection = !!sel
+              const hasSelection = !!sel || selectedIds.length > 0
               const isDuplicating = activeTab === 'kampanyalar' ? isDuplicatingCampaign : activeTab === 'reklam-setleri' ? isDuplicatingAdset : isDuplicatingAd
 
               const handleDuplicate = () => {
@@ -2688,10 +2697,15 @@ export default function MetaPage() {
                 else handleDuplicateAd(sel.id)
               }
               const handleDelete = () => {
-                if (!sel) return
-                if (activeTab === 'kampanyalar') setDeletingCampaign({ id: sel.id, name: sel.name })
-                else if (activeTab === 'reklam-setleri') setDeletingAdset({ id: sel.id, name: sel.name })
-                else setDeletingAd({ id: sel.id, name: sel.name })
+                const ids = selectedIds.length > 0 ? selectedIds : (sel ? [sel.id] : [])
+                if (ids.length === 0) return
+                if (ids.length === 1) {
+                  const item = toolbarCurrentData.find((x: { id: string; name: string }) => x.id === ids[0])
+                  if (!item) return
+                  if (activeTab === 'kampanyalar') setDeletingCampaign({ id: item.id, name: item.name })
+                  else if (activeTab === 'reklam-setleri') setDeletingAdset({ id: item.id, name: item.name })
+                  else setDeletingAd({ id: item.id, name: item.name })
+                }
               }
               const handleEditAction = () => {
                 if (!sel) return
@@ -2700,9 +2714,9 @@ export default function MetaPage() {
                 else setEditingAd({ id: sel.id, name: sel.name, adsetId: (sel as Ad).adsetId, campaignId: (sel as Ad).campaignId })
               }
               const clearSelection = () => {
-                if (activeTab === 'kampanyalar') setSelectedCampaignId(null)
-                else if (activeTab === 'reklam-setleri') setSelectedAdsetId(null)
-                else setSelectedAdId(null)
+                if (activeTab === 'kampanyalar') { setSelectedCampaignId(null); setSelectedCampaignIds([]) }
+                else if (activeTab === 'reklam-setleri') { setSelectedAdsetId(null); setSelectedAdsetIds([]) }
+                else { setSelectedAdId(null); setSelectedAdIds([]) }
               }
 
               return (
@@ -2806,6 +2820,14 @@ export default function MetaPage() {
                   onDuplicate={() => {}}
                   onDelete={() => {}}
                   onEdit={() => {}}
+                  selectedIds={selectedIds}
+                  onSelectAll={(ids) => (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(ids)}
+                  onDeselectAll={() => (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)([])}
+                  onRowSelect={(id: string, checked: boolean) => {
+                    (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(prev =>
+                      checked ? [...prev, id] : prev.filter(x => x !== id)
+                    )
+                  }}
                 />
               ) : (
                 <MetaTableSkeleton key="skeleton" columns={tableColumns} />

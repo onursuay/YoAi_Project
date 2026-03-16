@@ -36,8 +36,10 @@ export interface MetaTableRealProps {
   onDuplicate: (type: 'campaign' | 'adset' | 'ad', id: string) => void
   onDelete: (type: 'campaign' | 'adset' | 'ad', item: any) => void
   onEdit: (type: 'campaign' | 'adset' | 'ad', item: any) => void
+  selectedIds?: string[]
   onSelectAll?: (ids: string[]) => void
   onDeselectAll?: () => void
+  onRowSelect?: (id: string, checked: boolean) => void
 }
 
 export default function MetaTableReal({
@@ -67,8 +69,10 @@ export default function MetaTableReal({
   onAdsetSelect,
   selectedAdId,
   onAdSelect,
+  selectedIds,
   onSelectAll,
   onDeselectAll,
+  onRowSelect,
 }: MetaTableRealProps) {
   const rightAlignKeys = ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc']
 
@@ -168,18 +172,8 @@ export default function MetaTableReal({
                   {col.key === 'checkbox' ? (
                     <input
                       type="checkbox"
-                      checked={data.length > 0 && data.every((item: any) => {
-                        if (activeTab === 'kampanyalar') return item.id === selectedCampaignId
-                        if (activeTab === 'reklam-setleri') return item.id === selectedAdsetId
-                        return item.id === selectedAdId
-                      })}
-                      onChange={(e) => {
-                        if (e.target.checked) {
-                          onSelectAll?.(data.map((item: any) => item.id))
-                        } else {
-                          onDeselectAll?.()
-                        }
-                      }}
+                      checked={data.length > 0 && data.every((item: any) => selectedIds?.includes(item.id))}
+                      onChange={(e) => e.target.checked ? onSelectAll?.(data.map((item: any) => item.id)) : onDeselectAll?.()}
                       className="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
                     />
                   ) : col.label}
@@ -212,7 +206,8 @@ export default function MetaTableReal({
               const isSelectedRow =
                 (activeTab === 'kampanyalar' && item.id === selectedCampaignId) ||
                 (activeTab === 'reklam-setleri' && item.id === selectedAdsetId) ||
-                (activeTab === 'reklamlar' && item.id === selectedAdId)
+                (activeTab === 'reklamlar' && item.id === selectedAdId) ||
+                (selectedIds?.includes(item.id) ?? false)
               return (
                 <tr
                   key={item.id}
@@ -221,17 +216,13 @@ export default function MetaTableReal({
                   {columns.map((col) => {
                     // ── Checkbox (seçim) ─────────────────────────────────────
                     if (col.key === 'checkbox') {
-                      const selectHandler = activeTab === 'kampanyalar' ? onCampaignSelect
-                        : activeTab === 'reklam-setleri' ? onAdsetSelect : onAdSelect
-                      const selectedId = activeTab === 'kampanyalar' ? selectedCampaignId
-                        : activeTab === 'reklam-setleri' ? selectedAdsetId : selectedAdId
-                      const isSelected = item.id === selectedId
+                      const isSelected = selectedIds?.includes(item.id) ?? false
                       return (
                         <td key={col.key} className="pl-4 pr-1 py-3 w-10">
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => selectHandler(isSelected ? null : item.id)}
+                            onChange={(e) => onRowSelect?.(item.id, e.target.checked)}
                             className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
                           />
                         </td>
