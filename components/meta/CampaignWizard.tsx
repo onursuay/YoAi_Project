@@ -1355,21 +1355,6 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       }
     }
 
-    // Leads + CALL: telefon numarası zorunlu
-    if (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'CALL') {
-      if (!state.ad.phoneNumber?.trim() && !state.adset.destinationDetails?.calls?.phoneNumber?.trim()) err.phone_number = t.phoneNumberEnter
-    }
-
-    // Engagement + CALL: telefon numarası zorunlu
-    if (state.campaign.objective === 'OUTCOME_ENGAGEMENT' && state.adset.conversionLocation === 'CALL') {
-      if (!state.ad.phoneNumber?.trim() && !state.adset.destinationDetails?.calls?.phoneNumber?.trim()) err.phone_number = t.phoneNumberEnter
-    }
-
-    // Traffic + CALL: telefon numarası zorunlu
-    if (state.campaign.objective === 'OUTCOME_TRAFFIC' && state.adset.conversionLocation === 'CALL') {
-      if (!state.ad.phoneNumber?.trim() && !state.adset.destinationDetails?.calls?.phoneNumber?.trim()) err.phone_number = t.phoneNumberEnter
-    }
-
     if (state.ad.format === 'single_image' && !state.ad.media.preview) err.media = t.imageRequired
     if (state.ad.format === 'single_video' && !state.ad.media.preview) err.media = t.videoRequired
     if (state.ad.format === 'carousel' && state.ad.carouselCards.length < 2) err.carousel = t.minCarouselCards
