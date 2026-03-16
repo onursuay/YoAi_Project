@@ -1548,26 +1548,46 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                 const isCurrent = c.id === campaignId
                 return (
                   <div key={c.id}>
+                    {/* Kampanya */}
                     <div
-                      onClick={() => !isCurrent && onSwitchCampaign?.(c.id)}
+                      onClick={() => {
+                        if (!isCurrent) {
+                          onSwitchCampaign?.(c.id)
+                        } else {
+                          handleSelect({ type: 'campaign', id: c.id })
+                        }
+                      }}
                       className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
-                        isCurrent ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-700'
+                        isActive('campaign', c.id) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-700'
                       }`}
                     >
                       <span className="w-3.5 shrink-0" />
-                      <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isCurrent ? 'text-green-600' : 'text-gray-400'}`} />
+                      <Megaphone className={`w-3.5 h-3.5 shrink-0 ${isActive('campaign', c.id) ? 'text-green-600' : 'text-gray-400'}`} />
                       <span className="truncate flex-1" title={c.name}>{c.name}</span>
                     </div>
+                    {/* Ad Groups */}
                     {c.adGroups.map((ag) => (
                       <div key={ag.id}>
-                        <div className="flex items-center gap-1 pl-7 pr-3 py-1.5 text-sm text-gray-600">
+                        <div
+                          onClick={() => handleSelect({ type: 'adGroup', id: ag.id })}
+                          className={`flex items-center gap-1 pl-7 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                            isActive('adGroup', ag.id) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-600'
+                          }`}
+                        >
                           <span className="w-3.5 shrink-0" />
-                          <FolderOpen className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                          <FolderOpen className={`w-3.5 h-3.5 shrink-0 ${isActive('adGroup', ag.id) ? 'text-green-600' : 'text-gray-400'}`} />
                           <span className="truncate flex-1" title={ag.name}>{ag.name}</span>
                         </div>
+                        {/* Ads */}
                         {c.ads.filter((a) => a.adGroupId === ag.id).map((ad) => (
-                          <div key={ad.id} className="flex items-center gap-1.5 pl-14 pr-3 py-1.5 text-sm text-gray-500">
-                            <FileText className="w-3.5 h-3.5 shrink-0 text-gray-400" />
+                          <div
+                            key={ad.id}
+                            onClick={() => handleSelect({ type: 'ad', id: ad.id, adGroupId: ad.adGroupId })}
+                            className={`flex items-center gap-1.5 pl-14 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                              isActive('ad', ad.id, ad.adGroupId) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-500'
+                            }`}
+                          >
+                            <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive('ad', ad.id, ad.adGroupId) ? 'text-green-600' : 'text-gray-400'}`} />
                             <span className="truncate" title={ad.name}>{ad.name}</span>
                           </div>
                         ))}
