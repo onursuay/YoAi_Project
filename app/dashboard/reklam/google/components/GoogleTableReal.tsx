@@ -28,6 +28,10 @@ export interface GoogleTableRealProps {
   t: (key: string) => string
   selectedId: string | null
   onSelect: (id: string | null) => void
+  selectedIds?: string[]
+  onSelectAll?: (ids: string[]) => void
+  onDeselectAll?: () => void
+  onRowSelect?: (id: string, checked: boolean) => void
 }
 
 const rightAlignKeys = ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc', 'roas']
@@ -75,6 +79,10 @@ export default function GoogleTableReal({
   t,
   selectedId,
   onSelect,
+  selectedIds,
+  onSelectAll,
+  onDeselectAll,
+  onRowSelect,
 }: GoogleTableRealProps) {
   // ── Column resize state ──────────────────────────────────────
   const [colWidths, setColWidths] = useState<Record<string, number>>({})
@@ -127,7 +135,13 @@ export default function GoogleTableReal({
                   }`}
                 >
                   {col.key === 'checkbox' ? (
-                    <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-300 accent-blue-600 opacity-50" />
+                    <input
+                      type="checkbox"
+                      checked={data.length > 0 && selectedIds != null && data.every((item: any) => selectedIds.includes(getItemId(item, activeTab)))}
+                      onChange={(e) => (e.target.checked ? onSelectAll?.(data.map((item: any) => getItemId(item, activeTab))) : onDeselectAll?.())}
+                      disabled={!onSelectAll || !onDeselectAll}
+                      className="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer disabled:opacity-50"
+                    />
                   ) : col.label}
                   {idx < columns.length - 1 && (
                     <span
@@ -154,7 +168,7 @@ export default function GoogleTableReal({
           ) : (
             data.map((item: any) => {
               const itemId = getItemId(item, activeTab)
-              const isSelected = itemId === selectedId
+              const isSelected = itemId === selectedId || (selectedIds?.includes(itemId) ?? false)
               const isCampaign = activeTab === 'kampanyalar'
               const isAdGroup = activeTab === 'reklam-gruplari'
               const isLoadingStatus = isCampaign
@@ -179,7 +193,7 @@ export default function GoogleTableReal({
                           <input
                             type="checkbox"
                             checked={isSelected}
-                            onChange={() => onSelect(isSelected ? null : itemId)}
+                            onChange={(e) => onRowSelect ? onRowSelect(itemId, e.target.checked) : onSelect(isSelected ? null : itemId)}
                             className="w-4 h-4 rounded border-gray-300 text-blue-600 cursor-pointer accent-blue-600"
                           />
                         </td>

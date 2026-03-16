@@ -2684,9 +2684,17 @@ export default function MetaPage() {
             <Tabs tabs={tabs} activeTab={activeTab} onTabChange={handleTabChange} />
             {/* Unified toolbar: actions + search + filters in single row */}
             {(() => {
-              const sel = activeTab === 'kampanyalar' ? (selectedCampaignId ? campaigns.find(c => c.id === selectedCampaignId) : null)
+              // Multi-select: selectedIds array'i öncelikli, yoksa tek seçim
+              const _singleSel = activeTab === 'kampanyalar' ? (selectedCampaignId ? campaigns.find(c => c.id === selectedCampaignId) : null)
                 : activeTab === 'reklam-setleri' ? (selectedAdsetId ? adsets.find(a => a.id === selectedAdsetId) : null)
                 : (selectedAdId ? ads.find(a => a.id === selectedAdId) : null)
+
+              const _multiFirstId = selectedIds.length >= 1 ? selectedIds[0] : null
+              const sel = _multiFirstId
+                ? (activeTab === 'kampanyalar' ? campaigns.find(c => c.id === _multiFirstId)
+                  : activeTab === 'reklam-setleri' ? filteredAdsets.find(a => a.id === _multiFirstId)
+                  : filteredAds.find(a => a.id === _multiFirstId)) ?? _singleSel
+                : _singleSel
               const hasSelection = !!sel || selectedIds.length > 0
               const isDuplicating = activeTab === 'kampanyalar' ? isDuplicatingCampaign : activeTab === 'reklam-setleri' ? isDuplicatingAdset : isDuplicatingAd
 
@@ -2697,15 +2705,16 @@ export default function MetaPage() {
                 else handleDuplicateAd(sel.id)
               }
               const handleDelete = () => {
-                const ids = selectedIds.length > 0 ? selectedIds : (sel ? [sel.id] : [])
-                if (ids.length === 0) return
-                if (ids.length === 1) {
-                  const item = toolbarCurrentData.find((x: { id: string; name: string }) => x.id === ids[0])
-                  if (!item) return
-                  if (activeTab === 'kampanyalar') setDeletingCampaign({ id: item.id, name: item.name })
-                  else if (activeTab === 'reklam-setleri') setDeletingAdset({ id: item.id, name: item.name })
-                  else setDeletingAd({ id: item.id, name: item.name })
+                if (selectedIds.length > 1) {
+                  // Çoklu silme — şimdilik sadece ilk seçili öğeyi sil (ileride toplu silme eklenebilir)
+                  alert(`${selectedIds.length} öğe seçili. Toplu silme yakında eklenecek.`)
+                  return
                 }
+                const target = sel
+                if (!target) return
+                if (activeTab === 'kampanyalar') setDeletingCampaign({ id: target.id, name: target.name })
+                else if (activeTab === 'reklam-setleri') setDeletingAdset({ id: target.id, name: target.name })
+                else setDeletingAd({ id: target.id, name: target.name })
               }
               const handleEditAction = () => {
                 if (!sel) return

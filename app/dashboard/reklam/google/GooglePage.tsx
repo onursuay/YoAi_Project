@@ -35,6 +35,7 @@ export default function GooglePage() {
   const [selectedCampaignId, setSelectedCampaignId] = useState<string | null>(null)
   const [selectedAdGroupId, setSelectedAdGroupId] = useState<string | null>(null)
   const [selectedAdId, setSelectedAdId] = useState<string | null>(null)
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
 
   // Campaign edit panel (tree view)
   const [editingCampaignId, setEditingCampaignId] = useState<string | null>(null)
@@ -74,6 +75,7 @@ export default function GooglePage() {
     setSelectedCampaignId(null)
     setSelectedAdGroupId(null)
     setSelectedAdId(null)
+    setSelectedIds([])
   }, [activeTab])
 
   // Fetch data when tab changes
@@ -269,12 +271,12 @@ export default function GooglePage() {
   // Selection helpers
   const selectedId = activeTab === 'kampanyalar' ? selectedCampaignId : activeTab === 'reklam-gruplari' ? selectedAdGroupId : selectedAdId
   const onSelect = activeTab === 'kampanyalar' ? setSelectedCampaignId : activeTab === 'reklam-gruplari' ? setSelectedAdGroupId : setSelectedAdId
-  const hasSelection = selectedId !== null
+  const hasSelection = selectedId !== null || selectedIds.length > 0
 
   const clearSelection = () => {
-    if (activeTab === 'kampanyalar') setSelectedCampaignId(null)
-    else if (activeTab === 'reklam-gruplari') setSelectedAdGroupId(null)
-    else setSelectedAdId(null)
+    if (activeTab === 'kampanyalar') { setSelectedCampaignId(null); setSelectedIds([]) }
+    else if (activeTab === 'reklam-gruplari') { setSelectedAdGroupId(null); setSelectedIds([]) }
+    else { setSelectedAdId(null); setSelectedIds([]) }
   }
 
   const handleEditAction = () => {
@@ -454,7 +456,7 @@ export default function GooglePage() {
                 className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors"
                 title={tTable('toolbar.refresh')}
               >
-                <RefreshCw className="w-4 h-4" />
+                <RefreshCw className={`w-4 h-4 transition-transform ${showTableShimmer ? 'animate-spin' : ''}`} />
               </button>
               <button
                 onClick={handleEditAction}
@@ -543,6 +545,10 @@ export default function GooglePage() {
                   t={(key: string) => tTable(key)}
                   selectedId={selectedId}
                   onSelect={onSelect}
+                  selectedIds={selectedIds}
+                  onSelectAll={(ids: string[]) => setSelectedIds(ids)}
+                  onDeselectAll={() => setSelectedIds([])}
+                  onRowSelect={(id: string, checked: boolean) => setSelectedIds(prev => checked ? [...prev, id] : prev.filter(x => x !== id))}
                 />
               )}
             </TableShimmer>
