@@ -2709,7 +2709,7 @@ export default function MetaPage() {
                 <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
                   {/* Action icons */}
                   <button onClick={() => triggerRefresh()} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors" title={t('toolbar.refresh')}>
-                    <RefreshCw className="w-4 h-4" />
+                    <RefreshCw className={`w-4 h-4 transition-transform ${showTableShimmer ? 'animate-spin' : ''}`} />
                   </button>
                   <button onClick={handleEditAction} disabled={!hasSelection} className="p-1.5 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-md transition-colors disabled:opacity-30 disabled:cursor-not-allowed" title={t('actions.edit')}>
                     <Pencil className="w-4 h-4" />

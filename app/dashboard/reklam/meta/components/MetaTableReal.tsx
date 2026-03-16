@@ -36,6 +36,8 @@ export interface MetaTableRealProps {
   onDuplicate: (type: 'campaign' | 'adset' | 'ad', id: string) => void
   onDelete: (type: 'campaign' | 'adset' | 'ad', item: any) => void
   onEdit: (type: 'campaign' | 'adset' | 'ad', item: any) => void
+  onSelectAll?: (ids: string[]) => void
+  onDeselectAll?: () => void
 }
 
 export default function MetaTableReal({
@@ -65,6 +67,8 @@ export default function MetaTableReal({
   onAdsetSelect,
   selectedAdId,
   onAdSelect,
+  onSelectAll,
+  onDeselectAll,
 }: MetaTableRealProps) {
   const rightAlignKeys = ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc']
 
@@ -162,7 +166,22 @@ export default function MetaTableReal({
                   }`}
                 >
                   {col.key === 'checkbox' ? (
-                    <input type="checkbox" disabled className="w-4 h-4 rounded border-gray-300 accent-blue-600 opacity-50" />
+                    <input
+                      type="checkbox"
+                      checked={data.length > 0 && data.every((item: any) => {
+                        if (activeTab === 'kampanyalar') return item.id === selectedCampaignId
+                        if (activeTab === 'reklam-setleri') return item.id === selectedAdsetId
+                        return item.id === selectedAdId
+                      })}
+                      onChange={(e) => {
+                        if (e.target.checked) {
+                          onSelectAll?.(data.map((item: any) => item.id))
+                        } else {
+                          onDeselectAll?.()
+                        }
+                      }}
+                      className="w-4 h-4 rounded border-gray-300 accent-blue-600 cursor-pointer"
+                    />
                   ) : col.label}
                   {/* Resize handle between columns */}
                   {idx < columns.length - 1 && (
