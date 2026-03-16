@@ -207,7 +207,7 @@ export async function POST(request: Request) {
       const needsLink = (
         conversionLocation === 'WEBSITE' ||
         conversionLocation === 'APP' ||
-        (objective === 'OUTCOME_TRAFFIC' && !['MESSENGER', 'INSTAGRAM_DIRECT', 'CALL'].includes(conversionLocation))
+        (objective === 'OUTCOME_TRAFFIC' && !['MESSENGER', 'INSTAGRAM_DIRECT', 'CALL', 'WHATSAPP'].includes(conversionLocation))
       )
       if (needsLink && !creative.websiteUrl?.trim()) {
         validationErrors['creative.websiteUrl'] = 'Web sitesi URL\'si zorunludur'
