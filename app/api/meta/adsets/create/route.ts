@@ -149,6 +149,7 @@ function resolveDestinationConfig(
     case 'APP':
       needsDestinationType = true
       break
+    case 'CALL':
     case 'PHONE_CALL':
       if (pageId) promotedObject = { page_id: pageId }
       break
