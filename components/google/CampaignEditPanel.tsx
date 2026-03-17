@@ -1801,12 +1801,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Teklif Stratejisi ── */}
                       {schema.campaign.includes('bidding') && (
-                        <div className="relative rounded-xl border shadow-sm overflow-hidden bg-gradient-to-br from-[#fdbc00]/25 via-[#fdbc00]/8 to-white border-[#fdbc00]/40">
+                        <div className="relative rounded-xl border shadow-sm overflow-hidden bg-gradient-to-br from-[#fdbc00]/20 via-[#fdbc00]/5 to-white border-[#fdbc00]/30">
                           <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-bl-full pointer-events-none" />
                           <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-tr-full pointer-events-none" />
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#fdbc00]/25 text-[#b38600] shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-[#fdbc00]/20 text-[#fdbc00] shrink-0">
                                 <Settings2 className="w-[18px] h-[18px]" />
                               </div>
                               <div>
