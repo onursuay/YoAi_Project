@@ -134,58 +134,74 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
 
 const INFO_CARDS: Record<string, string[]> = {
   genel: [
-    'Kampanya adı reklam yönetimini kolaylaştırır, kullanıcılara gösterilmez.',
-    'Günlük bütçe aşıldığında reklamlar otomatik duraklar.',
-    'Teklif stratejisi dönüşüm hedeflerinize göre seçilmeli.',
-    'Arama ağı ortakları Google dışı sitelerde de görünüm sağlar.',
+    'Kampanya adı dahili bir etikettir; kullanıcılara gösterilmez. Anlamlı isimler yönetimi kolaylaştırır.',
+    'Günlük bütçe, Google\'ın günlük ortalama harcama limitidir. Bazı günler %20 fazla harcanabilir.',
+    'Teklif stratejisi kampanya amacınıza göre seçilmeli: trafik için Tıklamaları Artır, satış için Dönüşümleri Artır.',
+    'Arama Ağı Ortakları; Google Arama dışında Google\'ın arama ortağı sitelerde de görünüm sağlar.',
+    'Görüntülü Reklam Ağı milyonlarca web sitesi, uygulama ve YouTube\'da görünüm sağlar.',
+  ],
+  anahtar_kelimeler: [
+    'Anahtar kelimeler reklamınızın hangi aramalarda gösterileceğini belirler.',
+    'Geniş eşleme en fazla erişimi sağlar ancak alakasız aramalarda da tetiklenebilir.',
+    'Sıralı eşleme ("kelime") tam sırayı koruyarak daha hedefli gösterim sağlar.',
+    'Tam eşleme [kelime] yalnızca tam aramada veya çok yakın varyasyonlarda tetiklenir.',
+    'Kalite puanı yüksek anahtar kelimeler daha düşük maliyetle daha üst sıralarda yer alır.',
   ],
   negatif_ak: [
-    'Negatif kelimeler gereksiz tıklamaları önler, bütçeyi korur.',
-    'Geniş eşleme negatifler tüm varyasyonları dışlar.',
-    'Kampanya düzeyinde negatifler tüm reklam gruplarını etkiler.',
-    'Düzenli negatif kelime analizi CTR\'ı artırır.',
+    'Negatif anahtar kelimeler reklamınızın gösterilmesini istemediğiniz aramaları dışlar.',
+    'Negatif tam eşleme en hassas dışlamadır; yalnızca o tam aramayı engeller.',
+    'Kampanya düzeyi negatifler tüm reklam gruplarına uygulanır.',
+    'Arama terimi raporu düzenli incelenerek yeni negatifler eklenmelidir.',
+    'Negatif anahtar kelime listeleri birden fazla kampanyada kullanılabilir.',
   ],
   yer: [
-    'Hedef konum seçimi reklam gösterimini optimize eder.',
-    'Şehir bazlı hedefleme bölgesel işletmeler için idealdir.',
-    'Konum hariç tutma bütçe israfını önler.',
-    'Yarıçap hedefleme fiziksel mağazalar için etkilidir.',
+    'Konum hedefleme reklamları yalnızca seçili bölgelerdeki kullanıcılara gösterir.',
+    '"Hedef konum" ve "İlgi alanı" seçenekleri farklı davranır: biri fiziksel konumu, diğeri arama niyetini hedefler.',
+    'Konum raporları hangi şehir/bölgeden dönüşüm geldiğini gösterir.',
+    'Düşük performanslı konumlar hariç tutularak bütçe optimize edilebilir.',
+    'Yarıçap hedefleme fiziksel mağaza veya hizmet bölgesi olan işletmeler için idealdir.',
   ],
   ogeler: [
-    'Öğeler reklam metninizi genişleterek tıklama oranını artırır.',
-    'Sitelink öğeleri kullanıcıları doğrudan sayfalara yönlendirir.',
-    'Çağrı öğesi mobil kullanıcılar için dönüşümü artırır.',
-    'Görsel öğeler reklamın dikkat çekiciliğini artırır.',
+    'Öğeler (eski adıyla uzantılar) reklam alanını genişleterek CTR\'ı ortalama %10-15 artırır.',
+    'Sitelink öğeleri kullanıcıları doğrudan alt sayfalara yönlendirir.',
+    'Açıklama öğeleri ürün/hizmet avantajlarını vurgular.',
+    'Çağrı öğesi mobil cihazlarda doğrudan arama yapılmasını sağlar.',
+    'Konum öğesi işletme adresini göstererek yerel müşterileri çeker.',
   ],
   arama_terimleri: [
-    'Arama terimleri gerçek kullanıcı sorgularını gösterir.',
-    'Yüksek dönüşümlü terimleri anahtar kelimeye ekleyin.',
-    'Düşük performanslı terimler negatife alınmalı.',
-    'Arama terimi raporu kampanya optimizasyonunun temelidir.',
+    'Arama terimleri raporu reklamınızı tetikleyen gerçek kullanıcı sorgularını gösterir.',
+    'Yüksek dönüşümlü terimleri anahtar kelime olarak ekleyerek kampanyayı güçlendirin.',
+    'Alakasız veya düşük performanslı terimler negatif anahtar kelimeye eklenmelidir.',
+    'Arama terimleri raporu yeni içerik ve reklam fikirleri için de değerli bir kaynaktır.',
+    '"Otomatik" etiketli terimler geniş eşleme anahtar kelimelerden gelir.',
   ],
   gosterim_payi: [
-    'Gösterim payı rekabetteki görünürlük oranınızı gösterir.',
-    '%100 gösterim payı her zaman hedeflenmemeli.',
-    'Bütçe kaynaklı kayıp bütçe artışıyla çözülür.',
-    'Sıralama kaynaklı kayıp teklif veya kalite puanıyla iyileşir.',
+    'Arama Gösterim Payı, reklamınızın gösterilebileceği toplam gösterime oranıdır.',
+    '%100 gösterim payı hedeflenmemelidir; yüksek kaliteli gösterimler daha değerlidir.',
+    'Bütçe kaynaklı kayıp: günlük bütçeyi artırarak çözülür.',
+    'Sıralama kaynaklı kayıp: teklif artışı veya kalite puanı iyileştirmesiyle çözülür.',
+    'Rakip gösterim payı analizi rekabet durumunu anlamak için kullanılır.',
   ],
   hedef_kitleler: [
-    'Hedef kitle segmentleri reklamları doğru kişilere ulaştırır.',
-    'Gözlem modu performansı etkilemeden kitleyi izler.',
-    'Benzer kitleler mevcut müşterilere benzer kullanıcıları hedefler.',
-    'Yeniden pazarlama dönüşüm oranını önemli ölçüde artırır.',
+    'Hedef kitle segmentleri belirli ilgi alanları veya davranışlara sahip kullanıcıları hedefler.',
+    '"Gözlem" modu kitleyi izler ama reklamı kısıtlamaz; "Hedefleme" modu yalnızca o kitleye gösterir.',
+    'Yeniden pazarlama listeleri sitenizi ziyaret eden kullanıcıları yeniden hedefler.',
+    'Benzer segmentler mevcut müşterilere benzer yeni kullanıcılara ulaşır.',
+    'Demografik hedefleme yaş, cinsiyet, gelir düzeyine göre teklif ayarlaması sağlar.',
   ],
   acilis_sayfalari: [
-    'Açılış sayfası deneyimi kalite puanını doğrudan etkiler.',
-    'Yüksek hemen çıkma oranı sayfa uyumsuzluğuna işaret eder.',
-    'Mobil uyumlu sayfalar dönüşüm oranını artırır.',
-    'Sayfa hızı hem SEO hem de Ads performansını etkiler.',
+    'Açılış sayfası deneyimi kalite puanının üç bileşeninden biridir.',
+    'Sayfa içeriği reklam ile uyumlu olmalıdır; aksi halde kalite puanı düşer.',
+    'Mobil uyumluluk ve sayfa hızı hem dönüşümü hem de kalite puanını etkiler.',
+    'Hemen çıkma oranı yüksek sayfalar reklam metni ile içerik arasındaki uyumsuzluğa işaret eder.',
+    'Google PageSpeed Insights aracıyla açılış sayfası hızı test edilebilir.',
   ],
   gosterim_yeri_zamani: [
-    'Gösterilme zamanı ayarı bütçeyi verimli kullanır.',
-    'En yüksek dönüşüm saatlerine teklif artışı ekleyin.',
-    'Hafta sonu performansı sektöre göre değişir.',
-    'Zaman ayarı raporları 30 günlük veriyle analiz edilmeli.',
+    'Reklam planlaması reklamların yalnızca belirli gün ve saatlerde gösterilmesini sağlar.',
+    'Dönüşüm verilerine göre yüksek performanslı saatlere teklif artışı eklenebilir.',
+    'Çalışma saatleri dışındaki gösterimler bazı sektörler için bütçe israfı olabilir.',
+    'Coğrafi konuma göre saat dilimi farkı göz önünde bulundurulmalıdır.',
+    'Reklam planlaması raporları 30+ günlük veriyle anlamlı hale gelir.',
   ],
 }
 
@@ -1752,16 +1768,16 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           </div>
 
           {/* Info Card */}
-          <div className="px-3 pt-2 pb-3">
+          <div className="px-3 py-3 flex-shrink-0">
             <div
               style={{
-                transition: 'opacity 0.5s ease, transform 0.5s ease',
+                transition: 'opacity 0.6s ease, transform 0.6s ease',
                 opacity: infoCardVisible ? 1 : 0,
-                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-6px)',
+                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
               }}
-              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-3.5"
+              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4"
             >
-              <div className="flex items-start gap-2">
+              <div className="flex items-start gap-2 mb-3">
                 <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
                   <span className="text-emerald-600 text-[11px] font-bold">i</span>
                 </div>
@@ -1769,7 +1785,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
                 </p>
               </div>
-              <div className="flex gap-1 mt-2.5 justify-center">
+              <div className="flex gap-1 justify-center">
                 {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
                   <div
                     key={i}
