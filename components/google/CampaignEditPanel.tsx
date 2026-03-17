@@ -1984,23 +1984,23 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           </div>
 
           {!infoCardDismissed && infoCards.length > 0 && (
-            <div className="flex-1 px-3 py-3 flex flex-col min-h-0">
+            <div className="flex-1 px-3 py-3 flex flex-col min-h-0 overflow-y-auto">
               <div
                 style={{
                   transition: 'opacity 0.6s ease, transform 0.6s ease',
                   opacity: infoCardVisible ? 1 : 0,
                   transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
                 }}
-                className="flex-1 relative bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4 flex flex-col min-h-0"
+                className="info-card-shine bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4 flex flex-col"
               >
                 {/* Kapatma butonu */}
                 <button
                   onClick={() => setInfoCardDismissed(true)}
-                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-200/50 hover:bg-emerald-300/70 flex items-center justify-center transition-colors z-10"
+                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-200/50 hover:bg-emerald-300/70 flex items-center justify-center transition-colors z-20"
                 >
                   <X className="w-3 h-3 text-emerald-600" />
                 </button>
-                <div className="flex flex-col flex-1 min-h-0 pr-4">
+                <div className="relative z-10 flex flex-col pr-4">
                   <div className="flex items-start gap-2">
                     <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
                       <span className="text-emerald-600 text-[11px] font-bold">i</span>
@@ -2013,14 +2013,14 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                         return (
                           <>
                             <p className="text-[13px] font-semibold text-emerald-900 mb-2 block">{activeCard.title}</p>
-                            <p className="text-[12px] text-emerald-800 leading-relaxed overflow-y-auto max-h-[120px] pr-1">{activeCard.body}</p>
+                            <p className="text-[12px] text-emerald-800 leading-relaxed pr-1">{activeCard.body}</p>
                           </>
                         )
                       })()}
                     </div>
                   </div>
                 </div>
-                <div className="flex gap-1 justify-center mt-3 shrink-0">
+                <div className="relative z-10 flex gap-1 justify-center mt-3 shrink-0">
                   {infoCards.map((_, i) => {
                     const effectiveIndex = Math.min(infoCardIndex, Math.max(0, infoCards.length - 1))
                     return (

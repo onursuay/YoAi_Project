@@ -63,6 +63,39 @@ body {
   pointer-events: none;
 }
 
+/* Info card shine — soldan sağa yumuşak ışık süzmesi */
+@keyframes cardShine {
+  0% { transform: translateX(-140%) skewX(-15deg); }
+  100% { transform: translateX(340%) skewX(-15deg); }
+}
+
+.info-card-shine {
+  position: relative;
+  overflow: hidden;
+  height: auto;
+  min-height: 0;
+}
+
+.info-card-shine::before {
+  content: '';
+  position: absolute;
+  top: -20%;
+  bottom: -20%;
+  left: 0;
+  width: 45%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.06) 40%,
+    rgba(255, 255, 255, 0.14) 50%,
+    rgba(255, 255, 255, 0.06) 60%,
+    transparent 100%
+  );
+  animation: cardShine 4.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}
+
 /* Typography utilities — scaled to 85% */
 .text-body { font-size: 0.875rem; line-height: 1.5; }
 .text-ui { font-size: 0.875rem; line-height: 1.5; }
