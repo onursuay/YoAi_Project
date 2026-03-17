@@ -9,7 +9,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server'
-import { getGoogleAdsContext } from '@/lib/googleAdsAuth'
+import { getGoogleAdsContextForAdmin } from '@/lib/googleAdsAuth'
 import { browseAllAudiences } from '@/lib/google-ads/audience-segments'
 import { buildAudienceDataset } from '@/lib/audience/buildAudienceDataset'
 import { setAudienceDataset } from '@/lib/audience/edgeConfigStore'
@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
   }
 
   try {
-    const ctx = await getGoogleAdsContext()
+    const ctx = await getGoogleAdsContextForAdmin()
     const raw = await browseAllAudiences(ctx)
     const dataset = buildAudienceDataset(raw, 'tr')
 
@@ -82,16 +82,35 @@ export async function POST(req: NextRequest) {
     })
   } catch (e: unknown) {
     const elapsed = Date.now() - start
-    const msg = e instanceof Error ? e.message : String(e)
-    console.error('[AUDIENCE_REFRESH_FAIL]', msg)
+    const err = e as Error & { code?: string; status?: number }
+    const msg = err?.message ?? String(e)
+
+    let code = 'refresh_failed'
+    if (msg.includes('Google Ads bağlı değil') || msg.includes('not connected')) {
+      code = 'google_ads_not_connected'
+    } else if (msg.includes('hesabı seçilmedi') || msg.includes('account')) {
+      code = 'google_ads_account_missing'
+    } else if (err?.code === 'google_ads_not_connected') {
+      code = 'google_ads_not_connected'
+    } else if (err?.code === 'google_ads_account_missing') {
+      code = 'google_ads_account_missing'
+    }
+
+    console.error('[AUDIENCE_REFRESH_FAIL]', code, msg)
     return NextResponse.json(
       {
         ok: false,
-        code: 'refresh_failed',
+        code,
         error: msg,
+        hint:
+          code === 'google_ads_not_connected'
+            ? 'Set GOOGLE_ADS_REFRESH_TOKEN and GOOGLE_ADS_CUSTOMER_ID env vars, or ensure at least one active connection exists in DB (connect via UI first).'
+            : code === 'google_ads_account_missing'
+              ? 'Set GOOGLE_ADS_CUSTOMER_ID env var, or connect and select account in UI to persist to DB.'
+              : undefined,
         elapsedMs: elapsed,
       },
-      { status: (e as { status?: number })?.status ?? 500 }
+      { status: err?.status ?? 500 }
     )
   }
 }

@@ -13,6 +13,7 @@ import {
   COOKIE,
   MAX_SEARCH_ROWS,
   RETRY,
+  LOG_EVENTS,
 } from '@/lib/google-ads/constants'
 import { extractGoogleAdsError } from '@/lib/google-ads/errors'
 
@@ -84,19 +85,105 @@ export function buildGoogleAdsHeaders(ctx: GoogleAdsRequestContext): Record<stri
 }
 
 import { cookies } from 'next/headers'
+import { getConnection, upsertConnection } from '@/lib/googleAdsConnectionStore'
+import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 export const GOOGLE_ADS_BASE = CONSTANTS_BASE
 
+/** Machine-readable error codes for Google Ads context resolution */
+export const GOOGLE_ADS_ERROR_CODES = {
+  NOT_CONNECTED: 'google_ads_not_connected',
+  TOKEN_MISSING: 'google_ads_token_missing',
+  ACCOUNT_MISSING: 'google_ads_account_missing',
+} as const
+
+function throwWithCode(msg: string, code: string, status = 401): never {
+  throw Object.assign(new Error(msg), { status, code })
+}
+
+/**
+ * Resolve Google Ads context for current authenticated user.
+ * Lookup order: 1) DB, 2) cookie (with one-time backfill to DB), 3) throw.
+ * Returns context or throws with { code, status }.
+ */
 export async function getGoogleAdsContext(): Promise<GoogleAdsRequestContext> {
   const cookieStore = await cookies()
+  const userId = getGoogleAdsUserId(cookieStore)
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+
+  // 1) DB preferred
+  if (userId) {
+    const dbCtx = await getConnection(userId)
+    if (dbCtx?.refreshToken && dbCtx?.customerId) {
+      const accessToken = await getGoogleAdsAccessToken(dbCtx.refreshToken)
+      return {
+        accessToken,
+        customerId: dbCtx.customerId,
+        loginCustomerId: dbCtx.loginCustomerId,
+        locale,
+      }
+    }
+
+    // 2) Cookie backfill: DB missing but cookie exists — persist once
+    const cookieRefresh = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+    const cookieCustomerId = cookieStore.get(COOKIE.CUSTOMER_ID)?.value
+    const cookieLoginCustomerId = cookieStore.get(COOKIE.LOGIN_CUSTOMER_ID)?.value ?? cookieCustomerId
+    if (cookieRefresh && cookieCustomerId) {
+      const backfilled = await upsertConnection(userId, {
+        refreshToken: cookieRefresh,
+        customerId: cookieCustomerId,
+        loginCustomerId: cookieLoginCustomerId,
+      })
+      if (backfilled) {
+        console.log(LOG_EVENTS.DB_BACKFILL_OK, { userId: userId.slice(0, 8) + '…' })
+        const accessToken = await getGoogleAdsAccessToken(cookieRefresh)
+        return {
+          accessToken,
+          customerId: cookieCustomerId.replace(/-/g, ''),
+          loginCustomerId: (cookieLoginCustomerId ?? cookieCustomerId).replace(/-/g, ''),
+          locale,
+        }
+      }
+    }
+  }
+
+  // 3) Cookie fallback (no session / pre-migration)
   const refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
   const customerId = cookieStore.get(COOKIE.CUSTOMER_ID)?.value
   const loginCustomerId = cookieStore.get(COOKIE.LOGIN_CUSTOMER_ID)?.value ?? customerId
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
-  if (!refreshToken) throw Object.assign(new Error('Google Ads bağlı değil'), { status: 401 })
-  if (!customerId) throw Object.assign(new Error('Google Ads hesabı seçilmedi'), { status: 401 })
+
+  if (!refreshToken) throwWithCode('Google Ads bağlı değil', GOOGLE_ADS_ERROR_CODES.NOT_CONNECTED)
+  if (!customerId) throwWithCode('Google Ads hesabı seçilmedi', GOOGLE_ADS_ERROR_CODES.ACCOUNT_MISSING)
+
   const accessToken = await getGoogleAdsAccessToken(refreshToken)
   return { accessToken, customerId: customerId.replace(/-/g, ''), loginCustomerId: (loginCustomerId ?? customerId).replace(/-/g, ''), locale }
+}
+
+/**
+ * Resolve Google Ads context for admin/headless use (e.g. refresh cron).
+ * Lookup order: 1) env (GOOGLE_ADS_*), 2) DB (first active connection), 3) throw.
+ * No cookie fallback — cookies unavailable in server-to-server.
+ */
+export async function getGoogleAdsContextForAdmin(): Promise<GoogleAdsRequestContext> {
+  const envRefresh = process.env.GOOGLE_ADS_REFRESH_TOKEN?.trim()
+  const envCustomerId = process.env.GOOGLE_ADS_CUSTOMER_ID?.trim()
+  const envLoginCustomerId = process.env.GOOGLE_ADS_LOGIN_CUSTOMER_ID?.trim()
+
+  if (envRefresh && envCustomerId) {
+    console.log(LOG_EVENTS.ADMIN_CONTEXT_ENV)
+    const accessToken = await getGoogleAdsAccessToken(envRefresh)
+    const customerId = envCustomerId.replace(/-/g, '')
+    const loginCustomerId = (envLoginCustomerId || envCustomerId).replace(/-/g, '')
+    return { accessToken, customerId, loginCustomerId, locale: 'tr' }
+  }
+
+  const firstActive = await import('@/lib/googleAdsConnectionStore').then((m) => m.getFirstActiveConnection())
+  if (firstActive?.refreshToken && firstActive?.customerId) {
+    const accessToken = await getGoogleAdsAccessToken(firstActive.refreshToken)
+    return { accessToken, customerId: firstActive.customerId, loginCustomerId: firstActive.loginCustomerId, locale: 'tr' }
+  }
+
+  throwWithCode('Google Ads not connected (set env vars or connect in UI)', GOOGLE_ADS_ERROR_CODES.NOT_CONNECTED)
 }
 
 export async function fetchWithRetry(url: string, init: RequestInit, maxRetries = RETRY.MAX_RETRIES): Promise<Response> {

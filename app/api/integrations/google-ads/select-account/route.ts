@@ -3,18 +3,27 @@ import { cookies } from 'next/headers'
 import { getGoogleAdsAccessToken, GOOGLE_ADS_BASE, buildGoogleAdsHeaders } from '@/lib/googleAdsAuth'
 import { COOKIE } from '@/lib/google-ads/constants'
 import { parseGoogleAdsResponse } from '@/lib/google-ads/errors'
+import { getConnection, upsertConnection } from '@/lib/googleAdsConnectionStore'
+import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 const SANITY_QUERY = 'SELECT customer.id, customer.descriptive_name FROM customer LIMIT 1'
 
 /**
  * POST /api/integrations/google-ads/select-account
  * Body: { loginCustomerId?: string, customerId: string }
- * Stores google_ads_login_customer_id and google_ads_customer_id.
- * Runs sanity query to confirm access and get descriptive_name.
+ * Persists customer IDs to DB and optionally cookies. Runs sanity query to confirm access.
  */
 export async function POST(request: Request) {
+  console.log('GOOGLE_ADS_SELECT_ACCOUNT_HIT')
   const cookieStore = await cookies()
-  const refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  const userId = getGoogleAdsUserId(cookieStore)
+  console.log('GOOGLE_ADS_SELECT_ACCOUNT_SESSION_ID_PRESENT', !!userId)
+  let refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+
+  if (!refreshToken && userId) {
+    const dbCtx = await getConnection(userId)
+    refreshToken = dbCtx?.refreshToken ?? undefined
+  }
   if (!refreshToken) {
     return NextResponse.json({ error: 'not_connected' }, { status: 401 })
   }
@@ -90,6 +99,25 @@ export async function POST(request: Request) {
     loginCustomerId,
   })
 
+  // Persist to DB (primary). Include refreshToken if available for backfill.
+  if (userId) {
+    console.log('GOOGLE_ADS_SELECT_ACCOUNT_DB_UPSERT_ATTEMPT')
+    const ok = await upsertConnection(userId, {
+      refreshToken: refreshToken || undefined,
+      customerId,
+      loginCustomerId,
+      status: 'active',
+    })
+    if (ok) {
+      console.log('GOOGLE_ADS_SELECT_ACCOUNT_DB_UPSERT_OK')
+    } else {
+      console.log('GOOGLE_ADS_SELECT_ACCOUNT_DB_UPSERT_FAIL')
+    }
+  } else {
+    console.log('GOOGLE_ADS_SELECT_ACCOUNT_DB_UPSERT_FAIL userId missing')
+  }
+
+  // Cookies for UI compatibility
   const cookieOpts = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -97,7 +125,6 @@ export async function POST(request: Request) {
     path: '/',
     maxAge: 60 * 60 * 24 * 365,
   }
-
   response.cookies.set(COOKIE.LOGIN_CUSTOMER_ID, loginCustomerId, cookieOpts)
   response.cookies.set(COOKIE.CUSTOMER_ID, customerId, cookieOpts)
   response.cookies.set(COOKIE.ACCOUNT_NAME, descriptiveName, cookieOpts)

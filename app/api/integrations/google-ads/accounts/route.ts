@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { getGoogleAdsAccessToken, GOOGLE_ADS_BASE, searchGAds } from '@/lib/googleAdsAuth'
 import { COOKIE } from '@/lib/google-ads/constants'
+import { getConnection } from '@/lib/googleAdsConnectionStore'
+import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 const CUSTOMER_QUERY =
   'SELECT customer.id, customer.descriptive_name, customer.manager FROM customer LIMIT 1'
@@ -9,11 +11,15 @@ const CUSTOMER_QUERY =
 /**
  * GET /api/integrations/google-ads/accounts
  * Lists accessible Google Ads customers via ListAccessibleCustomers.
- * For each ID, queries customer to get descriptive_name and manager flag.
+ * Uses DB-first, then cookie fallback.
  */
 export async function GET() {
   const cookieStore = await cookies()
-  const refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  const userId = getGoogleAdsUserId(cookieStore)
+  let refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  if (!refreshToken && userId) {
+    refreshToken = (await getConnection(userId))?.refreshToken ?? undefined
+  }
   if (!refreshToken) {
     return NextResponse.json({ error: 'not_connected' }, { status: 401 })
   }

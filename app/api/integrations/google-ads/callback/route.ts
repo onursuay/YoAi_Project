@@ -1,10 +1,13 @@
 import { NextResponse } from 'next/server'
+import { randomUUID } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { GOOGLE_TOKEN_URL, COOKIE } from '@/lib/google-ads/constants'
+import { upsertConnection } from '@/lib/googleAdsConnectionStore'
+import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 /**
  * Google Ads OAuth callback. Validates state, exchanges code for tokens,
- * stores refresh_token in httpOnly cookie (provider=google_ads, separate from Meta).
+ * stores refresh_token in httpOnly cookie and persists to DB for production-safe use.
  */
 export async function GET(request: Request) {
   const url = new URL(request.url)
@@ -81,6 +84,8 @@ export async function GET(request: Request) {
     )
   }
 
+  console.log('GOOGLE_ADS_CALLBACK_HIT')
+
   const response = NextResponse.redirect(
     new URL('/dashboard/entegrasyon?google=connected', origin),
     { status: 302 }
@@ -88,7 +93,7 @@ export async function GET(request: Request) {
 
   response.cookies.set('google_ads_oauth_state', '', { maxAge: 0, path: '/' })
 
-  // Store refresh_token only (provider=google_ads; separate from Meta tokens)
+  // Store refresh_token in cookie (for UI compatibility)
   response.cookies.set(COOKIE.REFRESH_TOKEN, tokenJson.refresh_token, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -96,6 +101,38 @@ export async function GET(request: Request) {
     path: '/',
     maxAge: 60 * 60 * 24 * 365, // 1 year
   })
+
+  // Persist to DB for production-safe use (admin refresh, cron, server-to-server)
+  let userId = getGoogleAdsUserId(cookieStore)
+  console.log('GOOGLE_ADS_CALLBACK_SESSION_ID_PRESENT', !!userId)
+  if (!userId && tokenJson.refresh_token) {
+    userId = randomUUID()
+    response.cookies.set('session_id', userId, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30,
+    })
+    console.log('GOOGLE_ADS_CALLBACK_FALLBACK_SESSION_CREATED')
+  }
+  if (userId && tokenJson.refresh_token) {
+    console.log('GOOGLE_ADS_CALLBACK_DB_UPSERT_ATTEMPT')
+    const scope = typeof tokenJson.scope === 'string' ? tokenJson.scope : undefined
+    const ok = await upsertConnection(userId, {
+      refreshToken: tokenJson.refresh_token,
+      tokenScope: scope,
+      connectedEmail: undefined,
+      status: 'active',
+    })
+    if (ok) {
+      console.log('GOOGLE_ADS_CALLBACK_DB_UPSERT_OK')
+    } else {
+      console.log('GOOGLE_ADS_CALLBACK_DB_UPSERT_FAIL')
+    }
+  } else if (!userId) {
+    console.log('GOOGLE_ADS_CALLBACK_DB_UPSERT_FAIL userId missing')
+  }
 
   return response
 }

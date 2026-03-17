@@ -3,6 +3,8 @@ import { cookies } from 'next/headers'
 import { getGoogleAdsAccessToken, searchGAds } from '@/lib/googleAdsAuth'
 import { COOKIE } from '@/lib/google-ads/constants'
 import { normalizeError } from '@/lib/google-ads/errors'
+import { getConnection } from '@/lib/googleAdsConnectionStore'
+import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 const CHILDREN_QUERY = `
   SELECT
@@ -17,11 +19,15 @@ const CHILDREN_QUERY = `
 
 /**
  * GET /api/integrations/google-ads/children?loginCustomerId=XXXXXXXXXX
- * Lists client accounts (level 1) under a manager.
+ * Lists client accounts (level 1) under a manager. DB-first, then cookie.
  */
 export async function GET(request: Request) {
   const cookieStore = await cookies()
-  const refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  const userId = getGoogleAdsUserId(cookieStore)
+  let refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  if (!refreshToken && userId) {
+    refreshToken = (await getConnection(userId))?.refreshToken ?? undefined
+  }
   if (!refreshToken) {
     return NextResponse.json({ error: 'not_connected' }, { status: 401 })
   }

@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { randomBytes } from 'node:crypto'
+import { randomBytes, randomUUID } from 'node:crypto'
 import { cookies } from 'next/headers'
 
 const GOOGLE_AUTH_URL = 'https://accounts.google.com/o/oauth2/v2/auth'
@@ -7,7 +7,7 @@ const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/adwords'
 
 /**
  * Google Ads OAuth start. Redirects to Google authorize URL with state (CSRF).
- * Provider: google_ads. Completely separate from Meta.
+ * Ensures session_id exists so callback can persist to DB.
  */
 export async function GET(request: Request) {
   const clientId = process.env.GOOGLE_CLIENT_ID
@@ -35,6 +35,7 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies()
   const response = NextResponse.redirect(authorizeUrl.toString(), { status: 302 })
+
   response.cookies.set('google_ads_oauth_state', state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -42,6 +43,17 @@ export async function GET(request: Request) {
     maxAge: 60 * 10, // 10 minutes
     path: '/',
   })
+
+  if (!cookieStore.get('session_id')?.value) {
+    response.cookies.set('session_id', randomUUID(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      path: '/',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+    })
+    console.log('GOOGLE_ADS_START_SESSION_SET')
+  }
 
   return response
 }

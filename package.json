@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "verify:budget": "node scripts/verify-budget-conversion.mjs"
+    "verify:budget": "node scripts/verify-budget-conversion.mjs",
+    "db:migrate:google-ads": "node scripts/apply-google-ads-migration.mjs",
+    "verify:google-ads": "node scripts/verify-google-ads-prod.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "^1.9.4",
@@ -20,6 +22,7 @@
     "react": "^18.3.0",
     "react-dom": "^18.3.0",
     "react-markdown": "^10.1.0",
+    "pg": "^8.20.0",
     "sharp": "^0.34.5"
   },
   "devDependencies": {
