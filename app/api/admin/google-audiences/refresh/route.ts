@@ -54,11 +54,15 @@ export async function POST(req: NextRequest) {
     const result = await setAudienceDataset(dataset)
     if (!result.ok) {
       const elapsed = Date.now() - start
+      const is404 = result.error?.includes('404')
       return NextResponse.json(
         {
           ok: false,
           code: 'edge_config_write_failed',
           error: result.error,
+          hint: is404
+            ? 'Edge Config not found. If scoped to a Team: set VERCEL_TEAM_ID in Vercel env (Team Settings → General → Team ID). Also verify AUDIENCE_EDGE_CONFIG_ID and VERCEL_API_TOKEN.'
+            : undefined,
           elapsedMs: elapsed,
         },
         { status: 500 }

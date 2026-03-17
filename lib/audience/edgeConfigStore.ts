@@ -94,6 +94,15 @@ export async function getAudienceDatasetMeta(): Promise<AudienceDatasetMeta | nu
 export async function setAudienceDataset(dataset: AudienceDataset): Promise<{ ok: boolean; error?: string; storedBytes?: number }> {
   const token = process.env.VERCEL_API_TOKEN
   const configId = process.env.AUDIENCE_EDGE_CONFIG_ID
+  const teamId = process.env.VERCEL_TEAM_ID
+
+  console.log('[AUDIENCE_EDGE_WRITE_DIAG]', {
+    edgeConfigIdPresent: !!configId,
+    tokenPresent: !!token,
+    teamIdPresent: !!teamId,
+    writeTargetId: configId ? `${configId.slice(0, 8)}...` : 'none',
+  })
+
   if (!token || !configId) {
     const msg = 'VERCEL_API_TOKEN and AUDIENCE_EDGE_CONFIG_ID required for audience refresh'
     console.error('[AUDIENCE_REFRESH_FAIL]', msg)
@@ -117,7 +126,6 @@ export async function setAudienceDataset(dataset: AudienceDataset): Promise<{ ok
 
   const start = Date.now()
   try {
-    const teamId = process.env.VERCEL_TEAM_ID
     const url = teamId
       ? `https://api.vercel.com/v1/edge-config/${configId}/items?teamId=${teamId}`
       : `https://api.vercel.com/v1/edge-config/${configId}/items`
@@ -134,8 +142,12 @@ export async function setAudienceDataset(dataset: AudienceDataset): Promise<{ ok
     const elapsed = Date.now() - start
     if (!res.ok) {
       const body = await res.text()
-      console.error(`[AUDIENCE_REFRESH_FAIL] ${res.status} elapsed=${elapsed}ms`, body)
-      return { ok: false, error: `${res.status}: ${body}` }
+      console.error(`[AUDIENCE_REFRESH_FAIL] ${res.status} elapsed=${elapsed}ms url=${teamId ? 'with teamId' : 'no teamId'}`, body)
+      let errMsg = `${res.status}: ${body}`
+      if (res.status === 404 && !teamId) {
+        errMsg += ' — If Edge Config is team-scoped, set VERCEL_TEAM_ID in Vercel env (Team Settings → General → Team ID)'
+      }
+      return { ok: false, error: errMsg }
     }
     console.log(`[AUDIENCE_REFRESH_SUCCESS] elapsed=${elapsed}ms nodes=${dataset.stats.totalNodes} stored=${storedSize}`)
     return { ok: true, storedBytes: storedSize }

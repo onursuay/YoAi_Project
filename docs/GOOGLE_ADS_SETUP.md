@@ -38,8 +38,9 @@ Add these to your production environment:
 |----------|----------|-------|
 | `ADMIN_SECRET` | Yes | Random 32+ char secret for admin endpoints. Generate: `openssl rand -hex 32` |
 | `EDGE_CONFIG` | Yes | Already in .env.local – Edge Config connection for reads |
-| `AUDIENCE_EDGE_CONFIG_ID` | Yes | Edge Config ID (e.g. `ecfg_xxx`) for admin write |
-| `VERCEL_API_TOKEN` | Yes | Vercel API token for writing to Edge Config |
+| `AUDIENCE_EDGE_CONFIG_ID` | Yes | Edge Config ID (e.g. `ecfg_xxx`) – from Storage → Edge Config → your config |
+| `VERCEL_API_TOKEN` | Yes | Vercel API token (Dashboard → Settings → Tokens) scoped to team if applicable |
+| `VERCEL_TEAM_ID` | If team | Required when Edge Config is team-scoped. Team Settings → General → Team ID |
 | `GOOGLE_ADS_REFRESH_TOKEN` | Optional | Env override for admin refresh (avoids DB) |
 | `GOOGLE_ADS_CUSTOMER_ID` | Optional | With above, for admin refresh |
 | `DATABASE_URL` | Optional | For `npm run db:migrate:google-ads` – migration can also be run via Supabase SQL Editor |
