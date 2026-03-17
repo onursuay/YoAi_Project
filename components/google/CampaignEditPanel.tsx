@@ -1845,7 +1845,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Ağ Ayarları ── */}
                       {schema.campaign.includes('networks') && (
-                        <div className="col-span-2 bg-gradient-to-br from-white to-green-50/60 rounded-xl border border-green-100 shadow-sm overflow-hidden">
+                        <div className="col-span-1 bg-gradient-to-br from-white to-green-50/60 rounded-xl border border-green-100 shadow-sm overflow-hidden">
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
                               <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-700 shrink-0">
@@ -1858,48 +1858,22 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             </div>
                           </div>
                           <div className="px-5 pb-5 pt-4">
-                            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
-                              <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 ${
-                                campSearchNetwork
-                                  ? 'border-green-500 bg-green-50/50 shadow-sm shadow-green-500/10'
-                                  : 'border-gray-200 bg-gray-50/30 hover:border-gray-300 hover:bg-gray-50'
-                              }`}>
-                                <input type="checkbox" checked={campSearchNetwork} onChange={(e) => setCampSearchNetwork(e.target.checked)} className="sr-only" />
-                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5 transition-colors ${
-                                  campSearchNetwork ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
-                                }`}>
-                                  <Search className="w-4 h-4" />
+                            <div className="space-y-2">
+                              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" checked={campSearchNetwork} onChange={(e) => setCampSearchNetwork(e.target.checked)}
+                                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Arama Ağı Ortakları</p>
+                                  <p className="text-xs text-gray-500">Arama sonuçlarında ortaklarda gösterim</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium ${campSearchNetwork ? 'text-green-900' : 'text-gray-700'}`}>Arama Ağı Ortakları</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Arama sonuçlarında ortaklarda gösterim</p>
-                                </div>
-                                {campSearchNetwork && (
-                                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                    <Check className="w-3 h-3" />
-                                  </div>
-                                )}
                               </label>
-                              <label className={`relative flex items-start gap-3 p-4 rounded-xl border-2 cursor-pointer transition-all duration-150 ${
-                                campContentNetwork
-                                  ? 'border-green-500 bg-green-50/50 shadow-sm shadow-green-500/10'
-                                  : 'border-gray-200 bg-gray-50/30 hover:border-gray-300 hover:bg-gray-50'
-                              }`}>
-                                <input type="checkbox" checked={campContentNetwork} onChange={(e) => setCampContentNetwork(e.target.checked)} className="sr-only" />
-                                <div className={`flex items-center justify-center w-8 h-8 rounded-lg shrink-0 mt-0.5 transition-colors ${
-                                  campContentNetwork ? 'bg-green-500 text-white' : 'bg-gray-200 text-gray-400'
-                                }`}>
-                                  <Globe className="w-4 h-4" />
+                              <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
+                                <input type="checkbox" checked={campContentNetwork} onChange={(e) => setCampContentNetwork(e.target.checked)}
+                                  className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
+                                <div>
+                                  <p className="text-sm font-medium text-gray-800">Görüntülü Reklam Ağı</p>
+                                  <p className="text-xs text-gray-500">Web siteleri, uygulamalar ve videolarda gösterim</p>
                                 </div>
-                                <div className="flex-1 min-w-0">
-                                  <p className={`text-sm font-medium ${campContentNetwork ? 'text-green-900' : 'text-gray-700'}`}>Görüntülü Reklam Ağı</p>
-                                  <p className="text-xs text-gray-500 mt-0.5">Web siteleri, uygulamalar ve videolarda gösterim</p>
-                                </div>
-                                {campContentNetwork && (
-                                  <div className="absolute top-3 right-3 w-5 h-5 rounded-full bg-green-500 text-white flex items-center justify-center">
-                                    <Check className="w-3 h-3" />
-                                  </div>
-                                )}
                               </label>
                             </div>
                           </div>
