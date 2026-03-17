@@ -66,7 +66,7 @@ export async function POST(req: NextRequest) {
     }
 
     const elapsed = Date.now() - start
-    const payloadSizeBytes = JSON.stringify(dataset).length
+    const rawSize = JSON.stringify(dataset).length
 
     return NextResponse.json({
       ok: true,
@@ -76,7 +76,10 @@ export async function POST(req: NextRequest) {
         totalNodes: dataset.stats.totalNodes,
         totalSearchTerms: dataset.stats.totalSearchTerms,
       },
-      payloadSizeBytes,
+      payloadSizes: {
+        rawBytes: rawSize,
+        storedBytes: result.storedBytes ?? rawSize,
+      },
       elapsedMs: elapsed,
       storage: 'edge-config',
     })
