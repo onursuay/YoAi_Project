@@ -147,7 +147,7 @@ const INFO_CARDS: Record<string, string[]> = {
     'Tam eşleme [kelime] yalnızca tam aramada veya çok yakın varyasyonlarda tetiklenir.',
     'Kalite puanı yüksek anahtar kelimeler daha düşük maliyetle daha üst sıralarda yer alır.',
   ],
-  negatif_ak: [
+  negatif_anahtar_kelimeler: [
     'Negatif anahtar kelimeler reklamınızın gösterilmesini istemediğiniz aramaları dışlar.',
     'Negatif tam eşleme en hassas dışlamadır; yalnızca o tam aramayı engeller.',
     'Kampanya düzeyi negatifler tüm reklam gruplarına uygulanır.',
@@ -196,13 +196,27 @@ const INFO_CARDS: Record<string, string[]> = {
     'Hemen çıkma oranı yüksek sayfalar reklam metni ile içerik arasındaki uyumsuzluğa işaret eder.',
     'Google PageSpeed Insights aracıyla açılış sayfası hızı test edilebilir.',
   ],
-  gosterim_yeri_zamani: [
+  gosterilme_yeri: [
     'Reklam planlaması reklamların yalnızca belirli gün ve saatlerde gösterilmesini sağlar.',
     'Dönüşüm verilerine göre yüksek performanslı saatlere teklif artışı eklenebilir.',
     'Çalışma saatleri dışındaki gösterimler bazı sektörler için bütçe israfı olabilir.',
     'Coğrafi konuma göre saat dilimi farkı göz önünde bulundurulmalıdır.',
     'Reklam planlaması raporları 30+ günlük veriyle anlamlı hale gelir.',
   ],
+}
+
+/** UI tab (ViewId) → INFO_CARDS canonical key mapping */
+const TAB_TO_INFO_KEY: Record<string, string> = {
+  genel: 'genel',
+  anahtar_kelimeler: 'anahtar_kelimeler',
+  negatif_ak: 'negatif_anahtar_kelimeler',
+  hedef_kitleler: 'hedef_kitleler',
+  yer: 'yer',
+  ogeler: 'ogeler',
+  arama_terimleri: 'arama_terimleri',
+  gosterim_payi: 'gosterim_payi',
+  acilis_sayfalari: 'acilis_sayfalari',
+  gosterim_yeri_zamani: 'gosterilme_yeri',
 }
 
 const DAYS_ORDER: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
@@ -793,19 +807,24 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
     }
   }, [onClose, isDirty])
 
+  const infoCardMessages = useMemo(() => {
+    const key = TAB_TO_INFO_KEY[selectedView] ?? 'genel'
+    return INFO_CARDS[key] ?? INFO_CARDS.genel ?? []
+  }, [selectedView])
+
   useEffect(() => {
     const interval = setInterval(() => {
       setInfoCardVisible(false)
       setTimeout(() => {
         setInfoCardIndex(i => {
-          const cards = INFO_CARDS[selectedView] ?? INFO_CARDS.genel
-          return (i + 1) % cards.length
+          const len = infoCardMessages.length
+          return len ? (i + 1) % len : 0
         })
         setInfoCardVisible(true)
       }, 300)
     }, 5000)
     return () => clearInterval(interval)
-  }, [selectedView])
+  }, [selectedView, infoCardMessages])
 
   useEffect(() => {
     setInfoCardIndex(0)
@@ -1791,11 +1810,11 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                     <span className="text-emerald-600 text-[11px] font-bold">i</span>
                   </div>
                   <p className="text-[12px] text-emerald-800 leading-relaxed">
-                    {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
+                    {infoCardMessages[infoCardIndex]}
                   </p>
                 </div>
                 <div className="flex gap-1 justify-center mt-3">
-                  {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
+                  {infoCardMessages.map((_, i) => (
                     <div
                       key={i}
                       className={`h-1 rounded-full transition-all duration-500 ${
