@@ -34,8 +34,6 @@ function buildAssetsQuery(campaignId: string): string {
     asset.lead_form_asset.call_to_action_type,
     asset.lead_form_asset.headline,
     asset.lead_form_asset.description,
-    asset.business_name_asset.business_name,
-    asset.logo_asset.auto_generated_image_url,
     campaign_asset.field_type,
     campaign_asset.status,
     campaign_asset.resource_name,
