@@ -1495,20 +1495,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           <img src="/platform-icons/google-ads.svg" alt="Google Ads" className="w-7 h-7 shrink-0" />
           <div>
             <h2 className="text-[15px] font-semibold text-gray-900 leading-tight">Kampanya Düzenle</h2>
-            {selected.type === 'campaign' && campaign && (
-              <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center px-2 py-0.5 text-[13px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
-                  {channelTypeLabel}
-                </span>
-                <span className={`inline-flex items-center px-2 py-0.5 text-[13px] font-medium rounded-full ${
-                  campaign.status === 'ENABLED' ? 'bg-green-50 text-green-700 border border-green-200' :
-                  campaign.status === 'PAUSED' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
-                  'bg-gray-50 text-gray-500 border border-gray-200'
-                }`}>
-                  {campaign.status === 'ENABLED' ? 'Aktif' : campaign.status === 'PAUSED' ? 'Duraklatıldı' : campaign.status}
-                </span>
-              </div>
-            )}
             <p className="text-[13px] text-gray-500 truncate max-w-[400px]">Kampanyanızı buradan düzenleyebilirsiniz.</p>
           </div>
         </div>
