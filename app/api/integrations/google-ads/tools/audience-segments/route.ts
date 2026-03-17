@@ -23,7 +23,7 @@ const BROWSE_MEMORY_TTL = 60 * 60 * 1000 // 1 hour
  * After the first successful browse+translate, the FULL translated response
  * is saved to a JSON file. Subsequent requests read from this file instantly.
  * OpenAI is only called when the file cache is missing or expired (24h). */
-const BROWSE_CACHE_DIR = resolve(process.cwd(), 'data')
+const BROWSE_CACHE_DIR = '/tmp/audience-cache'
 const BROWSE_FILE_TTL = 24 * 60 * 60 * 1000 // 24 hours
 
 function getBrowseCachePath(customerId: string, locale: string): string {
