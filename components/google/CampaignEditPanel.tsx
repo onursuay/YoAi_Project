@@ -786,7 +786,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
         })
         setInfoCardVisible(true)
       }, 300)
-    }, 3000)
+    }, 5000)
     return () => clearInterval(interval)
   }, [selectedView])
 
@@ -1751,30 +1751,30 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
             )}
           </div>
 
-          {/* Info Cards */}
-          <div className="p-3 mt-auto border-t border-gray-100">
+          {/* Info Card */}
+          <div className="px-3 pt-2 pb-3">
             <div
               style={{
-                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                transition: 'opacity 0.5s ease, transform 0.5s ease',
                 opacity: infoCardVisible ? 1 : 0,
-                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
+                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-6px)',
               }}
-              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-lg p-3"
+              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-3.5"
             >
               <div className="flex items-start gap-2">
-                <div className="w-4 h-4 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-emerald-600 text-[10px] font-bold">i</span>
+                <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-emerald-600 text-[11px] font-bold">i</span>
                 </div>
-                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                <p className="text-[12px] text-emerald-800 leading-relaxed">
                   {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
                 </p>
               </div>
-              <div className="flex gap-1 mt-2 justify-center">
+              <div className="flex gap-1 mt-2.5 justify-center">
                 {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
                   <div
                     key={i}
-                    className={`h-1 rounded-full transition-all duration-300 ${
-                      i === infoCardIndex ? 'w-4 bg-emerald-500' : 'w-1 bg-emerald-300'
+                    className={`h-1 rounded-full transition-all duration-500 ${
+                      i === infoCardIndex ? 'w-5 bg-emerald-500' : 'w-1.5 bg-emerald-200'
                     }`}
                   />
                 ))}
