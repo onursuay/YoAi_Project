@@ -18,7 +18,7 @@ export async function GET(
 
     const query = `
       SELECT
-        auction_insight.domain,
+        segments.auction_insight_domain,
         metrics.auction_insight_search_impression_share,
         metrics.auction_insight_search_overlap_rate,
         metrics.auction_insight_search_position_above_rate,
@@ -33,8 +33,10 @@ export async function GET(
     `.trim()
 
     type Row = {
-      auctionInsight?: { domain?: string }
-      auction_insight?: { domain?: string }
+      segments?: {
+        auctionInsightDomain?: string
+        auction_insight_domain?: string
+      }
       metrics?: {
         auction_insight_search_impression_share?: number
         auctionInsightSearchImpressionShare?: number
@@ -56,10 +58,10 @@ export async function GET(
 
     const results = rows
       .map((r) => {
-        const ai = r.auctionInsight ?? r.auction_insight
+        const domain = r.segments?.auctionInsightDomain ?? r.segments?.auction_insight_domain ?? ''
         const m = r.metrics ?? {}
         return {
-          domain: ai?.domain ?? '',
+          domain,
           impressionShare: fmtPct(
             m.auctionInsightSearchImpressionShare ?? m.auction_insight_search_impression_share ?? 0
           ),
