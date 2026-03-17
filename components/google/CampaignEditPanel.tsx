@@ -565,7 +565,14 @@ interface ViewComponentProps {
 function AuctionInsightsView({ data, isLoading, error, onFetch }: ViewComponentProps) {
   useEffect(() => { onFetch() }, [onFetch])
   if (isLoading) return <div className="p-6 text-center text-gray-500">Açık artırma verileri yükleniyor...</div>
-  if (error) return <ViewErrorAlert error={error} />
+  if (error) return (
+    <div className="p-4 space-y-3">
+      <ViewErrorAlert error={error} />
+      <div className="px-3 py-2 bg-gray-50 border border-gray-200 rounded-lg">
+        <p className="text-[11px] text-gray-500 font-mono break-all">{JSON.stringify(error)}</p>
+      </div>
+    </div>
+  )
   if (!data || data.length === 0) return <div className="p-6 text-center text-gray-400">Açık artırma verisi bulunamadı.</div>
 
   const cols = [
