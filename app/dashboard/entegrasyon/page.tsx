@@ -54,9 +54,11 @@ function EntegrasyonContent() {
     let cancelled = false
     async function load() {
       try {
+        // Bootstrap session_id before any OAuth flow (credentials required for cookie)
+        await fetch('/api/session', { credentials: 'include' })
         const [metaRes, googleRes] = await Promise.all([
-          fetch('/api/meta/status'),
-          fetch('/api/google/status'),
+          fetch('/api/meta/status', { credentials: 'include' }),
+          fetch('/api/google/status', { credentials: 'include' }),
         ])
         if (!cancelled && metaRes.ok) {
           const data = await metaRes.json()

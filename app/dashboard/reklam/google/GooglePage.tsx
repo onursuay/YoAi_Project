@@ -78,6 +78,10 @@ export default function GooglePage() {
 
   const connection = useGoogleAdsConnection({ addToast, onAccountSelected, onInitReady })
 
+  useEffect(() => {
+    fetch('/api/session', { credentials: 'include' }).catch(() => {})
+  }, [])
+
   // Clear selection when tab changes
   useEffect(() => {
     setSelectedCampaignId(null)
