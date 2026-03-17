@@ -147,7 +147,7 @@ const INFO_CARDS: Record<string, string[]> = {
     'Tam eşleme [kelime] yalnızca tam aramada veya çok yakın varyasyonlarda tetiklenir.',
     'Kalite puanı yüksek anahtar kelimeler daha düşük maliyetle daha üst sıralarda yer alır.',
   ],
-  negatif_anahtar_kelimeler: [
+  negatif_ak: [
     'Negatif anahtar kelimeler reklamınızın gösterilmesini istemediğiniz aramaları dışlar.',
     'Negatif tam eşleme en hassas dışlamadır; yalnızca o tam aramayı engeller.',
     'Kampanya düzeyi negatifler tüm reklam gruplarına uygulanır.',
@@ -196,7 +196,7 @@ const INFO_CARDS: Record<string, string[]> = {
     'Hemen çıkma oranı yüksek sayfalar reklam metni ile içerik arasındaki uyumsuzluğa işaret eder.',
     'Google PageSpeed Insights aracıyla açılış sayfası hızı test edilebilir.',
   ],
-  gosterilme_yeri: [
+  gosterim_yeri_zamani: [
     'Reklam planlaması reklamların yalnızca belirli gün ve saatlerde gösterilmesini sağlar.',
     'Dönüşüm verilerine göre yüksek performanslı saatlere teklif artışı eklenebilir.',
     'Çalışma saatleri dışındaki gösterimler bazı sektörler için bütçe israfı olabilir.',
