@@ -248,26 +248,26 @@ const INFO_CARDS: Record<string, InfoCard[]> = {
       body: 'Kullanıcıların kullandığı dil, reklam başlıklarında ve açılış sayfalarında da kullanılabilir. En iyi terimler sadece keyword havuzu için değil, mesajlaşma stratejisi için de kritik veri sunar. Bu rapor içerik optimizasyonu için de altın madendir.',
     },
   ],
-  gosterim_payi: [
+  acik_artirma: [
     {
-      title: 'Gösterim payı neyi anlatır',
-      body: 'Gösterim payı, reklamınızın uygun olduğu toplam gösterim fırsatlarının ne kadarını aldığını gösterir. Bu metrik yalnızca görünürlük değil, rekabette ne kadar alan kazandığınızı da anlatır. Düşük gösterim payı her zaman kötü değildir ama nedeni mutlaka anlaşılmalıdır.',
+      title: 'Açık artırma raporu',
+      body: 'Açık artırma raporu hangi rakiplerin aynı açık artırmalarda göründüğünü gösterir.',
     },
     {
-      title: 'Bütçe kaynaklı kayıp',
-      body: 'Bütçe yetersizse sistem tüm uygun açık artırmalara giremez ve gösterim payı kaybedilir. Bu durumda çözüm çoğu zaman bütçeyi artırmak, trafiği daraltmak veya verimsiz alanları temizlemektir. Sorun teklif değil bütçeyse yanlış yere müdahale edilmemelidir.',
+      title: 'Gösterim payı',
+      body: 'Gösterim payı reklamınızın toplam uygun gösterimden aldığı pay oranıdır.',
     },
     {
-      title: 'Sıralama kaynaklı kayıp',
-      body: 'Gösterim payı kaybı bazen bütçeden değil reklam sıralamasından gelir. Bu durumda teklif, kalite puanı, reklam alaka düzeyi ve açılış sayfası deneyimi birlikte değerlendirilmelidir. Sadece teklif artırmak her zaman kalıcı çözüm değildir.',
+      title: 'Çakışma oranı',
+      body: 'Çakışma oranı rakibinizin de gösterim aldığı zamanlardaki payınızı gösterir.',
     },
     {
-      title: 'Mutlak %100 hedefi doğru değil',
-      body: 'Her kampanyada %100 gösterim payı kovalamak mantıklı değildir. Asıl hedef en kaliteli ve en verimli açık artırmalarda görünür olmaktır. Karlılığı bozan görünürlük artışı, metrik şişkinliği dışında fayda üretmez.',
+      title: 'Daha üst konum oranı',
+      body: 'Daha üst konum oranı rakibinizin reklamının sizinkinden üstte gösterilme sıklığıdır.',
     },
     {
-      title: 'Rekabet okuması için kullanılır',
-      body: 'Gösterim payı ve benzeri rekabet metrikleri, pazarda ne kadar baskı altında olduğunuzu anlamaya yardımcı olur. Rakip hareketleri, bütçe baskısı ve sıralama zayıflığı bu alanda daha net görünür. Bu yüzden sadece raporlama metriği değil, strateji sinyalidir.',
+      title: '"Siz" satırı',
+      body: '"Siz" satırı kendi kampanyanızın performansını temsil eder.',
     },
   ],
   hedef_kitleler: [
@@ -361,7 +361,7 @@ const TAB_TO_INFO_KEY: Record<string, string> = {
   yer: 'yer',
   ogeler: 'ogeler',
   arama_terimleri: 'arama_terimleri',
-  gosterim_payi: 'gosterim_payi',
+  acik_artirma: 'acik_artirma',
   acilis_sayfalari: 'acilis_sayfalari',
   gosterim_yeri_zamani: 'gosterilme_yeri',
 }
@@ -474,7 +474,7 @@ type ViewId =
   | 'yer'
   | 'ogeler'
   | 'arama_terimleri'
-  | 'gosterim_payi'
+  | 'acik_artirma'
   | 'acilis_sayfalari'
   | 'gosterim_yeri_zamani'
 
@@ -488,7 +488,7 @@ const VIEW_LABELS: Record<ViewId, string> = {
   yer: 'Yer',
   ogeler: 'Öğeler',
   arama_terimleri: 'Arama Terimleri',
-  gosterim_payi: 'Gösterim Payı Analizi',
+  acik_artirma: 'Açık Artırma',
   acilis_sayfalari: 'Açılış Sayfaları',
   gosterim_yeri_zamani: 'Gösterilme Yeri ve Zamanı',
 }
@@ -502,7 +502,7 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     // Arama terimleri: SEARCH only (DISPLAY has no search_term_view)
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only (impression share metrics are SEARCH-specific)
-    if (channelType === 'SEARCH') views.push('gosterim_payi')
+    if (channelType === 'SEARCH') views.push('acik_artirma')
     // Hedef Kitleler: campaign_audience_view — SEARCH, DISPLAY, VIDEO, DEMAND_GEN
     if (['SEARCH', 'DISPLAY', 'VIDEO', 'DEMAND_GEN'].includes(channelType)) views.push('hedef_kitleler')
     views.push('acilis_sayfalari')
@@ -525,7 +525,7 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     // Arama terimleri: SEARCH only
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only
-    if (channelType === 'SEARCH') views.push('gosterim_payi')
+    if (channelType === 'SEARCH') views.push('acik_artirma')
     if (['SEARCH', 'DISPLAY'].includes(channelType)) views.push('acilis_sayfalari')
     // Gösterilme yeri: ad group level only for DISPLAY (has placements)
     if (['DISPLAY'].includes(channelType)) views.push('gosterim_yeri_zamani')
@@ -597,7 +597,7 @@ function AuctionInsightsView({ data, isLoading, error, onFetch }: ViewComponentP
           </thead>
           <tbody>
             {data.map((row: Record<string, string>, i: number) => (
-              <tr key={i} className={`border-b border-gray-100 transition-colors ${row.domain === 'Siz' || row.domain?.toLowerCase().includes('you') ? 'bg-blue-50/50 font-medium' : 'hover:bg-gray-50'}`}>
+              <tr key={i} className={`border-b border-gray-100 transition-colors ${row.domain === 'Siz' ? 'bg-blue-50/50 font-medium' : 'hover:bg-gray-50'}`}>
                 {cols.map(c => (
                   <td key={c.key} className={`px-4 py-3 ${c.key === 'domain' ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
                     {row[c.key] ?? '—'}
@@ -607,87 +607,6 @@ function AuctionInsightsView({ data, isLoading, error, onFetch }: ViewComponentP
             ))}
           </tbody>
         </table>
-      </div>
-    </div>
-  )
-}
-
-function ImpressionShareView({ data, isLoading, error, onFetch }: ViewComponentProps) {
-  useEffect(() => { onFetch() }, [onFetch])
-  if (isLoading) return <div className="p-6 text-center text-gray-500">Gösterim payı verileri yükleniyor...</div>
-  if (error) return <ViewErrorAlert error={error} />
-  if (!data) return <div className="p-6 text-center text-gray-400">Gösterim payı verisi bulunamadı.</div>
-
-  const fmtPct = (v: number | null) => v == null ? '—' : `${(v * (v <= 1 ? 100 : 1)).toFixed(2)}%`
-  const fmtCur = (v: number | null) => v == null ? '—' : `${Number(v).toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TRY`
-  const fmtN = (v: number | null) => v == null ? '—' : Number(v).toLocaleString('tr-TR')
-
-  const shareMetrics = [
-    { label: 'Arama Gösterim Payı', value: fmtPct(data.searchImpressionShare) },
-    { label: 'Mutlak Üst Gösterim Payı', value: fmtPct(data.absoluteTopImpressionShare) },
-    { label: 'Üst Gösterim Payı', value: fmtPct(data.topImpressionShare) },
-    { label: 'Tam Eşleşme Gösterim Payı', value: fmtPct(data.exactMatchImpressionShare) },
-  ]
-
-  const lossMetrics = [
-    { label: 'Bütçe Kaynaklı Kayıp', value: fmtPct(data.budgetLostImpressionShare), color: 'text-amber-600' },
-    { label: 'Sıralama Kaynaklı Kayıp', value: fmtPct(data.rankLostImpressionShare), color: 'text-red-600' },
-  ]
-
-  const perfMetrics = [
-    { label: 'Tıklama', value: fmtN(data.clicks) },
-    { label: 'Gösterim', value: fmtN(data.impressions) },
-    { label: 'CTR', value: fmtPct(data.ctr) },
-    { label: 'Ort. TBM', value: fmtCur(data.averageCpc) },
-    { label: 'Maliyet', value: fmtCur(data.cost) },
-    { label: 'Dönüşüm', value: fmtN(data.conversions) },
-  ]
-
-  return (
-    <div className="max-w-2xl space-y-6">
-      <div>
-        <h3 className="text-[15px] font-semibold text-gray-900 mb-1">Gösterim Payı Analizi</h3>
-        <p className="text-[13px] text-gray-500 mb-4">Kampanyanızın arama sonuçlarındaki görünürlük oranları. Bu veriler Google Ads kampanya metrikleri üzerinden hesaplanır.</p>
-      </div>
-
-      <div>
-        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Gösterim Payları</p>
-        <div className="grid grid-cols-2 gap-4">
-          {shareMetrics.map((m) => (
-            <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
-              <p className="text-[15px] font-semibold text-gray-900">{m.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Kayıp Analizi</p>
-        <div className="grid grid-cols-2 gap-4">
-          {lossMetrics.map((m) => (
-            <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
-              <p className={`text-[15px] font-semibold ${m.color}`}>{m.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div>
-        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Genel Performans</p>
-        <div className="grid grid-cols-3 gap-4">
-          {perfMetrics.map((m) => (
-            <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
-              <p className="text-[15px] font-semibold text-gray-900">{m.value}</p>
-            </div>
-          ))}
-        </div>
-      </div>
-
-      <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-[13px] text-blue-700">
-        Not: Rakip karşılaştırması (Auction Insights) verileri Google Ads API GAQL üzerinden erişime kapalıdır. Rakip verilerine Google Ads web arayüzünden ulaşabilirsiniz.
       </div>
     </div>
   )
@@ -1140,7 +1059,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
     yer: 'Yer verileri şu anda alınamadı.',
     ogeler: 'Öğe verileri şu anda alınamadı.',
     arama_terimleri: 'Arama terimleri verileri şu anda alınamadı.',
-    gosterim_payi: 'Gösterim payı verileri şu anda alınamadı.',
+    acik_artirma: 'Açık artırma verileri şu anda alınamadı.',
     acilis_sayfalari: 'Açılış sayfası verisi şu anda getirilemedi.',
     gosterim_yeri_zamani: 'Gösterilme yeri ve zamanı verileri şu anda alınamadı.',
   }), [])
@@ -1191,11 +1110,11 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           setViewData(prev => ({ ...prev, acilis_sayfalari: data.landingPages ?? [] }))
           break
         }
-        case 'gosterim_payi': {
-          const res = await fetch(`/api/integrations/google-ads/campaigns/${campaignId}/auction-insights`, { cache: 'no-store' })
-          const data = await res.json()
+        case 'acik_artirma': {
+          const res = await fetch(`/api/integrations/google-ads/campaigns/${campaignId}/auction-insights-competitors`, { cache: 'no-store' })
+          const data = await res.json().catch(() => ({}))
           if (!res.ok) throwViewError(data, view)
-          setViewData(prev => ({ ...prev, gosterim_payi: data.insights ?? null }))
+          setViewData(prev => ({ ...prev, acik_artirma: data.competitors ?? null }))
           break
         }
         case 'hedef_kitleler': {
@@ -1242,7 +1161,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
   const fetchOgeler = useCallback(() => fetchViewDataFor('ogeler'), [fetchViewDataFor])
   const fetchAcilisSayfalari = useCallback(() => fetchViewDataFor('acilis_sayfalari'), [fetchViewDataFor])
   const fetchHedefKitleler = useCallback(() => fetchViewDataFor('hedef_kitleler'), [fetchViewDataFor])
-  const fetchGosterimPayi = useCallback(() => fetchViewDataFor('gosterim_payi'), [fetchViewDataFor])
+  const fetchAcikArtirma = useCallback(() => fetchViewDataFor('acik_artirma'), [fetchViewDataFor])
   const fetchGosterimYeriZamani = useCallback(() => fetchViewDataFor('gosterim_yeri_zamani'), [fetchViewDataFor])
 
   /* ── Exclude search term (add as campaign negative keyword via PUT /search-terms) ── */
@@ -2370,12 +2289,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   )}
 
                   {/* ── GÖSTERİM PAYI ANALİZİ ── */}
-                  {selectedView === 'gosterim_payi' && (
-                    <ImpressionShareView
-                      data={viewData.gosterim_payi ?? null}
-                      isLoading={viewLoading.gosterim_payi ?? false}
-                      error={viewError.gosterim_payi ?? null}
-                      onFetch={fetchGosterimPayi}
+                  {selectedView === 'acik_artirma' && (
+                    <AuctionInsightsView
+                      data={viewData.acik_artirma}
+                      isLoading={viewLoading.acik_artirma ?? false}
+                      error={viewError.acik_artirma ?? null}
+                      onFetch={fetchAcikArtirma}
                     />
                   )}
 
@@ -2798,12 +2717,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   )}
 
                   {/* ── GÖSTERİM PAYI (Ad Group) ── */}
-                  {selectedView === 'gosterim_payi' && (
-                    <ImpressionShareView
-                      data={viewData.gosterim_payi ?? null}
-                      isLoading={viewLoading.gosterim_payi ?? false}
-                      error={viewError.gosterim_payi ?? null}
-                      onFetch={fetchGosterimPayi}
+                  {selectedView === 'acik_artirma' && (
+                    <AuctionInsightsView
+                      data={viewData.acik_artirma}
+                      isLoading={viewLoading.acik_artirma ?? false}
+                      error={viewError.acik_artirma ?? null}
+                      onFetch={fetchAcikArtirma}
                     />
                   )}
 
