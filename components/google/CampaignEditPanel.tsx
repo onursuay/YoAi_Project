@@ -362,47 +362,47 @@ function ImpressionShareView({ data, isLoading, error, onFetch }: ViewComponentP
   return (
     <div className="max-w-2xl space-y-6">
       <div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Gösterim Payı Analizi</h3>
-        <p className="text-sm text-gray-500 mb-4">Kampanyanızın arama sonuçlarındaki görünürlük oranları. Bu veriler Google Ads kampanya metrikleri üzerinden hesaplanır.</p>
+        <h3 className="text-[15px] font-semibold text-gray-900 mb-1">Gösterim Payı Analizi</h3>
+        <p className="text-[13px] text-gray-500 mb-4">Kampanyanızın arama sonuçlarındaki görünürlük oranları. Bu veriler Google Ads kampanya metrikleri üzerinden hesaplanır.</p>
       </div>
 
       <div>
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Gösterim Payları</p>
+        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Gösterim Payları</p>
         <div className="grid grid-cols-2 gap-4">
           {shareMetrics.map((m) => (
             <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-              <p className="text-lg font-semibold text-gray-900">{m.value}</p>
+              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
+              <p className="text-[15px] font-semibold text-gray-900">{m.value}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Kayıp Analizi</p>
+        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Kayıp Analizi</p>
         <div className="grid grid-cols-2 gap-4">
           {lossMetrics.map((m) => (
             <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-              <p className={`text-lg font-semibold ${m.color}`}>{m.value}</p>
+              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
+              <p className={`text-[15px] font-semibold ${m.color}`}>{m.value}</p>
             </div>
           ))}
         </div>
       </div>
 
       <div>
-        <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-3">Genel Performans</p>
+        <p className="text-[13px] font-medium text-gray-500 uppercase tracking-wide mb-3">Genel Performans</p>
         <div className="grid grid-cols-3 gap-4">
           {perfMetrics.map((m) => (
             <div key={m.label} className="bg-white border border-gray-200 rounded-lg p-4">
-              <p className="text-xs text-gray-500 mb-1">{m.label}</p>
-              <p className="text-lg font-semibold text-gray-900">{m.value}</p>
+              <p className="text-[13px] text-gray-500 mb-1">{m.label}</p>
+              <p className="text-[15px] font-semibold text-gray-900">{m.value}</p>
             </div>
           ))}
         </div>
       </div>
 
-      <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-xs text-blue-700">
+      <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-[13px] text-blue-700">
         Not: Rakip karşılaştırması (Auction Insights) verileri Google Ads API GAQL üzerinden erişime kapalıdır. Rakip verilerine Google Ads web arayüzünden ulaşabilirsiniz.
       </div>
     </div>
@@ -419,7 +419,7 @@ function AudienceView({ data, isLoading, error, onFetch, entityType, onEditSegme
   // Action buttons — always show even during loading/empty
   const actionBar = (onEditSegments || onEditDemographics) ? (
     <div className="flex items-center justify-between mb-4">
-      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+      <h3 className="text-[15px] font-semibold text-gray-900 flex items-center gap-2">
         <Users className="w-5 h-5 text-gray-500" />
         Hedef Kitleler
       </h3>
@@ -427,7 +427,7 @@ function AudienceView({ data, isLoading, error, onFetch, entityType, onEditSegme
         {onEditSegments && (
           <button
             onClick={onEditSegments}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-blue-700 bg-blue-50 border border-blue-200 rounded-lg hover:bg-blue-100 transition-colors"
           >
             Kitle Segmentlerini Düzenle
           </button>
@@ -435,7 +435,7 @@ function AudienceView({ data, isLoading, error, onFetch, entityType, onEditSegme
         {onEditDemographics && (
           <button
             onClick={onEditDemographics}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors"
           >
             Demografiyi Düzenle
           </button>
@@ -464,33 +464,33 @@ function AudienceView({ data, isLoading, error, onFetch, entityType, onEditSegme
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Hedef Kitle</th>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gösterim</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tıklama</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CTR</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ort. TBM</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Maliyet</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Dönüşüm</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Hedef Kitle</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Tip</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Ort. TBM</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {data.map((row: any, i: number) => (
             <tr key={`${row.resourceName}-${i}`} className="hover:bg-gray-50">
-              <td className="px-4 py-3 text-sm text-gray-900 font-medium">{row.displayName || '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-600">
-                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs">{typeLabel(row.type)}</span>
+              <td className="px-4 py-3 text-[13px] text-gray-900 font-medium">{row.displayName || '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-600">
+                <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[13px]">{typeLabel(row.type)}</span>
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.impressions?.toLocaleString('tr-TR') ?? '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.clicks?.toLocaleString('tr-TR') ?? '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.ctr != null ? `${row.ctr.toFixed(2)}%` : '—'}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.impressions?.toLocaleString('tr-TR') ?? '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.clicks?.toLocaleString('tr-TR') ?? '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.ctr != null ? `${row.ctr.toFixed(2)}%` : '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">
                 {row.cpc != null ? `${row.cpc.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TRY` : '—'}
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">
                 {row.cost != null ? `${row.cost.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TRY` : '—'}
               </td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.conversions > 0 ? row.conversions.toLocaleString('tr-TR') : '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.conversions > 0 ? row.conversions.toLocaleString('tr-TR') : '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -512,25 +512,25 @@ function DeviceView({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Cihaz</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gösterim</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tıklama</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CTR</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ort. TBM</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Maliyet</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Dönüşüm</th>
+            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Cihaz</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Ort. TBM</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
+            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
           {data.map((row: any) => (
             <tr key={row.device} className="hover:bg-gray-50">
-              <td className="px-4 py-3 text-sm text-gray-900 font-medium">{row.deviceLabel || row.device}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{fmtN(row.impressions)}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{fmtN(row.clicks)}</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.ctr.toFixed(2)}%</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{fmtC(row.cpc)} TRY</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{fmtC(row.cost)} TRY</td>
-              <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.conversions > 0 ? fmtN(row.conversions) : '—'}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 font-medium">{row.deviceLabel || row.device}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{fmtN(row.impressions)}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{fmtN(row.clicks)}</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.ctr.toFixed(2)}%</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{fmtC(row.cpc)} TRY</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{fmtC(row.cost)} TRY</td>
+              <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.conversions > 0 ? fmtN(row.conversions) : '—'}</td>
             </tr>
           ))}
         </tbody>
@@ -547,40 +547,40 @@ function PlacementsView({ data, isLoading, error, onFetch }: ViewComponentProps)
 
   return (
     <div>
-      <h3 className="text-lg font-semibold text-gray-900 mb-4">Gösterilme Yerleri</h3>
+      <h3 className="text-[15px] font-semibold text-gray-900 mb-4">Gösterilme Yerleri</h3>
       <div className="overflow-x-auto">
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Yerleşim</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Tip</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gösterim</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tıklama</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CTR</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Maliyet</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Dönüşüm</th>
+              <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Yerleşim</th>
+              <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Tip</th>
+              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
+              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
+              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
+              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
+              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
             {data.map((row: any, i: number) => (
               <tr key={`${row.targetUrl}-${i}`} className="hover:bg-gray-50">
-                <td className="px-4 py-3 text-sm text-gray-900 font-medium max-w-xs truncate">
+                <td className="px-4 py-3 text-[13px] text-gray-900 font-medium max-w-xs truncate">
                   {row.targetUrl ? (
                     <a href={row.targetUrl} target="_blank" rel="noopener noreferrer" className="text-blue-600 hover:underline">
                       {row.displayName || row.targetUrl}
                     </a>
                   ) : (row.displayName || '—')}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-600">
-                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-xs">{row.placementType || '—'}</span>
+                <td className="px-4 py-3 text-[13px] text-gray-600">
+                  <span className="px-2 py-0.5 rounded-full bg-gray-100 text-[13px]">{row.placementType || '—'}</span>
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.impressions?.toLocaleString('tr-TR') ?? '—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.clicks?.toLocaleString('tr-TR') ?? '—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.ctr != null ? `${row.ctr.toFixed(2)}%` : '—'}</td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.impressions?.toLocaleString('tr-TR') ?? '—'}</td>
+                <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.clicks?.toLocaleString('tr-TR') ?? '—'}</td>
+                <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.ctr != null ? `${row.ctr.toFixed(2)}%` : '—'}</td>
+                <td className="px-4 py-3 text-[13px] text-gray-900 text-right">
                   {row.cost != null ? `${row.cost.toLocaleString('tr-TR', { minimumFractionDigits: 2, maximumFractionDigits: 2 })} TRY` : '—'}
                 </td>
-                <td className="px-4 py-3 text-sm text-gray-900 text-right">{row.conversions > 0 ? row.conversions.toLocaleString('tr-TR') : '—'}</td>
+                <td className="px-4 py-3 text-[13px] text-gray-900 text-right">{row.conversions > 0 ? row.conversions.toLocaleString('tr-TR') : '—'}</td>
               </tr>
             ))}
           </tbody>
@@ -1494,13 +1494,13 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
         <div className="flex items-center gap-3">
           <img src="/platform-icons/google-ads.svg" alt="Google Ads" className="w-7 h-7 shrink-0" />
           <div>
-            <h2 className="text-base font-semibold text-gray-900 leading-tight">Kampanya Düzenle</h2>
+            <h2 className="text-[15px] font-semibold text-gray-900 leading-tight">Kampanya Düzenle</h2>
             {selected.type === 'campaign' && campaign && (
               <div className="flex items-center gap-1.5 mt-0.5">
-                <span className="inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                <span className="inline-flex items-center px-2 py-0.5 text-[13px] font-medium rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                   {channelTypeLabel}
                 </span>
-                <span className={`inline-flex items-center px-2 py-0.5 text-xs font-medium rounded-full ${
+                <span className={`inline-flex items-center px-2 py-0.5 text-[13px] font-medium rounded-full ${
                   campaign.status === 'ENABLED' ? 'bg-green-50 text-green-700 border border-green-200' :
                   campaign.status === 'PAUSED' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
                   'bg-gray-50 text-gray-500 border border-gray-200'
@@ -1509,7 +1509,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                 </span>
               </div>
             )}
-            <p className="text-xs text-gray-500 truncate max-w-[400px]">Kampanyanızı buradan düzenleyebilirsiniz.</p>
+            <p className="text-[13px] text-gray-500 truncate max-w-[400px]">Kampanyanızı buradan düzenleyebilirsiniz.</p>
           </div>
         </div>
         <div className="flex items-center gap-3">
@@ -1518,14 +1518,14 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
               if (isDirty) { setPendingSelection(null); setShowUnsavedDialog(true) }
               else onClose()
             }}
-            className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+            className="px-4 py-2 text-[13px] font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
           >
             Kapat
           </button>
           <button
             onClick={handleSave}
             disabled={saveDisabled}
-            className="px-5 py-2 text-sm font-medium text-white bg-[#2BB673] rounded-lg hover:bg-[#249E63] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
+            className="px-5 py-2 text-[13px] font-medium text-white bg-[#2BB673] rounded-lg hover:bg-[#249E63] transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex items-center gap-2"
           >
             {saving && <Loader2 className="w-4 h-4 animate-spin" />}
             Kaydet
@@ -1546,7 +1546,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                 placeholder="Arama yapınız..."
                 value={treeSearch}
                 onChange={(e) => setTreeSearch(e.target.value)}
-                className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-green-300 focus:border-green-300"
+                className="w-full pl-8 pr-3 py-2 text-[13px] border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-green-300 focus:border-green-300"
               />
             </div>
           </div>
@@ -1571,7 +1571,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                           handleSelect({ type: 'campaign', id: c.id })
                         }
                       }}
-                      className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                      className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                         isActive('campaign', c.id) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-700'
                       }`}
                     >
@@ -1584,7 +1584,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       <div key={ag.id}>
                         <div
                           onClick={() => handleSelect({ type: 'adGroup', id: ag.id })}
-                          className={`flex items-center gap-1 pl-7 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                          className={`flex items-center gap-1 pl-7 pr-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                             isActive('adGroup', ag.id) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-600'
                           }`}
                         >
@@ -1597,12 +1597,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                           <div
                             key={ad.id}
                             onClick={() => handleSelect({ type: 'ad', id: ad.id, adGroupId: ad.adGroupId })}
-                            className={`flex items-center gap-1.5 pl-14 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                            className={`flex items-center gap-1.5 pl-14 pr-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                               isActive('ad', ad.id, ad.adGroupId) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-500'
                             }`}
                           >
                             <FileText className={`w-3.5 h-3.5 shrink-0 ${isActive('ad', ad.id, ad.adGroupId) ? 'text-green-600' : 'text-gray-400'}`} />
-                            <span className="break-all text-xs" title={ad.name}>{ad.name}</span>
+                            <span className="break-all text-[13px]" title={ad.name}>{ad.name}</span>
                           </div>
                         ))}
                       </div>
@@ -1611,12 +1611,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                 )
               })
             ) : !campaignMatchesSearch ? (
-              <div className="px-4 py-8 text-center text-sm text-gray-400">Sonuç bulunamadı</div>
+              <div className="px-4 py-8 text-center text-[13px] text-gray-400">Sonuç bulunamadı</div>
             ) : (
               <>
                 {/* Campaign node */}
                 <div
-                  className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                  className={`flex items-center gap-1 px-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                     isActive('campaign', campaignId) ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-700'
                   }`}
                 >
@@ -1645,7 +1645,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   return (
                     <div key={ag.id}>
                       <div
-                        className={`flex items-center gap-1 pl-7 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                        className={`flex items-center gap-1 pl-7 pr-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                           isAgCurrent ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-600'
                         }`}
                       >
@@ -1671,7 +1671,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                           <div
                             key={`${ad.adGroupId}-${ad.id}`}
                             onClick={() => handleSelect({ type: 'ad', id: ad.id, adGroupId: ad.adGroupId })}
-                            className={`flex items-center gap-1.5 pl-14 pr-3 py-1.5 cursor-pointer text-sm hover:bg-gray-100 transition-colors ${
+                            className={`flex items-center gap-1.5 pl-14 pr-3 py-1.5 cursor-pointer text-[13px] hover:bg-gray-100 transition-colors ${
                               isAdCurrent ? 'bg-green-50 border-l-2 border-green-500 text-green-700 font-medium' : 'text-gray-500'
                             }`}
                           >
@@ -1698,7 +1698,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
             <div className="p-8">
               {/* ── BREADCRUMB ── */}
               {breadcrumb.length > 1 && (
-                <nav className="flex items-center gap-1.5 text-sm mb-4">
+                <nav className="flex items-center gap-1.5 text-[13px] mb-4">
                   {breadcrumb.map((part, idx) => (
                     <span key={idx} className="flex items-center gap-1.5">
                       {idx > 0 && <ChevronRight className="w-3.5 h-3.5 text-gray-300" />}
@@ -1726,7 +1726,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                     <button
                       key={v}
                       onClick={() => setSelectedView(v)}
-                      className={`px-4 py-2.5 text-sm font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${
+                      className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap shrink-0 ${
                         selectedView === v
                           ? 'border-green-500 text-green-700'
                           : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -1764,7 +1764,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                           <div className="px-5 pb-5 pt-4">
                             <input type="text" value={campName} onChange={(e) => setCampName(e.target.value)} maxLength={256}
                               placeholder="Kampanya adı..."
-                              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                           </div>
                         </div>
                       )}
@@ -1784,12 +1784,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             </div>
                           </div>
                           <div className="px-5 pb-5 pt-4">
-                            <label className="block text-xs font-medium text-gray-600 mb-1.5">Günlük Bütçe</label>
+                            <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Günlük Bütçe</label>
                             <div className="relative max-w-xs">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 select-none pointer-events-none">TRY</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-gray-400 select-none pointer-events-none">TRY</span>
                               <input type="number" step="0.01" min="0" value={campBudget} onChange={(e) => setCampBudget(e.target.value)}
                                 placeholder="Orn: 1000.00"
-                                className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                                className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                             </div>
                           </div>
                         </div>
@@ -1812,7 +1812,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                           <div className="px-5 pb-5 pt-4">
                             <div className="relative max-w-md">
                               <select value={campBidStrategy} onChange={(e) => setCampBidStrategy(e.target.value)}
-                                className="w-full px-3.5 py-2.5 pr-10 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm hover:border-gray-300">
+                                className="w-full px-3.5 py-2.5 pr-10 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm hover:border-gray-300">
                                 <option value="">Seç...</option>
                                 {biddingOptions.map((s) => <option key={s.value} value={s.value}>{s.label}</option>)}
                               </select>
@@ -1820,21 +1820,21 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             </div>
                             {campBidStrategy === 'TARGET_CPA' && (
                               <div className="mt-4 pl-4 border-l-2 border-green-200">
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Hedef EBM</label>
+                                <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Hedef EBM</label>
                                 <div className="relative max-w-xs">
-                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 select-none pointer-events-none">TRY</span>
+                                  <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-gray-400 select-none pointer-events-none">TRY</span>
                                   <input type="number" step="0.01" min="0" value={campTargetCpa} onChange={(e) => setCampTargetCpa(e.target.value)}
                                     placeholder="Orn: 25.00"
-                                    className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                                    className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                                 </div>
                               </div>
                             )}
                             {campBidStrategy === 'TARGET_ROAS' && (
                               <div className="mt-4 pl-4 border-l-2 border-green-200">
-                                <label className="block text-xs font-medium text-gray-600 mb-1.5">Hedef ROAS</label>
+                                <label className="block text-[13px] font-medium text-gray-600 mb-1.5">Hedef ROAS</label>
                                 <input type="number" step="0.1" min="0" value={campTargetRoas} onChange={(e) => setCampTargetRoas(e.target.value)}
                                   placeholder="Orn: 4.0"
-                                  className="w-full max-w-xs px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                                  className="w-full max-w-xs px-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                               </div>
                             )}
                           </div>
@@ -1884,12 +1884,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {/* ── NEGATİF AK ── */}
                   {selectedView === 'negatif_ak' && (
                     <div className="max-w-2xl">
-                      <h3 className="text-lg font-semibold text-gray-900">Negatif Anahtar Kelimeler</h3>
-                      <p className="text-sm text-gray-500 mt-1 mb-4">Kampanya düzeyinde negatif anahtar kelimeler ekleyin. ({campNegKws.length} adet)</p>
+                      <h3 className="text-[15px] font-semibold text-gray-900">Negatif Anahtar Kelimeler</h3>
+                      <p className="text-[13px] text-gray-500 mt-1 mb-4">Kampanya düzeyinde negatif anahtar kelimeler ekleyin. ({campNegKws.length} adet)</p>
                       {campNegKws.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-4">
                           {campNegKws.map((nk) => (
-                            <span key={nk.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-red-50 text-red-600 border border-red-200">
+                            <span key={nk.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] rounded-full bg-red-50 text-red-600 border border-red-200">
                               <span className="text-red-400">{matchLabel(nk.matchType)}</span>
                               {nk.text}
                               <button onClick={() => removeCampNegKw(nk)} className="hover:text-red-800"><X className="w-3 h-3" /></button>
@@ -1900,13 +1900,13 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       <div className="flex items-center gap-2">
                         <input type="text" value={newCampNegText} onChange={(e) => setNewCampNegText(e.target.value)}
                           placeholder="Negatif kelime ekle..." onKeyDown={(e) => { if (e.key === 'Enter') addCampNegKw() }}
-                          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                          className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                         <select value={newCampNegMatch} onChange={(e) => setNewCampNegMatch(e.target.value as any)}
-                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                          className="px-3 py-2.5 border border-gray-300 rounded-lg text-[13px] bg-white">
                           {MATCH_TYPES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                         </select>
                         <button onClick={addCampNegKw} disabled={addingCampNeg || !newCampNegText.trim()}
-                          className="px-4 py-2.5 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50 flex items-center gap-1.5">
+                          className="px-4 py-2.5 text-[13px] font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50 flex items-center gap-1.5">
                           {addingCampNeg ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                           Ekle
                         </button>
@@ -1917,16 +1917,16 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {/* ── YER ── */}
                   {selectedView === 'yer' && (
                     <div className="max-w-2xl">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <h3 className="text-[15px] font-semibold text-gray-900 flex items-center gap-2">
                         <MapPin className="w-5 h-5" /> Lokasyonlar
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1 mb-4">Reklamlarınızın gösterileceği bölgeleri belirleyin.</p>
+                      <p className="text-[13px] text-gray-500 mt-1 mb-4">Reklamlarınızın gösterileceği bölgeleri belirleyin.</p>
                       {targetedLocations.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Hedeflenen</p>
+                          <p className="text-[13px] font-medium text-gray-500 mb-2 uppercase tracking-wide">Hedeflenen</p>
                           <div className="flex flex-wrap gap-1.5">
                             {targetedLocations.map((loc) => (
-                              <span key={loc.criterionId} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-green-50 text-green-700 border border-green-200">
+                              <span key={loc.criterionId} className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] rounded-full bg-green-50 text-green-700 border border-green-200">
                                 {loc.locationName}
                                 <button onClick={() => removeLocation(loc)} className="hover:text-green-900"><X className="w-3 h-3" /></button>
                               </span>
@@ -1936,10 +1936,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       )}
                       {excludedLocations.length > 0 && (
                         <div className="mb-3">
-                          <p className="text-xs font-medium text-gray-500 mb-2 uppercase tracking-wide">Hariç Tutulan</p>
+                          <p className="text-[13px] font-medium text-gray-500 mb-2 uppercase tracking-wide">Hariç Tutulan</p>
                           <div className="flex flex-wrap gap-1.5">
                             {excludedLocations.map((loc) => (
-                              <span key={loc.criterionId} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-red-50 text-red-600 border border-red-200">
+                              <span key={loc.criterionId} className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] rounded-full bg-red-50 text-red-600 border border-red-200">
                                 {loc.locationName}
                                 <button onClick={() => removeLocation(loc)} className="hover:text-red-800"><X className="w-3 h-3" /></button>
                               </span>
@@ -1954,7 +1954,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             <input
                               type="text" value={geoQuery} onChange={(e) => setGeoQuery(e.target.value)}
                               placeholder="Lokasyon ara (ör: İstanbul, Ankara...)"
-                              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20"
+                              className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20"
                             />
                             {geoLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-3.5 h-3.5 animate-spin text-gray-400" />}
                           </div>
@@ -1962,15 +1962,15 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                         {geoResults.length > 0 && (
                           <div className="absolute z-10 left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg max-h-48 overflow-y-auto">
                             {geoResults.map((geo) => (
-                              <div key={geo.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 text-sm">
+                              <div key={geo.id} className="flex items-center justify-between px-3 py-2 hover:bg-gray-50 text-[13px]">
                                 <span className="truncate flex-1">{geo.name}</span>
                                 <div className="flex items-center gap-1 shrink-0 ml-2">
                                   <button onClick={() => addLocation(geo, false)}
-                                    className="px-2 py-0.5 text-xs text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100">
+                                    className="px-2 py-0.5 text-[13px] text-green-700 bg-green-50 border border-green-200 rounded hover:bg-green-100">
                                     Hedefle
                                   </button>
                                   <button onClick={() => addLocation(geo, true)}
-                                    className="px-2 py-0.5 text-xs text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">
+                                    className="px-2 py-0.5 text-[13px] text-red-600 bg-red-50 border border-red-200 rounded hover:bg-red-100">
                                     Hariç Tut
                                   </button>
                                 </div>
@@ -2044,7 +2044,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             <button
                               key={tab.id}
                               onClick={() => setGyzSubView(tab.id)}
-                              className={`flex items-center gap-1.5 px-4 py-2.5 text-sm font-medium border-b-2 transition-all duration-150 ${
+                              className={`flex items-center gap-1.5 px-4 py-2.5 text-[13px] font-medium border-b-2 transition-all duration-150 ${
                                 active
                                   ? 'border-blue-500 text-blue-600'
                                   : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
@@ -2074,21 +2074,21 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Clock className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Reklam Zamanlaması</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Reklamlarınızın gösterilme saatlerini belirleyin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Reklam Zamanlaması</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Reklamlarınızın gösterilme saatlerini belirleyin.</p>
                               </div>
                             </div>
                           </div>
                           <div className="px-5 pb-5 pt-4">
                             {/* Presets */}
                             <div className="flex items-center gap-2 mb-5">
-                              <span className="text-xs font-medium text-gray-500 mr-1">Hazır Ayarlar:</span>
+                              <span className="text-[13px] font-medium text-gray-500 mr-1">Hazır Ayarlar:</span>
                               <button onClick={() => applySchedulePreset('business')}
-                                className="px-3.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 shadow-sm">
+                                className="px-3.5 py-1.5 text-[13px] font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 shadow-sm">
                                 İş Saatleri (Pzt-Cum 09:00-18:00)
                               </button>
                               <button onClick={() => applySchedulePreset('clear')}
-                                className="px-3.5 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 shadow-sm">
+                                className="px-3.5 py-1.5 text-[13px] font-medium text-gray-700 bg-white border border-gray-200 rounded-full hover:bg-gray-50 hover:border-gray-300 transition-all duration-150 shadow-sm">
                                 7/24 (Temizle)
                               </button>
                             </div>
@@ -2098,15 +2098,15 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                               <div className="border border-gray-200 rounded-lg overflow-hidden mb-5">
                                 <div className="divide-y divide-gray-100">
                                   {adSchedule.map((entry, idx) => (
-                                    <div key={idx} className="flex items-center gap-3 px-4 py-2.5 text-sm bg-white hover:bg-gray-50/50 transition-colors group">
-                                      <span className="inline-flex items-center justify-center w-20 py-0.5 text-xs font-medium text-green-700 bg-green-50 rounded-md shrink-0">
+                                    <div key={idx} className="flex items-center gap-3 px-4 py-2.5 text-[13px] bg-white hover:bg-gray-50/50 transition-colors group">
+                                      <span className="inline-flex items-center justify-center w-20 py-0.5 text-[13px] font-medium text-green-700 bg-green-50 rounded-md shrink-0">
                                         {DAY_LABELS[entry.dayOfWeek]}
                                       </span>
-                                      <span className="text-gray-700 font-mono text-xs tracking-wide">
+                                      <span className="text-gray-700 font-mono text-[13px] tracking-wide">
                                         {String(entry.startHour).padStart(2, '0')}:{MINUTE_LABELS[entry.startMinute]}
                                       </span>
                                       <span className="text-gray-300">{'\u2192'}</span>
-                                      <span className="text-gray-700 font-mono text-xs tracking-wide">
+                                      <span className="text-gray-700 font-mono text-[13px] tracking-wide">
                                         {String(entry.endHour).padStart(2, '0')}:{MINUTE_LABELS[entry.endMinute]}
                                       </span>
                                       <button onClick={() => removeScheduleEntry(idx)}
@@ -2121,13 +2121,13 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                             {/* Add new entry */}
                             <div className="bg-gray-50/80 rounded-lg border border-gray-200/60 p-4">
-                              <p className="text-xs font-medium text-gray-500 mb-3">Yeni Zamanlama Ekle</p>
+                              <p className="text-[13px] font-medium text-gray-500 mb-3">Yeni Zamanlama Ekle</p>
                               <div className="flex items-end gap-2.5 flex-wrap">
                                 <div>
                                   <label className="block text-[11px] font-medium text-gray-500 mb-1 uppercase tracking-wider">Gün</label>
                                   <div className="relative">
                                     <select value={newSchedDay} onChange={(e) => setNewSchedDay(e.target.value as DayOfWeek)}
-                                      className="px-3 py-2 pr-8 border border-gray-200 rounded-lg text-sm bg-white appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 hover:border-gray-300">
+                                      className="px-3 py-2 pr-8 border border-gray-200 rounded-lg text-[13px] bg-white appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 hover:border-gray-300">
                                       {DAYS_ORDER.map((d) => <option key={d} value={d}>{DAY_LABELS[d]}</option>)}
                                     </select>
                                     <ChevronDown className="absolute right-2 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400 pointer-events-none" />
@@ -2138,7 +2138,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                   <div className="flex items-center gap-1">
                                     <div className="relative">
                                       <select value={newSchedStartH} onChange={(e) => setNewSchedStartH(Number(e.target.value))}
-                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-sm bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-[13px] bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                                         {Array.from({ length: 24 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
                                       </select>
                                       <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -2146,7 +2146,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                     <span className="text-gray-400 font-medium">:</span>
                                     <div className="relative">
                                       <select value={newSchedStartM} onChange={(e) => setNewSchedStartM(e.target.value as Minute)}
-                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-sm bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-[13px] bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                                         {MINUTE_VALUES.map((m) => <option key={m} value={m}>{MINUTE_LABELS[m]}</option>)}
                                       </select>
                                       <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -2158,7 +2158,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                   <div className="flex items-center gap-1">
                                     <div className="relative">
                                       <select value={newSchedEndH} onChange={(e) => setNewSchedEndH(Number(e.target.value))}
-                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-sm bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-[13px] bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                                         {Array.from({ length: 25 }, (_, i) => <option key={i} value={i}>{String(i).padStart(2, '0')}</option>)}
                                       </select>
                                       <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -2166,7 +2166,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                     <span className="text-gray-400 font-medium">:</span>
                                     <div className="relative">
                                       <select value={newSchedEndM} onChange={(e) => setNewSchedEndM(e.target.value as Minute)}
-                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-sm bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
+                                        className="px-2 py-2 pr-6 border border-gray-200 rounded-lg text-[13px] bg-white w-16 appearance-none cursor-pointer transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500">
                                         {MINUTE_VALUES.map((m) => <option key={m} value={m}>{MINUTE_LABELS[m]}</option>)}
                                       </select>
                                       <ChevronDown className="absolute right-1.5 top-1/2 -translate-y-1/2 w-3 h-3 text-gray-400 pointer-events-none" />
@@ -2174,7 +2174,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                   </div>
                                 </div>
                                 <button onClick={addScheduleEntry}
-                                  className="px-3.5 py-2 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-1.5">
+                                  className="px-3.5 py-2 text-[13px] font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 transition-colors shadow-sm flex items-center gap-1.5">
                                   <Plus className="w-3.5 h-3.5" /> Ekle
                                 </button>
                               </div>
@@ -2183,7 +2183,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             {/* Save */}
                             <div className="flex justify-end mt-5 pt-4 border-t border-gray-100">
                               <button onClick={saveSchedule} disabled={savingSchedule}
-                                className="px-5 py-2.5 text-sm font-medium text-white bg-[#2BB673] rounded-lg hover:bg-[#249E63] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm flex items-center gap-2">
+                                className="px-5 py-2.5 text-[13px] font-medium text-white bg-[#2BB673] rounded-lg hover:bg-[#249E63] disabled:opacity-50 disabled:cursor-not-allowed transition-all duration-150 shadow-sm flex items-center gap-2">
                                 {savingSchedule && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
                                 Zamanlamayı Kaydet
                               </button>
@@ -2212,23 +2212,23 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                               <table className="w-full">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Konum</th>
-                                    <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-                                    <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Teklif Çarpanı</th>
+                                    <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Konum</th>
+                                    <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Durum</th>
+                                    <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Teklif Çarpanı</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
                                   {locations.map((loc) => (
                                     <tr key={loc.criterionId} className="hover:bg-gray-50">
-                                      <td className="px-4 py-3 text-sm text-gray-900 font-medium">{loc.locationName}</td>
-                                      <td className="px-4 py-3 text-sm">
+                                      <td className="px-4 py-3 text-[13px] text-gray-900 font-medium">{loc.locationName}</td>
+                                      <td className="px-4 py-3 text-[13px]">
                                         {loc.isNegative ? (
-                                          <span className="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">Hariç</span>
+                                          <span className="px-2 py-0.5 rounded-full text-[13px] bg-red-50 text-red-600">Hariç</span>
                                         ) : (
-                                          <span className="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">Hedef</span>
+                                          <span className="px-2 py-0.5 rounded-full text-[13px] bg-green-50 text-green-700">Hedef</span>
                                         )}
                                       </td>
-                                      <td className="px-4 py-3 text-sm text-gray-900 text-right">
+                                      <td className="px-4 py-3 text-[13px] text-gray-900 text-right">
                                         {loc.bidModifier != null ? `${((loc.bidModifier - 1) * 100).toFixed(0)}%` : '—'}
                                       </td>
                                     </tr>
@@ -2275,15 +2275,15 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <FileText className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Reklam Grubu Adı</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Reklam grubunuza bir isim verin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Reklam Grubu Adı</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Reklam grubunuza bir isim verin.</p>
                               </div>
                             </div>
                           </div>
                           <div className="px-5 pb-5 pt-4">
                             <input type="text" value={agName} onChange={(e) => setAgName(e.target.value)} maxLength={256}
                               placeholder="Reklam grubu adı..."
-                              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                              className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                           </div>
                         </div>
                       )}
@@ -2297,17 +2297,17 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Banknote className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Maks. CPC Teklif</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Bu reklam grubu için maksimum tıklama başına maliyet belirleyin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Maks. CPC Teklif</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Bu reklam grubu için maksimum tıklama başına maliyet belirleyin.</p>
                               </div>
                             </div>
                           </div>
                           <div className="px-5 pb-5 pt-4">
                             <div className="relative max-w-xs">
-                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-xs font-medium text-gray-400 select-none pointer-events-none">TRY</span>
+                              <span className="absolute left-3 top-1/2 -translate-y-1/2 text-[13px] font-medium text-gray-400 select-none pointer-events-none">TRY</span>
                               <input type="number" step="0.01" min="0" value={agCpcBid} onChange={(e) => setAgCpcBid(e.target.value)}
                                 placeholder="Orn: 2.50"
-                                className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-sm text-gray-900 bg-gray-50/50 placeholder:text-gray-400 transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
+                                className="w-full pl-12 pr-3.5 py-2.5 border border-gray-200 rounded-lg text-[13px] text-gray-900 bg-gray-50/50 placeholder:text-gray-400 placeholder:text-[11px] transition-all duration-150 focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 focus:bg-white focus:shadow-sm" />
                             </div>
                           </div>
                         </div>
@@ -2319,17 +2319,17 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {/* ── ANAHTAR KELİMELER ── */}
                   {selectedView === 'anahtar_kelimeler' && (
                     <div className="max-w-2xl">
-                      <h3 className="text-lg font-semibold text-gray-900 flex items-center gap-2">
+                      <h3 className="text-[15px] font-semibold text-gray-900 flex items-center gap-2">
                         <Key className="w-5 h-5" /> Anahtar Kelimeler
                       </h3>
-                      <p className="text-sm text-gray-500 mt-1 mb-4">
+                      <p className="text-[13px] text-gray-500 mt-1 mb-4">
                         {agPositiveKws.length} pozitif anahtar kelime.
                       </p>
                       {agPositiveKws.length > 0 && (
                         <div className="mb-4">
                           <div className="flex flex-wrap gap-1.5">
                             {agPositiveKws.map((kw) => (
-                              <span key={kw.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-blue-50 text-blue-700 border border-blue-200">
+                              <span key={kw.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] rounded-full bg-blue-50 text-blue-700 border border-blue-200">
                                 <span className="text-blue-400">{matchLabel(kw.matchType)}</span>
                                 {kw.text}
                                 {kw.qualityScore != null && <span className="text-blue-300 ml-0.5">QS:{kw.qualityScore}/10</span>}
@@ -2340,17 +2340,17 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                         </div>
                       )}
                       <div className="pt-4 border-t border-gray-100">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Anahtar Kelime Ekle</p>
+                        <p className="text-[13px] font-medium text-gray-700 mb-2">Anahtar Kelime Ekle</p>
                         <div className="flex items-center gap-2">
                           <input type="text" value={newKwText} onChange={(e) => setNewKwText(e.target.value)}
                             placeholder="Anahtar kelime..." onKeyDown={(e) => { if (e.key === 'Enter') addKeyword(selected.id) }}
-                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                           <select value={newKwMatch} onChange={(e) => setNewKwMatch(e.target.value as any)}
-                            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                            className="px-3 py-2.5 border border-gray-300 rounded-lg text-[13px] bg-white">
                             {MATCH_TYPES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                           </select>
                           <button onClick={() => addKeyword(selected.id)} disabled={addingKw || !newKwText.trim()}
-                            className="px-4 py-2.5 text-sm font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-1.5">
+                            className="px-4 py-2.5 text-[13px] font-medium text-white bg-blue-500 rounded-lg hover:bg-blue-600 disabled:opacity-50 flex items-center gap-1.5">
                             {addingKw ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                             Ekle
                           </button>
@@ -2362,14 +2362,14 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {/* ── NEGATİF AK (Ad Group) ── */}
                   {selectedView === 'negatif_ak' && (
                     <div className="max-w-2xl">
-                      <h3 className="text-lg font-semibold text-gray-900">Negatif Anahtar Kelimeler</h3>
-                      <p className="text-sm text-gray-500 mt-1 mb-4">
+                      <h3 className="text-[15px] font-semibold text-gray-900">Negatif Anahtar Kelimeler</h3>
+                      <p className="text-[13px] text-gray-500 mt-1 mb-4">
                         Reklam grubu düzeyinde {agNegativeKws.length} negatif anahtar kelime.
                       </p>
                       {agNegativeKws.length > 0 && (
                         <div className="flex flex-wrap gap-1.5 mb-4">
                           {agNegativeKws.map((kw) => (
-                            <span key={kw.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-xs rounded-full bg-red-50 text-red-600 border border-red-200">
+                            <span key={kw.id} className="inline-flex items-center gap-1 px-2.5 py-1 text-[13px] rounded-full bg-red-50 text-red-600 border border-red-200">
                               <span className="text-red-400">{matchLabel(kw.matchType)}</span>
                               {kw.text}
                               <button onClick={() => removeKeyword(kw)} className="hover:text-red-800"><X className="w-3 h-3" /></button>
@@ -2378,17 +2378,17 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                         </div>
                       )}
                       <div className="pt-4 border-t border-gray-100">
-                        <p className="text-sm font-medium text-gray-700 mb-2">Negatif Anahtar Kelime Ekle</p>
+                        <p className="text-[13px] font-medium text-gray-700 mb-2">Negatif Anahtar Kelime Ekle</p>
                         <div className="flex items-center gap-2">
                           <input type="text" value={newKwText} onChange={(e) => setNewKwText(e.target.value)}
                             placeholder="Negatif kelime..." onKeyDown={(e) => { if (e.key === 'Enter') { setNewKwNeg(true); addKeyword(selected.id) } }}
-                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                            className="flex-1 px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                           <select value={newKwMatch} onChange={(e) => setNewKwMatch(e.target.value as any)}
-                            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white">
+                            className="px-3 py-2.5 border border-gray-300 rounded-lg text-[13px] bg-white">
                             {MATCH_TYPES.map((m) => <option key={m.value} value={m.value}>{m.label}</option>)}
                           </select>
                           <button onClick={() => { setNewKwNeg(true); addKeyword(selected.id) }} disabled={addingKw || !newKwText.trim()}
-                            className="px-4 py-2.5 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50 flex items-center gap-1.5">
+                            className="px-4 py-2.5 text-[13px] font-medium text-white bg-red-500 rounded-lg hover:bg-red-600 disabled:opacity-50 flex items-center gap-1.5">
                             {addingKw ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
                             Ekle
                           </button>
@@ -2480,10 +2480,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {schema.ad.includes('adReadonly') && (
                     <div className="space-y-6">
                       <div className="flex items-center gap-2 flex-wrap">
-                        <span className="inline-flex items-center px-3 py-1 text-xs font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
+                        <span className="inline-flex items-center px-3 py-1 text-[13px] font-medium rounded-full bg-purple-50 text-purple-700 border border-purple-200">
                           {AD_TYPE_LABELS[selectedAd.type] || selectedAd.type}
                         </span>
-                        <span className={`inline-flex items-center px-2.5 py-1 text-xs font-medium rounded-full ${
+                        <span className={`inline-flex items-center px-2.5 py-1 text-[13px] font-medium rounded-full ${
                           selectedAd.status === 'ENABLED' ? 'bg-green-50 text-green-700 border border-green-200' :
                           selectedAd.status === 'PAUSED' ? 'bg-yellow-50 text-yellow-700 border border-yellow-200' :
                           'bg-gray-50 text-gray-500 border border-gray-200'
@@ -2492,26 +2492,26 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                         </span>
                       </div>
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Reklam Adı</h3>
+                        <h3 className="text-[15px] font-semibold text-gray-900">Reklam Adı</h3>
                         <input type="text" value={selectedAd.name || `Reklam #${selectedAd.id}`} disabled
-                          className="mt-2 w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm" />
+                          className="mt-2 w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-[13px]" />
                       </div>
                       {selectedAd.finalUrls.length > 0 && (
                         <div>
-                          <h3 className="text-lg font-semibold text-gray-900">Son URL</h3>
+                          <h3 className="text-[15px] font-semibold text-gray-900">Son URL</h3>
                           <div className="mt-2 space-y-1.5">
                             {selectedAd.finalUrls.map((url, idx) => (
-                              <div key={idx} className="px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-sm text-gray-600 truncate">{url}</div>
+                              <div key={idx} className="px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-[13px] text-gray-600 truncate">{url}</div>
                             ))}
                           </div>
                         </div>
                       )}
                       <div>
-                        <h3 className="text-lg font-semibold text-gray-900">Reklam Grubu</h3>
+                        <h3 className="text-[15px] font-semibold text-gray-900">Reklam Grubu</h3>
                         <input type="text" value={selectedAd.adGroupName} disabled
-                          className="mt-2 w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm" />
+                          className="mt-2 w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-[13px]" />
                       </div>
-                      <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-sm text-blue-700">
+                      <div className="px-4 py-3 bg-blue-50 border border-blue-200 rounded-lg text-[13px] text-blue-700">
                         {AD_READONLY_MESSAGES[channelType] || 'Bu reklam tipi bu arayüzden düzenlenemez.'}
                       </div>
                     </div>
@@ -2519,34 +2519,34 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   {schema.ad.includes('rsaEditor') && (
                     <>
                       {selectedAd.type !== 'RESPONSIVE_SEARCH_AD' ? (
-                        <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
+                        <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-[13px] text-amber-700">
                           Bu reklam tipi ({selectedAd.type}) düzenlenemez. Sadece Responsive Search Ad (RSA) reklamları düzenlenebilir.
                         </div>
                       ) : (
                         <div className="space-y-8">
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Reklam Adı</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-4">Google Ads API üzerinden reklam adı değiştirilemez.</p>
+                            <h3 className="text-[15px] font-semibold text-gray-900">Reklam Adı</h3>
+                            <p className="text-[13px] text-gray-500 mt-1 mb-4">Google Ads API üzerinden reklam adı değiştirilemez.</p>
                             <input type="text" value={selectedAd.name || `Reklam #${selectedAd.id}`} disabled
-                              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm" />
+                              className="w-full px-4 py-2.5 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-[13px]" />
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Başlıklar</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-4">En az 3, en fazla 15 başlık. Her biri maks 30 karakter. ({adHeadlines.length}/15)</p>
+                            <h3 className="text-[15px] font-semibold text-gray-900">Başlıklar</h3>
+                            <p className="text-[13px] text-gray-500 mt-1 mb-4">En az 3, en fazla 15 başlık. Her biri maks 30 karakter. ({adHeadlines.length}/15)</p>
                             <div className="space-y-2">
                               {adHeadlines.map((h, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-400 w-5 text-right shrink-0">{idx + 1}</span>
+                                  <span className="text-[13px] text-gray-400 w-5 text-right shrink-0">{idx + 1}</span>
                                   <input type="text" value={h.text}
                                     onChange={(e) => setAdHeadlines(adHeadlines.map((x, i) => i === idx ? { ...x, text: e.target.value } : x))}
                                     maxLength={30} placeholder="Başlık metni (maks 30)"
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                                   <select value={h.pinnedField || ''}
                                     onChange={(e) => setAdHeadlines(adHeadlines.map((x, i) => i === idx ? { ...x, pinnedField: e.target.value || null } : x))}
-                                    className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-xs bg-white">
+                                    className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-[13px] bg-white">
                                     {PIN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                                   </select>
-                                  <span className={`text-xs shrink-0 w-10 text-right ${h.text.length > 25 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                  <span className={`text-[13px] shrink-0 w-10 text-right ${h.text.length > 25 ? 'text-amber-500' : 'text-gray-400'}`}>
                                     {h.text.length}/30
                                   </span>
                                   {adHeadlines.length > 3 && (
@@ -2558,28 +2558,28 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             </div>
                             {adHeadlines.length < 15 && (
                               <button onClick={() => setAdHeadlines([...adHeadlines, { text: '' }])}
-                                className="mt-3 text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
+                                className="mt-3 text-[13px] text-green-600 hover:text-green-700 flex items-center gap-1">
                                 <Plus className="w-3.5 h-3.5" /> Başlık Ekle
                               </button>
                             )}
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Açıklamalar</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-4">En az 2, en fazla 4 açıklama. Her biri maks 90 karakter. ({adDescriptions.length}/4)</p>
+                            <h3 className="text-[15px] font-semibold text-gray-900">Açıklamalar</h3>
+                            <p className="text-[13px] text-gray-500 mt-1 mb-4">En az 2, en fazla 4 açıklama. Her biri maks 90 karakter. ({adDescriptions.length}/4)</p>
                             <div className="space-y-2">
                               {adDescriptions.map((d, idx) => (
                                 <div key={idx} className="flex items-center gap-2">
-                                  <span className="text-xs text-gray-400 w-5 text-right shrink-0">{idx + 1}</span>
+                                  <span className="text-[13px] text-gray-400 w-5 text-right shrink-0">{idx + 1}</span>
                                   <input type="text" value={d.text}
                                     onChange={(e) => setAdDescriptions(adDescriptions.map((x, i) => i === idx ? { ...x, text: e.target.value } : x))}
                                     maxLength={90} placeholder="Açıklama metni (maks 90)"
-                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                                    className="flex-1 px-4 py-2 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                                   <select value={d.pinnedField || ''}
                                     onChange={(e) => setAdDescriptions(adDescriptions.map((x, i) => i === idx ? { ...x, pinnedField: e.target.value || null } : x))}
-                                    className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-xs bg-white">
+                                    className="w-28 px-2 py-2 border border-gray-300 rounded-lg text-[13px] bg-white">
                                     {DESC_PIN_OPTIONS.map((p) => <option key={p.value} value={p.value}>{p.label}</option>)}
                                   </select>
-                                  <span className={`text-xs shrink-0 w-10 text-right ${d.text.length > 80 ? 'text-amber-500' : 'text-gray-400'}`}>
+                                  <span className={`text-[13px] shrink-0 w-10 text-right ${d.text.length > 80 ? 'text-amber-500' : 'text-gray-400'}`}>
                                     {d.text.length}/90
                                   </span>
                                   {adDescriptions.length > 2 && (
@@ -2591,49 +2591,49 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                             </div>
                             {adDescriptions.length < 4 && (
                               <button onClick={() => setAdDescriptions([...adDescriptions, { text: '' }])}
-                                className="mt-3 text-sm text-green-600 hover:text-green-700 flex items-center gap-1">
+                                className="mt-3 text-[13px] text-green-600 hover:text-green-700 flex items-center gap-1">
                                 <Plus className="w-3.5 h-3.5" /> Açıklama Ekle
                               </button>
                             )}
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">URL ve Yollar</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-4">Reklamınızın yönlendireceği URL ve görüntülenen yolları belirleyin.</p>
+                            <h3 className="text-[15px] font-semibold text-gray-900">URL ve Yollar</h3>
+                            <p className="text-[13px] text-gray-500 mt-1 mb-4">Reklamınızın yönlendireceği URL ve görüntülenen yolları belirleyin.</p>
                             <div className="space-y-3">
                               <div>
-                                <label className="block text-sm font-medium text-gray-700 mb-1.5">Son URL</label>
+                                <label className="block text-[13px] font-medium text-gray-700 mb-1.5">Son URL</label>
                                 <input type="url" value={adFinalUrl} onChange={(e) => setAdFinalUrl(e.target.value)}
                                   placeholder="https://www.example.com/sayfa"
-                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                                  className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                               </div>
                               <div className="grid grid-cols-2 gap-3">
                                 <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Yol 1 (maks 15)</label>
+                                  <label className="block text-[13px] font-medium text-gray-700 mb-1.5">Yol 1 (maks 15)</label>
                                   <input type="text" value={adPath1} onChange={(e) => setAdPath1(e.target.value)} maxLength={15}
                                     placeholder="ornek"
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                                 </div>
                                 <div>
-                                  <label className="block text-sm font-medium text-gray-700 mb-1.5">Yol 2 (maks 15)</label>
+                                  <label className="block text-[13px] font-medium text-gray-700 mb-1.5">Yol 2 (maks 15)</label>
                                   <input type="text" value={adPath2} onChange={(e) => setAdPath2(e.target.value)} maxLength={15}
                                     placeholder="sayfa"
-                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20" />
+                                    className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-green-500/20" />
                                 </div>
                               </div>
                             </div>
                           </div>
                           <div>
-                            <h3 className="text-lg font-semibold text-gray-900">Önizleme</h3>
-                            <p className="text-sm text-gray-500 mt-1 mb-4">Reklamınızın Google arama sonuçlarında nasıl görüneceği.</p>
+                            <h3 className="text-[15px] font-semibold text-gray-900">Önizleme</h3>
+                            <p className="text-[13px] text-gray-500 mt-1 mb-4">Reklamınızın Google arama sonuçlarında nasıl görüneceği.</p>
                             <div className="border border-gray-200 rounded-xl p-5 bg-white max-w-md">
                               <div className="space-y-1">
-                                <p className="text-xs text-green-700 truncate">
+                                <p className="text-[13px] text-green-700 truncate">
                                   {previewUrl}{displayPath ? `/${displayPath}` : ''}
                                 </p>
-                                <p className="text-base text-blue-700 font-medium leading-snug line-clamp-2">
+                                <p className="text-[15px] text-blue-700 font-medium leading-snug line-clamp-2">
                                   {previewH || 'Başlık önizlemesi'}
                                 </p>
-                                <p className="text-sm text-gray-600 line-clamp-2">
+                                <p className="text-[13px] text-gray-600 line-clamp-2">
                                   {previewD || 'Açıklama önizlemesi'}
                                 </p>
                               </div>
@@ -2675,18 +2675,18 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
       {showUnsavedDialog && (
         <div className="fixed inset-0 z-[60] flex items-center justify-center bg-black/40">
           <div className="bg-white rounded-xl shadow-2xl p-6 max-w-sm w-full mx-4">
-            <h3 className="text-lg font-semibold text-gray-900 mb-2">Kaydedilmemiş Değişiklikler</h3>
-            <p className="text-sm text-gray-600 mb-5">Kaydedilmemiş değişiklikleriniz var. Devam ederseniz bu değişiklikler kaybolacak.</p>
+            <h3 className="text-[15px] font-semibold text-gray-900 mb-2">Kaydedilmemiş Değişiklikler</h3>
+            <p className="text-[13px] text-gray-600 mb-5">Kaydedilmemiş değişiklikleriniz var. Devam ederseniz bu değişiklikler kaybolacak.</p>
             <div className="flex items-center gap-3 justify-end">
               <button
                 onClick={() => { setShowUnsavedDialog(false); setPendingSelection(null) }}
-                className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
+                className="px-4 py-2 text-[13px] font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
               >
                 Geri Dön
               </button>
               <button
                 onClick={confirmDiscard}
-                className="px-4 py-2 text-sm font-medium text-white bg-red-500 rounded-lg hover:bg-red-600"
+                className="px-4 py-2 text-[13px] font-medium text-white bg-red-500 rounded-lg hover:bg-red-600"
               >
                 Değişiklikleri At
               </button>
