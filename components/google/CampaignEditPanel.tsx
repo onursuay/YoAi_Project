@@ -1751,10 +1751,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Kampanya Adı ── */}
                       {schema.campaign.includes('name') && (
-                        <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-700 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
                                 <Megaphone className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1773,10 +1773,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Bütçe ── */}
                       {schema.campaign.includes('budget') && (
-                        <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-700 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
                                 <Banknote className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1799,10 +1799,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Teklif Stratejisi ── */}
                       {schema.campaign.includes('bidding') && (
-                        <div className="bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-700 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
                                 <Settings2 className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1845,10 +1845,10 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Ağ Ayarları ── */}
                       {schema.campaign.includes('networks') && (
-                        <div className="col-span-1 bg-white rounded-xl border border-gray-200/80 shadow-sm overflow-hidden">
+                        <div className="col-span-1 bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-green-100 text-green-700 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
                                 <Globe className="w-[18px] h-[18px]" />
                               </div>
                               <div>
