@@ -25,6 +25,8 @@ const USER_MESSAGES: Record<string, string> = {
   audience_view_failed: 'Hedef kitle verileri şu anda alınamadı.',
   ad_group_audience_failed: 'Reklam grubu hedef kitle verileri şu anda alınamadı.',
   auction_insights_failed: 'Gösterim payı verileri şu anda alınamadı.',
+  competitor_auction_insights_failed:
+    'Rakip açık artırma verileri şu anda alınamıyor. Bu veriler API üzerinden desteklenmiyor olabilir.',
   placements_failed: 'Gösterilme yeri verileri şu anda alınamadı.',
   search_terms_failed: 'Arama terimleri verileri şu anda alınamadı.',
   audience_criteria_list_failed: 'Hedef kitle segment verileri şu anda alınamadı.',

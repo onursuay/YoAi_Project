@@ -182,6 +182,13 @@ const INFO_CARDS: Record<string, string[]> = {
     'Sıralama kaynaklı kayıp: teklif artışı veya kalite puanı iyileştirmesiyle çözülür.',
     'Rakip gösterim payı analizi rekabet durumunu anlamak için kullanılır.',
   ],
+  acik_artirma: [
+    'Açık artırma raporu hangi rakiplerin aynı açık artırmalarda göründüğünü gösterir.',
+    'Gösterim payı reklamınızın toplam uygun gösterimden aldığı pay oranıdır.',
+    'Çakışma oranı rakibinizin de gösterim aldığı zamanlardaki payınızı gösterir.',
+    'Daha üst konum oranı rakibinizin reklamının sizinkinden üstte gösterilme sıklığıdır.',
+    '"Siz" satırı kendi kampanyanızın performansını temsil eder.',
+  ],
   hedef_kitleler: [
     'Hedef kitle segmentleri belirli ilgi alanları veya davranışlara sahip kullanıcıları hedefler.',
     '"Gözlem" modu kitleyi izler ama reklamı kısıtlamaz; "Hedefleme" modu yalnızca o kitleye gösterir.',
@@ -215,6 +222,7 @@ const TAB_TO_INFO_KEY: Record<string, string> = {
   ogeler: 'ogeler',
   arama_terimleri: 'arama_terimleri',
   gosterim_payi: 'gosterim_payi',
+  acik_artirma: 'acik_artirma',
   acilis_sayfalari: 'acilis_sayfalari',
   gosterim_yeri_zamani: 'gosterilme_yeri',
 }
@@ -328,6 +336,7 @@ type ViewId =
   | 'ogeler'
   | 'arama_terimleri'
   | 'gosterim_payi'
+  | 'acik_artirma'
   | 'acilis_sayfalari'
   | 'gosterim_yeri_zamani'
 
@@ -342,6 +351,7 @@ const VIEW_LABELS: Record<ViewId, string> = {
   ogeler: 'Öğeler',
   arama_terimleri: 'Arama Terimleri',
   gosterim_payi: 'Gösterim Payı Analizi',
+  acik_artirma: 'Açık Artırma',
   acilis_sayfalari: 'Açılış Sayfaları',
   gosterim_yeri_zamani: 'Gösterilme Yeri ve Zamanı',
 }
@@ -356,6 +366,8 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only (impression share metrics are SEARCH-specific)
     if (channelType === 'SEARCH') views.push('gosterim_payi')
+    // Açık Artırma (Rakip karşılaştırması): SEARCH only
+    if (channelType === 'SEARCH') views.push('acik_artirma')
     // Hedef Kitleler: campaign_audience_view — SEARCH, DISPLAY, VIDEO, DEMAND_GEN
     if (['SEARCH', 'DISPLAY', 'VIDEO', 'DEMAND_GEN'].includes(channelType)) views.push('hedef_kitleler')
     views.push('acilis_sayfalari')
@@ -379,6 +391,8 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only
     if (channelType === 'SEARCH') views.push('gosterim_payi')
+    // Açık Artırma (Rakip karşılaştırması): SEARCH only
+    if (channelType === 'SEARCH') views.push('acik_artirma')
     if (['SEARCH', 'DISPLAY'].includes(channelType)) views.push('acilis_sayfalari')
     // Gösterilme yeri: ad group level only for DISPLAY (has placements)
     if (['DISPLAY'].includes(channelType)) views.push('gosterim_yeri_zamani')
@@ -413,6 +427,56 @@ interface ViewComponentProps {
   isLoading: boolean
   error: ViewErrorInfo | null
   onFetch: () => void
+}
+
+function AuctionInsightsView({ data, isLoading, error, onFetch }: ViewComponentProps) {
+  useEffect(() => { onFetch() }, [onFetch])
+  if (isLoading) return <div className="p-6 text-center text-gray-500">Açık artırma verileri yükleniyor...</div>
+  if (error) return <ViewErrorAlert error={error} />
+  if (!data || data.length === 0) return <div className="p-6 text-center text-gray-400">Açık artırma verisi bulunamadı.</div>
+
+  const cols = [
+    { key: 'domain', label: 'Görünen URL Alanı' },
+    { key: 'impressionShare', label: 'Gösterim Payı' },
+    { key: 'overlapRate', label: 'Çakışma Oranı' },
+    { key: 'positionAboveRate', label: 'Daha Üst Konum Oranı' },
+    { key: 'topImpressionPct', label: 'Sayfanın Üst Kısmı Oranı' },
+    { key: 'absTopImpressionPct', label: 'Mutlak Sayfanın Üst Kısmı Oranı' },
+    { key: 'outrankingShare', label: 'Geçiş Payı' },
+  ]
+
+  return (
+    <div className="space-y-4">
+      <div>
+        <h3 className="text-[15px] font-semibold text-gray-900 mb-1">Açık Artırma Bilgileri</h3>
+        <p className="text-[13px] text-gray-500">Aynı açık artırmalarda rekabet ettiğiniz diğer reklamverenler.</p>
+      </div>
+      <div className="overflow-x-auto rounded-xl border border-gray-200">
+        <table className="w-full text-[13px]">
+          <thead>
+            <tr className="border-b border-gray-200 bg-gray-50">
+              {cols.map(c => (
+                <th key={c.key} className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">
+                  {c.label}
+                </th>
+              ))}
+            </tr>
+          </thead>
+          <tbody>
+            {data.map((row: Record<string, string>, i: number) => (
+              <tr key={i} className={`border-b border-gray-100 transition-colors ${row.domain === 'Siz' || row.domain?.toLowerCase().includes('you') ? 'bg-blue-50/50 font-medium' : 'hover:bg-gray-50'}`}>
+                {cols.map(c => (
+                  <td key={c.key} className={`px-4 py-3 ${c.key === 'domain' ? 'font-medium text-gray-900' : 'text-gray-700'}`}>
+                    {row[c.key] ?? '—'}
+                  </td>
+                ))}
+              </tr>
+            ))}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }
 
 function ImpressionShareView({ data, isLoading, error, onFetch }: ViewComponentProps) {
@@ -946,6 +1010,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
     ogeler: 'Öğe verileri şu anda alınamadı.',
     arama_terimleri: 'Arama terimleri verileri şu anda alınamadı.',
     gosterim_payi: 'Gösterim payı verileri şu anda alınamadı.',
+    acik_artirma: 'Açık artırma verileri şu anda alınamadı.',
     acilis_sayfalari: 'Açılış sayfası verisi şu anda getirilemedi.',
     gosterim_yeri_zamani: 'Gösterilme yeri ve zamanı verileri şu anda alınamadı.',
   }), [])
@@ -1003,6 +1068,13 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           setViewData(prev => ({ ...prev, gosterim_payi: data.insights ?? null }))
           break
         }
+        case 'acik_artirma': {
+          const res = await fetch(`/api/integrations/google-ads/campaigns/${campaignId}/auction-insights-competitors`, { cache: 'no-store' })
+          const data = await res.json().catch(() => ({}))
+          if (!res.ok) throwViewError(data, view)
+          setViewData(prev => ({ ...prev, acik_artirma: data.competitors ?? null }))
+          break
+        }
         case 'hedef_kitleler': {
           const url = sel.type === 'adGroup'
             ? `/api/integrations/google-ads/ad-groups/${sel.id}/audience-view`
@@ -1048,6 +1120,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
   const fetchAcilisSayfalari = useCallback(() => fetchViewDataFor('acilis_sayfalari'), [fetchViewDataFor])
   const fetchHedefKitleler = useCallback(() => fetchViewDataFor('hedef_kitleler'), [fetchViewDataFor])
   const fetchGosterimPayi = useCallback(() => fetchViewDataFor('gosterim_payi'), [fetchViewDataFor])
+  const fetchAcikArtirma = useCallback(() => fetchViewDataFor('acik_artirma'), [fetchViewDataFor])
   const fetchGosterimYeriZamani = useCallback(() => fetchViewDataFor('gosterim_yeri_zamani'), [fetchViewDataFor])
 
   /* ── Exclude search term (add as campaign negative keyword via PUT /search-terms) ── */
@@ -2162,6 +2235,16 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                     />
                   )}
 
+                  {/* ── AÇIK ARTIRMA ── */}
+                  {selectedView === 'acik_artirma' && (
+                    <AuctionInsightsView
+                      data={viewData.acik_artirma}
+                      isLoading={viewLoading.acik_artirma ?? false}
+                      error={viewError.acik_artirma ?? null}
+                      onFetch={fetchAcikArtirma}
+                    />
+                  )}
+
                   {/* ── AÇILIŞ SAYFALARI ── */}
                   {selectedView === 'acilis_sayfalari' && (
                     <CampaignLandingPagesTab
@@ -2587,6 +2670,16 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       isLoading={viewLoading.gosterim_payi ?? false}
                       error={viewError.gosterim_payi ?? null}
                       onFetch={fetchGosterimPayi}
+                    />
+                  )}
+
+                  {/* ── AÇIK ARTIRMA (Ad Group) ── */}
+                  {selectedView === 'acik_artirma' && (
+                    <AuctionInsightsView
+                      data={viewData.acik_artirma}
+                      isLoading={viewLoading.acik_artirma ?? false}
+                      error={viewError.acik_artirma ?? null}
+                      onFetch={fetchAcikArtirma}
                     />
                   )}
 
