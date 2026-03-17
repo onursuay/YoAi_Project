@@ -746,6 +746,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
   const [selectedView, setSelectedView] = useState<ViewId>('genel')
   const [infoCardIndex, setInfoCardIndex] = useState(0)
   const [infoCardVisible, setInfoCardVisible] = useState(true)
+  const [infoCardDismissed, setInfoCardDismissed] = useState(false)
   const [viewData, setViewData] = useState<Record<string, any>>({})
   const [viewLoading, setViewLoading] = useState<Record<string, boolean>>({})
   const [viewError, setViewError] = useState<Record<string, ViewErrorInfo | null>>({})
@@ -809,6 +810,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
   useEffect(() => {
     setInfoCardIndex(0)
     setInfoCardVisible(true)
+    setInfoCardDismissed(false)
   }, [selectedView])
 
   /* ── Fetch all data ── */
@@ -1632,7 +1634,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           </div>
 
           {/* Tree */}
-          <div className="flex-1 overflow-y-auto py-1">
+          <div className="overflow-y-auto py-1">
             {loading ? (
               <div className="flex items-center justify-center py-12">
                 <Loader2 className="w-5 h-5 animate-spin text-gray-400" />
@@ -1767,36 +1769,44 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
             )}
           </div>
 
-          {/* Info Card */}
-          <div className="px-3 py-3 flex-shrink-0">
-            <div
-              style={{
-                transition: 'opacity 0.6s ease, transform 0.6s ease',
-                opacity: infoCardVisible ? 1 : 0,
-                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
-              }}
-              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4"
-            >
-              <div className="flex items-start gap-2 mb-3">
-                <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
-                  <span className="text-emerald-600 text-[11px] font-bold">i</span>
+          {!infoCardDismissed && (
+            <div className="flex-1 px-3 py-3 flex flex-col min-h-0">
+              <div
+                style={{
+                  transition: 'opacity 0.6s ease, transform 0.6s ease',
+                  opacity: infoCardVisible ? 1 : 0,
+                  transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
+                }}
+                className="flex-1 relative bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4 flex flex-col"
+              >
+                {/* Kapatma butonu */}
+                <button
+                  onClick={() => setInfoCardDismissed(true)}
+                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-200/50 hover:bg-emerald-300/70 flex items-center justify-center transition-colors"
+                >
+                  <X className="w-3 h-3 text-emerald-600" />
+                </button>
+                <div className="flex items-start gap-2 flex-1 pr-4">
+                  <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                    <span className="text-emerald-600 text-[11px] font-bold">i</span>
+                  </div>
+                  <p className="text-[12px] text-emerald-800 leading-relaxed">
+                    {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
+                  </p>
                 </div>
-                <p className="text-[12px] text-emerald-800 leading-relaxed">
-                  {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
-                </p>
-              </div>
-              <div className="flex gap-1 justify-center">
-                {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
-                  <div
-                    key={i}
-                    className={`h-1 rounded-full transition-all duration-500 ${
-                      i === infoCardIndex ? 'w-5 bg-emerald-500' : 'w-1.5 bg-emerald-200'
-                    }`}
-                  />
-                ))}
+                <div className="flex gap-1 justify-center mt-3">
+                  {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
+                    <div
+                      key={i}
+                      className={`h-1 rounded-full transition-all duration-500 ${
+                        i === infoCardIndex ? 'w-5 bg-emerald-500' : 'w-1.5 bg-emerald-200'
+                      }`}
+                    />
+                  ))}
+                </div>
               </div>
             </div>
-          </div>
+          )}
         </div>
 
         {/* ── RIGHT WORKSPACE PANEL ── */}
