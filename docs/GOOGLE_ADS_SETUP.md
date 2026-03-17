@@ -42,7 +42,7 @@ Add these to your production environment:
 | `VERCEL_API_TOKEN` | Yes | Vercel API token for writing to Edge Config |
 | `GOOGLE_ADS_REFRESH_TOKEN` | Optional | Env override for admin refresh (avoids DB) |
 | `GOOGLE_ADS_CUSTOMER_ID` | Optional | With above, for admin refresh |
-| `DATABASE_URL` | Optional | Supabase connection string – enables `/api/admin/apply-google-ads-migration` |
+| `DATABASE_URL` | Optional | For `npm run db:migrate:google-ads` – migration can also be run via Supabase SQL Editor |
 
 ## 3. Connect flow (creates DB row)
 
