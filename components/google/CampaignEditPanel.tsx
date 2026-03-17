@@ -464,14 +464,14 @@ function AudienceView({ data, isLoading, error, onFetch, entityType, onEditSegme
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Hedef Kitle</th>
-            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Tip</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Ort. TBM</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
+            <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Hedef Kitle</th>
+            <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Tip</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Gösterim</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Tıklama</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">CTR</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Ort. TBM</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Maliyet</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Dönüşüm</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -512,13 +512,13 @@ function DeviceView({ data, isLoading }: { data: any[]; isLoading: boolean }) {
       <table className="w-full">
         <thead className="bg-gray-50">
           <tr>
-            <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Cihaz</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Ort. TBM</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
-            <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
+            <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Cihaz</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Gösterim</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Tıklama</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">CTR</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Ort. TBM</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Maliyet</th>
+            <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Dönüşüm</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">
@@ -552,13 +552,13 @@ function PlacementsView({ data, isLoading, error, onFetch }: ViewComponentProps)
         <table className="w-full">
           <thead className="bg-gray-50">
             <tr>
-              <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Yerleşim</th>
-              <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Tip</th>
-              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Gösterim</th>
-              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Tıklama</th>
-              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">CTR</th>
-              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Maliyet</th>
-              <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Dönüşüm</th>
+              <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Yerleşim</th>
+              <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Tip</th>
+              <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Gösterim</th>
+              <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Tıklama</th>
+              <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">CTR</th>
+              <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Maliyet</th>
+              <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Dönüşüm</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -2212,9 +2212,9 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                               <table className="w-full">
                                 <thead className="bg-gray-50">
                                   <tr>
-                                    <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Konum</th>
-                                    <th className="px-4 py-3 text-left text-[13px] font-medium text-gray-500 uppercase">Durum</th>
-                                    <th className="px-4 py-3 text-right text-[13px] font-medium text-gray-500 uppercase">Teklif Çarpanı</th>
+                                    <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Konum</th>
+                                    <th className="px-4 py-3 text-left text-[12px] font-medium text-gray-500 uppercase">Durum</th>
+                                    <th className="px-4 py-3 text-right text-[12px] font-medium text-gray-500 uppercase">Teklif Çarpanı</th>
                                   </tr>
                                 </thead>
                                 <tbody className="divide-y divide-gray-200">
