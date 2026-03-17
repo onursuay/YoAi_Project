@@ -1751,10 +1751,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Kampanya Adı ── */}
                       {schema.campaign.includes('name') && (
-                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
+                        <div className="relative bg-gradient-to-br from-indigo-500/10 via-white to-purple-500/5 rounded-xl border border-indigo-200 shadow-md overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-bl-full pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-tr-full pointer-events-none" />
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-200 shrink-0">
                                 <Megaphone className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1773,10 +1775,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Bütçe ── */}
                       {schema.campaign.includes('budget') && (
-                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
+                        <div className="relative bg-gradient-to-br from-indigo-500/10 via-white to-purple-500/5 rounded-xl border border-indigo-200 shadow-md overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-bl-full pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-tr-full pointer-events-none" />
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-200 shrink-0">
                                 <Banknote className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1799,10 +1803,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Teklif Stratejisi ── */}
                       {schema.campaign.includes('bidding') && (
-                        <div className="bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
+                        <div className="relative bg-gradient-to-br from-indigo-500/10 via-white to-purple-500/5 rounded-xl border border-indigo-200 shadow-md overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-bl-full pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-tr-full pointer-events-none" />
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-200 shrink-0">
                                 <Settings2 className="w-[18px] h-[18px]" />
                               </div>
                               <div>
@@ -1845,10 +1851,12 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
                       {/* ── Ağ Ayarları ── */}
                       {schema.campaign.includes('networks') && (
-                        <div className="col-span-1 bg-gradient-to-br from-white to-indigo-50 rounded-xl border border-indigo-100 shadow-sm shadow-indigo-100/50 overflow-hidden">
+                        <div className="col-span-1 relative bg-gradient-to-br from-indigo-500/10 via-white to-purple-500/5 rounded-xl border border-indigo-200 shadow-md overflow-hidden">
+                          <div className="absolute top-0 right-0 w-32 h-32 bg-gradient-to-bl from-indigo-400/10 to-transparent rounded-bl-full pointer-events-none" />
+                          <div className="absolute bottom-0 left-0 w-16 h-16 bg-gradient-to-tr from-purple-400/8 to-transparent rounded-tr-full pointer-events-none" />
                           <div className="px-5 pt-5 pb-0">
                             <div className="flex items-center gap-3 mb-1.5">
-                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-indigo-100 text-indigo-600 shrink-0">
+                              <div className="flex items-center justify-center w-9 h-9 rounded-lg bg-gradient-to-br from-indigo-500 to-purple-600 text-white shadow-sm shadow-indigo-200 shrink-0">
                                 <Globe className="w-[18px] h-[18px]" />
                               </div>
                               <div>
