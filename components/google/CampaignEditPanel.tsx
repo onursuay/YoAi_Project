@@ -132,83 +132,223 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   THURSDAY: 'Perşembe', FRIDAY: 'Cuma', SATURDAY: 'Cumartesi', SUNDAY: 'Pazar',
 }
 
-const INFO_CARDS: Record<string, string[]> = {
+interface InfoCard {
+  title: string
+  body: string
+}
+
+const INFO_CARDS: Record<string, InfoCard[]> = {
   genel: [
-    'Kampanya adı dahili bir etikettir; kullanıcılara gösterilmez. Anlamlı isimler yönetimi kolaylaştırır.',
-    'Günlük bütçe, Google\'ın günlük ortalama harcama limitidir. Bazı günler %20 fazla harcanabilir.',
-    'Teklif stratejisi kampanya amacınıza göre seçilmeli: trafik için Tıklamaları Artır, satış için Dönüşümleri Artır.',
-    'Arama Ağı Ortakları; Google Arama dışında Google\'ın arama ortağı sitelerde de görünüm sağlar.',
-    'Görüntülü Reklam Ağı milyonlarca web sitesi, uygulama ve YouTube\'da görünüm sağlar.',
-  ],
-  anahtar_kelimeler: [
-    'Anahtar kelimeler reklamınızın hangi aramalarda gösterileceğini belirler.',
-    'Geniş eşleme en fazla erişimi sağlar ancak alakasız aramalarda da tetiklenebilir.',
-    'Sıralı eşleme ("kelime") tam sırayı koruyarak daha hedefli gösterim sağlar.',
-    'Tam eşleme [kelime] yalnızca tam aramada veya çok yakın varyasyonlarda tetiklenir.',
-    'Kalite puanı yüksek anahtar kelimeler daha düşük maliyetle daha üst sıralarda yer alır.',
+    {
+      title: 'Kampanya adı ve iç yönetim',
+      body: 'Kampanya adı kullanıcılara gösterilmez; tamamen dahili yönetim içindir. Bu yüzden isim yapısı tarih, kanal, hedef ve varyant mantığıyla okunabilir olmalıdır. Doğru adlandırma; raporlama, filtreleme ve ekip içi operasyon hızını doğrudan artırır.',
+    },
+    {
+      title: 'Günlük bütçe nasıl çalışır',
+      body: 'Google Ads günlük bütçeyi tam sabit bir tavan gibi değil, ortalama günlük harcama mantığıyla işler. Bazı günlerde sistem daha fazla harcama yapabilir; bunu yüksek trafik fırsatlarını yakalamak için kullanır. Bütçe değerlendirmesi tek güne bakılarak değil, dönem ortalaması üzerinden yapılmalıdır.',
+    },
+    {
+      title: 'Teklif stratejisi seçimi',
+      body: 'Teklif stratejisi kampanya hedefiyle uyumlu olmalıdır. Trafik odaklı yapılarda tıklama odaklı stratejiler daha uygunken, satış veya lead odaklı yapılarda dönüşüm odaklı stratejiler daha mantıklıdır. Yanlış teklif stratejisi iyi reklamı bile verimsiz hale getirebilir.',
+    },
+    {
+      title: 'Arama Ağı Ortakları etkisi',
+      body: 'Arama Ağı Ortakları seçeneği reklamların yalnızca Google aramada değil, Google ile iş ortaklığı olan arama sitelerinde de görünmesine izin verebilir. Bu ayar erişimi artırabilir ancak trafik kalitesi kampanyaya göre değişebilir. Ayrı performans kontrolü yapılmadan kör şekilde açık bırakılmamalıdır.',
+    },
+    {
+      title: 'Görüntülü Reklam Ağı kapsamı',
+      body: 'Görüntülü Reklam Ağı açıldığında reklamlar çok daha geniş bir envanterde görünüm alabilir; buna web siteleri, uygulamalar ve video içerikleri dahildir. Bu genişleme görünürlüğü artırsa da arama niyeti kadar sıcak trafik getirmeyebilir. Search kampanyalarında bu ayar hedefe göre dikkatli değerlendirilmelidir.',
+    },
   ],
   negatif_anahtar_kelimeler: [
-    'Negatif anahtar kelimeler reklamınızın gösterilmesini istemediğiniz aramaları dışlar.',
-    'Negatif tam eşleme en hassas dışlamadır; yalnızca o tam aramayı engeller.',
-    'Kampanya düzeyi negatifler tüm reklam gruplarına uygulanır.',
-    'Arama terimi raporu düzenli incelenerek yeni negatifler eklenmelidir.',
-    'Negatif anahtar kelime listeleri birden fazla kampanyada kullanılabilir.',
+    {
+      title: 'Negatif anahtar kelimenin amacı',
+      body: 'Negatif anahtar kelimeler reklamların görünmesini istemediğiniz aramaları dışlamak için kullanılır. Bu yapı alakasız trafiği azaltır, bütçeyi korur ve dönüşüm kalitesini yükseltir. Özellikle geniş eşleme kullanılan kampanyalarda kritik kontrol katmanıdır.',
+    },
+    {
+      title: 'Boşa harcamayı azaltır',
+      body: 'Yanlış arama niyeti taşıyan kullanıcılar tıklama getirse bile çoğu zaman dönüşüm getirmez. Negatif listeler bu tür sorguları filtreleyerek maliyetin daha hedefli aramalara yönelmesini sağlar. Bu nedenle negatif yapı performans iyileştirme değil, bütçe savunma mekanizmasıdır.',
+    },
+    {
+      title: 'Eşleme mantığına dikkat',
+      body: 'Negatif anahtar kelimeler pozitif anahtar kelimelerle aynı mantıkta çalışmaz; bu yüzden geniş, sıralı ve tam eşleme yorumları birebir aynı sanılmamalıdır. Fazla agresif negatif kullanım değerli trafiği de kesebilir. Liste büyütmeden önce gerçekten hangi aramaların dışlanması gerektiği doğrulanmalıdır.',
+    },
+    {
+      title: 'Kampanya mı reklam grubu mu',
+      body: 'Negatifler kampanya düzeyinde eklendiğinde tüm reklam gruplarını etkiler. Daha hassas kontrol gerektiğinde reklam grubu seviyesinde ayrıştırma yapmak daha sağlıklıdır. Ortak ve tekrarlayan dışlamalar için merkezi liste mantığı tercih edilmelidir.',
+    },
+    {
+      title: 'Arama terimi raporuyla birlikte çalışır',
+      body: 'Negatif yapı bir defa kurulup bırakılmaz. Arama terimleri düzenli incelenerek yeni alakasız sorgular negatif listeye eklenmelidir. En doğru negatifler tahminden değil, gerçek kullanıcı sorgularından çıkar.',
+    },
   ],
   yer: [
-    'Konum hedefleme reklamları yalnızca seçili bölgelerdeki kullanıcılara gösterir.',
-    '"Hedef konum" ve "İlgi alanı" seçenekleri farklı davranır: biri fiziksel konumu, diğeri arama niyetini hedefler.',
-    'Konum raporları hangi şehir/bölgeden dönüşüm geldiğini gösterir.',
-    'Düşük performanslı konumlar hariç tutularak bütçe optimize edilebilir.',
-    'Yarıçap hedefleme fiziksel mağaza veya hizmet bölgesi olan işletmeler için idealdir.',
+    {
+      title: 'Konum hedefleme temeli',
+      body: 'Konum hedefleme reklamların hangi coğrafi bölgelerde gösterileceğini belirler. Ülke, şehir, ilçe, belirli alanlar veya yarıçap bazlı hedefleme yapılabilir. Yerel hizmet veren işletmelerde bu alan doğrudan maliyet verimliliğini etkiler.',
+    },
+    {
+      title: 'Bulunma ve ilgi ayrımı',
+      body: 'Konum ayarlarında kullanıcıların fiziksel olarak hedef bölgede bulunması ile o bölgeye ilgi göstermesi aynı şey değildir. Bu ayrım yanlış kurgulanırsa reklamlar hedef bölge dışındaki kullanıcılara da yayılabilir. Özellikle lokal hizmet kampanyalarında bu ayar dikkatle seçilmelidir.',
+    },
+    {
+      title: 'Hariç tutulan bölgeler',
+      body: 'Sadece hedeflenecek bölgeleri seçmek yetmez; gerekirse gösterim alınmaması gereken konumlar da hariç tutulmalıdır. Hizmet verilmeyen bölgeler, düşük kaliteli alanlar veya bütçeyi dağıtan şehirler dışlama listesine alınabilir. Bu kontrol özellikle geniş coğrafi yapılarda önemlidir.',
+    },
+    {
+      title: 'Yarıçap hedefleme kullanımı',
+      body: 'Mağaza, klinik, servis alanı veya fiziksel hizmet veren işletmeler için yarıçap hedefleme çok işlevseldir. Kullanıcının işletmeye olan mesafesi dönüşüm olasılığını ciddi biçimde etkileyebilir. Ancak yarıçap çok geniş açılırsa yerel avantaj kaybolur.',
+    },
+    {
+      title: 'Konum performansı okunmalı',
+      body: 'Konum raporları hangi şehir veya bölgelerin daha verimli çalıştığını gösterir. Performansı düşük bölgeler azaltılabilir, güçlü bölgelerde teklif veya bütçe artırılabilir. Konum yönetimi sadece hedefleme değil, optimizasyon alanıdır.',
+    },
   ],
   ogeler: [
-    'Öğeler (eski adıyla uzantılar) reklam alanını genişleterek CTR\'ı ortalama %10-15 artırır.',
-    'Sitelink öğeleri kullanıcıları doğrudan alt sayfalara yönlendirir.',
-    'Açıklama öğeleri ürün/hizmet avantajlarını vurgular.',
-    'Çağrı öğesi mobil cihazlarda doğrudan arama yapılmasını sağlar.',
-    'Konum öğesi işletme adresini göstererek yerel müşterileri çeker.',
+    {
+      title: 'Öğeler neden önemlidir',
+      body: 'Öğeler reklamın sadece daha büyük görünmesini sağlamaz; aynı zamanda kullanıcıya ek bilgi sunar. Ek bağlantılar, açıklamalar, telefon, adres veya fiyat gibi öğeler reklamın tıklanma potansiyelini artırabilir. Güçlü öğe yapısı reklam alanını daha verimli kullanır.',
+    },
+    {
+      title: 'Sitelink kullanımı',
+      body: 'Sitelink öğeleri kullanıcıyı doğrudan ilgili alt sayfalara yönlendirebilir. Bu sayede tek reklamla birden fazla niyet karşılanır ve kullanıcı daha hızlı uygun sayfaya gider. Özellikle hizmet, kategori ve kampanya sayfaları için değerlidir.',
+    },
+    {
+      title: 'Açıklama ve yapılandırılmış snippet',
+      body: 'Açıklama tipi öğeler marka veya hizmet avantajlarını hızlıca vurgulamak için kullanılır. Bu alanlar fiyat, deneyim, hız, kapsam, destek veya uzmanlık gibi ayırıcı unsurları öne çıkarmak için idealdir. Reklam metnini tekrar etmek yerine tamamlayıcı bilgi vermelidir.',
+    },
+    {
+      title: 'Çağrı ve konum öğeleri',
+      body: 'Telefon ve adres odaklı öğeler özellikle lokal ve mobil odaklı kampanyalarda güçlü sonuç verir. Kullanıcının doğrudan arama yapması veya işletme konumunu görmesi karar süresini kısaltır. Ancak bu öğeler işletmenin gerçek operasyon yapısıyla uyumlu olmalıdır.',
+    },
+    {
+      title: 'Öğe performansı takip edilmeli',
+      body: 'Tüm öğeler aynı katkıyı sağlamaz. Kullanılan öğelerin görünüm, etkileşim ve dönüşüm katkısı düzenli incelenmelidir. Gereksiz veya düşük katkılı öğeler temizlenmeli, güçlü olanlar genişletilmelidir.',
+    },
   ],
   arama_terimleri: [
-    'Arama terimleri raporu reklamınızı tetikleyen gerçek kullanıcı sorgularını gösterir.',
-    'Yüksek dönüşümlü terimleri anahtar kelime olarak ekleyerek kampanyayı güçlendirin.',
-    'Alakasız veya düşük performanslı terimler negatif anahtar kelimeye eklenmelidir.',
-    'Arama terimleri raporu yeni içerik ve reklam fikirleri için de değerli bir kaynaktır.',
-    '"Otomatik" etiketli terimler geniş eşleme anahtar kelimelerden gelir.',
+    {
+      title: 'Gerçek kullanıcı dili burada görünür',
+      body: 'Arama terimleri raporu, reklamınızı tetikleyen gerçek kullanıcı sorgularını gösterir. Anahtar kelime planı teoriktir; bu rapor ise sahadaki gerçek niyeti gösterir. Bu yüzden optimizasyonun en değerli kaynaklarından biridir.',
+    },
+    {
+      title: 'Yeni anahtar kelime fırsatları',
+      body: 'Yüksek niyetli ve dönüşüm getiren sorgular burada tespit edilip anahtar kelime setine dahil edilebilir. Böylece kampanya daha kontrollü ve daha kasıtlı bir yapıya taşınır. Başarılı sorguları sadece izlemek yetmez, yapılandırmaya çevirmek gerekir.',
+    },
+    {
+      title: 'Negatif üretim alanı',
+      body: 'Alakasız, zayıf veya istenmeyen sorgular bu raporda fark edilerek negatif anahtar kelimeye dönüştürülmelidir. Bu işlem trafik kalitesini artırır ve gereksiz maliyeti azaltır. Arama terimi raporu ile negatif yönetimi birlikte düşünülmelidir.',
+    },
+    {
+      title: 'Eşleme tipi analizi',
+      body: 'Hangi sorguların hangi anahtar kelime mantığıyla geldiği incelendiğinde eşleme stratejisinin ne kadar kontrollü olduğu anlaşılır. Fazla dağınık sorgular geniş eşlemenin agresif kaldığını gösterebilir. Bu durumda anahtar kelime mimarisi yeniden daraltılmalıdır.',
+    },
+    {
+      title: 'Reklam metni ve açılış sayfası içgörüsü',
+      body: 'Kullanıcıların kullandığı dil, reklam başlıklarında ve açılış sayfalarında da kullanılabilir. En iyi terimler sadece keyword havuzu için değil, mesajlaşma stratejisi için de kritik veri sunar. Bu rapor içerik optimizasyonu için de altın madendir.',
+    },
   ],
   gosterim_payi: [
-    'Arama Gösterim Payı, reklamınızın gösterilebileceği toplam gösterime oranıdır.',
-    '%100 gösterim payı hedeflenmemelidir; yüksek kaliteli gösterimler daha değerlidir.',
-    'Bütçe kaynaklı kayıp: günlük bütçeyi artırarak çözülür.',
-    'Sıralama kaynaklı kayıp: teklif artışı veya kalite puanı iyileştirmesiyle çözülür.',
-    'Rakip gösterim payı analizi rekabet durumunu anlamak için kullanılır.',
-  ],
-  acik_artirma: [
-    'Açık artırma raporu hangi rakiplerin aynı açık artırmalarda göründüğünü gösterir.',
-    'Gösterim payı reklamınızın toplam uygun gösterimden aldığı pay oranıdır.',
-    'Çakışma oranı rakibinizin de gösterim aldığı zamanlardaki payınızı gösterir.',
-    'Daha üst konum oranı rakibinizin reklamının sizinkinden üstte gösterilme sıklığıdır.',
-    '"Siz" satırı kendi kampanyanızın performansını temsil eder.',
+    {
+      title: 'Gösterim payı neyi anlatır',
+      body: 'Gösterim payı, reklamınızın uygun olduğu toplam gösterim fırsatlarının ne kadarını aldığını gösterir. Bu metrik yalnızca görünürlük değil, rekabette ne kadar alan kazandığınızı da anlatır. Düşük gösterim payı her zaman kötü değildir ama nedeni mutlaka anlaşılmalıdır.',
+    },
+    {
+      title: 'Bütçe kaynaklı kayıp',
+      body: 'Bütçe yetersizse sistem tüm uygun açık artırmalara giremez ve gösterim payı kaybedilir. Bu durumda çözüm çoğu zaman bütçeyi artırmak, trafiği daraltmak veya verimsiz alanları temizlemektir. Sorun teklif değil bütçeyse yanlış yere müdahale edilmemelidir.',
+    },
+    {
+      title: 'Sıralama kaynaklı kayıp',
+      body: 'Gösterim payı kaybı bazen bütçeden değil reklam sıralamasından gelir. Bu durumda teklif, kalite puanı, reklam alaka düzeyi ve açılış sayfası deneyimi birlikte değerlendirilmelidir. Sadece teklif artırmak her zaman kalıcı çözüm değildir.',
+    },
+    {
+      title: 'Mutlak %100 hedefi doğru değil',
+      body: 'Her kampanyada %100 gösterim payı kovalamak mantıklı değildir. Asıl hedef en kaliteli ve en verimli açık artırmalarda görünür olmaktır. Karlılığı bozan görünürlük artışı, metrik şişkinliği dışında fayda üretmez.',
+    },
+    {
+      title: 'Rekabet okuması için kullanılır',
+      body: 'Gösterim payı ve benzeri rekabet metrikleri, pazarda ne kadar baskı altında olduğunuzu anlamaya yardımcı olur. Rakip hareketleri, bütçe baskısı ve sıralama zayıflığı bu alanda daha net görünür. Bu yüzden sadece raporlama metriği değil, strateji sinyalidir.',
+    },
   ],
   hedef_kitleler: [
-    'Hedef kitle segmentleri belirli ilgi alanları veya davranışlara sahip kullanıcıları hedefler.',
-    '"Gözlem" modu kitleyi izler ama reklamı kısıtlamaz; "Hedefleme" modu yalnızca o kitleye gösterir.',
-    'Yeniden pazarlama listeleri sitenizi ziyaret eden kullanıcıları yeniden hedefler.',
-    'Benzer segmentler mevcut müşterilere benzer yeni kullanıcılara ulaşır.',
-    'Demografik hedefleme yaş, cinsiyet, gelir düzeyine göre teklif ayarlaması sağlar.',
+    {
+      title: 'Hedef kitle mantığı',
+      body: 'Hedef kitle segmentleri kullanıcıları ilgi alanı, niyet, davranış ve demografik sinyallere göre gruplar. Bu yapı reklamı sadece ne arandığına göre değil, kimin aradığına göre de daha akıllı yönetmeyi sağlar. Özellikle daha kaliteli trafik ayrımı için önemlidir.',
+    },
+    {
+      title: 'Gözlem ve hedefleme farkı',
+      body: 'Gözlem modu kitleyi kısıtlamaz; sadece performansı izlemenizi sağlar. Hedefleme modu ise reklamı yalnızca seçilen segmentlere sınırlar. Bu iki mod karıştırılırsa kampanya ya gereksiz daralır ya da içgörü üretmeden geniş kalır.',
+    },
+    {
+      title: 'Yeniden pazarlama gücü',
+      body: 'Web site ziyaretçileri, sepet terk edenler veya belirli aksiyonları alan kullanıcılar yeniden pazarlama listeleriyle tekrar hedeflenebilir. Bu yapı genellikle soğuk trafikten daha yüksek dönüşüm potansiyeli taşır. Ancak liste kalitesi ve üyelik süresi stratejik seçilmelidir.',
+    },
+    {
+      title: 'Segment verisi optimizasyon için kullanılır',
+      body: 'Kitle raporları hangi segmentlerin tıklama aldığını değil, hangi segmentlerin iş sonucu ürettiğini anlamak için okunmalıdır. Yüksek CTR her zaman iyi kitle anlamına gelmez. Dönüşüm, maliyet ve kalite birlikte değerlendirilmelidir.',
+    },
+    {
+      title: 'Demografi tek başına yetmez',
+      body: 'Yaş, cinsiyet veya hane geliri gibi demografik sinyaller faydalı olabilir ama tek başına strateji kurmak için çoğu zaman yetersizdir. Bunlar davranış ve niyet sinyalleriyle birlikte okunduğunda anlam kazanır. Kör demografik daraltma hacmi gereksiz kesebilir.',
+    },
   ],
   acilis_sayfalari: [
-    'Açılış sayfası deneyimi kalite puanının üç bileşeninden biridir.',
-    'Sayfa içeriği reklam ile uyumlu olmalıdır; aksi halde kalite puanı düşer.',
-    'Mobil uyumluluk ve sayfa hızı hem dönüşümü hem de kalite puanını etkiler.',
-    'Hemen çıkma oranı yüksek sayfalar reklam metni ile içerik arasındaki uyumsuzluğa işaret eder.',
-    'Google PageSpeed Insights aracıyla açılış sayfası hızı test edilebilir.',
+    {
+      title: 'Açılış sayfası reklamın devamıdır',
+      body: 'Kullanıcı reklama tıkladıktan sonra deneyim açılış sayfasında devam eder. Bu nedenle reklam mesajı ile sayfa içeriği arasında kopukluk olmamalıdır. Güçlü reklam, zayıf sayfa yüzünden boşa düşebilir.',
+    },
+    {
+      title: 'Alaka düzeyi kaliteyi etkiler',
+      body: 'Açılış sayfası ile reklam metni ve arama niyeti uyumlu değilse kalite puanı ve dönüşüm oranı zarar görür. Kullanıcı farklı bir vaat görüp başka bir içerikle karşılaşırsa hemen çıkma yükselir. Mesaj eşleşmesi burada kilit unsurdur.',
+    },
+    {
+      title: 'Hız ve mobil deneyim kritik',
+      body: 'Yavaş açılan veya mobilde kötü çalışan sayfalar reklam performansını doğrudan baltalar. Kullanıcı tıklama sonrası beklemek istemez; gecikme dönüşüm ihtimalini düşürür. Mobil öncelikli test yapılmadan açılış sayfası sağlıklı kabul edilmemelidir.',
+    },
+    {
+      title: 'Tek sayfa, tek amaç',
+      body: 'Açılış sayfası kullanıcıyı dağıtmak için değil, bir sonraki adıma taşımak için tasarlanmalıdır. Fazla seçenek, zayıf hiyerarşi veya dağınık içerik karar sürecini bozar. Reklamın amacı neyse sayfanın ana aksiyonu da o olmalıdır.',
+    },
+    {
+      title: 'Performans sinyalleri izlenmeli',
+      body: 'Sayfadaki bounce, scroll, form tamamlama, call click veya WhatsApp click gibi davranışlar reklam kalitesini yorumlamak için önemlidir. Sorun her zaman trafikte olmayabilir; bazen problem sayfanın kendisidir. Reklam optimizasyonu ile sayfa optimizasyonu birlikte yürümelidir.',
+    },
   ],
   gosterilme_yeri: [
-    'Reklam planlaması reklamların yalnızca belirli gün ve saatlerde gösterilmesini sağlar.',
-    'Dönüşüm verilerine göre yüksek performanslı saatlere teklif artışı eklenebilir.',
-    'Çalışma saatleri dışındaki gösterimler bazı sektörler için bütçe israfı olabilir.',
-    'Coğrafi konuma göre saat dilimi farkı göz önünde bulundurulmalıdır.',
-    'Reklam planlaması raporları 30+ günlük veriyle anlamlı hale gelir.',
+    {
+      title: 'Zamanlama kontrolü',
+      body: 'Reklam planlaması reklamların hangi gün ve saatlerde gösterileceğini kontrol etmeye yarar. Her saat aynı kalitede trafik üretmez. Özellikle satış, telefon veya operasyon saatine bağlı yapılarda bu alan kritik hale gelir.',
+    },
+    {
+      title: 'Çalışma saatine göre gösterim',
+      body: 'Kullanıcının dönüşüm alma ihtimali işletmenin cevap verebildiği saatlerle yakından ilişkilidir. Çağrı, WhatsApp veya hızlı dönüş gerektiren sektörlerde mesai dışı trafik çoğu zaman zayıf kalır. Gösterim zamanlaması iş akışıyla uyumlu olmalıdır.',
+    },
+    {
+      title: 'Saat bazlı verim farkları',
+      body: 'Bazı saatler yüksek hacim getirirken bazı saatler daha yüksek dönüşüm oranı üretebilir. Bu fark raporlarla okunup teklif veya yayın planı buna göre düzenlenmelidir. Zamanlama sadece açık-kapalı ayarı değil, verim filtresidir.',
+    },
+    {
+      title: 'Cihaz ve zaman birlikte okunmalı',
+      body: 'Aynı saat dilimi mobilde başka, masaüstünde başka performans gösterebilir. Bu yüzden zamanlama verisi cihaz performansıyla birlikte yorumlandığında daha anlamlı sonuç verir. Tek boyutlu okuma çoğu zaman yanıltıcıdır.',
+    },
+    {
+      title: 'Kısa veriyle sert karar verme',
+      body: 'Gösterim zamanı kararları çok kısa veri aralıklarıyla verilmemelidir. Özellikle düşük hacimli kampanyalarda birkaç günlük veri yanıltıcı olabilir. Daha sağlıklı karar için anlamlı dönem verisiyle hareket edilmelidir.',
+    },
+  ],
+  anahtar_kelimeler: [
+    {
+      title: 'Anahtar kelime rolü',
+      body: 'Anahtar kelimeler reklamınızın hangi aramalarda gösterileceğini belirler. Bu yapı kampanyanın trafik karakterini doğrudan etkiler. Geniş eşleme en fazla erişimi sağlar ancak alakasız aramalarda da tetiklenebilir; sıralı ve tam eşleme daha kontrollü gösterim sunar.',
+    },
+    {
+      title: 'Eşleme tipleri ve davranış',
+      body: 'Sıralı eşleme tam sırayı koruyarak daha hedefli gösterim sağlar. Tam eşleme yalnızca tam aramada veya çok yakın varyasyonlarda tetiklenir. Kalite puanı yüksek anahtar kelimeler daha düşük maliyetle daha üst sıralarda yer alır. Eşleme stratejisi kampanya hedefiyle uyumlu olmalıdır.',
+    },
+    {
+      title: 'Performans odaklı yönetim',
+      body: 'Anahtar kelime yönetimi sadece ekleme-çıkarma değildir. Düşük performanslı kelimeler daraltılabilir, güçlü olanlara teklif artışı verilebilir. Arama terimi raporu ile birlikte okunduğunda anahtar kelime seti sürekli optimize edilebilir.',
+    },
   ],
 }
 
@@ -222,7 +362,6 @@ const TAB_TO_INFO_KEY: Record<string, string> = {
   ogeler: 'ogeler',
   arama_terimleri: 'arama_terimleri',
   gosterim_payi: 'gosterim_payi',
-  acik_artirma: 'acik_artirma',
   acilis_sayfalari: 'acilis_sayfalari',
   gosterim_yeri_zamani: 'gosterilme_yeri',
 }
@@ -336,7 +475,6 @@ type ViewId =
   | 'ogeler'
   | 'arama_terimleri'
   | 'gosterim_payi'
-  | 'acik_artirma'
   | 'acilis_sayfalari'
   | 'gosterim_yeri_zamani'
 
@@ -351,7 +489,6 @@ const VIEW_LABELS: Record<ViewId, string> = {
   ogeler: 'Öğeler',
   arama_terimleri: 'Arama Terimleri',
   gosterim_payi: 'Gösterim Payı Analizi',
-  acik_artirma: 'Açık Artırma',
   acilis_sayfalari: 'Açılış Sayfaları',
   gosterim_yeri_zamani: 'Gösterilme Yeri ve Zamanı',
 }
@@ -366,8 +503,6 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only (impression share metrics are SEARCH-specific)
     if (channelType === 'SEARCH') views.push('gosterim_payi')
-    // Açık Artırma (Rakip karşılaştırması): SEARCH only
-    if (channelType === 'SEARCH') views.push('acik_artirma')
     // Hedef Kitleler: campaign_audience_view — SEARCH, DISPLAY, VIDEO, DEMAND_GEN
     if (['SEARCH', 'DISPLAY', 'VIDEO', 'DEMAND_GEN'].includes(channelType)) views.push('hedef_kitleler')
     views.push('acilis_sayfalari')
@@ -391,8 +526,6 @@ function getAvailableViews(entityType: Selection['type'], channelType: string): 
     if (channelType === 'SEARCH') views.push('arama_terimleri')
     // Gösterim Payı: SEARCH only
     if (channelType === 'SEARCH') views.push('gosterim_payi')
-    // Açık Artırma (Rakip karşılaştırması): SEARCH only
-    if (channelType === 'SEARCH') views.push('acik_artirma')
     if (['SEARCH', 'DISPLAY'].includes(channelType)) views.push('acilis_sayfalari')
     // Gösterilme yeri: ad group level only for DISPLAY (has placements)
     if (['DISPLAY'].includes(channelType)) views.push('gosterim_yeri_zamani')
@@ -871,24 +1004,22 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
     }
   }, [onClose, isDirty])
 
-  const infoCardMessages = useMemo(() => {
-    const key = TAB_TO_INFO_KEY[selectedView] ?? 'genel'
-    return INFO_CARDS[key] ?? INFO_CARDS.genel ?? []
+  const infoCards = useMemo(() => {
+    const resolvedInfoKey = TAB_TO_INFO_KEY[selectedView] ?? selectedView
+    return INFO_CARDS[resolvedInfoKey] ?? []
   }, [selectedView])
 
   useEffect(() => {
+    if (infoCards.length <= 1) return
     const interval = setInterval(() => {
       setInfoCardVisible(false)
       setTimeout(() => {
-        setInfoCardIndex(i => {
-          const len = infoCardMessages.length
-          return len ? (i + 1) % len : 0
-        })
+        setInfoCardIndex(i => (i + 1) % infoCards.length)
         setInfoCardVisible(true)
       }, 300)
     }, 5000)
     return () => clearInterval(interval)
-  }, [selectedView, infoCardMessages])
+  }, [selectedView, infoCards.length])
 
   useEffect(() => {
     setInfoCardIndex(0)
@@ -1010,7 +1141,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
     ogeler: 'Öğe verileri şu anda alınamadı.',
     arama_terimleri: 'Arama terimleri verileri şu anda alınamadı.',
     gosterim_payi: 'Gösterim payı verileri şu anda alınamadı.',
-    acik_artirma: 'Açık artırma verileri şu anda alınamadı.',
     acilis_sayfalari: 'Açılış sayfası verisi şu anda getirilemedi.',
     gosterim_yeri_zamani: 'Gösterilme yeri ve zamanı verileri şu anda alınamadı.',
   }), [])
@@ -1068,13 +1198,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
           setViewData(prev => ({ ...prev, gosterim_payi: data.insights ?? null }))
           break
         }
-        case 'acik_artirma': {
-          const res = await fetch(`/api/integrations/google-ads/campaigns/${campaignId}/auction-insights-competitors`, { cache: 'no-store' })
-          const data = await res.json().catch(() => ({}))
-          if (!res.ok) throwViewError(data, view)
-          setViewData(prev => ({ ...prev, acik_artirma: data.competitors ?? null }))
-          break
-        }
         case 'hedef_kitleler': {
           const url = sel.type === 'adGroup'
             ? `/api/integrations/google-ads/ad-groups/${sel.id}/audience-view`
@@ -1120,7 +1243,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
   const fetchAcilisSayfalari = useCallback(() => fetchViewDataFor('acilis_sayfalari'), [fetchViewDataFor])
   const fetchHedefKitleler = useCallback(() => fetchViewDataFor('hedef_kitleler'), [fetchViewDataFor])
   const fetchGosterimPayi = useCallback(() => fetchViewDataFor('gosterim_payi'), [fetchViewDataFor])
-  const fetchAcikArtirma = useCallback(() => fetchViewDataFor('acik_artirma'), [fetchViewDataFor])
   const fetchGosterimYeriZamani = useCallback(() => fetchViewDataFor('gosterim_yeri_zamani'), [fetchViewDataFor])
 
   /* ── Exclude search term (add as campaign negative keyword via PUT /search-terms) ── */
@@ -1861,7 +1983,7 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
             )}
           </div>
 
-          {!infoCardDismissed && (
+          {!infoCardDismissed && infoCards.length > 0 && (
             <div className="flex-1 px-3 py-3 flex flex-col min-h-0">
               <div
                 style={{
@@ -1869,32 +1991,54 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                   opacity: infoCardVisible ? 1 : 0,
                   transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
                 }}
-                className="flex-1 relative bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4 flex flex-col"
+                className="flex-1 relative bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-xl p-4 flex flex-col min-h-0"
               >
                 {/* Kapatma butonu */}
                 <button
                   onClick={() => setInfoCardDismissed(true)}
-                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-200/50 hover:bg-emerald-300/70 flex items-center justify-center transition-colors"
+                  className="absolute top-2 right-2 w-5 h-5 rounded-full bg-emerald-200/50 hover:bg-emerald-300/70 flex items-center justify-center transition-colors z-10"
                 >
                   <X className="w-3 h-3 text-emerald-600" />
                 </button>
-                <div className="flex items-start gap-2 flex-1 pr-4">
-                  <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
-                    <span className="text-emerald-600 text-[11px] font-bold">i</span>
+                <div className="flex flex-col flex-1 min-h-0 pr-4">
+                  <div className="flex items-start gap-2">
+                    <div className="w-5 h-5 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                      <span className="text-emerald-600 text-[11px] font-bold">i</span>
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      {(() => {
+                        const effectiveIndex = Math.min(infoCardIndex, Math.max(0, infoCards.length - 1))
+                        const activeCard = infoCards[effectiveIndex] as InfoCard | undefined
+                        if (!activeCard || typeof activeCard !== 'object' || !('title' in activeCard) || !('body' in activeCard)) return null
+                        return (
+                          <>
+                            <p className="text-[13px] font-semibold text-emerald-900 mb-2 block">{activeCard.title}</p>
+                            <p className="text-[12px] text-emerald-800 leading-relaxed overflow-y-auto max-h-[120px] pr-1">{activeCard.body}</p>
+                          </>
+                        )
+                      })()}
+                    </div>
                   </div>
-                  <p className="text-[12px] text-emerald-800 leading-relaxed">
-                    {infoCardMessages[infoCardIndex]}
-                  </p>
                 </div>
-                <div className="flex gap-1 justify-center mt-3">
-                  {infoCardMessages.map((_, i) => (
-                    <div
-                      key={i}
-                      className={`h-1 rounded-full transition-all duration-500 ${
-                        i === infoCardIndex ? 'w-5 bg-emerald-500' : 'w-1.5 bg-emerald-200'
-                      }`}
-                    />
-                  ))}
+                <div className="flex gap-1 justify-center mt-3 shrink-0">
+                  {infoCards.map((_, i) => {
+                    const effectiveIndex = Math.min(infoCardIndex, Math.max(0, infoCards.length - 1))
+                    return (
+                      <button
+                        key={i}
+                        type="button"
+                        onClick={() => {
+                          setInfoCardIndex(i)
+                          setInfoCardVisible(false)
+                          setTimeout(() => setInfoCardVisible(true), 50)
+                        }}
+                        className={`h-1 rounded-full transition-all duration-500 ${
+                          i === effectiveIndex ? 'w-5 bg-emerald-500' : 'w-1.5 bg-emerald-200'
+                        }`}
+                        aria-label={`Kart ${i + 1}`}
+                      />
+                    )
+                  })}
                 </div>
               </div>
             </div>
@@ -2232,16 +2376,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       isLoading={viewLoading.gosterim_payi ?? false}
                       error={viewError.gosterim_payi ?? null}
                       onFetch={fetchGosterimPayi}
-                    />
-                  )}
-
-                  {/* ── AÇIK ARTIRMA ── */}
-                  {selectedView === 'acik_artirma' && (
-                    <AuctionInsightsView
-                      data={viewData.acik_artirma}
-                      isLoading={viewLoading.acik_artirma ?? false}
-                      error={viewError.acik_artirma ?? null}
-                      onFetch={fetchAcikArtirma}
                     />
                   )}
 
@@ -2670,16 +2804,6 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                       isLoading={viewLoading.gosterim_payi ?? false}
                       error={viewError.gosterim_payi ?? null}
                       onFetch={fetchGosterimPayi}
-                    />
-                  )}
-
-                  {/* ── AÇIK ARTIRMA (Ad Group) ── */}
-                  {selectedView === 'acik_artirma' && (
-                    <AuctionInsightsView
-                      data={viewData.acik_artirma}
-                      isLoading={viewLoading.acik_artirma ?? false}
-                      error={viewError.acik_artirma ?? null}
-                      onFetch={fetchAcikArtirma}
                     />
                   )}
 
