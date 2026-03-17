@@ -132,6 +132,63 @@ const DAY_LABELS: Record<DayOfWeek, string> = {
   THURSDAY: 'Perşembe', FRIDAY: 'Cuma', SATURDAY: 'Cumartesi', SUNDAY: 'Pazar',
 }
 
+const INFO_CARDS: Record<string, string[]> = {
+  genel: [
+    'Kampanya adı reklam yönetimini kolaylaştırır, kullanıcılara gösterilmez.',
+    'Günlük bütçe aşıldığında reklamlar otomatik duraklar.',
+    'Teklif stratejisi dönüşüm hedeflerinize göre seçilmeli.',
+    'Arama ağı ortakları Google dışı sitelerde de görünüm sağlar.',
+  ],
+  negatif_ak: [
+    'Negatif kelimeler gereksiz tıklamaları önler, bütçeyi korur.',
+    'Geniş eşleme negatifler tüm varyasyonları dışlar.',
+    'Kampanya düzeyinde negatifler tüm reklam gruplarını etkiler.',
+    'Düzenli negatif kelime analizi CTR\'ı artırır.',
+  ],
+  yer: [
+    'Hedef konum seçimi reklam gösterimini optimize eder.',
+    'Şehir bazlı hedefleme bölgesel işletmeler için idealdir.',
+    'Konum hariç tutma bütçe israfını önler.',
+    'Yarıçap hedefleme fiziksel mağazalar için etkilidir.',
+  ],
+  ogeler: [
+    'Öğeler reklam metninizi genişleterek tıklama oranını artırır.',
+    'Sitelink öğeleri kullanıcıları doğrudan sayfalara yönlendirir.',
+    'Çağrı öğesi mobil kullanıcılar için dönüşümü artırır.',
+    'Görsel öğeler reklamın dikkat çekiciliğini artırır.',
+  ],
+  arama_terimleri: [
+    'Arama terimleri gerçek kullanıcı sorgularını gösterir.',
+    'Yüksek dönüşümlü terimleri anahtar kelimeye ekleyin.',
+    'Düşük performanslı terimler negatife alınmalı.',
+    'Arama terimi raporu kampanya optimizasyonunun temelidir.',
+  ],
+  gosterim_payi: [
+    'Gösterim payı rekabetteki görünürlük oranınızı gösterir.',
+    '%100 gösterim payı her zaman hedeflenmemeli.',
+    'Bütçe kaynaklı kayıp bütçe artışıyla çözülür.',
+    'Sıralama kaynaklı kayıp teklif veya kalite puanıyla iyileşir.',
+  ],
+  hedef_kitleler: [
+    'Hedef kitle segmentleri reklamları doğru kişilere ulaştırır.',
+    'Gözlem modu performansı etkilemeden kitleyi izler.',
+    'Benzer kitleler mevcut müşterilere benzer kullanıcıları hedefler.',
+    'Yeniden pazarlama dönüşüm oranını önemli ölçüde artırır.',
+  ],
+  acilis_sayfalari: [
+    'Açılış sayfası deneyimi kalite puanını doğrudan etkiler.',
+    'Yüksek hemen çıkma oranı sayfa uyumsuzluğuna işaret eder.',
+    'Mobil uyumlu sayfalar dönüşüm oranını artırır.',
+    'Sayfa hızı hem SEO hem de Ads performansını etkiler.',
+  ],
+  gosterim_yeri_zamani: [
+    'Gösterilme zamanı ayarı bütçeyi verimli kullanır.',
+    'En yüksek dönüşüm saatlerine teklif artışı ekleyin.',
+    'Hafta sonu performansı sektöre göre değişir.',
+    'Zaman ayarı raporları 30 günlük veriyle analiz edilmeli.',
+  ],
+}
+
 const DAYS_ORDER: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
 const MINUTE_VALUES: Minute[] = ['ZERO', 'FIFTEEN', 'THIRTY', 'FORTY_FIVE']
@@ -671,6 +728,8 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
 
   // ── View system (Axis 2) ──
   const [selectedView, setSelectedView] = useState<ViewId>('genel')
+  const [infoCardIndex, setInfoCardIndex] = useState(0)
+  const [infoCardVisible, setInfoCardVisible] = useState(true)
   const [viewData, setViewData] = useState<Record<string, any>>({})
   const [viewLoading, setViewLoading] = useState<Record<string, boolean>>({})
   const [viewError, setViewError] = useState<Record<string, ViewErrorInfo | null>>({})
@@ -716,6 +775,25 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
       document.removeEventListener('keydown', handleKey)
     }
   }, [onClose, isDirty])
+
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setInfoCardVisible(false)
+      setTimeout(() => {
+        setInfoCardIndex(i => {
+          const cards = INFO_CARDS[selectedView] ?? INFO_CARDS.genel
+          return (i + 1) % cards.length
+        })
+        setInfoCardVisible(true)
+      }, 300)
+    }, 3000)
+    return () => clearInterval(interval)
+  }, [selectedView])
+
+  useEffect(() => {
+    setInfoCardIndex(0)
+    setInfoCardVisible(true)
+  }, [selectedView])
 
   /* ── Fetch all data ── */
   const fetchData = useCallback(async () => {
@@ -1671,6 +1749,37 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                 })}
               </>
             )}
+          </div>
+
+          {/* Info Cards */}
+          <div className="p-3 mt-auto border-t border-gray-100">
+            <div
+              style={{
+                transition: 'opacity 0.3s ease, transform 0.3s ease',
+                opacity: infoCardVisible ? 1 : 0,
+                transform: infoCardVisible ? 'translateY(0)' : 'translateY(-8px)',
+              }}
+              className="bg-gradient-to-br from-emerald-50 to-green-50 border border-emerald-200/70 rounded-lg p-3"
+            >
+              <div className="flex items-start gap-2">
+                <div className="w-4 h-4 rounded-full bg-emerald-400/30 flex items-center justify-center shrink-0 mt-0.5">
+                  <span className="text-emerald-600 text-[10px] font-bold">i</span>
+                </div>
+                <p className="text-[11px] text-emerald-800 leading-relaxed">
+                  {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel)[infoCardIndex]}
+                </p>
+              </div>
+              <div className="flex gap-1 mt-2 justify-center">
+                {(INFO_CARDS[selectedView] ?? INFO_CARDS.genel).map((_, i) => (
+                  <div
+                    key={i}
+                    className={`h-1 rounded-full transition-all duration-300 ${
+                      i === infoCardIndex ? 'w-4 bg-emerald-500' : 'w-1 bg-emerald-300'
+                    }`}
+                  />
+                ))}
+              </div>
+            </div>
           </div>
         </div>
 
