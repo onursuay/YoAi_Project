@@ -73,7 +73,10 @@ body {
   position: relative;
   overflow: hidden;
   height: auto;
-  min-height: 0;
+  min-height: unset;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
 }
 
 .info-card-shine::before {
@@ -81,19 +84,20 @@ body {
   position: absolute;
   top: -20%;
   bottom: -20%;
-  left: 0;
-  width: 45%;
+  left: -50%;
+  width: 40%;
   background: linear-gradient(
     90deg,
     transparent 0%,
-    rgba(255, 255, 255, 0.06) 40%,
-    rgba(255, 255, 255, 0.14) 50%,
-    rgba(255, 255, 255, 0.06) 60%,
+    rgba(255, 255, 255, 0.05) 35%,
+    rgba(255, 255, 255, 0.12) 50%,
+    rgba(255, 255, 255, 0.05) 65%,
     transparent 100%
   );
-  animation: cardShine 4.5s ease-in-out infinite;
+  animation: cardShine 5s ease-in-out infinite;
   pointer-events: none;
   z-index: 0;
+  filter: blur(1px);
 }
 
 /* Typography utilities — scaled to 85% */
