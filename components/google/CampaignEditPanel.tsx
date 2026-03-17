@@ -1756,8 +1756,8 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Megaphone className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Kampanya Adı</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Kampanyanıza bir isim verin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Kampanya Adı</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Kampanyanıza bir isim verin.</p>
                               </div>
                             </div>
                           </div>
@@ -1778,8 +1778,8 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Banknote className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Bütçe</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Kampanyanız için günlük bütçe belirleyin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Bütçe</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Kampanyanız için günlük bütçe belirleyin.</p>
                               </div>
                             </div>
                           </div>
@@ -1804,8 +1804,8 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Settings2 className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Teklif Stratejisi</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Kampanyanız için teklif stratejisi seçin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Teklif Stratejisi</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Kampanyanız için teklif stratejisi seçin.</p>
                               </div>
                             </div>
                           </div>
@@ -1850,8 +1850,8 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <Globe className="w-[18px] h-[18px]" />
                               </div>
                               <div>
-                                <h3 className="text-sm font-semibold text-gray-900 leading-tight">Ağ Ayarları</h3>
-                                <p className="text-xs text-gray-500 mt-0.5">Reklamlarınızın gösterileceği ağları belirleyin.</p>
+                                <h3 className="text-[15px] font-semibold text-gray-900 leading-tight">Ağ Ayarları</h3>
+                                <p className="text-[13px] text-gray-500 mt-0.5">Reklamlarınızın gösterileceği ağları belirleyin.</p>
                               </div>
                             </div>
                           </div>
@@ -1861,16 +1861,16 @@ export default function CampaignEditPanel({ campaignId, onClose, onToast, allCam
                                 <input type="checkbox" checked={campSearchNetwork} onChange={(e) => setCampSearchNetwork(e.target.checked)}
                                   className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
                                 <div>
-                                  <p className="text-sm font-medium text-gray-800">Arama Ağı Ortakları</p>
-                                  <p className="text-xs text-gray-500">Arama sonuçlarında ortaklarda gösterim</p>
+                                  <p className="text-[15px] font-medium text-gray-800">Arama Ağı Ortakları</p>
+                                  <p className="text-[13px] text-gray-500">Arama sonuçlarında ortaklarda gösterim</p>
                                 </div>
                               </label>
                               <label className="flex items-center gap-3 px-3 py-2.5 rounded-lg border border-gray-200 bg-white cursor-pointer hover:bg-gray-50 transition-colors">
                                 <input type="checkbox" checked={campContentNetwork} onChange={(e) => setCampContentNetwork(e.target.checked)}
                                   className="w-4 h-4 rounded border-gray-300 text-green-600 focus:ring-green-500" />
                                 <div>
-                                  <p className="text-sm font-medium text-gray-800">Görüntülü Reklam Ağı</p>
-                                  <p className="text-xs text-gray-500">Web siteleri, uygulamalar ve videolarda gösterim</p>
+                                  <p className="text-[15px] font-medium text-gray-800">Görüntülü Reklam Ağı</p>
+                                  <p className="text-[13px] text-gray-500">Web siteleri, uygulamalar ve videolarda gösterim</p>
                                 </div>
                               </label>
                             </div>
