@@ -47,10 +47,12 @@ interface BrowseData {
   userLists: AudienceItem[]
   customAudiences: AudienceItem[]
   combinedAudiences: AudienceItem[]
+  state?: 'ok' | 'data_not_ready'
 }
 
+type BrowseSectionKey = Exclude<keyof BrowseData, 'state'>
 const BROWSE_SECTIONS: Array<{
-  key: keyof BrowseData
+  key: BrowseSectionKey
   label: string
   desc: string
   icon: typeof Users
@@ -115,6 +117,7 @@ export default function StepAudience({ state, update }: StepProps) {
       const res = await fetch(`/api/integrations/google-ads/tools/audience-segments?mode=search&q=${encodeURIComponent(q)}`)
       const data = await res.json()
       if (res.ok) setSearchResults(data.results ?? [])
+      // data.state === 'data_not_ready' when Edge Config index not yet populated
     } catch { /* ignore */ }
     finally { setSearching(false) }
   }, [])
@@ -286,7 +289,13 @@ export default function StepAudience({ state, update }: StepProps) {
 
           {browseError && <p className="text-sm text-red-500">{browseError}</p>}
 
-          {browseData && BROWSE_SECTIONS.map(section => {
+          {browseData?.state === 'data_not_ready' && (
+            <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              Kitle verileri henüz hazır değil. Yönetici tarafından yenilenmesi gerekiyor.
+            </div>
+          )}
+
+          {browseData && browseData.state !== 'data_not_ready' && BROWSE_SECTIONS.map(section => {
             const items = browseData[section.key]
             if (!items || items.length === 0) return null
             const isExpanded = expandedSections.has(section.key)

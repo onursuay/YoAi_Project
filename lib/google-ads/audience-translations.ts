@@ -784,7 +784,7 @@ const TRIP_DEST_TR: Record<string, string> = {
 /*  When user searches in Turkish, these map to English API terms       */
 /* ================================================================== */
 
-const SEARCH_KEYWORDS_TR_TO_EN: Record<string, string[]> = {
+export const SEARCH_KEYWORDS_TR_TO_EN: Record<string, string[]> = {
   'mobilya': ['furniture', 'home furnishings', 'bedroom', 'living room', 'sofa', 'bed'],
   'araba': ['car', 'auto', 'vehicle', 'sedan', 'motor vehicle'],
   'araç': ['vehicle', 'car', 'auto', 'motor vehicle'],
