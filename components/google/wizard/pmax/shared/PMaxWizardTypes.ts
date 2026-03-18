@@ -13,6 +13,16 @@ export type PMaxBiddingFocus = 'CONVERSION_COUNT' | 'CONVERSION_VALUE'
 export type PMaxAudienceMode = 'OBSERVATION' | 'TARGETING'
 export type PMaxLocationTargetingMode = 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
 export type PMaxEuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
+export type PMaxDayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
+export type PMaxMinute = 'ZERO' | 'FIFTEEN' | 'THIRTY' | 'FORTY_FIVE'
+
+export interface PMaxScheduleEntry {
+  dayOfWeek: PMaxDayOfWeek
+  startHour: number
+  startMinute: PMaxMinute
+  endHour: number
+  endMinute: PMaxMinute
+}
 
 export interface PMaxSelectedLocation {
   id: string
@@ -82,6 +92,8 @@ export interface PMaxWizardState {
   logos: PMaxAssetImage[]
   videos: PMaxAssetImage[]
   searchThemes: PMaxSearchTheme[]
+  adSchedule: PMaxScheduleEntry[]
+  finalUrlExpansionEnabled: boolean
 }
 
 export interface PMaxStepProps {
@@ -148,6 +160,8 @@ export const defaultPMaxState: PMaxWizardState = {
   logos: [],
   videos: [],
   searchThemes: [],
+  adSchedule: [],
+  finalUrlExpansionEnabled: false,
 }
 
 export const inputCls =
@@ -161,6 +175,8 @@ export const PMaxLanguageOptions = [
   { id: '1003', name: 'Español' },
   { id: '1004', name: 'Italiano' },
 ]
+
+export const PMaxDaysOfWeek: PMaxDayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
 export const PMaxCountryOptions = [
   { code: '', labelKey: 'location.countryAll' },

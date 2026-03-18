@@ -30,7 +30,8 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
   const hCount = state.headlines.filter(h => h.trim()).length
   const lhCount = state.longHeadlines.filter(h => h.trim()).length
   const dCount = state.descriptions.filter(d => d.trim()).length
-  const searchThemeCount = state.searchThemes.filter(st => st.text?.trim()).length
+  const searchThemesList = state.searchThemes.map(st => st.text.trim()).filter(Boolean)
+  const searchThemeCount = searchThemesList.length
 
   const blockingIssues = getPMaxBlockingIssues(state, t)
   const advisoryRecs = getPMaxAdvisoryRecommendations(state, t)
@@ -100,6 +101,8 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
         )}
         <Row label={t('summary.dailyBudget')} value={`${state.dailyBudget} TRY`} />
         <Row label={t('summary.dates')} value={datesValue} />
+        <Row label={t('summary.adScheduleCount')} value={t('summary.adScheduleCountValue', { count: state.adSchedule.length })} />
+        <Row label={t('summary.finalUrlExpansion')} value={state.finalUrlExpansionEnabled ? t('summary.yes') : t('summary.no')} />
       </Section>
 
       <Section title={t('summary.targetingSection')}>
@@ -134,6 +137,9 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
         <Row label={t('summary.videoCount')} value={String(state.videos.length)} />
         <Row label={t('summary.audienceSignalCount')} value={String(state.selectedAudienceSegments.length)} />
         <Row label={t('summary.searchThemeCount')} value={String(searchThemeCount)} />
+        {searchThemesList.length > 0 && (
+          <Row label={t('summary.searchThemesList')} value={searchThemesList.join(', ')} />
+        )}
       </Section>
 
       {blockingIssues.length === 0 && (

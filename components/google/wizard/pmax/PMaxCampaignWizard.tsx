@@ -6,7 +6,7 @@ import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2
 import { defaultPMaxState } from './shared/PMaxWizardTypes'
 import type { PMaxWizardState } from './shared/PMaxWizardTypes'
 import { validatePMaxStep, getPMaxBlockingIssues } from './shared/PMaxWizardValidation'
-import { buildPMaxPayload } from './shared/PMaxWizardHelpers'
+import { buildPerformanceMaxCreatePayload } from './shared/PMaxCreatePayload'
 import PMaxStepGoalType from './steps/PMaxStepGoalType'
 import PMaxStepConversionAndName from './steps/PMaxStepConversionAndName'
 import PMaxStepBiddingAcquisition from './steps/PMaxStepBiddingAcquisition'
@@ -71,15 +71,16 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
   }
 
   const submit = async () => {
-    // No backend create in this step — placeholder behavior
     setSubmitting(true)
     setError(null)
     try {
-      buildPMaxPayload(state) // validate shape only
+      const payload = buildPerformanceMaxCreatePayload(state)
+      console.debug('[PMax] Create payload (no network):', payload)
       onToast?.(t('toast.placeholderSuccess'), 'success')
       onSuccess()
       handleClose()
-    } catch {
+    } catch (err) {
+      console.error('[PMax] Payload build error:', err)
       onToast?.(t('toast.error'), 'error')
     } finally {
       setSubmitting(false)
