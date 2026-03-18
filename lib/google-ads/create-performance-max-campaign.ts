@@ -127,16 +127,13 @@ async function createCampaign(
     : fmt(tomorrow)
   const endDateTime = params.endDate ? `${params.endDate} 23:59:59` : undefined
 
-  const geoTargetTypeSetting =
-    params.locationTargetingMode === 'PRESENCE_ONLY'
-      ? { positiveGeoTargetType: 'PRESENCE' as const }
-      : { positiveGeoTargetType: 'PRESENCE_OR_INTEREST' as const }
+  const geoTargetTypeSetting = {
+    positiveGeoTargetType:
+      params.locationTargetingMode === 'PRESENCE_ONLY' ? ('PRESENCE' as const) : ('PRESENCE_OR_INTEREST' as const),
+  }
 
+  // Final URL expansion temporarily disabled – not supported in current campaign create schema
   const assetAutomationSettings = [
-    {
-      assetAutomationType: 'FINAL_URL_EXPANSION_TEXT_ASSET_AUTOMATION',
-      assetAutomationStatus: params.finalUrlExpansionEnabled ? 'OPTED_IN' : 'OPTED_OUT',
-    },
     { assetAutomationType: 'TEXT_ASSET_AUTOMATION', assetAutomationStatus: 'OPTED_IN' as const },
   ]
 
@@ -148,12 +145,11 @@ async function createCampaign(
         campaignBudget: budgetResourceName,
         status: 'ENABLED',
         containsEuPoliticalAdvertising: params.containsEuPoliticalAdvertising,
-        ...geoTargetTypeSetting,
+        geoTargetTypeSetting,
         ...buildBiddingField(params),
         startDateTime,
         ...(endDateTime && { endDateTime }),
         assetAutomationSettings,
-        urlExpansionOptOut: !params.finalUrlExpansionEnabled,
       },
     },
   ])
