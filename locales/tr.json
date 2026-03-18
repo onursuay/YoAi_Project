@@ -525,6 +525,7 @@
           "phoneCountryRequired": "Ülke seçin",
           "phoneNumberRequired": "Telefon numarası zorunludur",
           "phoneNumberInvalid": "Geçerli bir telefon numarası girin",
+          "phoneNumberInvalidForCountry": "Seçilen ülke için geçerli bir telefon numarası girin",
           "countryTR": "Türkiye",
           "countryUS": "Amerika Birleşik Devletleri",
           "countryGB": "Birleşik Krallık",

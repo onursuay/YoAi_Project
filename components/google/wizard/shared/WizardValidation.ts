@@ -1,4 +1,25 @@
+import { parsePhoneNumberFromString } from 'libphonenumber-js'
 import type { WizardState, BiddingStrategy } from './WizardTypes'
+
+/** dialCode -> ISO 3166-1 alpha-2 for country-aware phone validation */
+const DIAL_CODE_TO_ISO: Record<string, string> = {
+  '+90': 'TR', '+1': 'US', '+44': 'GB', '+49': 'DE', '+33': 'FR', '+31': 'NL', '+34': 'ES', '+39': 'IT',
+}
+
+/** Country-aware phone validation using libphonenumber-js. Rejects short/invalid numbers like "623". */
+export function isValidPhoneForCountry(nationalDigits: string, dialCode: string): boolean {
+  const digits = nationalDigits.replace(/\D/g, '').trim()
+  if (!digits) return false
+  const iso2 = DIAL_CODE_TO_ISO[dialCode]
+  if (!iso2) return false
+  const full = `${dialCode}${digits}`
+  try {
+    const parsed = parsePhoneNumberFromString(full, iso2)
+    return !!parsed?.isValid()
+  } catch {
+    return false
+  }
+}
 
 /** URL validation — must start http/https and have valid hostname. Used for Step 1 desired outcomes. */
 function isValidWebUrl(val: string): boolean {
@@ -20,10 +41,6 @@ function isValidWebUrl(val: string): boolean {
   }
 }
 
-/** Phone has valid numeric content — at least one digit. */
-function hasValidPhoneNumber(val: string): boolean {
-  return /^\d+$/.test(val.trim())
-}
 
 // Search wizard step order: 0 Goal, 1 Conversion+Name, 2 Bidding, 3 CampaignSettings, 4 AIMax, 5 Keywords&Ads, 6 Budget, 7 Summary
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -41,9 +58,9 @@ export function validateStep(step: number, state: WizardState, t: (key: string, 
       }
       if (state.desiredOutcomePhone) {
         if (!state.desiredOutcomePhoneCountryCode?.trim()) return t('conversion.phoneCountryRequired')
-        const phone = state.desiredOutcomePhoneNumber.trim()
+        const phone = state.desiredOutcomePhoneNumber.trim().replace(/\D/g, '')
         if (!phone) return t('conversion.phoneNumberRequired')
-        if (!hasValidPhoneNumber(phone)) return t('conversion.phoneNumberInvalid')
+        if (!isValidPhoneForCountry(phone, state.desiredOutcomePhoneCountryCode)) return t('conversion.phoneNumberInvalidForCountry')
       }
       return null
     }

@@ -22,22 +22,24 @@ import {
 import type { StepProps } from '../shared/WizardTypes'
 import { inputCls } from '../shared/WizardTypes'
 import type { ConversionActionForWizard } from '../shared/WizardTypes'
+import { isValidPhoneForCountry } from '../shared/WizardValidation'
 
-// Country-based phone options — visible labels are country names; value is dialCode for compatibility
+// Country-based phone options — label, iso2, dialCode, placeholder. Used for display and country-aware validation.
 const COUNTRY_PHONE_OPTIONS: Array<{
   id: string
+  iso2: string
   dialCode: string
   labelKey: string
   placeholderKey: string
 }> = [
-  { id: 'TR', dialCode: '+90', labelKey: 'conversion.countryTR', placeholderKey: 'conversion.phonePlaceholderTR' },
-  { id: 'US', dialCode: '+1', labelKey: 'conversion.countryUS', placeholderKey: 'conversion.phonePlaceholderUS' },
-  { id: 'GB', dialCode: '+44', labelKey: 'conversion.countryGB', placeholderKey: 'conversion.phonePlaceholderGB' },
-  { id: 'DE', dialCode: '+49', labelKey: 'conversion.countryDE', placeholderKey: 'conversion.phonePlaceholderDE' },
-  { id: 'FR', dialCode: '+33', labelKey: 'conversion.countryFR', placeholderKey: 'conversion.phonePlaceholderFR' },
-  { id: 'NL', dialCode: '+31', labelKey: 'conversion.countryNL', placeholderKey: 'conversion.phonePlaceholderNL' },
-  { id: 'ES', dialCode: '+34', labelKey: 'conversion.countryES', placeholderKey: 'conversion.phonePlaceholderES' },
-  { id: 'IT', dialCode: '+39', labelKey: 'conversion.countryIT', placeholderKey: 'conversion.phonePlaceholderIT' },
+  { id: 'TR', iso2: 'TR', dialCode: '+90', labelKey: 'conversion.countryTR', placeholderKey: 'conversion.phonePlaceholderTR' },
+  { id: 'US', iso2: 'US', dialCode: '+1', labelKey: 'conversion.countryUS', placeholderKey: 'conversion.phonePlaceholderUS' },
+  { id: 'GB', iso2: 'GB', dialCode: '+44', labelKey: 'conversion.countryGB', placeholderKey: 'conversion.phonePlaceholderGB' },
+  { id: 'DE', iso2: 'DE', dialCode: '+49', labelKey: 'conversion.countryDE', placeholderKey: 'conversion.phonePlaceholderDE' },
+  { id: 'FR', iso2: 'FR', dialCode: '+33', labelKey: 'conversion.countryFR', placeholderKey: 'conversion.phonePlaceholderFR' },
+  { id: 'NL', iso2: 'NL', dialCode: '+31', labelKey: 'conversion.countryNL', placeholderKey: 'conversion.phonePlaceholderNL' },
+  { id: 'ES', iso2: 'ES', dialCode: '+34', labelKey: 'conversion.countryES', placeholderKey: 'conversion.phonePlaceholderES' },
+  { id: 'IT', iso2: 'IT', dialCode: '+39', labelKey: 'conversion.countryIT', placeholderKey: 'conversion.phonePlaceholderIT' },
 ]
 
 /** Valid hostname: has a dot (domain.tld) or is exactly "localhost". Rejects bare IP-like digits or malformed hostnames. */
@@ -70,11 +72,6 @@ function isValidWebUrl(val: string): boolean {
 /** Extract digits only from pasted/typed input. */
 function sanitizePhoneDigits(input: string): string {
   return input.replace(/\D/g, '')
-}
-
-/** Phone has valid numeric content — at least one digit. */
-function hasValidPhoneNumber(val: string): boolean {
-  return /^\d+$/.test(val.trim())
 }
 
 /** Allow digits and common control keys in phone input. Block letters and symbols. */
@@ -422,7 +419,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="tel-national"
-                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!hasValidPhoneNumber(state.desiredOutcomePhoneNumber) ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!isValidPhoneForCountry(state.desiredOutcomePhoneNumber, state.desiredOutcomePhoneCountryCode ?? '') ? 'border-red-400' : 'border-gray-300'}`}
                   value={state.desiredOutcomePhoneNumber}
                   onChange={e => update({ desiredOutcomePhoneNumber: sanitizePhoneDigits(e.target.value) })}
                   onKeyDown={e => { if (!isAllowedPhoneKey(e)) e.preventDefault() }}
@@ -445,9 +442,9 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
               </div>
               {state.desiredOutcomePhone && (() => {
                 if (!state.desiredOutcomePhoneCountryCode?.trim()) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneCountryRequired')}</p>
-                const phone = state.desiredOutcomePhoneNumber.trim()
+                const phone = state.desiredOutcomePhoneNumber.trim().replace(/\D/g, '')
                 if (!phone) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneNumberRequired')}</p>
-                if (!hasValidPhoneNumber(phone)) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneNumberInvalid')}</p>
+                if (!isValidPhoneForCountry(phone, state.desiredOutcomePhoneCountryCode ?? '')) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneNumberInvalidForCountry')}</p>
                 return null
               })()}
             </div>
