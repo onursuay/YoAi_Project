@@ -1,9 +1,11 @@
 /**
  * Standard non-retail Performance Max campaign create.
  * Fully separate from Search create flow (create-campaign.ts).
+ * Brand Guidelines: BUSINESS_NAME and LOGO are linked at campaign level via googleAds:mutate batch.
  */
 
 import sharp from 'sharp'
+import { buildGoogleAdsHeaders, GOOGLE_ADS_BASE } from '@/lib/googleAdsAuth'
 import type { GoogleAdsRequestContext as Ctx } from '@/lib/googleAdsAuth'
 import type { CreatePerformanceMaxPayload } from '@/components/google/wizard/pmax/shared/PMaxCreatePayload'
 import { postMutate } from './create-campaign'
@@ -12,6 +14,8 @@ export interface CreatePerformanceMaxResult {
   campaignResourceName: string
   assetGroupResourceName: string
   conversionGoalsWarning?: string
+  /** Debug: campaign-level brand assets (for logging) */
+  _debug?: { businessNameAssetRn: string; logoAssetRn: string }
 }
 
 /** Marketing image: 1.91:1 landscape. Logo: 1:1 square. */
@@ -55,19 +59,6 @@ async function fetchAndValidateImage(
   return { base64: buf.toString('base64'), width: w, height: h }
 }
 
-/** Create a single Asset via mutate. Returns resource name. */
-async function createAsset(
-  ctx: Ctx,
-  payload: { type: string; name?: string; textAsset?: { text: string }; imageAsset?: { data: string } }
-): Promise<string> {
-  const data = await postMutate<{ results: Array<{ resourceName: string }> }>(ctx, 'assets', [
-    { create: payload },
-  ])
-  const rn = data.results?.[0]?.resourceName
-  if (!rn) throw new Error('Asset resource name not returned')
-  return rn
-}
-
 /** Create campaign budget. */
 async function createBudget(ctx: Ctx, params: CreatePerformanceMaxPayload): Promise<string> {
   const data = await postMutate<{ results: Array<{ resourceName: string }> }>(ctx, 'campaignBudgets', [
@@ -83,6 +74,11 @@ async function createBudget(ctx: Ctx, params: CreatePerformanceMaxPayload): Prom
   const rn = data.results?.[0]?.resourceName
   if (!rn) throw new Error('Campaign budget resource name not returned')
   return rn
+}
+
+interface PreFetchedImages {
+  marketingBase64: string
+  logoBase64: string
 }
 
 /** Build bidding config for PMax. */
@@ -110,12 +106,15 @@ function buildBiddingField(params: CreatePerformanceMaxPayload): Record<string, 
   return { maximizeConversions: {} }
 }
 
-/** Create PMax campaign. */
-async function createCampaign(
+/** Create PMax campaign + BUSINESS_NAME + LOGO campaign assets in one atomic batch (googleAds:mutate).
+ * Brand Guidelines requires business name linked as CampaignAsset; must be same request as campaign create.
+ */
+async function createCampaignWithBrandAssets(
   ctx: Ctx,
   params: CreatePerformanceMaxPayload,
-  budgetResourceName: string
-): Promise<string> {
+  budgetResourceName: string,
+  preFetched: PreFetchedImages
+): Promise<{ campaignResourceName: string; businessNameAssetRn: string; logoAssetRn: string }> {
   const today = new Date()
   const tomorrow = new Date(today)
   tomorrow.setDate(today.getDate() + 1)
@@ -132,30 +131,137 @@ async function createCampaign(
       params.locationTargetingMode === 'PRESENCE_ONLY' ? ('PRESENCE' as const) : ('PRESENCE_OR_INTEREST' as const),
   }
 
-  // Final URL expansion temporarily disabled – not supported in current campaign create schema
   const assetAutomationSettings = [
     { assetAutomationType: 'TEXT_ASSET_AUTOMATION', assetAutomationStatus: 'OPTED_IN' as const },
   ]
 
-  const data = await postMutate<{ results: Array<{ resourceName: string }> }>(ctx, 'campaigns', [
+  const cid = ctx.customerId
+  const tempCampaign = `customers/${cid}/campaigns/-1`
+  const tempBusinessNameAsset = `customers/${cid}/assets/-2`
+  const tempLogoAsset = `customers/${cid}/assets/-3`
+
+  const mutateOperations = [
     {
-      create: {
-        name: params.campaignName,
-        advertisingChannelType: 'PERFORMANCE_MAX',
-        campaignBudget: budgetResourceName,
-        status: 'ENABLED',
-        containsEuPoliticalAdvertising: params.containsEuPoliticalAdvertising,
-        geoTargetTypeSetting,
-        ...buildBiddingField(params),
-        startDateTime,
-        ...(endDateTime && { endDateTime }),
-        assetAutomationSettings,
+      assetOperation: {
+        create: {
+          resourceName: tempBusinessNameAsset,
+          type: 'TEXT',
+          name: 'Business name',
+          textAsset: { text: (params.assetGroup.businessName ?? '').slice(0, 25) },
+        },
       },
     },
-  ])
-  const rn = data.results?.[0]?.resourceName
-  if (!rn) throw new Error('Campaign resource name not returned')
-  return rn
+    {
+      assetOperation: {
+        create: {
+          resourceName: tempLogoAsset,
+          type: 'IMAGE',
+          name: params.assetGroup.logos[0]?.name || `Logo ${Date.now()}`,
+          imageAsset: { data: preFetched.logoBase64 },
+        },
+      },
+    },
+    {
+      campaignOperation: {
+        create: {
+          resourceName: tempCampaign,
+          name: params.campaignName,
+          advertisingChannelType: 'PERFORMANCE_MAX',
+          campaignBudget: budgetResourceName,
+          status: 'ENABLED',
+          containsEuPoliticalAdvertising: params.containsEuPoliticalAdvertising,
+          geoTargetTypeSetting,
+          ...buildBiddingField(params),
+          startDateTime,
+          ...(endDateTime && { endDateTime }),
+          assetAutomationSettings,
+        },
+      },
+    },
+    {
+      campaignAssetOperation: {
+        create: {
+          campaign: tempCampaign,
+          asset: tempBusinessNameAsset,
+          fieldType: 'BUSINESS_NAME',
+        },
+      },
+    },
+    {
+      campaignAssetOperation: {
+        create: {
+          campaign: tempCampaign,
+          asset: tempLogoAsset,
+          fieldType: 'LOGO',
+        },
+      },
+    },
+  ]
+
+  const campaignAssetOps = mutateOperations.slice(3).map((op: Record<string, unknown>) => op.campaignAssetOperation)
+  console.log(
+    '[PMax] campaignAssets:mutate (batch) request:',
+    JSON.stringify(
+      campaignAssetOps.map((op: unknown) => {
+        const o = op as { create?: { fieldType?: string; asset?: string; campaign?: string } }
+        return {
+          fieldType: o?.create?.fieldType,
+          asset: o?.create?.asset,
+          campaign: o?.create?.campaign,
+        }
+      }),
+      null,
+      2
+    )
+  )
+
+  const body = {
+    mutateOperations,
+  }
+
+  const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${cid}/googleAds:mutate`, {
+    method: 'POST',
+    headers: buildGoogleAdsHeaders(ctx),
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+
+  if (!res.ok) {
+    const googleError = data?.error
+    const firstDetail = googleError?.details?.[0]?.errors?.[0]
+    const msg = firstDetail
+      ? `[googleAds:mutate] ${JSON.stringify(firstDetail.errorCode)} | ${firstDetail.message} | field: ${firstDetail.location?.fieldPathElements?.map((f: { fieldName?: string }) => f.fieldName).join('.') ?? 'n/a'}`
+      : `[googleAds:mutate] ${googleError?.message ?? 'unknown error'} | status: ${res.status} | body: ${JSON.stringify(data)}`
+    const err = new Error(msg) as Error & { status?: number; googleError?: unknown }
+    err.status = res.status
+    err.googleError = data
+    throw err
+  }
+
+  const results: Array<Record<string, unknown>> = data?.mutateOperationResponses ?? []
+  let campaignResourceName: string | null = null
+  const assetResourceNames: string[] = []
+
+  for (const r of results) {
+    if (r.campaignResult && typeof r.campaignResult === 'object') {
+      const cr = r.campaignResult as { resourceName?: string }
+      if (cr.resourceName) campaignResourceName = cr.resourceName
+    }
+    if (r.assetResult && typeof r.assetResult === 'object') {
+      const ar = r.assetResult as { resourceName?: string }
+      if (ar.resourceName) assetResourceNames.push(ar.resourceName)
+    }
+  }
+
+  const businessNameAssetRn = assetResourceNames[0] ?? null
+  const logoAssetRn = assetResourceNames[1] ?? null
+
+  if (!campaignResourceName) throw new Error('Campaign resource name not returned from googleAds:mutate')
+  if (!businessNameAssetRn) throw new Error('Business name asset resource name not returned')
+  if (!logoAssetRn) throw new Error('Logo asset resource name not returned')
+
+  console.log('[PMax] googleAds:mutate response: campaignRn=', campaignResourceName, 'businessNameRn=', businessNameAssetRn, 'logoRn=', logoAssetRn)
+  return { campaignResourceName, businessNameAssetRn, logoAssetRn }
 }
 
 /** Create campaign criteria: locations, negative locations, languages, ad schedule. */
@@ -219,21 +325,25 @@ async function createCampaignCriteria(
   }
 }
 
-interface PreFetchedImages {
-  marketingBase64: string
-  logoBase64: string
+interface CampaignBrandAssets {
+  businessNameAssetRn: string
+  logoAssetRn: string
 }
 
-/** Create text and image assets, then asset group + links. Uses pre-fetched images to avoid double fetch. */
+/** Create asset group + all assets + assetGroupAsset links in ONE googleAds:mutate batch.
+ * PMax requires asset group and minimum asset links (3 headlines, 1 long headline, 2 descriptions, images)
+ * to be created atomically. Ayrı ayrı create + link NOT_ENOUGH_HEADLINE_ASSET hatası üretir.
+ * BUSINESS_NAME and LOGO stay at campaign level (not in this batch).
+ */
 async function createAssetGroupWithAssets(
   ctx: Ctx,
   params: CreatePerformanceMaxPayload,
   campaignResourceName: string,
-  preFetched: PreFetchedImages
+  preFetched: PreFetchedImages,
+  brandAssets: CampaignBrandAssets
 ): Promise<string> {
   const { assetGroup } = params
-
-  const assetResourceNames: { type: string; resourceName: string }[] = []
+  const cid = ctx.customerId
 
   if (assetGroup.headlines.length < 3) {
     throw new Error('At least 3 headlines required')
@@ -248,130 +358,190 @@ async function createAssetGroupWithAssets(
     throw new Error('Business name required')
   }
 
-  for (const text of assetGroup.headlines.slice(0, 15)) {
-    const rn = await createAsset(ctx, {
-      type: 'TEXT',
-      name: `Headline ${assetResourceNames.length + 1}`,
-      textAsset: { text: text.slice(0, 30) },
-    })
-    assetResourceNames.push({ type: 'HEADLINE', resourceName: rn })
-  }
-  for (const text of assetGroup.longHeadlines.slice(0, 5)) {
-    const rn = await createAsset(ctx, {
-      type: 'TEXT',
-      name: `Long headline ${assetResourceNames.length + 1}`,
-      textAsset: { text: text.slice(0, 90) },
-    })
-    assetResourceNames.push({ type: 'LONG_HEADLINE', resourceName: rn })
-  }
-  for (const text of assetGroup.descriptions.slice(0, 5)) {
-    const rn = await createAsset(ctx, {
-      type: 'TEXT',
-      name: `Description ${assetResourceNames.length + 1}`,
-      textAsset: { text: text.slice(0, 90) },
-    })
-    assetResourceNames.push({ type: 'DESCRIPTION', resourceName: rn })
-  }
+  const headlines = assetGroup.headlines.slice(0, 15)
+  const longHeadlines = assetGroup.longHeadlines.slice(0, 5)
+  const descriptions = assetGroup.descriptions.slice(0, 5)
 
-  const businessRn = await createAsset(ctx, {
-    type: 'TEXT',
-    name: 'Business name',
-    textAsset: { text: assetGroup.businessName.slice(0, 25) },
-  })
-  assetResourceNames.push({ type: 'BUSINESS_NAME', resourceName: businessRn })
+  const tempAssetGroup = `customers/${cid}/assetGroups/-10`
+  let nextTempId = -20
 
-  const marketingImageRn = await createAsset(ctx, {
-    type: 'IMAGE',
-    name: assetGroup.images[0]?.name || `Marketing Image ${Date.now()}`,
-    imageAsset: { data: preFetched.marketingBase64 },
-  })
-  const logoImageRn = await createAsset(ctx, {
-    type: 'IMAGE',
-    name: assetGroup.logos[0]?.name || `Logo ${Date.now()}`,
-    imageAsset: { data: preFetched.logoBase64 },
-  })
-  const squareMarketingImageRn = logoImageRn
-  const logoRn = logoImageRn
+  const mutateOperations: Record<string, unknown>[] = []
 
-  const assetGroupData = await postMutate<{ results: Array<{ resourceName: string }> }>(
-    ctx,
-    'assetGroups',
-    [
-      {
+  const headlineTempRns: string[] = []
+  for (let i = 0; i < headlines.length; i++) {
+    const tempRn = `customers/${cid}/assets/${nextTempId}`
+    headlineTempRns.push(tempRn)
+    nextTempId--
+    mutateOperations.push({
+      assetOperation: {
         create: {
-          name: assetGroup.name || 'Asset Group 1',
-          campaign: campaignResourceName,
-          status: 'ENABLED',
-          finalUrls: [params.finalUrl || 'https://example.com'],
+          resourceName: tempRn,
+          type: 'TEXT',
+          name: `Headline ${i + 1}`,
+          textAsset: { text: headlines[i].slice(0, 30) },
         },
       },
-    ]
-  )
-  const assetGroupResourceName = assetGroupData.results?.[0]?.resourceName
-  if (!assetGroupResourceName) throw new Error('Asset group resource name not returned')
+    })
+  }
 
-  const linkOps: unknown[] = []
-
-  const headlineRns = assetResourceNames.filter((a) => a.type === 'HEADLINE')
-  for (const { resourceName } of headlineRns) {
-    linkOps.push({
-      create: {
-        assetGroup: assetGroupResourceName,
-        asset: resourceName,
-        fieldType: 'HEADLINE',
+  const longHeadlineTempRns: string[] = []
+  for (let i = 0; i < longHeadlines.length; i++) {
+    const tempRn = `customers/${cid}/assets/${nextTempId}`
+    longHeadlineTempRns.push(tempRn)
+    nextTempId--
+    mutateOperations.push({
+      assetOperation: {
+        create: {
+          resourceName: tempRn,
+          type: 'TEXT',
+          name: `Long headline ${i + 1}`,
+          textAsset: { text: longHeadlines[i].slice(0, 90) },
+        },
       },
     })
   }
-  const longHeadlineRns = assetResourceNames.filter((a) => a.type === 'LONG_HEADLINE')
-  for (const { resourceName } of longHeadlineRns) {
-    linkOps.push({
-      create: {
-        assetGroup: assetGroupResourceName,
-        asset: resourceName,
-        fieldType: 'LONG_HEADLINE',
+
+  const descriptionTempRns: string[] = []
+  for (let i = 0; i < descriptions.length; i++) {
+    const tempRn = `customers/${cid}/assets/${nextTempId}`
+    descriptionTempRns.push(tempRn)
+    nextTempId--
+    mutateOperations.push({
+      assetOperation: {
+        create: {
+          resourceName: tempRn,
+          type: 'TEXT',
+          name: `Description ${i + 1}`,
+          textAsset: { text: descriptions[i].slice(0, 90) },
+        },
       },
     })
   }
-  const descriptionRns = assetResourceNames.filter((a) => a.type === 'DESCRIPTION')
-  for (const { resourceName } of descriptionRns) {
-    linkOps.push({
+
+  const tempMarketingImage = `customers/${cid}/assets/${nextTempId}`
+  nextTempId--
+  mutateOperations.push({
+    assetOperation: {
       create: {
-        assetGroup: assetGroupResourceName,
-        asset: resourceName,
-        fieldType: 'DESCRIPTION',
+        resourceName: tempMarketingImage,
+        type: 'IMAGE',
+        name: assetGroup.images[0]?.name || `Marketing Image ${Date.now()}`,
+        imageAsset: { data: preFetched.marketingBase64 },
       },
-    })
-  }
-  linkOps.push({
-    create: {
-      assetGroup: assetGroupResourceName,
-      asset: businessRn,
-      fieldType: 'BUSINESS_NAME',
-    },
-  })
-  linkOps.push({
-    create: {
-      assetGroup: assetGroupResourceName,
-      asset: marketingImageRn,
-      fieldType: 'MARKETING_IMAGE',
-    },
-  })
-  linkOps.push({
-    create: {
-      assetGroup: assetGroupResourceName,
-      asset: squareMarketingImageRn,
-      fieldType: 'SQUARE_MARKETING_IMAGE',
-    },
-  })
-  linkOps.push({
-    create: {
-      assetGroup: assetGroupResourceName,
-      asset: logoRn,
-      fieldType: 'LOGO',
     },
   })
 
-  await postMutate(ctx, 'assetGroupAssets', linkOps)
+  mutateOperations.push({
+    assetGroupOperation: {
+      create: {
+        resourceName: tempAssetGroup,
+        name: assetGroup.name || 'Asset Group 1',
+        campaign: campaignResourceName,
+        status: 'ENABLED',
+        finalUrls: [params.finalUrl || 'https://example.com'],
+      },
+    },
+  })
+
+  const fieldTypes: string[] = []
+
+  for (const rn of headlineTempRns) {
+    mutateOperations.push({
+      assetGroupAssetOperation: {
+        create: {
+          assetGroup: tempAssetGroup,
+          asset: rn,
+          fieldType: 'HEADLINE',
+        },
+      },
+    })
+    fieldTypes.push('HEADLINE')
+  }
+  for (const rn of longHeadlineTempRns) {
+    mutateOperations.push({
+      assetGroupAssetOperation: {
+        create: {
+          assetGroup: tempAssetGroup,
+          asset: rn,
+          fieldType: 'LONG_HEADLINE',
+        },
+      },
+    })
+    fieldTypes.push('LONG_HEADLINE')
+  }
+  for (const rn of descriptionTempRns) {
+    mutateOperations.push({
+      assetGroupAssetOperation: {
+        create: {
+          assetGroup: tempAssetGroup,
+          asset: rn,
+          fieldType: 'DESCRIPTION',
+        },
+      },
+    })
+    fieldTypes.push('DESCRIPTION')
+  }
+  mutateOperations.push({
+    assetGroupAssetOperation: {
+      create: {
+        assetGroup: tempAssetGroup,
+        asset: tempMarketingImage,
+        fieldType: 'MARKETING_IMAGE',
+      },
+    },
+  })
+  fieldTypes.push('MARKETING_IMAGE')
+
+  mutateOperations.push({
+    assetGroupAssetOperation: {
+      create: {
+        assetGroup: tempAssetGroup,
+        asset: brandAssets.logoAssetRn,
+        fieldType: 'SQUARE_MARKETING_IMAGE',
+      },
+    },
+  })
+  fieldTypes.push('SQUARE_MARKETING_IMAGE')
+
+  console.log('[PMax] asset group batch:', {
+    operationCount: mutateOperations.length,
+    headlineAssetTempResourceNames: headlineTempRns,
+    assetGroupAssetFieldTypes: fieldTypes,
+  })
+
+  const body = { mutateOperations }
+  const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${cid}/googleAds:mutate`, {
+    method: 'POST',
+    headers: buildGoogleAdsHeaders(ctx),
+    body: JSON.stringify(body),
+  })
+  const data = await res.json()
+
+  if (!res.ok) {
+    console.error('[PMax] Google Ads raw error body:', JSON.stringify(data, null, 2))
+    const googleError = data?.error
+    const firstDetail = googleError?.details?.[0]?.errors?.[0]
+    const msg = firstDetail
+      ? `[assetGroups] ${JSON.stringify(firstDetail.errorCode)} | ${firstDetail.message}`
+      : `[assetGroups] ${googleError?.message ?? 'unknown error'} | status: ${res.status} | body: ${JSON.stringify(data)}`
+    const err = new Error(msg) as Error & { status?: number; googleError?: unknown }
+    err.status = res.status
+    err.googleError = data
+    throw err
+  }
+
+  const results: Array<Record<string, unknown>> = data?.mutateOperationResponses ?? []
+  let assetGroupResourceName: string | null = null
+
+  for (const r of results) {
+    if (r.assetGroupResult && typeof r.assetGroupResult === 'object') {
+      const agr = r.assetGroupResult as { resourceName?: string }
+      if (agr.resourceName) assetGroupResourceName = agr.resourceName
+    }
+  }
+
+  if (!assetGroupResourceName) throw new Error('Asset group resource name not returned from googleAds:mutate')
+  console.log('[PMax] asset group batch success: assetGroupRn=', assetGroupResourceName)
 
   if (params.signals.searchThemes?.length) {
     const signalOps = params.signals.searchThemes.map((st) => ({
@@ -404,7 +574,8 @@ async function validateAndFetchImages(
 
 /**
  * Create standard non-retail Performance Max campaign.
- * Order: Validate+fetch images → Budget → Campaign → Criteria → Assets → AssetGroup → Links → Signals → Conversion goals
+ * Order: Validate+fetch → Budget → Campaign+BUSINESS_NAME+LOGO (googleAds:mutate batch) → Criteria → Asset group → Signals → Conversion goals.
+ * BUSINESS_NAME and LOGO are linked at campaign level (CampaignAsset), not asset group.
  */
 export async function createPerformanceMaxCampaign(
   ctx: Ctx,
@@ -412,13 +583,19 @@ export async function createPerformanceMaxCampaign(
 ): Promise<CreatePerformanceMaxResult> {
   const preFetched = await validateAndFetchImages(params)
   const budgetResourceName = await createBudget(ctx, params)
-  const campaignResourceName = await createCampaign(ctx, params, budgetResourceName)
+  const { campaignResourceName, businessNameAssetRn, logoAssetRn } = await createCampaignWithBrandAssets(
+    ctx,
+    params,
+    budgetResourceName,
+    preFetched
+  )
   await createCampaignCriteria(ctx, params, campaignResourceName)
   const assetGroupResourceName = await createAssetGroupWithAssets(
     ctx,
     params,
     campaignResourceName,
-    preFetched
+    preFetched,
+    { businessNameAssetRn, logoAssetRn }
   )
 
   let conversionGoalsWarning: string | undefined
@@ -447,5 +624,6 @@ export async function createPerformanceMaxCampaign(
     campaignResourceName,
     assetGroupResourceName,
     ...(conversionGoalsWarning && { conversionGoalsWarning }),
+    _debug: { businessNameAssetRn, logoAssetRn },
   }
 }

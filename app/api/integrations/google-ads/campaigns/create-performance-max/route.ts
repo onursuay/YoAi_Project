@@ -74,67 +74,119 @@ const API_ERRORS = {
   },
 } as const
 
-export async function POST(req: NextRequest) {
-  const cookieStore = await cookies()
-  const locale = (cookieStore.get('NEXT_LOCALE')?.value ?? 'tr') === 'en' ? 'en' : 'tr'
-  const msg = API_ERRORS[locale]
+function badRequest(msg: string) {
+  return NextResponse.json({ error: msg }, { status: 400 })
+}
 
+export async function POST(req: NextRequest): Promise<NextResponse> {
   try {
-    const body = await req.json() as Record<string, unknown>
+    let body: unknown
+    try {
+      body = await req.json()
+    } catch {
+      return badRequest(API_ERRORS.tr.generic)
+    }
 
-    if (body.advertisingChannelType && body.advertisingChannelType !== 'PERFORMANCE_MAX') {
-      return NextResponse.json({ error: msg.notPerformanceMax }, { status: 400 })
+    if (body == null || typeof body !== 'object') {
+      return badRequest(API_ERRORS.tr.campaignNameRequired)
+    }
+
+    const b = body as Record<string, unknown>
+
+    if (b.advertisingChannelType != null && b.advertisingChannelType !== 'PERFORMANCE_MAX') {
+      return badRequest(API_ERRORS.tr.notPerformanceMax)
     }
 
     for (const field of SEARCH_SPECIFIC_FIELDS) {
-      if (body[field] !== undefined && body[field] !== null) {
-        return NextResponse.json({ error: msg.searchFieldsRejected }, { status: 400 })
+      if (b[field] !== undefined && b[field] !== null) {
+        return badRequest(API_ERRORS.tr.searchFieldsRejected)
       }
     }
 
-    const params = body as unknown as CreatePerformanceMaxPayload
-
-    if (!params.campaignName?.trim()) {
-      return NextResponse.json({ error: msg.campaignNameRequired }, { status: 400 })
-    }
-    if (!params.dailyBudgetMicros || params.dailyBudgetMicros < 1_000_000) {
-      return NextResponse.json({ error: msg.minBudget }, { status: 400 })
-    }
-    if (!params.finalUrl?.startsWith?.('http')) {
-      return NextResponse.json({ error: msg.urlRequired }, { status: 400 })
-    }
-    const ag = params.assetGroup
-    if (!ag) {
-      return NextResponse.json({ error: msg.assetGroupNameRequired }, { status: 400 })
-    }
-    if (!ag.name?.trim()) {
-      return NextResponse.json({ error: msg.assetGroupNameRequired }, { status: 400 })
-    }
-    if (!ag.businessName?.trim()) {
-      return NextResponse.json({ error: msg.businessNameRequired }, { status: 400 })
-    }
-    if (!ag.headlines?.length || ag.headlines.length < 3) {
-      return NextResponse.json({ error: msg.minHeadlines }, { status: 400 })
-    }
-    if (!ag.longHeadlines?.length || ag.longHeadlines.length < 1) {
-      return NextResponse.json({ error: msg.minLongHeadline }, { status: 400 })
-    }
-    if (!ag.descriptions?.length || ag.descriptions.length < 2) {
-      return NextResponse.json({ error: msg.minDescriptions }, { status: 400 })
+    const campaignName = typeof b.campaignName === 'string' ? b.campaignName.trim() : ''
+    if (!campaignName) {
+      return badRequest(API_ERRORS.tr.campaignNameRequired)
     }
 
-    const imagesWithUrl = (ag.images ?? []).filter((img: { url?: string }) => img?.url?.trim())
-    const logosWithUrl = (ag.logos ?? []).filter((img: { url?: string }) => img?.url?.trim())
+    const dailyBudgetMicros = Number(b.dailyBudgetMicros)
+    if (!Number.isFinite(dailyBudgetMicros) || dailyBudgetMicros < 1_000_000) {
+      return badRequest(API_ERRORS.tr.minBudget)
+    }
+
+    const finalUrl = typeof b.finalUrl === 'string' ? b.finalUrl : ''
+    if (!finalUrl.startsWith('http')) {
+      return badRequest(API_ERRORS.tr.urlRequired)
+    }
+
+    const ag = b.assetGroup
+    if (ag == null || typeof ag !== 'object') {
+      return badRequest(API_ERRORS.tr.assetGroupNameRequired)
+    }
+
+    const agObj = ag as Record<string, unknown>
+    const agName = typeof agObj.name === 'string' ? agObj.name.trim() : ''
+    if (!agName) {
+      return badRequest(API_ERRORS.tr.assetGroupNameRequired)
+    }
+
+    const businessName = typeof agObj.businessName === 'string' ? agObj.businessName.trim() : ''
+    if (!businessName) {
+      return badRequest(API_ERRORS.tr.businessNameRequired)
+    }
+
+    const headlines = Array.isArray(agObj.headlines) ? agObj.headlines : []
+    if (headlines.length < 3) {
+      return badRequest(API_ERRORS.tr.minHeadlines)
+    }
+
+    const longHeadlines = Array.isArray(agObj.longHeadlines) ? agObj.longHeadlines : []
+    if (longHeadlines.length < 1) {
+      return badRequest(API_ERRORS.tr.minLongHeadline)
+    }
+
+    const descriptions = Array.isArray(agObj.descriptions) ? agObj.descriptions : []
+    if (descriptions.length < 2) {
+      return badRequest(API_ERRORS.tr.minDescriptions)
+    }
+
+    const images = Array.isArray(agObj.images) ? agObj.images : []
+    const imagesWithUrl = images.filter((img: unknown) => {
+      if (img == null || typeof img !== 'object') return false
+      const u = (img as Record<string, unknown>).url
+      return typeof u === 'string' && u.trim().length > 0
+    })
+    const logos = Array.isArray(agObj.logos) ? agObj.logos : []
+    const logosWithUrl = logos.filter((img: unknown) => {
+      if (img == null || typeof img !== 'object') return false
+      const u = (img as Record<string, unknown>).url
+      return typeof u === 'string' && u.trim().length > 0
+    })
     if (imagesWithUrl.length < 1 || logosWithUrl.length < 1) {
-      return NextResponse.json({ error: msg.minImagesRequired }, { status: 400 })
+      return badRequest(API_ERRORS.tr.minImagesRequired)
     }
+
+    const params = b as unknown as CreatePerformanceMaxPayload
+
+    const cookieStore = await cookies()
+    const locale = (cookieStore.get('NEXT_LOCALE')?.value ?? 'tr') === 'en' ? 'en' : 'tr'
+    const msg = API_ERRORS[locale]
 
     const smokeSecret = req.headers.get('X-Smoke-Test')
     const ctx =
       smokeSecret && process.env.ADMIN_SECRET && smokeSecret === process.env.ADMIN_SECRET
         ? await getGoogleAdsContextForAdmin()
         : await getGoogleAdsContext()
+
     const result = await createPerformanceMaxCampaign(ctx, params)
+
+    if (result._debug) {
+      console.log('[create-performance-max] PMax create debug:', {
+        campaignResourceName: result.campaignResourceName,
+        businessNameAssetRn: result._debug.businessNameAssetRn,
+        logoAssetRn: result._debug.logoAssetRn,
+        assetGroupResourceName: result.assetGroupResourceName,
+      })
+    }
 
     const warning =
       result.conversionGoalsWarning &&
@@ -160,7 +212,8 @@ export async function POST(req: NextRequest) {
     )
   } catch (e: unknown) {
     const err = e as Error & { status?: number; googleError?: unknown }
-    console.error('[create-performance-max] error:', err.message)
+    console.error('[create-performance-max] error:', err?.message ?? String(e))
+    const msg = API_ERRORS.tr
     const googleErr = err.googleError as Record<string, unknown> | undefined
     const errorObj = googleErr?.error as Record<string, unknown> | undefined
     const firstDetail = errorObj?.details as Array<Record<string, unknown>> | undefined
@@ -168,12 +221,13 @@ export async function POST(req: NextRequest) {
     const errorCode = firstError?.[0]?.errorCode as Record<string, string> | undefined
     const code = errorCode ? Object.values(errorCode)[0] : null
     const userMessage =
-      (code && (msg as Record<string, string>)[code]) ??
-      (msg as Record<string, string>)[err.message as string] ??
+      (code && (API_ERRORS.tr as Record<string, string>)[code]) ??
+      (API_ERRORS.tr as Record<string, string>)[err.message as string] ??
       msg.generic
+    const status = typeof err.status === 'number' ? err.status : 500
     return NextResponse.json(
       { error: userMessage },
-      { status: err.status ?? 500 }
+      { status }
     )
   }
 }
