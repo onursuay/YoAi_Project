@@ -334,23 +334,25 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
             <span className="text-[13px] font-medium text-gray-900">{t('conversion.outcomePhoneCalls')}</span>
           </label>
           {state.desiredOutcomePhone && (
-            <div className="px-2.5 pb-2.5 pt-0 flex flex-row items-center gap-3">
-              <select
-                className="h-9 w-[100px] shrink-0 px-3 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={state.desiredOutcomePhoneCountryCode}
-                onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
-              >
-                {PHONE_COUNTRY_CODES.map(code => (
-                  <option key={code} value={code}>{code}</option>
-                ))}
-              </select>
-              <input
-                type="tel"
-                className="h-9 flex-1 min-w-[140px] px-3 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
-                value={state.desiredOutcomePhoneNumber}
-                onChange={e => update({ desiredOutcomePhoneNumber: e.target.value })}
-                placeholder={t('conversion.outcomePhonePlaceholder')}
-              />
+            <div className="px-2.5 pb-2.5 pt-0">
+              <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-center w-full">
+                <select
+                  className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={state.desiredOutcomePhoneCountryCode}
+                  onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
+                >
+                  {PHONE_COUNTRY_CODES.map(code => (
+                    <option key={code} value={code}>{code}</option>
+                  ))}
+                </select>
+                <input
+                  type="tel"
+                  className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  value={state.desiredOutcomePhoneNumber}
+                  onChange={e => update({ desiredOutcomePhoneNumber: e.target.value })}
+                  placeholder={t('conversion.outcomePhonePlaceholder')}
+                />
+              </div>
             </div>
           )}
         </div>
