@@ -45,7 +45,7 @@ export interface AudienceRefreshOkResponse {
   stats: { totalNodes: number; totalSearchTerms: number }
   payloadSizeBytes: number
   elapsedMs: number
-  storage: 'edge-config'
+  storage: 'edge-config' | 'supabase'
 }
 
 export interface AudienceRefreshErrorResponse {

@@ -12,7 +12,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { getGoogleAdsContextForAdmin } from '@/lib/googleAdsAuth'
 import { browseAllAudiences } from '@/lib/google-ads/audience-segments'
 import { buildAudienceDataset } from '@/lib/audience/buildAudienceDataset'
-import { setAudienceDataset } from '@/lib/audience/edgeConfigStore'
+import { setAudienceDataset } from '@/lib/audience/audienceStore'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -54,15 +54,11 @@ export async function POST(req: NextRequest) {
     const result = await setAudienceDataset(dataset)
     if (!result.ok) {
       const elapsed = Date.now() - start
-      const is404 = result.error?.includes('404')
       return NextResponse.json(
         {
           ok: false,
-          code: 'edge_config_write_failed',
+          code: 'storage_write_failed',
           error: result.error,
-          hint: is404
-            ? 'Edge Config not found. If scoped to a Team: set VERCEL_TEAM_ID in Vercel env (Team Settings → General → Team ID). Also verify AUDIENCE_EDGE_CONFIG_ID and VERCEL_API_TOKEN.'
-            : undefined,
           elapsedMs: elapsed,
         },
         { status: 500 }
@@ -70,7 +66,6 @@ export async function POST(req: NextRequest) {
     }
 
     const elapsed = Date.now() - start
-    const rawSize = JSON.stringify(dataset).length
 
     return NextResponse.json({
       ok: true,
@@ -81,11 +76,11 @@ export async function POST(req: NextRequest) {
         totalSearchTerms: dataset.stats.totalSearchTerms,
       },
       payloadSizes: {
-        rawBytes: rawSize,
-        storedBytes: result.storedBytes ?? rawSize,
+        rawBytes: result.rawBytes ?? JSON.stringify(dataset).length,
+        storedBytes: result.storedBytes ?? JSON.stringify(dataset).length,
       },
       elapsedMs: elapsed,
-      storage: 'edge-config',
+      storage: 'supabase',
     })
   } catch (e: unknown) {
     const elapsed = Date.now() - start

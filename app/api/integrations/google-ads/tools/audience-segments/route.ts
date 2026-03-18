@@ -16,8 +16,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getAudienceDataset,
-  isEdgeConfigConfigured,
-} from '@/lib/audience/edgeConfigStore'
+  isAudienceStorageConfigured,
+} from '@/lib/audience/audienceStore'
 import { getDevFallbackDataset } from '@/lib/audience/devFallback'
 import { expandNode } from '@/lib/audience/types'
 import { normalizeText, scoreMatch } from '@/lib/audience/normalize'
@@ -68,7 +68,7 @@ export async function GET(req: NextRequest) {
     const mode = searchParams.get('mode') ?? 'browse'
 
     // ── Resolve data source: Edge Config or dev fallback (single read) ──
-    let source: 'edge-config' | 'dev-fallback' = 'edge-config'
+    let source: 'supabase' | 'dev-fallback' = 'supabase'
     let tree: AudienceBrowseTree | null = null
     let searchIndex: AudienceSearchItem[] | null = null
 
@@ -76,12 +76,12 @@ export async function GET(req: NextRequest) {
     if (ds) {
       tree = ds.browseTree
       searchIndex = ds.searchIndex
-    } else if (!isProduction && !isEdgeConfigConfigured()) {
+    } else if (!isProduction && !isAudienceStorageConfigured()) {
       const dev = getDevFallbackDataset()
       tree = dev.browseTree
       searchIndex = dev.searchIndex
       source = 'dev-fallback'
-      console.log('[AUDIENCE_DEV_FALLBACK_ACTIVE] Using in-memory seeded dataset (Edge Config not configured)')
+      console.log('[AUDIENCE_DEV_FALLBACK_ACTIVE] Using in-memory seeded dataset (Supabase not configured)')
     }
 
     // ── mode=search ──
