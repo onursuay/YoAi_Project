@@ -11,7 +11,8 @@ export function parseKeywords(raw: string, matchType: MatchType) {
     })
 }
 
-export function buildCreatePayload(state: WizardState) {
+/** @param defaultAdGroupName — locale-aware fallback when adGroupName is empty (e.g. t('adgroup.defaultNameFallback')) */
+export function buildCreatePayload(state: WizardState, defaultAdGroupName: string = 'Ad Group 1') {
   const keywords = parseKeywords(state.keywordsRaw, state.defaultMatchType)
   const negativeKeywords = state.negativeKeywordsRaw.trim()
     ? parseKeywords(state.negativeKeywordsRaw, 'EXACT')
@@ -20,17 +21,20 @@ export function buildCreatePayload(state: WizardState) {
   const positiveLocations = state.locations.filter(l => !l.isNegative).map(l => l.id)
   const negativeLocations = state.locations.filter(l => l.isNegative).map(l => l.id)
 
+  const adGroupName = state.adGroupName.trim() || `${state.campaignName} - ${defaultAdGroupName}`
+
   return {
     campaignName: state.campaignName.trim(),
     advertisingChannelType: state.campaignType,
     dailyBudgetMicros: Math.round(parseFloat(state.dailyBudget) * 1_000_000),
     biddingStrategy: state.biddingStrategy,
+    ...(state.biddingFocus && { biddingFocus: state.biddingFocus }),
     ...(state.targetCpa && { targetCpaMicros: Math.round(parseFloat(state.targetCpa) * 1_000_000) }),
     ...(state.targetRoas && { targetRoas: parseFloat(state.targetRoas) }),
     ...(state.startDate && { startDate: state.startDate }),
     ...(state.endDate && { endDate: state.endDate }),
     networkSettings: state.networkSettings,
-    adGroupName: state.adGroupName.trim() || `${state.campaignName} - Reklam Grubu 1`,
+    adGroupName,
     ...(state.cpcBid && { cpcBidMicros: Math.round(parseFloat(state.cpcBid) * 1_000_000) }),
     keywords,
     negativeKeywords,
@@ -41,6 +45,7 @@ export function buildCreatePayload(state: WizardState) {
     ...(state.path2 && { path2: state.path2 }),
     locationIds: positiveLocations.length > 0 ? positiveLocations : undefined,
     negativeLocationIds: negativeLocations.length > 0 ? negativeLocations : undefined,
+    locationTargetingMode: state.locationTargetingMode,
     languageIds: state.languageIds.length > 0 ? state.languageIds : undefined,
     // Audience targeting — split by category for backend
     // USER_LIST: send full resourceNames (customers/X/userLists/Y) for customer validation
@@ -63,5 +68,15 @@ export function buildCreatePayload(state: WizardState) {
     })()),
     audienceMode: state.audienceMode,
     adSchedule: state.adSchedule.length > 0 ? state.adSchedule : undefined,
+    // Conversion goals — real resource names; applied post-create via CustomConversionGoal
+    ...(state.selectedConversionGoalIds.length > 0 && {
+      selectedConversionGoalIds: state.selectedConversionGoalIds,
+      primaryConversionGoalId: state.primaryConversionGoalId ?? undefined,
+    }),
+    // EU political ads: wizard state -> Google Ads API enum
+    containsEuPoliticalAdvertising:
+      state.euPoliticalAdsDeclaration === 'POLITICAL'
+        ? ('CONTAINS_EU_POLITICAL_ADVERTISING' as const)
+        : ('DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING' as const),
   }
 }

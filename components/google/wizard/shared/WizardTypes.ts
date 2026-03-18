@@ -26,52 +26,70 @@ export type AdvertisingChannelType =
   | 'SMART'
   | 'LOCAL'
 
-// Campaign type options available per goal
+// Campaign type options available per goal (labels/descs resolved via t() in components)
 export interface CampaignTypeOption {
   type: AdvertisingChannelType
-  label: string
-  desc: string
 }
 
 // Goal → available campaign types mapping (matches real Google Ads panel)
 export const GOAL_CAMPAIGN_TYPES: Record<CampaignGoal, CampaignTypeOption[]> = {
   SALES: [
-    { type: 'SEARCH', label: 'Arama', desc: 'Google Arama sonuçlarında metin reklamları' },
-    { type: 'PERFORMANCE_MAX', label: 'Maksimum Performans', desc: 'Tüm Google kanallarında otomatik reklam' },
-    { type: 'DISPLAY', label: 'Görüntülü Reklam', desc: 'Web sitelerinde görsel reklamlar' },
-    { type: 'SHOPPING', label: 'Alışveriş', desc: 'Ürün listeleme reklamları' },
-    { type: 'DEMAND_GEN', label: 'Talep Oluşturma', desc: 'YouTube, Gmail ve Discover\'da reklam' },
+    { type: 'SEARCH' },
+    { type: 'PERFORMANCE_MAX' },
+    { type: 'DISPLAY' },
+    { type: 'SHOPPING' },
+    { type: 'DEMAND_GEN' },
   ],
   LEADS: [
-    { type: 'SEARCH', label: 'Arama', desc: 'Google Arama sonuçlarında metin reklamları' },
-    { type: 'PERFORMANCE_MAX', label: 'Maksimum Performans', desc: 'Tüm Google kanallarında otomatik reklam' },
-    { type: 'DISPLAY', label: 'Görüntülü Reklam', desc: 'Web sitelerinde görsel reklamlar' },
-    { type: 'DEMAND_GEN', label: 'Talep Oluşturma', desc: 'YouTube, Gmail ve Discover\'da reklam' },
+    { type: 'SEARCH' },
+    { type: 'PERFORMANCE_MAX' },
+    { type: 'DISPLAY' },
+    { type: 'DEMAND_GEN' },
   ],
   WEBSITE_TRAFFIC: [
-    { type: 'SEARCH', label: 'Arama', desc: 'Google Arama sonuçlarında metin reklamları' },
-    { type: 'PERFORMANCE_MAX', label: 'Maksimum Performans', desc: 'Tüm Google kanallarında otomatik reklam' },
-    { type: 'DISPLAY', label: 'Görüntülü Reklam', desc: 'Web sitelerinde görsel reklamlar' },
-    { type: 'DEMAND_GEN', label: 'Talep Oluşturma', desc: 'YouTube, Gmail ve Discover\'da reklam' },
+    { type: 'SEARCH' },
+    { type: 'PERFORMANCE_MAX' },
+    { type: 'DISPLAY' },
+    { type: 'DEMAND_GEN' },
   ],
-  APP_PROMOTION: [
-    { type: 'MULTI_CHANNEL', label: 'Uygulama', desc: 'Tüm Google ağlarında uygulama tanıtımı' },
-  ],
+  APP_PROMOTION: [{ type: 'MULTI_CHANNEL' }],
   BRAND_AWARENESS: [
-    { type: 'DISPLAY', label: 'Görüntülü Reklam', desc: 'Web sitelerinde görsel reklamlar' },
-    { type: 'VIDEO', label: 'Video', desc: 'YouTube\'da video reklamlar' },
-    { type: 'DEMAND_GEN', label: 'Talep Oluşturma', desc: 'YouTube, Gmail ve Discover\'da reklam' },
+    { type: 'DISPLAY' },
+    { type: 'VIDEO' },
+    { type: 'DEMAND_GEN' },
   ],
-  LOCAL_STORE: [
-    { type: 'PERFORMANCE_MAX', label: 'Maksimum Performans', desc: 'Mağaza ziyaretlerini artırmak için tüm kanallarda reklam' },
-  ],
+  LOCAL_STORE: [{ type: 'PERFORMANCE_MAX' }],
   NO_GOAL: [
-    { type: 'SEARCH', label: 'Arama', desc: 'Google Arama sonuçlarında metin reklamları' },
-    { type: 'DISPLAY', label: 'Görüntülü Reklam', desc: 'Web sitelerinde görsel reklamlar' },
-    { type: 'VIDEO', label: 'Video', desc: 'YouTube\'da video reklamlar' },
-    { type: 'SHOPPING', label: 'Alışveriş', desc: 'Ürün listeleme reklamları' },
-    { type: 'PERFORMANCE_MAX', label: 'Maksimum Performans', desc: 'Tüm Google kanallarında otomatik reklam' },
-    { type: 'DEMAND_GEN', label: 'Talep Oluşturma', desc: 'YouTube, Gmail ve Discover\'da reklam' },
+    { type: 'SEARCH' },
+    { type: 'DISPLAY' },
+    { type: 'VIDEO' },
+    { type: 'SHOPPING' },
+    { type: 'PERFORMANCE_MAX' },
+    { type: 'DEMAND_GEN' },
+  ],
+}
+
+// Bidding focus — which metric/goal to optimize for (reacts to bidding strategy)
+export type BiddingFocus =
+  | 'CONVERSION_COUNT'
+  | 'CONVERSION_VALUE'
+  | 'TOP_OF_PAGE'
+  | 'ABSOLUTE_TOP_OF_PAGE'
+  | 'CLICKS'
+
+// Focus options available per bidding strategy (labels resolved via t() in components)
+export const BIDDING_FOCUS_BY_STRATEGY: Record<BiddingStrategy, { value: BiddingFocus; labelKey: string }[]> = {
+  MAXIMIZE_CLICKS: [{ value: 'CLICKS', labelKey: 'CLICKS' }],
+  MAXIMIZE_CONVERSIONS: [
+    { value: 'CONVERSION_COUNT', labelKey: 'CONVERSION_COUNT' },
+    { value: 'CONVERSION_VALUE', labelKey: 'CONVERSION_VALUE' },
+  ],
+  TARGET_CPA: [{ value: 'CONVERSION_COUNT', labelKey: 'CONVERSION_COUNT_CPA' }],
+  TARGET_ROAS: [{ value: 'CONVERSION_VALUE', labelKey: 'CONVERSION_VALUE_ROAS' }],
+  MANUAL_CPC: [{ value: 'CLICKS', labelKey: 'CLICKS' }],
+  TARGET_IMPRESSION_SHARE: [
+    { value: 'TOP_OF_PAGE', labelKey: 'TOP_OF_PAGE' },
+    { value: 'ABSOLUTE_TOP_OF_PAGE', labelKey: 'ABSOLUTE_TOP_OF_PAGE' },
   ],
 }
 
@@ -110,20 +128,57 @@ export interface NetworkSettings {
   targetContentNetwork: boolean
 }
 
+// Location targeting mode — presence vs presence+interest
+export type LocationTargetingMode = 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
+
+// EU political ads declaration (compliance)
+export type EuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
+
+// AI Max settings (Search step 4) — not in backend payload yet
+export interface AiMaxSettings {
+  enabled: boolean
+  broadMatchWithAI: boolean
+  targetingExpansion: boolean
+  creativeOptimization: boolean
+}
+
+/** Conversion action from Google Ads API — used by Search wizard Step 1 */
+export interface ConversionActionForWizard {
+  resourceName: string
+  id: string
+  name: string
+  category: string
+  origin: string
+  primaryForGoal: boolean
+  status: string
+}
+
 export interface WizardState {
   // Step 1: Goal & Campaign Type
   campaignGoal: CampaignGoal
   campaignType: AdvertisingChannelType
-  // Step 2: Campaign Settings
+  // Step 1: Conversion + Name (Search)
   campaignName: string
+  /** resource_name strings from Google Ads conversion_action */
+  selectedConversionGoalIds: string[]
+  /** resource_name of primary conversion action */
+  primaryConversionGoalId: string | null
+  /** Fetched from API in Step 1 — used for display/lookup */
+  conversionActions: ConversionActionForWizard[]
   dailyBudget: string
   biddingStrategy: BiddingStrategy
+  biddingFocus: BiddingFocus | null
+  bidOnlyForNewCustomers: boolean
   targetCpa: string
   targetRoas: string
   startDate: string
   endDate: string
   networkSettings: NetworkSettings
-  // Step 3: Location & Language
+  // Step 3: Campaign Settings
+  locationTargetingMode: LocationTargetingMode
+  euPoliticalAdsDeclaration: EuPoliticalAdsDeclaration
+  // Step 4: AI Max
+  aiMax: AiMaxSettings
   locations: SelectedLocation[]
   geoSearchCountry: string
   languageIds: string[]
@@ -204,40 +259,45 @@ export const LANGUAGE_OPTIONS: LanguageOption[] = [
 ]
 
 export const COUNTRY_OPTIONS = [
-  { code: '', label: 'Tüm Ülkeler' },
-  { code: 'TR', label: 'Türkiye' },
-  { code: 'US', label: 'ABD' },
-  { code: 'DE', label: 'Almanya' },
-  { code: 'GB', label: 'Birleşik Krallık' },
-  { code: 'FR', label: 'Fransa' },
-  { code: 'NL', label: 'Hollanda' },
-  { code: 'IT', label: 'İtalya' },
-  { code: 'ES', label: 'İspanya' },
+  { code: '', labelKey: 'location.countryAll' },
+  { code: 'TR', labelKey: 'location.countryTR' },
+  { code: 'US', labelKey: 'location.countryUS' },
+  { code: 'DE', labelKey: 'location.countryDE' },
+  { code: 'GB', labelKey: 'location.countryGB' },
+  { code: 'FR', labelKey: 'location.countryFR' },
+  { code: 'NL', labelKey: 'location.countryNL' },
+  { code: 'IT', labelKey: 'location.countryIT' },
+  { code: 'ES', labelKey: 'location.countryES' },
 ]
 
 export const DAYS_OF_WEEK: DayOfWeek[] = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
-export const DAY_LABELS: Record<DayOfWeek, string> = {
-  MONDAY: 'Pazartesi',
-  TUESDAY: 'Salı',
-  WEDNESDAY: 'Çarşamba',
-  THURSDAY: 'Perşembe',
-  FRIDAY: 'Cuma',
-  SATURDAY: 'Cumartesi',
-  SUNDAY: 'Pazar',
-}
+// Day labels resolved via t('schedule.dayLabels.MONDAY') etc. in components
 
 export const defaultState: WizardState = {
   campaignGoal: 'SALES',
   campaignType: 'SEARCH',
   campaignName: '',
+  selectedConversionGoalIds: [],
+  primaryConversionGoalId: null,
+  conversionActions: [],
   dailyBudget: '',
   biddingStrategy: 'MAXIMIZE_CLICKS',
+  biddingFocus: 'CLICKS',
+  bidOnlyForNewCustomers: false,
   targetCpa: '',
   targetRoas: '',
   startDate: '',
   endDate: '',
   networkSettings: { targetGoogleSearch: true, targetSearchNetwork: true, targetContentNetwork: false },
+  locationTargetingMode: 'PRESENCE_OR_INTEREST',
+  euPoliticalAdsDeclaration: 'NOT_POLITICAL',
+  aiMax: {
+    enabled: false,
+    broadMatchWithAI: true,
+    targetingExpansion: true,
+    creativeOptimization: true,
+  },
   locations: [],
   geoSearchCountry: '',
   languageIds: ['1037'],

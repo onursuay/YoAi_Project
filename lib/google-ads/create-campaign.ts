@@ -72,6 +72,14 @@ export interface CreateCampaignParams {
   adSchedule?: Array<{ dayOfWeek: string; startHour: number; startMinute: string; endHour: number; endMinute: string }>
   /** AB siyasi reklam içeriği – verilmezse DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING kullanılır. */
   containsEuPoliticalAdvertising?: EuPoliticalAdvertising
+  /** Konum hedefleme modu: PRESENCE_OR_INTEREST (varsayılan) veya PRESENCE_ONLY -> geoTargetTypeSetting.positiveGeoTargetType */
+  locationTargetingMode?: 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
+  /** Hedef metrik – sadece MAXIMIZE_CONVERSIONS ve TARGET_IMPRESSION_SHARE için backend kullanır. */
+  biddingFocus?: 'CONVERSION_COUNT' | 'CONVERSION_VALUE' | 'TOP_OF_PAGE' | 'ABSOLUTE_TOP_OF_PAGE' | 'CLICKS'
+  /** Dönüşüm hedefleri — conversion_action resource_name. Post-create CustomConversionGoal + ConversionGoalCampaignConfig ile uygulanır. */
+  selectedConversionGoalIds?: string[]
+  /** Birincil dönüşüm — tek action optimize edilir. primaryConversionGoalId varsa sadece o kullanılır. */
+  primaryConversionGoalId?: string | null
 }
 
 export async function postMutate<T = any>(ctx: Ctx, resource: string, operations: unknown[]): Promise<T> {
@@ -95,8 +103,30 @@ export async function postMutate<T = any>(ctx: Ctx, resource: string, operations
   return data
 }
 
-export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams) {
+export interface CreateCampaignResult {
+  campaignResourceName: string
+  adGroupResourceName: string
+  conversionGoalsApplied?: boolean
+  conversionGoalsWarning?: string
+}
+
+export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams): Promise<CreateCampaignResult> {
   const channelType: AdvertisingChannelType = params.advertisingChannelType ?? 'SEARCH'
+
+  // 0. Create CustomConversionGoal FIRST (SEARCH only) — fail fast, no campaign created yet
+  let customGoalResourceName: string | null = null
+  if (
+    channelType === 'SEARCH' &&
+    params.selectedConversionGoalIds?.length
+  ) {
+    const { createCustomConversionGoal } = await import('./apply-conversion-goals')
+    customGoalResourceName = await createCustomConversionGoal(
+      ctx,
+      params.selectedConversionGoalIds,
+      params.primaryConversionGoalId ?? undefined,
+      params.campaignName
+    )
+  }
 
   // 1. Campaign Budget
   const budgetData = await postMutate(ctx, 'campaignBudgets', [{
@@ -117,14 +147,22 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
       ? { cpcBidCeilingMicros: params.cpcBidCeilingMicros }
       : {}
   } else if (params.biddingStrategy === 'MAXIMIZE_CONVERSIONS') {
-    biddingField.maximizeConversions = params.targetCpaMicros ? { targetCpaMicros: String(params.targetCpaMicros) } : {}
+    if (params.biddingFocus === 'CONVERSION_VALUE') {
+      biddingField.maximizeConversionValue = params.targetRoas
+        ? { targetRoas: params.targetRoas }
+        : {}
+    } else {
+      biddingField.maximizeConversions = params.targetCpaMicros ? { targetCpaMicros: String(params.targetCpaMicros) } : {}
+    }
   } else if (params.biddingStrategy === 'TARGET_CPA') {
     biddingField.targetCpa = { targetCpaMicros: params.targetCpaMicros ?? 0 }
   } else if (params.biddingStrategy === 'TARGET_ROAS') {
     biddingField.targetRoas = { targetRoas: params.targetRoas ?? 1 }
   } else if (params.biddingStrategy === 'TARGET_IMPRESSION_SHARE') {
+    const impressionLocation =
+      params.biddingFocus === 'ABSOLUTE_TOP_OF_PAGE' ? 'ABSOLUTE_TOP_OF_PAGE' : 'TOP_OF_PAGE'
     biddingField.targetImpressionShare = {
-      location: 'TOP_OF_PAGE',
+      location: impressionLocation,
       locationFractionMicros: '700000',
       cpcBidCeilingMicros: params.cpcBidCeilingMicros ? String(params.cpcBidCeilingMicros) : '5000000',
     }
@@ -137,6 +175,14 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
 
   const containsEuPoliticalAdvertising: EuPoliticalAdvertising =
     params.containsEuPoliticalAdvertising ?? DEFAULT_EU_POLITICAL_ADVERTISING
+
+  // Geo target type: PRESENCE_ONLY -> PRESENCE; PRESENCE_OR_INTEREST -> PRESENCE_OR_INTEREST (1:1 for latter)
+  const geoTargetTypeSetting =
+    params.locationTargetingMode === 'PRESENCE_ONLY'
+      ? { positiveGeoTargetType: 'PRESENCE' as const }
+      : params.locationTargetingMode === 'PRESENCE_OR_INTEREST'
+        ? { positiveGeoTargetType: 'PRESENCE_OR_INTEREST' as const }
+        : undefined
 
   // Network settings — only for SEARCH campaigns per Google Ads API (docs Section 2.3)
   const networkSettings = channelType === 'SEARCH' ? {
@@ -153,6 +199,7 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
       campaignBudget: budgetResourceName,
       status: 'ENABLED',
       containsEuPoliticalAdvertising,
+      ...(geoTargetTypeSetting && { geoTargetTypeSetting }),
       ...(networkSettings && { networkSettings }),
       startDateTime: params.startDate ? params.startDate.replace(/-/g, '-') + ' 00:00:00' : fmt(tomorrow),
       ...(params.endDate && { endDateTime: params.endDate + ' 23:59:59' }),
@@ -330,5 +377,24 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
     })))
   }
 
-  return { campaignResourceName, adGroupResourceName }
+  // 11. Attach ConversionGoalCampaignConfig (final step) — do not throw on failure; return partial success
+  let conversionGoalsApplied = true
+  let conversionGoalsWarning: string | undefined
+  if (customGoalResourceName) {
+    const { attachConversionGoalToCampaign, CONVERSION_GOAL_CONFIG_WARNING } = await import('./apply-conversion-goals')
+    const attachResult = await attachConversionGoalToCampaign(ctx, campaignResourceName, customGoalResourceName)
+    if (!attachResult.ok) {
+      conversionGoalsApplied = false
+      conversionGoalsWarning = attachResult.warning ?? CONVERSION_GOAL_CONFIG_WARNING
+    }
+  } else {
+    conversionGoalsApplied = false
+  }
+
+  return {
+    campaignResourceName,
+    adGroupResourceName,
+    ...(customGoalResourceName != null && { conversionGoalsApplied }),
+    ...(conversionGoalsWarning && { conversionGoalsWarning }),
+  }
 }

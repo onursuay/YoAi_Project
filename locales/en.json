@@ -431,7 +431,13 @@
           "adgroup": "Ad Group & Keywords",
           "ad": "Ad",
           "schedule": "Schedule",
-          "summary": "Summary & Review"
+          "summary": "Summary & Review",
+          "conversionAndName": "Conversion & Name",
+          "bidding": "Bidding & Acquisition",
+          "campaignSettings": "Campaign Settings",
+          "aiMax": "AI Max",
+          "keywordsAndAds": "Keywords & Ads",
+          "budget": "Budget"
         },
         "nav": {
           "cancel": "Cancel",
@@ -439,6 +445,82 @@
           "next": "Next",
           "submit": "Create Campaign",
           "submitting": "Creating..."
+        },
+        "goal": {
+          "selectTitle": "Select your campaign goal",
+          "selectDesc": "What do you want to achieve with your campaign?",
+          "campaignTypeTitle": "Campaign Type",
+          "labels": {
+            "SALES": "Sales",
+            "LEADS": "Leads",
+            "WEBSITE_TRAFFIC": "Website Traffic",
+            "APP_PROMOTION": "App Promotion",
+            "BRAND_AWARENESS": "Brand Awareness",
+            "LOCAL_STORE": "Local Store Visits",
+            "NO_GOAL": "Create Campaign Without Goal"
+          },
+          "descs": {
+            "SALES": "Increase sales online, in-app, by phone, or in-store",
+            "LEADS": "Collect leads and sign-ups",
+            "WEBSITE_TRAFFIC": "Drive more visitors to your website",
+            "APP_PROMOTION": "Increase app installs and engagement",
+            "BRAND_AWARENESS": "Reach and consideration",
+            "LOCAL_STORE": "Increase visits to your store",
+            "NO_GOAL": "Create a campaign directly without setting a goal"
+          }
+        },
+        "campaignTypeDescs": {
+          "SEARCH": "Text ads on Google Search results",
+          "PERFORMANCE_MAX": "Automated ads across all Google channels",
+          "DISPLAY": "Visual ads on websites",
+          "SHOPPING": "Product listing ads",
+          "DEMAND_GEN": "Ads on YouTube, Gmail, and Discover",
+          "VIDEO": "Video ads on YouTube",
+          "MULTI_CHANNEL": "App promotion across Google networks",
+          "SMART": "Smart campaign",
+          "LOCAL": "Local campaign"
+        },
+        "schedule": {
+          "title": "Ad Schedule",
+          "description": "Specify when your ads are shown by day and time",
+          "businessHours": "Business hours (Mon–Fri 09:00–18:00)",
+          "clearAll": "24/7 (Clear)",
+          "allDay": "All day",
+          "add": "Add",
+          "optionalNote": "This step is optional — if left empty, ads run 24/7.",
+          "dayLabels": {
+            "MONDAY": "Mon",
+            "TUESDAY": "Tue",
+            "WEDNESDAY": "Wed",
+            "THURSDAY": "Thu",
+            "FRIDAY": "Fri",
+            "SATURDAY": "Sat",
+            "SUNDAY": "Sun"
+          }
+        },
+        "conversion": {
+          "title": "Conversion Goals",
+          "description": "Select conversion actions for campaign optimization. At least one goal must be selected.",
+          "uiOnlyNote": "",
+          "loading": "Loading conversion actions...",
+          "error": "Failed to load conversion actions. Please check your Google Ads account and try again.",
+          "empty": "No conversion actions found in your account. Create a conversion action in Google Ads before creating a campaign.",
+          "conversionAction": "Conversion Action",
+          "category": "Category",
+          "primary": "Primary",
+          "primaryGoalTitle": "Primary goal",
+          "setAsPrimaryTitle": "Set as primary",
+          "set": "Set",
+          "goalsSelected": "{count} goals selected",
+          "primaryLabel": "Primary:"
+        },
+        "bidding": {
+          "focusTitle": "Which goal do you want to focus on?",
+          "acquisitionTitle": "Customer Acquisition",
+          "acquisitionDescription": "Option to bid for new customer acquisition.",
+          "newCustomersOnly": "Bid only for new customers",
+          "newCustomersOnlyHint": "Ads will be shown primarily to users who have not transacted with you before.",
+          "newCustomersOnlyUiNote": "This option is not yet applied to Google Ads. Planning phase."
         },
         "campaign": {
           "name": "Campaign Name",
@@ -460,17 +542,108 @@
           "startDate": "Start Date",
           "endDate": "End Date"
         },
+        "aiMax": {
+          "title": "AI Max",
+          "description": "YoAi uses AI-powered features to improve your campaign performance. These settings affect broad match, targeting expansion, and ad optimization.",
+          "enabled": "Enable AI Max",
+          "disabled": "AI Max disabled",
+          "broadMatchWithAI": "Broad match with AI",
+          "broadMatchWithAIHint": "Expands your keywords with AI to reach relevant searches",
+          "targetingExpansion": "AI-assisted targeting expansion",
+          "targetingExpansionHint": "Suggests automatic expansion to similar audiences",
+          "creativeOptimization": "AI-assisted creative optimization",
+          "creativeOptimizationHint": "Improves headline and description performance",
+          "summaryEnabled": "AI Max enabled",
+          "summaryOptions": "Options",
+          "uiOnlyNote": "AI Max settings are not yet sent to Google Ads. Will be applied in the next release."
+        },
+        "settings": {
+          "networksTitle": "Network Settings",
+          "networksGoogleSearch": "Google Search",
+          "networksGoogleSearchHint": "Always on",
+          "networksSearchPartners": "Search Network Partners",
+          "networksSearchPartnersHint": "Show on search partner sites",
+          "networksDisplay": "Display Network",
+          "networksDisplayHint": "Text ads on Display network",
+          "locationModeTitle": "Location targeting mode",
+          "locationModePresenceInterest": "Presence or interest",
+          "locationModePresenceInterestDesc": "People in, regularly in, or who've shown interest in your targeted locations",
+          "locationModePresenceOnly": "Presence only",
+          "locationModePresenceOnlyDesc": "People in or regularly in your targeted locations",
+          "euPoliticalTitle": "EU Political Ads Declaration",
+          "euPoliticalDescription": "Political ads in EU countries require declaration.",
+          "euPoliticalNotPolitical": "Not a political ad",
+          "euPoliticalPolitical": "Political ad — declaration required",
+          "otherSettingsTitle": "Other settings"
+        },
         "location": {
           "description": "Select the locations you want to target. If left empty, Turkey will be targeted.",
+          "locationTargetingTitle": "Location Targeting",
           "searchPlaceholder": "Search city or region... (e.g.: Istanbul, Ankara)",
           "searchButton": "Search",
           "searching": "Searching...",
           "noResults": "No results found.",
           "selectedTitle": "Selected Locations",
-          "noLocationNote": "No location selected — campaign will target all of Turkey."
+          "selectedTitleWithCount": "Selected Locations ({count})",
+          "noLocationNote": "No location selected — campaign will target all of Turkey.",
+          "excludedParens": "(excluded)",
+          "includeTitle": "Include",
+          "excludeTitle": "Exclude",
+          "includeLabel": "include",
+          "excludeLabel": "exclude",
+          "languageTargetingTitle": "Language Targeting",
+          "languageTargetingHint": "Select which language your ads will be shown to users who search.",
+          "countryAll": "All Countries",
+          "countryTR": "Turkey",
+          "countryUS": "United States",
+          "countryDE": "Germany",
+          "countryGB": "United Kingdom",
+          "countryFR": "France",
+          "countryNL": "Netherlands",
+          "countryIT": "Italy",
+          "countryES": "Spain"
+        },
+        "audience": {
+          "segmentTitle": "Audience Segments",
+          "segmentDescription": "Search or browse Google audience segments by category",
+          "targetingMode": "Targeting Mode",
+          "observation": "Observation",
+          "targeting": "Targeting",
+          "observationDesc": "Adjust bids but don't restrict reach",
+          "targetingDesc": "Show ads only to these audiences",
+          "tabSearch": "Search",
+          "tabBrowse": "Browse",
+          "searchPlaceholder": "Search audience segments... (e.g.: cars, sports, parenting)",
+          "noResults": "No results found",
+          "searchHint": "Search across in-market, affinity, demographic, and your data segments.",
+          "loading": "Loading audience segments...",
+          "browseError": "Failed to load audience segments",
+          "dataNotReady": "Audience data is not ready yet. Needs to be refreshed by admin.",
+          "segmentsSelected": "{count} segments selected",
+          "optionalNote": "This step is optional — can be left empty.",
+          "categoryLabels": {
+            "AFFINITY": "Affinity",
+            "IN_MARKET": "In-Market",
+            "DETAILED_DEMOGRAPHIC": "Detailed Demographics",
+            "LIFE_EVENT": "Life Events",
+            "USER_LIST": "Your Data",
+            "CUSTOM_AUDIENCE": "Custom Audience",
+            "COMBINED_AUDIENCE": "Combined Segment"
+          },
+          "browseSections": {
+            "inMarket": { "label": "In-Market", "desc": "In-market audience segments" },
+            "affinity": { "label": "Affinity and Habits", "desc": "Affinity segments" },
+            "detailedDemographics": { "label": "Who They Are", "desc": "Detailed demographic segments" },
+            "lifeEvents": { "label": "Life Events", "desc": "Life event segments" },
+            "userLists": { "label": "How They Interact With Your Business", "desc": "Segments based on your data (remarketing, CRM)" },
+            "customAudiences": { "label": "Your Custom Audiences", "desc": "Keyword/URL-based custom audiences" },
+            "combinedAudiences": { "label": "Your Combined Audience Segments", "desc": "Combined segments" }
+          }
         },
         "adgroup": {
           "name": "Ad Group Name",
+          "sectionTitle": "Ad Group",
+          "defaultNameFallback": "Ad Group 1",
           "namePlaceholder": "E.g.: General Search Group",
           "defaultMatchType": "Default Match Type",
           "matchTypes": {
@@ -478,8 +651,37 @@
             "PHRASE": "Phrase Match",
             "EXACT": "Exact Match"
           },
+          "matchTypesShort": {
+            "BROAD": "Broad",
+            "PHRASE": "Phrase",
+            "EXACT": "Exact"
+          },
           "keywords": "Keywords",
+          "keywordsSectionTitle": "Keywords",
           "keywordsNote": "One keyword per line, use [exact] or \"phrase\" brackets",
+          "defaultLabel": "Default:",
+          "keywordCount": "{count} keywords",
+          "keywordSuggestionBtn": "Get Keyword Suggestions",
+          "suggestionsError": "Failed to load suggestions",
+          "suggestionsEmpty": "No suggestions found.",
+          "tableKeyword": "Keyword",
+          "tableAvgSearch": "Avg. Search",
+          "tableCompetition": "Competition",
+          "negativeKeywordsSectionTitle": "Negative Keywords",
+          "urlPathSectionTitle": "URL & Display Path",
+          "headlinesSectionTitle": "Headlines (RSA)",
+          "headlinesHint": "Min 3, max 15 — each max 30 characters. First 3 headlines required.",
+          "headlinesCount": "{count}/15 headlines",
+          "headlinesMinRequired": "(min 3 required)",
+          "descriptionsSectionTitle": "Descriptions (RSA)",
+          "descriptionsHint": "Min 2, max 4 — each max 90 characters. First 2 descriptions required.",
+          "descriptionsCount": "{count}/4 descriptions",
+          "descriptionsMinRequired": "(min 2 required)",
+          "competition": {
+            "LOW": "Low",
+            "MEDIUM": "Medium",
+            "HIGH": "High"
+          },
           "keywordsPlaceholder": "google ads agency\n\"google ads management\"\n[google ads istanbul]",
           "negativeKeywords": "Negative Keywords (optional, exact match)",
           "negativeKeywordsPlaceholder": "free\ncheap",
@@ -502,6 +704,45 @@
           "descriptionRequired": "Description {n} *",
           "descriptionOptional": "Description {n} (optional)"
         },
+        "budget": {
+          "dailyBudget": "Daily Budget",
+          "dailyBudgetPlaceholder": "E.g.: 500",
+          "trySuffix": "TRY",
+          "recommendationTitle": "Recommended budget",
+          "recommendationText": "Google recommendation for your bidding strategy",
+          "lowBudgetWarning": "Very low budget may limit impressions.",
+          "deliveryLearningTitle": "Delivery & Learning",
+          "deliveryLearningText": "Google Ads distributes your budget throughout the day. New campaigns may need 1–2 weeks to complete the learning phase.",
+          "dateRangeTitle": "Date Range",
+          "dateRangeSet": "{start} – {end}",
+          "dateRangeStartOnly": "{start} (start only)",
+          "dateRangeNone": "Not set (no end date)",
+          "dateRangeHint": "Edit in Campaign Settings step",
+          "strategyNoteCpa": "For Target CPA, budget should be at least 10× your target CPA per day.",
+          "strategyNoteRoas": "Sufficient budget helps Target ROAS complete the learning phase faster.",
+          "manualCpcNote": "With Manual CPC, budget sets your maximum daily spend."
+        },
+        "review": {
+          "title": "Publish Control",
+          "blockingTitle": "Required items",
+          "blockingEmpty": "All required fields are complete.",
+          "advisoryTitle": "Recommendations",
+          "advisoryEmpty": "No recommendations.",
+          "lowKeywords": "Few keywords — adding more may improve performance.",
+          "weakHeadlines": "Add more headlines for better ad rotation.",
+          "weakDescriptions": "3–4 descriptions may improve performance.",
+          "lowBudget": "Budget below recommended minimum.",
+          "aiMaxDisabled": "AI Max disabled — AI features will not be used.",
+          "sectionCampaign": "Campaign Summary",
+          "sectionConversion": "Conversion Goals",
+          "sectionBidding": "Bidding",
+          "sectionSettings": "Campaign Settings",
+          "sectionAiMax": "AI Max",
+          "sectionKeywords": "Keywords & Ads",
+          "sectionBudget": "Budget",
+          "sectionAudience": "Audience Targeting",
+          "uiOnlyFieldsNote": "Bid only for new customers and AI Max settings are not yet applied to Google Ads. Planning phase."
+        },
         "summary": {
           "campaign": "Campaign",
           "dailyBudget": "Daily Budget",
@@ -518,7 +759,89 @@
           "locations": "Target Locations",
           "locationCount": "{count} locations selected",
           "locationDefault": "All Turkey",
-          "pausedNote": "Campaign will be created as PAUSED. Activate from the campaign table to go live."
+          "locationAllWorld": "All World",
+          "pausedNote": "Campaign will be created as PAUSED. Activate from the campaign table to go live.",
+          "rowCampaignGoal": "Campaign Goal",
+          "rowCampaignType": "Campaign Type",
+          "rowNetworks": "Network Settings",
+          "rowExcludedLocations": "Excluded Locations",
+          "rowLanguages": "Languages",
+          "rowAdSchedule": "Ad Schedule",
+          "scheduleSlots": "{count} time slots",
+          "scheduleAllDay": "24/7 - All day",
+          "budgetWarning": "Daily budget ({budget} TRY) is below recommended minimum ({recommended} TRY).",
+          "publishNote": "Campaign will be automatically published when created.",
+          "goalLabels": {
+            "SALES": "Sales",
+            "LEADS": "Leads",
+            "WEBSITE_TRAFFIC": "Website Traffic",
+            "APP_PROMOTION": "App Promotion",
+            "BRAND_AWARENESS": "Brand Awareness",
+            "LOCAL_STORE": "Local Store Visits",
+            "NO_GOAL": "Without Goal"
+          },
+          "biddingLabels": {
+            "MAXIMIZE_CLICKS": "Maximize Clicks",
+            "MAXIMIZE_CONVERSIONS": "Maximize Conversions",
+            "TARGET_CPA": "Target CPA",
+            "TARGET_ROAS": "Target ROAS",
+            "MANUAL_CPC": "Manual CPC",
+            "TARGET_IMPRESSION_SHARE": "Target Impression Share"
+          },
+          "campaignTypeLabels": {
+            "SEARCH": "Search",
+            "PERFORMANCE_MAX": "Performance Max",
+            "DISPLAY": "Display",
+            "SHOPPING": "Shopping",
+            "DEMAND_GEN": "Demand Gen",
+            "VIDEO": "Video",
+            "MULTI_CHANNEL": "App",
+            "SMART": "Smart",
+            "LOCAL": "Local"
+          },
+          "networkLabels": {
+            "googleSearch": "Google Search",
+            "searchPartners": "Search Network Partners",
+            "contentNetwork": "Display Network"
+          },
+          "biddingFocusLabels": {
+            "CONVERSION_COUNT": "Conversion count",
+            "CONVERSION_COUNT_CPA": "Conversion count (CPA)",
+            "CONVERSION_VALUE": "Conversion value",
+            "CONVERSION_VALUE_ROAS": "Conversion value (ROAS)",
+            "TOP_OF_PAGE": "Top of page",
+            "ABSOLUTE_TOP_OF_PAGE": "Absolute top of page",
+            "CLICKS": "Clicks"
+          },
+          "dayLabelsShort": {
+            "MONDAY": "Mon",
+            "TUESDAY": "Tue",
+            "WEDNESDAY": "Wed",
+            "THURSDAY": "Thu",
+            "FRIDAY": "Fri",
+            "SATURDAY": "Sat",
+            "SUNDAY": "Sun"
+          },
+          "audienceSegmentsLabel": "Audience Segments",
+          "audienceSegmentsSelected": "{count} segments selected",
+          "audienceModeLabel": "Audience Mode",
+          "audienceNone": "None selected",
+          "audienceModeLabels": {
+            "OBSERVATION": "Observation",
+            "TARGETING": "Targeting"
+          },
+          "languageNames": {
+            "1037": "Turkish",
+            "1000": "English",
+            "1001": "German",
+            "1002": "French",
+            "1003": "Spanish",
+            "1004": "Italian",
+            "1010": "Dutch",
+            "1014": "Portuguese",
+            "1019": "Arabic",
+            "1031": "Russian"
+          }
         },
         "validation": {
           "campaignNameRequired": "Campaign name is required",
@@ -534,11 +857,21 @@
           "descriptionMaxLength": "Descriptions must be max 90 characters",
           "duplicateHeadlines": "Headlines must be unique (no duplicates)",
           "duplicateDescriptions": "Descriptions must be unique (no duplicates)",
-          "languageRequired": "At least 1 language selection is required"
+          "languageRequired": "At least 1 language selection is required",
+          "conversionGoalsRequired": "Select at least 1 conversion goal"
         },
         "toast": {
-          "success": "Campaign created successfully (PAUSED)",
-          "error": "Failed to create campaign"
+          "success": "Campaign created successfully.",
+          "partialSuccess": "Campaign created. Conversion goals could not be applied — please configure manually in Google Ads.",
+          "error": "Failed to create campaign",
+          "networkError": "Connection error. Please try again."
+        },
+        "result": {
+          "fullTitle": "Campaign created",
+          "fullMessage": "Campaign was created successfully and will appear in the list.",
+          "partialTitle": "Campaign created",
+          "partialMessage": "Campaign was created but conversion goals could not be applied. Please configure them manually in Google Ads.",
+          "acknowledge": "OK"
         }
       }
     },

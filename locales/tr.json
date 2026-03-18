@@ -431,7 +431,13 @@
           "adgroup": "Reklam Grubu & Anahtar Kelimeler",
           "ad": "Reklam",
           "schedule": "Zamanlama",
-          "summary": "Özet & Onay"
+          "summary": "Özet & Onay",
+          "conversionAndName": "Dönüşüm & Ad",
+          "bidding": "Teklif & Edinim",
+          "campaignSettings": "Kampanya Ayarları",
+          "aiMax": "AI Max",
+          "keywordsAndAds": "Anahtar Kelimeler & Reklam",
+          "budget": "Bütçe"
         },
         "nav": {
           "cancel": "İptal",
@@ -439,6 +445,82 @@
           "next": "İleri",
           "submit": "Kampanyayı Oluştur",
           "submitting": "Oluşturuluyor..."
+        },
+        "goal": {
+          "selectTitle": "Kampanya Hedefinizi Seçin",
+          "selectDesc": "Kampanyanızla ne elde etmek istiyorsunuz?",
+          "campaignTypeTitle": "Kampanya Türü",
+          "labels": {
+            "SALES": "Satış",
+            "LEADS": "Potansiyel Müşteriler",
+            "WEBSITE_TRAFFIC": "Web Sitesi Trafiği",
+            "APP_PROMOTION": "Uygulama Tanıtımı",
+            "BRAND_AWARENESS": "Bilinirlik ve Markayı Dikkate Alma",
+            "LOCAL_STORE": "Yerel Mağaza Ziyaretleri",
+            "NO_GOAL": "Kılavuz Olmadan Kampanya Oluştur"
+          },
+          "descs": {
+            "SALES": "Online, uygulama, telefon veya mağaza içi satışları artırın",
+            "LEADS": "Potansiyel müşteri formları ve kayıtlar toplayın",
+            "WEBSITE_TRAFFIC": "Web sitenize daha fazla ziyaretçi çekin",
+            "APP_PROMOTION": "Uygulamanızın yüklenmesini ve etkileşimini artırın",
+            "BRAND_AWARENESS": "Markanızı daha geniş kitlelere ulaştırın",
+            "LOCAL_STORE": "Mağazanıza gerçek ziyaretleri artırın",
+            "NO_GOAL": "Hedef belirlemeden doğrudan kampanya oluşturun"
+          }
+        },
+        "campaignTypeDescs": {
+          "SEARCH": "Google Arama sonuçlarında metin reklamları",
+          "PERFORMANCE_MAX": "Tüm Google kanallarında otomatik reklam",
+          "DISPLAY": "Web sitelerinde görsel reklamlar",
+          "SHOPPING": "Ürün listeleme reklamları",
+          "DEMAND_GEN": "YouTube, Gmail ve Discover'da reklam",
+          "VIDEO": "YouTube'da video reklamlar",
+          "MULTI_CHANNEL": "Tüm Google ağlarında uygulama tanıtımı",
+          "SMART": "Akıllı kampanya",
+          "LOCAL": "Yerel kampanya"
+        },
+        "schedule": {
+          "title": "Reklam Zamanlaması",
+          "description": "Reklamlarınızın hangi gün ve saatlerde gösterileceğini belirleyin",
+          "businessHours": "İş Saatleri (Pzt-Cum 09:00-18:00)",
+          "clearAll": "7/24 (Temizle)",
+          "allDay": "Tüm gün",
+          "add": "Ekle",
+          "optionalNote": "Bu adım isteğe bağlı — boş bırakırsanız reklamlar 7/24 yayınlanır.",
+          "dayLabels": {
+            "MONDAY": "Pzt",
+            "TUESDAY": "Sal",
+            "WEDNESDAY": "Çar",
+            "THURSDAY": "Per",
+            "FRIDAY": "Cum",
+            "SATURDAY": "Cmt",
+            "SUNDAY": "Paz"
+          }
+        },
+        "conversion": {
+          "title": "Dönüşüm Hedefleri",
+          "description": "Kampanyanızın optimizasyonu için dönüşüm eylemlerini seçin. En az bir hedef seçilmelidir.",
+          "uiOnlyNote": "",
+          "loading": "Dönüşüm eylemleri yükleniyor...",
+          "error": "Dönüşüm eylemleri yüklenemedi. Lütfen Google Ads hesabınızı kontrol edip tekrar deneyin.",
+          "empty": "Hesabınızda dönüşüm eylemi bulunamadı. Kampanya oluşturmak için önce Google Ads'te bir dönüşüm eylemi oluşturun.",
+          "conversionAction": "Dönüşüm Eylemi",
+          "category": "Kategori",
+          "primary": "Birincil",
+          "primaryGoalTitle": "Birincil hedef",
+          "setAsPrimaryTitle": "Birincil olarak ayarla",
+          "set": "Ayarla",
+          "goalsSelected": "{count} hedef seçildi",
+          "primaryLabel": "Birincil:"
+        },
+        "bidding": {
+          "focusTitle": "Hangi hedefe odaklanmak istiyorsunuz?",
+          "acquisitionTitle": "Müşteri Edinimi",
+          "acquisitionDescription": "Yeni müşteri hedefli teklif verme seçeneği.",
+          "newCustomersOnly": "Yalnızca yeni müşteriler için teklif ver",
+          "newCustomersOnlyHint": "Reklamlar öncelikle daha önce sizinle işlem yapmamış kullanıcılara gösterilir.",
+          "newCustomersOnlyUiNote": "Bu seçenek henüz Google Ads'e uygulanmaz. Planlama aşamasındadır."
         },
         "campaign": {
           "name": "Kampanya Adı",
@@ -460,17 +542,108 @@
           "startDate": "Başlangıç Tarihi",
           "endDate": "Bitiş Tarihi"
         },
+        "aiMax": {
+          "title": "AI Max",
+          "description": "YoAi, kampanyanızın performansını artırmak için AI destekli özellikleri kullanır. Bu ayarlar geniş eşleme, hedefleme genişletmesi ve reklam optimizasyonunu etkiler.",
+          "enabled": "AI Max etkinleştir",
+          "disabled": "AI Max kapalı",
+          "broadMatchWithAI": "Geniş eşleme ile AI",
+          "broadMatchWithAIHint": "Anahtar kelimelerinizi AI ile genişletir, ilgili aramalara ulaşır",
+          "targetingExpansion": "AI destekli hedefleme genişletmesi",
+          "targetingExpansionHint": "Benzer kitlelere otomatik genişleme önerir",
+          "creativeOptimization": "AI destekli reklam optimizasyonu",
+          "creativeOptimizationHint": "Başlık ve açıklamaların performansını iyileştirir",
+          "summaryEnabled": "AI Max etkin",
+          "summaryOptions": "Seçenekler",
+          "uiOnlyNote": "AI Max ayarları şu anda Google Ads'e gönderilmez. Sonraki sürümde uygulanacaktır."
+        },
+        "settings": {
+          "networksTitle": "Ağ Ayarları",
+          "networksGoogleSearch": "Google Arama",
+          "networksGoogleSearchHint": "Her zaman aktif",
+          "networksSearchPartners": "Arama Ağı Ortakları",
+          "networksSearchPartnersHint": "Arama partner sitelerinde gösterim",
+          "networksDisplay": "Görüntülü Reklam Ağı",
+          "networksDisplayHint": "Display ağında metin reklamları",
+          "locationModeTitle": "Konum hedefleme modu",
+          "locationModePresenceInterest": "Varlık ve ilgi",
+          "locationModePresenceInterestDesc": "Hedef konumlarda olan, düzenli burada bulunan veya ilgi gösteren kullanıcılar",
+          "locationModePresenceOnly": "Yalnızca varlık",
+          "locationModePresenceOnlyDesc": "Hedef konumlarda olan veya düzenli burada bulunan kullanıcılar",
+          "euPoliticalTitle": "AB Siyasi Reklam Bildirimi",
+          "euPoliticalDescription": "AB ülkelerinde siyasi içerikli reklamlar bildirime tabidir.",
+          "euPoliticalNotPolitical": "Siyasi reklam değil",
+          "euPoliticalPolitical": "Siyasi reklam — bildirim yapılacak",
+          "otherSettingsTitle": "Diğer ayarlar"
+        },
         "location": {
           "description": "Hedeflemek istediğiniz konumları seçin. Boş bırakırsanız Türkiye geneli hedeflenir.",
+          "locationTargetingTitle": "Konum Hedefleme",
           "searchPlaceholder": "Şehir veya bölge ara... (ör: İstanbul, Ankara)",
           "searchButton": "Ara",
           "searching": "Aranıyor...",
           "noResults": "Sonuç bulunamadı.",
           "selectedTitle": "Seçili Konumlar",
-          "noLocationNote": "Konum seçilmedi — kampanya Türkiye genelini hedefleyecek."
+          "selectedTitleWithCount": "Seçili Konumlar ({count})",
+          "noLocationNote": "Konum seçilmedi — kampanya Türkiye genelini hedefleyecek.",
+          "excludedParens": "(hariç)",
+          "includeTitle": "Dahil et",
+          "excludeTitle": "Hariç tut",
+          "includeLabel": "dahil",
+          "excludeLabel": "hariç",
+          "languageTargetingTitle": "Dil Hedefleme",
+          "languageTargetingHint": "Reklamlarınızın hangi dilde arama yapan kullanıcılara gösterileceğini seçin",
+          "countryAll": "Tüm Ülkeler",
+          "countryTR": "Türkiye",
+          "countryUS": "ABD",
+          "countryDE": "Almanya",
+          "countryGB": "Birleşik Krallık",
+          "countryFR": "Fransa",
+          "countryNL": "Hollanda",
+          "countryIT": "İtalya",
+          "countryES": "İspanya"
+        },
+        "audience": {
+          "segmentTitle": "Kitle Segmentleri",
+          "segmentDescription": "Google kitle segmentlerini arayın veya kategorilere göz atın",
+          "targetingMode": "Hedefleme Modu",
+          "observation": "Gözlem",
+          "targeting": "Hedefleme",
+          "observationDesc": "Teklifleri ayarlayın ancak erişimi daraltmayın",
+          "targetingDesc": "Reklamları yalnızca bu kitlelere gösterin",
+          "tabSearch": "Arama",
+          "tabBrowse": "Göz at",
+          "searchPlaceholder": "Kitle segmenti arayın... (ör: araba, spor, ebeveyn)",
+          "noResults": "Sonuç bulunamadı",
+          "searchHint": "Pazardaki kitle, yakın ilgi alanı, demografi ve verilerinize göre segmentler arasında arayın.",
+          "loading": "Kitle segmentleri yükleniyor...",
+          "browseError": "Kitle segmentleri yüklenemedi",
+          "dataNotReady": "Kitle verileri henüz hazır değil. Yönetici tarafından yenilenmesi gerekiyor.",
+          "segmentsSelected": "{count} kitle segmenti seçildi",
+          "optionalNote": "Bu adım isteğe bağlı — boş bırakılabilir.",
+          "categoryLabels": {
+            "AFFINITY": "Yakın İlgi Alanı",
+            "IN_MARKET": "Pazardaki Kitle",
+            "DETAILED_DEMOGRAPHIC": "Ayrıntılı Demografi",
+            "LIFE_EVENT": "Yaşam Olayları",
+            "USER_LIST": "Verileriniz",
+            "CUSTOM_AUDIENCE": "Özel Kitle",
+            "COMBINED_AUDIENCE": "Birleşik Segment"
+          },
+          "browseSections": {
+            "inMarket": { "label": "Etkin Şekilde Araştırdıkları veya Planladıkları Konular", "desc": "Pazardaki kitle segmentleri" },
+            "affinity": { "label": "İlgi Alanları ve Alışkanlıkları", "desc": "Yakın ilgi alanı segmentleri" },
+            "detailedDemographics": { "label": "Kim Oldukları", "desc": "Ayrıntılı demografi segmentleri" },
+            "lifeEvents": { "label": "Yaşam Olayları", "desc": "Yaşam olayı segmentleri" },
+            "userLists": { "label": "İşletmenizle Etkileşimde Bulunma Biçimleri", "desc": "Verilerinize göre segmentler (remarketing, CRM)" },
+            "customAudiences": { "label": "Özel Kitleleriniz", "desc": "Anahtar kelime/URL tabanlı özel kitleler" },
+            "combinedAudiences": { "label": "Birleşik Kitle Segmentleriniz", "desc": "Birleşik segmentler" }
+          }
         },
         "adgroup": {
           "name": "Reklam Grubu Adı",
+          "sectionTitle": "Reklam Grubu",
+          "defaultNameFallback": "Reklam Grubu 1",
           "namePlaceholder": "Örn: Genel Arama Grubu",
           "defaultMatchType": "Varsayılan Eşleşme Türü",
           "matchTypes": {
@@ -478,8 +651,37 @@
             "PHRASE": "Sıralı Eşleme",
             "EXACT": "Tam Eşleme"
           },
+          "matchTypesShort": {
+            "BROAD": "Geniş",
+            "PHRASE": "Sıralı",
+            "EXACT": "Tam"
+          },
           "keywords": "Anahtar Kelimeler",
+          "keywordsSectionTitle": "Anahtar Kelimeler",
           "keywordsNote": "Her satıra 1 kelime, [tam] veya \"sıralı\" için köşeli/tırnak kullanılabilir",
+          "defaultLabel": "Varsayılan:",
+          "keywordCount": "{count} anahtar kelime",
+          "keywordSuggestionBtn": "Keyword Önerisi Al",
+          "suggestionsError": "Öneriler yüklenemedi",
+          "suggestionsEmpty": "Öneri bulunamadı.",
+          "tableKeyword": "Anahtar Kelime",
+          "tableAvgSearch": "Ort. Arama",
+          "tableCompetition": "Rekabet",
+          "negativeKeywordsSectionTitle": "Negatif Anahtar Kelimeler",
+          "urlPathSectionTitle": "URL ve Görünen Yol",
+          "headlinesSectionTitle": "Başlıklar (RSA)",
+          "headlinesHint": "Min 3, max 15 — her biri max 30 karakter. İlk 3 başlık zorunlu.",
+          "headlinesCount": "{count}/15 başlık",
+          "headlinesMinRequired": "(min 3 gerekli)",
+          "descriptionsSectionTitle": "Açıklamalar (RSA)",
+          "descriptionsHint": "Min 2, max 4 — her biri max 90 karakter. İlk 2 açıklama zorunlu.",
+          "descriptionsCount": "{count}/4 açıklama",
+          "descriptionsMinRequired": "(min 2 gerekli)",
+          "competition": {
+            "LOW": "Düşük",
+            "MEDIUM": "Orta",
+            "HIGH": "Yüksek"
+          },
           "keywordsPlaceholder": "google ads ajans\n\"google reklam yönetimi\"\n[google ads istanbul]",
           "negativeKeywords": "Negatif Anahtar Kelimeler (isteğe bağlı, tam eşleme)",
           "negativeKeywordsPlaceholder": "ücretsiz\nbedava",
@@ -502,6 +704,45 @@
           "descriptionRequired": "Açıklama {n} *",
           "descriptionOptional": "Açıklama {n} (isteğe bağlı)"
         },
+        "budget": {
+          "dailyBudget": "Günlük Bütçe",
+          "dailyBudgetPlaceholder": "Örn: 500",
+          "trySuffix": "TRY",
+          "recommendationTitle": "Önerilen bütçe",
+          "recommendationText": "Seçtiğiniz teklif stratejisi için Google önerisi",
+          "lowBudgetWarning": "Çok düşük bütçe gösterimleri sınırlayabilir.",
+          "deliveryLearningTitle": "Teslimat & Öğrenme",
+          "deliveryLearningText": "Google Ads, bütçenizi gün içinde optimize ederek dağıtır. Yeni kampanyalarda öğrenme aşaması 1–2 hafta sürebilir.",
+          "dateRangeTitle": "Tarih Aralığı",
+          "dateRangeSet": "{start} – {end}",
+          "dateRangeStartOnly": "{start} (başlangıç)",
+          "dateRangeNone": "Belirlenmedi (süresiz)",
+          "dateRangeHint": "Kampanya ayarları adımından düzenlenir",
+          "strategyNoteCpa": "Hedef EBM stratejisi için bütçe, günlük en az 10× hedef EBM olmalıdır.",
+          "strategyNoteRoas": "Hedef ROAS stratejisi için yeterli bütçe öğrenme aşamasını hızlandırır.",
+          "manualCpcNote": "Manuel TBM ile bütçe, günlük maksimum harcamanızı belirler."
+        },
+        "review": {
+          "title": "Yayın Kontrolü",
+          "blockingTitle": "Zorunlu eksikler",
+          "blockingEmpty": "Tüm zorunlu alanlar tamamlandı.",
+          "advisoryTitle": "Öneriler",
+          "advisoryEmpty": "Öneri yok.",
+          "lowKeywords": "Az anahtar kelime — daha fazla eklemek performansı artırabilir.",
+          "weakHeadlines": "Daha fazla başlık ekleyerek reklam rotasyonunu iyileştirin.",
+          "weakDescriptions": "3–4 açıklama ile daha iyi performans elde edebilirsiniz.",
+          "lowBudget": "Bütçe önerilen minimumun altında.",
+          "aiMaxDisabled": "AI Max kapalı — AI destekli özellikler kullanılmayacak.",
+          "sectionCampaign": "Kampanya Özeti",
+          "sectionConversion": "Dönüşüm Hedefleri",
+          "sectionBidding": "Teklif Verme",
+          "sectionSettings": "Kampanya Ayarları",
+          "sectionAiMax": "AI Max",
+          "sectionKeywords": "Anahtar Kelimeler & Reklam",
+          "sectionBudget": "Bütçe",
+          "sectionAudience": "Kitle Hedefleme",
+          "uiOnlyFieldsNote": "Yalnızca yeni müşteriler ve AI Max ayarları henüz Google Ads'e uygulanmaz. Planlama aşamasındadır."
+        },
         "summary": {
           "campaign": "Kampanya",
           "dailyBudget": "Günlük Bütçe",
@@ -518,7 +759,89 @@
           "locations": "Hedef Konumlar",
           "locationCount": "{count} konum seçildi",
           "locationDefault": "Türkiye Geneli",
-          "pausedNote": "Kampanya PAUSED olarak oluşturulacak. Yayına almak için kampanya tablosundan aktifleştirin."
+          "locationAllWorld": "Tüm Dünya",
+          "pausedNote": "Kampanya PAUSED olarak oluşturulacak. Yayına almak için kampanya tablosundan aktifleştirin.",
+          "rowCampaignGoal": "Kampanya Hedefi",
+          "rowCampaignType": "Kampanya Türü",
+          "rowNetworks": "Ağ Ayarları",
+          "rowExcludedLocations": "Hariç Konumlar",
+          "rowLanguages": "Diller",
+          "rowAdSchedule": "Reklam Zamanlaması",
+          "scheduleSlots": "{count} zaman dilimi",
+          "scheduleAllDay": "7/24 - Tüm gün",
+          "budgetWarning": "Günlük bütçe ({budget} TRY), önerilen minimumun ({recommended} TRY) altında.",
+          "publishNote": "Kampanya oluşturulduğunda otomatik olarak yayına alınacaktır.",
+          "goalLabels": {
+            "SALES": "Satış",
+            "LEADS": "Potansiyel Müşteriler",
+            "WEBSITE_TRAFFIC": "Web Sitesi Trafiği",
+            "APP_PROMOTION": "Uygulama Tanıtımı",
+            "BRAND_AWARENESS": "Bilinirlik ve Markayı Dikkate Alma",
+            "LOCAL_STORE": "Yerel Mağaza Ziyaretleri",
+            "NO_GOAL": "Kılavuz Olmadan"
+          },
+          "biddingLabels": {
+            "MAXIMIZE_CLICKS": "Tıklama Sayısını Artır",
+            "MAXIMIZE_CONVERSIONS": "Dönüşümleri Artır",
+            "TARGET_CPA": "Hedef EBM (CPA)",
+            "TARGET_ROAS": "Hedef ROAS",
+            "MANUAL_CPC": "Manuel TBM (CPC)",
+            "TARGET_IMPRESSION_SHARE": "Hedef Gösterim Payı"
+          },
+          "campaignTypeLabels": {
+            "SEARCH": "Arama",
+            "PERFORMANCE_MAX": "Maksimum Performans",
+            "DISPLAY": "Görüntülü Reklam",
+            "SHOPPING": "Alışveriş",
+            "DEMAND_GEN": "Talep Oluşturma",
+            "VIDEO": "Video",
+            "MULTI_CHANNEL": "Uygulama",
+            "SMART": "Akıllı",
+            "LOCAL": "Yerel"
+          },
+          "networkLabels": {
+            "googleSearch": "Google Arama",
+            "searchPartners": "Arama Ağı Ortakları",
+            "contentNetwork": "Görüntülü Reklam Ağı"
+          },
+          "biddingFocusLabels": {
+            "CONVERSION_COUNT": "Dönüşüm sayısı",
+            "CONVERSION_COUNT_CPA": "Dönüşüm sayısı (EBM)",
+            "CONVERSION_VALUE": "Dönüşüm değeri",
+            "CONVERSION_VALUE_ROAS": "Dönüşüm değeri (ROAS)",
+            "TOP_OF_PAGE": "Sayfa üstü",
+            "ABSOLUTE_TOP_OF_PAGE": "Mutlak sayfa üstü",
+            "CLICKS": "Tıklamalar"
+          },
+          "dayLabelsShort": {
+            "MONDAY": "Pzt",
+            "TUESDAY": "Sal",
+            "WEDNESDAY": "Çar",
+            "THURSDAY": "Per",
+            "FRIDAY": "Cum",
+            "SATURDAY": "Cmt",
+            "SUNDAY": "Paz"
+          },
+          "audienceSegmentsLabel": "Kitle Segmentleri",
+          "audienceSegmentsSelected": "{count} segment seçildi",
+          "audienceModeLabel": "Kitle Modu",
+          "audienceNone": "Seçilmedi",
+          "audienceModeLabels": {
+            "OBSERVATION": "Gözlem",
+            "TARGETING": "Hedefleme"
+          },
+          "languageNames": {
+            "1037": "Türkçe",
+            "1000": "İngilizce",
+            "1001": "Almanca",
+            "1002": "Fransızca",
+            "1003": "İspanyolca",
+            "1004": "İtalyanca",
+            "1010": "Felemenkçe",
+            "1014": "Portekizce",
+            "1019": "Arapça",
+            "1031": "Rusça"
+          }
         },
         "validation": {
           "campaignNameRequired": "Kampanya adı zorunlu",
@@ -534,11 +857,21 @@
           "descriptionMaxLength": "Açıklamalar max 90 karakter olabilir",
           "duplicateHeadlines": "Başlıklar benzersiz olmalı (tekrar yasak)",
           "duplicateDescriptions": "Açıklamalar benzersiz olmalı (tekrar yasak)",
-          "languageRequired": "En az 1 dil seçimi zorunlu"
+          "languageRequired": "En az 1 dil seçimi zorunlu",
+          "conversionGoalsRequired": "En az 1 dönüşüm hedefi seçin"
         },
         "toast": {
-          "success": "Kampanya başarıyla oluşturuldu (PAUSED)",
-          "error": "Kampanya oluşturulamadı"
+          "success": "Kampanya başarıyla oluşturuldu.",
+          "partialSuccess": "Kampanya oluşturuldu. Dönüşüm hedefleri uygulanamadı — lütfen Google Ads'te manuel ayarlayın.",
+          "error": "Kampanya oluşturulamadı",
+          "networkError": "Bağlantı hatası. Lütfen tekrar deneyin."
+        },
+        "result": {
+          "fullTitle": "Kampanya oluşturuldu",
+          "fullMessage": "Kampanya başarıyla oluşturuldu ve listede görünecek.",
+          "partialTitle": "Kampanya oluşturuldu",
+          "partialMessage": "Kampanya oluşturuldu ancak dönüşüm hedefleri uygulanamadı. Lütfen Google Ads üzerinden manuel olarak ayarlayın.",
+          "acknowledge": "Tamam"
         }
       }
     },

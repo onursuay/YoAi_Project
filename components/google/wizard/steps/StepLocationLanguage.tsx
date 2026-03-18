@@ -5,7 +5,7 @@ import { Check, X, Search } from 'lucide-react'
 import type { StepProps, GeoSuggestion, SelectedLocation } from '../shared/WizardTypes'
 import { inputCls, LANGUAGE_OPTIONS, COUNTRY_OPTIONS } from '../shared/WizardTypes'
 
-export default function StepLocationLanguage({ state, update }: StepProps) {
+export default function StepLocationLanguage({ state, update, t }: StepProps) {
   const [geoQuery, setGeoQuery] = useState('')
   const [geoResults, setGeoResults] = useState<GeoSuggestion[]>([])
   const [geoLoading, setGeoLoading] = useState(false)
@@ -57,7 +57,7 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
     <div className="space-y-5">
       {/* Location Search */}
       <div className="space-y-3">
-        <h4 className="text-sm font-semibold text-gray-900">Konum Hedefleme</h4>
+        <h4 className="text-sm font-semibold text-gray-900">{t('location.locationTargetingTitle')}</h4>
 
         {/* Country filter */}
         <div className="flex gap-2">
@@ -67,7 +67,7 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
             onChange={e => update({ geoSearchCountry: e.target.value })}
           >
             {COUNTRY_OPTIONS.map(c => (
-              <option key={c.code} value={c.code}>{c.label}</option>
+              <option key={c.code} value={c.code}>{t(c.labelKey)}</option>
             ))}
           </select>
 
@@ -76,7 +76,7 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
             value={geoQuery}
             onChange={e => { setGeoQuery(e.target.value); setGeoSearched(false) }}
             onKeyDown={e => e.key === 'Enter' && searchGeo()}
-            placeholder="Şehir veya bölge ara..."
+            placeholder={t('location.searchPlaceholder')}
           />
           <button
             type="button"
@@ -89,7 +89,7 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
         </div>
 
         {geoSearched && !geoLoading && geoResults.length === 0 && (
-          <p className="text-sm text-gray-500">Sonuç bulunamadı.</p>
+          <p className="text-sm text-gray-500">{t('location.noResults')}</p>
         )}
 
         {geoResults.length > 0 && (
@@ -117,7 +117,7 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
 
         {state.locations.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">Seçili Konumlar ({state.locations.length})</p>
+            <p className="text-sm font-medium text-gray-700 mb-2">{t('location.selectedTitleWithCount', { count: state.locations.length })}</p>
             <div className="flex flex-wrap gap-2">
               {state.locations.map(loc => (
                 <span
@@ -129,9 +129,9 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
                   }`}
                 >
                   {loc.name}
-                  {loc.isNegative && <span className="text-red-500 text-xs">(hariç)</span>}
-                  <button type="button" onClick={() => toggleNegative(loc.id)} className="ml-1 hover:opacity-70 text-xs underline" title={loc.isNegative ? 'Dahil et' : 'Hariç tut'}>
-                    {loc.isNegative ? 'dahil' : 'hariç'}
+                  {loc.isNegative && <span className="text-red-500 text-xs">{t('location.excludedParens')}</span>}
+                  <button type="button" onClick={() => toggleNegative(loc.id)} className="ml-1 hover:opacity-70 text-xs underline" title={loc.isNegative ? t('location.includeTitle') : t('location.excludeTitle')}>
+                    {loc.isNegative ? t('location.includeLabel') : t('location.excludeLabel')}
                   </button>
                   <button type="button" onClick={() => removeLocation(loc.id)} className="ml-0.5 hover:opacity-70">
                     <X className="w-3 h-3" />
@@ -147,8 +147,8 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
       {/* Language Targeting */}
       <div className="space-y-3">
         <div>
-          <h4 className="text-sm font-semibold text-gray-900">Dil Hedefleme <span className="text-red-500">*</span></h4>
-          <p className="text-xs text-gray-500 mt-0.5">Reklamlarınızın hangi dilde arama yapan kullanıcılara gösterileceğini seçin</p>
+          <h4 className="text-sm font-semibold text-gray-900">{t('location.languageTargetingTitle')} <span className="text-red-500">*</span></h4>
+          <p className="text-xs text-gray-500 mt-0.5">{t('location.languageTargetingHint')}</p>
         </div>
         <div className="flex flex-wrap gap-2">
           {LANGUAGE_OPTIONS.map(lang => {
@@ -164,13 +164,13 @@ export default function StepLocationLanguage({ state, update }: StepProps) {
                     : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
                 }`}
               >
-                {lang.name}
+                {t(`summary.languageNames.${lang.id}`) || lang.name}
               </button>
             )
           })}
         </div>
         {state.languageIds.length === 0 && (
-          <p className="text-xs text-red-500">En az 1 dil seçimi zorunludur.</p>
+          <p className="text-xs text-red-500">{t('validation.languageRequired')}</p>
         )}
       </div>
     </div>

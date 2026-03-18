@@ -8,16 +8,6 @@ import type { StepProps, AudienceMode, SelectedAudienceSegment, AudienceSegmentC
 /*  Labels & helpers                                                   */
 /* ------------------------------------------------------------------ */
 
-const CATEGORY_LABELS: Record<AudienceSegmentCategory, string> = {
-  AFFINITY: 'Yakın İlgi Alanı',
-  IN_MARKET: 'Pazardaki Kitle',
-  DETAILED_DEMOGRAPHIC: 'Ayrıntılı Demografi',
-  LIFE_EVENT: 'Yaşam Olayları',
-  USER_LIST: 'Verileriniz',
-  CUSTOM_AUDIENCE: 'Özel Kitle',
-  COMBINED_AUDIENCE: 'Birleşik Segment',
-}
-
 const CATEGORY_COLORS: Record<AudienceSegmentCategory, string> = {
   AFFINITY: 'bg-purple-50 text-purple-700',
   IN_MARKET: 'bg-green-50 text-green-700',
@@ -51,27 +41,21 @@ interface BrowseData {
 }
 
 type BrowseSectionKey = Exclude<keyof BrowseData, 'state'>
-const BROWSE_SECTIONS: Array<{
-  key: BrowseSectionKey
-  label: string
-  desc: string
-  icon: typeof Users
-  category: AudienceSegmentCategory
-}> = [
-  { key: 'inMarket', label: 'Etkin Şekilde Araştırdıkları veya Planladıkları Konular', desc: 'Pazardaki kitle segmentleri', icon: ShoppingBag, category: 'IN_MARKET' },
-  { key: 'affinity', label: 'İlgi Alanları ve Alışkanlıkları', desc: 'Yakın ilgi alanı segmentleri', icon: Heart, category: 'AFFINITY' },
-  { key: 'detailedDemographics', label: 'Kim Oldukları', desc: 'Ayrıntılı demografi segmentleri', icon: Users, category: 'DETAILED_DEMOGRAPHIC' },
-  { key: 'lifeEvents', label: 'Yaşam Olayları', desc: 'Yaşam olayı segmentleri', icon: Users, category: 'LIFE_EVENT' },
-  { key: 'userLists', label: 'İşletmenizle Etkileşimde Bulunma Biçimleri', desc: 'Verilerinize göre segmentler (remarketing, CRM)', icon: UserCheck, category: 'USER_LIST' },
-  { key: 'customAudiences', label: 'Özel Kitleleriniz', desc: 'Anahtar kelime/URL tabanlı özel kitleler', icon: Layers, category: 'CUSTOM_AUDIENCE' },
-  { key: 'combinedAudiences', label: 'Birleşik Kitle Segmentleriniz', desc: 'Birleşik segmentler', icon: Layers, category: 'COMBINED_AUDIENCE' },
+const BROWSE_SECTIONS: Array<{ key: BrowseSectionKey; icon: typeof Users; category: AudienceSegmentCategory }> = [
+  { key: 'inMarket', icon: ShoppingBag, category: 'IN_MARKET' },
+  { key: 'affinity', icon: Heart, category: 'AFFINITY' },
+  { key: 'detailedDemographics', icon: Users, category: 'DETAILED_DEMOGRAPHIC' },
+  { key: 'lifeEvents', icon: Users, category: 'LIFE_EVENT' },
+  { key: 'userLists', icon: UserCheck, category: 'USER_LIST' },
+  { key: 'customAudiences', icon: Layers, category: 'CUSTOM_AUDIENCE' },
+  { key: 'combinedAudiences', icon: Layers, category: 'COMBINED_AUDIENCE' },
 ]
 
 /* ------------------------------------------------------------------ */
 /*  Component                                                          */
 /* ------------------------------------------------------------------ */
 
-export default function StepAudience({ state, update }: StepProps) {
+export default function StepAudience({ state, update, t }: StepProps) {
   const [tab, setTab] = useState<'search' | 'browse'>('search')
   const [browseData, setBrowseData] = useState<BrowseData | null>(null)
   const [browseLoading, setBrowseLoading] = useState(false)
@@ -95,14 +79,14 @@ export default function StepAudience({ state, update }: StepProps) {
     try {
       const res = await fetch('/api/integrations/google-ads/tools/audience-segments?mode=browse')
       const data = await res.json()
-      if (!res.ok) { setBrowseError(data.error ?? 'Kitle segmentleri yüklenemedi'); return }
+      if (!res.ok) { setBrowseError(data.error ?? t('audience.browseError')); return }
       setBrowseData(data)
     } catch {
-      setBrowseError('Kitle segmentleri yüklenemedi')
+      setBrowseError(t('audience.browseError'))
     } finally {
       setBrowseLoading(false)
     }
-  }, [browseData])
+  }, [browseData, t])
 
   // Switch tab
   useEffect(() => {
@@ -173,13 +157,13 @@ export default function StepAudience({ state, update }: StepProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">Kitle Segmentleri</h3>
-        <p className="text-sm text-gray-500">Google kitle segmentlerini arayın veya kategorilere göz atın</p>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('audience.segmentTitle')}</h3>
+        <p className="text-sm text-gray-500">{t('audience.segmentDescription')}</p>
       </div>
 
       {/* Audience Mode */}
       <div>
-        <label className="block text-sm font-medium text-gray-700 mb-2">Hedefleme Modu</label>
+        <label className="block text-sm font-medium text-gray-700 mb-2">{t('audience.targetingMode')}</label>
         <div className="grid grid-cols-2 gap-3">
           {(['OBSERVATION', 'TARGETING'] as AudienceMode[]).map(mode => {
             const active = state.audienceMode === mode
@@ -193,12 +177,12 @@ export default function StepAudience({ state, update }: StepProps) {
                 }`}
               >
                 <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>
-                  {mode === 'OBSERVATION' ? 'Gözlem' : 'Hedefleme'}
+                  {mode === 'OBSERVATION' ? t('audience.observation') : t('audience.targeting')}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
                   {mode === 'OBSERVATION'
-                    ? 'Teklifleri ayarlayın ancak erişimi daraltmayın'
-                    : 'Reklamları yalnızca bu kitlelere gösterin'}
+                    ? t('audience.observationDesc')
+                    : t('audience.targetingDesc')}
                 </p>
               </button>
             )
@@ -216,7 +200,7 @@ export default function StepAudience({ state, update }: StepProps) {
           }`}
         >
           <Search className="w-3.5 h-3.5 inline mr-1.5" />
-          Arama
+          {t('audience.tabSearch')}
         </button>
         <button
           type="button"
@@ -226,7 +210,7 @@ export default function StepAudience({ state, update }: StepProps) {
           }`}
         >
           <Layers className="w-3.5 h-3.5 inline mr-1.5" />
-          Göz at
+          {t('audience.tabBrowse')}
         </button>
       </div>
 
@@ -239,7 +223,7 @@ export default function StepAudience({ state, update }: StepProps) {
               type="text"
               value={searchQuery}
               onChange={e => handleSearchInput(e.target.value)}
-              placeholder="Kitle segmenti arayın... (ör: araba, spor, ebeveyn)"
+              placeholder={t('audience.searchPlaceholder')}
               className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
             />
             {searching && (
@@ -250,7 +234,7 @@ export default function StepAudience({ state, update }: StepProps) {
           </div>
 
           {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-            <p className="text-sm text-gray-500 text-center py-4">Sonuç bulunamadı</p>
+            <p className="text-sm text-gray-500 text-center py-4">{t('audience.noResults')}</p>
           )}
 
           {searchResults.length > 0 && (
@@ -261,6 +245,7 @@ export default function StepAudience({ state, update }: StepProps) {
                   item={item}
                   selected={isSelected(item)}
                   onToggle={() => toggleSegment(item)}
+                  t={t}
                 />
               ))}
             </div>
@@ -270,7 +255,7 @@ export default function StepAudience({ state, update }: StepProps) {
             <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
               <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
               <p className="text-sm text-gray-600">
-                Pazardaki kitle, yakın ilgi alanı, demografi ve verilerinize göre segmentler arasında arayın.
+                {t('audience.searchHint')}
               </p>
             </div>
           )}
@@ -283,7 +268,7 @@ export default function StepAudience({ state, update }: StepProps) {
           {browseLoading && (
             <div className="flex items-center justify-center py-8 gap-2 text-gray-500">
               <Loader2 className="w-4 h-4 animate-spin" />
-              <span className="text-sm">Kitle segmentleri yükleniyor...</span>
+              <span className="text-sm">{t('audience.loading')}</span>
             </div>
           )}
 
@@ -291,7 +276,7 @@ export default function StepAudience({ state, update }: StepProps) {
 
           {browseData?.state === 'data_not_ready' && (
             <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-              Kitle verileri henüz hazır değil. Yönetici tarafından yenilenmesi gerekiyor.
+              {t('audience.dataNotReady')}
             </div>
           )}
 
@@ -322,8 +307,8 @@ export default function StepAudience({ state, update }: StepProps) {
                     : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
                   <Icon className="w-4 h-4 text-gray-500 shrink-0" />
                   <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900">{section.label}</p>
-                    <p className="text-xs text-gray-500">{section.desc} ({items.length})</p>
+                    <p className="text-sm font-medium text-gray-900">{t(`audience.browseSections.${section.key}.label`)}</p>
+                    <p className="text-xs text-gray-500">{t(`audience.browseSections.${section.key}.desc`)} ({items.length})</p>
                   </div>
                 </button>
 
@@ -355,6 +340,7 @@ export default function StepAudience({ state, update }: StepProps) {
                                   item={root}
                                   selected={isSelected(root)}
                                   onToggle={() => toggleSegment(root)}
+                                  t={t}
                                 />
                               </div>
                             </div>
@@ -366,6 +352,7 @@ export default function StepAudience({ state, update }: StepProps) {
                                     item={child}
                                     selected={isSelected(child)}
                                     onToggle={() => toggleSegment(child)}
+                                    t={t}
                                   />
                                 ))}
                               </div>
@@ -381,6 +368,7 @@ export default function StepAudience({ state, update }: StepProps) {
                           item={item}
                           selected={isSelected(item)}
                           onToggle={() => toggleSegment(item)}
+                          t={t}
                         />
                       ))
                     )}
@@ -396,7 +384,7 @@ export default function StepAudience({ state, update }: StepProps) {
       {state.selectedAudienceSegments.length > 0 && (
         <div className="space-y-2">
           <p className="text-xs font-medium text-blue-600">
-            {state.selectedAudienceSegments.length} kitle segmenti seçildi
+            {t('audience.segmentsSelected', { count: state.selectedAudienceSegments.length })}
           </p>
           <div className="flex flex-wrap gap-1.5">
             {state.selectedAudienceSegments.map(seg => (
@@ -424,7 +412,7 @@ export default function StepAudience({ state, update }: StepProps) {
       )}
 
       <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-500">
-        Bu adım isteğe bağlı — boş bırakılabilir.
+        {t('audience.optionalNote')}
       </div>
     </div>
   )
@@ -434,10 +422,11 @@ export default function StepAudience({ state, update }: StepProps) {
 /*  Reusable audience row                                              */
 /* ------------------------------------------------------------------ */
 
-function AudienceRow({ item, selected, onToggle }: {
+function AudienceRow({ item, selected, onToggle, t }: {
   item: AudienceItem
   selected: boolean
   onToggle: () => void
+  t: (key: string, params?: Record<string, string | number>) => string
 }) {
   return (
     <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer">
@@ -451,7 +440,7 @@ function AudienceRow({ item, selected, onToggle }: {
         <p className="text-sm text-gray-900 truncate">{item.name}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className={`text-[10px] px-1.5 py-0.5 rounded ${CATEGORY_COLORS[item.category]}`}>
-            {CATEGORY_LABELS[item.category]}
+            {t(`audience.categoryLabels.${item.category}`)}
           </span>
           {item.sizeRange && item.sizeRange !== '' && (
             <span className="text-[10px] text-gray-400">{item.sizeRange}</span>

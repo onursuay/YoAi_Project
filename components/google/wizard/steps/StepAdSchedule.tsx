@@ -3,14 +3,14 @@
 import { useState } from 'react'
 import { Plus, X, Clock } from 'lucide-react'
 import type { StepProps, ScheduleEntry, DayOfWeek, Minute } from '../shared/WizardTypes'
-import { DAYS_OF_WEEK, DAY_LABELS, inputCls } from '../shared/WizardTypes'
+import { DAYS_OF_WEEK, inputCls } from '../shared/WizardTypes'
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i)
 const END_HOURS = Array.from({ length: 25 }, (_, i) => i) // 0-24
 const MINUTES: Minute[] = ['ZERO', 'FIFTEEN', 'THIRTY', 'FORTY_FIVE']
 const MINUTE_LABELS: Record<Minute, string> = { ZERO: '00', FIFTEEN: '15', THIRTY: '30', FORTY_FIVE: '45' }
 
-export default function StepAdSchedule({ state, update }: StepProps) {
+export default function StepAdSchedule({ state, update, t }: StepProps) {
   const [addingDay, setAddingDay] = useState<DayOfWeek | null>(null)
   const [newStart, setNewStart] = useState(9)
   const [newStartMin, setNewStartMin] = useState<Minute>('ZERO')
@@ -54,17 +54,17 @@ export default function StepAdSchedule({ state, update }: StepProps) {
   return (
     <div className="space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">Reklam Zamanlaması</h3>
-        <p className="text-xs text-gray-500">Reklamlarınızın hangi gün ve saatlerde gösterileceğini belirleyin</p>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('schedule.title')}</h3>
+        <p className="text-xs text-gray-500">{t('schedule.description')}</p>
       </div>
 
       {/* Presets */}
       <div className="flex gap-2">
         <button type="button" onClick={applyBusinessHours} className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100">
-          <Clock className="w-3 h-3 inline mr-1" />İş Saatleri (Pzt-Cum 09:00-18:00)
+          <Clock className="w-3 h-3 inline mr-1" />{t('schedule.businessHours')}
         </button>
         <button type="button" onClick={clearAll} className="px-3 py-1.5 text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100">
-          7/24 (Temizle)
+          {t('schedule.clearAll')}
         </button>
       </div>
 
@@ -75,9 +75,9 @@ export default function StepAdSchedule({ state, update }: StepProps) {
           return (
             <div key={day} className="px-4 py-2.5">
               <div className="flex items-center justify-between">
-                <span className="text-sm font-medium text-gray-700 w-24">{DAY_LABELS[day]}</span>
+                <span className="text-sm font-medium text-gray-700 w-24">{t(`schedule.dayLabels.${day}`)}</span>
                 <div className="flex items-center gap-2 flex-1">
-                  {dayEntries.length === 0 && <span className="text-xs text-gray-400">Tüm gün</span>}
+                  {dayEntries.length === 0 && <span className="text-xs text-gray-400">{t('schedule.allDay')}</span>}
                   {dayEntries.map((entry, idx) => {
                     const globalIdx = state.adSchedule.indexOf(entry)
                     return (
@@ -119,7 +119,7 @@ export default function StepAdSchedule({ state, update }: StepProps) {
                     {MINUTES.map(m => <option key={m} value={m}>{MINUTE_LABELS[m]}</option>)}
                   </select>
                   <button type="button" onClick={addEntry} className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700">
-                    Ekle
+                    {t('schedule.add')}
                   </button>
                 </div>
               )}
@@ -129,7 +129,7 @@ export default function StepAdSchedule({ state, update }: StepProps) {
       </div>
 
       <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-500">
-        Bu adım isteğe bağlı — boş bırakırsanız reklamlar 7/24 yayınlanır.
+        {t('schedule.optionalNote')}
       </div>
     </div>
   )

@@ -2,19 +2,21 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2 } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { defaultState } from './shared/WizardTypes'
 import type { WizardState } from './shared/WizardTypes'
 import { validateStep } from './shared/WizardValidation'
 import { buildCreatePayload } from './shared/WizardHelpers'
 import StepGoalType from './steps/StepGoalType'
-import StepCampaignSettings from './steps/StepCampaignSettings'
-import StepLocationLanguage from './steps/StepLocationLanguage'
-import StepAudience from './steps/StepAudience'
-import StepAdGroupKeywords from './steps/StepAdGroupKeywords'
-import StepAdCreation from './steps/StepAdCreation'
-import StepAdSchedule from './steps/StepAdSchedule'
+import StepConversionAndName from './steps/StepConversionAndName'
+import StepBiddingAcquisition from './steps/StepBiddingAcquisition'
+import StepCampaignSettingsSearch from './steps/StepCampaignSettingsSearch'
+import StepAIMax from './steps/StepAIMax'
+import StepKeywordsAndAds from './steps/StepKeywordsAndAds'
+import StepBudget from './steps/StepBudget'
 import StepSummary from './steps/StepSummary'
+
+export type SubmitResult = null | 'full' | 'partial' | 'fail'
 
 interface Props {
   isOpen: boolean
@@ -25,26 +27,35 @@ interface Props {
 
 const TOTAL_STEPS = 8
 
+/** Normalize error for display — avoid exposing raw technical messages to users. */
+function normalizeError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  const technical = /^(fetch|network|ECONNREFUSED|ETIMEDOUT|Failed to fetch)/i.test(msg)
+  return technical ? '' : msg
+}
+
 export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToast }: Props) {
   const [step, setStep] = useState(0)
   const [state, setState] = useState<WizardState>(defaultState)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<SubmitResult>(null)
 
   const t = useTranslations('dashboard.google.wizard')
+  // Search-specific 8-step flow
   const STEPS = [
     t('steps.goal'),
-    t('steps.settings'),
-    t('steps.location'),
-    t('steps.audience'),
-    t('steps.adgroup'),
-    t('steps.ad'),
-    t('steps.schedule'),
+    t('steps.conversionAndName'),
+    t('steps.bidding'),
+    t('steps.campaignSettings'),
+    t('steps.aiMax'),
+    t('steps.keywordsAndAds'),
+    t('steps.budget'),
     t('steps.summary'),
   ]
 
   useEffect(() => {
-    if (isOpen) { setStep(0); setState(defaultState); setError(null) }
+    if (isOpen) { setStep(0); setState(defaultState); setError(null); setSubmitResult(null) }
   }, [isOpen])
 
   const update = (partial: Partial<WizardState>) => setState(prev => ({ ...prev, ...partial }))
@@ -61,26 +72,45 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
   const submit = async () => {
     setSubmitting(true)
     setError(null)
+    setSubmitResult(null)
     try {
-      const payload = buildCreatePayload(state)
+      const payload = buildCreatePayload(state, t('adgroup.defaultNameFallback'))
       const res = await fetch('/api/integrations/google-ads/campaigns/create', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-      if (!res.ok) { setError(data.error ?? t('toast.error')); return }
-      onToast?.(t('toast.success'), 'success')
-      onSuccess()
-      handleClose()
-    } catch (e: any) {
-      setError(e.message)
+
+      if (!res.ok) {
+        setSubmitResult('fail')
+        setError(data.error ?? t('toast.error'))
+        onToast?.(data.error ?? t('toast.error'), 'error')
+        return
+      }
+
+      const isPartial = Boolean(data.conversionGoalsWarning)
+      setSubmitResult(isPartial ? 'partial' : 'full')
+      onToast?.(
+        isPartial ? t('toast.partialSuccess') : t('toast.success'),
+        'success'
+      )
+    } catch (e: unknown) {
+      setSubmitResult('fail')
+      const displayMsg = normalizeError(e) || t('toast.networkError')
+      setError(displayMsg)
+      onToast?.(displayMsg, 'error')
     } finally {
       setSubmitting(false)
     }
   }
 
-  const handleClose = () => { setStep(0); setState(defaultState); setError(null); onClose() }
+  const acknowledgeResult = () => {
+    onSuccess()
+    handleClose()
+  }
+
+  const handleClose = () => { setStep(0); setState(defaultState); setError(null); setSubmitResult(null); onClose() }
 
   if (!isOpen) return null
 
@@ -95,7 +125,13 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
             <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
             <p className="text-sm text-gray-500">{step + 1} / {TOTAL_STEPS} — {STEPS[step]}</p>
           </div>
-          <button type="button" onClick={handleClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></button>
+          <button
+            type="button"
+            onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Progress */}
@@ -119,24 +155,57 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
 
         {/* Body */}
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {error && (
+          {submitResult === 'full' && (
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
+              <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
+              <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
+              <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
+              <button
+                type="button"
+                onClick={acknowledgeResult}
+                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                {t('result.acknowledge')}
+              </button>
+            </div>
+          )}
+          {submitResult === 'partial' && (
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-amber-50 border border-amber-200">
+              <AlertTriangle className="w-12 h-12 text-amber-600 mb-3" />
+              <h3 className="text-lg font-semibold text-amber-800 mb-1">{t('result.partialTitle')}</h3>
+              <p className="text-sm text-amber-700 text-center mb-4">{t('result.partialMessage')}</p>
+              <button
+                type="button"
+                onClick={acknowledgeResult}
+                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-white"
+              >
+                {t('result.acknowledge')}
+              </button>
+            </div>
+          )}
+          {error && submitResult !== 'full' && submitResult !== 'partial' && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
               <span>{error}</span>
             </div>
           )}
 
-          {step === 0 && <StepGoalType {...stepProps} />}
-          {step === 1 && <StepCampaignSettings {...stepProps} />}
-          {step === 2 && <StepLocationLanguage {...stepProps} />}
-          {step === 3 && <StepAudience {...stepProps} />}
-          {step === 4 && <StepAdGroupKeywords {...stepProps} />}
-          {step === 5 && <StepAdCreation {...stepProps} />}
-          {step === 6 && <StepAdSchedule {...stepProps} />}
-          {step === 7 && <StepSummary {...stepProps} />}
+          {submitResult !== 'full' && submitResult !== 'partial' && (
+            <>
+              {step === 0 && <StepGoalType {...stepProps} />}
+              {step === 1 && <StepConversionAndName {...stepProps} />}
+              {step === 2 && <StepBiddingAcquisition {...stepProps} />}
+              {step === 3 && <StepCampaignSettingsSearch {...stepProps} />}
+              {step === 4 && <StepAIMax {...stepProps} />}
+              {step === 5 && <StepKeywordsAndAds {...stepProps} />}
+              {step === 6 && <StepBudget {...stepProps} />}
+              {step === 7 && <StepSummary {...stepProps} />}
+            </>
+          )}
         </div>
 
-        {/* Footer */}
+        {/* Footer — hidden when showing success/partial result */}
+        {submitResult !== 'full' && submitResult !== 'partial' && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
           <button
             type="button"
@@ -167,6 +236,7 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
             </button>
           )}
         </div>
+        )}
       </div>
     </div>
   )

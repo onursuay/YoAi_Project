@@ -1,14 +1,20 @@
 import type { WizardState, BiddingStrategy } from './WizardTypes'
 
+// Search wizard step order: 0 Goal, 1 Conversion+Name, 2 Bidding, 3 CampaignSettings, 4 AIMax, 5 Keywords&Ads, 6 Budget, 7 Summary
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateStep(step: number, state: WizardState, t: (key: string, params?: any) => string): string | null {
   switch (step) {
     case 0: // Goal & Campaign Type — no hard validation needed
       return null
 
-    case 1: { // Campaign Settings
+    case 1: { // Conversion + Campaign Name
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
-      if (!state.dailyBudget || parseFloat(state.dailyBudget) < 1) return t('validation.minBudget')
+      if (state.campaignType === 'SEARCH' && state.selectedConversionGoalIds.length === 0)
+        return t('validation.conversionGoalsRequired')
+      return null
+    }
+
+    case 2: { // Bidding + Acquisition
       if (state.biddingStrategy === 'TARGET_CPA' && (!state.targetCpa || parseFloat(state.targetCpa) <= 0))
         return t('validation.targetCpaRequired')
       if (state.biddingStrategy === 'TARGET_ROAS' && (!state.targetRoas || parseFloat(state.targetRoas) <= 0))
@@ -16,23 +22,17 @@ export function validateStep(step: number, state: WizardState, t: (key: string, 
       return null
     }
 
-    case 2: // Location & Language
+    case 3: // Campaign Settings (networks, location, audience, schedule)
       if (state.languageIds.length === 0) return t('validation.languageRequired')
       return null
 
-    case 3: // Audience — optional
+    case 4: // AI Max — placeholder, no validation
       return null
 
-    case 4: { // Ad Group & Keywords
+    case 5: { // Keywords & Ads
       if (!state.adGroupName.trim()) return t('validation.adGroupNameRequired')
-      // Keywords only required for SEARCH campaigns
       if (state.campaignType === 'SEARCH' && !state.keywordsRaw.trim()) return t('validation.keywordsRequired')
-      return null
-    }
-
-    case 5: { // Ad Creation
       if (!state.finalUrl.startsWith('http')) return t('validation.urlRequired')
-      // RSA validation only for SEARCH campaigns
       if (state.campaignType === 'SEARCH') {
         const h = state.headlines.map(x => x.trim()).filter(Boolean)
         const d = state.descriptions.map(x => x.trim()).filter(Boolean)
@@ -48,8 +48,10 @@ export function validateStep(step: number, state: WizardState, t: (key: string, 
       return null
     }
 
-    case 6: // Schedule — optional
+    case 6: { // Budget
+      if (!state.dailyBudget || parseFloat(state.dailyBudget) < 1) return t('validation.minBudget')
       return null
+    }
 
     case 7: // Summary — no validation
       return null

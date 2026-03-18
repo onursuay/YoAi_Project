@@ -4,15 +4,16 @@ import { ShoppingCart, Users, Globe, Eye, Smartphone, MapPin, Compass, Search, M
 import type { StepProps, CampaignGoal, AdvertisingChannelType } from '../shared/WizardTypes'
 import { GOAL_CAMPAIGN_TYPES, CAMPAIGN_TYPE_BIDDING } from '../shared/WizardTypes'
 
-const goals: Array<{ id: CampaignGoal; icon: typeof ShoppingCart; label: string; desc: string }> = [
-  { id: 'SALES', icon: ShoppingCart, label: 'Satış', desc: 'Online, uygulama, telefon veya mağaza içi satışları artırın' },
-  { id: 'LEADS', icon: Users, label: 'Potansiyel Müşteriler', desc: 'Potansiyel müşteri formları ve kayıtlar toplayın' },
-  { id: 'WEBSITE_TRAFFIC', icon: Globe, label: 'Web Sitesi Trafiği', desc: 'Web sitenize daha fazla ziyaretçi çekin' },
-  { id: 'APP_PROMOTION', icon: Smartphone, label: 'Uygulama Tanıtımı', desc: 'Uygulamanızın yüklenmesini ve etkileşimini artırın' },
-  { id: 'BRAND_AWARENESS', icon: Eye, label: 'Bilinirlik ve Markayı Dikkate Alma', desc: 'Markanızı daha geniş kitlelere ulaştırın' },
-  { id: 'LOCAL_STORE', icon: MapPin, label: 'Yerel Mağaza Ziyaretleri', desc: 'Mağazanıza gerçek ziyaretleri artırın' },
-  { id: 'NO_GOAL', icon: Compass, label: 'Kılavuz Olmadan Kampanya Oluştur', desc: 'Hedef belirlemeden doğrudan kampanya oluşturun' },
-]
+const GOAL_IDS: CampaignGoal[] = ['SALES', 'LEADS', 'WEBSITE_TRAFFIC', 'APP_PROMOTION', 'BRAND_AWARENESS', 'LOCAL_STORE', 'NO_GOAL']
+const GOAL_ICONS: Record<CampaignGoal, typeof ShoppingCart> = {
+  SALES: ShoppingCart,
+  LEADS: Users,
+  WEBSITE_TRAFFIC: Globe,
+  APP_PROMOTION: Smartphone,
+  BRAND_AWARENESS: Eye,
+  LOCAL_STORE: MapPin,
+  NO_GOAL: Compass,
+}
 
 const CAMPAIGN_TYPE_ICONS: Record<AdvertisingChannelType, typeof Search> = {
   SEARCH: Search,
@@ -26,7 +27,7 @@ const CAMPAIGN_TYPE_ICONS: Record<AdvertisingChannelType, typeof Search> = {
   LOCAL: MapPin,
 }
 
-export default function StepGoalType({ state, update }: StepProps) {
+export default function StepGoalType({ state, update, t }: StepProps) {
   const availableTypes = GOAL_CAMPAIGN_TYPES[state.campaignGoal] ?? []
 
   const handleGoalChange = (goal: CampaignGoal) => {
@@ -63,29 +64,29 @@ export default function StepGoalType({ state, update }: StepProps) {
   return (
     <div className="space-y-5">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 mb-1">Kampanya Hedefinizi Seçin</h3>
-        <p className="text-sm text-gray-500">Kampanyanızla ne elde etmek istiyorsunuz?</p>
+        <h3 className="text-sm font-semibold text-gray-900 mb-1">{t('goal.selectTitle')}</h3>
+        <p className="text-sm text-gray-500">{t('goal.selectDesc')}</p>
       </div>
 
       <div className="grid grid-cols-2 gap-3">
-        {goals.map(g => {
-          const active = state.campaignGoal === g.id
-          const Icon = g.icon
+        {GOAL_IDS.map(id => {
+          const active = state.campaignGoal === id
+          const Icon = GOAL_ICONS[id]
           return (
             <button
-              key={g.id}
+              key={id}
               type="button"
-              onClick={() => handleGoalChange(g.id)}
+              onClick={() => handleGoalChange(id)}
               className={`flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${
                 active
                   ? 'border-blue-500 bg-blue-50'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
-              } ${g.id === 'NO_GOAL' ? 'col-span-2' : ''}`}
+              } ${id === 'NO_GOAL' ? 'col-span-2' : ''}`}
             >
               <Icon className={`w-5 h-5 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
               <div>
-                <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{g.label}</p>
-                <p className="text-xs text-gray-500 mt-0.5">{g.desc}</p>
+                <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{t(`goal.labels.${id}`)}</p>
+                <p className="text-xs text-gray-500 mt-0.5">{t(`goal.descs.${id}`)}</p>
               </div>
             </button>
           )
@@ -95,7 +96,7 @@ export default function StepGoalType({ state, update }: StepProps) {
       {/* Dynamic Campaign Type Selection */}
       {availableTypes.length > 0 && (
         <div>
-          <h4 className="text-sm font-semibold text-gray-900 mb-2">Kampanya Türü</h4>
+          <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('goal.campaignTypeTitle')}</h4>
           <div className={`grid gap-2 ${availableTypes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
             {availableTypes.map(ct => {
               const active = state.campaignType === ct.type
@@ -113,8 +114,8 @@ export default function StepGoalType({ state, update }: StepProps) {
                 >
                   <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
                   <div>
-                    <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{ct.label}</p>
-                    <p className="text-xs text-gray-500 mt-0.5">{ct.desc}</p>
+                    <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{t(`summary.campaignTypeLabels.${ct.type}`)}</p>
+                    <p className="text-xs text-gray-500 mt-0.5">{t(`campaignTypeDescs.${ct.type}`)}</p>
                   </div>
                 </button>
               )
