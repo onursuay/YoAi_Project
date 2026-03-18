@@ -320,6 +320,16 @@ async function createCampaignCriteria(
     }
   }
 
+  const locationCount = (params.locationIds?.length ?? 0) + (params.negativeLocationIds?.length ?? 0)
+  const languageCount = params.languageIds?.length ?? 0
+  const adScheduleCount = params.adSchedule?.length ?? 0
+  console.log('[PMax] criteria create:', {
+    criteriaOperationCount: ops.length,
+    locationCount,
+    languageCount,
+    adScheduleCount,
+  })
+
   if (ops.length > 0) {
     await postMutate(ctx, 'campaignCriteria', ops)
   }

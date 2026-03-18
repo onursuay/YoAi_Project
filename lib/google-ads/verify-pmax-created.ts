@@ -75,20 +75,38 @@ export async function verifyPmaxCreated(
   )
   result.signalsCount = signalRows.length
 
+  const campaignIdMatch = campaignResourceName.match(/\/campaigns\/(\d+)$/)
+  const campaignId = campaignIdMatch ? campaignIdMatch[1] : null
+  const escapedRn = campaignResourceName.replace(/'/g, "\\'")
+  const campaignFilter = campaignId
+    ? `campaign.id = ${campaignId}`
+    : `campaign_criterion.campaign = '${escapedRn}'`
+
   const criteriaQuery = `
-    SELECT campaign_criterion.resource_name, campaign_criterion.type
+    SELECT campaign_criterion.resource_name, campaign_criterion.type, campaign_criterion.status
     FROM campaign_criterion
-    WHERE campaign_criterion.campaign = '${campaignResourceName.replace(/'/g, "\\'")}'
+    WHERE ${campaignFilter}
+      AND campaign_criterion.status != 'REMOVED'
   `
   const criteriaRows = await searchGAds<{
-    campaignCriterion: { resourceName: string; type: string }
+    campaignCriterion?: { resourceName?: string; type?: string; status?: string }
+    campaign_criterion?: { resource_name?: string; type?: string; status?: string }
   }>(ctx, criteriaQuery, { maxRows: 500 })
+
   for (const r of criteriaRows) {
-    const t = r.campaignCriterion?.type ?? ''
-    if (t.includes('LOCATION')) result.locationCriteriaCount++
-    else if (t.includes('LANGUAGE')) result.languageCriteriaCount++
-    else if (t.includes('AD_SCHEDULE')) result.adScheduleCriteriaCount++
+    const c = r.campaignCriterion ?? r.campaign_criterion ?? {}
+    const t = String(c.type ?? '').toUpperCase()
+    if (t === 'LOCATION') result.locationCriteriaCount++
+    else if (t === 'LANGUAGE') result.languageCriteriaCount++
+    else if (t === 'AD_SCHEDULE') result.adScheduleCriteriaCount++
   }
+
+  console.log('[verify-pmax] criteria counts:', {
+    totalRows: criteriaRows.length,
+    locationCriteriaCount: result.locationCriteriaCount,
+    languageCriteriaCount: result.languageCriteriaCount,
+    adScheduleCriteriaCount: result.adScheduleCriteriaCount,
+  })
 
   return result
 }

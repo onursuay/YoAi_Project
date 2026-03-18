@@ -27,7 +27,9 @@ const ADMIN_SECRET = process.env.ADMIN_SECRET
 const DRY_RUN = process.argv.includes('--dry-run')
 const DO_VERIFY = process.argv.includes('--verify')
 
-/** Minimal valid PMax payload. Uses placehold.co for exact aspect ratios. */
+/** Minimal valid PMax payload. Uses placehold.co for exact aspect ratios.
+ * Includes locationIds, languageIds, adSchedule for parity verification.
+ */
 const MINIMAL_PAYLOAD = {
   advertisingChannelType: 'PERFORMANCE_MAX',
   campaignName: `PMax Smoke Test ${Date.now()}`,
@@ -37,6 +39,11 @@ const MINIMAL_PAYLOAD = {
   containsEuPoliticalAdvertising: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
   finalUrl: 'https://example.com',
   finalUrlExpansionEnabled: false,
+  locationIds: ['2792'],
+  languageIds: ['1037'],
+  adSchedule: [
+    { dayOfWeek: 'MONDAY', startHour: 9, startMinute: 'ZERO', endHour: 18, endMinute: 'ZERO' },
+  ],
   assetGroup: {
     name: 'Smoke Asset Group',
     businessName: 'Smoke Business',
