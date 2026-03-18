@@ -922,6 +922,8 @@
             "1031": "Rusça"
           }
         },
+        "performanceMaxNotReady": "Bu kampanya türü henüz bu sihirbazda desteklenmiyor. Ayrı bir akışta hazırlanacaktır. Lütfen Search veya başka bir kampanya türü seçin.",
+        "performanceMaxPlaceholder": "Performance Max kampanya türü şu an bu sihirbazda desteklenmiyor. Ayrı bir akışta hazırlanacaktır. Devam etmek için lütfen Search veya başka bir kampanya türü seçin.",
         "validation": {
           "campaignNameRequired": "Kampanya adı zorunlu",
           "minBudget": "Minimum günlük bütçe 1 TRY",

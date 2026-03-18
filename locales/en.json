@@ -922,6 +922,8 @@
             "1031": "Russian"
           }
         },
+        "performanceMaxNotReady": "This campaign type is not yet supported in this wizard. It will be available in a separate flow. Please select Search or another campaign type.",
+        "performanceMaxPlaceholder": "Performance Max campaign type is not yet supported in this wizard. It will be available in a separate flow. Please select Search or another campaign type to continue.",
         "validation": {
           "campaignNameRequired": "Campaign name is required",
           "minBudget": "Minimum daily budget is 1 TRY",

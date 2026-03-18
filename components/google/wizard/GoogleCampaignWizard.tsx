@@ -61,6 +61,11 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
   const update = (partial: Partial<WizardState>) => setState(prev => ({ ...prev, ...partial }))
 
   const next = () => {
+    // PERFORMANCE_MAX: block Search flow — will have its own wizard later
+    if (step === 0 && state.campaignType === 'PERFORMANCE_MAX') {
+      setError(t('performanceMaxNotReady'))
+      return
+    }
     const err = validateStep(step, state, t)
     if (err) { setError(err); return }
     setError(null)
@@ -70,6 +75,8 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
   const back = () => { setError(null); setStep(s => s - 1) }
 
   const submit = async () => {
+    // PERFORMANCE_MAX: do not submit — has separate flow
+    if (state.campaignType === 'PERFORMANCE_MAX') return
     setSubmitting(true)
     setError(null)
     setSubmitResult(null)
@@ -192,14 +199,32 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
 
           {submitResult !== 'full' && submitResult !== 'partial' && (
             <>
-              {step === 0 && <StepGoalType {...stepProps} />}
-              {step === 1 && <StepConversionAndName {...stepProps} />}
-              {step === 2 && <StepBiddingAcquisition {...stepProps} />}
-              {step === 3 && <StepCampaignSettingsSearch {...stepProps} />}
-              {step === 4 && <StepAIMax {...stepProps} />}
-              {step === 5 && <StepKeywordsAndAds {...stepProps} />}
-              {step === 6 && <StepBudget {...stepProps} />}
-              {step === 7 && <StepSummary {...stepProps} />}
+              {step === 0 && (
+                <>
+                  <StepGoalType {...stepProps} />
+                  {state.campaignType === 'PERFORMANCE_MAX' && (
+                    <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-medium text-amber-800">{t('performanceMaxPlaceholder')}</p>
+                    </div>
+                  )}
+                </>
+              )}
+              {step >= 1 && state.campaignType === 'PERFORMANCE_MAX' && (
+                <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-6 text-center">
+                  <p className="text-sm font-medium text-amber-800">{t('performanceMaxPlaceholder')}</p>
+                </div>
+              )}
+              {step >= 1 && state.campaignType !== 'PERFORMANCE_MAX' && (
+                <>
+                  {step === 1 && <StepConversionAndName {...stepProps} />}
+                  {step === 2 && <StepBiddingAcquisition {...stepProps} />}
+                  {step === 3 && <StepCampaignSettingsSearch {...stepProps} />}
+                  {step === 4 && <StepAIMax {...stepProps} />}
+                  {step === 5 && <StepKeywordsAndAds {...stepProps} />}
+                  {step === 6 && <StepBudget {...stepProps} />}
+                  {step === 7 && <StepSummary {...stepProps} />}
+                </>
+              )}
             </>
           )}
         </div>
