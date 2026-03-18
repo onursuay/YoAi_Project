@@ -23,6 +23,8 @@ interface Props {
   onClose: () => void
   onSuccess: () => void
   onToast?: (msg: string, type: 'success' | 'error') => void
+  /** When PERFORMANCE_MAX selected on step 0 and Next clicked — close this wizard and open PMax wizard */
+  onOpenPMaxWizard?: () => void
 }
 
 const TOTAL_STEPS = 8
@@ -34,7 +36,7 @@ function normalizeError(err: unknown): string {
   return technical ? '' : msg
 }
 
-export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToast }: Props) {
+export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToast, onOpenPMaxWizard }: Props) {
   const [step, setStep] = useState(0)
   const [state, setState] = useState<WizardState>(defaultState)
   const [error, setError] = useState<string | null>(null)
@@ -61,9 +63,14 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
   const update = (partial: Partial<WizardState>) => setState(prev => ({ ...prev, ...partial }))
 
   const next = () => {
-    // PERFORMANCE_MAX: block Search flow — will have its own wizard later
+    // PERFORMANCE_MAX: route to PMax wizard — campaign type based entry
     if (step === 0 && state.campaignType === 'PERFORMANCE_MAX') {
-      setError(t('performanceMaxNotReady'))
+      if (onOpenPMaxWizard) {
+        onOpenPMaxWizard()
+        handleClose()
+      } else {
+        setError(t('performanceMaxNotReady'))
+      }
       return
     }
     const err = validateStep(step, state, t)

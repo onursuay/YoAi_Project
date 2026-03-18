@@ -9,6 +9,7 @@ import TableShimmer from '@/components/TableShimmer'
 import DashboardKpiCard from '@/components/DashboardKpiCard'
 import AlertBanner from '@/components/AlertBanner'
 import GoogleCampaignWizard from '@/components/google/wizard/GoogleCampaignWizard'
+import PMaxCampaignWizard from '@/components/google/wizard/pmax/PMaxCampaignWizard'
 import GoogleAccountModal from '@/components/google/GoogleAccountModal'
 import DateRangePicker from '@/components/DateRangePicker'
 import GoogleTableReal from './components/GoogleTableReal'
@@ -29,6 +30,7 @@ export default function GooglePage() {
   const [activeTab, setActiveTab] = useState('kampanyalar')
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType }>>([])
   const [showWizard, setShowWizard] = useState(false)
+  const [showPMaxWizard, setShowPMaxWizard] = useState(false)
   const [emptyBannerDismissed, setEmptyBannerDismissed] = useState(false)
 
   // Selection state — one per tab
@@ -517,6 +519,14 @@ export default function GooglePage() {
 
             {/* Inline toolbar (Meta style) */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
+              {!showEmptyState && (
+                <button
+                  onClick={() => setShowPMaxWizard(true)}
+                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
+                >
+                  {t('createPMaxCampaign')}
+                </button>
+              )}
               {/* Action icons */}
               <button
                 onClick={handleRefresh}
@@ -906,6 +916,13 @@ export default function GooglePage() {
         isOpen={showWizard}
         onClose={() => setShowWizard(false)}
         onSuccess={() => { setShowWizard(false); data.fetchCampaigns(kpis.dateFrom, kpis.dateTo) }}
+        onToast={addToast}
+        onOpenPMaxWizard={() => { setShowWizard(false); setShowPMaxWizard(true) }}
+      />
+      <PMaxCampaignWizard
+        isOpen={showPMaxWizard}
+        onClose={() => setShowPMaxWizard(false)}
+        onSuccess={() => { setShowPMaxWizard(false); data.fetchCampaigns(kpis.dateFrom, kpis.dateTo) }}
         onToast={addToast}
       />
       <ToastContainer toasts={toasts} onClose={removeToast} />
