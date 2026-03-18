@@ -1452,17 +1452,6 @@
           "error404": "404 Page Not Found",
           "error403": "403 Access Denied",
           "error500": "500 Server Error"
-        },
-        "ping": {
-          "title": "URL Ping / Index Accelerator",
-          "description": "Notify search engines and directories to crawl your URLs faster",
-          "urlLabel": "URLs to Ping",
-          "urlPlaceholder": "https://example.com\nhttps://example.com/blog\nhttps://example.com/contact",
-          "urlHint": "Enter one URL per line. Maximum 20 URLs at once.",
-          "pingButton": "Ping",
-          "pinging": "Pinging...",
-          "results": "Results",
-          "successful": "successful"
         }
       },
       "articles": {

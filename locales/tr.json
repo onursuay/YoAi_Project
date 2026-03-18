@@ -1452,17 +1452,6 @@
           "error404": "404 Sayfa Bulunamadı",
           "error403": "403 Erişim Engellendi",
           "error500": "500 Sunucu Hatası"
-        },
-        "ping": {
-          "title": "URL Ping / İndeksleme Hızlandırıcı",
-          "description": "Arama motorlarını ve dizinleri URL'lerinizi daha hızlı taramaları için bilgilendirin",
-          "urlLabel": "Ping Atılacak URL'ler",
-          "urlPlaceholder": "https://example.com\nhttps://example.com/blog\nhttps://example.com/iletisim",
-          "urlHint": "Her satıra bir URL girin. Maksimum 20 URL.",
-          "pingButton": "Ping At",
-          "pinging": "Ping atılıyor...",
-          "results": "Sonuçlar",
-          "successful": "başarılı"
         }
       },
       "articles": {

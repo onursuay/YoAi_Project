@@ -290,13 +290,13 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
       </div>
 
       {/* Desired outcomes — Google Ads-style, lighter compact rows */}
-      <div className="rounded border border-gray-100 bg-gray-50/20 p-3 space-y-2">
+      <div className="rounded border border-gray-100/80 bg-white p-3 space-y-2">
         <h4 className="text-[15px] font-semibold text-gray-900 mb-0.5">{t('conversion.desiredOutcomesTitle')}</h4>
         <p className="text-[13px] text-gray-500 mb-2">{t('conversion.desiredOutcomesHelp')}</p>
 
         {/* Web sitesi ziyaretleri */}
         <div className={`rounded border transition-colors ${
-          state.desiredOutcomeWebsite ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 bg-white'
+          state.desiredOutcomeWebsite ? 'border-blue-100 bg-blue-50/20' : 'border-gray-100 bg-gray-50/30'
         }`}>
           <label className="flex items-center gap-2 px-2.5 py-2 cursor-pointer">
             <input
@@ -322,7 +322,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
 
         {/* Telefon Aramaları */}
         <div className={`rounded border transition-colors ${
-          state.desiredOutcomePhone ? 'border-blue-200 bg-blue-50/30' : 'border-gray-100 bg-white'
+          state.desiredOutcomePhone ? 'border-blue-100 bg-blue-50/20' : 'border-gray-100 bg-gray-50/30'
         }`}>
           <label className="flex items-center gap-2 px-2.5 py-2 cursor-pointer">
             <input
@@ -334,9 +334,9 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
             <span className="text-[13px] font-medium text-gray-900">{t('conversion.outcomePhoneCalls')}</span>
           </label>
           {state.desiredOutcomePhone && (
-            <div className="px-2.5 pb-2.5 pt-0 flex gap-2 w-full">
+            <div className="px-2.5 pb-2.5 pt-0 flex flex-row items-center gap-3">
               <select
-                className={`${inputCls} w-24 shrink-0`}
+                className="h-9 w-[100px] shrink-0 px-3 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={state.desiredOutcomePhoneCountryCode}
                 onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
               >
@@ -345,8 +345,8 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                 ))}
               </select>
               <input
-                className={`${inputCls} flex-1 min-w-0`}
                 type="tel"
+                className="h-9 flex-1 min-w-[140px] px-3 border border-gray-300 rounded-lg text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 value={state.desiredOutcomePhoneNumber}
                 onChange={e => update({ desiredOutcomePhoneNumber: e.target.value })}
                 placeholder={t('conversion.outcomePhonePlaceholder')}
