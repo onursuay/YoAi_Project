@@ -395,7 +395,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
           </label>
           {state.desiredOutcomePhone && (
             <div className="px-2.5 pb-2.5 pt-0">
-              <div className="grid grid-cols-[minmax(140px,1fr)_minmax(0,1fr)] gap-3 items-center w-full">
+              <div className="grid grid-cols-[140px_minmax(0,1fr)] gap-3 items-center w-full">
                 <select
                   className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={state.desiredOutcomePhoneCountryCode}
