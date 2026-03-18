@@ -89,11 +89,11 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
       <div>
         <div className="flex items-center gap-2 mb-2">
           <Target className="w-4 h-4 text-blue-600" />
-          <label className="text-sm font-semibold text-gray-900">
-            {t('conversion.title')} <span className="text-red-500">*</span>
+          <label className="text-[15px] font-semibold text-gray-900">
+            {t('conversion.title')}
           </label>
         </div>
-        <p className="text-xs text-gray-500 mb-3">
+        <p className="text-[13px] text-gray-500 mb-3">
           {t('conversion.description')}
         </p>
 

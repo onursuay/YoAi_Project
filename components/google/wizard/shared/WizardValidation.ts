@@ -9,8 +9,6 @@ export function validateStep(step: number, state: WizardState, t: (key: string, 
 
     case 1: { // Conversion + Campaign Name
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
-      if (state.campaignType === 'SEARCH' && state.selectedConversionGoalIds.length === 0)
-        return t('validation.conversionGoalsRequired')
       return null
     }
 

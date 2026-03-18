@@ -109,7 +109,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
     <div className="space-y-6">
       {/* 1. Ad group */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('adgroup.sectionTitle')}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('adgroup.sectionTitle')}</h4>
         <Field label={t('adgroup.name')} required>
           <input
             className={inputCls}
@@ -118,34 +118,37 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
             placeholder={t('adgroup.namePlaceholder')}
           />
         </Field>
-        <Field label={t('adgroup.defaultMatchType')}>
-          <select
-            className={`${inputCls} max-w-[200px]`}
-            value={state.defaultMatchType}
-            onChange={e => update({ defaultMatchType: e.target.value as MatchType })}
-          >
-            <option value="BROAD">{t('adgroup.matchTypes.BROAD')}</option>
-            <option value="PHRASE">{t('adgroup.matchTypes.PHRASE')}</option>
-            <option value="EXACT">{t('adgroup.matchTypes.EXACT')}</option>
-          </select>
-        </Field>
-        <Field label={t('adgroup.cpcBid')}>
-          <input
-            className={`${inputCls} max-w-[200px]`}
-            type="number"
-            min="0"
-            step="0.01"
-            value={state.cpcBid}
-            onChange={e => update({ cpcBid: e.target.value })}
-            placeholder={t('adgroup.cpcBidPlaceholder')}
-          />
-        </Field>
+        {/* Default match type & CPC — side by side on desktop */}
+        <div className="mt-6 pt-6 border-t border-gray-200 space-y-4 sm:space-y-0 sm:grid sm:grid-cols-2 sm:gap-4">
+          <Field label={t('adgroup.defaultMatchType')}>
+            <select
+              className={`${inputCls} w-full sm:max-w-[200px]`}
+              value={state.defaultMatchType}
+              onChange={e => update({ defaultMatchType: e.target.value as MatchType })}
+            >
+              <option value="BROAD">{t('adgroup.matchTypes.BROAD')}</option>
+              <option value="PHRASE">{t('adgroup.matchTypes.PHRASE')}</option>
+              <option value="EXACT">{t('adgroup.matchTypes.EXACT')}</option>
+            </select>
+          </Field>
+          <Field label={t('adgroup.cpcBid')}>
+            <input
+              className={`${inputCls} w-full sm:max-w-[200px]`}
+              type="number"
+              min="0"
+              step="0.01"
+              value={state.cpcBid}
+              onChange={e => update({ cpcBid: e.target.value })}
+              placeholder={t('adgroup.cpcBidPlaceholder')}
+            />
+          </Field>
+        </div>
       </section>
 
       {/* 2. Keywords */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('adgroup.keywordsSectionTitle')}</h4>
-        <p className="text-xs text-gray-500 mb-2">{t('adgroup.keywordsNote')}</p>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('adgroup.keywordsSectionTitle')}</h4>
+        <p className="text-[13px] text-gray-500 mb-2">{t('adgroup.keywordsNote')}</p>
         <div className="flex items-center gap-2 mb-1.5">
           <span className="text-xs font-medium text-gray-500">{t('adgroup.defaultLabel')}</span>
           <span className="inline-flex px-2 py-0.5 rounded bg-gray-100 text-gray-700 text-xs font-medium">
@@ -217,7 +220,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
 
       {/* 3. Negative keywords */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('adgroup.negativeKeywordsSectionTitle')}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('adgroup.negativeKeywordsSectionTitle')}</h4>
         <Field label={t('adgroup.negativeKeywords')}>
           <textarea
             className={`${inputCls} h-20 resize-none font-mono text-sm`}
@@ -230,7 +233,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
 
       {/* 4. URL & display path */}
       <section className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('adgroup.urlPathSectionTitle')}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('adgroup.urlPathSectionTitle')}</h4>
         <Field label={t('ad.finalUrl')} required>
           <input
             className={`${inputCls} ${hasInvalidUrl ? 'border-amber-500 ring-1 ring-amber-500' : ''}`}
@@ -255,8 +258,8 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
 
       {/* 5. Headlines (RSA) */}
       <section className="pt-4 border-t border-gray-200">
-        <h4 className="text-sm font-semibold text-gray-900 mb-1">{t('adgroup.headlinesSectionTitle')}</h4>
-        <p className="text-xs text-gray-500 mb-3">{t('adgroup.headlinesHint')}</p>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('adgroup.headlinesSectionTitle')}</h4>
+        <p className="text-[13px] text-gray-500 mb-3">{t('adgroup.headlinesHint')}</p>
         <p className="text-xs font-medium text-gray-600 mb-2">
           {t('adgroup.headlinesCount', { count: headlines.length })}{(headlines.length < 3) && <span className="text-amber-600"> {t('adgroup.headlinesMinRequired')}</span>}
         </p>
@@ -300,8 +303,8 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
 
       {/* 6. Descriptions (RSA) */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-1">{t('adgroup.descriptionsSectionTitle')}</h4>
-        <p className="text-xs text-gray-500 mb-3">{t('adgroup.descriptionsHint')}</p>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('adgroup.descriptionsSectionTitle')}</h4>
+        <p className="text-[13px] text-gray-500 mb-3">{t('adgroup.descriptionsHint')}</p>
         <p className="text-xs font-medium text-gray-600 mb-2">
           {t('adgroup.descriptionsCount', { count: descriptions.length })}{(descriptions.length < 2) && <span className="text-amber-600"> {t('adgroup.descriptionsMinRequired')}</span>}
         </p>

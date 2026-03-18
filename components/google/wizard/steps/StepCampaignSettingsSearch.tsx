@@ -28,13 +28,9 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
       {/* 1. Network Settings — only for SEARCH */}
       {isSearch && (
         <section>
-          <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('settings.networksTitle')}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('settings.networksTitle')}</h4>
+          <p className="text-[13px] text-gray-500 mb-3">{t('settings.networksGoogleSearchAlwaysOn')}</p>
           <div className="space-y-2">
-            <label className="flex items-center gap-2 text-sm">
-              <input type="checkbox" checked disabled className="rounded border-gray-300" />
-              <span className="text-gray-700">{t('settings.networksGoogleSearch')}</span>
-              <span className="text-xs text-gray-400">({t('settings.networksGoogleSearchHint')})</span>
-            </label>
             <label className="flex items-center gap-2 text-sm cursor-pointer">
               <input
                 type="checkbox"
@@ -63,7 +59,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
       <section>
         <div className="flex items-center gap-2 mb-2">
           <Globe className="w-4 h-4 text-blue-600" />
-          <h4 className="text-sm font-semibold text-gray-900">{t('settings.locationModeTitle')}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900">{t('settings.locationModeTitle')}</h4>
         </div>
         <div className="space-y-2">
           <label
@@ -83,7 +79,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
             />
             <div>
               <span className="text-sm font-medium text-gray-900">{t('settings.locationModePresenceInterest')}</span>
-              <p className="text-xs text-gray-500 mt-0.5">{t('settings.locationModePresenceInterestDesc')}</p>
+              <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.locationModePresenceInterestDesc')}</p>
             </div>
           </label>
           <label
@@ -103,7 +99,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
             />
             <div>
               <span className="text-sm font-medium text-gray-900">{t('settings.locationModePresenceOnly')}</span>
-              <p className="text-xs text-gray-500 mt-0.5">{t('settings.locationModePresenceOnlyDesc')}</p>
+              <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.locationModePresenceOnlyDesc')}</p>
             </div>
           </label>
         </div>
@@ -111,7 +107,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
 
       {/* 3. Locations & Languages */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('steps.location')}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('steps.location')}</h4>
         <StepLocationLanguage state={state} update={update} t={t} />
       </section>
 
@@ -119,9 +115,9 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
       <section>
         <div className="flex items-center gap-2 mb-2">
           <Shield className="w-4 h-4 text-blue-600" />
-          <h4 className="text-sm font-semibold text-gray-900">{t('settings.euPoliticalTitle')}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900">{t('settings.euPoliticalTitle')}</h4>
         </div>
-        <p className="text-xs text-gray-500 mb-3">{t('settings.euPoliticalDescription')}</p>
+        <p className="text-[13px] text-gray-500 mb-3">{t('settings.euPoliticalDescription')}</p>
         <div className="space-y-2">
           <label
             className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
@@ -162,7 +158,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
 
       {/* 5. Audience — embedded protected component, unchanged */}
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('steps.audience')}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('steps.audience')}</h4>
         <StepAudience state={state} update={update} t={t} />
       </section>
 
@@ -180,7 +176,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
         >
           <div className="flex items-center gap-2">
             <Settings className="w-4 h-4 text-gray-600" />
-            <span className="text-sm font-semibold text-gray-900">{t('settings.otherSettingsTitle')}</span>
+            <span className="text-[15px] font-semibold text-gray-900">{t('settings.otherSettingsTitle')}</span>
           </div>
           {otherSettingsOpen ? <ChevronUp className="w-4 h-4 text-gray-500" /> : <ChevronDown className="w-4 h-4 text-gray-500" />}
         </button>

@@ -500,7 +500,7 @@
         },
         "conversion": {
           "title": "Conversion Goals",
-          "description": "Select conversion actions for campaign optimization. At least one goal must be selected.",
+          "description": "Select conversion actions for campaign optimization. Optional — you can continue without selecting any.",
           "uiOnlyNote": "",
           "loading": "Loading conversion actions...",
           "error": "Failed to load conversion actions. Please check your Google Ads account and try again.",
@@ -561,6 +561,7 @@
           "networksTitle": "Network Settings",
           "networksGoogleSearch": "Google Search",
           "networksGoogleSearchHint": "Always on",
+          "networksGoogleSearchAlwaysOn": "Google Search is always on. Choose additional networks below.",
           "networksSearchPartners": "Search Network Partners",
           "networksSearchPartnersHint": "Show on search partner sites",
           "networksDisplay": "Display Network",

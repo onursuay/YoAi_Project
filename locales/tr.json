@@ -500,7 +500,7 @@
         },
         "conversion": {
           "title": "Dönüşüm Hedefleri",
-          "description": "Kampanyanızın optimizasyonu için dönüşüm eylemlerini seçin. En az bir hedef seçilmelidir.",
+          "description": "Kampanyanızın optimizasyonu için dönüşüm eylemlerini seçin. İsteğe bağlı — seçmeden devam edebilirsiniz.",
           "uiOnlyNote": "",
           "loading": "Dönüşüm eylemleri yükleniyor...",
           "error": "Dönüşüm eylemleri yüklenemedi. Lütfen Google Ads hesabınızı kontrol edip tekrar deneyin.",
@@ -561,6 +561,7 @@
           "networksTitle": "Ağ Ayarları",
           "networksGoogleSearch": "Google Arama",
           "networksGoogleSearchHint": "Her zaman aktif",
+          "networksGoogleSearchAlwaysOn": "Google Arama her zaman aktiftir. Ek ağları aşağıdan seçin.",
           "networksSearchPartners": "Arama Ağı Ortakları",
           "networksSearchPartnersHint": "Arama partner sitelerinde gösterim",
           "networksDisplay": "Görüntülü Reklam Ağı",

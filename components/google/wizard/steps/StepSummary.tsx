@@ -14,8 +14,6 @@ const WEAK_DESCRIPTIONS_THRESHOLD = 4
 function getBlockingIssues(state: WizardState, t: StepProps['t']): string[] {
   const issues: string[] = []
   if (!state.campaignName.trim()) issues.push(t('validation.campaignNameRequired'))
-  if (state.campaignType === 'SEARCH' && state.selectedConversionGoalIds.length === 0)
-    issues.push(t('validation.conversionGoalsRequired'))
   if (state.biddingStrategy === 'TARGET_CPA' && (!state.targetCpa || parseFloat(state.targetCpa) <= 0))
     issues.push(t('validation.targetCpaRequired'))
   if (state.biddingStrategy === 'TARGET_ROAS' && (!state.targetRoas || parseFloat(state.targetRoas) <= 0))
