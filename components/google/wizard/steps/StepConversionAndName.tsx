@@ -23,7 +23,64 @@ import type { StepProps } from '../shared/WizardTypes'
 import { inputCls } from '../shared/WizardTypes'
 import type { ConversionActionForWizard } from '../shared/WizardTypes'
 
-const PHONE_COUNTRY_CODES = ['+90', '+1', '+44', '+49', '+33', '+31', '+34', '+39']
+// Country-based phone options — visible labels are country names; value is dialCode for compatibility
+const COUNTRY_PHONE_OPTIONS: Array<{
+  id: string
+  dialCode: string
+  labelKey: string
+  placeholderKey: string
+}> = [
+  { id: 'TR', dialCode: '+90', labelKey: 'conversion.countryTR', placeholderKey: 'conversion.phonePlaceholderTR' },
+  { id: 'US', dialCode: '+1', labelKey: 'conversion.countryUS', placeholderKey: 'conversion.phonePlaceholderUS' },
+  { id: 'GB', dialCode: '+44', labelKey: 'conversion.countryGB', placeholderKey: 'conversion.phonePlaceholderGB' },
+  { id: 'DE', dialCode: '+49', labelKey: 'conversion.countryDE', placeholderKey: 'conversion.phonePlaceholderDE' },
+  { id: 'FR', dialCode: '+33', labelKey: 'conversion.countryFR', placeholderKey: 'conversion.phonePlaceholderFR' },
+  { id: 'NL', dialCode: '+31', labelKey: 'conversion.countryNL', placeholderKey: 'conversion.phonePlaceholderNL' },
+  { id: 'ES', dialCode: '+34', labelKey: 'conversion.countryES', placeholderKey: 'conversion.phonePlaceholderES' },
+  { id: 'IT', dialCode: '+39', labelKey: 'conversion.countryIT', placeholderKey: 'conversion.phonePlaceholderIT' },
+]
+
+/** Valid hostname: has a dot (domain.tld) or is exactly "localhost". Rejects bare IP-like digits or malformed hostnames. */
+function hasValidHostname(url: URL): boolean {
+  const host = url.hostname
+  if (!host) return false
+  if (host === 'localhost') return true
+  // Must have at least one dot (e.g. example.com, sub.example.com)
+  if (!host.includes('.')) return false
+  const parts = host.split('.')
+  const last = parts[parts.length - 1]
+  // TLD must be at least 2 chars (reject "https://1222" as host "1222")
+  return last.length >= 2 && /^[a-z0-9-]+$/i.test(last)
+}
+
+/** Practical web URL validation — http/https, parseable URL, valid hostname shape. Compatible with Step 6 / submit. */
+function isValidWebUrl(val: string): boolean {
+  if (!val || !val.trim()) return false
+  const s = val.trim()
+  if (!s.startsWith('http://') && !s.startsWith('https://')) return false
+  try {
+    const u = new URL(s)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
+    return hasValidHostname(u)
+  } catch {
+    return false
+  }
+}
+
+/** Extract digits only from pasted/typed input. */
+function sanitizePhoneDigits(input: string): string {
+  return input.replace(/\D/g, '')
+}
+
+/** Allow digits and common control keys in phone input. Block letters and symbols. */
+function isAllowedPhoneKey(e: React.KeyboardEvent<HTMLInputElement>): boolean {
+  if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return true
+  if (e.ctrlKey || e.metaKey) {
+    if (['a', 'c', 'v', 'x'].includes(e.key.toLowerCase())) return true
+  }
+  if (/^\d$/.test(e.key)) return true
+  return false
+}
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
@@ -310,12 +367,15 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
           {state.desiredOutcomeWebsite && (
             <div className="px-2.5 pb-2.5 pt-0">
               <input
-                className={inputCls}
+                className={`${inputCls} ${state.finalUrl.trim() && !isValidWebUrl(state.finalUrl) ? 'border-red-400 focus:ring-red-500 focus:border-red-500' : ''}`}
                 type="url"
                 value={state.finalUrl}
                 onChange={e => update({ finalUrl: e.target.value })}
                 placeholder={t('conversion.outcomeWebsiteUrlPlaceholder')}
               />
+              {state.finalUrl.trim() && !isValidWebUrl(state.finalUrl) && (
+                <p className="mt-1 text-[13px] text-red-600">{t('conversion.outcomeUrlInvalid')}</p>
+              )}
             </div>
           )}
         </div>
@@ -335,22 +395,40 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
           </label>
           {state.desiredOutcomePhone && (
             <div className="px-2.5 pb-2.5 pt-0">
-              <div className="grid grid-cols-[100px_minmax(0,1fr)] gap-3 items-center w-full">
+              <div className="grid grid-cols-[minmax(140px,1fr)_minmax(0,1fr)] gap-3 items-center w-full">
                 <select
                   className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={state.desiredOutcomePhoneCountryCode}
                   onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
                 >
-                  {PHONE_COUNTRY_CODES.map(code => (
-                    <option key={code} value={code}>{code}</option>
+                  {COUNTRY_PHONE_OPTIONS.map(opt => (
+                    <option key={opt.id} value={opt.dialCode}>{t(opt.labelKey)}</option>
                   ))}
                 </select>
                 <input
                   type="tel"
+                  inputMode="numeric"
+                  pattern="[0-9]*"
+                  autoComplete="tel-national"
                   className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
                   value={state.desiredOutcomePhoneNumber}
-                  onChange={e => update({ desiredOutcomePhoneNumber: e.target.value })}
-                  placeholder={t('conversion.outcomePhonePlaceholder')}
+                  onChange={e => update({ desiredOutcomePhoneNumber: sanitizePhoneDigits(e.target.value) })}
+                  onKeyDown={e => { if (!isAllowedPhoneKey(e)) e.preventDefault() }}
+                  onBeforeInput={e => {
+                    const data = (e.nativeEvent as InputEvent).data
+                    if (data != null && /\D/.test(data)) e.preventDefault()
+                  }}
+                  onPaste={e => {
+                    e.preventDefault()
+                    const inp = e.currentTarget
+                    const start = inp.selectionStart ?? 0
+                    const end = inp.selectionEnd ?? 0
+                    const cur = state.desiredOutcomePhoneNumber
+                    const pasted = sanitizePhoneDigits(e.clipboardData.getData('text'))
+                    const next = cur.slice(0, start) + pasted + cur.slice(end)
+                    update({ desiredOutcomePhoneNumber: sanitizePhoneDigits(next) })
+                  }}
+                  placeholder={t(COUNTRY_PHONE_OPTIONS.find(o => o.dialCode === state.desiredOutcomePhoneCountryCode)?.placeholderKey ?? 'conversion.outcomePhonePlaceholder')}
                 />
               </div>
             </div>
