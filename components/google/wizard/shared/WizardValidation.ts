@@ -1,8 +1,8 @@
-import { parsePhoneNumberFromString } from 'libphonenumber-js'
+import { parsePhoneNumberFromString, type CountryCode } from 'libphonenumber-js'
 import type { WizardState, BiddingStrategy } from './WizardTypes'
 
 /** dialCode -> ISO 3166-1 alpha-2 for country-aware phone validation */
-const DIAL_CODE_TO_ISO: Record<string, string> = {
+const DIAL_CODE_TO_ISO: Record<string, CountryCode> = {
   '+90': 'TR', '+1': 'US', '+44': 'GB', '+49': 'DE', '+33': 'FR', '+31': 'NL', '+34': 'ES', '+39': 'IT',
 }
 
@@ -10,11 +10,11 @@ const DIAL_CODE_TO_ISO: Record<string, string> = {
 export function isValidPhoneForCountry(nationalDigits: string, dialCode: string): boolean {
   const digits = nationalDigits.replace(/\D/g, '').trim()
   if (!digits) return false
-  const iso2 = DIAL_CODE_TO_ISO[dialCode]
-  if (!iso2) return false
+  const country: CountryCode | undefined = DIAL_CODE_TO_ISO[dialCode]
+  if (!country) return false
   const full = `${dialCode}${digits}`
   try {
-    const parsed = parsePhoneNumberFromString(full, iso2)
+    const parsed = parsePhoneNumberFromString(full, country)
     return !!parsed?.isValid()
   } catch {
     return false
