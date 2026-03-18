@@ -23,6 +23,8 @@ import type { StepProps } from '../shared/WizardTypes'
 import { inputCls } from '../shared/WizardTypes'
 import type { ConversionActionForWizard } from '../shared/WizardTypes'
 
+const PHONE_COUNTRY_CODES = ['+90', '+1', '+44', '+49', '+33', '+31', '+34', '+39']
+
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
@@ -264,7 +266,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                           {isPrimary ? t('conversion.primary') : t('conversion.set')}
                         </button>
                       ) : (
-                        <span className="text-gray-300 text-xs">—</span>
+                        <span className="text-gray-300 text-[13px]">—</span>
                       )}
                     </div>
                   </label>
@@ -316,6 +318,41 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                 onChange={e => update({ finalUrl: e.target.value })}
                 placeholder={t('conversion.outcomeWebsiteUrlPlaceholder')}
               />
+            )}
+          </div>
+        </label>
+
+        {/* Telefon Aramaları */}
+        <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+          state.desiredOutcomePhone ? 'border-blue-500 bg-blue-50/40' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+        }`}>
+          <input
+            type="checkbox"
+            checked={state.desiredOutcomePhone}
+            onChange={e => update({ desiredOutcomePhone: e.target.checked })}
+            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
+          />
+          <div className="flex-1 min-w-0">
+            <span className="text-[15px] font-medium text-gray-900">{t('conversion.outcomePhoneCalls')}</span>
+            {state.desiredOutcomePhone && (
+              <div className="flex gap-2 mt-2">
+                <select
+                  className={`${inputCls} w-20 shrink-0`}
+                  value={state.desiredOutcomePhoneCountryCode}
+                  onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
+                >
+                  {PHONE_COUNTRY_CODES.map(code => (
+                    <option key={code} value={code}>{code}</option>
+                  ))}
+                </select>
+                <input
+                  className={`${inputCls} flex-1`}
+                  type="tel"
+                  value={state.desiredOutcomePhoneNumber}
+                  onChange={e => update({ desiredOutcomePhoneNumber: e.target.value })}
+                  placeholder={t('conversion.outcomePhonePlaceholder')}
+                />
+              </div>
             )}
           </div>
         </label>

@@ -517,6 +517,8 @@
           "desiredOutcomesHelp": "Choose what you want people to do.",
           "outcomeWebsiteVisits": "Website visits",
           "outcomeWebsiteUrlPlaceholder": "https://example.com",
+          "outcomePhoneCalls": "Phone calls",
+          "outcomePhonePlaceholder": "555 123 4567",
           "websiteOutcomeTitle": "Website visits",
           "websiteOutcomeLabel": "Landing page URL",
           "websiteOutcomeHelp": "Where people go when they click your ad. Same URL will be used for ads.",

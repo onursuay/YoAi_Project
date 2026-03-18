@@ -517,6 +517,8 @@
           "desiredOutcomesHelp": "İnsanların ne yapmasını istediğinizi seçin.",
           "outcomeWebsiteVisits": "Web sitesi ziyaretleri",
           "outcomeWebsiteUrlPlaceholder": "https://ornek.com",
+          "outcomePhoneCalls": "Telefon Aramaları",
+          "outcomePhonePlaceholder": "555 123 4567",
           "websiteOutcomeTitle": "Web sitesi ziyaretleri",
           "websiteOutcomeLabel": "Hedef sayfa URL'si",
           "websiteOutcomeHelp": "İnsanlar reklamınıza tıkladığında gidecekleri adres. Reklamlar için aynı URL kullanılacaktır.",
