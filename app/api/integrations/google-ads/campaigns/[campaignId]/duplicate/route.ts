@@ -60,6 +60,8 @@ export async function POST(
         campaign_criterion.user_interest.user_interest_category,
         campaign_criterion.custom_audience.custom_audience,
         campaign_criterion.combined_audience.combined_audience,
+        campaign_criterion.life_event.life_event_id,
+        campaign_criterion.extended_demographic.extended_demographic_id,
         campaign_criterion.ad_schedule.day_of_week,
         campaign_criterion.ad_schedule.start_hour,
         campaign_criterion.ad_schedule.start_minute,
@@ -195,6 +197,10 @@ export async function POST(
           op.customAudience = { customAudience: cr.customAudience.customAudience }
         } else if (cr.type === 'COMBINED_AUDIENCE' && cr.combinedAudience?.combinedAudience) {
           op.combinedAudience = { combinedAudience: cr.combinedAudience.combinedAudience }
+        } else if (cr.type === 'LIFE_EVENT' && cr.lifeEvent?.lifeEventId != null) {
+          op.lifeEvent = { lifeEventId: String(cr.lifeEvent.lifeEventId ?? cr.lifeEvent.life_event_id) }
+        } else if (cr.type === 'EXTENDED_DEMOGRAPHIC' && cr.extendedDemographic?.extendedDemographicId != null) {
+          op.extendedDemographic = { extendedDemographicId: String(cr.extendedDemographic.extendedDemographicId ?? cr.extendedDemographic.extended_demographic_id) }
         } else if (cr.type === 'AD_SCHEDULE' && cr.adSchedule) {
           op.adSchedule = {
             dayOfWeek: cr.adSchedule.dayOfWeek,

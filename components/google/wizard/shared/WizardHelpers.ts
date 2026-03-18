@@ -47,11 +47,15 @@ export function buildCreatePayload(state: WizardState) {
       const segs = state.selectedAudienceSegments
       const ul = segs.filter(s => s.category === 'USER_LIST').map(s => s.id)
       const ui = segs.filter(s => s.category === 'AFFINITY' || s.category === 'IN_MARKET').map(s => s.id)
+      const dd = segs.filter(s => s.category === 'DETAILED_DEMOGRAPHIC').map(s => s.id)
+      const le = segs.filter(s => s.category === 'LIFE_EVENT').map(s => s.id)
       const ca = segs.filter(s => s.category === 'CUSTOM_AUDIENCE').map(s => s.id)
       const cb = segs.filter(s => s.category === 'COMBINED_AUDIENCE').map(s => s.id)
       return {
         ...(ul.length > 0 && { audienceIds: ul }),
         ...(ui.length > 0 && { userInterestIds: ui }),
+        ...(dd.length > 0 && { detailedDemographicIds: dd }),
+        ...(le.length > 0 && { lifeEventIds: le }),
         ...(ca.length > 0 && { customAudienceIds: ca }),
         ...(cb.length > 0 && { combinedAudienceIds: cb }),
       }

@@ -1,7 +1,7 @@
 import { searchGAds, buildGoogleAdsHeaders, GOOGLE_ADS_BASE } from '@/lib/googleAdsAuth'
 import type { GoogleAdsRequestContext as Ctx } from '@/lib/googleAdsAuth'
 
-export type AudienceCriterionType = 'USER_LIST' | 'USER_INTEREST' | 'CUSTOM_AUDIENCE' | 'COMBINED_AUDIENCE'
+export type AudienceCriterionType = 'USER_LIST' | 'USER_INTEREST' | 'CUSTOM_AUDIENCE' | 'COMBINED_AUDIENCE' | 'LIFE_EVENT' | 'EXTENDED_DEMOGRAPHIC'
 export type AudienceSegmentCategory =
   | 'AFFINITY' | 'IN_MARKET' | 'DETAILED_DEMOGRAPHIC' | 'LIFE_EVENT'
   | 'USER_LIST' | 'CUSTOM_AUDIENCE' | 'COMBINED_AUDIENCE'
@@ -14,6 +14,8 @@ export interface ExistingAudienceCriterion {
   status: string
   bidModifier: number | null
   segmentResourceName: string
+  /** Taxonomy ID for LIFE_EVENT/EXTENDED_DEMOGRAPHIC; use for matching browse selection. */
+  segmentId?: string
 }
 
 /* ── NAME RESOLUTION ── */
@@ -54,11 +56,59 @@ function extractIdFromInternalKey(name: string): string {
 const userInterestNameCache = new Map<string, string>()
 let uiCacheLoaded = false
 
+/** Name caches for detailed_demographic and life_event (separate from user_interest). */
+const detailedDemographicNameCache = new Map<string, string>()
+const lifeEventNameCache = new Map<string, string>()
+let ddCacheLoaded = false
+let leCacheLoaded = false
+
+async function ensureDetailedDemographicCache(ctx: Ctx): Promise<void> {
+  if (ddCacheLoaded) return
+  ddCacheLoaded = true
+  try {
+    const rows = await searchGAds<any>(ctx, `
+      SELECT detailed_demographic.id, detailed_demographic.name
+      FROM detailed_demographic
+      WHERE detailed_demographic.launched_to_all = TRUE
+      LIMIT 1000
+    `)
+    for (const r of rows) {
+      const d = r.detailedDemographic ?? r.detailed_demographic ?? {}
+      const id = String(d.id ?? '')
+      const name = d.name ?? ''
+      if (id && name) detailedDemographicNameCache.set(id, name)
+    }
+  } catch (e) {
+    console.error('[audience-criteria] Failed to load detailed_demographic cache:', e)
+  }
+}
+
+async function ensureLifeEventCache(ctx: Ctx): Promise<void> {
+  if (leCacheLoaded) return
+  leCacheLoaded = true
+  try {
+    const rows = await searchGAds<any>(ctx, `
+      SELECT life_event.id, life_event.name
+      FROM life_event
+      WHERE life_event.launched_to_all = TRUE
+      LIMIT 500
+    `)
+    for (const r of rows) {
+      const l = r.lifeEvent ?? r.life_event ?? {}
+      const id = String(l.id ?? '')
+      const name = l.name ?? ''
+      if (id && name) lifeEventNameCache.set(id, name)
+    }
+  } catch (e) {
+    console.error('[audience-criteria] Failed to load life_event cache:', e)
+  }
+}
+
 async function ensureUserInterestCache(ctx: Ctx): Promise<void> {
   if (uiCacheLoaded) return
   uiCacheLoaded = true
 
-  for (const taxonomyType of ['AFFINITY', 'IN_MARKET', 'LIFE_EVENT']) {
+  for (const taxonomyType of ['AFFINITY', 'IN_MARKET']) {
     const query = `
       SELECT user_interest.user_interest_id, user_interest.name
       FROM user_interest
@@ -100,29 +150,37 @@ export async function resolveUserInterestNames(
 }
 
 /**
- * Enrich criteria list: resolve internal display names (uservertical::XXXXX)
- * to human-readable names using the cached user_interest taxonomy.
- * Any remaining internal keys are replaced with "Bilinmeyen Segment".
+ * Enrich criteria list: resolve internal display names to human-readable names.
+ * Uses user_interest, detailed_demographic, and life_event caches per type.
  */
 async function enrichDisplayNames(ctx: Ctx, criteria: ExistingAudienceCriterion[]): Promise<void> {
   const hasUnresolved = criteria.some(c => isInternalDisplayName(c.displayName))
-  if (!hasUnresolved) return
+  const hasLifeEvent = criteria.some(c => c.type === 'LIFE_EVENT')
+  const hasExtended = criteria.some(c => c.type === 'EXTENDED_DEMOGRAPHIC')
+  if (!hasUnresolved && !hasLifeEvent && !hasExtended) return
 
   await ensureUserInterestCache(ctx)
+  if (hasLifeEvent) await ensureLifeEventCache(ctx)
+  if (hasExtended) await ensureDetailedDemographicCache(ctx)
 
   for (const c of criteria) {
-    if (isInternalDisplayName(c.displayName)) {
-      // Try multiple ID sources to resolve the name
+    if (c.type === 'LIFE_EVENT' && c.segmentId) {
+      const name = lifeEventNameCache.get(c.segmentId)
+      if (name) c.displayName = name
+    } else if (c.type === 'EXTENDED_DEMOGRAPHIC' && c.segmentId) {
+      const name = detailedDemographicNameCache.get(c.segmentId)
+      if (name) c.displayName = name
+    } else if (isInternalDisplayName(c.displayName)) {
       const idFromKey = extractIdFromInternalKey(c.displayName)
-      // Also try extracting ID from segmentResourceName (e.g., "customers/123/userInterests/80980" → "80980")
       const idFromResource = c.segmentResourceName?.split('/')?.pop() || ''
       const resolved = userInterestNameCache.get(idFromKey)
         || userInterestNameCache.get(c.criterionId)
         || userInterestNameCache.get(idFromResource)
+        || userInterestNameCache.get(c.segmentId ?? '')
       if (resolved) {
         c.displayName = resolved
       } else {
-        console.warn(`[audience-criteria] Unresolved criterion: id=${c.criterionId}, type=${c.type}, displayName=${c.displayName}, segmentResource=${c.segmentResourceName}`)
+        console.warn(`[audience-criteria] Unresolved criterion: id=${c.criterionId}, type=${c.type}, displayName=${c.displayName}`)
         c.displayName = 'Bilinmeyen Segment'
       }
     }
@@ -144,10 +202,12 @@ export async function listCampaignAudienceCriteria(ctx: Ctx, campaignId: string)
       campaign_criterion.user_list.user_list,
       campaign_criterion.user_interest.user_interest_category,
       campaign_criterion.custom_audience.custom_audience,
-      campaign_criterion.combined_audience.combined_audience
+      campaign_criterion.combined_audience.combined_audience,
+      campaign_criterion.life_event.life_event_id,
+      campaign_criterion.extended_demographic.extended_demographic_id
     FROM campaign_criterion
     WHERE campaign.id = ${campaignId}
-      AND campaign_criterion.type IN ('USER_LIST', 'USER_INTEREST', 'CUSTOM_AUDIENCE', 'COMBINED_AUDIENCE')
+      AND campaign_criterion.type IN ('USER_LIST', 'USER_INTEREST', 'CUSTOM_AUDIENCE', 'COMBINED_AUDIENCE', 'LIFE_EVENT', 'EXTENDED_DEMOGRAPHIC')
       AND campaign_criterion.status != 'REMOVED'
   `
   const rows = await searchGAds<any>(ctx, query)
@@ -169,10 +229,12 @@ export async function listAdGroupAudienceCriteria(ctx: Ctx, adGroupId: string): 
       ad_group_criterion.user_list.user_list,
       ad_group_criterion.user_interest.user_interest_category,
       ad_group_criterion.custom_audience.custom_audience,
-      ad_group_criterion.combined_audience.combined_audience
+      ad_group_criterion.combined_audience.combined_audience,
+      ad_group_criterion.life_event.life_event_id,
+      ad_group_criterion.extended_demographic.extended_demographic_id
     FROM ad_group_criterion
     WHERE ad_group.id = ${adGroupId}
-      AND ad_group_criterion.type IN ('USER_LIST', 'USER_INTEREST', 'CUSTOM_AUDIENCE', 'COMBINED_AUDIENCE')
+      AND ad_group_criterion.type IN ('USER_LIST', 'USER_INTEREST', 'CUSTOM_AUDIENCE', 'COMBINED_AUDIENCE', 'LIFE_EVENT', 'EXTENDED_DEMOGRAPHIC')
       AND ad_group_criterion.status != 'REMOVED'
   `
   const rows = await searchGAds<any>(ctx, query)
@@ -183,6 +245,11 @@ export async function listAdGroupAudienceCriteria(ctx: Ctx, adGroupId: string): 
 
 function mapCampaignCriterion(r: any): ExistingAudienceCriterion {
   const c = r.campaignCriterion ?? r.campaign_criterion ?? {}
+  const le = c.lifeEvent ?? c.life_event ?? {}
+  const ed = c.extendedDemographic ?? c.extended_demographic ?? {}
+  const lifeEventId = le.lifeEventId ?? le.life_event_id
+  const extDemoId = ed.extendedDemographicId ?? ed.extended_demographic_id
+  const segmentId = lifeEventId != null ? String(lifeEventId) : extDemoId != null ? String(extDemoId) : undefined
   return {
     resourceName: c.resourceName ?? c.resource_name ?? '',
     criterionId: String(c.criterionId ?? c.criterion_id ?? ''),
@@ -191,11 +258,17 @@ function mapCampaignCriterion(r: any): ExistingAudienceCriterion {
     status: c.status ?? 'ENABLED',
     bidModifier: c.bidModifier ?? c.bid_modifier ?? null,
     segmentResourceName: extractSegmentResource(c),
+    segmentId,
   }
 }
 
 function mapAdGroupCriterion(r: any): ExistingAudienceCriterion {
   const c = r.adGroupCriterion ?? r.ad_group_criterion ?? {}
+  const le = c.lifeEvent ?? c.life_event ?? {}
+  const ed = c.extendedDemographic ?? c.extended_demographic ?? {}
+  const lifeEventId = le.lifeEventId ?? le.life_event_id
+  const extDemoId = ed.extendedDemographicId ?? ed.extended_demographic_id
+  const segmentId = lifeEventId != null ? String(lifeEventId) : extDemoId != null ? String(extDemoId) : undefined
   return {
     resourceName: c.resourceName ?? c.resource_name ?? '',
     criterionId: String(c.criterionId ?? c.criterion_id ?? ''),
@@ -204,6 +277,7 @@ function mapAdGroupCriterion(r: any): ExistingAudienceCriterion {
     status: c.status ?? 'ENABLED',
     bidModifier: c.bidModifier ?? c.bid_modifier ?? null,
     segmentResourceName: extractSegmentResource(c),
+    segmentId,
   }
 }
 
@@ -216,6 +290,10 @@ function extractSegmentResource(c: any): string {
   if (ca) return ca.customAudience ?? ca.custom_audience ?? ''
   const comb = c.combinedAudience ?? c.combined_audience
   if (comb) return comb.combinedAudience ?? comb.combined_audience ?? ''
+  const le = c.lifeEvent ?? c.life_event
+  if (le) return `life_event:${le.lifeEventId ?? le.life_event_id ?? ''}`
+  const ed = c.extendedDemographic ?? c.extended_demographic
+  if (ed) return `extended_demographic:${ed.extendedDemographicId ?? ed.extended_demographic_id ?? ''}`
   return ''
 }
 
@@ -223,14 +301,28 @@ function extractSegmentResource(c: any): string {
 
 type SegmentInput = { resourceName: string; category: AudienceSegmentCategory; id: string }
 
-const CATEGORY_FIELD: Record<AudienceSegmentCategory, (rn: string) => Record<string, any>> = {
-  USER_LIST:              (rn) => ({ userList: { userList: rn } }),
-  AFFINITY:               (rn) => ({ userInterest: { userInterestCategory: rn } }),
-  IN_MARKET:              (rn) => ({ userInterest: { userInterestCategory: rn } }),
-  DETAILED_DEMOGRAPHIC:   (rn) => ({ userInterest: { userInterestCategory: rn } }),
-  LIFE_EVENT:             (rn) => ({ userInterest: { userInterestCategory: rn } }),
-  CUSTOM_AUDIENCE:        (rn) => ({ customAudience: { customAudience: rn } }),
-  COMBINED_AUDIENCE:      (rn) => ({ combinedAudience: { combinedAudience: rn } }),
+/**
+ * Maps category to Google Ads criterion field. Uses resourceName for most types;
+ * LIFE_EVENT and DETAILED_DEMOGRAPHIC use taxonomy id (not userInterest).
+ */
+function buildCriterionField(s: SegmentInput): Record<string, any> {
+  switch (s.category) {
+    case 'USER_LIST':
+      return { userList: { userList: s.resourceName } }
+    case 'AFFINITY':
+    case 'IN_MARKET':
+      return { userInterest: { userInterestCategory: s.resourceName } }
+    case 'DETAILED_DEMOGRAPHIC':
+      return { extendedDemographic: { extendedDemographicId: String(s.id) } }
+    case 'LIFE_EVENT':
+      return { lifeEvent: { lifeEventId: String(s.id) } }
+    case 'CUSTOM_AUDIENCE':
+      return { customAudience: { customAudience: s.resourceName } }
+    case 'COMBINED_AUDIENCE':
+      return { combinedAudience: { combinedAudience: s.resourceName } }
+    default:
+      throw new Error(`Unknown audience category: ${s.category}`)
+  }
 }
 
 export async function addCampaignAudienceCriteria(
@@ -240,11 +332,11 @@ export async function addCampaignAudienceCriteria(
   bidOnly: boolean,
 ): Promise<void> {
   if (!segments.length) return
+  // bidOnly (Observation mode) must be set via campaign.targeting_setting, not on criterion.
   const operations = segments.map(s => ({
     create: {
       campaign: campaignResourceName,
-      ...CATEGORY_FIELD[s.category](s.resourceName),
-      ...(bidOnly ? { bidOnly: true } : {}),
+      ...buildCriterionField(s),
     },
   }))
   const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${ctx.customerId}/campaignCriteria:mutate`, {
@@ -262,11 +354,11 @@ export async function addAdGroupAudienceCriteria(
   bidOnly: boolean,
 ): Promise<void> {
   if (!segments.length) return
+  // bidOnly (Observation mode) must be set via ad_group.targeting_setting, not on criterion.
   const operations = segments.map(s => ({
     create: {
       adGroup: adGroupResourceName,
-      ...CATEGORY_FIELD[s.category](s.resourceName),
-      ...(bidOnly ? { bidOnly: true } : {}),
+      ...buildCriterionField(s),
     },
   }))
   const res = await fetch(`${GOOGLE_ADS_BASE}/customers/${ctx.customerId}/adGroupCriteria:mutate`, {

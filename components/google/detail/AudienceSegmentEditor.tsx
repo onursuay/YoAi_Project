@@ -35,6 +35,8 @@ interface ExistingCriterion {
   status: string
   bidModifier: number | null
   segmentResourceName: string
+  /** Taxonomy ID for LIFE_EVENT/EXTENDED_DEMOGRAPHIC; use for matching browse selection */
+  segmentId?: string
 }
 
 interface BrowseData {
@@ -92,6 +94,8 @@ function inferCategory(type: string): AudienceSegmentCategory {
   if (type === 'USER_LIST') return 'USER_LIST'
   if (type === 'CUSTOM_AUDIENCE') return 'CUSTOM_AUDIENCE'
   if (type === 'COMBINED_AUDIENCE') return 'COMBINED_AUDIENCE'
+  if (type === 'LIFE_EVENT') return 'LIFE_EVENT'
+  if (type === 'EXTENDED_DEMOGRAPHIC') return 'DETAILED_DEMOGRAPHIC'
   return 'AFFINITY' // USER_INTEREST defaults to AFFINITY (cannot distinguish from criterion alone)
 }
 
@@ -161,17 +165,17 @@ export default function AudienceSegmentEditor({
       .then(data => {
         const criteria: ExistingCriterion[] = data.criteria ?? []
         setExistingCriteria(criteria)
-        // Map to selected segments
-        // Sanitize: never show raw internal keys (uservertical::XXXXX) to user
+        // Map to selected segments. Use segmentId for LIFE_EVENT/EXTENDED_DEMOGRAPHIC to match browse dataset.
         const sanitize = (n: string) => (!n || n.includes('::') || /^\d+$/.test(n)) ? 'Bilinmeyen Segment' : n
+        const segId = (c: ExistingCriterion) => c.segmentId ?? c.criterionId
         const segs: SelectedSegment[] = criteria.map(c => ({
-          id: c.criterionId,
+          id: segId(c),
           name: sanitize(c.displayName),
           category: inferCategory(c.type),
           resourceName: c.segmentResourceName,
         }))
         setSelectedSegments(segs)
-        setInitialSegmentIds(new Set(criteria.map(c => c.criterionId)))
+        setInitialSegmentIds(new Set(criteria.map(c => segId(c))))
         // Infer mode from first criterion
         if (criteria.length > 0 && criteria[0].bidModifier != null) {
           setMode('OBSERVATION')

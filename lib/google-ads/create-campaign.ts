@@ -63,6 +63,8 @@ export interface CreateCampaignParams {
   networkSettings?: { targetGoogleSearch: boolean; targetSearchNetwork: boolean; targetContentNetwork: boolean }
   audienceIds?: string[]                 // user_list IDs (remarketing, CRM, etc.)
   userInterestIds?: string[]             // user_interest IDs (affinity, in-market)
+  detailedDemographicIds?: string[]      // extended_demographic taxonomy IDs (INT64)
+  lifeEventIds?: string[]                // life_event taxonomy IDs (INT64)
   customAudienceIds?: string[]           // custom_audience IDs
   combinedAudienceIds?: string[]         // combined_audience IDs
   audienceMode?: 'OBSERVATION' | 'TARGETING'
@@ -244,47 +246,59 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
     })))
   }
 
-  // 9a. Audience targeting — user lists / remarketing (optional)
-  const bidOnlyFlag = params.audienceMode === 'OBSERVATION' ? { bidOnly: true } : {}
+  // 9a–9f. Audience targeting. Note: Observation vs Targeting (bid_only) is set via
+  // campaign.targeting_setting / ad_group.targeting_setting, not on individual criteria.
+  // Criteria are created without bidOnly; default is Targeting mode.
   if (params.audienceIds?.length) {
     await postMutate(ctx, 'campaignCriteria', params.audienceIds.map(id => ({
       create: {
         campaign: campaignResourceName,
         userList: { userList: `customers/${ctx.customerId}/userLists/${id}` },
-        ...bidOnlyFlag,
       },
     })))
   }
 
-  // 9b. Audience targeting — user interests / affinity / in-market (optional)
   if (params.userInterestIds?.length) {
     await postMutate(ctx, 'campaignCriteria', params.userInterestIds.map(id => ({
       create: {
         campaign: campaignResourceName,
         userInterest: { userInterestCategory: `customers/${ctx.customerId}/userInterests/${id}` },
-        ...bidOnlyFlag,
       },
     })))
   }
 
-  // 9c. Audience targeting — custom audiences (optional)
+  if (params.detailedDemographicIds?.length) {
+    await postMutate(ctx, 'campaignCriteria', params.detailedDemographicIds.map(id => ({
+      create: {
+        campaign: campaignResourceName,
+        extendedDemographic: { extendedDemographicId: String(id) },
+      },
+    })))
+  }
+
+  if (params.lifeEventIds?.length) {
+    await postMutate(ctx, 'campaignCriteria', params.lifeEventIds.map(id => ({
+      create: {
+        campaign: campaignResourceName,
+        lifeEvent: { lifeEventId: String(id) },
+      },
+    })))
+  }
+
   if (params.customAudienceIds?.length) {
     await postMutate(ctx, 'campaignCriteria', params.customAudienceIds.map(id => ({
       create: {
         campaign: campaignResourceName,
         customAudience: { customAudience: `customers/${ctx.customerId}/customAudiences/${id}` },
-        ...bidOnlyFlag,
       },
     })))
   }
 
-  // 9d. Audience targeting — combined audiences (optional)
   if (params.combinedAudienceIds?.length) {
     await postMutate(ctx, 'campaignCriteria', params.combinedAudienceIds.map(id => ({
       create: {
         campaign: campaignResourceName,
         combinedAudience: { combinedAudience: `customers/${ctx.customerId}/combinedAudiences/${id}` },
-        ...bidOnlyFlag,
       },
     })))
   }
