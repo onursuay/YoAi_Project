@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import {
   Download, Copy, Check, Plus, Trash2,
   ChevronDown, ChevronUp, RotateCcw,
-  Bot, Globe, FileCode, Shield,
+  Bot, Globe, FileCode, Shield, Zap,
 } from 'lucide-react'
 
 /* ═══════ Types ═══════ */
@@ -69,6 +69,7 @@ export default function SeoToolsTab() {
         <RobotsTxtGenerator t={t} />
         <SitemapGenerator t={t} />
         <HtaccessGenerator t={t} />
+        <PingIndexer t={t} />
       </div>
     </div>
   )
@@ -717,6 +718,109 @@ function HtaccessGenerator({ t }: { t: (key: string) => string }) {
             onDownload={() => downloadFile(output, '.htaccess')}
             t={t}
           />
+        )}
+      </div>
+    </ToolCard>
+  )
+}
+
+/* ═══════ Pingler URL Indexer ═══════ */
+
+function PingIndexer({ t }: { t: (key: string) => string }) {
+  const [expanded, setExpanded] = useState(false)
+  const [urlInput, setUrlInput] = useState('')
+  const [loading, setLoading] = useState(false)
+  const [results, setResults] = useState<{ url: string; success: boolean; response: string }[]>([])
+  const [error, setError] = useState('')
+
+  const handlePing = async () => {
+    const urls = urlInput
+      .split('\n')
+      .map(u => u.trim())
+      .filter(u => u.length > 0)
+
+    if (urls.length === 0) return
+
+    setLoading(true)
+    setError('')
+    setResults([])
+
+    try {
+      const res = await fetch('/api/seo/ping', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ urls }),
+      })
+      const data = await res.json()
+      if (!res.ok) {
+        setError(data.error || 'Hata oluştu.')
+      } else {
+        setResults(data.results)
+      }
+    } catch {
+      setError('Bağlantı hatası.')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  return (
+    <ToolCard
+      icon={<Zap className="w-5 h-5 text-purple-600" />}
+      title={t('ping.title')}
+      description={t('ping.description')}
+      expanded={expanded}
+      onToggle={() => setExpanded(!expanded)}
+    >
+      <div className="space-y-4">
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('ping.urlLabel')}</label>
+          <textarea
+            value={urlInput}
+            onChange={e => setUrlInput(e.target.value)}
+            placeholder={t('ping.urlPlaceholder')}
+            rows={4}
+            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 font-mono resize-none"
+          />
+          <p className="text-xs text-gray-400 mt-1">{t('ping.urlHint')}</p>
+        </div>
+
+        <button
+          onClick={handlePing}
+          disabled={loading || !urlInput.trim()}
+          className="flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+        >
+          <Zap className="w-4 h-4" />
+          {loading ? t('ping.pinging') : t('ping.pingButton')}
+        </button>
+
+        {error && (
+          <div className="p-3 bg-red-50 border border-red-200 rounded-lg text-sm text-red-700">
+            {error}
+          </div>
+        )}
+
+        {results.length > 0 && (
+          <div className="border border-gray-200 rounded-lg overflow-hidden">
+            <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+              <span className="text-xs font-medium text-gray-600">
+                {t('ping.results')}: {results.filter(r => r.success).length}/{results.length} {t('ping.successful')}
+              </span>
+            </div>
+            <div className="divide-y divide-gray-100 max-h-60 overflow-y-auto">
+              {results.map((result, i) => (
+                <div key={i} className="flex items-start gap-3 px-3 py-2.5">
+                  <span className={`mt-0.5 w-4 h-4 flex-shrink-0 rounded-full flex items-center justify-center ${result.success ? 'bg-green-100 text-green-600' : 'bg-red-100 text-red-600'}`}>
+                    {result.success ? <Check className="w-2.5 h-2.5" /> : <span className="text-xs font-bold">✗</span>}
+                  </span>
+                  <div className="min-w-0">
+                    <p className="text-xs font-medium text-gray-800 truncate">{result.url}</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{result.response}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
         )}
       </div>
     </ToolCard>

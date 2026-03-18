@@ -512,7 +512,51 @@
           "setAsPrimaryTitle": "Set as primary",
           "set": "Set",
           "goalsSelected": "{count} goals selected",
-          "primaryLabel": "Primary:"
+          "primaryLabel": "Primary:",
+          "websiteOutcomeTitle": "Website visits",
+          "websiteOutcomeLabel": "Landing page URL",
+          "websiteOutcomeHelp": "Where people go when they click your ad. Same URL will be used for ads.",
+          "statusEnabled": "Active",
+          "statusUnenabled": "Inactive",
+          "categoryLabels": {
+            "PURCHASE": "Purchase",
+            "PAGE_VIEW": "Page view",
+            "SIGNUP": "Sign-up",
+            "LEAD": "Lead",
+            "DOWNLOAD": "Download",
+            "ADD_TO_CART": "Add to cart",
+            "BEGIN_CHECKOUT": "Begin checkout",
+            "SUBSCRIBE_PAID": "Paid subscription",
+            "PHONE_CALL_LEAD": "Phone call lead",
+            "IMPORTED_LEAD": "Imported lead",
+            "SUBMIT_LEAD_FORM": "Submit lead form",
+            "BOOK_APPOINTMENT": "Book appointment",
+            "REQUEST_QUOTE": "Request quote",
+            "GET_DIRECTIONS": "Get directions",
+            "OUTBOUND_CLICK": "Outbound click",
+            "CONTACT": "Contact",
+            "ENGAGEMENT": "Engagement",
+            "STORE_VISIT": "Store visit",
+            "STORE_SALE": "Store sale",
+            "QUALIFIED_LEAD": "Qualified lead",
+            "CONVERTED_LEAD": "Converted lead",
+            "DEFAULT": "Default"
+          },
+          "originLabels": {
+            "WEBSITE": "Website",
+            "GOOGLE_HOSTED": "Google Ads",
+            "APP": "App",
+            "IMPORTED": "Imported",
+            "UPLOAD": "Upload",
+            "ANALYTICS": "Google Analytics 4",
+            "STORE": "Store",
+            "FIREBASE": "Firebase",
+            "FLUTTER": "Flutter",
+            "THIRD_PARTY_APP_ANALYTICS": "Third-party app analytics",
+            "ANDROID_FIRST_OPEN": "Android first open",
+            "IOS_FIRST_OPEN": "iOS first open",
+            "UNKNOWN": "Unknown"
+          }
         },
         "bidding": {
           "focusTitle": "Which goal do you want to focus on?",
@@ -1402,6 +1446,17 @@
           "error404": "404 Page Not Found",
           "error403": "403 Access Denied",
           "error500": "500 Server Error"
+        },
+        "ping": {
+          "title": "URL Ping / Index Accelerator",
+          "description": "Notify search engines and directories to crawl your URLs faster",
+          "urlLabel": "URLs to Ping",
+          "urlPlaceholder": "https://example.com\nhttps://example.com/blog\nhttps://example.com/contact",
+          "urlHint": "Enter one URL per line. Maximum 20 URLs at once.",
+          "pingButton": "Ping",
+          "pinging": "Pinging...",
+          "results": "Results",
+          "successful": "successful"
         }
       },
       "articles": {

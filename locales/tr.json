@@ -512,7 +512,51 @@
           "setAsPrimaryTitle": "Birincil olarak ayarla",
           "set": "Ayarla",
           "goalsSelected": "{count} hedef seçildi",
-          "primaryLabel": "Birincil:"
+          "primaryLabel": "Birincil:",
+          "websiteOutcomeTitle": "Web sitesi ziyaretleri",
+          "websiteOutcomeLabel": "Hedef sayfa URL'si",
+          "websiteOutcomeHelp": "İnsanlar reklamınıza tıkladığında gidecekleri adres. Reklamlar için aynı URL kullanılacaktır.",
+          "statusEnabled": "Aktif",
+          "statusUnenabled": "Pasif",
+          "categoryLabels": {
+            "PURCHASE": "Satın alma",
+            "PAGE_VIEW": "Sayfa görüntüleme",
+            "SIGNUP": "Kayıt",
+            "LEAD": "Potansiyel müşteri",
+            "DOWNLOAD": "İndirme",
+            "ADD_TO_CART": "Sepete ekleme",
+            "BEGIN_CHECKOUT": "Ödeme başlatma",
+            "SUBSCRIBE_PAID": "Ücretli abonelik",
+            "PHONE_CALL_LEAD": "Telefon araması potansiyel müşterisi",
+            "IMPORTED_LEAD": "İçe aktarılmış potansiyel müşteri",
+            "SUBMIT_LEAD_FORM": "Lead formu gönderme",
+            "BOOK_APPOINTMENT": "Randevu alma",
+            "REQUEST_QUOTE": "Fiyat teklifi talep etme",
+            "GET_DIRECTIONS": "Yol tarifi alma",
+            "OUTBOUND_CLICK": "Harici tıklama",
+            "CONTACT": "İletişim",
+            "ENGAGEMENT": "Etkileşim",
+            "STORE_VISIT": "Mağaza ziyareti",
+            "STORE_SALE": "Mağaza satışı",
+            "QUALIFIED_LEAD": "Nitelikli potansiyel müşteri",
+            "CONVERTED_LEAD": "Dönüştürülmüş potansiyel müşteri",
+            "DEFAULT": "Varsayılan"
+          },
+          "originLabels": {
+            "WEBSITE": "Web sitesi",
+            "GOOGLE_HOSTED": "Google Ads",
+            "APP": "Uygulama",
+            "IMPORTED": "İçe aktarılmış",
+            "UPLOAD": "Yükleme",
+            "ANALYTICS": "Google Analytics 4",
+            "STORE": "Mağaza",
+            "FIREBASE": "Firebase",
+            "FLUTTER": "Flutter",
+            "THIRD_PARTY_APP_ANALYTICS": "Üçüncü taraf uygulama analitiği",
+            "ANDROID_FIRST_OPEN": "Android ilk açılış",
+            "IOS_FIRST_OPEN": "iOS ilk açılış",
+            "UNKNOWN": "Bilinmiyor"
+          }
         },
         "bidding": {
           "focusTitle": "Hangi hedefe odaklanmak istiyorsunuz?",
@@ -1402,6 +1446,17 @@
           "error404": "404 Sayfa Bulunamadı",
           "error403": "403 Erişim Engellendi",
           "error500": "500 Sunucu Hatası"
+        },
+        "ping": {
+          "title": "URL Ping / İndeksleme Hızlandırıcı",
+          "description": "Arama motorlarını ve dizinleri URL'lerinizi daha hızlı taramaları için bilgilendirin",
+          "urlLabel": "Ping Atılacak URL'ler",
+          "urlPlaceholder": "https://example.com\nhttps://example.com/blog\nhttps://example.com/iletisim",
+          "urlHint": "Her satıra bir URL girin. Maksimum 20 URL.",
+          "pingButton": "Ping At",
+          "pinging": "Ping atılıyor...",
+          "results": "Sonuçlar",
+          "successful": "başarılı"
         }
       },
       "articles": {
