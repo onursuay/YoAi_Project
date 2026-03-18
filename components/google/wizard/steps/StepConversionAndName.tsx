@@ -177,21 +177,21 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
         </p>
 
         {loading && (
-          <div className="flex items-center gap-2 py-8 text-sm text-gray-500">
+          <div className="flex items-center gap-2 py-8 text-[13px] text-gray-500">
             <Loader2 className="w-5 h-5 animate-spin" />
             {t('conversion.loading')}
           </div>
         )}
 
         {fetchError && !loading && (
-          <div className="flex items-start gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-sm text-red-800">
+          <div className="flex items-start gap-2 p-4 rounded-lg bg-red-50 border border-red-200 text-[13px] text-red-800">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{t('conversion.error')} {fetchError}</span>
           </div>
         )}
 
         {!loading && !fetchError && conversionActions.length === 0 && (
-          <div className="flex items-start gap-2 p-4 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+          <div className="flex items-start gap-2 p-4 rounded-lg bg-amber-50 border border-amber-200 text-[13px] text-amber-800">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{t('conversion.empty')}</span>
           </div>
@@ -253,7 +253,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                             e.preventDefault()
                             setPrimary(goal.resourceName)
                           }}
-                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-xs font-medium transition-colors ${
+                          className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-medium transition-colors ${
                             isPrimary
                               ? 'bg-amber-100 text-amber-800 border border-amber-200'
                               : 'bg-gray-100 text-gray-600 hover:bg-gray-200 border border-gray-200'
@@ -291,19 +291,34 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
         )}
       </div>
 
-      {/* Website URL — single source of truth, same as finalUrl in Step 6 */}
-      <div className="rounded-lg border border-gray-200 p-4 bg-gray-50/30">
-        <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('conversion.websiteOutcomeTitle')}</h4>
-        <p className="text-[13px] text-gray-500 mb-3">{t('conversion.websiteOutcomeHelp')}</p>
-        <Field label={t('conversion.websiteOutcomeLabel')}>
+      {/* Desired outcomes — Google Ads-style, under conversion goals */}
+      <div className="rounded-lg border border-gray-200 p-4 space-y-3">
+        <h4 className="text-[15px] font-semibold text-gray-900 mb-0.5">{t('conversion.desiredOutcomesTitle')}</h4>
+        <p className="text-[13px] text-gray-500 mb-3">{t('conversion.desiredOutcomesHelp')}</p>
+
+        {/* Web sitesi ziyaretleri */}
+        <label className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
+          state.desiredOutcomeWebsite ? 'border-blue-500 bg-blue-50/40' : 'border-gray-200 hover:border-gray-300 hover:bg-gray-50/50'
+        }`}>
           <input
-            className={inputCls}
-            type="url"
-            value={state.finalUrl}
-            onChange={e => update({ finalUrl: e.target.value })}
-            placeholder={t('ad.finalUrlPlaceholder')}
+            type="checkbox"
+            checked={state.desiredOutcomeWebsite}
+            onChange={e => update({ desiredOutcomeWebsite: e.target.checked })}
+            className="mt-1 rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
           />
-        </Field>
+          <div className="flex-1 min-w-0">
+            <span className="text-[15px] font-medium text-gray-900">{t('conversion.outcomeWebsiteVisits')}</span>
+            {state.desiredOutcomeWebsite && (
+              <input
+                className={`${inputCls} mt-2`}
+                type="url"
+                value={state.finalUrl}
+                onChange={e => update({ finalUrl: e.target.value })}
+                placeholder={t('conversion.outcomeWebsiteUrlPlaceholder')}
+              />
+            )}
+          </div>
+        </label>
       </div>
     </div>
   )

@@ -159,6 +159,8 @@ export interface WizardState {
   campaignType: AdvertisingChannelType
   // Step 1: Conversion + Name (Search)
   campaignName: string
+  /** Desired outcomes — UI/state (Google Ads-style) */
+  desiredOutcomeWebsite: boolean
   /** resource_name strings from Google Ads conversion_action */
   selectedConversionGoalIds: string[]
   /** resource_name of primary conversion action */
@@ -278,6 +280,7 @@ export const defaultState: WizardState = {
   campaignGoal: 'SALES',
   campaignType: 'SEARCH',
   campaignName: '',
+  desiredOutcomeWebsite: false,
   selectedConversionGoalIds: [],
   primaryConversionGoalId: null,
   conversionActions: [],
