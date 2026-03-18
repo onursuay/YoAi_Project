@@ -80,7 +80,7 @@ export default function StepSummary({ state, t }: StepProps) {
   const positiveLocations = state.locations.filter(l => !l.isNegative)
   const negativeLocations = state.locations.filter(l => l.isNegative)
   const langNames = state.languageIds.map(id =>
-    t(`summary.languageNames.${id}`) || LANGUAGE_OPTIONS.find(l => l.id === id)?.name ?? id
+    (t(`summary.languageNames.${id}`) || LANGUAGE_OPTIONS.find(l => l.id === id)?.name) ?? id
   ).join(', ')
   const kwCount = parseKeywords(state.keywordsRaw, state.defaultMatchType).length
   const hCount = state.headlines.filter(h => h.trim()).length
