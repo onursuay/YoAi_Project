@@ -157,13 +157,37 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
       </section>
 
       <section>
-        <div className="flex items-center gap-2 p-4 rounded-lg border-2 border-dashed border-gray-200 bg-gray-50">
-          <Image className="w-8 h-8 text-gray-400" />
-          <div>
-            <p className="text-sm font-medium text-gray-600">{t('assetGroup.imagesPlaceholder')}</p>
-            <p className="text-xs text-gray-500 mt-0.5">{t('assetGroup.imagesPlaceholderHint')}</p>
-          </div>
+        <div className="flex items-center gap-2 mb-2">
+          <Image className="w-4 h-4 text-blue-600" />
+          <h4 className="text-sm font-semibold text-gray-900">{t('assetGroup.imagesTitle')}</h4>
         </div>
+        <p className="text-xs text-gray-500 mb-2">{t('assetGroup.imagesHint')}</p>
+        <Field label={t('assetGroup.marketingImageUrl')} required>
+          <input
+            className={inputCls}
+            value={state.images[0]?.url ?? ''}
+            onChange={e => {
+              const next = [...state.images]
+              if (next[0]) next[0] = { ...next[0], url: e.target.value.trim(), id: next[0].id }
+              else next.push({ id: `img-${Date.now()}`, url: e.target.value.trim() })
+              update({ images: next })
+            }}
+            placeholder="https://example.com/image.jpg"
+          />
+        </Field>
+        <Field label={t('assetGroup.logoUrl')} required>
+          <input
+            className={inputCls}
+            value={state.logos[0]?.url ?? ''}
+            onChange={e => {
+              const next = [...state.logos]
+              if (next[0]) next[0] = { ...next[0], url: e.target.value.trim(), id: next[0].id }
+              else next.push({ id: `logo-${Date.now()}`, url: e.target.value.trim() })
+              update({ logos: next })
+            }}
+            placeholder="https://example.com/logo.png"
+          />
+        </Field>
       </section>
     </div>
   )

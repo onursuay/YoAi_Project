@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2 } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { defaultPMaxState } from './shared/PMaxWizardTypes'
 import type { PMaxWizardState } from './shared/PMaxWizardTypes'
 import { validatePMaxStep, getPMaxBlockingIssues } from './shared/PMaxWizardValidation'
@@ -16,7 +16,7 @@ import PMaxStepSignals from './steps/PMaxStepSignals'
 import PMaxStepBudget from './steps/PMaxStepBudget'
 import PMaxStepSummary from './steps/PMaxStepSummary'
 
-export type PMaxSubmitResult = null | 'placeholder'
+export type PMaxSubmitResult = null | 'full' | 'partial' | 'fail'
 
 interface Props {
   isOpen: boolean
@@ -27,11 +27,18 @@ interface Props {
 
 const TOTAL_STEPS = 8
 
+function normalizeError(err: unknown): string {
+  const msg = err instanceof Error ? err.message : String(err)
+  const technical = /^(fetch|network|ECONNREFUSED|ETIMEDOUT|Failed to fetch)/i.test(msg)
+  return technical ? '' : msg
+}
+
 export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast }: Props) {
   const [step, setStep] = useState(0)
   const [state, setState] = useState<PMaxWizardState>(defaultPMaxState)
   const [error, setError] = useState<string | null>(null)
   const [submitting, setSubmitting] = useState(false)
+  const [submitResult, setSubmitResult] = useState<PMaxSubmitResult>(null)
 
   const t = useTranslations('dashboard.google.pmaxWizard')
   const STEPS = [
@@ -50,6 +57,7 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
       setStep(0)
       setState(defaultPMaxState)
       setError(null)
+      setSubmitResult(null)
     }
   }, [isOpen])
 
@@ -73,24 +81,49 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
   const submit = async () => {
     setSubmitting(true)
     setError(null)
+    setSubmitResult(null)
     try {
       const payload = buildPerformanceMaxCreatePayload(state)
-      console.debug('[PMax] Create payload (no network):', payload)
-      onToast?.(t('toast.placeholderSuccess'), 'success')
-      onSuccess()
-      handleClose()
+      const res = await fetch('/api/integrations/google-ads/campaigns/create-performance-max', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      })
+      const data = await res.json()
+
+      if (!res.ok) {
+        setSubmitResult('fail')
+        setError(data.error ?? t('toast.error'))
+        onToast?.(data.error ?? t('toast.error'), 'error')
+        return
+      }
+
+      const isPartial = Boolean(data.partialSuccess || data.conversionGoalsWarning)
+      setSubmitResult(isPartial ? 'partial' : 'full')
+      onToast?.(
+        isPartial ? (t('toast.partialSuccess') || data.conversionGoalsWarning) : t('toast.success'),
+        'success'
+      )
     } catch (err) {
-      console.error('[PMax] Payload build error:', err)
-      onToast?.(t('toast.error'), 'error')
+      setSubmitResult('fail')
+      const displayMsg = normalizeError(err) || t('toast.networkError')
+      setError(displayMsg)
+      onToast?.(displayMsg, 'error')
     } finally {
       setSubmitting(false)
     }
+  }
+
+  const acknowledgeResult = () => {
+    onSuccess()
+    handleClose()
   }
 
   const handleClose = () => {
     setStep(0)
     setState(defaultPMaxState)
     setError(null)
+    setSubmitResult(null)
     onClose()
   }
 
@@ -113,7 +146,11 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
               {step + 1} / {TOTAL_STEPS} — {STEPS[step]}
             </p>
           </div>
-          <button type="button" onClick={handleClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500">
+          <button
+            type="button"
+            onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
+            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
+          >
             <X className="w-5 h-5" />
           </button>
         </div>
@@ -139,6 +176,34 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
         </div>
 
         <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
+          {submitResult === 'full' && (
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
+              <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
+              <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
+              <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
+              <button
+                type="button"
+                onClick={acknowledgeResult}
+                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
+              >
+                {t('result.acknowledge')}
+              </button>
+            </div>
+          )}
+          {submitResult === 'partial' && (
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-amber-50 border border-amber-200">
+              <AlertTriangle className="w-12 h-12 text-amber-600 mb-3" />
+              <h3 className="text-lg font-semibold text-amber-800 mb-1">{t('result.partialTitle')}</h3>
+              <p className="text-sm text-amber-700 text-center mb-4">{t('result.partialMessage')}</p>
+              <button
+                type="button"
+                onClick={acknowledgeResult}
+                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-white"
+              >
+                {t('result.acknowledge')}
+              </button>
+            </div>
+          )}
           {error && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
               <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
@@ -146,16 +211,17 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
             </div>
           )}
 
-          {step === 0 && <PMaxStepGoalType {...stepProps} />}
-          {step === 1 && <PMaxStepConversionAndName {...stepProps} />}
-          {step === 2 && <PMaxStepBiddingAcquisition {...stepProps} />}
-          {step === 3 && <PMaxStepCampaignSettings {...stepProps} />}
-          {step === 4 && <PMaxStepAssetGroup {...stepProps} />}
-          {step === 5 && <PMaxStepSignals {...stepProps} />}
-          {step === 6 && <PMaxStepBudget {...stepProps} />}
-          {step === 7 && <PMaxStepSummary {...stepProps} />}
+          {!submitResult && step === 0 && <PMaxStepGoalType {...stepProps} />}
+          {!submitResult && step === 1 && <PMaxStepConversionAndName {...stepProps} />}
+          {!submitResult && step === 2 && <PMaxStepBiddingAcquisition {...stepProps} />}
+          {!submitResult && step === 3 && <PMaxStepCampaignSettings {...stepProps} />}
+          {!submitResult && step === 4 && <PMaxStepAssetGroup {...stepProps} />}
+          {!submitResult && step === 5 && <PMaxStepSignals {...stepProps} />}
+          {!submitResult && step === 6 && <PMaxStepBudget {...stepProps} />}
+          {!submitResult && step === 7 && <PMaxStepSummary {...stepProps} />}
         </div>
 
+        {!submitResult && (
         <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
           <button
             type="button"
@@ -187,6 +253,7 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
             </button>
           )}
         </div>
+        )}
       </div>
     </div>
   )

@@ -1090,7 +1090,11 @@
           "descriptionPlaceholder": "Açıklama",
           "addDescription": "Açıklama ekle",
           "imagesPlaceholder": "Görseller",
-          "imagesPlaceholderHint": "Görsel yükleme sonraki sürümde eklenecektir."
+          "imagesPlaceholderHint": "Görsel yükleme sonraki sürümde eklenecektir.",
+          "imagesTitle": "Görsel ve Logo",
+          "imagesHint": "En az 1 marketing görsel ve 1 logo URL’si zorunludur. Önerilen: Marketing 1200x628 (1.91:1), Logo 1200x1200 (1:1).",
+          "marketingImageUrl": "Marketing görsel URL",
+          "logoUrl": "Logo URL"
         },
         "signals": {
           "title": "Sinyaller",
@@ -1193,11 +1197,22 @@
           "descriptionMaxLength": "Açıklamalar en fazla 90 karakter olabilir",
           "businessNameMaxLength": "İşletme adı en fazla 25 karakter olabilir",
           "endDateBeforeStart": "Bitiş tarihi başlangıç tarihinden önce olamaz",
-          "minBudget": "Minimum günlük bütçe 1 TRY"
+          "minBudget": "Minimum günlük bütçe 1 TRY",
+          "minImagesRequired": "En az 1 görsel ve 1 logo URL'si gereklidir"
         },
         "toast": {
           "placeholderSuccess": "PMax sihirbazı iskelet — backend henüz bağlı değil.",
-          "error": "Bir hata oluştu"
+          "success": "Performance Max kampanyası oluşturuldu.",
+          "partialSuccess": "Kampanya oluşturuldu; bazı ayarlar Google Ads üzerinden tamamlanmalı.",
+          "error": "Bir hata oluştu",
+          "networkError": "Bağlantı hatası. Lütfen tekrar deneyin."
+        },
+        "result": {
+          "fullTitle": "Kampanya Oluşturuldu",
+          "fullMessage": "Performance Max kampanyanız başarıyla oluşturuldu.",
+          "partialTitle": "Kampanya Oluşturuldu (Kısmi)",
+          "partialMessage": "Kampanya oluşturuldu. Bazı ayarlar Google Ads üzerinden tamamlanmalı.",
+          "acknowledge": "Tamam"
         }
       }
     },

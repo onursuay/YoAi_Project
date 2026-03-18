@@ -1090,7 +1090,11 @@
           "descriptionPlaceholder": "Description",
           "addDescription": "Add description",
           "imagesPlaceholder": "Images",
-          "imagesPlaceholderHint": "Image upload will be added in a future release."
+          "imagesPlaceholderHint": "Image upload will be added in a future release.",
+          "imagesTitle": "Image and Logo",
+          "imagesHint": "At least 1 marketing image and 1 logo URL required. Recommended: Marketing 1200x628 (1.91:1), Logo 1200x1200 (1:1).",
+          "marketingImageUrl": "Marketing image URL",
+          "logoUrl": "Logo URL"
         },
         "signals": {
           "title": "Signals",
@@ -1193,11 +1197,22 @@
           "descriptionMaxLength": "Descriptions must be max 90 characters",
           "businessNameMaxLength": "Business name must be max 25 characters",
           "endDateBeforeStart": "End date cannot be before start date",
-          "minBudget": "Minimum daily budget is 1 TRY"
+          "minBudget": "Minimum daily budget is 1 TRY",
+          "minImagesRequired": "At least 1 image and 1 logo URL required"
         },
         "toast": {
           "placeholderSuccess": "PMax wizard skeleton — backend not yet connected.",
-          "error": "An error occurred"
+          "success": "Performance Max campaign created.",
+          "partialSuccess": "Campaign created; some settings must be completed in Google Ads.",
+          "error": "An error occurred",
+          "networkError": "Connection error. Please try again."
+        },
+        "result": {
+          "fullTitle": "Campaign Created",
+          "fullMessage": "Your Performance Max campaign was created successfully.",
+          "partialTitle": "Campaign Created (Partial)",
+          "partialMessage": "Campaign created. Some settings must be completed in Google Ads.",
+          "acknowledge": "OK"
         }
       }
     },

@@ -9,7 +9,9 @@
     "lint": "next lint",
     "verify:budget": "node scripts/verify-budget-conversion.mjs",
     "db:migrate:google-ads": "node scripts/apply-google-ads-migration.mjs",
-    "verify:google-ads": "node scripts/verify-google-ads-prod.mjs"
+    "verify:google-ads": "node scripts/verify-google-ads-prod.mjs",
+    "pmax:smoke": "node scripts/pmax-smoke-test.mjs",
+    "search:isolation": "node scripts/search-isolation-check.mjs"
   },
   "dependencies": {
     "@fal-ai/client": "^1.9.4",
