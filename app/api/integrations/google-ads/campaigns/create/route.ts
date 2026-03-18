@@ -41,6 +41,7 @@ export async function POST(req: NextRequest) {
       KEYWORD_TEXT_TOO_LONG: 'Anahtar kelime metni çok uzun.',
       HEADLINE_TOO_LONG: 'Başlık çok uzun (maks. 30 karakter).',
       DESCRIPTION_TOO_LONG: 'Açıklama çok uzun (maks. 90 karakter).',
+      RESOURCE_NOT_FOUND: 'Seçilen kitle kaynağı (örn. kullanıcı listesi) bulunamadı. Farklı bir Google Ads hesabı altındaki listeler seçilmiş olabilir.',
     }
 
     const userMessage = (errorCode && friendlyMessages[errorCode as string])

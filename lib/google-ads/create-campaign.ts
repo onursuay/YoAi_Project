@@ -61,7 +61,8 @@ export interface CreateCampaignParams {
   negativeLocationIds?: string[]
   languageIds?: string[]
   networkSettings?: { targetGoogleSearch: boolean; targetSearchNetwork: boolean; targetContentNetwork: boolean }
-  audienceIds?: string[]                 // user_list IDs (remarketing, CRM, etc.)
+  audienceIds?: string[]                 // deprecated: use audienceResourceNames
+  audienceResourceNames?: string[]       // user_list full resource names (customers/X/userLists/Y)
   userInterestIds?: string[]             // user_interest IDs (affinity, in-market)
   detailedDemographicIds?: string[]      // extended_demographic taxonomy IDs (INT64)
   lifeEventIds?: string[]                // life_event taxonomy IDs (INT64)
@@ -248,12 +249,22 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
 
   // 9a–9f. Audience targeting. Note: Observation vs Targeting (bid_only) is set via
   // campaign.targeting_setting / ad_group.targeting_setting, not on individual criteria.
-  // Criteria are created without bidOnly; default is Targeting mode.
-  if (params.audienceIds?.length) {
-    await postMutate(ctx, 'campaignCriteria', params.audienceIds.map(id => ({
+  const userListResourceNames = params.audienceResourceNames ?? (params.audienceIds?.map(id => `customers/${ctx.customerId}/userLists/${id}`) ?? [])
+  if (userListResourceNames.length > 0) {
+    for (const rn of userListResourceNames) {
+      const m = rn.match(/^customers\/(\d+)\/userLists\/\d+$/)
+      if (!m) {
+        throw new Error(`Invalid user list resource format: ${rn}`)
+      }
+      const listCustomerId = m[1]
+      if (listCustomerId !== ctx.customerId) {
+        throw new Error('Selected user list does not belong to the active Google Ads customer')
+      }
+    }
+    await postMutate(ctx, 'campaignCriteria', userListResourceNames.map(rn => ({
       create: {
         campaign: campaignResourceName,
-        userList: { userList: `customers/${ctx.customerId}/userLists/${id}` },
+        userList: { userList: rn },
       },
     })))
   }

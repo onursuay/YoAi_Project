@@ -325,6 +325,11 @@ function buildCriterionField(s: SegmentInput): Record<string, any> {
   }
 }
 
+function parseUserListCustomer(resourceName: string): string | null {
+  const m = resourceName.match(/^customers\/(\d+)\/userLists\/\d+$/)
+  return m ? m[1] : null
+}
+
 export async function addCampaignAudienceCriteria(
   ctx: Ctx,
   campaignResourceName: string,
@@ -332,6 +337,14 @@ export async function addCampaignAudienceCriteria(
   bidOnly: boolean,
 ): Promise<void> {
   if (!segments.length) return
+  for (const s of segments) {
+    if (s.category === 'USER_LIST' && s.resourceName) {
+      const listCustomerId = parseUserListCustomer(s.resourceName)
+      if (!listCustomerId || listCustomerId !== ctx.customerId) {
+        throw new Error('Selected user list does not belong to the active Google Ads customer')
+      }
+    }
+  }
   // bidOnly (Observation mode) must be set via campaign.targeting_setting, not on criterion.
   const operations = segments.map(s => ({
     create: {
@@ -354,6 +367,14 @@ export async function addAdGroupAudienceCriteria(
   bidOnly: boolean,
 ): Promise<void> {
   if (!segments.length) return
+  for (const s of segments) {
+    if (s.category === 'USER_LIST' && s.resourceName) {
+      const listCustomerId = parseUserListCustomer(s.resourceName)
+      if (!listCustomerId || listCustomerId !== ctx.customerId) {
+        throw new Error('Selected user list does not belong to the active Google Ads customer')
+      }
+    }
+  }
   // bidOnly (Observation mode) must be set via ad_group.targeting_setting, not on criterion.
   const operations = segments.map(s => ({
     create: {
