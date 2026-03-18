@@ -92,16 +92,21 @@ export async function getAudienceDatasetMeta(): Promise<AudienceDatasetMeta | nu
 
 /** Write compressed dataset to Edge Config. */
 export async function setAudienceDataset(dataset: AudienceDataset): Promise<{ ok: boolean; error?: string; storedBytes?: number }> {
-  const token = process.env.VERCEL_API_TOKEN
-  const configId = process.env.AUDIENCE_EDGE_CONFIG_ID
-  const teamId = process.env.VERCEL_TEAM_ID
+  const token = process.env.VERCEL_API_TOKEN?.trim()
+  const configId = process.env.AUDIENCE_EDGE_CONFIG_ID?.trim()
+  const teamId = process.env.VERCEL_TEAM_ID?.trim()
 
-  console.log('[AUDIENCE_EDGE_WRITE_DIAG]', {
-    edgeConfigIdPresent: !!configId,
-    tokenPresent: !!token,
+  const requestPath = configId ? `/v1/edge-config/${configId}/items` : 'none'
+  const diag = {
+    requestPath,
+    method: 'PATCH',
     teamIdPresent: !!teamId,
-    writeTargetId: configId ? `${configId.slice(0, 8)}...` : 'none',
-  })
+    edgeConfigIdPrefix: configId ? configId.slice(0, 12) : 'none',
+    tokenPresent: !!token,
+    tokenLength: token?.length ?? 0,
+    tokenStartsWithVcp: !!(token && token.startsWith('vcp_')),
+  }
+  console.log('[AUDIENCE_EDGE_WRITE_DIAG]', diag)
 
   if (!token || !configId) {
     const msg = 'VERCEL_API_TOKEN and AUDIENCE_EDGE_CONFIG_ID required for audience refresh'
@@ -142,10 +147,13 @@ export async function setAudienceDataset(dataset: AudienceDataset): Promise<{ ok
     const elapsed = Date.now() - start
     if (!res.ok) {
       const body = await res.text()
-      console.error(`[AUDIENCE_REFRESH_FAIL] ${res.status} elapsed=${elapsed}ms url=${teamId ? 'with teamId' : 'no teamId'}`, body)
+      console.error(`[AUDIENCE_REFRESH_FAIL] ${res.status} elapsed=${elapsed}ms path=${requestPath} teamId=${teamId ? 'yes' : 'no'}`, body)
       let errMsg = `${res.status}: ${body}`
       if (res.status === 404 && !teamId) {
         errMsg += ' — If Edge Config is team-scoped, set VERCEL_TEAM_ID in Vercel env (Team Settings → General → Team ID)'
+      }
+      if (res.status === 403) {
+        errMsg += ' — Trim whitespace from VERCEL_API_TOKEN (known Vercel env gotcha). Ensure token created from Team Settings → Tokens.'
       }
       return { ok: false, error: errMsg }
     }
