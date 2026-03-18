@@ -72,6 +72,11 @@ function sanitizePhoneDigits(input: string): string {
   return input.replace(/\D/g, '')
 }
 
+/** Phone has valid numeric content — at least one digit. */
+function hasValidPhoneNumber(val: string): boolean {
+  return /^\d+$/.test(val.trim())
+}
+
 /** Allow digits and common control keys in phone input. Block letters and symbols. */
 function isAllowedPhoneKey(e: React.KeyboardEvent<HTMLInputElement>): boolean {
   if (['Backspace', 'Delete', 'Tab', 'ArrowLeft', 'ArrowRight', 'ArrowUp', 'ArrowDown', 'Home', 'End'].includes(e.key)) return true
@@ -367,15 +372,22 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
           {state.desiredOutcomeWebsite && (
             <div className="px-2.5 pb-2.5 pt-0">
               <input
-                className={`${inputCls} ${state.finalUrl.trim() && !isValidWebUrl(state.finalUrl) ? 'border-red-400 focus:ring-red-500 focus:border-red-500' : ''}`}
+                className={`${inputCls} ${(() => {
+                  const url = state.finalUrl.trim()
+                  if (!url || !isValidWebUrl(state.finalUrl)) return 'border-red-400 focus:ring-red-500 focus:border-red-500'
+                  return ''
+                })()}`}
                 type="url"
                 value={state.finalUrl}
                 onChange={e => update({ finalUrl: e.target.value })}
                 placeholder={t('conversion.outcomeWebsiteUrlPlaceholder')}
               />
-              {state.finalUrl.trim() && !isValidWebUrl(state.finalUrl) && (
-                <p className="mt-1 text-[13px] text-red-600">{t('conversion.outcomeUrlInvalid')}</p>
-              )}
+              {state.desiredOutcomeWebsite && (() => {
+                const url = state.finalUrl.trim()
+                if (!url) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.websiteUrlRequired')}</p>
+                if (!isValidWebUrl(state.finalUrl)) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.websiteUrlInvalid')}</p>
+                return null
+              })()}
             </div>
           )}
         </div>
@@ -397,7 +409,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
             <div className="px-2.5 pb-2.5 pt-0">
               <div className="grid grid-cols-[140px_minmax(0,1fr)] gap-3 items-center w-full">
                 <select
-                  className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!state.desiredOutcomePhoneCountryCode?.trim() ? 'border-red-400' : 'border-gray-300'}`}
                   value={state.desiredOutcomePhoneCountryCode}
                   onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
                 >
@@ -410,7 +422,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="tel-national"
-                  className="h-10 w-full min-w-0 rounded-md border border-gray-300 bg-white px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500"
+                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!hasValidPhoneNumber(state.desiredOutcomePhoneNumber) ? 'border-red-400' : 'border-gray-300'}`}
                   value={state.desiredOutcomePhoneNumber}
                   onChange={e => update({ desiredOutcomePhoneNumber: sanitizePhoneDigits(e.target.value) })}
                   onKeyDown={e => { if (!isAllowedPhoneKey(e)) e.preventDefault() }}
@@ -431,6 +443,13 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                   placeholder={t(COUNTRY_PHONE_OPTIONS.find(o => o.dialCode === state.desiredOutcomePhoneCountryCode)?.placeholderKey ?? 'conversion.outcomePhonePlaceholder')}
                 />
               </div>
+              {state.desiredOutcomePhone && (() => {
+                if (!state.desiredOutcomePhoneCountryCode?.trim()) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneCountryRequired')}</p>
+                const phone = state.desiredOutcomePhoneNumber.trim()
+                if (!phone) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneNumberRequired')}</p>
+                if (!hasValidPhoneNumber(phone)) return <p className="mt-1 text-[13px] text-red-600">{t('conversion.phoneNumberInvalid')}</p>
+                return null
+              })()}
             </div>
           )}
         </div>

@@ -1,5 +1,30 @@
 import type { WizardState, BiddingStrategy } from './WizardTypes'
 
+/** URL validation — must start http/https and have valid hostname. Used for Step 1 desired outcomes. */
+function isValidWebUrl(val: string): boolean {
+  if (!val || !val.trim()) return false
+  const s = val.trim()
+  if (!s.startsWith('http://') && !s.startsWith('https://')) return false
+  try {
+    const u = new URL(s)
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
+    const host = u.hostname
+    if (!host) return false
+    if (host === 'localhost') return true
+    if (!host.includes('.')) return false
+    const parts = host.split('.')
+    const last = parts[parts.length - 1]
+    return last.length >= 2 && /^[a-z0-9-]+$/i.test(last)
+  } catch {
+    return false
+  }
+}
+
+/** Phone has valid numeric content — at least one digit. */
+function hasValidPhoneNumber(val: string): boolean {
+  return /^\d+$/.test(val.trim())
+}
+
 // Search wizard step order: 0 Goal, 1 Conversion+Name, 2 Bidding, 3 CampaignSettings, 4 AIMax, 5 Keywords&Ads, 6 Budget, 7 Summary
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validateStep(step: number, state: WizardState, t: (key: string, params?: any) => string): string | null {
@@ -7,8 +32,19 @@ export function validateStep(step: number, state: WizardState, t: (key: string, 
     case 0: // Goal & Campaign Type — no hard validation needed
       return null
 
-    case 1: { // Conversion + Campaign Name
+    case 1: { // Conversion + Campaign Name + conditional desired outcomes
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
+      if (state.desiredOutcomeWebsite) {
+        const url = state.finalUrl.trim()
+        if (!url) return t('conversion.websiteUrlRequired')
+        if (!isValidWebUrl(url)) return t('conversion.websiteUrlInvalid')
+      }
+      if (state.desiredOutcomePhone) {
+        if (!state.desiredOutcomePhoneCountryCode?.trim()) return t('conversion.phoneCountryRequired')
+        const phone = state.desiredOutcomePhoneNumber.trim()
+        if (!phone) return t('conversion.phoneNumberRequired')
+        if (!hasValidPhoneNumber(phone)) return t('conversion.phoneNumberInvalid')
+      }
       return null
     }
 
