@@ -711,13 +711,34 @@
             "COMBINED_AUDIENCE": "Birleşik Segment"
           },
           "browseSections": {
-            "inMarket": { "label": "Etkin Şekilde Araştırdıkları veya Planladıkları Konular", "desc": "Pazardaki kitle segmentleri" },
-            "affinity": { "label": "İlgi Alanları ve Alışkanlıkları", "desc": "Yakın ilgi alanı segmentleri" },
-            "detailedDemographics": { "label": "Kim Oldukları", "desc": "Ayrıntılı demografi segmentleri" },
-            "lifeEvents": { "label": "Yaşam Olayları", "desc": "Yaşam olayı segmentleri" },
-            "userLists": { "label": "İşletmenizle Etkileşimde Bulunma Biçimleri", "desc": "Verilerinize göre segmentler (remarketing, CRM)" },
-            "customAudiences": { "label": "Özel Kitleleriniz", "desc": "Anahtar kelime/URL tabanlı özel kitleler" },
-            "combinedAudiences": { "label": "Birleşik Kitle Segmentleriniz", "desc": "Birleşik segmentler" }
+            "inMarket": {
+              "label": "Etkin Şekilde Araştırdıkları veya Planladıkları Konular",
+              "desc": "Pazardaki kitle segmentleri"
+            },
+            "affinity": {
+              "label": "İlgi Alanları ve Alışkanlıkları",
+              "desc": "Yakın ilgi alanı segmentleri"
+            },
+            "detailedDemographics": {
+              "label": "Kim Oldukları",
+              "desc": "Ayrıntılı demografi segmentleri"
+            },
+            "lifeEvents": {
+              "label": "Yaşam Olayları",
+              "desc": "Yaşam olayı segmentleri"
+            },
+            "userLists": {
+              "label": "İşletmenizle Etkileşimde Bulunma Biçimleri",
+              "desc": "Verilerinize göre segmentler (remarketing, CRM)"
+            },
+            "customAudiences": {
+              "label": "Özel Kitleleriniz",
+              "desc": "Anahtar kelime/URL tabanlı özel kitleler"
+            },
+            "combinedAudiences": {
+              "label": "Birleşik Kitle Segmentleriniz",
+              "desc": "Birleşik segmentler"
+            }
           }
         },
         "adgroup": {
@@ -911,7 +932,6 @@
             "TARGETING": "Hedefleme"
           },
           "languageNames": {
-            "1037": "Türkçe",
             "1000": "İngilizce",
             "1001": "Almanca",
             "1002": "Fransızca",
@@ -920,7 +940,8 @@
             "1010": "Felemenkçe",
             "1014": "Portekizce",
             "1019": "Arapça",
-            "1031": "Rusça"
+            "1031": "Rusça",
+            "1037": "Türkçe"
           }
         },
         "performanceMaxNotReady": "Bu kampanya türü henüz bu sihirbazda desteklenmiyor. Ayrı bir akışta hazırlanacaktır. Lütfen Search veya başka bir kampanya türü seçin.",
@@ -959,12 +980,10 @@
       "pmaxWizard": {
         "title": "Performance Max Kampanyası Oluştur",
         "steps": {
-          "goal": "Hedef",
-          "conversionAndName": "Dönüşüm & Ad",
-          "bidding": "Teklif & Edinim",
-          "campaignSettings": "Kampanya Ayarları",
-          "assetGroup": "Varlık Grubu",
-          "signals": "Sinyaller",
+          "entry": "Giriş",
+          "bidding": "Teklif verme",
+          "campaignSettings": "Kampanya ayarları",
+          "assetGroup": "Öğe grubu",
           "budget": "Bütçe",
           "summary": "Özet"
         },
@@ -1008,6 +1027,12 @@
           "primary": "Birincil",
           "optionalNote": "İsteğe bağlı. Seçmeden devam edebilirsiniz."
         },
+        "entry": {
+          "goalQuestion": "Kampanya hedefiniz nedir?",
+          "merchantTitle": "Bu kampanyaya ürün ekleyin",
+          "merchantPlaceholder": "Merchant Center entegrasyonu yakında eklenecektir. Şu an ürün kataloğu olmadan devam edebilirsiniz.",
+          "landingTitle": "Kullanıcıları reklamlarınızı tıkladıktan sonra nereye yönlendirilsin?"
+        },
         "bidding": {
           "strategyLabel": "Teklif Stratejisi",
           "focusTitle": "Hedef odak",
@@ -1028,7 +1053,15 @@
             "CONVERSION_VALUE": "Dönüşüm değeri",
             "CONVERSION_COUNT_CPA": "Dönüşüm sayısı (EBM)",
             "CONVERSION_VALUE_ROAS": "Dönüşüm değeri (ROAS)"
-          }
+          },
+          "sectionTitle": "Teklif verme",
+          "focusQuestion": "Hangi hedefe odaklanmak istiyorsunuz?",
+          "setCpaOptional": "Hedef işlem başına maliyet belirleyin (isteğe bağlı)",
+          "setRoasOptional": "Hedef reklam harcaması getirisi belirleyin (isteğe bağlı)",
+          "newCustomersDescription": "Teklif stratejinizden bağımsız olarak, kampanyanız yalnızca yeni müşterilere gösterilir.",
+          "acquisitionWarningTitle": "Bu kampanya yayınlanmayacak.",
+          "acquisitionWarningText": "Kampanyayı düzeltmek için en az bir ağda minimum 1.000 etkin üyesi olan bir kitle segmenti ekleyebilir veya uygun kitle ekleyene kadar bu ayarı devre dışı bırakabilirsiniz.",
+          "acquisitionInfoText": "Akıllı Teklif, reklamlarınızı yalnızca yeni müşterilere gösterecek şekilde optimize edilir."
         },
         "settings": {
           "datesTitle": "Kampanya Tarihleri",
@@ -1064,7 +1097,49 @@
           "euPoliticalTitle": "AB Siyasi Reklamları",
           "euPoliticalLearnMore": "Daha fazla bilgi",
           "euPoliticalNotPolitical": "Hayır, siyasi reklam yok",
-          "euPoliticalPolitical": "Evet, siyasi reklam var"
+          "euPoliticalPolitical": "Evet, siyasi reklam var",
+          "subtitle": "Doğru kullanıcılara ulaşmak için başlangıç olarak kampanyanızın temel ayarlarını tanımlayın.",
+          "locationsLabel": "Bu kampanya için konumları seçin",
+          "locationsAllCountries": "Tüm ülkeler ve bölgeler",
+          "locationsCustom": "Başka bir yer girin",
+          "locationOptionsToggle": "Yer seçenekleri",
+          "languagesLabel": "Müşterilerinizin konuştuğu dilleri seçin",
+          "languagesSearchPlaceholder": "Yazmaya başlayın veya bir dil seçin",
+          "euPoliticalQuestion": "Kampanyanızda Avrupa Birliği ile ilgili siyasi reklamlar var mı?",
+          "euPoliticalRequired": "Zorunlu",
+          "euPoliticalValidation": "Kampanyanızda AB ile ilgili siyasi reklamlar olup olmadığını onaylayın.",
+          "devicesTitle": "Cihazlar",
+          "devicesLabel": "Reklamlarınızın gösterilebileceği cihazları seçin.",
+          "devicesRequired": "Zorunlu",
+          "endDateNone": "Yok",
+          "urlOptionsTitle": "Kampanya URL seçenekleri",
+          "trackingTemplate": "İzleme şablonu",
+          "trackingTemplatePlaceholder": "Örn: https://www.trackingtemplate.foo/?url={lpurl}&id=5",
+          "finalUrlSuffix": "Nihai URL son eki",
+          "finalUrlSuffixPlaceholder": "Örn: param1=value1&param2=value2",
+          "customParametersLabel": "Özel parametreler",
+          "customParamKey": "Ad",
+          "customParamValue": "Değer",
+          "customParamAdd": "Parametre ekle",
+          "pageFeedsTitle": "Sayfa feed'leri",
+          "pageFeedsDescription": "Kampanyanızda kullanılacak URL'leri belirtmek için sayfa feed'leri ekleyin.",
+          "brandExclusionsTitle": "Marka hariç tutmaları",
+          "brandExclusionsDescription": "Markaları hariç tutarak belirtilen markaların bahsedildiği aramalarda reklamlarınızın gösterilmemesini sağlayın.",
+          "brandExclusionsPlaceholder": "Markaları hariç tutmak için marka listelerini kullanın",
+          "demographicExclusionsTitle": "Demografik hariç tutmalar",
+          "demographicExclusionsDescription": "Demografik hariç tutmalar, bu kampanyadaki öğe gruplarında etkin olan tüm ipuçlarını geçersiz kılar.",
+          "ageExclusionsEnable": "Yaş hariç tutmalarını etkinleştir",
+          "ageUnknown": "Bilinmiyor",
+          "genderExclusionsEnable": "Cinsiyet hariç tutmalarını etkinleştir",
+          "genderMALE": "Erkek",
+          "genderFEMALE": "Kadın",
+          "genderUNKNOWN": "Bilinmiyor",
+          "dataExclusionsTitle": "Verileri hariç tutma işlemleriniz",
+          "dataExclusionsDescription": "Bu kampanya için verileri hariç tutma özelliğini etkinleştirin.",
+          "dataExclusionsEnable": "Verileri hariç tutma özelliğini etkinleştirin",
+          "scheduleEveryDay": "Her gün",
+          "scheduleAddLink": "Ekle",
+          "scheduleTimezoneNote": "Hesabın saat dilimine göre: (GMT+03:00) Türkiye Standart Saati. Bunu kaydettiğinizde, değiştirdiğiniz ayarlar kaldırılır ve tüm performans verilerini sıfırlayarak yeni kayıtlar eklerir."
         },
         "location": {
           "countryAll": "Tüm ülkeler",
@@ -1125,9 +1200,13 @@
           "learningText": "Performance Max kampanyaları başlangıçta öğrenme fazındadır. Tutarlı bütçe verimliliği artırır."
         },
         "summary": {
-          "pmaxNote": "Performance Max kampanyası — tüm kanallarda otomatik reklam.",
-          "blockingIssuesTitle": "Eksik veya hatalı alanlar",
+          "pmaxNote": "Kampanyanız yayınlanmaya neredeyse hazır.",
+          "blockingIssuesTitle": "Sorunlar",
           "advisoryTitle": "Öneriler",
+          "overviewSection": "Genel bakış",
+          "biddingSection": "Teklif verme",
+          "campaignSettingsSection": "Kampanya ayarları",
+          "budgetSection": "Bütçe",
           "campaignSection": "Kampanya",
           "campaignName": "Kampanya Adı",
           "campaignType": "Kampanya Türü",
@@ -1163,7 +1242,16 @@
           "languages": "Diller",
           "locationMode": "Konum Modu",
           "euPoliticalDeclaration": "AB Siyasi Reklam",
-          "backendPlaceholder": "Backend create henüz uygulanmadı. Bu adım iskelet."
+          "backendPlaceholder": "Backend create henüz uygulanmadı. Bu adım iskelet.",
+          "readyTitle": "Kampanyanız yayınlanmaya neredeyse hazır",
+          "blockingIssuesDesc": "Kampanyanızı yayınlamak için bu sorunları giderin.",
+          "advisoryDesc": "Kampanya performansını optimize etmek için bu önerileri uygulayın.",
+          "viewAction": "Görüntüle",
+          "notSpecified": "Belirtilmedi",
+          "biddingFocus": "Teklif odağı",
+          "newCustomersOnly": "Yalnızca yeni müşteriler",
+          "allCustomers": "Yeni ve mevcut müşteriler için aynı teklifi ver",
+          "day": "gün"
         },
         "review": {
           "lowHeadlines": "3–5 başlık var; 15'e kadar ekleyerek performansı artırabilirsiniz.",
@@ -1213,6 +1301,12 @@
           "partialTitle": "Kampanya Oluşturuldu (Kısmi)",
           "partialMessage": "Kampanya oluşturuldu. Bazı ayarlar Google Ads üzerinden tamamlanmalı.",
           "acknowledge": "Tamam"
+        },
+        "devices": {
+          "computers": "Bilgisayarlar",
+          "mobile": "Cep telefonları",
+          "tablets": "Tabletler",
+          "tvScreens": "TV ekranları"
         }
       }
     },

@@ -1,114 +1,144 @@
 'use client'
 
-import { Target, Users, Info } from 'lucide-react'
-import type { PMaxStepProps, PMaxBiddingStrategy } from '../shared/PMaxWizardTypes'
-import { inputCls, PMaxBiddingStrategies, PMaxBiddingFocusByStrategy } from '../shared/PMaxWizardTypes'
+import { useState } from 'react'
+import { ChevronUp, ChevronDown, Users, Info, AlertCircle } from 'lucide-react'
+import type { PMaxStepProps, PMaxBiddingFocus } from '../shared/PMaxWizardTypes'
+import { inputCls } from '../shared/PMaxWizardTypes'
 
-function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
+function CollapsibleSection({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
+  const [open, setOpen] = useState(defaultOpen)
   return (
-    <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
-        {label} {required && <span className="text-red-500">*</span>}
-      </label>
-      {children}
+    <div className="border border-gray-200 rounded-lg bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-5 py-4 text-left"
+      >
+        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      </button>
+      {open && <div className="px-5 pb-5 pt-0">{children}</div>}
     </div>
   )
 }
 
 export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxStepProps) {
-  const focusOptions = PMaxBiddingFocusByStrategy[state.biddingStrategy] ?? []
-  const currentFocusValid = focusOptions.some(o => o.value === state.biddingFocus)
-  const effectiveFocus = currentFocusValid ? state.biddingFocus! : (focusOptions[0]?.value ?? null)
-
-  const handleStrategyChange = (strategy: PMaxBiddingStrategy) => {
-    const newFocusOptions = PMaxBiddingFocusByStrategy[strategy] ?? []
-    update({
-      biddingStrategy: strategy,
-      biddingFocus: newFocusOptions[0]?.value ?? null,
-      targetCpa: strategy === 'TARGET_CPA' ? state.targetCpa : '',
-      targetRoas: strategy === 'TARGET_ROAS' ? state.targetRoas : '',
-    })
+  const handleFocusChange = (focus: PMaxBiddingFocus) => {
+    if (focus === 'CONVERSION_VALUE') {
+      update({
+        biddingFocus: focus,
+        biddingStrategy: 'MAXIMIZE_CONVERSIONS',
+        targetCpa: '',
+      })
+    } else {
+      update({
+        biddingFocus: focus,
+        biddingStrategy: 'MAXIMIZE_CONVERSIONS',
+        targetRoas: '',
+      })
+    }
   }
 
+  const showTargetCpa = state.biddingFocus === 'CONVERSION_COUNT'
+  const showTargetRoas = state.biddingFocus === 'CONVERSION_VALUE'
+
   return (
-    <div className="space-y-5">
-      <Field label={t('bidding.strategyLabel')} required>
-        <select
-          className={inputCls}
-          value={state.biddingStrategy}
-          onChange={e => handleStrategyChange(e.target.value as PMaxBiddingStrategy)}
-        >
-          {PMaxBiddingStrategies.map(bs => (
-            <option key={bs} value={bs}>{t(`bidding.labels.${bs}`)}</option>
-          ))}
-        </select>
-      </Field>
-
-      {focusOptions.length > 0 && (
-        <section>
-          <div className="flex items-center gap-2 mb-2">
-            <Target className="w-4 h-4 text-blue-600" />
-            <label className="text-sm font-semibold text-gray-900">{t('bidding.focusTitle')}</label>
+    <div className="space-y-4 pt-2">
+      {/* Teklif verme section */}
+      <CollapsibleSection title={t('bidding.sectionTitle')}>
+        <div className="space-y-4">
+          <div>
+            <label className="block text-sm text-gray-700 mb-1.5">{t('bidding.focusQuestion')}</label>
+            <select
+              className={`${inputCls} max-w-[240px]`}
+              value={state.biddingFocus ?? 'CONVERSION_COUNT'}
+              onChange={e => handleFocusChange(e.target.value as PMaxBiddingFocus)}
+            >
+              <option value="CONVERSION_COUNT">{t('bidding.focusLabels.CONVERSION_COUNT')}</option>
+              <option value="CONVERSION_VALUE">{t('bidding.focusLabels.CONVERSION_VALUE')}</option>
+            </select>
           </div>
-          <div className="space-y-2">
-            {focusOptions.map(({ value, labelKey }) => (
-              <label
-                key={value}
-                className={`flex items-center gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-                  effectiveFocus === value ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300 bg-white'
-                }`}
-              >
+
+          {/* Target CPA — optional checkbox + input */}
+          {showTargetCpa && (
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
                 <input
-                  type="radio"
-                  name="pmaxBiddingFocus"
-                  value={value}
-                  checked={effectiveFocus === value}
-                  onChange={() => update({ biddingFocus: value })}
-                  className="text-blue-600 focus:ring-blue-500"
+                  type="checkbox"
+                  checked={state.biddingStrategy === 'TARGET_CPA'}
+                  onChange={e => {
+                    update({
+                      biddingStrategy: e.target.checked ? 'TARGET_CPA' : 'MAXIMIZE_CONVERSIONS',
+                      targetCpa: e.target.checked ? state.targetCpa : '',
+                    })
+                  }}
+                  className="rounded border-gray-300 text-blue-600"
                 />
-                <span className="text-sm font-medium">{t(`bidding.focusLabels.${labelKey}`)}</span>
+                <span className="text-sm text-gray-700">{t('bidding.setCpaOptional')}</span>
               </label>
-            ))}
-          </div>
-        </section>
-      )}
+              {state.biddingStrategy === 'TARGET_CPA' && (
+                <div className="mt-3 ml-6">
+                  <label className="block text-sm text-gray-600 mb-1">{t('bidding.targetCpaLabel')}</label>
+                  <div className="relative max-w-[200px]">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">&#8378;</span>
+                    <input
+                      className={`${inputCls} pl-7`}
+                      type="number"
+                      min="0"
+                      step="1"
+                      value={state.targetCpa}
+                      onChange={e => update({ targetCpa: e.target.value })}
+                      placeholder={t('bidding.targetCpaPlaceholder')}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
 
-      {state.biddingStrategy === 'TARGET_CPA' && (
-        <Field label={t('bidding.targetCpaLabel')} required>
-          <div className="relative max-w-[200px]">
-            <input
-              className={`${inputCls} pr-10`}
-              type="number"
-              min="0"
-              step="1"
-              value={state.targetCpa}
-              onChange={e => update({ targetCpa: e.target.value })}
-              placeholder={t('bidding.targetCpaPlaceholder')}
-            />
-            <span className="absolute right-3 top-1/2 -translate-y-1/2 text-sm text-gray-500">TRY</span>
-          </div>
-        </Field>
-      )}
+          {/* Target ROAS — optional checkbox + input */}
+          {showTargetRoas && (
+            <div>
+              <label className="flex items-center gap-2 cursor-pointer">
+                <input
+                  type="checkbox"
+                  checked={state.biddingStrategy === 'TARGET_ROAS'}
+                  onChange={e => {
+                    update({
+                      biddingStrategy: e.target.checked ? 'TARGET_ROAS' : 'MAXIMIZE_CONVERSIONS',
+                      targetRoas: e.target.checked ? state.targetRoas : '',
+                    })
+                  }}
+                  className="rounded border-gray-300 text-blue-600"
+                />
+                <span className="text-sm text-gray-700">{t('bidding.setRoasOptional')}</span>
+              </label>
+              {state.biddingStrategy === 'TARGET_ROAS' && (
+                <div className="mt-3 ml-6">
+                  <label className="block text-sm text-gray-600 mb-1">{t('bidding.targetRoasLabel')}</label>
+                  <div className="relative max-w-[200px]">
+                    <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
+                    <input
+                      className={`${inputCls} pl-7`}
+                      type="number"
+                      min="0"
+                      step="0.1"
+                      value={state.targetRoas}
+                      onChange={e => update({ targetRoas: e.target.value })}
+                      placeholder={t('bidding.targetRoasPlaceholder')}
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+          )}
+        </div>
+      </CollapsibleSection>
 
-      {state.biddingStrategy === 'TARGET_ROAS' && (
-        <Field label={t('bidding.targetRoasLabel')} required>
-          <input
-            className={`${inputCls} max-w-[200px]`}
-            type="number"
-            min="0"
-            step="0.1"
-            value={state.targetRoas}
-            onChange={e => update({ targetRoas: e.target.value })}
-            placeholder={t('bidding.targetRoasPlaceholder')}
-          />
-        </Field>
-      )}
-
-      <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
-        <Users className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-        <div>
-          <p className="text-sm font-medium text-gray-700">{t('bidding.acquisitionTitle')}</p>
-          <label className="flex items-center gap-2 mt-2 cursor-pointer">
+      {/* Müşteri edinme section */}
+      <CollapsibleSection title={t('bidding.acquisitionTitle')}>
+        <div className="space-y-3">
+          <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
               checked={state.bidOnlyForNewCustomers}
@@ -117,12 +147,24 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
             />
             <span className="text-sm text-gray-700">{t('bidding.newCustomersOnly')}</span>
           </label>
-          <p className="text-xs text-gray-500 mt-1 flex items-start gap-1">
-            <Info className="w-3.5 h-3.5 shrink-0 mt-0.5" />
-            {t('bidding.newCustomersHint')}
-          </p>
+          <p className="text-sm text-gray-500 ml-6">{t('bidding.newCustomersDescription')}</p>
+
+          {state.bidOnlyForNewCustomers && (
+            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+              <div>
+                <p className="font-medium">{t('bidding.acquisitionWarningTitle')}</p>
+                <p className="mt-1">{t('bidding.acquisitionWarningText')}</p>
+              </div>
+            </div>
+          )}
+
+          <div className="flex items-start gap-3 p-3 bg-gray-50 rounded-lg mt-2">
+            <Info className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+            <p className="text-xs text-gray-600">{t('bidding.acquisitionInfoText')}</p>
+          </div>
         </div>
-      </div>
+      </CollapsibleSection>
     </div>
   )
 }

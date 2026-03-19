@@ -711,13 +711,34 @@
             "COMBINED_AUDIENCE": "Combined Segment"
           },
           "browseSections": {
-            "inMarket": { "label": "In-Market", "desc": "In-market audience segments" },
-            "affinity": { "label": "Affinity and Habits", "desc": "Affinity segments" },
-            "detailedDemographics": { "label": "Who They Are", "desc": "Detailed demographic segments" },
-            "lifeEvents": { "label": "Life Events", "desc": "Life event segments" },
-            "userLists": { "label": "How They Interact With Your Business", "desc": "Segments based on your data (remarketing, CRM)" },
-            "customAudiences": { "label": "Your Custom Audiences", "desc": "Keyword/URL-based custom audiences" },
-            "combinedAudiences": { "label": "Your Combined Audience Segments", "desc": "Combined segments" }
+            "inMarket": {
+              "label": "In-Market",
+              "desc": "In-market audience segments"
+            },
+            "affinity": {
+              "label": "Affinity and Habits",
+              "desc": "Affinity segments"
+            },
+            "detailedDemographics": {
+              "label": "Who They Are",
+              "desc": "Detailed demographic segments"
+            },
+            "lifeEvents": {
+              "label": "Life Events",
+              "desc": "Life event segments"
+            },
+            "userLists": {
+              "label": "How They Interact With Your Business",
+              "desc": "Segments based on your data (remarketing, CRM)"
+            },
+            "customAudiences": {
+              "label": "Your Custom Audiences",
+              "desc": "Keyword/URL-based custom audiences"
+            },
+            "combinedAudiences": {
+              "label": "Your Combined Audience Segments",
+              "desc": "Combined segments"
+            }
           }
         },
         "adgroup": {
@@ -911,7 +932,6 @@
             "TARGETING": "Targeting"
           },
           "languageNames": {
-            "1037": "Turkish",
             "1000": "English",
             "1001": "German",
             "1002": "French",
@@ -920,7 +940,8 @@
             "1010": "Dutch",
             "1014": "Portuguese",
             "1019": "Arabic",
-            "1031": "Russian"
+            "1031": "Russian",
+            "1037": "Turkish"
           }
         },
         "performanceMaxNotReady": "This campaign type is not yet supported in this wizard. It will be available in a separate flow. Please select Search or another campaign type.",
@@ -959,12 +980,10 @@
       "pmaxWizard": {
         "title": "Create Performance Max Campaign",
         "steps": {
-          "goal": "Goal",
-          "conversionAndName": "Conversion & Name",
-          "bidding": "Bidding & Acquisition",
-          "campaignSettings": "Campaign Settings",
-          "assetGroup": "Asset Group",
-          "signals": "Signals",
+          "entry": "Entry",
+          "bidding": "Bidding",
+          "campaignSettings": "Campaign settings",
+          "assetGroup": "Asset group",
           "budget": "Budget",
           "summary": "Summary"
         },
@@ -1008,6 +1027,12 @@
           "primary": "Primary",
           "optionalNote": "Optional. You can continue without selecting any."
         },
+        "entry": {
+          "goalQuestion": "What is your campaign goal?",
+          "merchantTitle": "Add products to this campaign",
+          "merchantPlaceholder": "Merchant Center integration will be added soon. You can continue without a product catalog for now.",
+          "landingTitle": "Where should users go after they click your ads?"
+        },
         "bidding": {
           "strategyLabel": "Bidding Strategy",
           "focusTitle": "Bidding focus",
@@ -1028,7 +1053,15 @@
             "CONVERSION_VALUE": "Conversion value",
             "CONVERSION_COUNT_CPA": "Conversion count (CPA)",
             "CONVERSION_VALUE_ROAS": "Conversion value (ROAS)"
-          }
+          },
+          "sectionTitle": "Bidding",
+          "focusQuestion": "What do you want to focus on?",
+          "setCpaOptional": "Set a target cost per action (optional)",
+          "setRoasOptional": "Set a target return on ad spend (optional)",
+          "newCustomersDescription": "Your campaign will only show ads to new customers regardless of your bidding strategy.",
+          "acquisitionWarningTitle": "This campaign will not publish.",
+          "acquisitionWarningText": "To fix, add an audience segment with at least 1,000 active members, or disable this setting until you have a sufficient audience.",
+          "acquisitionInfoText": "Smart Bidding will be optimized to show your ads only to new customers."
         },
         "settings": {
           "datesTitle": "Campaign Dates",
@@ -1064,7 +1097,49 @@
           "euPoliticalTitle": "EU Political Ads",
           "euPoliticalLearnMore": "Learn more",
           "euPoliticalNotPolitical": "No political ads",
-          "euPoliticalPolitical": "Yes, political ads"
+          "euPoliticalPolitical": "Yes, political ads",
+          "subtitle": "Define your basic settings to reach the right users as a starting point for your campaign.",
+          "locationsLabel": "Select locations for this campaign",
+          "locationsAllCountries": "All countries and territories",
+          "locationsCustom": "Enter another location",
+          "locationOptionsToggle": "Location options",
+          "languagesLabel": "Select the languages your customers speak",
+          "languagesSearchPlaceholder": "Start typing or select a language",
+          "euPoliticalQuestion": "Does your campaign contain EU political ads?",
+          "euPoliticalRequired": "Required",
+          "euPoliticalValidation": "Please confirm whether your campaign contains EU political ads.",
+          "devicesTitle": "Devices",
+          "devicesLabel": "Select the devices your ads can be shown on.",
+          "devicesRequired": "Required",
+          "endDateNone": "None",
+          "urlOptionsTitle": "Campaign URL options",
+          "trackingTemplate": "Tracking template",
+          "trackingTemplatePlaceholder": "E.g.: https://www.trackingtemplate.foo/?url={lpurl}&id=5",
+          "finalUrlSuffix": "Final URL suffix",
+          "finalUrlSuffixPlaceholder": "E.g.: param1=value1&param2=value2",
+          "customParametersLabel": "Custom parameters",
+          "customParamKey": "Key",
+          "customParamValue": "Value",
+          "customParamAdd": "Add parameter",
+          "pageFeedsTitle": "Page feeds",
+          "pageFeedsDescription": "Add page feeds to specify which URLs to use in your campaign.",
+          "brandExclusionsTitle": "Brand exclusions",
+          "brandExclusionsDescription": "Exclude brands to prevent your ads from showing when those brands are mentioned in searches.",
+          "brandExclusionsPlaceholder": "Search brands to exclude using brand lists",
+          "demographicExclusionsTitle": "Demographic exclusions",
+          "demographicExclusionsDescription": "Demographic exclusions override all item groups in this campaign.",
+          "ageExclusionsEnable": "Enable age exclusions",
+          "ageUnknown": "Unknown",
+          "genderExclusionsEnable": "Enable gender exclusions",
+          "genderMALE": "Male",
+          "genderFEMALE": "Female",
+          "genderUNKNOWN": "Unknown",
+          "dataExclusionsTitle": "Data exclusions",
+          "dataExclusionsDescription": "Enable data exclusion features for this campaign.",
+          "dataExclusionsEnable": "Enable data exclusion feature",
+          "scheduleEveryDay": "Every day",
+          "scheduleAddLink": "Add",
+          "scheduleTimezoneNote": "Account timezone: (GMT+03:00) Turkey Standard Time. Changing this setting removes existing rules and resets all performance data."
         },
         "location": {
           "countryAll": "All countries",
@@ -1125,9 +1200,13 @@
           "learningText": "Performance Max campaigns go through a learning phase. Consistent budget improves efficiency."
         },
         "summary": {
-          "pmaxNote": "Performance Max campaign — automated ads across all channels.",
-          "blockingIssuesTitle": "Missing or invalid fields",
+          "pmaxNote": "Your campaign is almost ready to publish.",
+          "blockingIssuesTitle": "Issues",
           "advisoryTitle": "Recommendations",
+          "overviewSection": "Overview",
+          "biddingSection": "Bidding",
+          "campaignSettingsSection": "Campaign settings",
+          "budgetSection": "Budget",
           "campaignSection": "Campaign",
           "campaignName": "Campaign Name",
           "campaignType": "Campaign Type",
@@ -1163,7 +1242,16 @@
           "languages": "Languages",
           "locationMode": "Location Mode",
           "euPoliticalDeclaration": "EU Political Ads",
-          "backendPlaceholder": "Backend create not yet implemented. This is a skeleton."
+          "backendPlaceholder": "Backend create not yet implemented. This is a skeleton.",
+          "readyTitle": "Your campaign is almost ready to publish",
+          "blockingIssuesDesc": "Fix these issues to publish your campaign.",
+          "advisoryDesc": "Apply these recommendations to optimize your campaign performance.",
+          "viewAction": "View",
+          "notSpecified": "Not specified",
+          "biddingFocus": "Bidding focus",
+          "newCustomersOnly": "Only new customers",
+          "allCustomers": "New and existing customers — same bid",
+          "day": "day"
         },
         "review": {
           "lowHeadlines": "3–5 headlines; add up to 15 to improve performance.",
@@ -1213,6 +1301,12 @@
           "partialTitle": "Campaign Created (Partial)",
           "partialMessage": "Campaign created. Some settings must be completed in Google Ads.",
           "acknowledge": "OK"
+        },
+        "devices": {
+          "computers": "Computers",
+          "mobile": "Mobile phones",
+          "tablets": "Tablets",
+          "tvScreens": "TV screens"
         }
       }
     },

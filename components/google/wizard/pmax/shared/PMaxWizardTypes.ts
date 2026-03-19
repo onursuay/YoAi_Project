@@ -59,6 +59,8 @@ export interface PMaxSearchTheme {
   text: string
 }
 
+export type PMaxDeviceType = 'COMPUTERS' | 'MOBILE' | 'TABLETS' | 'TV_SCREENS'
+
 export interface PMaxWizardState {
   campaignGoal: PMaxCampaignGoal
   campaignType: 'PERFORMANCE_MAX'
@@ -76,7 +78,7 @@ export interface PMaxWizardState {
   startDate: string
   endDate: string
   locationTargetingMode: PMaxLocationTargetingMode
-  euPoliticalAdsDeclaration: PMaxEuPoliticalAdsDeclaration
+  euPoliticalAdsDeclaration: PMaxEuPoliticalAdsDeclaration | null
   locations: PMaxSelectedLocation[]
   geoSearchCountry: string
   languageIds: string[]
@@ -94,6 +96,20 @@ export interface PMaxWizardState {
   searchThemes: PMaxSearchTheme[]
   adSchedule: PMaxScheduleEntry[]
   finalUrlExpansionEnabled: boolean
+  // Campaign Settings — additional Google parity fields
+  devices: PMaxDeviceType[]
+  trackingTemplate: string
+  finalUrlSuffix: string
+  customParameters: { key: string; value: string }[]
+  pageFeedUrls: string[]
+  brandExclusions: string[]
+  demographicExclusions: {
+    ageEnabled: boolean
+    ages: string[]
+    genderEnabled: boolean
+    genders: string[]
+  }
+  dataExclusionsEnabled: boolean
 }
 
 export interface PMaxStepProps {
@@ -127,6 +143,8 @@ export const PMaxGoalsWithPMax: PMaxCampaignGoal[] = [
   'NO_GOAL',
 ]
 
+export const PMaxAllDevices: PMaxDeviceType[] = ['COMPUTERS', 'MOBILE', 'TABLETS', 'TV_SCREENS']
+
 export const defaultPMaxState: PMaxWizardState = {
   campaignGoal: 'SALES',
   campaignType: 'PERFORMANCE_MAX',
@@ -144,7 +162,7 @@ export const defaultPMaxState: PMaxWizardState = {
   startDate: '',
   endDate: '',
   locationTargetingMode: 'PRESENCE_OR_INTEREST',
-  euPoliticalAdsDeclaration: 'NOT_POLITICAL',
+  euPoliticalAdsDeclaration: null,
   locations: [],
   geoSearchCountry: '',
   languageIds: ['1037'],
@@ -162,6 +180,19 @@ export const defaultPMaxState: PMaxWizardState = {
   searchThemes: [],
   adSchedule: [],
   finalUrlExpansionEnabled: false,
+  devices: ['COMPUTERS', 'MOBILE', 'TABLETS', 'TV_SCREENS'],
+  trackingTemplate: '',
+  finalUrlSuffix: '',
+  customParameters: [],
+  pageFeedUrls: [],
+  brandExclusions: [],
+  demographicExclusions: {
+    ageEnabled: false,
+    ages: [],
+    genderEnabled: false,
+    genders: [],
+  },
+  dataExclusionsEnabled: false,
 }
 
 export const inputCls =

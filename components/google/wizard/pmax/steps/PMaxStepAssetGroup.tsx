@@ -1,6 +1,7 @@
 'use client'
 
-import { Image, Type } from 'lucide-react'
+import { useState } from 'react'
+import { Image, Type, Radio, Users, X } from 'lucide-react'
 import type { PMaxStepProps } from '../shared/PMaxWizardTypes'
 import { inputCls } from '../shared/PMaxWizardTypes'
 
@@ -15,7 +16,12 @@ function Field({ label, required, children }: { label: string; required?: boolea
   )
 }
 
+/**
+ * ÖĞE GRUBU — Google PMax parity.
+ * Asset group + Signals (arama temaları, kitle sinyali) aynı step içinde.
+ */
 export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) {
+  const [searchThemeInput, setSearchThemeInput] = useState('')
   const addHeadline = () => {
     if (state.headlines.length < 15) {
       update({ headlines: [...state.headlines, ''] })
@@ -35,6 +41,19 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
     if (state.descriptions.length > 2) {
       update({ descriptions: state.descriptions.filter((_, idx) => idx !== i) })
     }
+  }
+
+  const addSearchTheme = (text: string) => {
+    const trimmed = text.trim()
+    if (!trimmed) return
+    const lower = trimmed.toLowerCase()
+    const existingLower = new Set(state.searchThemes.map(st => st.text.trim().toLowerCase()).filter(Boolean))
+    if (existingLower.has(lower)) return
+    update({ searchThemes: [...state.searchThemes, { text: trimmed }] })
+    setSearchThemeInput('')
+  }
+  const removeSearchTheme = (i: number) => {
+    update({ searchThemes: state.searchThemes.filter((_, idx) => idx !== i) })
   }
 
   return (
@@ -188,6 +207,67 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             placeholder="https://example.com/logo.png"
           />
         </Field>
+      </section>
+
+      <section className="pt-4 border-t border-gray-200">
+        <div className="flex items-start gap-2 p-4 rounded-lg bg-blue-50 border border-blue-200 mb-4">
+          <Radio className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+          <div>
+            <h4 className="text-sm font-semibold text-blue-900">{t('signals.title')}</h4>
+            <p className="text-sm text-blue-800 mt-1">{t('signals.description')}</p>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between mb-2">
+          <h4 className="text-sm font-semibold text-gray-900">{t('signals.audienceTitle')}</h4>
+          <span className="text-sm text-gray-600">{t('signals.audienceCount', { count: state.selectedAudienceSegments.length })}</span>
+        </div>
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200 mb-4">
+          <Users className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
+          <p className="text-xs text-gray-600">{t('signals.audienceNote')}</p>
+        </div>
+
+        <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('signals.searchThemesTitle')}</h4>
+        <p className="text-xs text-gray-500 mb-3">{t('signals.searchThemesHint')}</p>
+        <div className="flex gap-2 flex-wrap items-center">
+          {state.searchThemes
+            .map((st, i) => ({ st, i }))
+            .filter(({ st }) => st.text.trim())
+            .map(({ st, i }) => (
+              <span
+                key={`${st.text}-${i}`}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 text-sm border border-blue-200"
+              >
+                {st.text.trim()}
+                <button
+                  type="button"
+                  onClick={() => removeSearchTheme(i)}
+                  className="hover:text-red-600 p-0.5 rounded-full hover:bg-blue-100"
+                  aria-label={t('signals.removeTheme')}
+                >
+                  <X className="w-3.5 h-3.5" />
+                </button>
+              </span>
+            ))}
+          <div className="flex gap-2 flex-1 min-w-[200px]">
+            <input
+              className={inputCls}
+              value={searchThemeInput}
+              onChange={e => setSearchThemeInput(e.target.value)}
+              onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), addSearchTheme(searchThemeInput))}
+              placeholder={t('signals.searchThemePlaceholder')}
+            />
+            <button
+              type="button"
+              onClick={() => addSearchTheme(searchThemeInput)}
+              disabled={!searchThemeInput.trim()}
+              className="px-3 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
+            >
+              {t('signals.addSearchTheme')}
+            </button>
+          </div>
+        </div>
+        <p className="text-xs text-gray-500 mt-2">{t('signals.searchThemeEnterHint')}</p>
       </section>
     </div>
   )

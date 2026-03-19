@@ -18,7 +18,7 @@ function isValidWebUrl(val: string): boolean {
   }
 }
 
-// PMax step order: 0 Goal, 1 Conversion+Name, 2 Bidding, 3 CampaignSettings, 4 AssetGroup, 5 Signals, 6 Budget, 7 Summary
+// PMax step order: 0 Entry, 1 Bidding, 2 CampaignSettings, 3 AssetGroup+Signals, 4 Budget, 5 Summary
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 export function validatePMaxStep(
   step: number,
@@ -26,24 +26,23 @@ export function validatePMaxStep(
   t: (key: string, params?: any) => string
 ): string | null {
   switch (step) {
-    case 0:
-      return null
-    case 1: {
+    case 0: {
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
       const url = state.finalUrl.trim()
       if (!url) return t('validation.urlRequired')
       if (!isValidWebUrl(url)) return t('validation.urlInvalid')
       return null
     }
-    case 2: {
+    case 1: {
       if (state.biddingStrategy === 'TARGET_CPA' && (!state.targetCpa || parseFloat(state.targetCpa) <= 0))
         return t('validation.targetCpaRequired')
       if (state.biddingStrategy === 'TARGET_ROAS' && (!state.targetRoas || parseFloat(state.targetRoas) <= 0))
         return t('validation.targetRoasRequired')
       return null
     }
-    case 3: {
+    case 2: {
       if (state.languageIds.length === 0) return t('validation.languageRequired')
+      if (state.euPoliticalAdsDeclaration === null) return t('settings.euPoliticalValidation')
       if (state.startDate && state.endDate) {
         const start = new Date(state.startDate).getTime()
         const end = new Date(state.endDate).getTime()
@@ -51,7 +50,7 @@ export function validatePMaxStep(
       }
       return null
     }
-    case 4: {
+    case 3: {
       if (!state.assetGroupName.trim()) return t('validation.assetGroupNameRequired')
       if (!state.businessName.trim()) return t('validation.businessNameRequired')
       const businessNameTrim = state.businessName.trim()
@@ -87,9 +86,7 @@ export function validatePMaxStep(
 
       return null
     }
-    case 5:
-      return null
-    case 6: {
+    case 4: {
       const budget = parseFloat(state.dailyBudget)
       if (!state.dailyBudget || isNaN(budget) || budget < 1) return t('validation.minBudget')
       if (state.biddingStrategy === 'TARGET_CPA') {
@@ -102,7 +99,7 @@ export function validatePMaxStep(
       }
       return null
     }
-    case 7:
+    case 5:
       return null
     default:
       return null
@@ -138,6 +135,7 @@ export function getPMaxBlockingIssues(state: PMaxWizardState, t: (key: string, p
   if (state.biddingStrategy === 'TARGET_ROAS' && (!state.targetRoas || parseFloat(state.targetRoas) <= 0))
     issues.push(t('validation.targetRoasRequired'))
   if (state.languageIds.length === 0) issues.push(t('validation.languageRequired'))
+  if (state.euPoliticalAdsDeclaration === null) issues.push(t('settings.euPoliticalValidation'))
   if (!state.assetGroupName.trim()) issues.push(t('validation.assetGroupNameRequired'))
   if (!state.businessName.trim()) issues.push(t('validation.businessNameRequired'))
   const h = state.headlines.map(x => x.trim()).filter(Boolean)
