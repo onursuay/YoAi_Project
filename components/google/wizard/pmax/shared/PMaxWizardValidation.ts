@@ -80,9 +80,9 @@ export function validatePMaxStep(
       if (lh.some(x => x.length > 90)) return t('validation.longHeadlineMaxLength')
       if (d.some(x => x.length > 90)) return t('validation.descriptionMaxLength')
 
-      const imagesWithUrl = state.images.filter(img => img.url?.trim())
-      const logosWithUrl = state.logos.filter(img => img.url?.trim())
-      if (imagesWithUrl.length < 1 || logosWithUrl.length < 1) return t('validation.minImagesRequired')
+      const imagesReady = state.images.filter(img => img.url?.trim() || img.file)
+      const logosReady = state.logos.filter(img => img.url?.trim() || img.file)
+      if (imagesReady.length < 1 || logosReady.length < 1) return t('validation.minImagesRequired')
 
       // Sitelink validation (optional but if filled, must be valid)
       for (const sl of state.sitelinks) {
@@ -158,9 +158,9 @@ export function getPMaxBlockingIssues(state: PMaxWizardState, t: (key: string, p
   if (h.length < 3) issues.push(t('validation.minHeadlines'))
   if (lh.length < 1) issues.push(t('validation.minLongHeadlines'))
   if (d.length < 2) issues.push(t('validation.minDescriptions'))
-  const imagesWithUrl = state.images.filter(img => img.url?.trim())
-  const logosWithUrl = state.logos.filter(img => img.url?.trim())
-  if (imagesWithUrl.length < 1 || logosWithUrl.length < 1) issues.push(t('validation.minImagesRequired'))
+  const imagesReady = state.images.filter(img => img.url?.trim() || img.file)
+  const logosReady = state.logos.filter(img => img.url?.trim() || img.file)
+  if (imagesReady.length < 1 || logosReady.length < 1) issues.push(t('validation.minImagesRequired'))
   if (state.budgetType === 'DAILY') {
     const budget = parseFloat(state.dailyBudget)
     if (!state.dailyBudget || isNaN(budget) || budget < 1) issues.push(t('validation.minBudget'))

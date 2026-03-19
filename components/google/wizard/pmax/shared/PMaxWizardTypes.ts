@@ -53,6 +53,10 @@ export interface PMaxAssetImage {
   id: string
   url?: string
   name?: string
+  /** Local file for upload (not yet sent to server) */
+  file?: File
+  /** Object URL for local preview */
+  previewUrl?: string
 }
 
 export interface PMaxSearchTheme {

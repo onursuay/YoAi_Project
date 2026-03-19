@@ -1,8 +1,8 @@
 'use client'
 
-import { useState } from 'react'
-import { ChevronUp, ChevronDown, Plus, X, Clock, Search } from 'lucide-react'
-import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType } from '../shared/PMaxWizardTypes'
+import { useState, useRef, useCallback, useEffect } from 'react'
+import { ChevronUp, ChevronDown, Plus, X, Clock, Search, MapPin, Loader2 } from 'lucide-react'
+import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType, PMaxSelectedLocation } from '../shared/PMaxWizardTypes'
 import { inputCls, PMaxLanguageOptions, PMaxCountryOptions, PMaxDaysOfWeek, PMaxAllDevices } from '../shared/PMaxWizardTypes'
 
 const EU_POLICY_URL = 'https://support.google.com/adspolicy/answer/6014595'
@@ -48,34 +48,72 @@ function CollapsibleSection({
   )
 }
 
+interface GeoSuggestion {
+  id: string
+  name: string
+  countryCode: string
+  targetType: string
+}
+
 export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepProps) {
   const [geoQuery, setGeoQuery] = useState('')
   const [geoLoading, setGeoLoading] = useState(false)
+  const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([])
+  const [showGeoDropdown, setShowGeoDropdown] = useState(false)
+  const geoTimer = useRef<ReturnType<typeof setTimeout>>()
+  const geoDropdownRef = useRef<HTMLDivElement>(null)
   const [addingDay, setAddingDay] = useState<PMaxDayOfWeek | null>(null)
   const [newStart, setNewStart] = useState(0)
   const [newStartMin, setNewStartMin] = useState<PMaxMinute>('ZERO')
   const [newEnd, setNewEnd] = useState(0)
   const [newEndMin, setNewEndMin] = useState<PMaxMinute>('ZERO')
 
-  const searchGeo = async () => {
-    if (geoQuery.trim().length < 2) return
+  // Close dropdown on outside click
+  useEffect(() => {
+    const handler = (e: MouseEvent) => {
+      if (geoDropdownRef.current && !geoDropdownRef.current.contains(e.target as Node)) {
+        setShowGeoDropdown(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [])
+
+  const searchGeo = useCallback(async (query: string) => {
+    if (query.trim().length < 2) { setGeoSuggestions([]); setShowGeoDropdown(false); return }
     setGeoLoading(true)
     try {
-      const params = new URLSearchParams({ q: geoQuery })
+      const params = new URLSearchParams({ q: query })
       if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
       const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
       const data = await res.json()
-      const results = data.results ?? []
-      results.slice(0, 5).forEach((r: { id: string; name: string; countryCode: string; targetType: string }) => {
-        if (!state.locations.some(l => l.id === r.id)) {
-          update({ locations: [...state.locations, { ...r, isNegative: false }] })
-        }
-      })
+      const results: GeoSuggestion[] = data.results ?? []
+      // Filter out already-added locations
+      const filtered = results.filter(r => !state.locations.some(l => l.id === r.id))
+      setGeoSuggestions(filtered.slice(0, 10))
+      setShowGeoDropdown(filtered.length > 0)
     } catch {
-      // ignore
+      setGeoSuggestions([])
+      setShowGeoDropdown(false)
     } finally {
       setGeoLoading(false)
     }
+  }, [state.geoSearchCountry, state.locations])
+
+  const handleGeoInput = (val: string) => {
+    setGeoQuery(val)
+    if (geoTimer.current) clearTimeout(geoTimer.current)
+    if (val.trim().length < 2) { setGeoSuggestions([]); setShowGeoDropdown(false); return }
+    geoTimer.current = setTimeout(() => searchGeo(val), 350)
+  }
+
+  const selectGeoSuggestion = (suggestion: GeoSuggestion) => {
+    if (!state.locations.some(l => l.id === suggestion.id)) {
+      update({ locations: [...state.locations, { ...suggestion, isNegative: false }] })
+    }
+    setGeoQuery('')
+    setGeoSuggestions([])
+    setShowGeoDropdown(false)
   }
 
   const removeLocation = (id: string) => {
@@ -168,25 +206,37 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
             </label>
           </div>
 
-          <div className="flex gap-2">
-            <div className="relative flex-1">
+          <div className="relative" ref={geoDropdownRef}>
+            <div className="relative">
               <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
               <input
-                className={`${inputCls} pl-9`}
+                className={`${inputCls} pl-9 pr-9`}
                 value={geoQuery}
-                onChange={e => setGeoQuery(e.target.value)}
-                onKeyDown={e => e.key === 'Enter' && searchGeo()}
+                onChange={e => handleGeoInput(e.target.value)}
+                onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
                 placeholder={t('settings.locationSearchPlaceholder')}
               />
+              {geoLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />}
             </div>
-            <button
-              type="button"
-              onClick={searchGeo}
-              disabled={geoLoading || geoQuery.trim().length < 2}
-              className="px-3 py-2 text-sm bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-            >
-              {geoLoading ? '...' : t('settings.locationSearch')}
-            </button>
+            {/* Autocomplete dropdown */}
+            {showGeoDropdown && geoSuggestions.length > 0 && (
+              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                {geoSuggestions.map(s => (
+                  <button
+                    key={s.id}
+                    type="button"
+                    onClick={() => selectGeoSuggestion(s)}
+                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 text-left transition-colors"
+                  >
+                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
+                    <div className="flex-1 min-w-0">
+                      <p className="text-sm text-gray-900 truncate">{s.name}</p>
+                      <p className="text-xs text-gray-500">{s.targetType} · {s.countryCode}</p>
+                    </div>
+                  </button>
+                ))}
+              </div>
+            )}
           </div>
 
           {state.locations.length > 0 && (
