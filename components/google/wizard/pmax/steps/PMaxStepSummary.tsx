@@ -8,7 +8,7 @@ import { getPMaxBlockingIssues, getPMaxAdvisoryRecommendations } from '../shared
 function Row({ label, value, error }: { label: string; value: string; error?: boolean }) {
   return (
     <div className="flex justify-between items-start py-2.5 border-b border-gray-100 last:border-0 gap-4">
-      <span className="text-[13px] text-gray-500 shrink-0">{label}</span>
+      <span className="text-sm text-gray-600 shrink-0">{label}</span>
       <span className={`text-sm font-medium text-right max-w-sm ${error ? 'text-red-600' : 'text-gray-900'}`}>{value}</span>
     </div>
   )
@@ -18,7 +18,7 @@ function SummarySection({ title, children }: { title: string; children: React.Re
   return (
     <div className="border border-gray-200 rounded-lg bg-white">
       <div className="px-5 py-3 border-b border-gray-100">
-        <h4 className="text-[15px] font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
       </div>
       <div className="px-5 py-2">{children}</div>
     </div>
@@ -52,7 +52,7 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
       {/* Blocking issues */}
       {blockingIssues.length > 0 && (
         <div className="space-y-2">
-          <h4 className="text-[15px] font-semibold text-gray-900">{t('summary.blockingIssuesTitle')}</h4>
+          <h4 className="text-sm font-semibold text-gray-900">{t('summary.blockingIssuesTitle')}</h4>
           <p className="text-sm text-gray-500">{t('summary.blockingIssuesDesc')}</p>
           {blockingIssues.map((issue, i) => (
             <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-red-50 border border-red-200">
@@ -72,8 +72,8 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
       {advisoryRecs.length > 0 && (
         <div className="space-y-2">
           <div className="flex items-center justify-between">
-            <h4 className="text-[15px] font-semibold text-gray-900">{t('summary.advisoryTitle')}</h4>
-            <span className="text-[12px] text-gray-500">{advisoryRecs.length} / {advisoryRecs.length}</span>
+            <h4 className="text-sm font-semibold text-gray-900">{t('summary.advisoryTitle')}</h4>
+            <span className="text-xs text-gray-500">{advisoryRecs.length} / {advisoryRecs.length}</span>
           </div>
           <p className="text-sm text-gray-500">{t('summary.advisoryDesc')}</p>
           {advisoryRecs.map((rec, i) => (
@@ -121,8 +121,11 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
         <Row
           label={t('summary.locations')}
           value={
-            state.locations.length > 0
-              ? state.locations.map(l => l.name).join(', ')
+            state.locations.length > 0 || state.proximityTargets.length > 0
+              ? [
+                  ...state.locations.map(l => (l.isNegative ? `- ${l.name}` : l.name)),
+                  ...state.proximityTargets.map(p => p.label ?? `${p.lat.toFixed(2)}, ${p.lng.toFixed(2)} (${p.radiusMeters / 1000} km)`),
+                ].join(', ')
               : t('summary.locationsAll')
           }
         />

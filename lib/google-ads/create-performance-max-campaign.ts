@@ -293,6 +293,25 @@ async function createCampaignCriteria(
       })
     }
   }
+  if (params.proximityTargets?.length) {
+    for (const p of params.proximityTargets) {
+      const latMicros = Math.round(p.lat * 1_000_000)
+      const lngMicros = Math.round(p.lng * 1_000_000)
+      const radiusKm = p.radiusMeters / 1000
+      ops.push({
+        create: {
+          campaign: campaignResourceName,
+          location: {
+            proximity: {
+              geoPoint: { latitudeMicros: latMicros, longitudeMicros: lngMicros },
+              radius: String(radiusKm),
+              radiusUnits: 'KILOMETERS',
+            },
+          },
+        },
+      })
+    }
+  }
   if (params.languageIds?.length) {
     for (const id of params.languageIds) {
       ops.push({
@@ -320,35 +339,15 @@ async function createCampaignCriteria(
     }
   }
 
-  // Proximity (radius) targeting
-  if (params.proximityLocations?.length) {
-    for (const prox of params.proximityLocations) {
-      if (prox.latitude && prox.longitude) {
-        ops.push({
-          create: {
-            campaign: campaignResourceName,
-            proximity: {
-              geoPoint: {
-                latitudeInMicroDegrees: Math.round(prox.latitude * 1_000_000),
-                longitudeInMicroDegrees: Math.round(prox.longitude * 1_000_000),
-              },
-              radiusInUnits: prox.radiusInUnits,
-              radiusUnits: prox.radiusUnits,
-            },
-          },
-        })
-      }
-    }
-  }
-
-  const locationCount = (params.locationIds?.length ?? 0) + (params.negativeLocationIds?.length ?? 0)
-  const proximityCount = params.proximityLocations?.length ?? 0
+  const locationCount =
+    (params.locationIds?.length ?? 0) +
+    (params.negativeLocationIds?.length ?? 0) +
+    (params.proximityTargets?.length ?? 0)
   const languageCount = params.languageIds?.length ?? 0
   const adScheduleCount = params.adSchedule?.length ?? 0
   console.log('[PMax] criteria create:', {
     criteriaOperationCount: ops.length,
     locationCount,
-    proximityCount,
     languageCount,
     adScheduleCount,
   })

@@ -38,14 +38,23 @@ export async function listCampaignLocations(ctx: Ctx, campaignId: string): Promi
   }))
 }
 
+export interface GeoTargetSuggestion {
+  id: string
+  name: string
+  countryCode: string
+  targetType: string
+  /** Reach / erişim — API'den dönerse kullanılır */
+  reach?: string | number
+}
+
 export async function searchGeoTargets(
   ctx: Ctx,
   searchText: string,
   locale = 'tr',
   countryCode?: string
-): Promise<Array<{ id: string; name: string; countryCode: string; targetType: string }>> {
-  const body: Record<string, string> = { locale, searchTerm: searchText }
-  if (countryCode) body.countryCode = countryCode
+): Promise<GeoTargetSuggestion[]> {
+  const body: Record<string, unknown> = { locale, searchTerm: searchText }
+  if (countryCode && countryCode.trim()) body.countryCode = countryCode
   const res = await fetch(`${GOOGLE_ADS_BASE}/geoTargetConstants:suggest`, {
     method: 'POST',
     headers: buildGoogleAdsHeaders(ctx),
@@ -53,12 +62,17 @@ export async function searchGeoTargets(
   })
   if (!res.ok) { const err = await res.json(); throw new Error(err?.error?.message ?? 'searchGeoTargets failed') }
   const data = await res.json()
-  return (data.geoTargetConstantSuggestions ?? []).map((s: any) => ({
-    id: s.geoTargetConstant.id,
-    name: s.geoTargetConstant.canonicalName ?? s.geoTargetConstant.name,
-    countryCode: s.geoTargetConstant.countryCode,
-    targetType: s.geoTargetConstant.targetType,
-  }))
+  return (data.geoTargetConstantSuggestions ?? []).map((s: any) => {
+    const geo = s.geoTargetConstant ?? {}
+    const reach = s.reach ?? geo.reach
+    return {
+      id: String(geo.id ?? ''),
+      name: geo.canonicalName ?? geo.name ?? '',
+      countryCode: geo.countryCode ?? '',
+      targetType: geo.targetType ?? 'LOCATION_OF_PRESENCE',
+      ...(reach != null && { reach: typeof reach === 'number' ? String(reach) : reach }),
+    }
+  })
 }
 
 export async function addCampaignLocation(

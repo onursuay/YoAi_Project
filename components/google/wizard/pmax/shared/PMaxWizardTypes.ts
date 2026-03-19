@@ -30,20 +30,15 @@ export interface PMaxSelectedLocation {
   countryCode: string
   targetType: string
   isNegative: boolean
-  /** 'NEARBY' means the location was added as a "yakınlarda" target */
-  action?: 'INCLUDE' | 'EXCLUDE' | 'NEARBY'
 }
 
-export type PMaxRadiusUnit = 'KILOMETERS' | 'MILES'
-
-export interface PMaxProximityLocation {
-  id: string
-  /** Human-readable address/place name */
-  label: string
-  latitude: number
-  longitude: number
-  radiusInUnits: number
-  radiusUnits: PMaxRadiusUnit
+/** Proximity / yarıçap hedefleme — harita pin + radius */
+export interface PMaxProximityTarget {
+  lat: number
+  lng: number
+  radiusMeters: number
+  /** Görüntüleme için: "Ankara, Türkiye" gibi */
+  label?: string
 }
 
 export interface PMaxConversionAction {
@@ -67,10 +62,6 @@ export interface PMaxAssetImage {
   id: string
   url?: string
   name?: string
-  /** Local file for upload (not yet sent to server) */
-  file?: File
-  /** Object URL for local preview */
-  previewUrl?: string
 }
 
 export interface PMaxSearchTheme {
@@ -118,6 +109,7 @@ export interface PMaxWizardState {
   locationTargetingMode: PMaxLocationTargetingMode
   euPoliticalAdsDeclaration: PMaxEuPoliticalAdsDeclaration | null
   locations: PMaxSelectedLocation[]
+  proximityTargets: PMaxProximityTarget[]
   geoSearchCountry: string
   languageIds: string[]
   audienceMode: PMaxAudienceMode
@@ -158,11 +150,6 @@ export interface PMaxWizardState {
     genders: string[]
   }
   dataExclusionsEnabled: boolean
-  /** Phone number for call extension (Google Ads CALL asset) */
-  phoneNumber: string
-  phoneCountryCode: string
-  /** Proximity/radius targets (Gelişmiş arama → Yarıçap) */
-  proximityLocations: PMaxProximityLocation[]
 }
 
 export interface PMaxStepProps {
@@ -222,6 +209,7 @@ export const defaultPMaxState: PMaxWizardState = {
   locationTargetingMode: 'PRESENCE_OR_INTEREST',
   euPoliticalAdsDeclaration: null,
   locations: [],
+  proximityTargets: [],
   geoSearchCountry: '',
   languageIds: ['1037'],
   audienceMode: 'OBSERVATION',
@@ -259,9 +247,6 @@ export const defaultPMaxState: PMaxWizardState = {
     genders: [],
   },
   dataExclusionsEnabled: false,
-  phoneNumber: '',
-  phoneCountryCode: 'TR',
-  proximityLocations: [],
 }
 
 export const inputCls =

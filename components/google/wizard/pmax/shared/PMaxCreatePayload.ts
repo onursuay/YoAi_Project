@@ -10,7 +10,6 @@ import type {
   PMaxSearchTheme,
   PMaxSelectedAudienceSegment,
   PMaxSitelink,
-  PMaxProximityLocation,
 } from './PMaxWizardTypes'
 
 export interface CreatePerformanceMaxPayload {
@@ -28,7 +27,7 @@ export interface CreatePerformanceMaxPayload {
   languageIds?: string[]
   locationIds?: string[]
   negativeLocationIds?: string[]
-  proximityLocations?: PMaxProximityLocation[]
+  proximityTargets?: { lat: number; lng: number; radiusMeters: number; label?: string }[]
   adSchedule?: PMaxScheduleEntry[]
   finalUrl: string
   finalUrlExpansionEnabled: boolean
@@ -126,7 +125,15 @@ export function buildPerformanceMaxCreatePayload(state: PMaxWizardState): Create
     languageIds: state.languageIds?.length ? state.languageIds.filter(Boolean) : undefined,
     locationIds: positiveLocations.length > 0 ? positiveLocations : undefined,
     negativeLocationIds: negativeLocations.length > 0 ? negativeLocations : undefined,
-    proximityLocations: state.proximityLocations?.length ? state.proximityLocations : undefined,
+    proximityTargets:
+      state.proximityTargets?.length > 0
+        ? state.proximityTargets.map(p => ({
+            lat: p.lat,
+            lng: p.lng,
+            radiusMeters: p.radiusMeters,
+            label: p.label,
+          }))
+        : undefined,
     adSchedule: state.adSchedule?.length ? state.adSchedule : undefined,
     finalUrl,
     finalUrlExpansionEnabled: state.finalUrlExpansionEnabled,
