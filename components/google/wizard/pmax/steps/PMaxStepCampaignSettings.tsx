@@ -60,6 +60,12 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
   const [geoLoading, setGeoLoading] = useState(false)
   const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([])
   const [showGeoDropdown, setShowGeoDropdown] = useState(false)
+  // Location scope: 'all' | 'turkey' | 'custom'
+  const [locationScope, setLocationScope] = useState<'all' | 'turkey' | 'custom'>(
+    state.locations.length > 0 || state.proximityLocations.length > 0 ? 'custom'
+      : state.geoSearchCountry === 'TR' ? 'turkey'
+      : 'all'
+  )
   // Advanced location dialog state
   const [showAdvancedLocation, setShowAdvancedLocation] = useState(false)
   const [advancedLocationTab, setAdvancedLocationTab] = useState<'location' | 'radius'>('location')
@@ -227,20 +233,21 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
           {/* Radio options */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="pmaxLocScope" checked={state.locations.length === 0 && state.proximityLocations.length === 0 && !state.geoSearchCountry} onChange={() => update({ locations: [], proximityLocations: [], geoSearchCountry: '' })} className="text-blue-600" />
+              <input type="radio" name="pmaxLocScope" checked={locationScope === 'all'} onChange={() => { setLocationScope('all'); update({ locations: [], proximityLocations: [], geoSearchCountry: '' }) }} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsAllCountries')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="pmaxLocScope" checked={state.geoSearchCountry === 'TR' && state.locations.length === 0 && state.proximityLocations.length === 0} onChange={() => update({ geoSearchCountry: 'TR', locations: [], proximityLocations: [] })} className="text-blue-600" />
+              <input type="radio" name="pmaxLocScope" checked={locationScope === 'turkey'} onChange={() => { setLocationScope('turkey'); update({ geoSearchCountry: 'TR', locations: [], proximityLocations: [] }) }} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('location.countryTR')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input type="radio" name="pmaxLocScope" checked={state.locations.length > 0 || state.proximityLocations.length > 0 || (state.geoSearchCountry !== '' && state.geoSearchCountry !== 'TR')} onChange={() => update({ geoSearchCountry: '' })} className="text-blue-600" />
+              <input type="radio" name="pmaxLocScope" checked={locationScope === 'custom'} onChange={() => { setLocationScope('custom'); update({ geoSearchCountry: '' }) }} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsCustom')}</span>
             </label>
           </div>
 
-          {/* Search input with autocomplete — Google Ads style with Dahil et / Hariç Tut actions */}
+          {/* Search + locations — only visible when "Başka bir yer girin" selected */}
+          {locationScope === 'custom' && (<>
           <div className="relative" ref={geoDropdownRef}>
             <div className="flex items-center gap-2">
               <div className="flex items-center flex-1 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
@@ -370,6 +377,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               </label>
             </div>
           </details>
+          </>)}
         </div>
       </CollapsibleSection>
 
