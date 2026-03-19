@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback, useEffect } from 'react'
 import { ChevronUp, ChevronDown, Plus, X, Clock, Search, MapPin, Loader2, Shield, Info } from 'lucide-react'
-import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType, PMaxSelectedLocation } from '../shared/PMaxWizardTypes'
+import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType, PMaxSelectedLocation, PMaxProximityLocation, PMaxRadiusUnit } from '../shared/PMaxWizardTypes'
 import { inputCls, PMaxLanguageOptions, PMaxCountryOptions, PMaxDaysOfWeek, PMaxAllDevices } from '../shared/PMaxWizardTypes'
 
 const EU_POLICY_URL = 'https://support.google.com/adspolicy/answer/6014595'
@@ -60,7 +60,17 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
   const [geoLoading, setGeoLoading] = useState(false)
   const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([])
   const [showGeoDropdown, setShowGeoDropdown] = useState(false)
-  // geoTimer removed — useEffect handles debounce
+  // Advanced location dialog state
+  const [showAdvancedLocation, setShowAdvancedLocation] = useState(false)
+  const [advancedLocationTab, setAdvancedLocationTab] = useState<'location' | 'radius'>('location')
+  const [advGeoQuery, setAdvGeoQuery] = useState('')
+  const [advGeoResults, setAdvGeoResults] = useState<GeoSuggestion[]>([])
+  const [advGeoLoading, setAdvGeoLoading] = useState(false)
+  const [radiusPlaceName, setRadiusPlaceName] = useState('')
+  const [radiusValue, setRadiusValue] = useState('20')
+  const [radiusUnit, setRadiusUnit] = useState<PMaxRadiusUnit>('KILOMETERS')
+  const [pinMode, setPinMode] = useState(false)
+  const [radiusSearchResults, setRadiusSearchResults] = useState<GeoSuggestion[]>([])
   const geoDropdownRef = useRef<HTMLDivElement>(null)
   const [addingDay, setAddingDay] = useState<PMaxDayOfWeek | null>(null)
   const [newStart, setNewStart] = useState(0)
@@ -109,6 +119,43 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
     }, 350)
     return () => { clearTimeout(timer); controller.abort() }
   }, [geoQuery, state.geoSearchCountry, state.locations])
+
+  // Advanced dialog — location search
+  useEffect(() => {
+    if (advGeoQuery.trim().length < 2) { setAdvGeoResults([]); return }
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      setAdvGeoLoading(true)
+      try {
+        const params = new URLSearchParams({ q: advGeoQuery })
+        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        const data = await res.json()
+        setAdvGeoResults((data.results ?? []).slice(0, 15))
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') setAdvGeoResults([])
+      } finally {
+        setAdvGeoLoading(false)
+      }
+    }, 350)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [advGeoQuery])
+
+  // Advanced dialog — radius search
+  useEffect(() => {
+    if (radiusPlaceName.trim().length < 2) { setRadiusSearchResults([]); return }
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      try {
+        const params = new URLSearchParams({ q: radiusPlaceName })
+        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        const data = await res.json()
+        setRadiusSearchResults((data.results ?? []).slice(0, 10))
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') setRadiusSearchResults([])
+      }
+    }, 350)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [radiusPlaceName])
 
   const selectGeoSuggestion = (suggestion: GeoSuggestion) => {
     if (!state.locations.some(l => l.id === suggestion.id)) {
@@ -176,90 +223,143 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       <CollapsibleSection id="pmax-settings-section-0" title={t('settings.locationsTitle')}>
         <div className="space-y-3">
           <p className="text-[13px] text-gray-500 mb-2">{t('settings.locationsLabel')}</p>
+
+          {/* Radio options */}
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxLocScope"
-                checked={state.locations.length === 0 && !state.geoSearchCountry}
-                onChange={() => update({ locations: [], geoSearchCountry: '' })}
-                className="text-blue-600"
-              />
+              <input type="radio" name="pmaxLocScope" checked={state.locations.length === 0 && state.proximityLocations.length === 0 && !state.geoSearchCountry} onChange={() => update({ locations: [], proximityLocations: [], geoSearchCountry: '' })} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsAllCountries')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxLocScope"
-                checked={state.geoSearchCountry === 'TR' && state.locations.length === 0}
-                onChange={() => update({ geoSearchCountry: 'TR', locations: [] })}
-                className="text-blue-600"
-              />
+              <input type="radio" name="pmaxLocScope" checked={state.geoSearchCountry === 'TR' && state.locations.length === 0 && state.proximityLocations.length === 0} onChange={() => update({ geoSearchCountry: 'TR', locations: [], proximityLocations: [] })} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('location.countryTR')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxLocScope"
-                checked={state.locations.length > 0 || (state.geoSearchCountry !== '' && state.geoSearchCountry !== 'TR')}
-                onChange={() => update({ geoSearchCountry: '' })}
-                className="text-blue-600"
-              />
+              <input type="radio" name="pmaxLocScope" checked={state.locations.length > 0 || state.proximityLocations.length > 0 || (state.geoSearchCountry !== '' && state.geoSearchCountry !== 'TR')} onChange={() => update({ geoSearchCountry: '' })} className="text-blue-600" />
               <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsCustom')}</span>
             </label>
           </div>
 
+          {/* Search input with autocomplete — Google Ads style with Dahil et / Hariç Tut actions */}
           <div className="relative" ref={geoDropdownRef}>
-            <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
-              <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
-              <input
-                className="w-full px-2 py-2 text-sm focus:outline-none bg-transparent"
-                value={geoQuery}
-                onChange={e => setGeoQuery(e.target.value)}
-                onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
-                placeholder={t('settings.locationSearchPlaceholder')}
-              />
-              {geoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
+            <div className="flex items-center gap-2">
+              <div className="flex items-center flex-1 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
+                <input
+                  className="w-full px-2 py-2 text-[13px] focus:outline-none bg-transparent"
+                  value={geoQuery}
+                  onChange={e => setGeoQuery(e.target.value)}
+                  onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
+                  placeholder={t('settings.locationSearchPlaceholder')}
+                />
+                {geoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
+              </div>
+              <button
+                type="button"
+                onClick={() => setShowAdvancedLocation(true)}
+                className="text-[13px] text-blue-600 hover:underline whitespace-nowrap shrink-0"
+              >
+                {t('settings.advancedSearch')}
+              </button>
             </div>
-            {/* Autocomplete dropdown */}
+
+            {/* Autocomplete dropdown with actions */}
             {showGeoDropdown && geoSuggestions.length > 0 && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-                {geoSuggestions.map(s => (
-                  <button
+              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
+                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+                  <span className="text-[12px] font-medium text-gray-500">{t('settings.locationMatches')}</span>
+                  <span className="text-[12px] text-gray-400">{t('settings.locationReach')}</span>
+                </div>
+                {geoSuggestions.map((s, idx) => (
+                  <div
                     key={s.id}
-                    type="button"
-                    onClick={() => selectGeoSuggestion(s)}
-                    className="w-full flex items-center gap-3 px-4 py-2.5 hover:bg-blue-50 text-left transition-colors"
+                    className={`flex items-center justify-between px-3 py-2 hover:bg-blue-50 group ${idx === 0 ? 'bg-blue-50/50' : ''}`}
                   >
-                    <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm text-gray-900 truncate">{s.name}</p>
-                      <p className="text-[12px] text-gray-500">{s.targetType} · {s.countryCode}</p>
+                      <p className="text-[13px] text-gray-900 truncate">{s.name} <span className="text-gray-400">{s.targetType.toLowerCase()}</span></p>
                     </div>
-                  </button>
+                    <div className="flex items-center gap-2 shrink-0 ml-2">
+                      <button
+                        type="button"
+                        onClick={() => { selectGeoSuggestion(s); }}
+                        className="text-[12px] text-blue-600 hover:underline font-medium"
+                      >
+                        {t('settings.locationInclude')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!state.locations.some(l => l.id === s.id)) {
+                            update({ locations: [...state.locations, { ...s, isNegative: true }] })
+                          }
+                          setGeoQuery('')
+                          setGeoSuggestions([])
+                          setShowGeoDropdown(false)
+                        }}
+                        className="text-[12px] text-gray-500 hover:text-red-600 hover:underline font-medium"
+                      >
+                        {t('settings.locationExclude')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          if (!state.locations.some(l => l.id === s.id)) {
+                            update({ locations: [...state.locations, { ...s, isNegative: false, action: 'NEARBY' as const }] })
+                          }
+                          setGeoQuery('')
+                          setGeoSuggestions([])
+                          setShowGeoDropdown(false)
+                        }}
+                        className="text-[12px] text-gray-500 hover:text-blue-600 hover:underline font-medium"
+                      >
+                        {t('settings.locationNearby')}
+                      </button>
+                    </div>
+                  </div>
                 ))}
               </div>
             )}
           </div>
 
-          {state.locations.length > 0 && (
-            <div className="flex flex-wrap gap-2">
+          <p className="text-[11px] text-gray-400">{t('settings.locationSearchHint')}</p>
+
+          {/* Selected locations */}
+          {(state.locations.length > 0 || state.proximityLocations.length > 0) && (
+            <div className="space-y-1.5">
               {state.locations.map(l => (
-                <span key={l.id} className="inline-flex items-center gap-1 px-2.5 py-1 rounded-full bg-gray-100 text-sm">
-                  {l.name}
-                  <button type="button" onClick={() => removeLocation(l.id)} className="text-gray-500 hover:text-red-600">
+                <div key={l.id} className={`flex items-center justify-between px-3 py-2 rounded-lg border text-[13px] ${l.isNegative ? 'border-red-200 bg-red-50' : 'border-gray-200 bg-gray-50'}`}>
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-gray-400 shrink-0" />
+                    <span className="text-gray-900">{l.name}</span>
+                    <span className="text-[11px] text-gray-400">{l.targetType}</span>
+                    {l.isNegative && <span className="text-[11px] text-red-600 font-medium">{t('settings.locationExcluded')}</span>}
+                    {l.action === 'NEARBY' && <span className="text-[11px] text-blue-600 font-medium">{t('settings.locationNearbyTag')}</span>}
+                  </div>
+                  <button type="button" onClick={() => removeLocation(l.id)} className="text-gray-400 hover:text-red-600">
                     <X className="w-3.5 h-3.5" />
                   </button>
-                </span>
+                </div>
+              ))}
+              {state.proximityLocations.map(p => (
+                <div key={p.id} className="flex items-center justify-between px-3 py-2 rounded-lg border border-blue-200 bg-blue-50 text-[13px]">
+                  <div className="flex items-center gap-2">
+                    <MapPin className="w-3.5 h-3.5 text-blue-500 shrink-0" />
+                    <span className="text-gray-900">{p.label}</span>
+                    <span className="text-[11px] text-blue-600">{p.radiusInUnits} {p.radiusUnits === 'KILOMETERS' ? 'km' : 'mil'} {t('settings.locationRadius')}</span>
+                  </div>
+                  <button type="button" onClick={() => update({ proximityLocations: state.proximityLocations.filter(x => x.id !== p.id) })} className="text-gray-400 hover:text-red-600">
+                    <X className="w-3.5 h-3.5" />
+                  </button>
+                </div>
               ))}
             </div>
           )}
 
-          {/* Location targeting mode */}
+          {/* Yer seçenekleri — Location targeting mode */}
           <details className="text-sm">
             <summary className="text-blue-600 cursor-pointer hover:underline">{t('settings.locationOptionsToggle')}</summary>
-            <div className="mt-3 space-y-2 pl-1">
-              <p className="text-xs font-medium text-gray-600 mb-1">{t('settings.locationModeTitle')}</p>
+            <div className="mt-3 space-y-3 pl-1">
+              <p className="text-[12px] font-medium text-gray-600 mb-1">{t('settings.locationModeTitle')}</p>
               <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_OR_INTEREST' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                 <input type="radio" name="pmaxLocationMode" checked={state.locationTargetingMode === 'PRESENCE_OR_INTEREST'} onChange={() => update({ locationTargetingMode: 'PRESENCE_OR_INTEREST' })} className="mt-0.5 text-blue-600" />
                 <span className="text-[13px] font-medium text-gray-900">{t('settings.locationModePresenceInterest')}</span>
@@ -272,6 +372,203 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
           </details>
         </div>
       </CollapsibleSection>
+
+      {/* Gelişmiş Arama Dialog — Konum / Yarıçap */}
+      {showAdvancedLocation && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
+          <div className="bg-white rounded-xl shadow-2xl w-full max-w-4xl max-h-[85vh] flex flex-col">
+            {/* Header */}
+            <div className="flex items-center gap-3 px-5 py-4 border-b border-gray-200">
+              <button type="button" onClick={() => setShowAdvancedLocation(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-5 h-5" />
+              </button>
+              <span className="text-[15px] font-semibold text-gray-900">{t('settings.advancedLocationTitle')}</span>
+            </div>
+
+            {/* Konum / Yarıçap tabs */}
+            <div className="flex items-center gap-4 px-5 py-3 border-b border-gray-200">
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="advLocTab" checked={advancedLocationTab === 'location'} onChange={() => setAdvancedLocationTab('location')} className="text-blue-600" />
+                <span className="text-[13px] font-medium text-gray-900">{t('settings.advancedTabLocation')}</span>
+              </label>
+              <label className="flex items-center gap-1.5 cursor-pointer">
+                <input type="radio" name="advLocTab" checked={advancedLocationTab === 'radius'} onChange={() => setAdvancedLocationTab('radius')} className="text-blue-600" />
+                <span className="text-[13px] font-medium text-gray-900">{t('settings.advancedTabRadius')}</span>
+              </label>
+            </div>
+
+            {/* Tab content */}
+            <div className="flex-1 overflow-y-auto p-5">
+              {advancedLocationTab === 'location' && (
+                <div className="space-y-4">
+                  <div className="relative" ref={geoDropdownRef}>
+                    <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                      <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
+                      <input
+                        className="w-full px-2 py-2.5 text-[13px] focus:outline-none bg-transparent"
+                        value={advGeoQuery}
+                        onChange={e => setAdvGeoQuery(e.target.value)}
+                        placeholder={t('settings.advancedSearchPlaceholder')}
+                      />
+                      {advGeoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
+                    </div>
+                    <p className="text-[11px] text-gray-400 mt-1">{t('settings.advancedSearchHint')}</p>
+
+                    {/* Results */}
+                    {advGeoResults.length > 0 && (
+                      <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden">
+                        <div className="px-3 py-2 bg-gray-50 border-b border-gray-200 flex justify-between">
+                          <span className="text-[12px] font-medium text-gray-500">{t('settings.locationMatches')}</span>
+                          <span className="text-[12px] text-gray-400">{t('settings.locationReach')}</span>
+                        </div>
+                        {advGeoResults.map(s => (
+                          <div key={s.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0">
+                            <span className="text-[13px] text-gray-900">{s.name} <span className="text-gray-400">{s.targetType.toLowerCase()}</span></span>
+                            <div className="flex items-center gap-2">
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!state.locations.some(l => l.id === s.id)) {
+                                    update({ locations: [...state.locations, { ...s, isNegative: false }] })
+                                  }
+                                }}
+                                className="text-[12px] text-blue-600 hover:underline font-medium"
+                              >
+                                {t('settings.locationInclude')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!state.locations.some(l => l.id === s.id)) {
+                                    update({ locations: [...state.locations, { ...s, isNegative: true }] })
+                                  }
+                                }}
+                                className="text-[12px] text-gray-500 hover:text-red-600 hover:underline font-medium"
+                              >
+                                {t('settings.locationExclude')}
+                              </button>
+                              <button
+                                type="button"
+                                onClick={() => {
+                                  if (!state.locations.some(l => l.id === s.id)) {
+                                    update({ locations: [...state.locations, { ...s, isNegative: false, action: 'NEARBY' as const }] })
+                                  }
+                                }}
+                                className="text-[12px] text-gray-500 hover:text-blue-600 hover:underline font-medium"
+                              >
+                                {t('settings.locationNearby')}
+                              </button>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    )}
+                  </div>
+
+                  <p className="text-[12px] text-gray-500">{t('settings.advancedLocationNote')}</p>
+                </div>
+              )}
+
+              {advancedLocationTab === 'radius' && (
+                <div className="space-y-4">
+                  {/* Radius search input + controls */}
+                  <div className="flex items-center gap-3">
+                    <div className="flex items-center flex-1 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                      <input
+                        className="w-full px-3 py-2.5 text-[13px] focus:outline-none bg-transparent"
+                        value={radiusPlaceName}
+                        onChange={e => setRadiusPlaceName(e.target.value)}
+                        placeholder={t('settings.radiusPlaceholder')}
+                      />
+                    </div>
+                    <input
+                      type="number"
+                      className={`${inputCls} w-20 text-center`}
+                      value={radiusValue}
+                      onChange={e => setRadiusValue(e.target.value)}
+                      min={1}
+                      max={50}
+                      placeholder="20"
+                    />
+                    <select
+                      className={`${inputCls} w-20`}
+                      value={radiusUnit}
+                      onChange={e => setRadiusUnit(e.target.value as PMaxRadiusUnit)}
+                    >
+                      <option value="KILOMETERS">km</option>
+                      <option value="MILES">mil</option>
+                    </select>
+                  </div>
+
+                  {/* Sabitleme modu toggle */}
+                  <label className="flex items-center gap-2 cursor-pointer">
+                    <input type="checkbox" checked={pinMode} onChange={e => setPinMode(e.target.checked)} className="rounded border-gray-300 text-blue-600" />
+                    <MapPin className="w-4 h-4 text-blue-600" />
+                    <span className="text-[13px] font-medium text-gray-900">{t('settings.radiusPinMode')}</span>
+                  </label>
+
+                  {/* Radius search results */}
+                  {radiusSearchResults.length > 0 && (
+                    <div className="border border-gray-200 rounded-lg overflow-hidden">
+                      <div className="px-3 py-2 bg-gray-50 border-b border-gray-200">
+                        <span className="text-[12px] font-medium text-gray-500">{t('settings.radiusMatchingLocations')}: {radiusPlaceName}</span>
+                      </div>
+                      {radiusSearchResults.map(s => (
+                        <div key={s.id} className="flex items-center justify-between px-3 py-2.5 hover:bg-blue-50 border-b border-gray-100 last:border-0">
+                          <span className="text-[13px] text-gray-900">{s.name}</span>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              // Use the geo target's approximate center for radius
+                              const proximity: PMaxProximityLocation = {
+                                id: `prox-${Date.now()}`,
+                                label: `${s.name} ${t('settings.radiusLabel')} ${radiusValue || 20} ${radiusUnit === 'KILOMETERS' ? 'km' : 'mil'}`,
+                                latitude: 0, // Will be resolved by backend
+                                longitude: 0,
+                                radiusInUnits: parseInt(radiusValue) || 20,
+                                radiusUnits: radiusUnit,
+                              }
+                              update({ proximityLocations: [...state.proximityLocations, proximity] })
+                            }}
+                            className="text-[12px] text-blue-600 hover:underline font-medium"
+                          >
+                            {t('settings.locationInclude')}
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+
+                  {/* Added proximity locations */}
+                  {state.proximityLocations.length > 0 && (
+                    <div className="space-y-1">
+                      <p className="text-[12px] font-medium text-gray-500">{t('settings.radiusAddedLocations')} ({state.proximityLocations.length})</p>
+                      {state.proximityLocations.map(p => (
+                        <div key={p.id} className="flex items-center justify-between px-3 py-2 border border-gray-200 rounded-lg text-[13px]">
+                          <span className="text-gray-900">{p.label}</span>
+                          <button type="button" onClick={() => update({ proximityLocations: state.proximityLocations.filter(x => x.id !== p.id) })} className="text-gray-400 hover:text-red-600">
+                            <X className="w-3.5 h-3.5" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )}
+            </div>
+
+            {/* Footer */}
+            <div className="flex items-center justify-end gap-3 px-5 py-3 border-t border-gray-200">
+              <button type="button" onClick={() => setShowAdvancedLocation(false)} className="px-4 py-2 text-[13px] text-gray-600 hover:text-gray-800">
+                {t('settings.advancedCancel')}
+              </button>
+              <button type="button" onClick={() => setShowAdvancedLocation(false)} className="px-4 py-2 text-[13px] font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700">
+                {t('settings.advancedSave')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* 2. Diller */}
       <CollapsibleSection id="pmax-settings-section-1" title={t('settings.languagesTitle')}>

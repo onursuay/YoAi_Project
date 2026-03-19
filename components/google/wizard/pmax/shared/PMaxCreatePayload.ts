@@ -10,6 +10,7 @@ import type {
   PMaxSearchTheme,
   PMaxSelectedAudienceSegment,
   PMaxSitelink,
+  PMaxProximityLocation,
 } from './PMaxWizardTypes'
 
 export interface CreatePerformanceMaxPayload {
@@ -27,6 +28,7 @@ export interface CreatePerformanceMaxPayload {
   languageIds?: string[]
   locationIds?: string[]
   negativeLocationIds?: string[]
+  proximityLocations?: PMaxProximityLocation[]
   adSchedule?: PMaxScheduleEntry[]
   finalUrl: string
   finalUrlExpansionEnabled: boolean
@@ -124,6 +126,7 @@ export function buildPerformanceMaxCreatePayload(state: PMaxWizardState): Create
     languageIds: state.languageIds?.length ? state.languageIds.filter(Boolean) : undefined,
     locationIds: positiveLocations.length > 0 ? positiveLocations : undefined,
     negativeLocationIds: negativeLocations.length > 0 ? negativeLocations : undefined,
+    proximityLocations: state.proximityLocations?.length ? state.proximityLocations : undefined,
     adSchedule: state.adSchedule?.length ? state.adSchedule : undefined,
     finalUrl,
     finalUrlExpansionEnabled: state.finalUrlExpansionEnabled,

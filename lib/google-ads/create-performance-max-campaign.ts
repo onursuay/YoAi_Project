@@ -320,12 +320,35 @@ async function createCampaignCriteria(
     }
   }
 
+  // Proximity (radius) targeting
+  if (params.proximityLocations?.length) {
+    for (const prox of params.proximityLocations) {
+      if (prox.latitude && prox.longitude) {
+        ops.push({
+          create: {
+            campaign: campaignResourceName,
+            proximity: {
+              geoPoint: {
+                latitudeInMicroDegrees: Math.round(prox.latitude * 1_000_000),
+                longitudeInMicroDegrees: Math.round(prox.longitude * 1_000_000),
+              },
+              radiusInUnits: prox.radiusInUnits,
+              radiusUnits: prox.radiusUnits,
+            },
+          },
+        })
+      }
+    }
+  }
+
   const locationCount = (params.locationIds?.length ?? 0) + (params.negativeLocationIds?.length ?? 0)
+  const proximityCount = params.proximityLocations?.length ?? 0
   const languageCount = params.languageIds?.length ?? 0
   const adScheduleCount = params.adSchedule?.length ?? 0
   console.log('[PMax] criteria create:', {
     criteriaOperationCount: ops.length,
     locationCount,
+    proximityCount,
     languageCount,
     adScheduleCount,
   })

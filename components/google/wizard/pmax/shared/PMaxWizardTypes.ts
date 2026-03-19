@@ -30,6 +30,20 @@ export interface PMaxSelectedLocation {
   countryCode: string
   targetType: string
   isNegative: boolean
+  /** 'NEARBY' means the location was added as a "yakınlarda" target */
+  action?: 'INCLUDE' | 'EXCLUDE' | 'NEARBY'
+}
+
+export type PMaxRadiusUnit = 'KILOMETERS' | 'MILES'
+
+export interface PMaxProximityLocation {
+  id: string
+  /** Human-readable address/place name */
+  label: string
+  latitude: number
+  longitude: number
+  radiusInUnits: number
+  radiusUnits: PMaxRadiusUnit
 }
 
 export interface PMaxConversionAction {
@@ -147,6 +161,8 @@ export interface PMaxWizardState {
   /** Phone number for call extension (Google Ads CALL asset) */
   phoneNumber: string
   phoneCountryCode: string
+  /** Proximity/radius targets (Gelişmiş arama → Yarıçap) */
+  proximityLocations: PMaxProximityLocation[]
 }
 
 export interface PMaxStepProps {
@@ -245,6 +261,7 @@ export const defaultPMaxState: PMaxWizardState = {
   dataExclusionsEnabled: false,
   phoneNumber: '',
   phoneCountryCode: 'TR',
+  proximityLocations: [],
 }
 
 export const inputCls =
