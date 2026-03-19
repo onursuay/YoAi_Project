@@ -59,7 +59,7 @@ function CollapsibleSection({ title, count, defaultOpen = true, icon, children }
 
 type UploadTab = 'upload'
 
-function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
+function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
   assets: PMaxAssetImage[]
   onAdd: (files: File[]) => void
   onRemove: (id: string) => void
@@ -67,6 +67,8 @@ function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
   role: 'image' | 'logo'
   t: PMaxStepProps['t']
 }) {
+  const [showDialog, setShowDialog] = useState(false)
+  const [activeTab, setActiveTab] = useState<'upload'>('upload')
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [dragOver, setDragOver] = useState(false)
 
@@ -83,9 +85,21 @@ function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
     if (fileInputRef.current) fileInputRef.current.value = ''
   }
 
+  const dialogTitle = role === 'image'
+    ? t('assetGroup.imageDialogTitle')
+    : t('assetGroup.logoDialogTitle')
+
   const sizeHint = role === 'image'
     ? t('assetGroup.imageUploadSizeHint')
     : t('assetGroup.logoUploadSizeHint')
+
+  const IMAGE_TABS: { key: string; label: string }[] = [
+    { key: 'recommendations', label: t('assetGroup.imageTabRecommendations') },
+    { key: 'library', label: t('assetGroup.imageTabLibrary') },
+    { key: 'website', label: t('assetGroup.imageTabWebsite') },
+    { key: 'upload', label: t('assetGroup.imageTabUpload') },
+    { key: 'stock', label: t('assetGroup.imageTabStock') },
+  ]
 
   return (
     <div className="space-y-3">
@@ -118,36 +132,286 @@ function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
         </div>
       )}
 
-      {/* Drop zone */}
+      {/* Add button */}
       {assets.length < maxCount && (
-        <div
-          onDragOver={e => { e.preventDefault(); setDragOver(true) }}
-          onDragLeave={() => setDragOver(false)}
-          onDrop={handleDrop}
-          className={`border-2 border-dashed rounded-lg p-6 text-center cursor-pointer transition-colors ${
-            dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
-          }`}
-          onClick={() => fileInputRef.current?.click()}
+        <button
+          type="button"
+          onClick={() => setShowDialog(true)}
+          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-medium"
         >
-          <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-          <p className="text-sm text-gray-600">{t('assetGroup.uploadDragDrop')}</p>
-          <p className="text-[12px] text-gray-400 mt-1">{sizeHint}</p>
-          <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
-            {t('assetGroup.uploadBrowseFiles')}
-          </button>
-          <input
-            ref={fileInputRef}
-            type="file"
-            accept="image/*"
-            multiple={maxCount > 1}
-            onChange={handleFileChange}
-            className="hidden"
-          />
+          <Plus className="w-3.5 h-3.5" /> {role === 'image' ? t('assetGroup.addImage') : t('assetGroup.addLogo')}
+        </button>
+      )}
+
+      {/* Google Ads style dialog */}
+      {showDialog && (
+        <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
+          {/* Dialog header */}
+          <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setShowDialog(false)} className="text-gray-400 hover:text-gray-600">
+                <X className="w-4 h-4" />
+              </button>
+              <span className="text-[13px] font-medium text-gray-900">{dialogTitle}</span>
+            </div>
+          </div>
+
+          {/* Tabs */}
+          <div className="flex border-b border-gray-200 overflow-x-auto">
+            {IMAGE_TABS.map(tab => (
+              <button
+                key={tab.key}
+                type="button"
+                onClick={() => setActiveTab(tab.key as 'upload')}
+                className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
+                  activeTab === tab.key
+                    ? 'border-blue-500 text-blue-600'
+                    : 'border-transparent text-gray-500 hover:text-gray-700'
+                }`}
+              >
+                {tab.label}
+              </button>
+            ))}
+          </div>
+
+          {/* Tab content */}
+          <div className="p-4 min-h-[200px]">
+            {activeTab === 'upload' ? (
+              <div
+                onDragOver={e => { e.preventDefault(); setDragOver(true) }}
+                onDragLeave={() => setDragOver(false)}
+                onDrop={handleDrop}
+                className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
+                  dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                }`}
+                onClick={() => fileInputRef.current?.click()}
+              >
+                <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                <p className="text-sm text-gray-600">{t('assetGroup.uploadDragDrop')}</p>
+                <p className="text-[12px] text-gray-400 mt-1">{sizeHint}</p>
+                <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
+                  {t('assetGroup.uploadBrowseFiles')}
+                </button>
+                <input
+                  ref={fileInputRef}
+                  type="file"
+                  accept="image/*"
+                  multiple={maxCount > 1}
+                  onChange={handleFileChange}
+                  className="hidden"
+                />
+              </div>
+            ) : (
+              /* Placeholder for non-upload tabs */
+              <div className="flex flex-col items-center justify-center py-12 text-center">
+                <div className="w-16 h-16 mb-3 text-gray-300">
+                  <ImageIcon className="w-full h-full" />
+                </div>
+                <p className="text-[13px] font-medium text-gray-900">{t('assetGroup.noSuggestionsYet')}</p>
+                <p className="text-[12px] text-gray-500 mt-1 max-w-md">{t('assetGroup.noSuggestionsHint')}</p>
+              </div>
+            )}
+          </div>
+
+          {/* Dialog footer */}
+          <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+            <p className="text-[11px] text-gray-400 flex-1 pr-4">{t('assetGroup.imageLegalNote')}</p>
+            <div className="flex gap-2 shrink-0">
+              <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] text-gray-600 hover:text-gray-800">
+                {t('assetGroup.imageCancel')}
+              </button>
+              <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                {t('assetGroup.imageSave')}
+              </button>
+            </div>
+          </div>
         </div>
       )}
 
       <p className="text-[12px] text-gray-400">{assets.length}/{maxCount}</p>
     </div>
+  )
+}
+
+/* ------------------------------------------------------------------ */
+/*  Video Upload Dialog (Google Ads style tabs)                        */
+/* ------------------------------------------------------------------ */
+
+type VideoTab = 'youtube' | 'upload'
+
+function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t }: {
+  videos: PMaxAssetImage[]
+  onAdd: (files: File[]) => void
+  onAddYouTube: (url: string) => void
+  onRemove: (id: string) => void
+  maxCount: number
+  t: PMaxStepProps['t']
+}) {
+  const [showDialog, setShowDialog] = useState(false)
+  const [videoTab, setVideoTab] = useState<VideoTab>('youtube')
+  const [ytUrl, setYtUrl] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
+  const handleFileChange = (e: ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files ?? []).filter(f => f.type.startsWith('video/'))
+    if (files.length) onAdd(files.slice(0, maxCount - videos.length))
+    if (fileInputRef.current) fileInputRef.current.value = ''
+  }
+
+  const handleYouTubeAdd = () => {
+    if (ytUrl.trim()) {
+      onAddYouTube(ytUrl)
+      setYtUrl('')
+    }
+  }
+
+  const VIDEO_TABS: { key: VideoTab; label: string; beta?: boolean }[] = [
+    { key: 'youtube', label: t('assetGroup.videoTabYouTube') },
+    { key: 'upload', label: t('assetGroup.videoTabUpload') },
+  ]
+
+  return (
+    <CollapsibleSection
+      title={t('assetGroup.videosTitle')}
+      count={videos.length}
+      icon={<div className={`w-2 h-2 rounded-full ${videos.length > 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+    >
+      <div className="space-y-3">
+        {/* Existing videos */}
+        {videos.length > 0 && (
+          <div className="space-y-2">
+            {videos.map(v => (
+              <div key={v.id} className="flex items-center gap-3 p-2.5 border border-gray-200 rounded-lg">
+                <Video className="w-5 h-5 text-gray-400 shrink-0" />
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] text-gray-900 truncate">{v.name || v.url || 'Video'}</p>
+                  {v.url && <p className="text-[12px] text-gray-400 truncate">{v.url}</p>}
+                </div>
+                <button type="button" onClick={() => onRemove(v.id)} className="text-gray-400 hover:text-red-600 shrink-0">
+                  <X className="w-4 h-4" />
+                </button>
+              </div>
+            ))}
+          </div>
+        )}
+
+        {/* Add video button */}
+        {videos.length < maxCount && (
+          <button
+            type="button"
+            onClick={() => setShowDialog(true)}
+            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-medium"
+          >
+            <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addVideo')}
+          </button>
+        )}
+
+        {videos.length === 0 && !showDialog && (
+          <p className="text-[12px] text-gray-400 italic">{t('assetGroup.noVideoNote')}</p>
+        )}
+
+        {/* Video dialog — Google Ads style */}
+        {showDialog && (
+          <div className="border border-gray-300 rounded-lg bg-white shadow-sm overflow-hidden">
+            {/* Dialog header */}
+            <div className="flex items-center justify-between px-4 py-3 border-b border-gray-200">
+              <div className="flex items-center gap-2">
+                <button type="button" onClick={() => setShowDialog(false)} className="text-gray-400 hover:text-gray-600">
+                  <X className="w-4 h-4" />
+                </button>
+                <span className="text-[13px] font-medium text-gray-900">
+                  {t('assetGroup.videoDialogTitle')}
+                </span>
+              </div>
+            </div>
+
+            {/* Tabs */}
+            <div className="flex border-b border-gray-200">
+              {VIDEO_TABS.map(tab => (
+                <button
+                  key={tab.key}
+                  type="button"
+                  onClick={() => setVideoTab(tab.key)}
+                  className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
+                    videoTab === tab.key
+                      ? 'border-blue-500 text-blue-600'
+                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                  }`}
+                >
+                  {tab.label}
+                  {tab.beta && <span className="ml-1 px-1 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-100 rounded">BETA</span>}
+                </button>
+              ))}
+            </div>
+
+            {/* Tab content */}
+            <div className="p-4">
+              {videoTab === 'youtube' && (
+                <div className="space-y-3">
+                  <p className="text-[12px] text-gray-500">{t('assetGroup.videoYouTubeHint')}</p>
+                  <div className="flex gap-2">
+                    <input
+                      className={`${inputCls} flex-1`}
+                      value={ytUrl}
+                      onChange={e => setYtUrl(e.target.value)}
+                      onKeyDown={e => e.key === 'Enter' && (e.preventDefault(), handleYouTubeAdd())}
+                      placeholder="https://www.youtube.com/watch?v=..."
+                    />
+                    <button
+                      type="button"
+                      onClick={handleYouTubeAdd}
+                      disabled={!ytUrl.trim()}
+                      className="px-4 py-2 text-[13px] font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                    >
+                      {t('assetGroup.videoAdd')}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {videoTab === 'upload' && (
+                <div className="space-y-3">
+                  <div
+                    className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center cursor-pointer hover:border-gray-400"
+                    onClick={() => fileInputRef.current?.click()}
+                  >
+                    <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+                    <p className="text-sm text-gray-600">{t('assetGroup.videoUploadDragDrop')}</p>
+                    <p className="text-[12px] text-gray-400 mt-1">{t('assetGroup.videoUploadHint')}</p>
+                    <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
+                      {t('assetGroup.uploadBrowseFiles')}
+                    </button>
+                    <input
+                      ref={fileInputRef}
+                      type="file"
+                      accept="video/*"
+                      multiple
+                      onChange={handleFileChange}
+                      className="hidden"
+                    />
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Dialog footer */}
+            <div className="flex items-center justify-between px-4 py-3 border-t border-gray-200 bg-gray-50">
+              <p className="text-[11px] text-gray-400 flex-1 pr-4">{t('assetGroup.videoLegalNote')}</p>
+              <div className="flex gap-2 shrink-0">
+                <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] text-gray-600 hover:text-gray-800">
+                  {t('assetGroup.videoCancel')}
+                </button>
+                <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                  {t('assetGroup.videoSave')}
+                </button>
+              </div>
+            </div>
+          </div>
+        )}
+
+        <p className="text-[12px] text-gray-400">{videos.length}/{maxCount}</p>
+      </div>
+    </CollapsibleSection>
   )
 }
 
@@ -796,7 +1060,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               count={state.images.length}
               icon={<div className={`w-2 h-2 rounded-full ${state.images.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
             >
-              <ImageUploadArea
+              <ImageUploadDialog
                 assets={state.images}
                 onAdd={addImages}
                 onRemove={removeImage}
@@ -812,7 +1076,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               count={state.logos.length}
               icon={<div className={`w-2 h-2 rounded-full ${state.logos.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
             >
-              <ImageUploadArea
+              <ImageUploadDialog
                 assets={state.logos}
                 onAdd={addLogos}
                 onRemove={removeLogo}
@@ -834,39 +1098,31 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               <p className="text-[12px] text-gray-400 mt-1">{state.businessName.length}/25</p>
             </CollapsibleSection>
 
-            {/* Videos (0-5) — YouTube URL (correct per Google Ads) */}
-            <CollapsibleSection
-              title={t('assetGroup.videosTitle')}
-              count={state.videos.length}
-              icon={<div className={`w-2 h-2 rounded-full ${state.videos.length > 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
-            >
-              <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.videosHint')}</p>
-              <div className="space-y-2">
-                {state.videos.map((v, i) => (
-                  <div key={v.id} className="flex gap-2 items-center">
-                    <input
-                      className={`${inputCls} flex-1`}
-                      value={v.url ?? ''}
-                      onChange={e => {
-                        const next = [...state.videos]
-                        next[i] = { ...next[i], url: e.target.value.trim() }
-                        update({ videos: next })
-                      }}
-                      placeholder="https://www.youtube.com/watch?v=..."
-                    />
-                    <button type="button" onClick={() => removeVideo(i)} className="px-1 text-gray-400 hover:text-red-600 shrink-0">×</button>
-                  </div>
-                ))}
-                {state.videos.length < 5 ? (
-                  <button type="button" onClick={addVideo} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
-                    <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addVideo')}
-                  </button>
-                ) : null}
-                {state.videos.length === 0 && (
-                  <p className="text-[12px] text-gray-400 italic">{t('assetGroup.noVideoNote')}</p>
-                )}
-              </div>
-            </CollapsibleSection>
+            {/* Videos (0-5) — Google Ads style dialog */}
+            <VideoUploadSection
+              videos={state.videos}
+              onAdd={(files) => {
+                const newVideos: PMaxAssetImage[] = files.map(f => ({
+                  id: `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
+                  name: f.name,
+                  file: f,
+                  previewUrl: URL.createObjectURL(f),
+                }))
+                update({ videos: [...state.videos, ...newVideos].slice(0, 5) })
+              }}
+              onAddYouTube={(url) => {
+                if (state.videos.length < 5 && url.trim()) {
+                  update({ videos: [...state.videos, { id: `vid-${Date.now()}`, url: url.trim(), name: url.trim() }] })
+                }
+              }}
+              onRemove={(id) => {
+                const vid = state.videos.find(v => v.id === id)
+                if (vid?.previewUrl) URL.revokeObjectURL(vid.previewUrl)
+                update({ videos: state.videos.filter(v => v.id !== id) })
+              }}
+              maxCount={5}
+              t={t}
+            />
 
             {/* Sitelinks (0-8) */}
             <CollapsibleSection
