@@ -1,5 +1,31 @@
 # Google Ads API - Kapsamli Uygulama Dokumani & Gelistirme Plani
 
+---
+
+## Kritik Koruma Kuralı
+
+> **⛔ DO-NOT-TOUCH — ZORUNLU GUARDRAIL**
+
+Google Ads Search campaign flow, dosya yapısı, state yapısı, validation zinciri, payload builder, route zinciri ve çalışan UI yapısı korunacaktır. Search tarafında hiçbir dosya değiştirilmeyecektir.
+
+Google Ads > Hedef Kitleler > Kitle Segmentlerini Düzenle alanı ve buna bağlı hedef kitle çalışma kod yapısı korunacaktır. Audience manager, audience criteria, audience segment ve ilgili hedef kitle altyapısı refactor edilmeyecek, taşınmayacak ve bozulmayacaktır.
+
+Hedef kitle, konum ve AB siyasi reklamları gibi ortak alanlar gerekiyorsa shared/common yaklaşımı Search implementasyonunu değiştirmeden ele alınacaktır. Search akışını etkileyen kırıcı refactor kesinlikle yasaktır.
+
+**Korunan dosyalar (kesinlikle dokunulmayacak):**
+
+- `components/google/wizard/GoogleCampaignWizard.tsx` (Search wizard)
+- `components/google/wizard/shared/WizardTypes.ts` (Search state)
+- `components/google/wizard/shared/WizardValidation.ts` (Search validation)
+- `components/google/wizard/shared/WizardHelpers.ts` (Search helpers)
+- `components/google/wizard/steps/Step*.tsx` (Tüm Search step dosyaları)
+- `components/google/detail/AudienceSegmentEditor.tsx` (Audience editor)
+- `components/google/wizard/steps/StepAudience.tsx` (Audience step)
+
+**Bu kural future work, code review ve her türlü refactoring için geçerlidir.**
+
+---
+
 ## Context
 
 YoAi platformunda Meta Ads dashboard'una benzer sekilde, tam kapsamli bir **Google Ads yonetim paneli** gelistirilecek. Mevcut projede zaten temel bir altyapi mevcut (OAuth, kampanya listeleme, basit kampanya olusturma wizard'i). Ancak Google Ads'in gercek gucunu yansitan, profesyonel bir dashboard icin onemli eksikler var. Bu dokuman, Google Ads API v23/v23.1 (Mart 2026 guncel) ile tam uyumlu, uretim seviyesinde bir uygulama icin teknik referans ve gelistirme plani niteligindedir.

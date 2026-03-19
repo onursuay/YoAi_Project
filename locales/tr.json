@@ -1169,7 +1169,43 @@
           "imagesTitle": "Görsel ve Logo",
           "imagesHint": "En az 1 marketing görsel ve 1 logo URL’si zorunludur. Önerilen: Marketing 1200x628 (1.91:1), Logo 1200x1200 (1:1).",
           "marketingImageUrl": "Marketing görsel URL",
-          "logoUrl": "Logo URL"
+          "logoUrl": "Logo URL",
+          "assetsSection": "Öğeler",
+          "businessNameHint": "Maks 25 karakter. Reklamlarınızda marka adı olarak görünür.",
+          "addLongHeadline": "Uzun başlık ekle",
+          "videosTitle": "Videolar",
+          "videosHint": "En fazla 5 YouTube video URL ekleyin. Min 10 saniye. Video eklenmezse Google otomatik oluşturabilir.",
+          "addVideo": "Video ekle",
+          "sitelinksTitle": "Site bağlantıları",
+          "sitelinksHint": "Daha iyi reklam performansı için açıklamalı en az 4 site bağlantısı ekleyin. Önerilen: 6+.",
+          "sitelinkTitle": "Bağlantı metni",
+          "sitelinkUrl": "URL",
+          "sitelinkDesc": "Açıklama",
+          "addSitelink": "Site bağlantısı ekle",
+          "ctaTitle": "Harekete geçirici mesaj",
+          "ctaOptions": {
+            "AUTOMATED": "Otomatik (önerilir)",
+            "LEARN_MORE": "Daha fazla bilgi",
+            "SHOP_NOW": "Şimdi alışveriş yapın",
+            "SIGN_UP": "Kaydolun",
+            "CONTACT_US": "İletişime geçin",
+            "GET_QUOTE": "Teklif alın",
+            "APPLY_NOW": "Başvurun",
+            "DOWNLOAD": "İndirin",
+            "SUBSCRIBE": "Abone olun"
+          },
+          "displayPathTitle": "Görüntülü URL yolları",
+          "displayPathHint": "İsteğe bağlı. 2 yol, her biri en fazla 15 karakter.",
+          "displayPath": "Yol",
+          "optimizationTitle": "Öğe optimizasyonu",
+          "textCustomization": "Metin özelleştirme",
+          "textCustomizationDesc": "Google AI, reklam alaka düzeyini artırmak için açılış sayfalarınızdan ek metin öğeleri oluşturur.",
+          "finalUrlExpansion": "Nihai URL genişletmesi",
+          "finalUrlExpansionDesc": "Kullanıcının amacına göre nihai URL'nizi daha alakalı bir açılış sayfasıyla değiştirin.",
+          "imageEnhancement": "Görsel iyileştirme",
+          "imageEnhancementDesc": "Daha iyi performans için görsellerinizi farklı yerleşimlere uyarlayın ve iyileştirin.",
+          "videoEnhancement": "Geliştirilmiş YouTube videoları",
+          "videoEnhancementDesc": "Mevcut öğelerinizden geliştirilmiş video varyasyonları oluşturun."
         },
         "signals": {
           "title": "Sinyaller",
@@ -1197,7 +1233,15 @@
           "dateRangeStartOnly": "{start} — (bitiş yok)",
           "dateRangeNone": "Belirtilmedi",
           "learningTitle": "Öğrenme Süreci",
-          "learningText": "Performance Max kampanyaları başlangıçta öğrenme fazındadır. Tutarlı bütçe verimliliği artırır."
+          "learningText": "Performance Max kampanyaları başlangıçta öğrenme fazındadır. Tutarlı bütçe verimliliği artırır.",
+          "sectionTitle": "Bütçe",
+          "typeInfoNote": "Bu kampanya başladıktan sonra bütçe türünü (günlük veya toplam kampanya bütçesi) değiştiremezsiniz. Bütçe tutarını dilediğiniz zaman değiştirebilirsiniz.",
+          "selectType": "Bütçe türü seçin",
+          "dailyBudgetOption": "Ortalama günlük bütçe",
+          "dailyBudgetDesc": "Bu kampanya için ortalama günlük bütçenizi belirleyin.",
+          "totalBudgetOption": "Toplam kampanya bütçesi",
+          "totalBudgetDesc": "Kampanyanız süresince geçerli olacak bir bütçe belirleyin.",
+          "totalPlaceholder": "Örn: 15000"
         },
         "summary": {
           "pmaxNote": "Kampanyanız yayınlanmaya neredeyse hazır.",
@@ -1251,7 +1295,9 @@
           "biddingFocus": "Teklif odağı",
           "newCustomersOnly": "Yalnızca yeni müşteriler",
           "allCustomers": "Yeni ve mevcut müşteriler için aynı teklifi ver",
-          "day": "gün"
+          "day": "gün",
+          "sitelinkCount": "Site bağlantısı sayısı",
+          "totalBudget": "Toplam Kampanya Bütçesi"
         },
         "review": {
           "lowHeadlines": "3–5 başlık var; 15'e kadar ekleyerek performansı artırabilirsiniz.",
@@ -1276,7 +1322,7 @@
           "businessNameRequired": "İşletme adı zorunlu",
           "minHeadlines": "En az 3 başlık gerekli",
           "minLongHeadlines": "En az 1 uzun başlık gerekli",
-          "minDescriptions": "En az 2 açıklama gerekli",
+          "minDescriptions": "En az 3 açıklama gerekli",
           "duplicateHeadlines": "Başlıklar benzersiz olmalı",
           "duplicateLongHeadlines": "Uzun başlıklar benzersiz olmalı",
           "duplicateDescriptions": "Açıklamalar benzersiz olmalı",
@@ -1286,7 +1332,11 @@
           "businessNameMaxLength": "İşletme adı en fazla 25 karakter olabilir",
           "endDateBeforeStart": "Bitiş tarihi başlangıç tarihinden önce olamaz",
           "minBudget": "Minimum günlük bütçe 1 TRY",
-          "minImagesRequired": "En az 1 görsel ve 1 logo URL'si gereklidir"
+          "minImagesRequired": "En az 1 görsel ve 1 logo URL'si gereklidir",
+          "sitelinkTitleMaxLength": "Site bağlantısı başlıkları en fazla 25 karakter olabilir",
+          "sitelinkDescMaxLength": "Site bağlantısı açıklamaları en fazla 35 karakter olabilir",
+          "displayPathMaxLength": "Görüntülü URL yolları en fazla 15 karakter olabilir",
+          "minTotalBudget": "Toplam kampanya bütçesi en az 1 TRY olmalıdır"
         },
         "toast": {
           "placeholderSuccess": "PMax sihirbazı iskelet — backend henüz bağlı değil.",

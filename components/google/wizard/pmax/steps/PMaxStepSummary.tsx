@@ -143,17 +143,28 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
         <Row label={t('summary.descriptionsCount')} value={`${dCount} / 5`} />
         <Row label={t('summary.imageCount')} value={String(state.images.filter(i => i.url?.trim()).length)} />
         <Row label={t('summary.logoCount')} value={String(state.logos.filter(i => i.url?.trim()).length)} />
+        <Row label={t('summary.videoCount')} value={String(state.videos.filter(v => v.url?.trim()).length)} />
+        <Row label={t('summary.sitelinkCount')} value={String(state.sitelinks.filter(s => s.title.trim()).length)} />
+        <Row label={t('assetGroup.ctaTitle')} value={t(`assetGroup.ctaOptions.${state.callToAction}`)} />
         <Row label={t('summary.audienceSignalCount')} value={String(state.selectedAudienceSegments.length)} />
         <Row label={t('summary.searchThemeCount')} value={String(searchThemesList.length)} />
       </SummarySection>
 
       {/* Budget */}
       <SummarySection title={t('summary.budgetSection')}>
-        <Row
-          label={t('summary.dailyBudget')}
-          value={state.dailyBudget ? `${state.dailyBudget} TRY/${t('summary.day')}` : '—'}
-          error={!state.dailyBudget || parseFloat(state.dailyBudget) < 1}
-        />
+        {state.budgetType === 'DAILY' ? (
+          <Row
+            label={t('summary.dailyBudget')}
+            value={state.dailyBudget ? `${state.dailyBudget} TRY/${t('summary.day')}` : '—'}
+            error={!state.dailyBudget || parseFloat(state.dailyBudget) < 1}
+          />
+        ) : (
+          <Row
+            label={t('summary.totalBudget')}
+            value={state.totalBudget ? `${state.totalBudget} TRY` : '—'}
+            error={!state.totalBudget || parseFloat(state.totalBudget) < 1}
+          />
+        )}
       </SummarySection>
     </div>
   )

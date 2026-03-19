@@ -1169,7 +1169,43 @@
           "imagesTitle": "Image and Logo",
           "imagesHint": "At least 1 marketing image and 1 logo URL required. Recommended: Marketing 1200x628 (1.91:1), Logo 1200x1200 (1:1).",
           "marketingImageUrl": "Marketing image URL",
-          "logoUrl": "Logo URL"
+          "logoUrl": "Logo URL",
+          "assetsSection": "Assets",
+          "businessNameHint": "Max 25 characters. This appears in your ads as your brand name.",
+          "addLongHeadline": "Add long headline",
+          "videosTitle": "Videos",
+          "videosHint": "Add up to 5 YouTube video URLs. Min 10 seconds. Google may auto-generate videos if none provided.",
+          "addVideo": "Add video",
+          "sitelinksTitle": "Sitelinks",
+          "sitelinksHint": "Add at least 4 sitelinks with descriptions for better ad performance. Recommended: 6+.",
+          "sitelinkTitle": "Link text",
+          "sitelinkUrl": "URL",
+          "sitelinkDesc": "Description",
+          "addSitelink": "Add sitelink",
+          "ctaTitle": "Call to action",
+          "ctaOptions": {
+            "AUTOMATED": "Automated (recommended)",
+            "LEARN_MORE": "Learn more",
+            "SHOP_NOW": "Shop now",
+            "SIGN_UP": "Sign up",
+            "CONTACT_US": "Contact us",
+            "GET_QUOTE": "Get quote",
+            "APPLY_NOW": "Apply now",
+            "DOWNLOAD": "Download",
+            "SUBSCRIBE": "Subscribe"
+          },
+          "displayPathTitle": "Display URL paths",
+          "displayPathHint": "Optional. 2 paths, max 15 characters each.",
+          "displayPath": "Path",
+          "optimizationTitle": "Asset optimization",
+          "textCustomization": "Text customization",
+          "textCustomizationDesc": "Google AI generates additional text assets from your landing pages to improve ad relevance.",
+          "finalUrlExpansion": "Final URL expansion",
+          "finalUrlExpansionDesc": "Replace your final URL with a more relevant landing page based on user intent.",
+          "imageEnhancement": "Image enhancement",
+          "imageEnhancementDesc": "Enhance and adapt your images for better performance across placements.",
+          "videoEnhancement": "Enhanced YouTube videos",
+          "videoEnhancementDesc": "Generate enhanced video variations from your existing assets."
         },
         "signals": {
           "title": "Signals",
@@ -1197,7 +1233,15 @@
           "dateRangeStartOnly": "{start} — (no end)",
           "dateRangeNone": "Not specified",
           "learningTitle": "Learning Phase",
-          "learningText": "Performance Max campaigns go through a learning phase. Consistent budget improves efficiency."
+          "learningText": "Performance Max campaigns go through a learning phase. Consistent budget improves efficiency.",
+          "sectionTitle": "Budget",
+          "typeInfoNote": "Once this campaign starts, you cannot change the budget type (daily or total campaign budget). You can change the budget amount at any time.",
+          "selectType": "Select budget type",
+          "dailyBudgetOption": "Average daily budget",
+          "dailyBudgetDesc": "Set an average daily budget for this campaign.",
+          "totalBudgetOption": "Total campaign budget",
+          "totalBudgetDesc": "Set a fixed budget for the entire campaign duration.",
+          "totalPlaceholder": "E.g.: 15000"
         },
         "summary": {
           "pmaxNote": "Your campaign is almost ready to publish.",
@@ -1251,7 +1295,9 @@
           "biddingFocus": "Bidding focus",
           "newCustomersOnly": "Only new customers",
           "allCustomers": "New and existing customers — same bid",
-          "day": "day"
+          "day": "day",
+          "sitelinkCount": "Sitelink count",
+          "totalBudget": "Total Campaign Budget"
         },
         "review": {
           "lowHeadlines": "3–5 headlines; add up to 15 to improve performance.",
@@ -1276,7 +1322,7 @@
           "businessNameRequired": "Business name is required",
           "minHeadlines": "At least 3 headlines required",
           "minLongHeadlines": "At least 1 long headline required",
-          "minDescriptions": "At least 2 descriptions required",
+          "minDescriptions": "At least 3 descriptions required",
           "duplicateHeadlines": "Headlines must be unique",
           "duplicateLongHeadlines": "Long headlines must be unique",
           "duplicateDescriptions": "Descriptions must be unique",
@@ -1286,7 +1332,11 @@
           "businessNameMaxLength": "Business name must be max 25 characters",
           "endDateBeforeStart": "End date cannot be before start date",
           "minBudget": "Minimum daily budget is 1 TRY",
-          "minImagesRequired": "At least 1 image and 1 logo URL required"
+          "minImagesRequired": "At least 1 image and 1 logo URL required",
+          "sitelinkTitleMaxLength": "Sitelink titles must be max 25 characters",
+          "sitelinkDescMaxLength": "Sitelink descriptions must be max 35 characters",
+          "displayPathMaxLength": "Display paths must be max 15 characters",
+          "minTotalBudget": "Total campaign budget must be at least 1 TRY"
         },
         "toast": {
           "placeholderSuccess": "PMax wizard skeleton — backend not yet connected.",

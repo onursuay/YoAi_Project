@@ -62,7 +62,7 @@ export function validatePMaxStep(
 
       if (h.length < 3) return t('validation.minHeadlines')
       if (lh.length < 1) return t('validation.minLongHeadlines')
-      if (d.length < 2) return t('validation.minDescriptions')
+      if (d.length < 3) return t('validation.minDescriptions')
 
       const hLower = h.map(x => x.toLowerCase())
       const hSet = new Set(hLower)
@@ -84,11 +84,25 @@ export function validatePMaxStep(
       const logosWithUrl = state.logos.filter(img => img.url?.trim())
       if (imagesWithUrl.length < 1 || logosWithUrl.length < 1) return t('validation.minImagesRequired')
 
+      // Sitelink validation (optional but if filled, must be valid)
+      for (const sl of state.sitelinks) {
+        if (sl.title.trim() && sl.title.trim().length > 25) return t('validation.sitelinkTitleMaxLength')
+        if (sl.description1.trim() && sl.description1.trim().length > 35) return t('validation.sitelinkDescMaxLength')
+        if (sl.description2.trim() && sl.description2.trim().length > 35) return t('validation.sitelinkDescMaxLength')
+      }
+
+      // Display path validation
+      if (state.displayPaths[0].length > 15 || state.displayPaths[1].length > 15) return t('validation.displayPathMaxLength')
+
       return null
     }
     case 4: {
+      if (state.budgetType === 'TOTAL') {
+        const total = parseFloat(state.totalBudget)
+        if (!state.totalBudget || isNaN(total) || total < 1) return t('validation.minTotalBudget')
+      }
       const budget = parseFloat(state.dailyBudget)
-      if (!state.dailyBudget || isNaN(budget) || budget < 1) return t('validation.minBudget')
+      if (state.budgetType === 'DAILY' && (!state.dailyBudget || isNaN(budget) || budget < 1)) return t('validation.minBudget')
       if (state.biddingStrategy === 'TARGET_CPA') {
         const cpa = parseFloat(state.targetCpa)
         if (!state.targetCpa || isNaN(cpa) || cpa <= 0) return t('validation.targetCpaRequired')
@@ -147,8 +161,13 @@ export function getPMaxBlockingIssues(state: PMaxWizardState, t: (key: string, p
   const imagesWithUrl = state.images.filter(img => img.url?.trim())
   const logosWithUrl = state.logos.filter(img => img.url?.trim())
   if (imagesWithUrl.length < 1 || logosWithUrl.length < 1) issues.push(t('validation.minImagesRequired'))
-  const budget = parseFloat(state.dailyBudget)
-  if (!state.dailyBudget || isNaN(budget) || budget < 1) issues.push(t('validation.minBudget'))
+  if (state.budgetType === 'DAILY') {
+    const budget = parseFloat(state.dailyBudget)
+    if (!state.dailyBudget || isNaN(budget) || budget < 1) issues.push(t('validation.minBudget'))
+  } else {
+    const total = parseFloat(state.totalBudget)
+    if (!state.totalBudget || isNaN(total) || total < 1) issues.push(t('validation.minTotalBudget'))
+  }
   return issues
 }
 

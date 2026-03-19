@@ -9,6 +9,7 @@ import type {
   PMaxAssetImage,
   PMaxSearchTheme,
   PMaxSelectedAudienceSegment,
+  PMaxSitelink,
 } from './PMaxWizardTypes'
 
 export interface CreatePerformanceMaxPayload {
@@ -31,6 +32,8 @@ export interface CreatePerformanceMaxPayload {
   finalUrlExpansionEnabled: boolean
   selectedConversionGoalIds?: string[]
   primaryConversionGoalId?: string
+  budgetType: 'DAILY' | 'TOTAL'
+  totalBudgetMicros?: number
   assetGroup: {
     name: string
     businessName: string
@@ -40,6 +43,15 @@ export interface CreatePerformanceMaxPayload {
     images: PMaxAssetImage[]
     logos: PMaxAssetImage[]
     videos: PMaxAssetImage[]
+    sitelinks: PMaxSitelink[]
+    callToAction: string
+    displayPaths: [string, string]
+  }
+  assetAutomationSettings: {
+    textCustomizationEnabled: boolean
+    finalUrlExpansionEnabled: boolean
+    imageEnhancementEnabled: boolean
+    videoEnhancementEnabled: boolean
   }
   signals: {
     searchThemes: PMaxSearchTheme[]
@@ -87,10 +99,17 @@ export function buildPerformanceMaxCreatePayload(state: PMaxWizardState): Create
   const targetCpa = safeParseFloat(state.targetCpa)
   const targetRoas = safeParseFloat(state.targetRoas)
 
+  const totalBudget = safeParseFloat(state.totalBudget)
+  const totalBudgetMicros = totalBudget != null ? Math.round(totalBudget * 1_000_000) : undefined
+
+  const sitelinks = state.sitelinks.filter(sl => sl.title.trim() && sl.finalUrl.trim())
+
   return {
     campaignName,
     advertisingChannelType: 'PERFORMANCE_MAX',
     dailyBudgetMicros,
+    budgetType: state.budgetType,
+    ...(totalBudgetMicros != null && totalBudgetMicros > 0 && { totalBudgetMicros }),
     biddingStrategy: state.biddingStrategy,
     ...(state.biddingFocus && { biddingFocus: state.biddingFocus }),
     ...(targetCpa != null && targetCpa > 0 && { targetCpaMicros: Math.round(targetCpa * 1_000_000) }),
@@ -122,6 +141,15 @@ export function buildPerformanceMaxCreatePayload(state: PMaxWizardState): Create
       images,
       logos,
       videos,
+      sitelinks,
+      callToAction: state.callToAction,
+      displayPaths: [state.displayPaths[0].trim(), state.displayPaths[1].trim()],
+    },
+    assetAutomationSettings: {
+      textCustomizationEnabled: state.textCustomizationEnabled,
+      finalUrlExpansionEnabled: state.finalUrlExpansionEnabled,
+      imageEnhancementEnabled: state.imageEnhancementEnabled,
+      videoEnhancementEnabled: state.videoEnhancementEnabled,
     },
     signals: {
       searchThemes,

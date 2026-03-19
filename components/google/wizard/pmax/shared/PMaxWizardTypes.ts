@@ -59,6 +59,26 @@ export interface PMaxSearchTheme {
   text: string
 }
 
+export interface PMaxSitelink {
+  title: string
+  description1: string
+  description2: string
+  finalUrl: string
+}
+
+export type PMaxCallToAction =
+  | 'AUTOMATED'
+  | 'LEARN_MORE'
+  | 'SHOP_NOW'
+  | 'SIGN_UP'
+  | 'CONTACT_US'
+  | 'GET_QUOTE'
+  | 'APPLY_NOW'
+  | 'DOWNLOAD'
+  | 'SUBSCRIBE'
+
+export type PMaxBudgetType = 'DAILY' | 'TOTAL'
+
 export type PMaxDeviceType = 'COMPUTERS' | 'MOBILE' | 'TABLETS' | 'TV_SCREENS'
 
 export interface PMaxWizardState {
@@ -93,9 +113,19 @@ export interface PMaxWizardState {
   images: PMaxAssetImage[]
   logos: PMaxAssetImage[]
   videos: PMaxAssetImage[]
+  sitelinks: PMaxSitelink[]
+  callToAction: PMaxCallToAction
+  displayPaths: [string, string]
   searchThemes: PMaxSearchTheme[]
   adSchedule: PMaxScheduleEntry[]
   finalUrlExpansionEnabled: boolean
+  // Asset optimization toggles (Google Ads defaults: all on)
+  textCustomizationEnabled: boolean
+  imageEnhancementEnabled: boolean
+  videoEnhancementEnabled: boolean
+  // Budget
+  budgetType: PMaxBudgetType
+  totalBudget: string
   // Campaign Settings — additional Google parity fields
   devices: PMaxDeviceType[]
   trackingTemplate: string
@@ -145,6 +175,11 @@ export const PMaxGoalsWithPMax: PMaxCampaignGoal[] = [
 
 export const PMaxAllDevices: PMaxDeviceType[] = ['COMPUTERS', 'MOBILE', 'TABLETS', 'TV_SCREENS']
 
+export const PMaxCallToActionOptions: PMaxCallToAction[] = [
+  'AUTOMATED', 'LEARN_MORE', 'SHOP_NOW', 'SIGN_UP', 'CONTACT_US',
+  'GET_QUOTE', 'APPLY_NOW', 'DOWNLOAD', 'SUBSCRIBE',
+]
+
 export const defaultPMaxState: PMaxWizardState = {
   campaignGoal: 'SALES',
   campaignType: 'PERFORMANCE_MAX',
@@ -177,9 +212,17 @@ export const defaultPMaxState: PMaxWizardState = {
   images: [],
   logos: [],
   videos: [],
+  sitelinks: [],
+  callToAction: 'AUTOMATED',
+  displayPaths: ['', ''],
   searchThemes: [],
   adSchedule: [],
   finalUrlExpansionEnabled: false,
+  textCustomizationEnabled: true,
+  imageEnhancementEnabled: true,
+  videoEnhancementEnabled: true,
+  budgetType: 'DAILY',
+  totalBudget: '',
   devices: ['COMPUTERS', 'MOBILE', 'TABLETS', 'TV_SCREENS'],
   trackingTemplate: '',
   finalUrlSuffix: '',
