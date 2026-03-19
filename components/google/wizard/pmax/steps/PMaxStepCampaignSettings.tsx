@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useRef, useCallback, useEffect } from 'react'
-import { ChevronUp, ChevronDown, Plus, X, Clock, Search, MapPin, Loader2 } from 'lucide-react'
+import { ChevronUp, ChevronDown, Plus, X, Clock, Search, MapPin, Loader2, Shield, Info } from 'lucide-react'
 import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType, PMaxSelectedLocation } from '../shared/PMaxWizardTypes'
 import { inputCls, PMaxLanguageOptions, PMaxCountryOptions, PMaxDaysOfWeek, PMaxAllDevices } from '../shared/PMaxWizardTypes'
 
@@ -306,43 +306,77 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
         </div>
       </CollapsibleSection>
 
-      {/* 3. AB siyasi reklamları */}
-      <CollapsibleSection id="pmax-settings-section-2" title={t('settings.euPoliticalTitle')}>
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.euPoliticalQuestion')}</p>
-          <p className="text-xs text-gray-500">{t('settings.euPoliticalRequired')}</p>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
+      {/* 3. AB siyasi reklamları — Search wizard ile birebir aynı tasarım */}
+      <section id="pmax-settings-section-2" className="border border-gray-200 rounded-lg bg-white scroll-mt-4">
+        <div className="px-5 py-4">
+          <div className="flex items-center gap-2 mb-1">
+            <Shield className="w-4 h-4 text-gray-600" />
+            <h4 className="text-[15px] font-semibold text-gray-900">{t('settings.euPoliticalTitle')}</h4>
+          </div>
+          <p className="text-[13px] text-gray-600 mb-3">{t('settings.euPoliticalQuestion')}</p>
+          <div className="space-y-1">
+            <label
+              className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
+                state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'
+                  ? 'border-blue-300 bg-blue-50/50'
+                  : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+              }`}
+            >
               <input
                 type="radio"
                 name="pmaxEuPolitical"
-                checked={state.euPoliticalAdsDeclaration === 'POLITICAL'}
-                onChange={() => update({ euPoliticalAdsDeclaration: 'POLITICAL' })}
-                className="text-blue-600"
-              />
-              <span className="text-sm">{t('settings.euPoliticalPolitical')}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxEuPolitical"
+                value="NOT_POLITICAL"
                 checked={state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'}
                 onChange={() => update({ euPoliticalAdsDeclaration: 'NOT_POLITICAL' })}
-                className="text-blue-600"
+                className="text-blue-600 focus:ring-blue-500"
               />
-              <span className="text-sm">{t('settings.euPoliticalNotPolitical')}</span>
+              <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalNotPolitical')}</span>
             </label>
+            {state.euPoliticalAdsDeclaration === 'NOT_POLITICAL' && (
+              <p className="text-[12px] text-gray-500 pl-8 mt-0.5 mb-1">
+                {t('settings.euPoliticalHelperNote')}
+              </p>
+            )}
+            <label
+              className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
+                state.euPoliticalAdsDeclaration === 'POLITICAL'
+                  ? 'border-blue-300 bg-blue-50/50'
+                  : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+              }`}
+            >
+              <input
+                type="radio"
+                name="pmaxEuPolitical"
+                value="POLITICAL"
+                checked={state.euPoliticalAdsDeclaration === 'POLITICAL'}
+                onChange={() => update({ euPoliticalAdsDeclaration: 'POLITICAL' })}
+                className="text-blue-600 focus:ring-blue-500"
+              />
+              <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalPolitical')}</span>
+            </label>
+            {state.euPoliticalAdsDeclaration === 'POLITICAL' && (
+              <div className="flex items-start gap-2 p-3 mt-1 rounded border border-amber-200 bg-amber-50/60 text-[13px] text-amber-900">
+                <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+                <div>
+                  <p className="font-medium">{t('settings.euPoliticalWarningLine1')}</p>
+                  <p className="mt-1 text-amber-800">{t('settings.euPoliticalWarningLine2')}</p>
+                  <a
+                    href={EU_POLICY_URL}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="mt-1.5 inline-block text-blue-600 hover:text-blue-700 underline"
+                  >
+                    {t('settings.euPoliticalLearnMore')}
+                  </a>
+                </div>
+              </div>
+            )}
           </div>
           {state.euPoliticalAdsDeclaration === null && (
-            <p className="text-xs text-red-600">{t('settings.euPoliticalValidation')}</p>
+            <p className="text-xs text-red-600 mt-2">{t('settings.euPoliticalValidation')}</p>
           )}
-          <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
-            <a href={EU_POLICY_URL} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-              {t('settings.euPoliticalLearnMore')}
-            </a>
-          </div>
         </div>
-      </CollapsibleSection>
+      </section>
 
       {/* 4. Cihazlar */}
       <CollapsibleSection id="pmax-settings-section-3" title={t('settings.devicesTitle')}>
