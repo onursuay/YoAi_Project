@@ -165,7 +165,7 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
             >
               <X className="w-5 h-5" />
             </button>
-            <span className="text-sm font-medium text-gray-600">{t('title')}</span>
+            <span className="text-[15px] font-semibold text-gray-900">{t('title')}</span>
           </div>
         </div>
 
@@ -231,7 +231,7 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
             <div className="px-6 pt-4 pb-2">
               <h2 className="text-lg font-semibold text-gray-900">{STEPS[step]}</h2>
               {step === 2 && (
-                <p className="text-sm text-gray-500 mt-0.5">{t('settings.subtitle')}</p>
+                <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.subtitle')}</p>
               )}
             </div>
 

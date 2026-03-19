@@ -21,12 +21,12 @@ function Field({ label, required, children, hint, counter }: {
   return (
     <div>
       <div className="flex items-center justify-between mb-1">
-        <label className="block text-sm font-medium text-gray-700">
+        <label className="block text-[13px] font-medium text-gray-700">
           {label} {required && <span className="text-red-500">*</span>}
         </label>
         {counter && <span className="text-xs text-gray-400">{counter}</span>}
       </div>
-      {hint && <p className="text-xs text-gray-500 mb-1.5">{hint}</p>}
+      {hint && <p className="text-[12px] text-gray-500 mb-1.5">{hint}</p>}
       {children}
     </div>
   )
@@ -41,7 +41,7 @@ function CollapsibleSection({ title, count, defaultOpen = true, icon, children }
       <button type="button" onClick={() => setOpen(!open)} className="flex items-center justify-between w-full px-5 py-4 text-left">
         <div className="flex items-center gap-2">
           {icon}
-          <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900">{title}</h4>
           {count !== undefined && (
             <span className="text-xs text-gray-400 ml-1">({count})</span>
           )}
@@ -131,7 +131,7 @@ function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
         >
           <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
           <p className="text-sm text-gray-600">{t('assetGroup.uploadDragDrop')}</p>
-          <p className="text-xs text-gray-400 mt-1">{sizeHint}</p>
+          <p className="text-[12px] text-gray-400 mt-1">{sizeHint}</p>
           <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
             {t('assetGroup.uploadBrowseFiles')}
           </button>
@@ -146,7 +146,7 @@ function ImageUploadArea({ assets, onAdd, onRemove, maxCount, role, t }: {
         </div>
       )}
 
-      <p className="text-xs text-gray-400">{assets.length}/{maxCount}</p>
+      <p className="text-[12px] text-gray-400">{assets.length}/{maxCount}</p>
     </div>
   )
 }
@@ -312,7 +312,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
 
       {/* Verileriniz — Your Data section */}
       <CollapsibleSection title={t('signals.yourData')} defaultOpen={true}>
-        <p className="text-xs text-gray-500 mb-3">{t('signals.yourDataDesc')}</p>
+        <p className="text-[12px] text-gray-500 mb-3">{t('signals.yourDataDesc')}</p>
 
         {/* Tabs: Arama / Göz at */}
         <div className="flex border-b border-gray-200 mb-3">
@@ -454,14 +454,14 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
         <div className="space-y-3">
           <div className="flex items-start gap-3">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-700">{t('signals.interestsTitle')}</p>
-              <p className="text-xs text-gray-500">{t('signals.interestsDesc')}</p>
+              <p className="text-[13px] font-medium text-gray-700">{t('signals.interestsTitle')}</p>
+              <p className="text-[12px] text-gray-500">{t('signals.interestsDesc')}</p>
             </div>
           </div>
           <div className="flex items-start gap-3">
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-700">{t('signals.demographicsTitle')}</p>
-              <p className="text-xs text-gray-500">{t('signals.demographicsDesc')}</p>
+              <p className="text-[13px] font-medium text-gray-700">{t('signals.demographicsTitle')}</p>
+              <p className="text-[12px] text-gray-500">{t('signals.demographicsDesc')}</p>
             </div>
           </div>
         </div>
@@ -469,7 +469,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
 
       {/* Kitle adı */}
       <CollapsibleSection title={t('signals.audienceNameTitle')} defaultOpen={true}>
-        <p className="text-xs text-gray-500 mb-2">{t('signals.audienceNameDesc')}</p>
+        <p className="text-[12px] text-gray-500 mb-2">{t('signals.audienceNameDesc')}</p>
         <input
           className={inputCls}
           value={audienceNameInput}
@@ -766,7 +766,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               count={filledDescriptions}
               icon={<div className={`w-2 h-2 rounded-full ${filledDescriptions >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
             >
-              <p className="text-xs text-gray-500 mb-2">{t('assetGroup.descriptionsHint')}</p>
+              <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.descriptionsHint')}</p>
               <div className="space-y-2">
                 {state.descriptions.map((d, i) => (
                   <div key={i} className="flex gap-2 items-start">
@@ -831,7 +831,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                 placeholder={t('assetGroup.businessNamePlaceholder')}
                 maxLength={25}
               />
-              <p className="text-xs text-gray-400 mt-1">{state.businessName.length}/25</p>
+              <p className="text-[12px] text-gray-400 mt-1">{state.businessName.length}/25</p>
             </CollapsibleSection>
 
             {/* Videos (0-5) — YouTube URL (correct per Google Ads) */}
@@ -840,7 +840,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               count={state.videos.length}
               icon={<div className={`w-2 h-2 rounded-full ${state.videos.length > 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
             >
-              <p className="text-xs text-gray-500 mb-2">{t('assetGroup.videosHint')}</p>
+              <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.videosHint')}</p>
               <div className="space-y-2">
                 {state.videos.map((v, i) => (
                   <div key={v.id} className="flex gap-2 items-center">
@@ -863,7 +863,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                   </button>
                 ) : null}
                 {state.videos.length === 0 && (
-                  <p className="text-xs text-gray-400 italic">{t('assetGroup.noVideoNote')}</p>
+                  <p className="text-[12px] text-gray-400 italic">{t('assetGroup.noVideoNote')}</p>
                 )}
               </div>
             </CollapsibleSection>
@@ -874,7 +874,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               count={state.sitelinks.filter(sl => sl.title.trim()).length}
               defaultOpen={true}
             >
-              <p className="text-xs text-gray-500 mb-3">{t('assetGroup.sitelinksHint')}</p>
+              <p className="text-[12px] text-gray-500 mb-3">{t('assetGroup.sitelinksHint')}</p>
               <div className="space-y-3">
                 {state.sitelinks.length === 0 && (
                   <div className="space-y-1">
@@ -961,7 +961,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
 
           {/* Right: Ad Preview (Google Ads style) */}
           <div className="w-[300px] shrink-0 border-l border-gray-100 p-4 hidden lg:block">
-            <p className="text-xs text-gray-500 mb-3">{t('assetGroup.previewTitle')}</p>
+            <p className="text-[12px] text-gray-500 mb-3">{t('assetGroup.previewTitle')}</p>
             <AdPreview state={state} t={t} />
             <div className="mt-4 text-xs text-gray-400 space-y-1">
               <p>{t('assetGroup.previewStrengthLabel')}</p>
@@ -983,29 +983,29 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
             <input type="checkbox" checked={state.textCustomizationEnabled} onChange={e => update({ textCustomizationEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
             <div>
-              <span className="text-sm font-medium text-gray-700">{t('assetGroup.textCustomization')}</span>
-              <p className="text-xs text-gray-500">{t('assetGroup.textCustomizationDesc')}</p>
+              <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.textCustomization')}</span>
+              <p className="text-[12px] text-gray-500">{t('assetGroup.textCustomizationDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
             <input type="checkbox" checked={state.finalUrlExpansionEnabled} onChange={e => update({ finalUrlExpansionEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
             <div>
-              <span className="text-sm font-medium text-gray-700">{t('assetGroup.finalUrlExpansion')}</span>
-              <p className="text-xs text-gray-500">{t('assetGroup.finalUrlExpansionDesc')}</p>
+              <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.finalUrlExpansion')}</span>
+              <p className="text-[12px] text-gray-500">{t('assetGroup.finalUrlExpansionDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
             <input type="checkbox" checked={state.imageEnhancementEnabled} onChange={e => update({ imageEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
             <div>
-              <span className="text-sm font-medium text-gray-700">{t('assetGroup.imageEnhancement')}</span>
-              <p className="text-xs text-gray-500">{t('assetGroup.imageEnhancementDesc')}</p>
+              <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.imageEnhancement')}</span>
+              <p className="text-[12px] text-gray-500">{t('assetGroup.imageEnhancementDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
             <input type="checkbox" checked={state.videoEnhancementEnabled} onChange={e => update({ videoEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
             <div>
-              <span className="text-sm font-medium text-gray-700">{t('assetGroup.videoEnhancement')}</span>
-              <p className="text-xs text-gray-500">{t('assetGroup.videoEnhancementDesc')}</p>
+              <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.videoEnhancement')}</span>
+              <p className="text-[12px] text-gray-500">{t('assetGroup.videoEnhancementDesc')}</p>
             </div>
           </label>
         </div>
@@ -1020,7 +1020,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
       {/* Search Themes */}
       <CollapsibleSection title={t('signals.searchThemesTitle')} defaultOpen={true}>
         <div className="space-y-3">
-          <p className="text-xs text-gray-500">{t('signals.searchThemesHint')}</p>
+          <p className="text-[12px] text-gray-500">{t('signals.searchThemesHint')}</p>
           <div className="flex gap-2">
             <input
               className={`${inputCls} flex-1`}
@@ -1042,7 +1042,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               ))}
             </div>
           )}
-          <p className="text-xs text-gray-400">{state.searchThemes.length}/25</p>
+          <p className="text-[12px] text-gray-400">{state.searchThemes.length}/25</p>
         </div>
       </CollapsibleSection>
 

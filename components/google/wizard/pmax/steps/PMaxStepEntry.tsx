@@ -8,7 +8,7 @@ import { inputCls } from '../shared/PMaxWizardTypes'
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-[13px] font-medium text-gray-700 mb-1">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -44,11 +44,11 @@ export default function PMaxStepEntry({ state, update, t }: PMaxStepProps) {
       <section>
         <div className="flex items-center gap-2 mb-2">
           <GlobeIcon className="w-4 h-4 text-blue-600" />
-          <h4 className="text-sm font-semibold text-gray-900">{t('conversion.title')}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900">{t('conversion.title')}</h4>
         </div>
-        <p className="text-sm text-gray-500 mb-3">{t('conversion.description')}</p>
+        <p className="text-[13px] text-gray-500 mb-3">{t('conversion.description')}</p>
         {loading ? (
-          <p className="text-sm text-gray-500">{t('conversion.loading')}</p>
+          <p className="text-[13px] text-gray-500">{t('conversion.loading')}</p>
         ) : (
           <div className="space-y-2 max-h-40 overflow-y-auto border border-gray-200 rounded-lg p-3">
             {(state.conversionActions || []).slice(0, 10).map(ca => {
@@ -81,21 +81,21 @@ export default function PMaxStepEntry({ state, update, t }: PMaxStepProps) {
               )
             })}
             {(!state.conversionActions || state.conversionActions.length === 0) && (
-              <p className="text-sm text-gray-500">{t('conversion.empty')}</p>
+              <p className="text-[13px] text-gray-500">{t('conversion.empty')}</p>
             )}
           </div>
         )}
         <div className="flex items-start gap-2 mt-2 p-2 rounded bg-gray-50">
           <Info className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-          <p className="text-xs text-gray-600">{t('conversion.optionalNote')}</p>
+          <p className="text-[12px] text-gray-500">{t('conversion.optionalNote')}</p>
         </div>
       </section>
 
       <section>
         <div className="flex items-center gap-2 mb-2">
-          <h4 className="text-sm font-semibold text-gray-900">{t('entry.merchantTitle')}</h4>
+          <h4 className="text-[15px] font-semibold text-gray-900">{t('entry.merchantTitle')}</h4>
         </div>
-        <p className="text-xs text-gray-500 p-3 rounded-lg bg-gray-50 border border-gray-200">
+        <p className="text-[12px] text-gray-500 p-3 rounded-lg bg-gray-50 border border-gray-200">
           {t('entry.merchantPlaceholder')}
         </p>
       </section>

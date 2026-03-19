@@ -14,7 +14,7 @@ function CollapsibleSection({ title, defaultOpen = true, children }: { title: st
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between w-full px-5 py-4 text-left"
       >
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900">{title}</h4>
         {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
       </button>
       {open && <div className="px-5 pb-5 pt-0">{children}</div>}
@@ -48,7 +48,7 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
       <CollapsibleSection title={t('bidding.sectionTitle')}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-700 mb-1.5">{t('bidding.focusQuestion')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1.5">{t('bidding.focusQuestion')}</label>
             <select
               className={`${inputCls} max-w-[240px]`}
               value={state.biddingFocus ?? 'CONVERSION_COUNT'}
@@ -74,11 +74,11 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
                   }}
                   className="rounded border-gray-300 text-blue-600"
                 />
-                <span className="text-sm text-gray-700">{t('bidding.setCpaOptional')}</span>
+                <span className="text-[13px] font-medium text-gray-900">{t('bidding.setCpaOptional')}</span>
               </label>
               {state.biddingStrategy === 'TARGET_CPA' && (
                 <div className="mt-3 ml-6">
-                  <label className="block text-sm text-gray-600 mb-1">{t('bidding.targetCpaLabel')}</label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('bidding.targetCpaLabel')}</label>
                   <div className="relative max-w-[200px]">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">&#8378;</span>
                     <input
@@ -111,11 +111,11 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
                   }}
                   className="rounded border-gray-300 text-blue-600"
                 />
-                <span className="text-sm text-gray-700">{t('bidding.setRoasOptional')}</span>
+                <span className="text-[13px] font-medium text-gray-900">{t('bidding.setRoasOptional')}</span>
               </label>
               {state.biddingStrategy === 'TARGET_ROAS' && (
                 <div className="mt-3 ml-6">
-                  <label className="block text-sm text-gray-600 mb-1">{t('bidding.targetRoasLabel')}</label>
+                  <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('bidding.targetRoasLabel')}</label>
                   <div className="relative max-w-[200px]">
                     <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">%</span>
                     <input
@@ -145,9 +145,9 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
               onChange={e => update({ bidOnlyForNewCustomers: e.target.checked })}
               className="rounded border-gray-300 text-blue-600"
             />
-            <span className="text-sm text-gray-700">{t('bidding.newCustomersOnly')}</span>
+            <span className="text-[13px] font-medium text-gray-900">{t('bidding.newCustomersOnly')}</span>
           </label>
-          <p className="text-sm text-gray-500 ml-6">{t('bidding.newCustomersDescription')}</p>
+          <p className="text-[13px] text-gray-500 ml-6">{t('bidding.newCustomersDescription')}</p>
 
           {state.bidOnlyForNewCustomers && (
             <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">

@@ -13,7 +13,7 @@ function CollapsibleSection({ title, defaultOpen = true, children }: { title: st
   return (
     <div className="border border-gray-200 rounded-lg bg-white">
       <button type="button" onClick={() => setOpen(!open)} className="flex items-center justify-between w-full px-5 py-4 text-left">
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900">{title}</h4>
         {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
       </button>
       {open && <div className="px-5 pb-5 pt-0">{children}</div>}
@@ -41,7 +41,7 @@ export default function PMaxStepBudget({ state, update, t }: PMaxStepProps) {
           </div>
 
           {/* Budget type selector */}
-          <p className="text-sm font-medium text-gray-700">{t('budget.selectType')}</p>
+          <p className="text-[13px] font-medium text-gray-700">{t('budget.selectType')}</p>
 
           {/* Daily budget option */}
           <label className={`flex items-start gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
@@ -55,8 +55,8 @@ export default function PMaxStepBudget({ state, update, t }: PMaxStepProps) {
               className="mt-0.5 text-blue-600"
             />
             <div className="flex-1">
-              <p className="text-sm font-medium text-gray-900">{t('budget.dailyBudgetOption')}</p>
-              <p className="text-xs text-gray-500 mt-0.5">{t('budget.dailyBudgetDesc')}</p>
+              <p className="text-[13px] font-medium text-gray-900">{t('budget.dailyBudgetOption')}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{t('budget.dailyBudgetDesc')}</p>
               {state.budgetType === 'DAILY' && (
                 <div className="mt-3 relative max-w-[240px]">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">&#8378;</span>
@@ -87,10 +87,10 @@ export default function PMaxStepBudget({ state, update, t }: PMaxStepProps) {
             />
             <div className="flex-1">
               <div className="flex items-center gap-2">
-                <p className="text-sm font-medium text-gray-900">{t('budget.totalBudgetOption')}</p>
+                <p className="text-[13px] font-medium text-gray-900">{t('budget.totalBudgetOption')}</p>
                 <span className="px-1.5 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-100 rounded">BETA</span>
               </div>
-              <p className="text-xs text-gray-500 mt-0.5">{t('budget.totalBudgetDesc')}</p>
+              <p className="text-[12px] text-gray-500 mt-0.5">{t('budget.totalBudgetDesc')}</p>
               {state.budgetType === 'TOTAL' && (
                 <div className="mt-3 relative max-w-[240px]">
                   <span className="absolute left-3 top-1/2 -translate-y-1/2 text-sm text-gray-400">&#8378;</span>
@@ -153,8 +153,8 @@ export default function PMaxStepBudget({ state, update, t }: PMaxStepProps) {
       <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
         <Calendar className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
         <div>
-          <p className="text-sm font-medium text-gray-700">{t('budget.dateRangeTitle')}</p>
-          <p className="text-sm text-gray-600 mt-0.5">
+          <p className="text-[13px] font-medium text-gray-700">{t('budget.dateRangeTitle')}</p>
+          <p className="text-[13px] text-gray-500 mt-0.5">
             {state.startDate && state.endDate
               ? t('budget.dateRangeSet', { start: state.startDate, end: state.endDate })
               : state.startDate
@@ -169,7 +169,7 @@ export default function PMaxStepBudget({ state, update, t }: PMaxStepProps) {
         <Info className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
         <div>
           <p className="text-sm font-semibold text-gray-900">{t('budget.learningTitle')}</p>
-          <p className="text-sm text-gray-600 mt-1">{t('budget.learningText')}</p>
+          <p className="text-[13px] text-gray-500 mt-1">{t('budget.learningText')}</p>
         </div>
       </div>
     </div>

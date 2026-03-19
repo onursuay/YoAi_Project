@@ -40,7 +40,7 @@ function CollapsibleSection({
         onClick={() => setOpen(!open)}
         className="flex items-center justify-between w-full px-5 py-4 text-left"
       >
-        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        <h4 className="text-[15px] font-semibold text-gray-900">{title}</h4>
         {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
       </button>
       {open && <div className="px-5 pb-5 pt-0">{children}</div>}
@@ -177,7 +177,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 1. Konumlar */}
       <CollapsibleSection id="pmax-settings-section-0" title={t('settings.locationsTitle')}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600 mb-2">{t('settings.locationsLabel')}</p>
+          <p className="text-[13px] text-gray-500 mb-2">{t('settings.locationsLabel')}</p>
           <div className="space-y-2">
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -187,7 +187,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 onChange={() => update({ locations: [], geoSearchCountry: '' })}
                 className="text-blue-600"
               />
-              <span className="text-sm">{t('settings.locationsAllCountries')}</span>
+              <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsAllCountries')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -197,7 +197,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 onChange={() => update({ geoSearchCountry: 'TR', locations: [] })}
                 className="text-blue-600"
               />
-              <span className="text-sm">{t('location.countryTR')}</span>
+              <span className="text-[13px] font-medium text-gray-900">{t('location.countryTR')}</span>
             </label>
             <label className="flex items-center gap-2 cursor-pointer">
               <input
@@ -207,7 +207,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 onChange={() => update({ geoSearchCountry: '' })}
                 className="text-blue-600"
               />
-              <span className="text-sm">{t('settings.locationsCustom')}</span>
+              <span className="text-[13px] font-medium text-gray-900">{t('settings.locationsCustom')}</span>
             </label>
           </div>
 
@@ -236,7 +236,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                     <MapPin className="w-4 h-4 text-gray-400 shrink-0" />
                     <div className="flex-1 min-w-0">
                       <p className="text-sm text-gray-900 truncate">{s.name}</p>
-                      <p className="text-xs text-gray-500">{s.targetType} · {s.countryCode}</p>
+                      <p className="text-[12px] text-gray-500">{s.targetType} · {s.countryCode}</p>
                     </div>
                   </button>
                 ))}
@@ -264,11 +264,11 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               <p className="text-xs font-medium text-gray-600 mb-1">{t('settings.locationModeTitle')}</p>
               <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_OR_INTEREST' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                 <input type="radio" name="pmaxLocationMode" checked={state.locationTargetingMode === 'PRESENCE_OR_INTEREST'} onChange={() => update({ locationTargetingMode: 'PRESENCE_OR_INTEREST' })} className="mt-0.5 text-blue-600" />
-                <span className="text-sm text-gray-800">{t('settings.locationModePresenceInterest')}</span>
+                <span className="text-[13px] font-medium text-gray-900">{t('settings.locationModePresenceInterest')}</span>
               </label>
               <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_ONLY' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
                 <input type="radio" name="pmaxLocationMode" checked={state.locationTargetingMode === 'PRESENCE_ONLY'} onChange={() => update({ locationTargetingMode: 'PRESENCE_ONLY' })} className="mt-0.5 text-blue-600" />
-                <span className="text-sm text-gray-800">{t('settings.locationModePresenceOnly')}</span>
+                <span className="text-[13px] font-medium text-gray-900">{t('settings.locationModePresenceOnly')}</span>
               </label>
             </div>
           </details>
@@ -278,7 +278,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 2. Diller */}
       <CollapsibleSection id="pmax-settings-section-1" title={t('settings.languagesTitle')}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600 mb-2">{t('settings.languagesLabel')}</p>
+          <p className="text-[13px] text-gray-500 mb-2">{t('settings.languagesLabel')}</p>
           <div className="relative max-w-xs">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input className={`${inputCls} pl-9`} placeholder={t('settings.languagesSearchPlaceholder')} readOnly />
@@ -381,8 +381,8 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 4. Cihazlar */}
       <CollapsibleSection id="pmax-settings-section-3" title={t('settings.devicesTitle')}>
         <div className="space-y-2">
-          <p className="text-sm text-gray-600 mb-2">{t('settings.devicesLabel')}</p>
-          <p className="text-xs text-gray-500 mb-2">{t('settings.devicesRequired')}</p>
+          <p className="text-[13px] text-gray-500 mb-2">{t('settings.devicesLabel')}</p>
+          <p className="text-[12px] text-gray-500 mb-2">{t('settings.devicesRequired')}</p>
           {PMaxAllDevices.map(device => (
             <label key={device} className="flex items-center gap-2 cursor-pointer">
               <input
@@ -391,7 +391,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 onChange={() => toggleDevice(device)}
                 className="rounded border-gray-300 text-blue-600"
               />
-              <span className="text-sm text-gray-700">{t(DEVICE_LABELS[device])}</span>
+              <span className="text-[13px] font-medium text-gray-900">{t(DEVICE_LABELS[device])}</span>
             </label>
           ))}
         </div>
@@ -400,7 +400,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 5. Reklam zaman planlaması */}
       <CollapsibleSection id="pmax-settings-section-4" title={t('settings.scheduleTitle')}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.scheduleDescription')}</p>
+          <p className="text-[13px] text-gray-500">{t('settings.scheduleDescription')}</p>
           <div className="flex gap-2 items-center mb-2">
             <select className={`${inputCls} w-28`} value="EVERYDAY" onChange={() => {}}>
               <option value="EVERYDAY">{t('settings.scheduleEveryDay')}</option>
@@ -466,7 +466,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
             </div>
           )}
 
-          <p className="text-xs text-gray-500">{t('settings.scheduleTimezoneNote')}</p>
+          <p className="text-[12px] text-gray-500">{t('settings.scheduleTimezoneNote')}</p>
         </div>
       </CollapsibleSection>
 
@@ -474,15 +474,15 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       <CollapsibleSection id="pmax-settings-section-5" title={t('settings.datesTitle')}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('settings.startDate')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.startDate')}</label>
             <input type="date" className={`${inputCls} max-w-[200px]`} value={state.startDate} onChange={e => update({ startDate: e.target.value })} />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('settings.endDate')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.endDate')}</label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="pmaxEndDate" checked={!state.endDate} onChange={() => update({ endDate: '' })} className="text-blue-600" />
-                <span className="text-sm">{t('settings.endDateNone')}</span>
+                <span className="text-[13px] font-medium text-gray-900">{t('settings.endDateNone')}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="pmaxEndDate" checked={!!state.endDate} onChange={() => update({ endDate: state.startDate || '' })} className="text-blue-600" />
@@ -497,7 +497,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       <CollapsibleSection id="pmax-settings-section-6" title={t('settings.urlOptionsTitle')}>
         <div className="space-y-4">
           <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('settings.trackingTemplate')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.trackingTemplate')}</label>
             <input
               className={inputCls}
               value={state.trackingTemplate}
@@ -506,7 +506,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('settings.finalUrlSuffix')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.finalUrlSuffix')}</label>
             <input
               className={inputCls}
               value={state.finalUrlSuffix}
@@ -515,7 +515,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
             />
           </div>
           <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('settings.customParametersLabel')}</label>
+            <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.customParametersLabel')}</label>
             <div className="space-y-2">
               {state.customParameters.map((cp, i) => (
                 <div key={i} className="flex items-center gap-2">
@@ -550,7 +550,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 8. Sayfa feed'leri */}
       <CollapsibleSection id="pmax-settings-section-7" title={t('settings.pageFeedsTitle')}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.pageFeedsDescription')}</p>
+          <p className="text-[13px] text-gray-500">{t('settings.pageFeedsDescription')}</p>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
             <input
               type="checkbox"
@@ -558,16 +558,16 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               onChange={e => update({ finalUrlExpansionEnabled: e.target.checked })}
               className="rounded border-gray-300 text-blue-600"
             />
-            <span className="text-sm text-gray-700">{t('settings.finalUrlExpansionLabel')}</span>
+            <span className="text-[13px] font-medium text-gray-900">{t('settings.finalUrlExpansionLabel')}</span>
           </label>
-          <p className="text-xs text-gray-500">{t('settings.finalUrlExpansionNote')}</p>
+          <p className="text-[12px] text-gray-500">{t('settings.finalUrlExpansionNote')}</p>
         </div>
       </CollapsibleSection>
 
       {/* 9. Marka hariç tutmaları */}
       <CollapsibleSection id="pmax-settings-section-8" title={t('settings.brandExclusionsTitle')}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.brandExclusionsDescription')}</p>
+          <p className="text-[13px] text-gray-500">{t('settings.brandExclusionsDescription')}</p>
           <div className="relative">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
             <input
@@ -602,7 +602,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 10. Demografik hariç tutmalar */}
       <CollapsibleSection title={t('settings.demographicExclusionsTitle')} defaultOpen={false}>
         <div className="space-y-4">
-          <p className="text-sm text-gray-600">{t('settings.demographicExclusionsDescription')}</p>
+          <p className="text-[13px] text-gray-500">{t('settings.demographicExclusionsDescription')}</p>
           {/* Age exclusions */}
           <div>
             <label className="flex items-center gap-2 mb-2 cursor-pointer">
@@ -629,7 +629,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                       }}
                       className="rounded border-gray-300 text-blue-600"
                     />
-                    <span className="text-sm text-gray-700">{age === 'UNKNOWN' ? t('settings.ageUnknown') : age}</span>
+                    <span className="text-[13px] font-medium text-gray-900">{age === 'UNKNOWN' ? t('settings.ageUnknown') : age}</span>
                   </label>
                 ))}
               </div>
@@ -661,7 +661,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                       }}
                       className="rounded border-gray-300 text-blue-600"
                     />
-                    <span className="text-sm text-gray-700">{t(`settings.gender${g}`)}</span>
+                    <span className="text-[13px] font-medium text-gray-900">{t(`settings.gender${g}`)}</span>
                   </label>
                 ))}
               </div>
@@ -673,7 +673,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       {/* 11. Verileri hariç tutma işlemleriniz */}
       <CollapsibleSection title={t('settings.dataExclusionsTitle')} defaultOpen={false}>
         <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.dataExclusionsDescription')}</p>
+          <p className="text-[13px] text-gray-500">{t('settings.dataExclusionsDescription')}</p>
           <label className="flex items-center gap-2 cursor-pointer">
             <input
               type="checkbox"
@@ -681,7 +681,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               onChange={e => update({ dataExclusionsEnabled: e.target.checked })}
               className="rounded border-gray-300 text-blue-600"
             />
-            <span className="text-sm text-gray-700">{t('settings.dataExclusionsEnable')}</span>
+            <span className="text-[13px] font-medium text-gray-900">{t('settings.dataExclusionsEnable')}</span>
           </label>
         </div>
       </CollapsibleSection>
