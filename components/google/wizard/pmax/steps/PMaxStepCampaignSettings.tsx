@@ -60,7 +60,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
   const [geoLoading, setGeoLoading] = useState(false)
   const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([])
   const [showGeoDropdown, setShowGeoDropdown] = useState(false)
-  const geoTimer = useRef<ReturnType<typeof setTimeout>>()
+  // geoTimer removed — useEffect handles debounce
   const geoDropdownRef = useRef<HTMLDivElement>(null)
   const [addingDay, setAddingDay] = useState<PMaxDayOfWeek | null>(null)
   const [newStart, setNewStart] = useState(0)
@@ -79,38 +79,36 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Use ref to avoid stale closure in debounced search
-  const locationsRef = useRef(state.locations)
-  locationsRef.current = state.locations
-  const countryRef = useRef(state.geoSearchCountry)
-  countryRef.current = state.geoSearchCountry
-
-  const searchGeo = useCallback(async (query: string) => {
-    if (query.trim().length < 2) { setGeoSuggestions([]); setShowGeoDropdown(false); return }
-    setGeoLoading(true)
-    try {
-      const params = new URLSearchParams({ q: query })
-      if (countryRef.current) params.set('country', countryRef.current)
-      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
-      const data = await res.json()
-      const results: GeoSuggestion[] = data.results ?? []
-      const filtered = results.filter(r => !locationsRef.current.some(l => l.id === r.id))
-      setGeoSuggestions(filtered.slice(0, 10))
-      setShowGeoDropdown(filtered.length > 0)
-    } catch {
+  // Debounced geo search via useEffect — more reliable than timer ref
+  useEffect(() => {
+    if (geoQuery.trim().length < 2) {
       setGeoSuggestions([])
       setShowGeoDropdown(false)
-    } finally {
-      setGeoLoading(false)
+      return
     }
-  }, [])
-
-  const handleGeoInput = (val: string) => {
-    setGeoQuery(val)
-    if (geoTimer.current) clearTimeout(geoTimer.current)
-    if (val.trim().length < 2) { setGeoSuggestions([]); setShowGeoDropdown(false); return }
-    geoTimer.current = setTimeout(() => searchGeo(val), 350)
-  }
+    const controller = new AbortController()
+    const timer = setTimeout(async () => {
+      setGeoLoading(true)
+      try {
+        const params = new URLSearchParams({ q: geoQuery })
+        if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
+        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        const data = await res.json()
+        const results: GeoSuggestion[] = data.results ?? []
+        const filtered = results.filter(r => !state.locations.some(l => l.id === r.id))
+        setGeoSuggestions(filtered.slice(0, 10))
+        setShowGeoDropdown(filtered.length > 0)
+      } catch (err) {
+        if ((err as Error).name !== 'AbortError') {
+          setGeoSuggestions([])
+          setShowGeoDropdown(false)
+        }
+      } finally {
+        setGeoLoading(false)
+      }
+    }, 350)
+    return () => { clearTimeout(timer); controller.abort() }
+  }, [geoQuery, state.geoSearchCountry, state.locations])
 
   const selectGeoSuggestion = (suggestion: GeoSuggestion) => {
     if (!state.locations.some(l => l.id === suggestion.id)) {
@@ -217,7 +215,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               <input
                 className="w-full px-2 py-2 text-sm focus:outline-none bg-transparent"
                 value={geoQuery}
-                onChange={e => handleGeoInput(e.target.value)}
+                onChange={e => setGeoQuery(e.target.value)}
                 onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
                 placeholder={t('settings.locationSearchPlaceholder')}
               />
@@ -472,10 +470,10 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
 
       {/* 6. Başlangıç ve bitiş tarihleri */}
       <CollapsibleSection id="pmax-settings-section-5" title={t('settings.datesTitle')}>
-        <div className="space-y-4">
+        <div className="grid grid-cols-2 gap-6">
           <div>
             <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.startDate')}</label>
-            <input type="date" className={`${inputCls} max-w-[200px]`} value={state.startDate} onChange={e => update({ startDate: e.target.value })} />
+            <input type="date" className={inputCls} value={state.startDate} onChange={e => update({ startDate: e.target.value })} />
           </div>
           <div>
             <label className="block text-[13px] font-medium text-gray-700 mb-1">{t('settings.endDate')}</label>
@@ -486,7 +484,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
                 <input type="radio" name="pmaxEndDate" checked={!!state.endDate} onChange={() => update({ endDate: state.startDate || '' })} className="text-blue-600" />
-                <input type="date" className={`${inputCls} max-w-[200px]`} value={state.endDate} onChange={e => update({ endDate: e.target.value })} min={state.startDate || undefined} />
+                <input type="date" className={inputCls} value={state.endDate} onChange={e => update({ endDate: e.target.value })} min={state.startDate || undefined} />
               </label>
             </div>
           </div>
