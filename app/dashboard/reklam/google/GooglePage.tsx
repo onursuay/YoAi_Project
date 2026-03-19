@@ -519,14 +519,7 @@ export default function GooglePage() {
 
             {/* Inline toolbar (Meta style) */}
             <div className="flex items-center gap-2 px-4 py-2.5 border-b border-gray-100">
-              {!showEmptyState && (
-                <button
-                  onClick={() => setShowPMaxWizard(true)}
-                  className="text-sm text-blue-600 hover:text-blue-800 hover:underline"
-                >
-                  {t('createPMaxCampaign')}
-                </button>
-              )}
+              {/* PMax shortcut removed — use "Kampanya Oluştur" button instead */}
               {/* Action icons */}
               <button
                 onClick={handleRefresh}
