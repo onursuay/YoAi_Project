@@ -1233,6 +1233,10 @@
           "tabVideos": "Videos",
           "tabSitelinks": "Sitelinks",
           "callExtensions": "1 phone call (Optional)",
+          "callsTitle": "Calls",
+          "callsHint": "Account-level phone calls. Add a phone number to your campaign so customers can call you directly.",
+          "callsPlaceholder": "552 789 77 36",
+          "callsPreview": "Preview",
           "noVideoNote": "No suggested videos found",
           "videoTabYouTube": "YouTube",
           "videoTabUpload": "Upload",
@@ -1288,7 +1292,8 @@
           "demographicsDesc": "All demographics (recommended)",
           "audienceNameTitle": "Audience name",
           "audienceNameDesc": "Give your audience a name to save it to your library (optional).",
-          "audienceNamePlaceholder": "Enter audience name"
+          "audienceNamePlaceholder": "Enter audience name",
+          "loadInterests": "Load interests and demographic data"
         },
         "budget": {
           "dailyBudget": "Daily Budget",

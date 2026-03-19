@@ -144,6 +144,9 @@ export interface PMaxWizardState {
     genders: string[]
   }
   dataExclusionsEnabled: boolean
+  /** Phone number for call extension (Google Ads CALL asset) */
+  phoneNumber: string
+  phoneCountryCode: string
 }
 
 export interface PMaxStepProps {
@@ -240,6 +243,8 @@ export const defaultPMaxState: PMaxWizardState = {
     genders: [],
   },
   dataExclusionsEnabled: false,
+  phoneNumber: '',
+  phoneCountryCode: 'TR',
 }
 
 export const inputCls =

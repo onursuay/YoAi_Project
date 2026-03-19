@@ -1233,6 +1233,10 @@
           "tabVideos": "Videolar",
           "tabSitelinks": "Site bağlantıları",
           "callExtensions": "1 telefon araması (Opsiyonel)",
+          "callsTitle": "Aramalar",
+          "callsHint": "Hesap düzeyindeki telefon aramaları. Kampanyanıza telefon numarası ekleyerek müşterilerinizin sizi doğrudan aramasını sağlayın.",
+          "callsPlaceholder": "552 789 77 36",
+          "callsPreview": "Önizleme",
           "noVideoNote": "Önerilebilecek video bulunamadı",
           "videoTabYouTube": "YouTube",
           "videoTabUpload": "Yükle",
@@ -1288,7 +1292,8 @@
           "demographicsDesc": "Tüm demografiler (önerilir)",
           "audienceNameTitle": "Kitle adı",
           "audienceNameDesc": "Kitaplığınıza kaydetmek için kitlenize bir ad verin (isteğe bağlı).",
-          "audienceNamePlaceholder": "Kitle adını girin"
+          "audienceNamePlaceholder": "Kitle adını girin",
+          "loadInterests": "İlgi alanları ve demografik verileri yükle"
         },
         "budget": {
           "dailyBudget": "Günlük Bütçe",

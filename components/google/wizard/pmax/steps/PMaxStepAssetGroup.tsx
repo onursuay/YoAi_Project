@@ -3,7 +3,7 @@
 import { useState, useEffect, useCallback, useRef, type ChangeEvent, type DragEvent } from 'react'
 import {
   ChevronUp, ChevronDown, ChevronRight, Image as ImageIcon, Type, Users, X, Plus, Link2, Video,
-  Upload, Search, Loader2, Heart, ShoppingBag, UserCheck, Layers, Info, Monitor, Globe,
+  Upload, Search, Loader2, Heart, ShoppingBag, UserCheck, Layers, Info, Globe,
 } from 'lucide-react'
 import type {
   PMaxStepProps, PMaxSitelink, PMaxCallToAction, PMaxAssetImage,
@@ -599,9 +599,6 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             {t('signals.tabBrowse')}
           </button>
           <div className="flex-1" />
-          <button type="button" className="text-sm text-blue-600 hover:underline px-2">
-            + {t('signals.newSegment')}
-          </button>
         </div>
 
         {/* Search Tab */}
@@ -713,21 +710,61 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
         )}
       </CollapsibleSection>
 
-      {/* Ek sinyaller accordion */}
+      {/* Ek sinyaller — İlgi alanları ve demografik veriler (from browse API) */}
       <CollapsibleSection title={t('signals.additionalSignals')} defaultOpen={false}>
         <div className="space-y-3">
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <p className="text-[13px] font-medium text-gray-700">{t('signals.interestsTitle')}</p>
-              <p className="text-[12px] text-gray-500">{t('signals.interestsDesc')}</p>
+          <p className="text-[12px] text-gray-500">{t('signals.interestsDesc')}</p>
+          {browseLoading && (
+            <div className="flex items-center gap-2 py-4 text-gray-500">
+              <Loader2 className="w-4 h-4 animate-spin" />
+              <span className="text-sm">{t('signals.loading')}</span>
             </div>
-          </div>
-          <div className="flex items-start gap-3">
-            <div className="flex-1">
-              <p className="text-[13px] font-medium text-gray-700">{t('signals.demographicsTitle')}</p>
-              <p className="text-[12px] text-gray-500">{t('signals.demographicsDesc')}</p>
-            </div>
-          </div>
+          )}
+          {!browseLoading && !browseData && (
+            <button type="button" onClick={loadBrowse} className="text-sm text-blue-600 hover:underline">
+              {t('signals.loadInterests')}
+            </button>
+          )}
+          {browseData && (() => {
+            const interestSections: Array<{ key: BrowseSectionKey; label: string; icon: typeof Users }> = [
+              { key: 'affinity', label: 'Yakınlık', icon: Heart },
+              { key: 'detailedDemographics', label: 'Ayrıntılı demografik veriler', icon: Users },
+              { key: 'lifeEvents', label: 'Yaşam olayları', icon: Users },
+            ]
+            return interestSections.map(section => {
+              const items = browseData[section.key]
+              if (!items || items.length === 0) return null
+              const isExp = expandedSections.has(`extra-${section.key}`)
+              const Icon = section.icon
+              return (
+                <div key={section.key} className="border border-gray-200 rounded-lg overflow-hidden">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setExpandedSections(prev => {
+                        const next = new Set(prev)
+                        const k = `extra-${section.key}`
+                        if (next.has(k)) next.delete(k); else next.add(k)
+                        return next
+                      })
+                    }}
+                    className="w-full flex items-center gap-3 px-4 py-3 hover:bg-gray-50 text-left"
+                  >
+                    {isExp ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
+                    <Icon className="w-4 h-4 text-gray-500 shrink-0" />
+                    <p className="text-sm font-medium text-gray-900 flex-1">{section.label}</p>
+                  </button>
+                  {isExp && (
+                    <div className="border-t border-gray-100 max-h-52 overflow-y-auto">
+                      {items.map(item => (
+                        <AudienceRow key={`${item.category}-${item.id}`} item={item} selected={isSelected(item)} onToggle={() => toggleSegment(item)} />
+                      ))}
+                    </div>
+                  )}
+                </div>
+              )
+            })
+          })()}
         </div>
       </CollapsibleSection>
 
@@ -962,11 +999,33 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               <input className={inputCls} value={state.finalUrl} onChange={e => update({ finalUrl: e.target.value })} placeholder="https://example.com" />
             </Field>
 
-            {/* Aramalar / Call extensions */}
-            <div className="flex items-center gap-2 text-sm text-blue-600">
-              <Monitor className="w-4 h-4" />
-              <span>{t('assetGroup.callExtensions')}</span>
-            </div>
+            {/* Aramalar / Call extensions — functional */}
+            <CollapsibleSection title={t('assetGroup.callsTitle')} defaultOpen={state.phoneNumber.length > 0}>
+              <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.callsHint')}</p>
+              <div className="flex gap-2 items-center max-w-md">
+                <select
+                  className={`${inputCls} w-20`}
+                  value={state.phoneCountryCode}
+                  onChange={e => update({ phoneCountryCode: e.target.value })}
+                >
+                  <option value="TR">+90</option>
+                  <option value="US">+1</option>
+                  <option value="DE">+49</option>
+                  <option value="GB">+44</option>
+                  <option value="FR">+33</option>
+                </select>
+                <input
+                  className={`${inputCls} flex-1`}
+                  value={state.phoneNumber}
+                  onChange={e => update({ phoneNumber: e.target.value.replace(/[^0-9 ]/g, '') })}
+                  placeholder={t('assetGroup.callsPlaceholder')}
+                  maxLength={15}
+                />
+              </div>
+              {state.phoneNumber.trim() && (
+                <p className="text-[12px] text-gray-400 mt-1">{t('assetGroup.callsPreview')}: +{state.phoneCountryCode === 'TR' ? '90' : state.phoneCountryCode === 'US' ? '1' : state.phoneCountryCode === 'DE' ? '49' : state.phoneCountryCode === 'GB' ? '44' : '33'} {state.phoneNumber}</p>
+              )}
+            </CollapsibleSection>
 
             {/* Headlines (3-15, max 30 chars) */}
             <CollapsibleSection
