@@ -58,8 +58,8 @@ interface GeoSuggestion {
 export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepProps) {
   const [geoQuery, setGeoQuery] = useState('')
   const [geoLoading, setGeoLoading] = useState(false)
-  const [geoSuggestions, setGeoSuggestions] = useState<GeoSuggestion[]>([])
-  const [showGeoDropdown, setShowGeoDropdown] = useState(false)
+  const [geoResults, setGeoResults] = useState<GeoSuggestion[]>([])
+  const [geoSearched, setGeoSearched] = useState(false)
   // Location scope: 'all' | 'turkey' | 'custom'
   const [locationScope, setLocationScope] = useState<'all' | 'turkey' | 'custom'>(
     state.locations.length > 0 || state.proximityLocations.length > 0 ? 'custom'
@@ -84,115 +84,54 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
   const [newEnd, setNewEnd] = useState(0)
   const [newEndMin, setNewEndMin] = useState<PMaxMinute>('ZERO')
 
-  // Close dropdown on outside click
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (geoDropdownRef.current && !geoDropdownRef.current.contains(e.target as Node)) {
-        setShowGeoDropdown(false)
-      }
+  // ===== GEO SEARCH — Same proven approach as Search wizard =====
+  // Simple async function, triggered by button click or Enter key
+  const searchGeo = async (query?: string) => {
+    const q = (query ?? geoQuery).trim()
+    if (q.length < 2) return
+    setGeoLoading(true)
+    setGeoSearched(true)
+    try {
+      const params = new URLSearchParams({ q })
+      if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
+      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
+      const data = await res.json()
+      const results: GeoSuggestion[] = data.results ?? []
+      setGeoResults(results.filter(r => !state.locations.some(l => l.id === r.id)))
+    } catch {
+      setGeoResults([])
+    } finally {
+      setGeoLoading(false)
     }
-    document.addEventListener('mousedown', handler)
-    return () => document.removeEventListener('mousedown', handler)
-  }, [])
+  }
 
-  // Refs to avoid stale closures in useEffect
-  const locationsRef = useRef(state.locations)
-  locationsRef.current = state.locations
-  const countryRef = useRef(state.geoSearchCountry)
-  countryRef.current = state.geoSearchCountry
-
-  // Debounced geo search — only re-runs when geoQuery changes
-  useEffect(() => {
-    const q = geoQuery.trim()
-    if (q.length < 2) {
-      setGeoSuggestions([])
-      setShowGeoDropdown(false)
-      return
+  // Advanced dialog — location search (same approach)
+  const searchAdvGeo = async () => {
+    if (advGeoQuery.trim().length < 2) return
+    setAdvGeoLoading(true)
+    try {
+      const params = new URLSearchParams({ q: advGeoQuery })
+      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
+      const data = await res.json()
+      setAdvGeoResults((data.results ?? []).slice(0, 15))
+    } catch {
+      setAdvGeoResults([])
+    } finally {
+      setAdvGeoLoading(false)
     }
-    let cancelled = false
-    const timer = setTimeout(async () => {
-      setGeoLoading(true)
-      try {
-        const params = new URLSearchParams({ q })
-        if (countryRef.current) params.set('country', countryRef.current)
-        const url = `/api/integrations/google-ads/geo-targets?${params}`
-        console.log('[PMax GeoSearch] fetching:', url)
-        const res = await fetch(url)
-        const data = await res.json()
-        console.log('[PMax GeoSearch] response:', { ok: res.ok, status: res.status, resultCount: data.results?.length ?? 0, error: data.error })
-        if (cancelled) return
-        if (!res.ok || data.error) {
-          console.warn('[PMax GeoSearch] API error:', data.error)
-          setGeoSuggestions([])
-          setShowGeoDropdown(false)
-          setGeoLoading(false)
-          return
-        }
-        const results: GeoSuggestion[] = data.results ?? []
-        const filtered = results.filter(r => !locationsRef.current.some(l => l.id === r.id))
-        console.log('[PMax GeoSearch] filtered results:', filtered.length)
-        setGeoSuggestions(filtered.slice(0, 10))
-        setShowGeoDropdown(filtered.length > 0)
-      } catch (err) {
-        if (!cancelled) {
-          console.error('[PMax GeoSearch] fetch error:', err)
-          setGeoSuggestions([])
-          setShowGeoDropdown(false)
-        }
-      } finally {
-        if (!cancelled) setGeoLoading(false)
-      }
-    }, 400)
-    return () => { cancelled = true; clearTimeout(timer) }
-  // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [geoQuery])
+  }
 
-  // Advanced dialog — location search
-  useEffect(() => {
-    if (advGeoQuery.trim().length < 2) { setAdvGeoResults([]); return }
-    const controller = new AbortController()
-    const timer = setTimeout(async () => {
-      setAdvGeoLoading(true)
-      try {
-        const params = new URLSearchParams({ q: advGeoQuery })
-        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
-        if (!res.ok) { setAdvGeoLoading(false); return }
-        const data = await res.json()
-        setAdvGeoResults((data.results ?? []).slice(0, 15))
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') setAdvGeoResults([])
-      } finally {
-        setAdvGeoLoading(false)
-      }
-    }, 400)
-    return () => { clearTimeout(timer); controller.abort() }
-  }, [advGeoQuery])
-
-  // Advanced dialog — radius search
-  useEffect(() => {
-    if (radiusPlaceName.trim().length < 2) { setRadiusSearchResults([]); return }
-    const controller = new AbortController()
-    const timer = setTimeout(async () => {
-      try {
-        const params = new URLSearchParams({ q: radiusPlaceName })
-        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
-        if (!res.ok) return
-        const data = await res.json()
-        setRadiusSearchResults((data.results ?? []).slice(0, 10))
-      } catch (err) {
-        if ((err as Error).name !== 'AbortError') setRadiusSearchResults([])
-      }
-    }, 400)
-    return () => { clearTimeout(timer); controller.abort() }
-  }, [radiusPlaceName])
-
-  const selectGeoSuggestion = (suggestion: GeoSuggestion) => {
-    if (!state.locations.some(l => l.id === suggestion.id)) {
-      update({ locations: [...state.locations, { ...suggestion, isNegative: false }] })
+  // Radius search (same approach)
+  const searchRadius = async () => {
+    if (radiusPlaceName.trim().length < 2) return
+    try {
+      const params = new URLSearchParams({ q: radiusPlaceName })
+      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
+      const data = await res.json()
+      setRadiusSearchResults((data.results ?? []).slice(0, 10))
+    } catch {
+      setRadiusSearchResults([])
     }
-    setGeoQuery('')
-    setGeoSuggestions([])
-    setShowGeoDropdown(false)
   }
 
   const removeLocation = (id: string) => {
@@ -278,12 +217,20 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 <input
                   className="w-full px-2 py-2 text-[13px] focus:outline-none bg-transparent"
                   value={geoQuery}
-                  onChange={e => setGeoQuery(e.target.value)}
-                  onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
+                  onChange={e => { setGeoQuery(e.target.value); setGeoSearched(false) }}
+                  onKeyDown={e => e.key === 'Enter' && searchGeo()}
                   placeholder={t('settings.locationSearchPlaceholder')}
                 />
                 {geoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
               </div>
+              <button
+                type="button"
+                onClick={() => searchGeo()}
+                disabled={geoLoading || geoQuery.trim().length < 2}
+                className="px-3 py-2 text-[13px] font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
+              >
+                <Search className="w-4 h-4" />
+              </button>
               <button
                 type="button"
                 onClick={() => setShowAdvancedLocation(true)}
@@ -293,73 +240,71 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               </button>
             </div>
 
-            {/* Loading state */}
-            {geoLoading && geoQuery.trim().length >= 2 && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex items-center gap-2">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
-                <span className="text-[13px] text-gray-500">{t('settings.locationSearching')}</span>
-              </div>
+            {/* No results */}
+            {geoSearched && !geoLoading && geoResults.length === 0 && (
+              <p className="text-[12px] text-gray-400 mt-2">{t('settings.locationNoResults')}</p>
             )}
 
-            {/* No results state */}
-            {!geoLoading && geoQuery.trim().length >= 2 && geoSuggestions.length === 0 && showGeoDropdown === false && (
-              <p className="text-[12px] text-gray-400 mt-1">{t('settings.locationNoResults')}</p>
-            )}
-
-            {/* Autocomplete dropdown with actions */}
-            {showGeoDropdown && geoSuggestions.length > 0 && (
-              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-72 overflow-y-auto">
-                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between">
+            {/* Results with Dahil et / Hariç Tut / Yakınlarda actions */}
+            {geoResults.length > 0 && (
+              <div className="mt-2 border border-gray-200 rounded-lg overflow-hidden max-h-72 overflow-y-auto">
+                <div className="px-3 py-2 border-b border-gray-100 flex items-center justify-between bg-gray-50">
                   <span className="text-[12px] font-medium text-gray-500">{t('settings.locationMatches')}</span>
                   <span className="text-[12px] text-gray-400">{t('settings.locationReach')}</span>
                 </div>
-                {geoSuggestions.map((s, idx) => (
-                  <div
-                    key={s.id}
-                    className={`flex items-center justify-between px-3 py-2 hover:bg-blue-50 group ${idx === 0 ? 'bg-blue-50/50' : ''}`}
-                  >
-                    <div className="flex-1 min-w-0">
-                      <p className="text-[13px] text-gray-900 truncate">{s.name} <span className="text-gray-400">{s.targetType.toLowerCase()}</span></p>
+                {geoResults.map((s, idx) => {
+                  const added = state.locations.some(l => l.id === s.id)
+                  return (
+                    <div
+                      key={s.id}
+                      className={`flex items-center justify-between px-3 py-2 hover:bg-blue-50 border-b border-gray-100 last:border-0 ${idx === 0 ? 'bg-blue-50/30' : ''} ${added ? 'opacity-40' : ''}`}
+                    >
+                      <div className="flex-1 min-w-0">
+                        <p className="text-[13px] text-gray-900 truncate">{s.name} <span className="text-gray-400">{s.targetType.toLowerCase()}</span></p>
+                      </div>
+                      {!added && (
+                        <div className="flex items-center gap-2 shrink-0 ml-2">
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!state.locations.some(l => l.id === s.id)) {
+                                update({ locations: [...state.locations, { ...s, isNegative: false }] })
+                              }
+                              setGeoResults(prev => prev.filter(r => r.id !== s.id))
+                            }}
+                            className="text-[12px] text-blue-600 hover:underline font-medium"
+                          >
+                            {t('settings.locationInclude')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!state.locations.some(l => l.id === s.id)) {
+                                update({ locations: [...state.locations, { ...s, isNegative: true }] })
+                              }
+                              setGeoResults(prev => prev.filter(r => r.id !== s.id))
+                            }}
+                            className="text-[12px] text-gray-500 hover:text-red-600 hover:underline font-medium"
+                          >
+                            {t('settings.locationExclude')}
+                          </button>
+                          <button
+                            type="button"
+                            onClick={() => {
+                              if (!state.locations.some(l => l.id === s.id)) {
+                                update({ locations: [...state.locations, { ...s, isNegative: false, action: 'NEARBY' as const }] })
+                              }
+                              setGeoResults(prev => prev.filter(r => r.id !== s.id))
+                            }}
+                            className="text-[12px] text-gray-500 hover:text-blue-600 hover:underline font-medium"
+                          >
+                            {t('settings.locationNearby')}
+                          </button>
+                        </div>
+                      )}
                     </div>
-                    <div className="flex items-center gap-2 shrink-0 ml-2">
-                      <button
-                        type="button"
-                        onClick={() => { selectGeoSuggestion(s); }}
-                        className="text-[12px] text-blue-600 hover:underline font-medium"
-                      >
-                        {t('settings.locationInclude')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!state.locations.some(l => l.id === s.id)) {
-                            update({ locations: [...state.locations, { ...s, isNegative: true }] })
-                          }
-                          setGeoQuery('')
-                          setGeoSuggestions([])
-                          setShowGeoDropdown(false)
-                        }}
-                        className="text-[12px] text-gray-500 hover:text-red-600 hover:underline font-medium"
-                      >
-                        {t('settings.locationExclude')}
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => {
-                          if (!state.locations.some(l => l.id === s.id)) {
-                            update({ locations: [...state.locations, { ...s, isNegative: false, action: 'NEARBY' as const }] })
-                          }
-                          setGeoQuery('')
-                          setGeoSuggestions([])
-                          setShowGeoDropdown(false)
-                        }}
-                        className="text-[12px] text-gray-500 hover:text-blue-600 hover:underline font-medium"
-                      >
-                        {t('settings.locationNearby')}
-                      </button>
-                    </div>
-                  </div>
-                ))}
+                  )
+                })}
               </div>
             )}
           </div>
@@ -452,9 +397,16 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                         className="w-full px-2 py-2.5 text-[13px] focus:outline-none bg-transparent"
                         value={advGeoQuery}
                         onChange={e => setAdvGeoQuery(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && searchAdvGeo()}
                         placeholder={t('settings.advancedSearchPlaceholder')}
                       />
-                      {advGeoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
+                      {advGeoLoading ? (
+                        <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />
+                      ) : (
+                        <button type="button" onClick={searchAdvGeo} disabled={advGeoQuery.trim().length < 2} className="mr-2 text-gray-400 hover:text-blue-600 disabled:opacity-30">
+                          <Search className="w-4 h-4" />
+                        </button>
+                      )}
                     </div>
                     <p className="text-[11px] text-gray-400 mt-1">{t('settings.advancedSearchHint')}</p>
 
@@ -523,6 +475,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                         className="w-full px-2 py-2.5 text-[13px] focus:outline-none bg-transparent"
                         value={radiusPlaceName}
                         onChange={e => setRadiusPlaceName(e.target.value)}
+                        onKeyDown={e => e.key === 'Enter' && searchRadius()}
                         placeholder={t('settings.radiusPlaceholder')}
                       />
                     </div>
