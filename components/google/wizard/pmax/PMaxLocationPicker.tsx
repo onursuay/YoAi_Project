@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { Search, X, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation } from './shared/PMaxWizardTypes'
 import { inputCls, PMaxCountryOptions } from './shared/PMaxWizardTypes'
@@ -34,35 +34,46 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
   const [showDropdown, setShowDropdown] = useState(false)
   const [advancedOpen, setAdvancedOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
+  // Separate scope state to fix radio selection bug
+  const [locationScope, setLocationScope] = useState<'all' | 'turkey' | 'custom'>(
+    state.locations.length > 0 || state.proximityTargets.length > 0 ? 'custom'
+      : state.geoSearchCountry === 'TR' ? 'turkey'
+      : 'all'
+  )
 
-  const searchGeo = useCallback(async (q: string) => {
-    if (q.trim().length < MIN_CHARS) {
+  // Refs for stable closure in useEffect
+  const countryRef = useRef(state.geoSearchCountry)
+  countryRef.current = state.geoSearchCountry
+
+  // Debounced search — inline fetch, no useCallback dependency issues
+  useEffect(() => {
+    const q = query.trim()
+    if (q.length < MIN_CHARS) {
       setResults([])
       setShowDropdown(false)
       return
     }
-    setLoading(true)
-    try {
-      const params = new URLSearchParams({ q: q.trim() })
-      if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
-      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
-      const data = await res.json()
-      const list = data.results ?? []
-      setResults(list)
-      setShowDropdown(list.length > 0)
-    } catch {
-      setResults([])
-    } finally {
-      setLoading(false)
-    }
-  }, [state.geoSearchCountry])
-
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      searchGeo(query)
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      setLoading(true)
+      try {
+        const params = new URLSearchParams({ q })
+        if (countryRef.current) params.set('country', countryRef.current)
+        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
+        if (cancelled) return
+        const data = await res.json()
+        if (cancelled) return
+        const list: GeoSuggestion[] = data.results ?? []
+        setResults(list)
+        setShowDropdown(list.length > 0)
+      } catch {
+        if (!cancelled) { setResults([]); setShowDropdown(false) }
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
     }, DEBOUNCE_MS)
-    return () => clearTimeout(timer)
-  }, [query, searchGeo])
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [query])
 
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
@@ -116,14 +127,14 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
     <div ref={containerRef} className="space-y-3">
       <p className="text-sm text-gray-600 mb-2">{t('settings.locationsLabel')}</p>
 
-      {/* Scope radios */}
+      {/* Scope radios — uses local locationScope state for reliable selection */}
       <div className="space-y-2">
         <label className="flex items-center gap-2 cursor-pointer">
           <input
             type="radio"
             name="pmaxLocScope"
-            checked={state.locations.length === 0 && state.proximityTargets.length === 0 && !state.geoSearchCountry}
-            onChange={() => update({ locations: [], proximityTargets: [], geoSearchCountry: '' })}
+            checked={locationScope === 'all'}
+            onChange={() => { setLocationScope('all'); update({ locations: [], proximityTargets: [], geoSearchCountry: '' }) }}
             className="text-blue-600"
           />
           <span className="text-sm">{t('settings.locationsAllCountries')}</span>
@@ -132,8 +143,8 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
           <input
             type="radio"
             name="pmaxLocScope"
-            checked={state.geoSearchCountry === 'TR' && state.locations.length === 0 && state.proximityTargets.length === 0}
-            onChange={() => update({ geoSearchCountry: 'TR', locations: [], proximityTargets: [] })}
+            checked={locationScope === 'turkey'}
+            onChange={() => { setLocationScope('turkey'); update({ geoSearchCountry: 'TR', locations: [], proximityTargets: [] }) }}
             className="text-blue-600"
           />
           <span className="text-sm">{t('location.countryTR')}</span>
@@ -142,12 +153,8 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
           <input
             type="radio"
             name="pmaxLocScope"
-            checked={
-              state.locations.length > 0 ||
-              state.proximityTargets.length > 0 ||
-              (state.geoSearchCountry !== '' && state.geoSearchCountry !== 'TR')
-            }
-            onChange={() => update({ geoSearchCountry: '' })}
+            checked={locationScope === 'custom'}
+            onChange={() => { setLocationScope('custom'); update({ geoSearchCountry: '' }) }}
             className="text-blue-600"
           />
           <span className="text-sm">{t('settings.locationsCustom')}</span>
