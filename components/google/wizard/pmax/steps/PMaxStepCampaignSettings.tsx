@@ -103,34 +103,47 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
 
   // Debounced geo search — only re-runs when geoQuery changes
   useEffect(() => {
-    if (geoQuery.trim().length < 2) {
+    const q = geoQuery.trim()
+    if (q.length < 2) {
       setGeoSuggestions([])
       setShowGeoDropdown(false)
       return
     }
-    const controller = new AbortController()
+    let cancelled = false
     const timer = setTimeout(async () => {
       setGeoLoading(true)
       try {
-        const params = new URLSearchParams({ q: geoQuery })
+        const params = new URLSearchParams({ q })
         if (countryRef.current) params.set('country', countryRef.current)
-        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
-        if (!res.ok) { setGeoLoading(false); return }
+        const url = `/api/integrations/google-ads/geo-targets?${params}`
+        console.log('[PMax GeoSearch] fetching:', url)
+        const res = await fetch(url)
         const data = await res.json()
+        console.log('[PMax GeoSearch] response:', { ok: res.ok, status: res.status, resultCount: data.results?.length ?? 0, error: data.error })
+        if (cancelled) return
+        if (!res.ok || data.error) {
+          console.warn('[PMax GeoSearch] API error:', data.error)
+          setGeoSuggestions([])
+          setShowGeoDropdown(false)
+          setGeoLoading(false)
+          return
+        }
         const results: GeoSuggestion[] = data.results ?? []
         const filtered = results.filter(r => !locationsRef.current.some(l => l.id === r.id))
+        console.log('[PMax GeoSearch] filtered results:', filtered.length)
         setGeoSuggestions(filtered.slice(0, 10))
         setShowGeoDropdown(filtered.length > 0)
       } catch (err) {
-        if ((err as Error).name !== 'AbortError') {
+        if (!cancelled) {
+          console.error('[PMax GeoSearch] fetch error:', err)
           setGeoSuggestions([])
           setShowGeoDropdown(false)
         }
       } finally {
-        setGeoLoading(false)
+        if (!cancelled) setGeoLoading(false)
       }
     }, 400)
-    return () => { clearTimeout(timer); controller.abort() }
+    return () => { cancelled = true; clearTimeout(timer) }
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [geoQuery])
 
@@ -279,6 +292,19 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 {t('settings.advancedSearch')}
               </button>
             </div>
+
+            {/* Loading state */}
+            {geoLoading && geoQuery.trim().length >= 2 && (
+              <div className="absolute z-20 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg p-4 flex items-center gap-2">
+                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                <span className="text-[13px] text-gray-500">{t('settings.locationSearching')}</span>
+              </div>
+            )}
+
+            {/* No results state */}
+            {!geoLoading && geoQuery.trim().length >= 2 && geoSuggestions.length === 0 && showGeoDropdown === false && (
+              <p className="text-[12px] text-gray-400 mt-1">{t('settings.locationNoResults')}</p>
+            )}
 
             {/* Autocomplete dropdown with actions */}
             {showGeoDropdown && geoSuggestions.length > 0 && (

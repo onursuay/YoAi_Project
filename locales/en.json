@@ -1122,6 +1122,8 @@
           "locationExcluded": "Excluded",
           "locationNearbyTag": "Nearby",
           "locationRadius": "radius area",
+          "locationSearching": "Searching locations...",
+          "locationNoResults": "No results found. Try a different search.",
           "locationSearchHint": "E.g., country, city, region, or postal code",
           "radiusPlaceholder": "Enter place name, address, or coordinates",
           "radiusPinMode": "Pin mode",

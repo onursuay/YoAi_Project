@@ -1122,6 +1122,8 @@
           "locationExcluded": "Hariç tutuldu",
           "locationNearbyTag": "Yakınlarda",
           "locationRadius": "çevresi yarıçap",
+          "locationSearching": "Konum aranıyor...",
+          "locationNoResults": "Sonuç bulunamadı. Farklı bir arama deneyin.",
           "locationSearchHint": "Örneğin; ülke, şehir, bölge veya posta kodu",
           "radiusPlaceholder": "Yer adı, adres veya koordinatları girin",
           "radiusPinMode": "Sabitleme modu",
