@@ -79,17 +79,22 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Use ref to avoid stale closure in debounced search
+  const locationsRef = useRef(state.locations)
+  locationsRef.current = state.locations
+  const countryRef = useRef(state.geoSearchCountry)
+  countryRef.current = state.geoSearchCountry
+
   const searchGeo = useCallback(async (query: string) => {
     if (query.trim().length < 2) { setGeoSuggestions([]); setShowGeoDropdown(false); return }
     setGeoLoading(true)
     try {
       const params = new URLSearchParams({ q: query })
-      if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
+      if (countryRef.current) params.set('country', countryRef.current)
       const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
       const data = await res.json()
       const results: GeoSuggestion[] = data.results ?? []
-      // Filter out already-added locations
-      const filtered = results.filter(r => !state.locations.some(l => l.id === r.id))
+      const filtered = results.filter(r => !locationsRef.current.some(l => l.id === r.id))
       setGeoSuggestions(filtered.slice(0, 10))
       setShowGeoDropdown(filtered.length > 0)
     } catch {
@@ -98,7 +103,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
     } finally {
       setGeoLoading(false)
     }
-  }, [state.geoSearchCountry, state.locations])
+  }, [])
 
   const handleGeoInput = (val: string) => {
     setGeoQuery(val)
@@ -207,16 +212,16 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
           </div>
 
           <div className="relative" ref={geoDropdownRef}>
-            <div className="relative">
-              <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <div className="flex items-center border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+              <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
               <input
-                className={`${inputCls} pl-9 pr-9`}
+                className="w-full px-2 py-2 text-sm focus:outline-none bg-transparent"
                 value={geoQuery}
                 onChange={e => handleGeoInput(e.target.value)}
                 onFocus={() => { if (geoSuggestions.length > 0) setShowGeoDropdown(true) }}
                 placeholder={t('settings.locationSearchPlaceholder')}
               />
-              {geoLoading && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />}
+              {geoLoading && <Loader2 className="w-4 h-4 animate-spin text-blue-500 mr-3 shrink-0" />}
             </div>
             {/* Autocomplete dropdown */}
             {showGeoDropdown && geoSuggestions.length > 0 && (
