@@ -108,10 +108,10 @@ function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
         <div className="flex flex-wrap gap-3">
           {assets.map(asset => (
             <div key={asset.id} className="relative group w-24 h-24 rounded-lg overflow-hidden border border-gray-200 bg-gray-50">
-              {(asset.previewUrl || asset.url) ? (
+              {(asset.url) ? (
                 // eslint-disable-next-line @next/next/no-img-element
                 <img
-                  src={asset.previewUrl || asset.url}
+                  src={asset.url}
                   alt={asset.name || role}
                   className="w-full h-full object-cover"
                 />
@@ -846,7 +846,7 @@ function AdPreview({ state, t }: { state: PMaxStepProps['state']; t: PMaxStepPro
   const desc = state.descriptions.find(d => d.trim()) || ''
   const businessName = state.businessName || t('assetGroup.previewBusiness')
   const url = state.finalUrl || 'https://example.com'
-  const logoPreview = state.logos[0]?.previewUrl || state.logos[0]?.url
+  const logoPreview = state.logos[0]?.url
 
   return (
     <div className="border border-gray-200 rounded-lg p-4 bg-white max-w-[280px]">
@@ -907,14 +907,13 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
     const newImages: PMaxAssetImage[] = files.map(f => ({
       id: `img-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: f.name,
-      file: f,
-      previewUrl: URL.createObjectURL(f),
+      url: URL.createObjectURL(f),
     }))
     update({ images: [...state.images, ...newImages].slice(0, 20) })
   }
   const removeImage = (id: string) => {
     const img = state.images.find(i => i.id === id)
-    if (img?.previewUrl) URL.revokeObjectURL(img.previewUrl)
+    if (img?.url?.startsWith?.('blob:')) URL.revokeObjectURL(img.url)
     update({ images: state.images.filter(i => i.id !== id) })
   }
 
@@ -923,14 +922,13 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
     const newLogos: PMaxAssetImage[] = files.map(f => ({
       id: `logo-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
       name: f.name,
-      file: f,
-      previewUrl: URL.createObjectURL(f),
+      url: URL.createObjectURL(f),
     }))
     update({ logos: [...state.logos, ...newLogos].slice(0, 5) })
   }
   const removeLogo = (id: string) => {
     const logo = state.logos.find(l => l.id === id)
-    if (logo?.previewUrl) URL.revokeObjectURL(logo.previewUrl)
+    if (logo?.url?.startsWith?.('blob:')) URL.revokeObjectURL(logo.url)
     update({ logos: state.logos.filter(l => l.id !== id) })
   }
 
@@ -1164,8 +1162,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                 const newVideos: PMaxAssetImage[] = files.map(f => ({
                   id: `vid-${Date.now()}-${Math.random().toString(36).slice(2, 8)}`,
                   name: f.name,
-                  file: f,
-                  previewUrl: URL.createObjectURL(f),
+                  url: URL.createObjectURL(f),
                 }))
                 update({ videos: [...state.videos, ...newVideos].slice(0, 5) })
               }}
@@ -1176,7 +1173,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               }}
               onRemove={(id) => {
                 const vid = state.videos.find(v => v.id === id)
-                if (vid?.previewUrl) URL.revokeObjectURL(vid.previewUrl)
+                if (vid?.url?.startsWith?.('blob:')) URL.revokeObjectURL(vid.url)
                 update({ videos: state.videos.filter(v => v.id !== id) })
               }}
               maxCount={5}
