@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useRef, useCallback, useEffect } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import { ChevronUp, ChevronDown, Plus, X, Clock, Search, MapPin, Loader2, Shield, Info } from 'lucide-react'
 import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType, PMaxSelectedLocation, PMaxProximityLocation, PMaxRadiusUnit } from '../shared/PMaxWizardTypes'
 import { inputCls, PMaxLanguageOptions, PMaxCountryOptions, PMaxDaysOfWeek, PMaxAllDevices } from '../shared/PMaxWizardTypes'
@@ -95,7 +95,13 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
-  // Debounced geo search via useEffect — more reliable than timer ref
+  // Refs to avoid stale closures in useEffect
+  const locationsRef = useRef(state.locations)
+  locationsRef.current = state.locations
+  const countryRef = useRef(state.geoSearchCountry)
+  countryRef.current = state.geoSearchCountry
+
+  // Debounced geo search — only re-runs when geoQuery changes
   useEffect(() => {
     if (geoQuery.trim().length < 2) {
       setGeoSuggestions([])
@@ -107,11 +113,12 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       setGeoLoading(true)
       try {
         const params = new URLSearchParams({ q: geoQuery })
-        if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
+        if (countryRef.current) params.set('country', countryRef.current)
         const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        if (!res.ok) { setGeoLoading(false); return }
         const data = await res.json()
         const results: GeoSuggestion[] = data.results ?? []
-        const filtered = results.filter(r => !state.locations.some(l => l.id === r.id))
+        const filtered = results.filter(r => !locationsRef.current.some(l => l.id === r.id))
         setGeoSuggestions(filtered.slice(0, 10))
         setShowGeoDropdown(filtered.length > 0)
       } catch (err) {
@@ -122,9 +129,10 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       } finally {
         setGeoLoading(false)
       }
-    }, 350)
+    }, 400)
     return () => { clearTimeout(timer); controller.abort() }
-  }, [geoQuery, state.geoSearchCountry, state.locations])
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [geoQuery])
 
   // Advanced dialog — location search
   useEffect(() => {
@@ -135,6 +143,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       try {
         const params = new URLSearchParams({ q: advGeoQuery })
         const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        if (!res.ok) { setAdvGeoLoading(false); return }
         const data = await res.json()
         setAdvGeoResults((data.results ?? []).slice(0, 15))
       } catch (err) {
@@ -142,7 +151,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       } finally {
         setAdvGeoLoading(false)
       }
-    }, 350)
+    }, 400)
     return () => { clearTimeout(timer); controller.abort() }
   }, [advGeoQuery])
 
@@ -154,12 +163,13 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
       try {
         const params = new URLSearchParams({ q: radiusPlaceName })
         const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`, { signal: controller.signal })
+        if (!res.ok) return
         const data = await res.json()
         setRadiusSearchResults((data.results ?? []).slice(0, 10))
       } catch (err) {
         if ((err as Error).name !== 'AbortError') setRadiusSearchResults([])
       }
-    }, 350)
+    }, 400)
     return () => { clearTimeout(timer); controller.abort() }
   }, [radiusPlaceName])
 
@@ -479,11 +489,12 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
 
               {advancedLocationTab === 'radius' && (
                 <div className="space-y-4">
-                  {/* Radius search input + controls */}
-                  <div className="flex items-center gap-3">
-                    <div className="flex items-center flex-1 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500">
+                  {/* Radius: yer adı + mesafe + birim — Google Ads layout */}
+                  <div className="flex items-center gap-2">
+                    <div className="flex items-center flex-1 min-w-0 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-blue-500 focus-within:border-transparent">
+                      <Search className="w-4 h-4 text-gray-400 ml-3 shrink-0" />
                       <input
-                        className="w-full px-3 py-2.5 text-[13px] focus:outline-none bg-transparent"
+                        className="w-full px-2 py-2.5 text-[13px] focus:outline-none bg-transparent"
                         value={radiusPlaceName}
                         onChange={e => setRadiusPlaceName(e.target.value)}
                         placeholder={t('settings.radiusPlaceholder')}
@@ -491,15 +502,14 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                     </div>
                     <input
                       type="number"
-                      className={`${inputCls} w-20 text-center`}
+                      className="w-16 px-2 py-2.5 text-[13px] text-center border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={radiusValue}
                       onChange={e => setRadiusValue(e.target.value)}
                       min={1}
                       max={50}
-                      placeholder="20"
                     />
                     <select
-                      className={`${inputCls} w-20`}
+                      className="w-16 px-2 py-2.5 text-[13px] border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                       value={radiusUnit}
                       onChange={e => setRadiusUnit(e.target.value as PMaxRadiusUnit)}
                     >
