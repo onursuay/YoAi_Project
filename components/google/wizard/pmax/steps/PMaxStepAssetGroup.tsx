@@ -997,34 +997,6 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
               <input className={inputCls} value={state.finalUrl} onChange={e => update({ finalUrl: e.target.value })} placeholder="https://example.com" />
             </Field>
 
-            {/* Aramalar / Call extensions — functional */}
-            <CollapsibleSection title={t('assetGroup.callsTitle')} defaultOpen={state.phoneNumber.length > 0}>
-              <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.callsHint')}</p>
-              <div className="flex gap-2 items-center max-w-md">
-                <select
-                  className={`${inputCls} w-20`}
-                  value={state.phoneCountryCode}
-                  onChange={e => update({ phoneCountryCode: e.target.value })}
-                >
-                  <option value="TR">+90</option>
-                  <option value="US">+1</option>
-                  <option value="DE">+49</option>
-                  <option value="GB">+44</option>
-                  <option value="FR">+33</option>
-                </select>
-                <input
-                  className={`${inputCls} flex-1`}
-                  value={state.phoneNumber}
-                  onChange={e => update({ phoneNumber: e.target.value.replace(/[^0-9 ]/g, '') })}
-                  placeholder={t('assetGroup.callsPlaceholder')}
-                  maxLength={15}
-                />
-              </div>
-              {state.phoneNumber.trim() && (
-                <p className="text-[12px] text-gray-400 mt-1">{t('assetGroup.callsPreview')}: +{state.phoneCountryCode === 'TR' ? '90' : state.phoneCountryCode === 'US' ? '1' : state.phoneCountryCode === 'DE' ? '49' : state.phoneCountryCode === 'GB' ? '44' : '33'} {state.phoneNumber}</p>
-              )}
-            </CollapsibleSection>
-
             {/* Headlines (3-15, max 30 chars) */}
             <CollapsibleSection
               title={t('assetGroup.headlinesTitle')}
