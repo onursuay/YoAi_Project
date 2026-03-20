@@ -391,19 +391,6 @@ export default function GooglePage() {
   const isLoading = activeTab === 'kampanyalar' ? data.campaignsLoading : activeTab === 'reklam-gruplari' ? data.adGroupsLoading : data.adsLoading
   const showTableShimmer = activeTab === 'kampanyalar' && data.campaignsRefreshing && data.campaigns.length > 0
 
-  if (connection.isLoading) {
-    return (
-      <>
-        <Topbar title={t('title')} description={t('description')} />
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-          <div className="flex items-center justify-center py-12">
-            <p className="text-gray-600">{t('loading')}</p>
-          </div>
-        </div>
-      </>
-    )
-  }
-
   return (
     <>
       <Topbar
