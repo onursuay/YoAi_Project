@@ -76,12 +76,12 @@ export async function GET(req: NextRequest) {
     if (ds) {
       tree = ds.browseTree
       searchIndex = ds.searchIndex
-    } else if (!isProduction && !isAudienceStorageConfigured()) {
+    } else if (!isProduction) {
       const dev = getDevFallbackDataset()
       tree = dev.browseTree
       searchIndex = dev.searchIndex
       source = 'dev-fallback'
-      console.log('[AUDIENCE_DEV_FALLBACK_ACTIVE] Using in-memory seeded dataset (Supabase not configured)')
+      console.log('[AUDIENCE_DEV_FALLBACK_ACTIVE] Using in-memory seeded dataset (audience dataset missing)')
     }
 
     // ── mode=search ──

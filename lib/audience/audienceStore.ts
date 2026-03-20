@@ -6,13 +6,21 @@
  * Write: admin refresh upserts to audience_cache
  */
 
-import { supabase } from '@/lib/supabase/client'
+import { createClient } from '@supabase/supabase-js'
+import { supabase as supabaseService } from '@/lib/supabase/client'
 import type { AudienceDataset, AudienceDatasetMeta } from '@/lib/audience/types'
 
 const DEFAULT_KEY = 'google_ads_audience_tr'
 
+const supabaseUrl = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
+const supabaseAnonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
+
+// Audience reads should work with anon key + RLS (service role is only needed for writes/admin refresh).
+const supabaseRead =
+  supabaseUrl && supabaseAnonKey ? createClient(supabaseUrl, supabaseAnonKey, { auth: { persistSession: false } }) : null
+
 export function isAudienceStorageConfigured(): boolean {
-  return !!supabase
+  return !!supabaseService || !!supabaseRead
 }
 
 export async function isAudienceDatasetReady(): Promise<boolean> {
@@ -22,13 +30,14 @@ export async function isAudienceDatasetReady(): Promise<boolean> {
 
 /** Read dataset from Supabase audience_cache. */
 export async function getAudienceDataset(): Promise<AudienceDataset | null> {
-  if (!supabase) {
-    console.log('[AUDIENCE_SUPABASE_MISSING] Supabase client not configured')
+  const client = supabaseService ?? supabaseRead
+  if (!client) {
+    console.log('[AUDIENCE_SUPABASE_MISSING] Supabase read client not configured (service or anon)')
     return null
   }
   const start = Date.now()
   try {
-    const { data, error } = await supabase
+    const { data, error } = await client
       .from('audience_cache')
       .select('payload_json')
       .eq('key', DEFAULT_KEY)
@@ -85,8 +94,8 @@ export async function getAudienceDatasetMeta(): Promise<AudienceDatasetMeta | nu
 export async function setAudienceDataset(
   dataset: AudienceDataset
 ): Promise<{ ok: boolean; error?: string; rawBytes?: number; storedBytes?: number }> {
-  if (!supabase) {
-    const msg = 'Supabase not configured — SUPABASE_URL and SUPABASE_SERVICE_KEY required'
+  if (!supabaseService) {
+    const msg = 'Supabase not configured for writes — SUPABASE_URL and SUPABASE_SERVICE_KEY/SUPABASE_SERVICE_ROLE_KEY required'
     console.error('[AUDIENCE_REFRESH_FAIL]', msg)
     return { ok: false, error: msg }
   }
@@ -108,7 +117,7 @@ export async function setAudienceDataset(
 
   const start = Date.now()
   try {
-    const { error } = await supabase
+    const { error } = await supabaseService
       .from('audience_cache')
       .upsert(row, { onConflict: 'key' })
 
