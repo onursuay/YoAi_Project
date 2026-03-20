@@ -67,6 +67,28 @@ export async function GET(req: NextRequest) {
     const { searchParams } = new URL(req.url)
     const mode = searchParams.get('mode') ?? 'browse'
 
+    // ── Diagnostic mode: show storage config + read status ──
+    if (mode === 'diag') {
+      const storageOk = isAudienceStorageConfigured()
+      const ds = await getAudienceDataset()
+      return NextResponse.json({
+        storageConfigured: storageOk,
+        datasetFound: !!ds,
+        hasBrowseTree: !!ds?.browseTree,
+        hasSearchIndex: !!ds?.searchIndex,
+        browseTreeKeys: ds ? Object.keys(ds.browseTree) : [],
+        searchIndexCount: ds?.searchIndex?.length ?? 0,
+        stats: ds?.stats ?? null,
+        version: ds?.version ?? null,
+        env: {
+          hasSupabaseUrl: !!(process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL),
+          hasServiceKey: !!(process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY),
+          hasAnonKey: !!(process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+          nodeEnv: process.env.NODE_ENV,
+        },
+      }, { headers: { 'Cache-Control': 'no-store' } })
+    }
+
     // ── Resolve data source: Edge Config or dev fallback (single read) ──
     let source: 'supabase' | 'dev-fallback' = 'supabase'
     let tree: AudienceBrowseTree | null = null
