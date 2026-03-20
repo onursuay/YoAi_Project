@@ -14,6 +14,7 @@ export const COOKIE = {
   LOGIN_CUSTOMER_ID: 'google_ads_login_customer_id',
   ACCOUNT_NAME: 'google_ads_account_name',
   CUSTOMER_NAME: 'google_ads_customer_name',
+  IS_MANAGER: 'google_ads_is_manager',
 } as const
 
 /** Micros conversion factor: 1 currency unit = 1,000,000 micros */

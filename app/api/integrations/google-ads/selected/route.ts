@@ -37,6 +37,23 @@ export async function GET() {
     )
   }
 
+  // Fast path: read isManager from cookie cache
+  const cachedIsManager = cookieStore.get(COOKIE.IS_MANAGER)?.value
+  if (cachedIsManager === 'true' || cachedIsManager === 'false') {
+    return NextResponse.json(
+      {
+        selected: {
+          customerId,
+          loginCustomerId: loginCustomerId || customerId,
+          customerName: customerName || `Account ${customerId}`,
+          isManager: cachedIsManager === 'true',
+        },
+      },
+      { headers: { 'Cache-Control': 'no-store' } }
+    )
+  }
+
+  // Slow path: query Google Ads API for isManager, then cache result
   let isManager = false
   let refreshToken = cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
   if (!refreshToken && userId) {
@@ -57,7 +74,7 @@ export async function GET() {
     }
   }
 
-  return NextResponse.json(
+  const response = NextResponse.json(
     {
       selected: {
         customerId,
@@ -68,4 +85,16 @@ export async function GET() {
     },
     { headers: { 'Cache-Control': 'no-store' } }
   )
+
+  // Cache isManager in cookie for subsequent page loads
+  const cookieOpts = {
+    httpOnly: true,
+    secure: process.env.NODE_ENV === 'production',
+    sameSite: 'lax' as const,
+    path: '/',
+    maxAge: 60 * 60 * 24 * 365,
+  }
+  response.cookies.set(COOKIE.IS_MANAGER, String(isManager), cookieOpts)
+
+  return response
 }

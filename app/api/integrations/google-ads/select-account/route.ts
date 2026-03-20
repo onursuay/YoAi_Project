@@ -129,6 +129,7 @@ export async function POST(request: Request) {
   response.cookies.set(COOKIE.CUSTOMER_ID, customerId, cookieOpts)
   response.cookies.set(COOKIE.ACCOUNT_NAME, descriptiveName, cookieOpts)
   response.cookies.set(COOKIE.CUSTOMER_NAME, descriptiveName, cookieOpts)
+  response.cookies.set(COOKIE.IS_MANAGER, 'false', cookieOpts)
 
   return response
 }
