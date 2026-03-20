@@ -16,7 +16,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import {
   getAudienceDataset,
-  isAudienceStorageConfigured,
 } from '@/lib/audience/audienceStore'
 import { getDevFallbackDataset } from '@/lib/audience/devFallback'
 import { expandNode } from '@/lib/audience/types'
@@ -66,65 +65,6 @@ export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url)
     const mode = searchParams.get('mode') ?? 'browse'
-
-    // ── Diagnostic mode: show storage config + read status ──
-    if (mode === 'diag') {
-      const storageOk = isAudienceStorageConfigured()
-      const url = process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL
-      const svcKey = process.env.SUPABASE_SERVICE_KEY || process.env.SUPABASE_SERVICE_ROLE_KEY
-      const anonKey = process.env.SUPABASE_ANON_KEY || process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY
-
-      // Direct inline Supabase query for diagnosis
-      let directResult: Record<string, unknown> = {}
-      if (url && svcKey) {
-        try {
-          const { createClient } = await import('@supabase/supabase-js')
-          const directClient = createClient(url, svcKey)
-          const { data, error, count } = await directClient
-            .from('audience_cache')
-            .select('key, status, version, updated_at, raw_bytes', { count: 'exact' })
-            .limit(5)
-          directResult = {
-            directQueryOk: !error,
-            directError: error?.message ?? null,
-            directErrorCode: error?.code ?? null,
-            directCount: count,
-            directRows: data,
-          }
-        } catch (e: unknown) {
-          directResult = { directQueryOk: false, directError: e instanceof Error ? e.message : String(e) }
-        }
-      }
-
-      // Also try the getAudienceDataset function
-      let datasetResult: Record<string, unknown> = {}
-      try {
-        const ds = await getAudienceDataset()
-        datasetResult = {
-          datasetFound: !!ds,
-          hasBrowseTree: !!ds?.browseTree,
-          searchIndexCount: ds?.searchIndex?.length ?? 0,
-          stats: ds?.stats ?? null,
-          version: ds?.version ?? null,
-        }
-      } catch (e: unknown) {
-        datasetResult = { datasetFound: false, datasetError: e instanceof Error ? e.message : String(e) }
-      }
-
-      return NextResponse.json({
-        storageConfigured: storageOk,
-        env: {
-          hasSupabaseUrl: !!url,
-          supabaseUrlPrefix: url ? url.substring(0, 30) + '...' : null,
-          hasServiceKey: !!svcKey,
-          serviceKeyPrefix: svcKey ? svcKey.substring(0, 20) + '...' : null,
-          hasAnonKey: !!anonKey,
-          nodeEnv: process.env.NODE_ENV,
-        },
-        ...directResult,
-        ...datasetResult,
-      }, { headers: { 'Cache-Control': 'no-store' } })
-    }
 
     // ── Resolve data source: Edge Config or dev fallback (single read) ──
     let source: 'supabase' | 'dev-fallback' = 'supabase'
