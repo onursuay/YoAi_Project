@@ -31,6 +31,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
   const [pinModeActive, setPinModeActive] = useState(false)
+
   const stateRef = useRef(state)
   stateRef.current = state
   const updateRef = useRef(update)
@@ -85,6 +86,14 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     setResults([])
   }
 
+  const removeLocation = (id: string) => {
+    updateRef.current({ locations: stateRef.current.locations.filter(l => l.id !== id) })
+  }
+
+  const removeProximity = (idx: number) => {
+    updateRef.current({ proximityTargets: stateRef.current.proximityTargets.filter((_, i) => i !== idx) })
+  }
+
   const saveProximity = () => {
     if (!pinCoords) return
     const meters = radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
@@ -97,6 +106,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     }
     updateRef.current({ proximityTargets: [...stateRef.current.proximityTargets, prox] })
     setPinCoords(null)
+    setPinModeActive(false)
     setAddressQuery('')
   }
 
@@ -135,6 +145,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
         </div>
 
         <div className="flex-1 overflow-hidden flex min-h-0">
+          {/* Left panel */}
           <div className="w-80 border-r border-gray-200 overflow-y-auto p-4 space-y-4">
             {mode === 'location' ? (
               <>
@@ -150,7 +161,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     />
                   </div>
                 </div>
-                <div className="max-h-48 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
+                <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
                   {loading ? (
                     <div className="p-4 text-sm text-gray-500">{t('location.searching')}</div>
                   ) : results.length === 0 ? (
@@ -161,15 +172,14 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     results.map(r => {
                       const added = state.locations.some(l => l.id === r.id)
                       return (
-                        <div
-                          key={r.id}
-                          className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${added ? 'bg-blue-50' : ''}`}
-                        >
-                          <span className="text-sm font-medium truncate">{r.name}</span>
-                          {!added && (
+                        <div key={r.id} className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${added ? 'bg-blue-50' : ''}`}>
+                          <span className="text-sm font-medium truncate flex-1 mr-2">{r.name}</span>
+                          {added ? (
+                            <span className="text-xs text-blue-500 shrink-0">Eklendi</span>
+                          ) : (
                             <div className="flex gap-1 shrink-0">
-                              <button type="button" onClick={() => addLocation(r, false)} className="text-xs text-blue-600 hover:underline">{t('location.include')}</button>
-                              <button type="button" onClick={() => addLocation(r, true)} className="text-xs text-red-600 hover:underline">{t('location.exclude')}</button>
+                              <button type="button" onClick={() => addLocation(r, false)} className="text-xs text-blue-600 hover:underline font-medium">{t('location.include')}</button>
+                              <button type="button" onClick={() => addLocation(r, true)} className="text-xs text-red-600 hover:underline font-medium">{t('location.exclude')}</button>
                             </div>
                           )}
                         </div>
@@ -177,17 +187,18 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     })
                   )}
                 </div>
-                {/* Seçilen konumlar */}
+
+                {/* Selected locations list */}
                 {state.locations.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
-                      Seçilen ({state.locations.length})
-                    </p>
-                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Seçilen ({state.locations.length})</p>
+                    <div className="space-y-1 max-h-36 overflow-y-auto">
                       {state.locations.map(loc => (
-                        <div key={loc.id} className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs ${loc.isNegative ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
+                        <div key={loc.id} className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs ${loc.isNegative ? 'bg-red-50 text-red-800 border border-red-100' : 'bg-blue-50 text-blue-800 border border-blue-100'}`}>
                           <span className="truncate flex-1">{loc.name}{loc.isNegative ? ' (Hariç)' : ''}</span>
-                          <button type="button" onClick={() => updateRef.current({ locations: stateRef.current.locations.filter(l => l.id !== loc.id) })} className="ml-1 shrink-0 hover:opacity-70"><X className="w-3 h-3" /></button>
+                          <button type="button" onClick={() => removeLocation(loc.id)} className="ml-1 shrink-0 hover:opacity-70">
+                            <X className="w-3 h-3" />
+                          </button>
                         </div>
                       ))}
                     </div>
@@ -204,7 +215,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     onChange={e => setAddressQuery(e.target.value)}
                     placeholder={t('location.addressPlaceholder')}
                   />
-                  <p className="text-xs text-gray-400 mt-1">Haritaya tıklayarak da konum seçebilirsiniz</p>
+                  <p className="text-xs text-gray-400 mt-1">Sabitleme modu ile haritadan konum seçebilirsiniz</p>
                 </div>
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">{t('location.radius')}</label>
@@ -227,11 +238,11 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     </select>
                   </div>
                 </div>
+
                 {pinCoords && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <p className="text-sm font-medium text-emerald-800">
-                      {pinCoords.lat.toFixed(5)}, {pinCoords.lng.toFixed(5)}
-                    </p>
+                    <p className="text-sm font-medium text-emerald-800">{pinCoords.lat.toFixed(5)}, {pinCoords.lng.toFixed(5)}</p>
+                    <p className="text-xs text-emerald-600 mt-0.5">{radiusValue} {radiusUnit} yarıçap</p>
                     <button
                       type="button"
                       onClick={saveProximity}
@@ -241,16 +252,41 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     </button>
                   </div>
                 )}
+
+                {/* Selected proximity list */}
+                {state.proximityTargets.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Yarıçap hedefleri ({state.proximityTargets.length})</p>
+                    <div className="space-y-1 max-h-36 overflow-y-auto">
+                      {state.proximityTargets.map((prox, idx) => (
+                        <div key={idx} className="flex items-center justify-between px-3 py-1.5 rounded-lg text-xs bg-emerald-50 text-emerald-800 border border-emerald-100">
+                          <span className="truncate flex-1">
+                            <MapPin className="w-3 h-3 inline mr-1" />
+                            {prox.label ?? `${prox.lat.toFixed(4)}, ${prox.lng.toFixed(4)}`}
+                          </span>
+                          <button type="button" onClick={() => removeProximity(idx)} className="ml-1 shrink-0 hover:opacity-70">
+                            <X className="w-3 h-3" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             )}
           </div>
 
-          <div className="flex-1 min-w-0 min-h-[300px] relative">
+          {/* Right panel - Map */}
+          <div className="flex-1 min-w-0 relative">
             {mode === 'radius' && (
               <button
                 type="button"
                 onClick={() => setPinModeActive(v => !v)}
-                className={`absolute top-3 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition-colors ${pinModeActive ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+                className={`absolute top-3 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition-all ${
+                  pinModeActive
+                    ? 'bg-blue-600 text-white'
+                    : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'
+                }`}
               >
                 <MapPin className="w-4 h-4" />
                 Sabitleme modu
