@@ -191,7 +191,7 @@ export default function GooglePage() {
 
   const tableColumns = getTableColumns()
 
-  const showEmptyState = !connection.isGoogleConnected || !connection.selected || (connection.selected?.isManager === true)
+  const showEmptyState = !connection.isLoading && (!connection.isGoogleConnected || !connection.selected || (connection.selected?.isManager === true))
 
   // ── Status constants (same pattern as Meta Ads) ──────────────────────
   // ALWAYS_HIDDEN: never shown anywhere (table or KPI)
