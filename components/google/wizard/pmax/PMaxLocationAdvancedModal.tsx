@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Search } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation, PMaxProximityTarget } from './shared/PMaxWizardTypes'
 import { inputCls } from './shared/PMaxWizardTypes'
@@ -30,6 +30,10 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [radiusUnit, setRadiusUnit] = useState<'km' | 'mi'>('km')
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
+  const stateRef = useRef(state)
+  stateRef.current = state
+  const stateRef = useRef(state)
+  stateRef.current = state
 
   // Location search debounce
   useEffect(() => {
@@ -67,7 +71,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   }, [addressQuery, mode])
 
   const addLocation = (geo: GeoSuggestion, isNegative: boolean) => {
-    if (state.locations.some(l => l.id === geo.id)) return
+    if (stateRef.current.locations.some(l => l.id === geo.id)) return
     const loc: PMaxSelectedLocation = {
       id: geo.id,
       name: geo.name,
@@ -75,7 +79,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
       targetType: geo.targetType,
       isNegative,
     }
-    update({ locations: [...state.locations, loc] })
+    update({ locations: [...stateRef.current.locations, loc] })
     setQuery('')
     setResults([])
   }
@@ -90,7 +94,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
       radiusMeters: Math.round(meters),
       label: `${label} (${radiusValue} ${radiusUnit})`,
     }
-    update({ proximityTargets: [...state.proximityTargets, prox] })
+    update({ proximityTargets: [...stateRef.current.proximityTargets, prox] })
     setPinCoords(null)
     setAddressQuery('')
   }
