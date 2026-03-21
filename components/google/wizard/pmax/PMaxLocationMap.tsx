@@ -29,25 +29,29 @@ export default function PMaxLocationMap({
   pinModeActive,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
-  const mapRef = useRef<{ map: any; marker: any; circle: any; proximityCircles: any[] } | null>(null)
-  const onSaveProximityRef = useRef(onSaveProximity)
+  const overlayRef = useRef<HTMLDivElement>(null)
+  const mapRef = useRef<{ map: any; marker: any; circle: any } | null>(null)
+  const [mounted, setMounted] = useState(false)
+
   const onPinPlaceRef = useRef(onPinPlace)
+  const onSaveProximityRef = useRef(onSaveProximity)
   const radiusMetersRef = useRef(radiusMeters)
   const radiusLabelRef = useRef(radiusLabel)
   const pinModeActiveRef = useRef(pinModeActive)
-  const [mounted, setMounted] = useState(false)
 
-  onSaveProximityRef.current = onSaveProximity
   onPinPlaceRef.current = onPinPlace
+  onSaveProximityRef.current = onSaveProximity
   radiusMetersRef.current = radiusMeters
   radiusLabelRef.current = radiusLabel
   pinModeActiveRef.current = pinModeActive
 
   useEffect(() => { setMounted(true) }, [])
 
+  // Init map
   useEffect(() => {
     if (!mounted || !containerRef.current) return
     let cancelled = false
+
     const init = async () => {
       const L = await import('leaflet')
       if (typeof window !== 'undefined' && !document.querySelector('link[data-leaflet-css]')) {
@@ -59,9 +63,9 @@ export default function PMaxLocationMap({
       }
       if (cancelled || !containerRef.current) return
 
-      const DefaultIcon = L.Icon.Default
-      if (DefaultIcon && !(DefaultIcon as any)._getIconUrl) {
-        ;(DefaultIcon as any).mergeOptions({
+      const DefaultIcon = L.Icon.Default as any
+      if (DefaultIcon && !DefaultIcon._getIconUrl) {
+        DefaultIcon.mergeOptions({
           iconRetinaUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon-2x.png',
           iconUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-icon.png',
           shadowUrl: 'https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.7.1/images/marker-shadow.png',
@@ -73,101 +77,110 @@ export default function PMaxLocationMap({
 
       let marker: any = null
       let circle: any = null
-      const proximityCircles: any[] = []
 
-      const updateMarkerAndCircle = (lat: number, lng: number, radius?: number) => {
+      // Draw existing proximity targets
+      proximityTargets.forEach(prox => {
+        L.circle([prox.lat, prox.lng], { radius: prox.radiusMeters, color: '#2563eb', fillColor: '#3b82f6', fillOpacity: 0.2 }).addTo(map)
+        L.marker([prox.lat, prox.lng]).addTo(map)
+      })
+
+      // Click handler
+      map.on('click', (e: any) => {
+        if (mode !== 'radius' || !pinModeActiveRef.current) return
+        const { lat, lng } = e.latlng
+
+        // Remove old marker/circle
         if (marker) map.removeLayer(marker)
         if (circle) map.removeLayer(circle)
-        marker = L.marker([lat, lng]).addTo(map)
+
+        // Place marker with custom icon
+        const customIcon = L.icon({
+          iconUrl: '/location-pin.png',
+          iconSize: [40, 40],
+          iconAnchor: [20, 40],
+        })
+        marker = L.marker([lat, lng], { icon: customIcon }).addTo(map)
         mapRef.current!.marker = marker
-        if (radius != null && radius > 0) {
-          circle = L.circle([lat, lng], { radius }).addTo(map)
+
+        // Draw radius circle
+        if (radiusMetersRef.current && radiusMetersRef.current > 0) {
+          circle = L.circle([lat, lng], {
+            radius: radiusMetersRef.current,
+            color: '#2563eb',
+            fillColor: '#3b82f6',
+            fillOpacity: 0.2,
+          }).addTo(map)
           mapRef.current!.circle = circle
         }
-      }
 
-      map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
-        if (mode !== 'radius') return
-        if (!pinModeActiveRef.current) return
-        const { lat, lng } = e.latlng
         onPinPlaceRef.current({ lat, lng })
-        updateMarkerAndCircle(lat, lng, radiusMetersRef.current)
-        const popup = L.popup()
-          .setLatLng([lat, lng])
-          .setContent(`<div style="padding:8px;min-width:200px">
-            <p style="margin:0 0 6px;font-size:12px;color:#374151">${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
-            <p style="margin:0 0 8px;font-size:12px;color:#6b7280">${radiusLabelRef.current ?? ''} yarıçap</p>
-            <button id="loc-include-btn" style="background:#2563eb;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">Dahil et</button>
-          </div>`)
-          .openOn(map)
-        setTimeout(() => {
-          const btn = document.getElementById('loc-include-btn')
-          if (btn) btn.addEventListener('click', () => { map.closePopup(); onSaveProximityRef.current?.() })
-        }, 0)
+        map.setView([lat, lng], map.getZoom())
       })
 
-      proximityTargets.forEach(prox => {
-        const c = L.circle([prox.lat, prox.lng], { radius: prox.radiusMeters }).addTo(map)
-        proximityCircles.push(c)
-      })
-
-      mapRef.current = { map, marker, circle, proximityCircles }
+      mapRef.current = { map, marker, circle }
     }
+
     init()
     return () => {
       cancelled = true
-      if (mapRef.current?.map) { mapRef.current.map.remove(); mapRef.current = null }
+      if (mapRef.current?.map) {
+        mapRef.current.map.remove()
+        mapRef.current = null
+      }
     }
-  }, [mounted, proximityTargets.length, mode])
+  }, [mounted, mode])
 
-  // Draggable pin when pinModeActive turns on
+  // Update pin when pinCoords changes (from address geocode)
   useEffect(() => {
-    if (!mapRef.current) return
-    const { map } = mapRef.current
-    if (!pinModeActive) return
-    // Place a draggable marker at map center
+    if (!mapRef.current || !pinCoords) return
+    const { map, marker, circle } = mapRef.current
+
     import('leaflet').then(L => {
       if (!mapRef.current) return
-      const center = map.getCenter()
+      if (marker) map.removeLayer(marker)
+      if (circle) map.removeLayer(circle)
+
       const customIcon = L.icon({
         iconUrl: '/location-pin.png',
         iconSize: [40, 40],
         iconAnchor: [20, 40],
       })
-      const dragMarker = L.marker([center.lat, center.lng], { draggable: true, zIndexOffset: 1000, icon: customIcon })
-      dragMarker.addTo(map)
-      dragMarker.on('dragend', () => {
-        const pos = dragMarker.getLatLng()
-        onPinPlaceRef.current({ lat: pos.lat, lng: pos.lng })
-        map.removeLayer(dragMarker)
-      })
-      // Store so we can remove on cleanup
-      ;(mapRef.current as any).dragMarker = dragMarker
-    })
-    return () => {
-      if ((mapRef.current as any)?.dragMarker) {
-        try { mapRef.current!.map.removeLayer((mapRef.current as any).dragMarker) } catch {}
-        delete (mapRef.current as any).dragMarker
-      }
-    }
-  }, [pinModeActive])
-
-  useEffect(() => {
-    if (!mapRef.current || !pinCoords) return
-    const { map, marker, circle } = mapRef.current
-    if (marker) map.removeLayer(marker)
-    if (circle) map.removeLayer(circle)
-    import('leaflet').then(L => {
-      if (!mapRef.current) return
-      const m = L.marker([pinCoords.lat, pinCoords.lng]).addTo(map)
+      const m = L.marker([pinCoords.lat, pinCoords.lng], { icon: customIcon }).addTo(map)
       mapRef.current.marker = m
+
       if (radiusMeters != null && radiusMeters > 0) {
-        const c = L.circle([pinCoords.lat, pinCoords.lng], { radius: radiusMeters }).addTo(map)
+        const c = L.circle([pinCoords.lat, pinCoords.lng], {
+          radius: radiusMeters,
+          color: '#2563eb',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.2,
+        }).addTo(map)
         mapRef.current.circle = c
       }
-      map.setView([pinCoords.lat, pinCoords.lng], 14)
+
+      map.setView([pinCoords.lat, pinCoords.lng], 13)
     })
   }, [pinCoords, radiusMeters])
+
+  // Update circle radius when radiusMeters changes (without new pinCoords)
+  useEffect(() => {
+    if (!mapRef.current || !pinCoords) return
+    const { map, circle } = mapRef.current
+    if (!circle) return
+    import('leaflet').then(L => {
+      if (!mapRef.current) return
+      map.removeLayer(circle)
+      if (radiusMeters && radiusMeters > 0) {
+        const c = L.circle([pinCoords.lat, pinCoords.lng], {
+          radius: radiusMeters,
+          color: '#2563eb',
+          fillColor: '#3b82f6',
+          fillOpacity: 0.2,
+        }).addTo(map)
+        mapRef.current.circle = c
+      }
+    })
+  }, [radiusMeters])
 
   if (!mounted) {
     return (
@@ -178,10 +191,12 @@ export default function PMaxLocationMap({
   }
 
   return (
-    <div
-      ref={containerRef}
-      className="w-full h-full min-h-[300px]"
-      style={{ cursor: mode === 'radius' && pinModeActive ? 'crosshair' : 'default' }}
-    />
+    <div className="w-full h-full min-h-[300px] relative">
+      <div
+        ref={containerRef}
+        className="w-full h-full min-h-[300px]"
+        style={{ cursor: mode === 'radius' && pinModeActive ? `url('/location-pin.png') 20 40, crosshair` : 'default' }}
+      />
+    </div>
   )
 }
