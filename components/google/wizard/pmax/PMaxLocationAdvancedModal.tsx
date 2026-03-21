@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { X, Search } from 'lucide-react'
+import { X, Search, MapPin } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation, PMaxProximityTarget } from './shared/PMaxWizardTypes'
 import { inputCls } from './shared/PMaxWizardTypes'
 import PMaxLocationMap from './PMaxLocationMap'
@@ -30,6 +30,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [radiusUnit, setRadiusUnit] = useState<'km' | 'mi'>('km')
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
+  const [pinModeActive, setPinModeActive] = useState(false)
   const stateRef = useRef(state)
   stateRef.current = state
   const updateRef = useRef(update)
@@ -176,6 +177,22 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     })
                   )}
                 </div>
+                {/* Seçilen konumlar */}
+                {state.locations.length > 0 && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      Seçilen ({state.locations.length})
+                    </p>
+                    <div className="space-y-1 max-h-32 overflow-y-auto">
+                      {state.locations.map(loc => (
+                        <div key={loc.id} className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs ${loc.isNegative ? 'bg-red-50 text-red-800' : 'bg-blue-50 text-blue-800'}`}>
+                          <span className="truncate flex-1">{loc.name}{loc.isNegative ? ' (Hariç)' : ''}</span>
+                          <button type="button" onClick={() => updateRef.current({ locations: stateRef.current.locations.filter(l => l.id !== loc.id) })} className="ml-1 shrink-0 hover:opacity-70"><X className="w-3 h-3" /></button>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </>
             ) : (
               <>
@@ -228,16 +245,27 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
             )}
           </div>
 
-          <div className="flex-1 min-w-0 min-h-[300px]">
+          <div className="flex-1 min-w-0 min-h-[300px] relative">
+            {mode === 'radius' && (
+              <button
+                type="button"
+                onClick={() => setPinModeActive(v => !v)}
+                className={`absolute top-3 left-1/2 -translate-x-1/2 z-[500] flex items-center gap-2 px-4 py-2 rounded-full text-sm font-medium shadow-md transition-colors ${pinModeActive ? 'bg-blue-600 text-white' : 'bg-white text-gray-700 border border-gray-200 hover:bg-gray-50'}`}
+              >
+                <MapPin className="w-4 h-4" />
+                Sabitleme modu
+              </button>
+            )}
             <PMaxLocationMap
               mode={mode}
               pinCoords={pinCoords}
-              onPinPlace={setPinCoords}
+              onPinPlace={coords => { setPinCoords(coords); setPinModeActive(false) }}
               proximityTargets={state.proximityTargets}
               addressQuery={addressQuery}
               radiusMeters={radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34}
               onSaveProximity={saveProximity}
               radiusLabel={radiusLabel}
+              pinModeActive={pinModeActive}
             />
           </div>
         </div>
