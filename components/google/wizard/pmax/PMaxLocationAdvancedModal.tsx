@@ -241,7 +241,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
 
                 {pinCoords && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <p className="text-sm font-medium text-emerald-800">{pinCoords.lat.toFixed(5)}, {pinCoords.lng.toFixed(5)}</p>
+                    <p className="text-sm font-medium text-emerald-800">{addressQuery.trim() || `${pinCoords.lat.toFixed(5)}, ${pinCoords.lng.toFixed(5)}`}</p>
                     <p className="text-xs text-emerald-600 mt-0.5">{radiusValue} {radiusUnit} yarıçap</p>
                     <button
                       type="button"

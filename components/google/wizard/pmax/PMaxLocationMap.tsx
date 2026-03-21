@@ -118,6 +118,33 @@ export default function PMaxLocationMap({
     }
   }, [mounted, onPinPlace, proximityTargets.length, mode])
 
+  // Draggable pin when pinModeActive turns on
+  useEffect(() => {
+    if (!mapRef.current) return
+    const { map } = mapRef.current
+    if (!pinModeActive) return
+    // Place a draggable marker at map center
+    import('leaflet').then(L => {
+      if (!mapRef.current) return
+      const center = map.getCenter()
+      const dragMarker = L.marker([center.lat, center.lng], { draggable: true, zIndexOffset: 1000 })
+      dragMarker.addTo(map)
+      dragMarker.on('dragend', () => {
+        const pos = dragMarker.getLatLng()
+        onPinPlace({ lat: pos.lat, lng: pos.lng })
+        map.removeLayer(dragMarker)
+      })
+      // Store so we can remove on cleanup
+      ;(mapRef.current as any).dragMarker = dragMarker
+    })
+    return () => {
+      if ((mapRef.current as any)?.dragMarker) {
+        try { mapRef.current!.map.removeLayer((mapRef.current as any).dragMarker) } catch {}
+        delete (mapRef.current as any).dragMarker
+      }
+    }
+  }, [pinModeActive, onPinPlace])
+
   useEffect(() => {
     if (!mapRef.current || !pinCoords) return
     const { map, marker, circle } = mapRef.current
