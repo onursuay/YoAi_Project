@@ -53,7 +53,7 @@ export async function searchGeoTargets(
   locale = 'tr',
   countryCode?: string
 ): Promise<GeoTargetSuggestion[]> {
-  const body: Record<string, unknown> = { locale, searchTerm: searchText }
+  const body: Record<string, unknown> = { locale, locationNames: { names: [searchText] } }
   if (countryCode && countryCode.trim()) body.countryCode = countryCode
   const res = await fetch(`${GOOGLE_ADS_BASE}/geoTargetConstants:suggest`, {
     method: 'POST',
