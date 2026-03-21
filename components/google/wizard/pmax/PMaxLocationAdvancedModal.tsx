@@ -44,6 +44,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const updateRef = useRef(update)
   updateRef.current = update
 
+  const radLockedRef = useRef(false)
   const onPinPlaceRef = useRef((coords: { lat: number; lng: number }) => {
     setPinCoords(coords)
     setPinModeActive(false)
@@ -71,6 +72,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   // Radius search debounce
   useEffect(() => {
     if (!isOpen || mode !== 'radius') return
+    if (radLockedRef.current) { radLockedRef.current = false; return }
     const q = radQuery.trim()
     if (q.length < MIN_CHARS) { setRadResults([]); return }
     let cancelled = false
@@ -111,6 +113,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
 
   // Seçilen konumu geocode edip pin'e dönüştür
   const selectRadiusLocation = async (geo: GeoSuggestion) => {
+    radLockedRef.current = true
     setRadQuery(geo.name)
     setRadResults([])
     setPinLabel(geo.name)
