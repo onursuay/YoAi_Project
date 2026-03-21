@@ -194,7 +194,7 @@ export const defaultPMaxState: PMaxWizardState = {
   campaignGoal: 'SALES',
   campaignType: 'PERFORMANCE_MAX',
   campaignName: '',
-  finalUrl: 'https://',
+  finalUrl: '',
   selectedConversionGoalIds: [],
   primaryConversionGoalId: null,
   conversionActions: [],
