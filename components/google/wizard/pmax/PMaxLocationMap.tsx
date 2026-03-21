@@ -34,13 +34,11 @@ export default function PMaxLocationMap({
   const radiusMetersRef = useRef(radiusMeters)
   const radiusLabelRef = useRef(radiusLabel)
   const pinModeActiveRef = useRef(pinModeActive)
-  const pinModeActiveRef = useRef(pinModeActive)
   const [mounted, setMounted] = useState(false)
 
   onSaveProximityRef.current = onSaveProximity
   radiusMetersRef.current = radiusMeters
   radiusLabelRef.current = radiusLabel
-  pinModeActiveRef.current = pinModeActive
   pinModeActiveRef.current = pinModeActive
 
   useEffect(() => { setMounted(true) }, [])
