@@ -129,7 +129,12 @@ export default function PMaxLocationMap({
     import('leaflet').then(L => {
       if (!mapRef.current) return
       const center = map.getCenter()
-      const dragMarker = L.marker([center.lat, center.lng], { draggable: true, zIndexOffset: 1000 })
+      const customIcon = L.icon({
+        iconUrl: '/location-pin.png',
+        iconSize: [40, 40],
+        iconAnchor: [20, 40],
+      })
+      const dragMarker = L.marker([center.lat, center.lng], { draggable: true, zIndexOffset: 1000, icon: customIcon })
       dragMarker.addTo(map)
       dragMarker.on('dragend', () => {
         const pos = dragMarker.getLatLng()
