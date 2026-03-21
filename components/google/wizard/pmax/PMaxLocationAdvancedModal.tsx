@@ -32,6 +32,10 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [addressQuery, setAddressQuery] = useState('')
   const stateRef = useRef(state)
   stateRef.current = state
+  const updateRef = useRef(update)
+  updateRef.current = update
+  const updateRef = useRef(update)
+  updateRef.current = update
 
   // Location search debounce
   useEffect(() => {
@@ -77,7 +81,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
       targetType: geo.targetType,
       isNegative,
     }
-    update({ locations: [...stateRef.current.locations, loc] })
+    updateRef.current({ locations: [...stateRef.current.locations, loc] })
     setQuery('')
     setResults([])
   }
@@ -92,7 +96,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
       radiusMeters: Math.round(meters),
       label: `${label} (${radiusValue} ${radiusUnit})`,
     }
-    update({ proximityTargets: [...stateRef.current.proximityTargets, prox] })
+    updateRef.current({ proximityTargets: [...stateRef.current.proximityTargets, prox] })
     setPinCoords(null)
     setAddressQuery('')
   }
