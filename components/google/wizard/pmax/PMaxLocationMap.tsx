@@ -10,33 +10,37 @@ interface Props {
   mode: 'location' | 'radius'
   pinCoords: { lat: number; lng: number } | null
   onPinPlace: (coords: { lat: number; lng: number }) => void
-  onSaveProximity: () => void
   proximityTargets: PMaxProximityTarget[]
   addressQuery: string
-  radiusLabel: string
   radiusMeters?: number
+  onSaveProximity?: () => void
+  radiusLabel?: string
 }
 
 export default function PMaxLocationMap({
   mode,
   pinCoords,
   onPinPlace,
-  onSaveProximity,
   proximityTargets,
-  radiusLabel,
   radiusMeters,
+  onSaveProximity,
+  radiusLabel,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<{ map: any; marker: any; circle: any; proximityCircles: any[] } | null>(null)
+  const onSaveProximityRef = useRef(onSaveProximity)
+  const radiusMetersRef = useRef(radiusMeters)
+  const radiusLabelRef = useRef(radiusLabel)
   const [mounted, setMounted] = useState(false)
 
-  useEffect(() => {
-    setMounted(true)
-  }, [])
+  onSaveProximityRef.current = onSaveProximity
+  radiusMetersRef.current = radiusMeters
+  radiusLabelRef.current = radiusLabel
+
+  useEffect(() => { setMounted(true) }, [])
 
   useEffect(() => {
     if (!mounted || !containerRef.current) return
-
     let cancelled = false
     const init = async () => {
       const L = await import('leaflet')
@@ -47,10 +51,8 @@ export default function PMaxLocationMap({
         link.setAttribute('data-leaflet-css', '1')
         document.head.appendChild(link)
       }
-
       if (cancelled || !containerRef.current) return
 
-      // Fix Leaflet default icon in Next.js
       const DefaultIcon = L.Icon.Default
       if (DefaultIcon && !(DefaultIcon as any)._getIconUrl) {
         ;(DefaultIcon as any).mergeOptions({
@@ -60,13 +62,8 @@ export default function PMaxLocationMap({
         })
       }
 
-      const map = L.map(containerRef.current).setView(
-        [DEFAULT_CENTER.lat, DEFAULT_CENTER.lng],
-        DEFAULT_ZOOM
-      )
-      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
-        attribution: '© OpenStreetMap',
-      }).addTo(map)
+      const map = L.map(containerRef.current).setView([DEFAULT_CENTER.lat, DEFAULT_CENTER.lng], DEFAULT_ZOOM)
+      L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', { attribution: '© OpenStreetMap' }).addTo(map)
 
       let marker: any = null
       let circle: any = null
@@ -76,8 +73,10 @@ export default function PMaxLocationMap({
         if (marker) map.removeLayer(marker)
         if (circle) map.removeLayer(circle)
         marker = L.marker([lat, lng]).addTo(map)
+        mapRef.current!.marker = marker
         if (radius != null && radius > 0) {
           circle = L.circle([lat, lng], { radius }).addTo(map)
+          mapRef.current!.circle = circle
         }
       }
 
@@ -85,17 +84,18 @@ export default function PMaxLocationMap({
         if (mode !== 'radius') return
         const { lat, lng } = e.latlng
         onPinPlace({ lat, lng })
-        updateMarkerAndCircle(lat, lng, radiusMeters)
+        updateMarkerAndCircle(lat, lng, radiusMetersRef.current)
         const popup = L.popup()
           .setLatLng([lat, lng])
-          .setContent(`<div style="padding:8px;min-width:180px">
-      <p style="margin:0 0 8px;font-size:12px;color:#374151">(${lat.toFixed(5)}, ${lng.toFixed(5)}) – ${radiusLabel ?? ''}</p>
-      <button id="loc-include-btn" style="background:#2563eb;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">Dahil et</button>
-    </div>`)
+          .setContent(`<div style="padding:8px;min-width:200px">
+            <p style="margin:0 0 6px;font-size:12px;color:#374151">${lat.toFixed(5)}, ${lng.toFixed(5)}</p>
+            <p style="margin:0 0 8px;font-size:12px;color:#6b7280">${radiusLabelRef.current ?? ''} yarıçap</p>
+            <button id="loc-include-btn" style="background:#2563eb;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">Dahil et</button>
+          </div>`)
           .openOn(map)
         setTimeout(() => {
           const btn = document.getElementById('loc-include-btn')
-          if (btn) btn.addEventListener('click', () => { map.closePopup(); onSaveProximity?.() })
+          if (btn) btn.addEventListener('click', () => { map.closePopup(); onSaveProximityRef.current?.() })
         }, 0)
       })
 
@@ -109,29 +109,25 @@ export default function PMaxLocationMap({
     init()
     return () => {
       cancelled = true
-      if (mapRef.current?.map) {
-        mapRef.current.map.remove()
-        mapRef.current = null
-      }
+      if (mapRef.current?.map) { mapRef.current.map.remove(); mapRef.current = null }
     }
-  }, [mounted, mode, onPinPlace, onSaveProximity, proximityTargets.length, radiusLabel, radiusMeters])
+  }, [mounted, onPinPlace, proximityTargets.length, mode])
 
   useEffect(() => {
-    if (!mapRef.current) return
+    if (!mapRef.current || !pinCoords) return
     const { map, marker, circle } = mapRef.current
-    if (pinCoords) {
-      if (marker) map.removeLayer(marker)
-      if (circle) map.removeLayer(circle)
-      import('leaflet').then(L => {
-        const m = L.marker([pinCoords.lat, pinCoords.lng]).addTo(map)
-        mapRef.current!.marker = m
-        if (radiusMeters != null && radiusMeters > 0) {
-          const c = L.circle([pinCoords.lat, pinCoords.lng], { radius: radiusMeters }).addTo(map)
-          mapRef.current!.circle = c
-        }
-        map.setView([pinCoords.lat, pinCoords.lng], 14)
-      })
-    }
+    if (marker) map.removeLayer(marker)
+    if (circle) map.removeLayer(circle)
+    import('leaflet').then(L => {
+      if (!mapRef.current) return
+      const m = L.marker([pinCoords.lat, pinCoords.lng]).addTo(map)
+      mapRef.current.marker = m
+      if (radiusMeters != null && radiusMeters > 0) {
+        const c = L.circle([pinCoords.lat, pinCoords.lng], { radius: radiusMeters }).addTo(map)
+        mapRef.current.circle = c
+      }
+      map.setView([pinCoords.lat, pinCoords.lng], 14)
+    })
   }, [pinCoords, radiusMeters])
 
   if (!mounted) {

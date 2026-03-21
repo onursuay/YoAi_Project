@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect } from 'react'
 import { X, Search } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation, PMaxProximityTarget } from './shared/PMaxWizardTypes'
 import { inputCls } from './shared/PMaxWizardTypes'
@@ -30,8 +30,8 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [radiusUnit, setRadiusUnit] = useState<'km' | 'mi'>('km')
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
-  const pinCoordsRef = useRef<{ lat: number; lng: number } | null>(null)
 
+  // Location search debounce
   useEffect(() => {
     if (!isOpen) return
     const timer = setTimeout(() => {
@@ -41,9 +41,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
         if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
         fetch(`/api/integrations/google-ads/geo-targets?${params}`)
           .then(r => r.json())
-          .then(d => {
-            setResults(d.results ?? [])
-          })
+          .then(d => setResults(d.results ?? []))
           .catch(() => setResults([]))
           .finally(() => setLoading(false))
       } else {
@@ -53,39 +51,20 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     return () => clearTimeout(timer)
   }, [query, isOpen, mode, state.geoSearchCountry])
 
+  // Address geocode debounce (radius mode)
   useEffect(() => {
-    if (!isOpen || mode !== 'radius') return
-    const trimmedAddress = addressQuery.trim()
-    if (trimmedAddress.length < 3) return
-
-    const timer = setTimeout(() => {
-      const params = new URLSearchParams({
-        q: trimmedAddress,
-        format: 'json',
-        limit: '1',
-      })
-      fetch(`https://nominatim.openstreetmap.org/search?${params}`)
-        .then(r => r.json())
-        .then(d => {
-          const result = Array.isArray(d) ? d[0] : null
-          if (!result?.lat || !result?.lon) return
-          const coords = {
-            lat: parseFloat(result.lat),
-            lng: parseFloat(result.lon),
-          }
-          pinCoordsRef.current = coords
-          setPinCoords(coords)
-        })
-        .catch(() => {})
+    if (mode !== 'radius') return
+    const q = addressQuery.trim()
+    if (q.length < 3) return
+    const timer = setTimeout(async () => {
+      try {
+        const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`)
+        const data = await res.json()
+        if (data[0]) setPinCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) })
+      } catch { /* ignore */ }
     }, 400)
-
     return () => clearTimeout(timer)
-  }, [addressQuery, isOpen, mode])
-
-  const handlePinPlace = useCallback((coords: { lat: number; lng: number }) => {
-    pinCoordsRef.current = coords
-    setPinCoords(coords)
-  }, [])
+  }, [addressQuery, mode])
 
   const addLocation = (geo: GeoSuggestion, isNegative: boolean) => {
     if (state.locations.some(l => l.id === geo.id)) return
@@ -101,24 +80,24 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     setResults([])
   }
 
-  const saveProximity = useCallback(() => {
-    const activePin = pinCoordsRef.current ?? pinCoords
-    if (!activePin) return
+  const saveProximity = () => {
+    if (!pinCoords) return
     const meters = radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
-    const label = addressQuery.trim() || `${activePin.lat.toFixed(4)}, ${activePin.lng.toFixed(4)}`
+    const label = addressQuery.trim() || `${pinCoords.lat.toFixed(4)}, ${pinCoords.lng.toFixed(4)}`
     const prox: PMaxProximityTarget = {
-      lat: activePin.lat,
-      lng: activePin.lng,
+      lat: pinCoords.lat,
+      lng: pinCoords.lng,
       radiusMeters: Math.round(meters),
       label: `${label} (${radiusValue} ${radiusUnit})`,
     }
     update({ proximityTargets: [...state.proximityTargets, prox] })
     setPinCoords(null)
-    pinCoordsRef.current = null
     setAddressQuery('')
-  }, [addressQuery, pinCoords, radiusUnit, radiusValue, state.proximityTargets, update])
+  }
 
   if (!isOpen) return null
+
+  const radiusLabel = `${radiusValue} ${radiusUnit}`
 
   return (
     <div className="fixed inset-0 z-[200] flex items-center justify-center p-4 bg-black/50">
@@ -133,37 +112,29 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
           </button>
         </div>
 
-        {/* Mode tabs */}
         <div className="flex border-b border-gray-200 px-6">
           <button
             type="button"
             onClick={() => setMode('location')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px ${
-              mode === 'location' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
-            }`}
+            className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px ${mode === 'location' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}
           >
             {t('location.modeLocation')}
           </button>
           <button
             type="button"
             onClick={() => setMode('radius')}
-            className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px ${
-              mode === 'radius' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'
-            }`}
+            className={`px-4 py-3 text-sm font-medium border-b-2 -mb-px ${mode === 'radius' ? 'border-blue-600 text-blue-600' : 'border-transparent text-gray-500'}`}
           >
             {t('location.modeRadius')}
           </button>
         </div>
 
         <div className="flex-1 overflow-hidden flex min-h-0">
-          {/* Left panel */}
           <div className="w-80 border-r border-gray-200 overflow-y-auto p-4 space-y-4">
             {mode === 'location' ? (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('location.searchLocations')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('location.searchLocations')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input
@@ -187,27 +158,13 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                       return (
                         <div
                           key={r.id}
-                          className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${
-                            added ? 'bg-blue-50' : ''
-                          }`}
+                          className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${added ? 'bg-blue-50' : ''}`}
                         >
                           <span className="text-sm font-medium truncate">{r.name}</span>
                           {!added && (
                             <div className="flex gap-1 shrink-0">
-                              <button
-                                type="button"
-                                onClick={() => addLocation(r, false)}
-                                className="text-xs text-blue-600 hover:underline"
-                              >
-                                {t('location.include')}
-                              </button>
-                              <button
-                                type="button"
-                                onClick={() => addLocation(r, true)}
-                                className="text-xs text-red-600 hover:underline"
-                              >
-                                {t('location.exclude')}
-                              </button>
+                              <button type="button" onClick={() => addLocation(r, false)} className="text-xs text-blue-600 hover:underline">{t('location.include')}</button>
+                              <button type="button" onClick={() => addLocation(r, true)} className="text-xs text-red-600 hover:underline">{t('location.exclude')}</button>
                             </div>
                           )}
                         </div>
@@ -219,20 +176,17 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('location.addressOrCoords')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('location.addressOrCoords')}</label>
                   <input
                     className={inputCls}
                     value={addressQuery}
                     onChange={e => setAddressQuery(e.target.value)}
                     placeholder={t('location.addressPlaceholder')}
                   />
+                  <p className="text-xs text-gray-400 mt-1">Haritaya tıklayarak da konum seçebilirsiniz</p>
                 </div>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">
-                    {t('location.radius')}
-                  </label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('location.radius')}</label>
                   <div className="flex gap-2">
                     <input
                       type="number"
@@ -255,27 +209,31 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                 {pinCoords && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                     <p className="text-sm font-medium text-emerald-800">
-                      {t('location.pinPlaced')}: {pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}
+                      {pinCoords.lat.toFixed(5)}, {pinCoords.lng.toFixed(5)}
                     </p>
+                    <button
+                      type="button"
+                      onClick={saveProximity}
+                      className="mt-2 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
+                    >
+                      {t('location.saveProximity')}
+                    </button>
                   </div>
                 )}
               </>
             )}
           </div>
 
-          {/* Right panel - Map */}
           <div className="flex-1 min-w-0 min-h-[300px]">
             <PMaxLocationMap
               mode={mode}
               pinCoords={pinCoords}
-              onPinPlace={handlePinPlace}
-              onSaveProximity={saveProximity}
+              onPinPlace={setPinCoords}
               proximityTargets={state.proximityTargets}
               addressQuery={addressQuery}
-              radiusLabel={`${radiusValue} ${radiusUnit}`}
-              radiusMeters={
-                radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
-              }
+              radiusMeters={radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34}
+              onSaveProximity={saveProximity}
+              radiusLabel={radiusLabel}
             />
           </div>
         </div>
