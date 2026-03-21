@@ -34,8 +34,6 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   stateRef.current = state
   const updateRef = useRef(update)
   updateRef.current = update
-  const updateRef = useRef(update)
-  updateRef.current = update
 
   // Location search debounce
   useEffect(() => {
