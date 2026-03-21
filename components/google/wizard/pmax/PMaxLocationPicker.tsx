@@ -179,9 +179,7 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
               placeholder="Hedeflenecek veya hariç tutulacak konumları girin"
               autoComplete="off"
             />
-            {loading && (
-              <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin" />
-            )}
+            <Loader2 className={`absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 animate-spin transition-opacity ${loading ? 'opacity-100' : 'opacity-0'}`} />
           </div>
           <p className="text-xs text-gray-400 mt-1">Örneğin; ülke, şehir, bölge veya posta kodu</p>
 
