@@ -31,11 +31,16 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
   const [pinModeActive, setPinModeActive] = useState(false)
+  const [geocodedName, setGeocodedName] = useState('')
 
   const stateRef = useRef(state)
   stateRef.current = state
   const updateRef = useRef(update)
   updateRef.current = update
+  const onPinPlaceRef = useRef((coords: { lat: number; lng: number }) => {
+    setPinCoords(coords)
+    setPinModeActive(false)
+  })
 
   // Location search debounce
   useEffect(() => {
@@ -66,7 +71,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
       try {
         const res = await fetch(`https://nominatim.openstreetmap.org/search?q=${encodeURIComponent(q)}&format=json&limit=1`)
         const data = await res.json()
-        if (data[0]) setPinCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) })
+        if (data[0]) { setPinCoords({ lat: parseFloat(data[0].lat), lng: parseFloat(data[0].lon) }); setGeocodedName(data[0].display_name?.split(',')[0] ?? addressQuery.trim()) }
       } catch { /* ignore */ }
     }, 400)
     return () => clearTimeout(timer)
@@ -97,7 +102,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const saveProximity = () => {
     if (!pinCoords) return
     const meters = radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
-    const label = addressQuery.trim() || `${pinCoords.lat.toFixed(4)}, ${pinCoords.lng.toFixed(4)}`
+    const label = geocodedName || addressQuery.trim() || `${pinCoords.lat.toFixed(4)}, ${pinCoords.lng.toFixed(4)}`
     const prox: PMaxProximityTarget = {
       lat: pinCoords.lat,
       lng: pinCoords.lng,
@@ -108,6 +113,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     setPinCoords(null)
     setPinModeActive(false)
     setAddressQuery('')
+    setGeocodedName('')
   }
 
   if (!isOpen) return null
@@ -241,7 +247,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
 
                 {pinCoords && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
-                    <p className="text-sm font-medium text-emerald-800">{addressQuery.trim() || `${pinCoords.lat.toFixed(5)}, ${pinCoords.lng.toFixed(5)}`}</p>
+                    <p className="text-sm font-medium text-emerald-800">{geocodedName || addressQuery.trim() || `${pinCoords.lat.toFixed(5)}, ${pinCoords.lng.toFixed(5)}`}</p>
                     <p className="text-xs text-emerald-600 mt-0.5">{radiusValue} {radiusUnit} yarıçap</p>
                     <button
                       type="button"
@@ -295,7 +301,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
             <PMaxLocationMap
               mode={mode}
               pinCoords={pinCoords}
-              onPinPlace={coords => { setPinCoords(coords); setPinModeActive(false) }}
+              onPinPlace={onPinPlaceRef.current}
               proximityTargets={state.proximityTargets}
               addressQuery={addressQuery}
               radiusMeters={radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34}

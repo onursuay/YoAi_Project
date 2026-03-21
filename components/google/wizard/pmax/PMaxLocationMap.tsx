@@ -31,12 +31,14 @@ export default function PMaxLocationMap({
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<{ map: any; marker: any; circle: any; proximityCircles: any[] } | null>(null)
   const onSaveProximityRef = useRef(onSaveProximity)
+  const onPinPlaceRef = useRef(onPinPlace)
   const radiusMetersRef = useRef(radiusMeters)
   const radiusLabelRef = useRef(radiusLabel)
   const pinModeActiveRef = useRef(pinModeActive)
   const [mounted, setMounted] = useState(false)
 
   onSaveProximityRef.current = onSaveProximity
+  onPinPlaceRef.current = onPinPlace
   radiusMetersRef.current = radiusMeters
   radiusLabelRef.current = radiusLabel
   pinModeActiveRef.current = pinModeActive
@@ -88,7 +90,7 @@ export default function PMaxLocationMap({
         if (mode !== 'radius') return
         if (!pinModeActiveRef.current) return
         const { lat, lng } = e.latlng
-        onPinPlace({ lat, lng })
+        onPinPlaceRef.current({ lat, lng })
         updateMarkerAndCircle(lat, lng, radiusMetersRef.current)
         const popup = L.popup()
           .setLatLng([lat, lng])
@@ -116,7 +118,7 @@ export default function PMaxLocationMap({
       cancelled = true
       if (mapRef.current?.map) { mapRef.current.map.remove(); mapRef.current = null }
     }
-  }, [mounted, onPinPlace, proximityTargets.length, mode])
+  }, [mounted, proximityTargets.length, mode])
 
   // Draggable pin when pinModeActive turns on
   useEffect(() => {
@@ -131,7 +133,7 @@ export default function PMaxLocationMap({
       dragMarker.addTo(map)
       dragMarker.on('dragend', () => {
         const pos = dragMarker.getLatLng()
-        onPinPlace({ lat: pos.lat, lng: pos.lng })
+        onPinPlaceRef.current({ lat: pos.lat, lng: pos.lng })
         map.removeLayer(dragMarker)
       })
       // Store so we can remove on cleanup
@@ -143,7 +145,7 @@ export default function PMaxLocationMap({
         delete (mapRef.current as any).dragMarker
       }
     }
-  }, [pinModeActive, onPinPlace])
+  }, [pinModeActive])
 
   useEffect(() => {
     if (!mapRef.current || !pinCoords) return
