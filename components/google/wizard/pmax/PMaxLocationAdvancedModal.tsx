@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
-import { X, MapPin, Search } from 'lucide-react'
+import { useState, useEffect, useRef, useCallback } from 'react'
+import { X, Search } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation, PMaxProximityTarget } from './shared/PMaxWizardTypes'
 import { inputCls } from './shared/PMaxWizardTypes'
 import PMaxLocationMap from './PMaxLocationMap'
@@ -26,11 +26,11 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
   const [query, setQuery] = useState('')
   const [results, setResults] = useState<GeoSuggestion[]>([])
   const [loading, setLoading] = useState(false)
-  const [pinMode, setPinMode] = useState(false)
   const [radiusValue, setRadiusValue] = useState(10)
   const [radiusUnit, setRadiusUnit] = useState<'km' | 'mi'>('km')
   const [pinCoords, setPinCoords] = useState<{ lat: number; lng: number } | null>(null)
   const [addressQuery, setAddressQuery] = useState('')
+  const pinCoordsRef = useRef<{ lat: number; lng: number } | null>(null)
 
   useEffect(() => {
     if (!isOpen) return
@@ -53,6 +53,40 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     return () => clearTimeout(timer)
   }, [query, isOpen, mode, state.geoSearchCountry])
 
+  useEffect(() => {
+    if (!isOpen || mode !== 'radius') return
+    const trimmedAddress = addressQuery.trim()
+    if (trimmedAddress.length < 3) return
+
+    const timer = setTimeout(() => {
+      const params = new URLSearchParams({
+        q: trimmedAddress,
+        format: 'json',
+        limit: '1',
+      })
+      fetch(`https://nominatim.openstreetmap.org/search?${params}`)
+        .then(r => r.json())
+        .then(d => {
+          const result = Array.isArray(d) ? d[0] : null
+          if (!result?.lat || !result?.lon) return
+          const coords = {
+            lat: parseFloat(result.lat),
+            lng: parseFloat(result.lon),
+          }
+          pinCoordsRef.current = coords
+          setPinCoords(coords)
+        })
+        .catch(() => {})
+    }, 400)
+
+    return () => clearTimeout(timer)
+  }, [addressQuery, isOpen, mode])
+
+  const handlePinPlace = useCallback((coords: { lat: number; lng: number }) => {
+    pinCoordsRef.current = coords
+    setPinCoords(coords)
+  }, [])
+
   const addLocation = (geo: GeoSuggestion, isNegative: boolean) => {
     if (state.locations.some(l => l.id === geo.id)) return
     const loc: PMaxSelectedLocation = {
@@ -67,21 +101,22 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
     setResults([])
   }
 
-  const saveProximity = () => {
-    if (!pinCoords) return
+  const saveProximity = useCallback(() => {
+    const activePin = pinCoordsRef.current ?? pinCoords
+    if (!activePin) return
     const meters = radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
-    const label = addressQuery.trim() || `${pinCoords.lat.toFixed(4)}, ${pinCoords.lng.toFixed(4)}`
+    const label = addressQuery.trim() || `${activePin.lat.toFixed(4)}, ${activePin.lng.toFixed(4)}`
     const prox: PMaxProximityTarget = {
-      lat: pinCoords.lat,
-      lng: pinCoords.lng,
+      lat: activePin.lat,
+      lng: activePin.lng,
       radiusMeters: Math.round(meters),
       label: `${label} (${radiusValue} ${radiusUnit})`,
     }
     update({ proximityTargets: [...state.proximityTargets, prox] })
     setPinCoords(null)
-    setPinMode(false)
+    pinCoordsRef.current = null
     setAddressQuery('')
-  }
+  }, [addressQuery, pinCoords, radiusUnit, radiusValue, state.proximityTargets, update])
 
   if (!isOpen) return null
 
@@ -217,30 +252,11 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                     </select>
                   </div>
                 </div>
-                <div>
-                  <label className="flex items-center gap-2 cursor-pointer">
-                    <input
-                      type="checkbox"
-                      checked={pinMode}
-                      onChange={e => setPinMode(e.target.checked)}
-                      className="rounded border-gray-300 text-blue-600"
-                    />
-                    <span className="text-sm">{t('location.pinMode')}</span>
-                  </label>
-                  <p className="text-xs text-gray-500 mt-1">{t('location.pinModeHint')}</p>
-                </div>
                 {pinCoords && (
                   <div className="p-3 bg-emerald-50 border border-emerald-200 rounded-lg">
                     <p className="text-sm font-medium text-emerald-800">
                       {t('location.pinPlaced')}: {pinCoords.lat.toFixed(4)}, {pinCoords.lng.toFixed(4)}
                     </p>
-                    <button
-                      type="button"
-                      onClick={saveProximity}
-                      className="mt-2 px-3 py-1.5 text-sm font-medium bg-emerald-600 text-white rounded-lg hover:bg-emerald-700"
-                    >
-                      {t('location.saveProximity')}
-                    </button>
                   </div>
                 )}
               </>
@@ -251,11 +267,12 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
           <div className="flex-1 min-w-0 min-h-[300px]">
             <PMaxLocationMap
               mode={mode}
-              pinMode={pinMode}
               pinCoords={pinCoords}
-              onPinPlace={setPinCoords}
+              onPinPlace={handlePinPlace}
+              onSaveProximity={saveProximity}
               proximityTargets={state.proximityTargets}
               addressQuery={addressQuery}
+              radiusLabel={`${radiusValue} ${radiusUnit}`}
               radiusMeters={
                 radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
               }

@@ -1,7 +1,7 @@
 'use client'
 
-import { useState } from 'react'
-import { Check, X, Search } from 'lucide-react'
+import { useEffect, useState } from 'react'
+import { Check, X } from 'lucide-react'
 import type { StepProps, GeoSuggestion, SelectedLocation } from '../shared/WizardTypes'
 import { inputCls, LANGUAGE_OPTIONS, COUNTRY_OPTIONS } from '../shared/WizardTypes'
 
@@ -9,24 +9,27 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
   const [geoQuery, setGeoQuery] = useState('')
   const [geoResults, setGeoResults] = useState<GeoSuggestion[]>([])
   const [geoLoading, setGeoLoading] = useState(false)
-  const [geoSearched, setGeoSearched] = useState(false)
 
-  const searchGeo = async () => {
-    if (geoQuery.trim().length < 2) return
-    setGeoLoading(true)
-    setGeoSearched(true)
-    try {
-      const params = new URLSearchParams({ q: geoQuery })
-      if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
-      const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
-      const data = await res.json()
-      setGeoResults(data.results ?? [])
-    } catch {
-      setGeoResults([])
-    } finally {
-      setGeoLoading(false)
-    }
-  }
+  useEffect(() => {
+    const q = geoQuery.trim()
+    if (q.length < 2) { setGeoResults([]); return }
+    let cancelled = false
+    const timer = setTimeout(async () => {
+      setGeoLoading(true)
+      try {
+        const params = new URLSearchParams({ q })
+        if (state.geoSearchCountry) params.set('country', state.geoSearchCountry)
+        const res = await fetch(`/api/integrations/google-ads/geo-targets?${params}`)
+        const data = await res.json()
+        if (!cancelled) setGeoResults(data.results ?? [])
+      } catch {
+        if (!cancelled) setGeoResults([])
+      } finally {
+        if (!cancelled) setGeoLoading(false)
+      }
+    }, 300)
+    return () => { cancelled = true; clearTimeout(timer) }
+  }, [geoQuery, state.geoSearchCountry])
 
   const addLocation = (geo: GeoSuggestion) => {
     if (state.locations.some(l => l.id === geo.id)) return
@@ -74,21 +77,12 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
           <input
             className={`${inputCls} flex-1`}
             value={geoQuery}
-            onChange={e => { setGeoQuery(e.target.value); setGeoSearched(false) }}
-            onKeyDown={e => e.key === 'Enter' && searchGeo()}
+            onChange={e => setGeoQuery(e.target.value)}
             placeholder={t('location.searchPlaceholder')}
           />
-          <button
-            type="button"
-            onClick={searchGeo}
-            disabled={geoLoading || geoQuery.trim().length < 2}
-            className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
-          >
-            {geoLoading ? '...' : <Search className="w-4 h-4" />}
-          </button>
         </div>
 
-        {geoSearched && !geoLoading && geoResults.length === 0 && (
+        {!geoLoading && geoQuery.trim().length >= 2 && geoResults.length === 0 && (
           <p className="text-sm text-gray-500">{t('location.noResults')}</p>
         )}
 

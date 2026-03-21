@@ -8,20 +8,22 @@ const DEFAULT_ZOOM = 6
 
 interface Props {
   mode: 'location' | 'radius'
-  pinMode: boolean
   pinCoords: { lat: number; lng: number } | null
   onPinPlace: (coords: { lat: number; lng: number }) => void
+  onSaveProximity: () => void
   proximityTargets: PMaxProximityTarget[]
   addressQuery: string
+  radiusLabel: string
   radiusMeters?: number
 }
 
 export default function PMaxLocationMap({
   mode,
-  pinMode,
   pinCoords,
   onPinPlace,
+  onSaveProximity,
   proximityTargets,
+  radiusLabel,
   radiusMeters,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
@@ -80,10 +82,21 @@ export default function PMaxLocationMap({
       }
 
       map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
-        if (pinMode) {
-          onPinPlace({ lat: e.latlng.lat, lng: e.latlng.lng })
-          updateMarkerAndCircle(e.latlng.lat, e.latlng.lng, radiusMeters)
-        }
+        if (mode !== 'radius') return
+        const { lat, lng } = e.latlng
+        onPinPlace({ lat, lng })
+        updateMarkerAndCircle(lat, lng, radiusMeters)
+        const popup = L.popup()
+          .setLatLng([lat, lng])
+          .setContent(`<div style="padding:8px;min-width:180px">
+      <p style="margin:0 0 8px;font-size:12px;color:#374151">(${lat.toFixed(5)}, ${lng.toFixed(5)}) – ${radiusLabel ?? ''}</p>
+      <button id="loc-include-btn" style="background:#2563eb;color:white;border:none;padding:6px 14px;border-radius:6px;cursor:pointer;font-size:12px;font-weight:500">Dahil et</button>
+    </div>`)
+          .openOn(map)
+        setTimeout(() => {
+          const btn = document.getElementById('loc-include-btn')
+          if (btn) btn.addEventListener('click', () => { map.closePopup(); onSaveProximity?.() })
+        }, 0)
       })
 
       proximityTargets.forEach(prox => {
@@ -101,7 +114,7 @@ export default function PMaxLocationMap({
         mapRef.current = null
       }
     }
-  }, [mounted, onPinPlace, proximityTargets.length])
+  }, [mounted, mode, onPinPlace, onSaveProximity, proximityTargets.length, radiusLabel, radiusMeters])
 
   useEffect(() => {
     if (!mapRef.current) return
@@ -133,7 +146,7 @@ export default function PMaxLocationMap({
     <div
       ref={containerRef}
       className="w-full h-full min-h-[300px]"
-      style={{ cursor: pinMode ? 'crosshair' : 'default' }}
+      style={{ cursor: mode === 'radius' ? 'crosshair' : 'default' }}
     />
   )
 }
