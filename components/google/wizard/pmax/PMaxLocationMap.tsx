@@ -15,6 +15,7 @@ interface Props {
   radiusMeters?: number
   onSaveProximity?: () => void
   radiusLabel?: string
+  pinModeActive?: boolean
 }
 
 export default function PMaxLocationMap({
@@ -25,17 +26,22 @@ export default function PMaxLocationMap({
   radiusMeters,
   onSaveProximity,
   radiusLabel,
+  pinModeActive,
 }: Props) {
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<{ map: any; marker: any; circle: any; proximityCircles: any[] } | null>(null)
   const onSaveProximityRef = useRef(onSaveProximity)
   const radiusMetersRef = useRef(radiusMeters)
   const radiusLabelRef = useRef(radiusLabel)
+  const pinModeActiveRef = useRef(pinModeActive)
+  const pinModeActiveRef = useRef(pinModeActive)
   const [mounted, setMounted] = useState(false)
 
   onSaveProximityRef.current = onSaveProximity
   radiusMetersRef.current = radiusMeters
   radiusLabelRef.current = radiusLabel
+  pinModeActiveRef.current = pinModeActive
+  pinModeActiveRef.current = pinModeActive
 
   useEffect(() => { setMounted(true) }, [])
 
@@ -82,6 +88,7 @@ export default function PMaxLocationMap({
 
       map.on('click', (e: { latlng: { lat: number; lng: number } }) => {
         if (mode !== 'radius') return
+        if (!pinModeActiveRef.current) return
         const { lat, lng } = e.latlng
         onPinPlace({ lat, lng })
         updateMarkerAndCircle(lat, lng, radiusMetersRef.current)
@@ -142,7 +149,7 @@ export default function PMaxLocationMap({
     <div
       ref={containerRef}
       className="w-full h-full min-h-[300px]"
-      style={{ cursor: mode === 'radius' ? 'crosshair' : 'default' }}
+      style={{ cursor: mode === 'radius' && pinModeActive ? 'crosshair' : 'default' }}
     />
   )
 }
