@@ -146,7 +146,7 @@ export default function PMaxLocationMap({
             ">Dahil et</button>
           </div>
         `
-        const popup = L.popup({ closeOnClick: false, autoPan: false, offset: [0, -10] })
+        const popup = L.popup({ closeOnClick: false, autoPan: true, autoPanPadding: [20, 20], offset: [0, -10] })
           .setLatLng([lat, lng])
           .setContent(popupContent)
           .openOn(map)
