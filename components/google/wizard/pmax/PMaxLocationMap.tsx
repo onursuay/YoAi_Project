@@ -214,7 +214,7 @@ export default function PMaxLocationMap({
         }).addTo(map)
         mapRef.current.circle = c
       }
-      map.setView([pinCoords.lat, pinCoords.lng], 13)
+      // setView kaldırıldı - zoom yapmasın
     })
   }, [pinCoords]) // radiusMeters burada YOK — çift circle önlenir
 

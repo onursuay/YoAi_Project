@@ -307,7 +307,17 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
             <PMaxLocationMap
               mode={mode}
               pinCoords={pinCoords}
-              onPinPlace={coords => { setPinCoords(coords); setPinLabel(''); setPinModeActive(false) }}
+              onPinPlace={coords => {
+                const meters = radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34
+                const prox = {
+                  lat: coords.lat,
+                  lng: coords.lng,
+                  radiusMeters: Math.round(meters),
+                  label: `${coords.lat.toFixed(4)}, ${coords.lng.toFixed(4)} (${radiusValue} ${radiusUnit})`,
+                }
+                updateRef.current({ proximityTargets: [...stateRef.current.proximityTargets, prox] })
+                // pinModeActive açık kalır, pinCoords set edilmez
+              }}
               proximityTargets={state.proximityTargets}
               addressQuery={radQuery}
               radiusMeters={radiusUnit === 'km' ? radiusValue * 1000 : radiusValue * 1609.34}
