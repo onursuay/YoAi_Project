@@ -157,16 +157,14 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
       >
         {/* Top header */}
         <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white rounded-t-2xl">
-          <div className="flex items-center gap-3">
-            <button
-              type="button"
-              onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
-              className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
-            >
-              <X className="w-5 h-5" />
-            </button>
-            <span className="text-[15px] font-semibold text-gray-900">{t('title')}</span>
-          </div>
+          <span className="text-[15px] font-semibold text-gray-900">{t('title')}</span>
+          <button
+            type="button"
+            onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
+            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
+          >
+            <X className="w-5 h-5" />
+          </button>
         </div>
 
         {/* Main layout: sidebar + content */}
