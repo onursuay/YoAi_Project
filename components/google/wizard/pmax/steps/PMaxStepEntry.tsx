@@ -278,7 +278,6 @@ export default function PMaxStepEntry({ state, update, t }: PMaxStepProps) {
       </section>
 
       <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('entry.landingTitle')}</h4>
         <Field label={t('conversion.campaignName')} required>
           <input
             className={inputCls}
