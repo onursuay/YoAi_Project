@@ -1,7 +1,7 @@
 'use client'
 
 import { useEffect, useState } from 'react'
-import { Check, X } from 'lucide-react'
+import { X } from 'lucide-react'
 import type { StepProps, GeoSuggestion, SelectedLocation } from '../shared/WizardTypes'
 import { inputCls, LANGUAGE_OPTIONS, COUNTRY_OPTIONS } from '../shared/WizardTypes'
 
@@ -41,11 +41,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
     update({ locations: state.locations.filter(l => l.id !== id) })
   }
 
-  const toggleNegative = (id: string) => {
-    update({
-      locations: state.locations.map(l => l.id === id ? { ...l, isNegative: !l.isNegative } : l),
-    })
-  }
+
 
   const toggleLanguage = (langId: string) => {
     const has = state.languageIds.includes(langId)
@@ -87,19 +83,16 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
         )}
 
         {geoResults.length > 0 && (
-          <div className="border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto">
+          <div className="max-h-40 overflow-y-auto border border-gray-200 rounded-lg divide-y divide-gray-100">
             {geoResults.map(r => {
               const added = state.locations.some(l => l.id === r.id)
               return (
                 <div key={r.id} className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${added ? 'bg-blue-50' : ''}`}>
-                  <div>
-                    <span className="text-sm font-medium text-gray-900">{r.name}</span>
-                    <span className="ml-2 text-xs text-gray-400">{r.targetType}</span>
-                  </div>
+                  <span className="text-sm font-medium truncate flex-1 mr-2">{r.name}</span>
                   {added ? (
-                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                    <span className="text-xs text-blue-500 shrink-0">{t('location.added')}</span>
                   ) : (
-                    <div className="flex items-center gap-3 shrink-0">
+                    <div className="flex gap-1 shrink-0">
                       <button type="button" onClick={() => addLocation(r, false)} className="text-xs text-blue-600 hover:underline font-medium">{t('location.include')}</button>
                       <button type="button" onClick={() => addLocation(r, true)} className="text-xs text-red-600 hover:underline font-medium">{t('location.exclude')}</button>
                     </div>
@@ -112,26 +105,26 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
 
         {state.locations.length > 0 && (
           <div>
-            <p className="text-sm font-medium text-gray-700 mb-2">{t('location.selectedTitleWithCount', { count: state.locations.length })}</p>
-            <div className="flex flex-wrap gap-2">
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+              {t('location.selectedTitleWithCount', { count: state.locations.length })}
+            </p>
+            <div className="space-y-1 max-h-36 overflow-y-auto">
               {state.locations.map(loc => (
-                <span
+                <div
                   key={loc.id}
-                  className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${
+                  className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs ${
                     loc.isNegative
-                      ? 'bg-red-100 text-red-800'
-                      : 'bg-blue-100 text-blue-800'
+                      ? 'bg-red-50 text-red-800 border border-red-100'
+                      : 'bg-blue-50 text-blue-800 border border-blue-100'
                   }`}
                 >
-                  {loc.name}
-                  {loc.isNegative && <span className="text-red-500 text-xs">{t('location.excludedParens')}</span>}
-                  <button type="button" onClick={() => toggleNegative(loc.id)} className="ml-1 hover:opacity-70 text-xs underline" title={loc.isNegative ? t('location.includeTitle') : t('location.excludeTitle')}>
-                    {loc.isNegative ? t('location.includeLabel') : t('location.excludeLabel')}
-                  </button>
-                  <button type="button" onClick={() => removeLocation(loc.id)} className="ml-0.5 hover:opacity-70">
+                  <span className="truncate flex-1">
+                    {loc.name}{loc.isNegative ? ` (${t('location.excludedParens')})` : ''}
+                  </span>
+                  <button type="button" onClick={() => removeLocation(loc.id)} className="ml-1 shrink-0 hover:opacity-70">
                     <X className="w-3 h-3" />
                   </button>
-                </span>
+                </div>
               ))}
             </div>
           </div>
