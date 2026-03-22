@@ -10,6 +10,8 @@ import DashboardKpiCard from '@/components/DashboardKpiCard'
 import AlertBanner from '@/components/AlertBanner'
 import GoogleCampaignWizard from '@/components/google/wizard/GoogleCampaignWizard'
 import PMaxCampaignWizard from '@/components/google/wizard/pmax/PMaxCampaignWizard'
+import DisplayCampaignWizard from '@/components/google/wizard/display/DisplayCampaignWizard'
+import type { CampaignGoal } from '@/components/google/wizard/shared/WizardTypes'
 import GoogleAccountModal from '@/components/google/GoogleAccountModal'
 import DateRangePicker from '@/components/DateRangePicker'
 import GoogleTableReal from './components/GoogleTableReal'
@@ -31,6 +33,8 @@ export default function GooglePage() {
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType }>>([])
   const [showWizard, setShowWizard] = useState(false)
   const [showPMaxWizard, setShowPMaxWizard] = useState(false)
+  const [showDisplayWizard, setShowDisplayWizard] = useState(false)
+  const [displayCampaignGoal, setDisplayCampaignGoal] = useState<CampaignGoal>('SALES')
   const [emptyBannerDismissed, setEmptyBannerDismissed] = useState(false)
 
   // Selection state — one per tab
@@ -898,11 +902,26 @@ export default function GooglePage() {
         onSuccess={() => { setShowWizard(false); data.fetchCampaigns(kpis.dateFrom, kpis.dateTo) }}
         onToast={addToast}
         onOpenPMaxWizard={() => { setShowWizard(false); setShowPMaxWizard(true) }}
+        onOpenDisplayWizard={({ campaignGoal }) => {
+          setDisplayCampaignGoal(campaignGoal)
+          setShowWizard(false)
+          setShowDisplayWizard(true)
+        }}
       />
       <PMaxCampaignWizard
         isOpen={showPMaxWizard}
         onClose={() => setShowPMaxWizard(false)}
         onSuccess={() => { setShowPMaxWizard(false); data.fetchCampaigns(kpis.dateFrom, kpis.dateTo) }}
+        onToast={addToast}
+      />
+      <DisplayCampaignWizard
+        isOpen={showDisplayWizard}
+        initialCampaignGoal={displayCampaignGoal}
+        onClose={() => setShowDisplayWizard(false)}
+        onSuccess={() => {
+          setShowDisplayWizard(false)
+          data.fetchCampaigns(kpis.dateFrom, kpis.dateTo)
+        }}
         onToast={addToast}
       />
       <ToastContainer toasts={toasts} onClose={removeToast} />

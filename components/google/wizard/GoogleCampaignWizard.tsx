@@ -4,7 +4,7 @@ import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { defaultState } from './shared/WizardTypes'
-import type { WizardState } from './shared/WizardTypes'
+import type { WizardState, CampaignGoal } from './shared/WizardTypes'
 import { validateStep } from './shared/WizardValidation'
 import { buildCreatePayload } from './shared/WizardHelpers'
 import StepGoalType from './steps/StepGoalType'
@@ -25,6 +25,8 @@ interface Props {
   onToast?: (msg: string, type: 'success' | 'error') => void
   /** When PERFORMANCE_MAX selected on step 0 and Next clicked — close this wizard and open PMax wizard */
   onOpenPMaxWizard?: () => void
+  /** When DISPLAY selected on step 0 and Next clicked — close this wizard and open Display wizard */
+  onOpenDisplayWizard?: (payload: { campaignGoal: CampaignGoal }) => void
 }
 
 const TOTAL_STEPS = 8
@@ -36,7 +38,14 @@ function normalizeError(err: unknown): string {
   return technical ? '' : msg
 }
 
-export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToast, onOpenPMaxWizard }: Props) {
+export default function GoogleCampaignWizard({
+  isOpen,
+  onClose,
+  onSuccess,
+  onToast,
+  onOpenPMaxWizard,
+  onOpenDisplayWizard,
+}: Props) {
   const [step, setStep] = useState(0)
   const [state, setState] = useState<WizardState>(defaultState)
   const [error, setError] = useState<string | null>(null)
@@ -70,6 +79,15 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
         handleClose()
       } else {
         setError(t('performanceMaxNotReady'))
+      }
+      return
+    }
+    if (step === 0 && state.campaignType === 'DISPLAY') {
+      if (onOpenDisplayWizard) {
+        onOpenDisplayWizard({ campaignGoal: state.campaignGoal })
+        handleClose()
+      } else {
+        setError(t('displayNotReady'))
       }
       return
     }
@@ -212,6 +230,11 @@ export default function GoogleCampaignWizard({ isOpen, onClose, onSuccess, onToa
                   {state.campaignType === 'PERFORMANCE_MAX' && (
                     <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
                       <p className="text-sm font-medium text-amber-800">{t('performanceMaxPlaceholder')}</p>
+                    </div>
+                  )}
+                  {state.campaignType === 'DISPLAY' && (
+                    <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
+                      <p className="text-sm font-medium text-amber-800">{t('displayPlaceholder')}</p>
                     </div>
                   )}
                 </>

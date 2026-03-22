@@ -131,6 +131,16 @@ export interface NetworkSettings {
 // Location targeting mode — presence vs presence+interest
 export type LocationTargetingMode = 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
 
+/** Display wizard — preset vs custom geo */
+export type DisplayLocationMode = 'ALL' | 'TURKEY' | 'CUSTOM'
+
+/** Display wizard — teklif odağı (UI); maps to biddingStrategy + biddingFocus */
+export type DisplayBiddingFocus = 'CONVERSIONS' | 'CONVERSION_VALUE' | 'VIEWABLE_IMPRESSIONS'
+
+/** Alt seçenekler — DisplayStepBudgetBidding */
+export type DisplayConversionsSub = 'MAXIMIZE_CONVERSIONS' | 'TARGET_CPA'
+export type DisplayValueSub = 'MAXIMIZE_CONVERSION_VALUE' | 'TARGET_ROAS'
+
 // EU political ads declaration (compliance)
 export type EuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
 
@@ -205,6 +215,16 @@ export interface WizardState {
   path2: string
   // Step 7: Schedule
   adSchedule: ScheduleEntry[]
+  // Display campaign
+  optimizedTargeting: boolean
+  displayBusinessName: string
+  displayHeadlines: string[]
+  displayLongHeadline: string
+  displayDescriptions: string[]
+  displayLocationMode: DisplayLocationMode
+  displayBiddingFocus: DisplayBiddingFocus
+  displayConversionsSub: DisplayConversionsSub
+  displayValueSub: DisplayValueSub
 }
 
 export interface GeoSuggestion {
@@ -324,6 +344,16 @@ export const defaultState: WizardState = {
   path1: '',
   path2: '',
   adSchedule: [],
+  // Display campaign
+  optimizedTargeting: true,
+  displayBusinessName: '',
+  displayHeadlines: ['', '', '', '', ''],
+  displayLongHeadline: '',
+  displayDescriptions: ['', '', '', '', ''],
+  displayLocationMode: 'ALL',
+  displayBiddingFocus: 'CONVERSIONS',
+  displayConversionsSub: 'MAXIMIZE_CONVERSIONS',
+  displayValueSub: 'MAXIMIZE_CONVERSION_VALUE',
 }
 
 export const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'
