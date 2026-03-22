@@ -60,12 +60,12 @@ export const GOAL_CAMPAIGN_TYPES: Record<CampaignGoal, CampaignTypeOption[]> = {
   ],
   LOCAL_STORE: [{ type: 'PERFORMANCE_MAX' }],
   NO_GOAL: [
-    { type: 'SEARCH' },
-    { type: 'DISPLAY' },
-    { type: 'VIDEO' },
-    { type: 'SHOPPING' },
     { type: 'PERFORMANCE_MAX' },
+    { type: 'SEARCH' },
     { type: 'DEMAND_GEN' },
+    { type: 'DISPLAY' },
+    { type: 'SHOPPING' },
+    { type: 'VIDEO' },
   ],
 }
 
