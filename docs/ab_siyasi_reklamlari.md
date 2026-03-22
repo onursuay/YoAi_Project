@@ -1,248 +1,119 @@
-# AB Siyasi Reklamları (EU Political Ads) — YoAI Google Ads Sistemi
+# AB siyasi reklamları (EU political ads)
 
-## 1. Genel Bakış
+## Genel bakış
 
-Google Ads, AB (Avrupa Birliği) siyasi reklamcılık düzenlemesi kapsamında kampanya oluştururken kullanıcıdan bir **beyan** (declaration) alınmasını zorunlu kılar. Kullanıcı kampanyanın AB siyasi reklamı içerip içermediğini beyan eder; "içeriyor" seçilirse kampanya AB bölgelerinde yayınlanamaz.
+Kullanıcıdan, kampanyanın **Avrupa Birliği ile ilgili siyasi reklam** içerip içermediğini beyan etmesi istenir. Bu beyan, Google Ads kampanya oluşturma isteğinde **`contains_eu_political_advertising`** alanına yazılır.
 
-**Google Ads API karşılığı:** `campaign.eu_political_advertising` alanı.
+- Amaç: AB bölgesinde siyasi reklam politikalarına uyum.
+- Uygulama: UI’da iki seçenek (`NOT_POLITICAL` / `POLITICAL`); backend’de API enum değerlerine map edilir.
+
+## Google Ads API karşılığı
+
+| Uygulama (wizard) | Google Ads API (`Campaign`) |
+|-------------------|-----------------------------|
+| `EuPoliticalAdsDeclaration` / `PMaxEuPoliticalAdsDeclaration` | Alan: **`contains_eu_political_advertising`** |
+| `'NOT_POLITICAL'` | `DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING` |
+| `'POLITICAL'` | `CONTAINS_EU_POLITICAL_ADVERTISING` |
+
+**Kod referansları**
+
+- Standart kampanya oluşturma: `lib/google-ads/create-campaign.ts` — `CreateCampaignParams.containsEuPoliticalAdvertising`, varsayılan `DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING`.
+- Search (ve ortak) sihirbaz payload: `components/google/wizard/shared/WizardHelpers.ts` → `buildCreatePayload` içinde `containsEuPoliticalAdvertising`.
+- PMax payload: `components/google/wizard/pmax/shared/PMaxCreatePayload.ts` → `containsEuPoliticalAdvertising`.
 
 ---
 
-## 2. Mevcut Implementasyon Durumu
+## Kampanya tipi durum tablosu
 
-### 2.1 Katman Haritası
+Ortak **Google Campaign Wizard** akışında (PMax hariç) adım 3’te `StepCampaignSettingsSearch` kullanılır; **DISPLAY / VIDEO / DEMAND_GEN** seçildiğinde de aynı adım ve aynı AB bloğu gösterilir. **PMax** ayrı sihirbazdadır.
 
-| Katman | Dosya | Durum |
-|--------|-------|-------|
-| **TypeScript Tipi (UI)** | `components/google/wizard/shared/WizardTypes.ts` | ✅ Tanımlı |
-| **UI Bileşeni** | `components/google/wizard/steps/StepCampaignSettingsSearch.tsx` | ✅ Gösteriliyor |
-| **WizardState default** | `WizardTypes.ts → defaultState` | ✅ `NOT_POLITICAL` |
-| **Backend tipi** | `lib/google-ads/create-campaign.ts` | ✅ Tanımlı |
-| **Wizard → API mapping** | `create-campaign.ts → CreateCampaignParams` | ⚠️ EKSİK |
-| **API payload'a geçiş** | `route.ts` veya `create-campaign.ts` içinde | ⚠️ EKSİK |
-| **i18n locales** | `locales/tr.json`, `locales/en.json` | ❌ EKSİK |
+| Kampanya tipi | UI | Backend / payload |
+|---------------|----|-------------------|
+| **SEARCH** | `StepCampaignSettingsSearch` — AB bölümü | `buildCreatePayload` → `POST .../campaigns/create` |
+| **DISPLAY** | Aynı (ortak sihirbaz, adım 3) | Aynı |
+| **VIDEO** | Aynı | Aynı |
+| **DEMAND_GEN** | Aynı | Aynı |
+| **PERFORMANCE_MAX (PMax)** | `PMaxStepCampaignSettings` (collapsible bölüm) | `PMaxCreatePayload` → PMax create akışı |
 
 ---
 
-## 3. Tip Tanımları
+## TypeScript tipleri
 
-### 3.1 UI State Tipi (`WizardTypes.ts`)
-```typescript
-// UI'da kullanılan değerler
+### `EuPoliticalAdsDeclaration` (Search / ortak wizard)
+
+**Dosya:** `components/google/wizard/shared/WizardTypes.ts`
+
+```ts
 export type EuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
-
-// WizardState içinde
-euPoliticalAdsDeclaration: EuPoliticalAdsDeclaration
-
-// defaultState içinde
-euPoliticalAdsDeclaration: 'NOT_POLITICAL'
 ```
 
-### 3.2 Google Ads API Tipi (`create-campaign.ts`)
-```typescript
-// Google Ads API'ye gönderilecek değerler
-export type EuPoliticalAdvertising =
-  | 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING'
-  | 'CONTAINS_EU_POLITICAL_ADVERTISING'
+`WizardState.euPoliticalAdsDeclaration` varsayılan: `'NOT_POLITICAL'`.
 
-const DEFAULT_EU_POLITICAL_ADVERTISING: EuPoliticalAdvertising =
-  'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING'
+### `PMaxEuPoliticalAdsDeclaration` (PMax)
+
+**Dosya:** `components/google/wizard/pmax/shared/PMaxWizardTypes.ts`
+
+```ts
+export type PMaxEuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
 ```
 
-### 3.3 UI → API Değer Mapping
-```typescript
-// Bu mapping create-campaign.ts içine eklenmelidir
-const EU_POLITICAL_MAP: Record<EuPoliticalAdsDeclaration, EuPoliticalAdvertising> = {
-  NOT_POLITICAL: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
-  POLITICAL:     'CONTAINS_EU_POLITICAL_ADVERTISING',
-}
-```
+`PMaxWizardState.euPoliticalAdsDeclaration` başlangıç: `null` (kullanıcı seçene kadar); PMax özet/validasyonda zorunlu seçim için `settings.euPoliticalValidation` kullanılır.
 
 ---
 
-## 4. UI Bileşeni — `StepCampaignSettingsSearch.tsx`
+## UI yapısı
 
-AB Siyasi Reklamları bloğu bu component'ın **4. section'ı** olarak bulunur. Sadece bu step'te gösterilir (Search + diğer campaign type'lar için `StepCampaignSettings.tsx`'de **mevcut değildir**).
+1. **Radio kartlar** — Her seçenek `<label>` içinde `type="radio"`, tıklanabilir kart.
+2. **Border highlight** — Seçili kart: `border-blue-300 bg-blue-50/50`; diğeri: `border-gray-100` + hover.
+3. **Helper note** — Sadece **“Hayır / NOT_POLITICAL”** seçiliyken, ikinci satırda gri küçük metin: `euPoliticalHelperNote` + `euPoliticalHelperNoteOptional`.
+4. **Amber uyarı kutusu** — **“Evet / POLITICAL”** seçilince: `border-amber-200`, `bg-amber-50/60`, `Info` ikonu, iki satır uyarı metni.
+5. **Policy link** — Uyarı kutusunda, `euPoliticalWarningLearnMore` metniyle `target="_blank"` bağlantı.
 
-### 4.1 Görsel Yapı
-```
-┌─────────────────────────────────────────────┐
-│  🛡️  AB Siyasi Reklamları                   │
-│  Kampanyanızda AB ile ilgili siyasi reklam   │
-│  var mı?                                     │
-│                                              │
-│  ○  Hayır, bu kampanyada AB ile ilgili       │
-│     siyasi reklam yok                        │
-│     [helper note — isteğe bağlı]            │
-│                                              │
-│  ○  Evet, bu kampanyada AB ile ilgili        │
-│     siyasi reklam var                        │
-│     ┌─ Uyarı ───────────────────────────┐  │
-│     │ ⚠️ Kampanyanız AB'de yayınlanamaz  │  │
-│     │ ... politika hakkında daha fazla  │  │
-│     └────────────────────────────────────┘  │
-└─────────────────────────────────────────────┘
-```
-
-### 4.2 State Bağlantısı
-```typescript
-// Okuma
-state.euPoliticalAdsDeclaration  // 'NOT_POLITICAL' | 'POLITICAL'
-
-// Yazma
-update({ euPoliticalAdsDeclaration: 'NOT_POLITICAL' })
-update({ euPoliticalAdsDeclaration: 'POLITICAL' })
-```
-
-### 4.3 Koşullu Rendering
-
-- `NOT_POLITICAL` seçiliyken: Helper note gösterilir (isteğe bağlı bilgi)
-- `POLITICAL` seçiliyken: **Amber uyarı kutusu** gösterilir, AB'de yayınlanamayacağı bildirilir, Google policy URL linki sunulur
-
-### 4.4 Policy URL
-```typescript
-const EU_POLICY_URL = 'https://support.google.com/adspolicy/answer/6014595'
-// Locale'e göre: ?hl=tr veya ?hl=en
-```
+**Dosyalar:**  
+`StepCampaignSettingsSearch.tsx`, `StepCampaignSettings.tsx` (ortak desen), `PMaxStepCampaignSettings.tsx` (PMax; radio `name` farklı: `pmaxEuPoliticalAdsDeclaration`).
 
 ---
 
-## 5. i18n Anahtarları (Locales)
+## Policy URL sabiti ve `useLocale`
 
-`StepCampaignSettingsSearch.tsx` şu `t()` anahtarlarını kullanır. **Mevcut locales dosyalarında eksiktir, eklenmesi gerekir.**
+**Sabit:** `EU_POLICY_URL = 'https://support.google.com/adspolicy/answer/6014595'`
 
-### `locales/tr.json` — eklenecek keyler:
-```json
-{
-  "settings": {
-    "euPoliticalTitle": "AB Siyasi Reklamları",
-    "euPoliticalQuestion": "Kampanyanızda Avrupa Birliği ile ilgili siyasi reklam var mı?",
-    "euPoliticalNotPolitical": "Hayır, bu kampanyada AB ile ilgili siyasi reklam yok",
-    "euPoliticalPolitical": "Evet, bu kampanyada AB ile ilgili siyasi reklam var",
-    "euPoliticalHelperNote": "Bu kampanya AB siyasi reklamı içermiyor.",
-    "euPoliticalHelperNoteOptional": "(isteğe bağlı)",
-    "euPoliticalWarningLine1": "Kampanyanız Avrupa Birliği'nde yayınlanamaz.",
-    "euPoliticalWarningLine2": "Google Ads, AB siyasi reklamları içeren kampanyaların AB'de yayınlanmasına izin vermez. Kampanyanızı diğer bölgelerde yayınlamaya devam edebilirsiniz.",
-    "euPoliticalWarningLearnMore": "AB'deki siyasi reklamlar ile ilgili politika hakkında daha fazla bilgi"
-  }
-}
+**Locale’e göre `hl`:** `next-intl` `useLocale()` ile; `tr` ise `?hl=tr`, aksi halde `?hl=en`.
+
+```ts
+const locale = useLocale()
+const euPolicyUrl = `${EU_POLICY_URL}?hl=${locale === 'tr' ? 'tr' : 'en'}`
 ```
 
-### `locales/en.json` — eklenecek keyler:
-```json
-{
-  "settings": {
-    "euPoliticalTitle": "EU Political Ads",
-    "euPoliticalQuestion": "Does your campaign contain EU political advertising?",
-    "euPoliticalNotPolitical": "No, this campaign does not contain EU political advertising",
-    "euPoliticalPolitical": "Yes, this campaign contains EU political advertising",
-    "euPoliticalHelperNote": "This campaign does not contain EU political advertising.",
-    "euPoliticalHelperNoteOptional": "(optional)",
-    "euPoliticalWarningLine1": "Your campaign cannot be served in the European Union.",
-    "euPoliticalWarningLine2": "Google Ads does not allow campaigns containing EU political advertising to be served in the EU. You can still serve your campaign in other regions.",
-    "euPoliticalWarningLearnMore": "Learn more about the policy on political ads in the EU"
-  }
-}
-```
+Örnek dosyalar: `StepCampaignSettings.tsx` (satır ~37–65), `StepCampaignSettingsSearch.tsx`, `PMaxStepCampaignSettings.tsx`.
 
 ---
 
-## 6. Backend — `create-campaign.ts`
+## Locale keyleri (9 adet)
 
-### 6.1 Mevcut Durum
+Namespace: `dashboard.google.wizard` → `settings.*` (çeviri fonksiyonu: `t('settings.euPolitical…')`).
 
-`CreateCampaignParams` interface'inde `euPoliticalAdsDeclaration` alanı **henüz yok**. API her zaman `DEFAULT_EU_POLITICAL_ADVERTISING` (`DOES_NOT_CONTAIN_...`) kullanıyor.
+| # | Key |
+|---|-----|
+| 1 | `settings.euPoliticalTitle` |
+| 2 | `settings.euPoliticalQuestion` |
+| 3 | `settings.euPoliticalNotPolitical` |
+| 4 | `settings.euPoliticalPolitical` |
+| 5 | `settings.euPoliticalHelperNote` |
+| 6 | `settings.euPoliticalHelperNoteOptional` |
+| 7 | `settings.euPoliticalWarningLine1` |
+| 8 | `settings.euPoliticalWarningLine2` |
+| 9 | `settings.euPoliticalWarningLearnMore` |
 
-### 6.2 Eklenmesi Gereken Değişiklikler
-
-**`CreateCampaignParams` interface'ine ekle:**
-```typescript
-export interface CreateCampaignParams {
-  // ... mevcut alanlar ...
-  euPoliticalAdsDeclaration?: EuPoliticalAdsDeclaration
-}
-```
-
-**Campaign oluşturma sırasında mapping:**
-```typescript
-const EU_POLITICAL_MAP: Record<EuPoliticalAdsDeclaration, EuPoliticalAdvertising> = {
-  NOT_POLITICAL: 'DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING',
-  POLITICAL:     'CONTAINS_EU_POLITICAL_ADVERTISING',
-}
-
-const euPolitical = params.euPoliticalAdsDeclaration
-  ? EU_POLITICAL_MAP[params.euPoliticalAdsDeclaration]
-  : DEFAULT_EU_POLITICAL_ADVERTISING
-
-// Campaign resource'a ekle:
-campaign: {
-  // ...
-  eu_political_advertising: euPolitical,
-}
-```
+> **Not:** PMax sihirbazında ek olarak `settings.euPoliticalValidation` (zorunlu seçim) vb. kullanılabilir; yukarıdaki 9 anahtar AB bloğunun tam metin setidir.
 
 ---
 
-## 7. Wizard → API Route Akışı
-```
-StepCampaignSettingsSearch
-  │  state.euPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
-  │
-  ▼
-WizardSummary / Submit
-  │  params.euPoliticalAdsDeclaration gönderilmeli
-  │
-  ▼
-POST /api/integrations/google-ads/campaigns/create
-  │  params.euPoliticalAdsDeclaration alınmalı
-  │
-  ▼
-createFullCampaign(ctx, params)
-  │  EU_POLITICAL_MAP ile dönüştürülmeli
-  │
-  ▼
-Google Ads API
-  │  campaign.eu_political_advertising = 'DOES_NOT_CONTAIN...' | 'CONTAINS...'
-```
+## Yeni kampanya tipi / yeni sihirbaz eklerken checklist
 
----
-
-## 8. Kampanya Tipi Kapsamı
-
-| Campaign Type | Google Ads'de Var mı? | YOAI'de Eklenecek mi? |
-|---------------|----------------------|----------------------|
-| SEARCH | ✅ Evet | ✅ Zaten var |
-| DISPLAY | ✅ Evet | Eklenebilir |
-| VIDEO | ✅ Evet | Eklenebilir |
-| SHOPPING | ❌ Hayır | — |
-| PERFORMANCE_MAX | ✅ Evet | ✅ Tam entegre |
-| DEMAND_GEN | ✅ Evet | Eklenebilir |
-
-**Mevcut durum:** Yalnızca `StepCampaignSettingsSearch.tsx` içinde görünüyor. `StepCampaignSettings.tsx` (DISPLAY, VIDEO, DEMAND_GEN için) içinde **yok**.
-
----
-
-## 9. Entegrasyon Yapılacaklar Listesi
-
-### Kritik (Şu an eksik — işlevselliği etkiler)
-
-- [ ] `locales/tr.json` ve `locales/en.json` dosyalarına `euPolitical` keylerini ekle
-- [ ] `CreateCampaignParams` interface'ine `euPoliticalAdsDeclaration?: EuPoliticalAdsDeclaration` ekle
-- [ ] `create-campaign.ts` içinde `EU_POLITICAL_MAP` ile Google API değerine mapping yap
-- [ ] Wizard submit akışında `euPoliticalAdsDeclaration` alanını API payload'a dahil et
-
-### İsteğe Bağlı (Kapsam genişletme)
-
-- [ ] `StepCampaignSettings.tsx` (non-Search campaign'ler) içine de AB Siyasi Reklamları bloğu ekle
-- [ ] POLITICAL seçildiğinde `İleri` butonunu disable etme davranışı değerlendirilebilir
-
----
-
-## 10. Google Ads API Referansı
-
-- **Alan:** `Campaign.eu_political_advertising`
-- **Enum:** `EuPoliticalAdvertisingEnum.EuPoliticalAdvertising`
-  - `DOES_NOT_CONTAIN_EU_POLITICAL_ADVERTISING`
-  - `CONTAINS_EU_POLITICAL_ADVERTISING`
-- **Politika sayfası:** https://support.google.com/adspolicy/answer/6014595
-- **API dokümantasyonu:** https://developers.google.com/google-ads/api/reference/rpc/v18/Campaign
+1. [ ] State’e `EuPoliticalAdsDeclaration` (veya PMax için `| null` başlangıç) ve `update` ile senkronize et.
+2. [ ] İlgili ayarlar adımına **radio kart + helper + amber uyarı + policy link** (`EU_POLICY_URL` + `useLocale`) UI’ını ekle veya ortak bileşeni yeniden kullan.
+3. [ ] `locales/tr.json` ve `locales/en.json` içinde yukarıdaki **9 `settings.euPolitical*`** anahtarının tanımlı olduğundan emin ol (namespace farkı varsa kopyala).
+4. [ ] Oluşturma payload’ında `containsEuPoliticalAdvertising` → `DOES_NOT_CONTAIN_*` / `CONTAINS_*` map’ini ekle (`WizardHelpers` / `PMaxCreatePayload` örnekleri).
+5. [ ] Özet adımında seçimi göster; PMax’te `null` ise hata göstergesi (`PMaxStepSummary`).
+6. [ ] `lib/google-ads/create-campaign.ts` (veya ilgili mutate) tarafında API alanının gerçekten gönderildiğini doğrula.
