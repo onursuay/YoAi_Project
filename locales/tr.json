@@ -1096,8 +1096,8 @@
           },
           "euPoliticalTitle": "AB Siyasi Reklamları",
           "euPoliticalLearnMore": "Daha fazla bilgi",
-          "euPoliticalNotPolitical": "Hayır, siyasi reklam yok",
-          "euPoliticalPolitical": "Evet, siyasi reklam var",
+          "euPoliticalNotPolitical": "Hayır, bu kampanyada AB ile ilgili siyasi reklam yok",
+          "euPoliticalPolitical": "Evet, bu kampanyada AB ile ilgili siyasi reklam var",
           "subtitle": "Doğru kullanıcılara ulaşmak için başlangıç olarak kampanyanızın temel ayarlarını tanımlayın.",
           "locationsLabel": "Bu kampanya için konumları seçin",
           "locationsAllCountries": "Tüm ülkeler ve bölgeler",
@@ -1105,7 +1105,7 @@
           "locationOptionsToggle": "Yer seçenekleri",
           "languagesLabel": "Müşterilerinizin konuştuğu dilleri seçin",
           "languagesSearchPlaceholder": "Yazmaya başlayın veya bir dil seçin",
-          "euPoliticalQuestion": "Kampanyanızda Avrupa Birliği ile ilgili siyasi reklamlar var mı?",
+          "euPoliticalQuestion": "Kampanyanızda Avrupa Birliği ile ilgili siyasi reklam var mı?",
           "euPoliticalRequired": "Zorunlu",
           "euPoliticalValidation": "Kampanyanızda AB ile ilgili siyasi reklamlar olup olmadığını onaylayın.",
           "devicesTitle": "Cihazlar",
@@ -1139,7 +1139,12 @@
           "dataExclusionsEnable": "Verileri hariç tutma özelliğini etkinleştirin",
           "scheduleEveryDay": "Her gün",
           "scheduleAddLink": "Ekle",
-          "scheduleTimezoneNote": "Hesabın saat dilimine göre: (GMT+03:00) Türkiye Standart Saati. Bunu kaydettiğinizde, değiştirdiğiniz ayarlar kaldırılır ve tüm performans verilerini sıfırlayarak yeni kayıtlar eklerir."
+          "scheduleTimezoneNote": "Hesabın saat dilimine göre: (GMT+03:00) Türkiye Standart Saati. Bunu kaydettiğinizde, değiştirdiğiniz ayarlar kaldırılır ve tüm performans verilerini sıfırlayarak yeni kayıtlar eklerir.",
+          "euPoliticalHelperNote": "Bu hesap AB ile ilgili siyasi reklamlar yayınlamak için kullanılmayacak.",
+          "euPoliticalHelperNoteOptional": "Bu seçim, yeni ve mevcut kampanyaların tümüne uygulanır. Bunu dilediğiniz zaman herhangi bir kampanya için değiştirebilirsiniz.",
+          "euPoliticalWarningLine1": "Kampanyanız Avrupa Birliği'nde yayınlanamaz.",
+          "euPoliticalWarningLine2": "Google Ads, AB siyasi reklamları içeren kampanyaların AB'de yayınlanmasına izin vermez. Kampanyanızı diğer bölgelerde yayınlamaya devam edebilirsiniz.",
+          "euPoliticalWarningLearnMore": "AB'deki siyasi reklamlar ile ilgili politika hakkında daha fazla bilgi"
         },
         "location": {
           "countryAll": "Tüm ülkeler",

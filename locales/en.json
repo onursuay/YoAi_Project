@@ -1096,8 +1096,8 @@
           },
           "euPoliticalTitle": "EU Political Ads",
           "euPoliticalLearnMore": "Learn more",
-          "euPoliticalNotPolitical": "No political ads",
-          "euPoliticalPolitical": "Yes, political ads",
+          "euPoliticalNotPolitical": "No, this campaign does not contain EU political advertising",
+          "euPoliticalPolitical": "Yes, this campaign contains EU political advertising",
           "subtitle": "Define your basic settings to reach the right users as a starting point for your campaign.",
           "locationsLabel": "Select locations for this campaign",
           "locationsAllCountries": "All countries and territories",
@@ -1105,7 +1105,7 @@
           "locationOptionsToggle": "Location options",
           "languagesLabel": "Select the languages your customers speak",
           "languagesSearchPlaceholder": "Start typing or select a language",
-          "euPoliticalQuestion": "Does your campaign contain EU political ads?",
+          "euPoliticalQuestion": "Does your campaign contain political advertising related to the European Union?",
           "euPoliticalRequired": "Required",
           "euPoliticalValidation": "Please confirm whether your campaign contains EU political ads.",
           "devicesTitle": "Devices",
@@ -1139,7 +1139,12 @@
           "dataExclusionsEnable": "Enable data exclusion feature",
           "scheduleEveryDay": "Every day",
           "scheduleAddLink": "Add",
-          "scheduleTimezoneNote": "Account timezone: (GMT+03:00) Turkey Standard Time. Changing this setting removes existing rules and resets all performance data."
+          "scheduleTimezoneNote": "Account timezone: (GMT+03:00) Turkey Standard Time. Changing this setting removes existing rules and resets all performance data.",
+          "euPoliticalHelperNote": "This account will not be used to run EU political ads.",
+          "euPoliticalHelperNoteOptional": "This selection applies to new and existing campaigns. You can change it for any campaign at any time.",
+          "euPoliticalWarningLine1": "Your campaign cannot be served in the European Union.",
+          "euPoliticalWarningLine2": "Google Ads does not allow campaigns containing EU political advertising to be served in the EU. You can still serve your campaign in other regions.",
+          "euPoliticalWarningLearnMore": "Learn more about the policy on political ads in the EU"
         },
         "location": {
           "countryAll": "All countries",
