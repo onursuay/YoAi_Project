@@ -4,6 +4,7 @@ import { useEffect, useState, useRef } from 'react'
 import { Search, X, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 import type { StepProps, GeoSuggestion, SelectedLocation } from '../shared/WizardTypes'
 import { inputCls, LANGUAGE_OPTIONS } from '../shared/WizardTypes'
+import LocationAdvancedModal from '../shared/LocationAdvancedModal'
 
 const DEBOUNCE_MS = 300
 const MIN_CHARS = 2
@@ -13,6 +14,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
   const [results, setResults] = useState<GeoSuggestion[]>([])
   const [loading, setLoading] = useState(false)
   const [showDropdown, setShowDropdown] = useState(false)
+  const [advancedOpen, setAdvancedOpen] = useState(false)
   const containerRef = useRef<HTMLDivElement>(null)
   const inputRef = useRef<HTMLInputElement>(null)
 
@@ -225,6 +227,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
         {/* Advanced search button */}
         <button
           type="button"
+          onClick={() => setAdvancedOpen(true)}
           className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
         >
           <MapPin className="w-4 h-4" />
@@ -291,6 +294,14 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
             </label>
           </div>
         </details>
+
+        <LocationAdvancedModal
+          isOpen={advancedOpen}
+          onClose={() => setAdvancedOpen(false)}
+          state={{ ...state, proximityTargets: [] }}
+          update={update}
+          t={t}
+        />
       </div>
 
       {/* ── Language Targeting ── */}

@@ -4,7 +4,8 @@ import { useState, useEffect, useRef } from 'react'
 import { Search, X, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 import type { PMaxStepProps, PMaxSelectedLocation } from './shared/PMaxWizardTypes'
 import { inputCls } from './shared/PMaxWizardTypes'
-import PMaxLocationAdvancedModal from './PMaxLocationAdvancedModal'
+import LocationAdvancedModal from '../shared/LocationAdvancedModal'
+import PMaxLocationMap from './PMaxLocationMap'
 
 const DEBOUNCE_MS = 300
 const MIN_CHARS = 2
@@ -324,12 +325,25 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
         </div>
       </details>
 
-      <PMaxLocationAdvancedModal
+      <LocationAdvancedModal
         isOpen={advancedOpen}
         onClose={() => setAdvancedOpen(false)}
         state={state}
         update={update}
         t={t}
+        renderMap={(mapProps) => (
+          <PMaxLocationMap
+            mode={mapProps.mode}
+            pinCoords={mapProps.pinCoords}
+            onPinPlace={mapProps.onPinPlace}
+            proximityTargets={mapProps.proximityTargets}
+            addressQuery={mapProps.addressQuery}
+            radiusMeters={mapProps.radiusMeters}
+            onSaveProximity={mapProps.onSaveProximity}
+            radiusLabel={mapProps.radiusLabel}
+            pinModeActive={mapProps.pinModeActive}
+          />
+        )}
       />
     </div>
   )
