@@ -31,9 +31,9 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
     return () => { cancelled = true; clearTimeout(timer) }
   }, [geoQuery, state.geoSearchCountry])
 
-  const addLocation = (geo: GeoSuggestion) => {
+  const addLocation = (geo: GeoSuggestion, isNegative: boolean) => {
     if (state.locations.some(l => l.id === geo.id)) return
-    const loc: SelectedLocation = { ...geo, isNegative: false }
+    const loc: SelectedLocation = { ...geo, isNegative }
     update({ locations: [...state.locations, loc] })
   }
 
@@ -91,19 +91,20 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
             {geoResults.map(r => {
               const added = state.locations.some(l => l.id === r.id)
               return (
-                <button
-                  key={r.id}
-                  type="button"
-                  onClick={() => addLocation(r)}
-                  disabled={added}
-                  className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left hover:bg-gray-50 ${added ? 'bg-blue-50 opacity-60' : ''}`}
-                >
+                <div key={r.id} className={`flex items-center justify-between px-3 py-2 hover:bg-gray-50 ${added ? 'bg-blue-50' : ''}`}>
                   <div>
-                    <span className="font-medium text-gray-900">{r.name}</span>
+                    <span className="text-sm font-medium text-gray-900">{r.name}</span>
                     <span className="ml-2 text-xs text-gray-400">{r.targetType}</span>
                   </div>
-                  {added && <Check className="w-4 h-4 text-blue-600 shrink-0" />}
-                </button>
+                  {added ? (
+                    <Check className="w-4 h-4 text-blue-600 shrink-0" />
+                  ) : (
+                    <div className="flex items-center gap-3 shrink-0">
+                      <button type="button" onClick={() => addLocation(r, false)} className="text-xs text-blue-600 hover:underline font-medium">{t('location.include')}</button>
+                      <button type="button" onClick={() => addLocation(r, true)} className="text-xs text-red-600 hover:underline font-medium">{t('location.exclude')}</button>
+                    </div>
+                  )}
+                </div>
               )
             })}
           </div>
