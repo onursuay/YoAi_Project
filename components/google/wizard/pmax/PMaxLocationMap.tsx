@@ -146,7 +146,7 @@ export default function PMaxLocationMap({
             ">Dahil et</button>
           </div>
         `
-        const popup = L.popup({ closeOnClick: false })
+        const popup = L.popup({ closeOnClick: false, autoPan: false, offset: [0, -10] })
           .setLatLng([lat, lng])
           .setContent(popupContent)
           .openOn(map)
@@ -157,6 +157,16 @@ export default function PMaxLocationMap({
           if (btn) {
             btn.addEventListener('click', () => {
               map.closePopup()
+              // Kaydedilen nokta için circle çiz
+              if (radiusMetersRef.current && radiusMetersRef.current > 0) {
+                L.circle([lat, lng], {
+                  radius: radiusMetersRef.current,
+                  color: '#2563eb',
+                  fillColor: '#93c5fd',
+                  fillOpacity: 0.25,
+                  weight: 2,
+                }).addTo(map)
+              }
               onPinPlaceRef.current({ lat, lng })
             })
           }
