@@ -1,7 +1,8 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronUp, ChevronDown, Plus, X, Search } from 'lucide-react'
+import { ChevronUp, ChevronDown, Plus, X, Search, Info } from 'lucide-react'
+import { useLocale } from 'next-intl'
 import type { PMaxStepProps, PMaxScheduleEntry, PMaxDayOfWeek, PMaxMinute, PMaxDeviceType } from '../shared/PMaxWizardTypes'
 import { inputCls, PMaxLanguageOptions, PMaxDaysOfWeek, PMaxAllDevices } from '../shared/PMaxWizardTypes'
 import PMaxLocationPicker from '../PMaxLocationPicker'
@@ -50,6 +51,8 @@ function CollapsibleSection({
 }
 
 export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepProps) {
+  const locale = useLocale()
+  const euPolicyUrl = `${EU_POLICY_URL}?hl=${locale === 'tr' ? 'tr' : 'en'}`
   const [addingDay, setAddingDay] = useState<PMaxDayOfWeek | null>(null)
   const [newStart, setNewStart] = useState(0)
   const [newStartMin, setNewStartMin] = useState<PMaxMinute>('ZERO')
@@ -143,39 +146,64 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
 
       {/* 3. AB siyasi reklamları */}
       <CollapsibleSection id="pmax-settings-section-2" title={t('settings.euPoliticalTitle')}>
-        <div className="space-y-3">
-          <p className="text-sm text-gray-600">{t('settings.euPoliticalQuestion')}</p>
-          <p className="text-xs text-gray-500">{t('settings.euPoliticalRequired')}</p>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxEuPolitical"
-                checked={state.euPoliticalAdsDeclaration === 'POLITICAL'}
-                onChange={() => update({ euPoliticalAdsDeclaration: 'POLITICAL' })}
-                className="text-blue-600"
-              />
-              <span className="text-sm">{t('settings.euPoliticalPolitical')}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="pmaxEuPolitical"
-                checked={state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'}
-                onChange={() => update({ euPoliticalAdsDeclaration: 'NOT_POLITICAL' })}
-                className="text-blue-600"
-              />
-              <span className="text-sm">{t('settings.euPoliticalNotPolitical')}</span>
-            </label>
-          </div>
-          {state.euPoliticalAdsDeclaration === null && (
-            <p className="text-xs text-red-600">{t('settings.euPoliticalValidation')}</p>
+        <p className="text-[13px] text-gray-600 mb-3">{t('settings.euPoliticalQuestion')}</p>
+        <div className="space-y-1">
+          <label
+            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
+              state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'
+                ? 'border-blue-300 bg-blue-50/50'
+                : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+            }`}
+          >
+            <input
+              type="radio"
+              name="pmaxEuPoliticalAdsDeclaration"
+              value="NOT_POLITICAL"
+              checked={state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'}
+              onChange={() => update({ euPoliticalAdsDeclaration: 'NOT_POLITICAL' })}
+              className="text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalNotPolitical')}</span>
+          </label>
+          {state.euPoliticalAdsDeclaration === 'NOT_POLITICAL' && (
+            <p className="text-[12px] text-gray-500 pl-8 mt-0.5 mb-1">
+              {t('settings.euPoliticalHelperNote')} {t('settings.euPoliticalHelperNoteOptional')}
+            </p>
           )}
-          <div className="flex items-start gap-2 p-3 bg-gray-50 rounded-lg">
-            <a href={EU_POLICY_URL} target="_blank" rel="noopener noreferrer" className="text-xs text-blue-600 hover:underline">
-              {t('settings.euPoliticalLearnMore')}
-            </a>
-          </div>
+          <label
+            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
+              state.euPoliticalAdsDeclaration === 'POLITICAL'
+                ? 'border-blue-300 bg-blue-50/50'
+                : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
+            }`}
+          >
+            <input
+              type="radio"
+              name="pmaxEuPoliticalAdsDeclaration"
+              value="POLITICAL"
+              checked={state.euPoliticalAdsDeclaration === 'POLITICAL'}
+              onChange={() => update({ euPoliticalAdsDeclaration: 'POLITICAL' })}
+              className="text-blue-600 focus:ring-blue-500"
+            />
+            <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalPolitical')}</span>
+          </label>
+          {state.euPoliticalAdsDeclaration === 'POLITICAL' && (
+            <div className="flex items-start gap-2 p-3 mt-1 rounded border border-amber-200 bg-amber-50/60 text-[13px] text-amber-900">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+              <div>
+                <p className="font-medium">{t('settings.euPoliticalWarningLine1')}</p>
+                <p className="mt-1 text-amber-800">{t('settings.euPoliticalWarningLine2')}</p>
+                <a
+                  href={euPolicyUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="mt-1.5 inline-block text-blue-600 hover:text-blue-700 underline"
+                >
+                  {t('settings.euPoliticalWarningLearnMore')}
+                </a>
+              </div>
+            </div>
+          )}
         </div>
       </CollapsibleSection>
 
