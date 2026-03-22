@@ -1,10 +1,16 @@
-# PMax Konum Sistemi — Teknik Dokümantasyon
+# Konum Sistemi — YoAI Google Ads Standart Referansı
+
+Bu dosya tüm kampanya tiplerinde (Search, Display, Video, Demand Gen, Performance Max) kullanılan konum hedefleme sisteminin teknik referansıdır. Her yeni kampanya tipi eklendiğinde bu dokümandaki standartlar referans alınır.
 
 **Son güncelleme:** 22 Mart 2026  
-**İlgili dosyalar:**
+**PMax modal dosyaları (gelişmiş harita + yarıçap):**
 - `components/google/wizard/pmax/PMaxLocationAdvancedModal.tsx`
 - `components/google/wizard/pmax/PMaxLocationMap.tsx`
 - `public/location-pin.png`
+
+**Diğer kampanya tipleri:**
+- `components/google/wizard/steps/StepLocationLanguage.tsx` (Search)
+- `components/google/wizard/display/steps/DisplayStepCampaignSettings.tsx` (Display)
 
 ---
 
