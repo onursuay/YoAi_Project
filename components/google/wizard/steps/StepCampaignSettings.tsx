@@ -156,7 +156,7 @@ export default function StepCampaignSettings({ state, update, t }: StepProps) {
               <div>
                 <p className="font-medium">{t('settings.euPoliticalWarningLine1')}</p>
                 <p className="mt-1 text-amber-800">{t('settings.euPoliticalWarningLine2')}</p>
-                
+                <a
                   href={euPolicyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
