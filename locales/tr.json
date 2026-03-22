@@ -721,7 +721,10 @@
           "euPoliticalWarningLearnMore": "AB'deki siyasi reklamlar ile ilgili politika hakkında daha fazla bilgi",
           "euPoliticalHelperNote": "Bu hesap AB ile ilgili siyasi reklamlar yayınlamak için kullanılmayacak.",
           "euPoliticalHelperNoteOptional": "Bu seçim, yeni ve mevcut kampanyaların tümüne uygulanır. Bunu dilediğiniz zaman herhangi bir kampanya için değiştirebilirsiniz.",
-          "otherSettingsTitle": "Diğer ayarlar"
+          "otherSettingsTitle": "Diğer ayarlar",
+          "locationsAllCountries": "Tüm ülkeler ve bölgeler",
+          "locationsCustom": "Başka bir yer girin",
+          "locationOptionsToggle": "Yer seçenekleri"
         },
         "location": {
           "description": "Hedeflemek istediğiniz konumları seçin. Boş bırakırsanız Türkiye geneli hedeflenir.",
@@ -733,7 +736,7 @@
           "selectedTitle": "Seçili Konumlar",
           "selectedTitleWithCount": "Seçili Konumlar ({count})",
           "noLocationNote": "Konum seçilmedi — kampanya Türkiye genelini hedefleyecek.",
-          "excludedParens": "(hariç)",
+          "excludedParens": "hariç",
           "includeTitle": "Dahil et",
           "excludeTitle": "Hariç tut",
           "includeLabel": "dahil",
@@ -748,7 +751,13 @@
           "countryFR": "Fransa",
           "countryNL": "Hollanda",
           "countryIT": "İtalya",
-          "countryES": "İspanya"
+          "countryES": "İspanya",
+          "include": "Dahil et",
+          "exclude": "Hariç tut",
+          "added": "Eklendi",
+          "advancedSearch": "Gelişmiş arama",
+          "searchPlaceholderFull": "Hedeflenecek veya hariç tutulacak konumları girin",
+          "searchHint": "Örneğin; ülke, şehir, bölge veya posta kodu"
         },
         "audience": {
           "segmentTitle": "Kitle Segmentleri",

@@ -1,7 +1,7 @@
 'use client'
 
 import { useState } from 'react'
-import { ChevronDown, ChevronUp, Globe, Shield, Settings, Info } from 'lucide-react'
+import { ChevronDown, ChevronUp, Shield, Settings, Info } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import type { StepProps } from '../shared/WizardTypes'
 import { inputCls } from '../shared/WizardTypes'
@@ -60,57 +60,7 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
         </section>
       )}
 
-      {/* 2. Location targeting mode */}
-      <section>
-        <div className="flex items-center gap-2 mb-2">
-          <Globe className="w-4 h-4 text-blue-600" />
-          <h4 className="text-[15px] font-semibold text-gray-900">{t('settings.locationModeTitle')}</h4>
-        </div>
-        <div className="space-y-2">
-          <label
-            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-              state.locationTargetingMode === 'PRESENCE_OR_INTEREST'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
-            }`}
-          >
-            <input
-              type="radio"
-              name="locationTargetingMode"
-              value="PRESENCE_OR_INTEREST"
-              checked={state.locationTargetingMode === 'PRESENCE_OR_INTEREST'}
-              onChange={() => update({ locationTargetingMode: 'PRESENCE_OR_INTEREST' })}
-              className="mt-1 text-blue-600 focus:ring-blue-500"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900">{t('settings.locationModePresenceInterest')}</span>
-              <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.locationModePresenceInterestDesc')}</p>
-            </div>
-          </label>
-          <label
-            className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-              state.locationTargetingMode === 'PRESENCE_ONLY'
-                ? 'border-blue-500 bg-blue-50'
-                : 'border-gray-200 hover:border-gray-300 bg-white'
-            }`}
-          >
-            <input
-              type="radio"
-              name="locationTargetingMode"
-              value="PRESENCE_ONLY"
-              checked={state.locationTargetingMode === 'PRESENCE_ONLY'}
-              onChange={() => update({ locationTargetingMode: 'PRESENCE_ONLY' })}
-              className="mt-1 text-blue-600 focus:ring-blue-500"
-            />
-            <div>
-              <span className="text-sm font-medium text-gray-900">{t('settings.locationModePresenceOnly')}</span>
-              <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.locationModePresenceOnlyDesc')}</p>
-            </div>
-          </label>
-        </div>
-      </section>
-
-      {/* 3. Locations & Languages */}
+      {/* 2. Locations & Languages */}
       <section>
         <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('steps.location')}</h4>
         <StepLocationLanguage state={state} update={update} t={t} />

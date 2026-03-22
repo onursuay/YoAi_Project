@@ -1,139 +1,99 @@
 # Konum Sistemi — YoAI Google Ads Standart Referansı
 
-Bu dosya tüm kampanya tiplerinde (Search, Display, Video, Demand Gen, Performance Max) kullanılan konum hedefleme sisteminin teknik referansıdır. Her yeni kampanya tipi eklendiğinde bu dokümandaki standartlar referans alınır.
+Bu dosya tüm kampanya tiplerinde kullanılan konum hedefleme UI'ının standart yapısını tanımlar. Referans implementasyon: `PMaxLocationPicker.tsx`. Yeni kampanya tipi eklenirken bu standart birebir uygulanır.
 
-**Son güncelleme:** 22 Mart 2026  
-**PMax modal dosyaları (gelişmiş harita + yarıçap):**
-- `components/google/wizard/pmax/PMaxLocationAdvancedModal.tsx`
-- `components/google/wizard/pmax/PMaxLocationMap.tsx`
-- `public/location-pin.png`
-
-**Diğer kampanya tipleri:**
-- `components/google/wizard/steps/StepLocationLanguage.tsx` (Search)
-- `components/google/wizard/display/steps/DisplayStepCampaignSettings.tsx` (Display)
+**Son güncelleme:** 22 Mart 2026
 
 ---
 
-## Genel Yapı
+## Standart Konum UI — Tam Yapı
 
-Modal iki sekmeden oluşur: **Konum** ve **Yarıçap**. Her sekme kendi arama state'ini ve harita davranışını yönetir.
+### 1. Kapsam Radyo Butonları
 
----
+3 seçenek, her zaman gösterilir:
 
-## Konum Sekmesi
+- **Tüm ülkeler ve bölgeler** → `locations: [], geoSearchCountry: ''`
+- **Türkiye** → `geoSearchCountry: 'TR', locations: []`
+- **Başka bir yer girin** → arama input açılır
 
-### Arama
-- Input: `locQuery` state
+### 2. Arama Input (sadece "Başka bir yer girin" seçilince)
+
+- Search ikonu solda, Loader2 sağda
 - Debounce: 300ms, min 2 karakter
 - API: `GET /api/integrations/google-ads/geo-targets?q=...`
-- Sonuçlar `locResults` state'ine yazılır
+- Placeholder: "Hedeflenecek veya hariç tutulacak konumları girin"
+- Alt not: "Örneğin; ülke, şehir, bölge veya posta kodu"
 
-### Seçim
-- Her sonuçta **Dahil et** / **Hariç Tut** butonu
-- `addLocation(geo, isNegative)` fonksiyonu çalışır
-- `PMaxSelectedLocation` objesi: `{ id, name, countryCode, targetType, isNegative }`
-- `updateRef.current({ locations: [...] })` ile state güncellenir
-- Input temizlenir, sonuçlar kapanır
+### 3. Dropdown Sonuçları
 
-### Seçilen Konumlar Listesi
-- `state.locations.length > 0` ise sol panelde gösterilir
-- Dahil: mavi badge, Hariç: kırmızı badge
-- X butonu → `removeLocation(id)` → state'ten çıkarır
-
----
-
-## Yarıçap Sekmesi
-
-### Arama
-- Input: `radQuery` state
-- Debounce: 300ms, min 2 karakter
-- API: `GET /api/integrations/google-ads/geo-targets?q=...`
-- **Re-search koruması:** `radLockedRef` — konum seçilince debounce tekrar tetiklenmez
-
-### Konum Seçimi (`selectRadiusLocation`)
 ```
-1. radLockedRef.current = true
-2. setRadQuery(geo.name)
-3. setRadResults([])
-4. setPinLabel(geo.name)
-5. Nominatim geocode: geo.name → { lat, lng }
-6. setPinCoords({ lat, lng }) → haritaya pin + circle
+absolute, z-[100], bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto
+Her satır: px-4 py-2.5 border-b border-gray-100 hover:bg-gray-50
+Eklendi: bg-blue-50/50 + "Eklendi" text-xs text-blue-600
+Eklenmedi: "Dahil et" (text-blue-600 hover:bg-blue-50) + "Hariç Tut" (text-red-600 hover:bg-red-50)
 ```
 
-### Kaydetme
-- Arama ile seçilen konum: `pinCoords` set edilir, sol panelde yeşil kutu + "Yarıçap hedeflemesini kaydet" butonu çıkar
-- Sabitleme modu ile seçilen konum: Dahil et = direkt kayıt (ikinci onay yok, sol panel çıkmaz)
+### 4. Gelişmiş Arama Butonu
 
-### Kaydedilen Hedefler Listesi
-- Sol panelde yeşil badge ile listelenir
-- X butonu ile silinebilir
+```
+<MapPin> Gelişmiş arama
+text-sm text-blue-600 hover:underline
+```
 
----
+Not: Harita/yarıçap sadece PMax'te aktiftir.
 
-## Sabitleme Modu
+### 5. Seçilen Konumlar
 
-### Buton
-- Sadece Yarıçap sekmesinde, harita üstünde ortalanmış
-- Toggle: `setPinModeActive(v => !v)`
-- Aktif: mavi, Pasif: beyaz
+```
+flex flex-wrap gap-2
+Dahil: bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-xs
+Hariç: bg-red-100 text-red-800 rounded-full px-3 py-1 text-xs
+İçinde: isim + (Hariç) + "Dahil et"/"Hariç tut" toggle + X butonu
+```
 
-### Harita Davranışı
-Sabitleme modu **aktifken**:
-- `cursor: 'none'` — fare imleci gizlenir
-- `mousemove` → **sadece icon** takip eder (circle YOK — Google Ads davranışı)
-- `mouseout` → preview icon kaldırılır
-- `click` → popup açılır: `(lat, lng) (özel) yerinin X km çevresi` + **Dahil et** butonu
+### 6. Yer Seçenekleri
 
-**Dahil et tıklanınca:**
-1. Popup kapanır
-2. Haritaya kalıcı circle çizilir (gerçek km'ye göre ölçeklenmiş)
-3. `map.fitBounds(circle.getBounds(), { padding: [40,40], maxZoom: 13 })` → harita circle'a fit olur
-4. `onPinPlaceRef.current({ lat, lng })` çağrılır
-5. Modal handler direkt `proximityTargets`'a ekler — `setPinCoords` çağrılmaz, sol panelde ikinci onay istenmez
-6. `pinModeActive` açık kalır → kullanıcı tekrar tıklayarak yeni nokta ekleyebilir
+`<details>` accordion, `<summary>` = "Yer seçenekleri" (text-blue-600 + ChevronDown):
 
-Sabitleme modu **kapatılınca:**
-- `useEffect([pinModeActive])` → preview icon temizlenir
+- `PRESENCE_OR_INTEREST` → "Hedef konumlarda olan veya düzenli burada bulunan kullanıcılar"
+- `PRESENCE_ONLY` → "Hedef konumlarda olan kullanıcılar"
+
+Her seçenek: `p-2.5 rounded-lg border`, aktif: `border-blue-500 bg-blue-50`
 
 ---
 
-## PMaxLocationMap Props
+## State Alanları
 
-| Prop | Tip | Açıklama |
-|------|-----|----------|
-| `mode` | `'location' \| 'radius'` | Aktif sekme |
-| `pinCoords` | `{lat, lng} \| null` | Arama ile seçilen koordinat |
-| `onPinPlace` | `(coords) => void` | Popup Dahil et tıklanınca çağrılır |
-| `proximityTargets` | `PMaxProximityTarget[]` | Kaydedilmiş yarıçaplar |
-| `radiusMeters` | `number` | Yarıçap (metre) |
-| `radiusLabel` | `string` | Popup'ta gösterilir: "10 km" |
-| `pinModeActive` | `boolean` | Sabitleme modu durumu |
+```typescript
+locations: SelectedLocation[]       // default: []
+geoSearchCountry: string            // default: ''
+locationTargetingMode: 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
 
----
-
-## Harita Teknik Detaylar
-
-- **Kütüphane:** Leaflet 1.9.4 (dinamik import, SSR-safe)
-- **Tiles:** OpenStreetMap
-- **Varsayılan merkez:** Ankara `{ lat: 39.9334, lng: 32.8597 }`, zoom 6
-- **Custom icon:** `/public/location-pin.png`, 40×40px, anchor 20×40
-
-### useEffect Sırası
-1. `[mounted, mode]` → Map init + event handler'lar
-2. `[pinModeActive]` → Preview icon temizle
-3. `[pinCoords]` → Arama seçiminde marker + circle (zoom yok)
-4. `[radiusMeters]` → Sadece circle güncelle (çift circle önlenir)
-
-### Popup Ayarları
-```js
-L.popup({ closeOnClick: false, autoPan: true, autoPanPadding: [20, 20], offset: [0, -10] })
+interface SelectedLocation {
+  id: string
+  name: string
+  countryCode: string
+  targetType: string
+  isNegative: boolean
+}
 ```
 
 ---
 
-## Önemli Notlar
+## Kampanya Tipi Durumu
 
-1. **Çift circle sorunu çözüldü:** `[pinCoords]` effect'i `radiusMetersRef.current` kullanır, dependency array'e girmez.
-2. **Sabitleme modunda ikinci onay yok:** `onPinPlace` direkt `updateRef.current({ proximityTargets: [...] })` çağırır.
-3. **Preview'da circle yok:** Sadece icon takip eder — Google Ads ile aynı davranış.
-4. **radLockedRef:** `setRadQuery(geo.name)` debounce'u tetikler, `radLockedRef.current = true` ile bir kez engellenir.
+| Kampanya | Dosya | Durum |
+|----------|-------|-------|
+| PERFORMANCE_MAX | `pmax/PMaxLocationPicker.tsx` | ✅ Referans |
+| SEARCH | `steps/StepCampaignSettingsSearch.tsx` | ✅ Tamamlandı |
+| DISPLAY | `display/steps/DisplayStepCampaignSettings.tsx` | ⚠️ Güncellenmeli |
+| VIDEO | — | ⏳ Bekliyor |
+| DEMAND_GEN | — | ⏳ Bekliyor |
+
+---
+
+## PMax'e Özel (Diğerleri için gerekli değil)
+
+- Yarıçap hedefleme (`proximityTargets`)
+- Harita (Leaflet, OpenStreetMap)
+- `PMaxLocationAdvancedModal`
