@@ -83,18 +83,6 @@ export default function DisplayStepCampaignSettings({ state, update, t }: StepPr
 
   return (
     <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {t('campaign.name')} <span className="text-red-500">*</span>
-        </label>
-        <input
-          className={inputCls}
-          value={state.campaignName}
-          onChange={e => update({ campaignName: e.target.value })}
-          placeholder={t('campaign.namePlaceholder')}
-        />
-      </div>
-
       {/* (1) Konumlar */}
       <section>
         <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('display.locationSectionTitle')}</h4>

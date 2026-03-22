@@ -50,6 +50,14 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
           <span className="text-gray-500">{t('display.summaryGoal')}: </span>
           {t(`goal.labels.${state.campaignGoal}`)}
         </p>
+        <p>
+          <span className="text-gray-500">{t('conversion.title')}: </span>
+          {state.selectedConversionGoalIds.length > 0
+            ? state.selectedConversionGoalIds.length === 1
+              ? (state.conversionActions.find(a => a.resourceName === state.selectedConversionGoalIds[0])?.name ?? '1')
+              : t('conversion.goalsSelected', { count: state.selectedConversionGoalIds.length })
+            : '—'}
+        </p>
       </Card>
 
       <Card title={t('display.summaryGeoLangEu')}>

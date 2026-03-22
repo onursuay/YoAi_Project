@@ -7,6 +7,8 @@ import { defaultState } from '../shared/WizardTypes'
 import type { WizardState, CampaignGoal } from '../shared/WizardTypes'
 import { validateDisplayStep } from './displayWizardValidation'
 import { buildCreatePayload } from '../shared/WizardHelpers'
+import StepGoalType from '../steps/StepGoalType'
+import StepConversionAndName from '../steps/StepConversionAndName'
 import DisplayStepCampaignSettings from './steps/DisplayStepCampaignSettings'
 import DisplayStepBudgetBidding from './steps/DisplayStepBudgetBidding'
 import StepAudience from '../steps/StepAudience'
@@ -61,7 +63,15 @@ interface Props {
   initialCampaignGoal?: CampaignGoal
 }
 
-const TOTAL_STEPS = 5
+// Step indices
+// 0: Hedef & Tür        (StepGoalType)
+// 1: Dönüşüm & İsim     (StepConversionAndName)
+// 2: Kampanya Ayarları  (DisplayStepCampaignSettings)
+// 3: Bütçe & Teklif     (DisplayStepBudgetBidding)
+// 4: Hedefleme          (StepAudience)
+// 5: Reklamlar          (DisplayStepAds)
+// 6: Özet               (DisplayStepSummary)
+const TOTAL_STEPS = 7
 
 function normalizeError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
@@ -85,9 +95,11 @@ export default function DisplayCampaignWizard({
   const t = useTranslations('dashboard.google.wizard')
 
   const STEPS = [
+    t('goal.selectTitle'),
+    t('conversion.title'),
     t('display.steps.campaignSettings'),
     t('display.steps.budgetBidding'),
-    t('display.steps.audience'),
+    t('steps.audience'),
     t('display.steps.ads'),
     t('display.steps.summary'),
   ]
@@ -122,7 +134,8 @@ export default function DisplayCampaignWizard({
   }
 
   const submit = async () => {
-    const err = validateDisplayStep(3, state, t)
+    // Validate Ads step (step 5) before submitting
+    const err = validateDisplayStep(5, state, t)
     if (err) {
       setError(err)
       return
@@ -237,7 +250,7 @@ export default function DisplayCampaignWizard({
               <button
                 type="button"
                 onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-white"
+                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700"
               >
                 {t('result.acknowledge')}
               </button>
@@ -252,11 +265,13 @@ export default function DisplayCampaignWizard({
 
           {submitResult !== 'full' && submitResult !== 'partial' && (
             <>
-              {step === 0 && <DisplayStepCampaignSettings {...stepProps} />}
-              {step === 1 && <DisplayStepBudgetBidding {...stepProps} />}
-              {step === 2 && <StepAudience {...stepProps} />}
-              {step === 3 && <DisplayStepAds {...stepProps} />}
-              {step === 4 && <DisplayStepSummary {...stepProps} />}
+              {step === 0 && <StepGoalType {...stepProps} />}
+              {step === 1 && <StepConversionAndName {...stepProps} />}
+              {step === 2 && <DisplayStepCampaignSettings {...stepProps} />}
+              {step === 3 && <DisplayStepBudgetBidding {...stepProps} />}
+              {step === 4 && <StepAudience {...stepProps} />}
+              {step === 5 && <DisplayStepAds {...stepProps} />}
+              {step === 6 && <DisplayStepSummary {...stepProps} />}
             </>
           )}
         </div>
