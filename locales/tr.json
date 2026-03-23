@@ -725,7 +725,10 @@
           "locationsAllCountries": "Tüm ülkeler ve bölgeler",
           "locationsCustom": "Başka bir yer girin",
           "locationOptionsToggle": "Yer seçenekleri",
-          "locationsLabel": "Bu kampanya için konumları seçin"
+          "locationsLabel": "Bu kampanya için konumları seçin",
+          "locationsTitle": "Konumlar",
+          "languagesTitle": "Diller",
+          "languagesLabel": "Müşterilerinizin konuştuğu dilleri seçin"
         },
         "location": {
           "description": "Hedeflemek istediğiniz konumları seçin. Boş bırakırsanız Türkiye geneli hedeflenir.",

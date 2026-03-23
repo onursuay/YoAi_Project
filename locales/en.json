@@ -725,7 +725,10 @@
           "locationsAllCountries": "All countries and territories",
           "locationsCustom": "Enter another location",
           "locationOptionsToggle": "Location options",
-          "locationsLabel": "Select locations for this campaign"
+          "locationsLabel": "Select locations for this campaign",
+          "locationsTitle": "Locations",
+          "languagesTitle": "Languages",
+          "languagesLabel": "Select the languages your customers speak"
         },
         "location": {
           "description": "Select the locations you want to target. If left empty, Turkey will be targeted.",
