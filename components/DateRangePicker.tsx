@@ -104,7 +104,7 @@ function MonthGrid({ year, month, rangeStart, rangeEnd, onDayClick, isEn }: {
       </div>
       <div className="grid grid-cols-7 gap-0">
         {DAY_NAMES.map(d => (
-          <div key={d} className="text-[10px] text-gray-400 text-center py-1 font-medium">{d}</div>
+          <div key={d} className="text-xs text-gray-400 text-center py-1 font-medium">{d}</div>
         ))}
         {cells.map((date, i) => {
           if (!date) return <div key={`e-${i}`} className="h-7" />

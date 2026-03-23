@@ -44,13 +44,13 @@ export default function DashboardKpiCard({ label, periodLabel, value, deltaDispl
       {/* Header: label left, date right */}
       <div className="flex items-start justify-between px-5 pt-4 pb-0">
         <span className="text-[13px] font-medium text-gray-500 leading-tight">{label}</span>
-        <span className="text-[11px] text-gray-400 whitespace-nowrap ml-2">{periodLabel}</span>
+        <span className="text-xs text-gray-400 whitespace-nowrap ml-2">{periodLabel}</span>
       </div>
 
       {/* Delta + Value */}
       <div className="px-5 pt-2 pb-1 relative z-10">
         {displayDelta && (
-          <span className={`text-[11px] font-medium ${deltaColorClass} block mb-0.5`}>
+          <span className={`text-xs font-medium ${deltaColorClass} block mb-0.5`}>
             {displayDelta}
           </span>
         )}

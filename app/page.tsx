@@ -19,7 +19,7 @@ export default async function RootPage() {
     heroSub: 'YoAi lets you create ad campaigns, generate creatives and manage SEO processes from a single hub. Built for agencies, brands and digital experts — reduce operational overhead, sharpen your performance focus.',
     ctaTrial: '7-Day Free Trial',
     ctaSchedule: 'Book a Call',
-    ctaDemo: 'Watch Demo',
+    ctaDemo: 'Platform Demo',
     trustLabel: 'Powering ads across leading platforms',
     capTitle: 'Built for Modern Advertisers',
     capSub: 'Six core modules that replace your entire ad ops stack.',
@@ -67,7 +67,7 @@ export default async function RootPage() {
     heroSub: 'YoAi, reklam kampanyalarınızı oluşturmanızı, kreatiflerinizi üretmenizi ve SEO süreçlerinizi tek merkezden kolayca yönetmenizi sağlar. Ajanslar, markalar ve dijital uzmanlar için geliştirilen bu yapı sayesinde operasyonel yükünüz azalır, performans odağınız güçlenir.',
     ctaTrial: '7 Gün Ücretsiz Dene',
     ctaSchedule: 'Görüşme Planla',
-    ctaDemo: 'Demo İzle',
+    ctaDemo: 'Panelin Demosu',
     trustLabel: 'Lider platformlarda reklam yönetimi',
     capTitle: 'Modern Reklamcılar İçin Tasarlandı',
     capSub: 'Tüm reklam operasyonlarınızın yerini alan altı temel modül.',
@@ -194,15 +194,16 @@ export default async function RootPage() {
             {c.heroSub}
           </p>
 
-          {/* CTA Group — 2 equal buttons centered, same size */}
-          <div className="flex flex-wrap justify-center items-center gap-5">
-            <ScheduleModal label={c.ctaSchedule} locale={locale} variant="hero" />
+          {/* CTA Group — 3 buttons: primary / secondary / tertiary */}
+          <div className="flex flex-wrap justify-center items-center gap-4">
             <Link
               href="/signup"
-              className="inline-flex items-center justify-center font-semibold text-base px-10 py-4 rounded-full transition-all min-w-[220px] bg-[#1e1e2a] border border-white/[0.08] text-gray-200 hover:bg-[#262635] hover:border-white/15"
+              className="btn-shimmer inline-flex items-center justify-center font-semibold text-base px-10 py-4 rounded-full transition-all min-w-[220px] bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]"
             >
               {c.ctaTrial}
             </Link>
+            <ScheduleModal label={c.ctaSchedule} locale={locale} variant="hero" />
+            <DemoModal label={c.ctaDemo} locale={locale} variant="hero" />
           </div>
         </div>
       </section>
@@ -218,7 +219,7 @@ export default async function RootPage() {
                 <span className="text-sm font-semibold text-gray-200">{c.panelTitle}</span>
               </div>
               <div className="flex items-center gap-3">
-                <span className="text-xs text-emerald-400/70 font-medium">{c.panelAI}</span>
+                <span className="text-xs text-emerald-400 font-medium">{c.panelAI}</span>
                 <span className="text-xs text-gray-600">{c.panelPeriod}</span>
               </div>
             </div>
@@ -226,7 +227,7 @@ export default async function RootPage() {
               <div className="grid grid-cols-4 gap-2">
                 {c.kpis.map((kpi, i) => (
                   <div key={i} className="bg-white/[0.03] border border-white/[0.05] rounded-xl p-3">
-                    <p className="text-xs text-gray-500 mb-0.5">{kpi.label}</p>
+                    <p className="text-sm text-gray-500 mb-0.5">{kpi.label}</p>
                     <p className="text-xl font-bold text-white leading-tight">{kpi.value}</p>
                     <p className="text-xs text-emerald-400 font-medium">{kpi.delta}</p>
                   </div>
@@ -252,7 +253,7 @@ export default async function RootPage() {
                   <Image src="/platform-icons/meta.svg" alt="Meta" width={14} height={14} className="brightness-0 invert opacity-40" />
                   <span className="text-xs text-gray-600">{c.panelPlatforms}</span>
                 </div>
-                <span className="text-xs text-emerald-400/50 font-medium">{c.panelStatus}</span>
+                <span className="text-xs text-emerald-400/70 font-medium">{c.panelStatus}</span>
               </div>
             </div>
           </div>
@@ -262,7 +263,7 @@ export default async function RootPage() {
       {/* ═══════════ TRUST STRIP ═══════════ */}
       <section className="w-full border-y border-white/[0.04] py-5 px-6 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
-          <p className="text-[11px] text-gray-600 uppercase tracking-[0.2em] text-center mb-4 font-medium">{c.trustLabel}</p>
+          <p className="text-xs text-gray-600 uppercase tracking-[0.2em] text-center mb-4 font-medium">{c.trustLabel}</p>
           <div className="flex flex-wrap justify-center items-center gap-3">
             {[
               { label: 'Google Ads', icon: '/platform-icons/google-ads.svg' },
@@ -344,7 +345,7 @@ export default async function RootPage() {
                 <div className="w-8 h-8 rounded-lg bg-gradient-to-br from-emerald-400/10 to-teal-400/[0.06] border border-white/[0.06] flex items-center justify-center mb-3">
                   <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
                 </div>
-                <h4 className="font-semibold text-white text-[0.95rem] mb-1.5">{cmd.title}</h4>
+                <h4 className="font-semibold text-white text-base mb-1.5">{cmd.title}</h4>
                 <p className="text-base text-gray-400 leading-relaxed">{cmd.desc}</p>
               </div>
             ))}
@@ -363,11 +364,12 @@ export default async function RootPage() {
           <div className="flex flex-wrap justify-center items-center gap-3">
             <Link
               href="/signup"
-              className="btn-shimmer inline-flex items-center gap-2 text-[14px] font-medium border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors"
+              className="btn-shimmer inline-flex items-center gap-2 text-[14px] font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 px-7 py-3 rounded-full transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
             >
               {c.ctaTrial} <Icon name="arrow" size={14} />
             </Link>
             <ScheduleModal label={c.ctaSchedule} locale={locale} variant="bottom" />
+            <DemoModal label={c.ctaDemo} locale={locale} variant="nav" />
           </div>
         </div>
       </section>

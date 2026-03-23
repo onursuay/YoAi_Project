@@ -295,11 +295,11 @@ function PlatformCard({ platformName, iconSrc, status, loading, panelHref, conne
           <div className="grid grid-cols-3 gap-3">
             {[metrics.spend, metrics.clicks, metrics.impressions].map((m, i) => (
               <div key={i} className="min-w-0">
-                <p className="text-[11px] text-gray-400 mb-0.5 truncate">{m.label}</p>
+                <p className="text-xs text-gray-400 mb-0.5 truncate">{m.label}</p>
                 <p className="text-xs text-gray-500">{periodLabel}</p>
                 <p className="text-sm font-semibold text-gray-900 mt-1 truncate">{m.value}</p>
                 {m.delta && (
-                  <p className={`text-[11px] mt-0.5 ${m.color === 'green' ? 'text-green-500' : m.color === 'red' ? 'text-red-500' : 'text-gray-400'}`}>
+                  <p className={`text-xs mt-0.5 ${m.color === 'green' ? 'text-green-500' : m.color === 'red' ? 'text-red-500' : 'text-gray-400'}`}>
                     {m.delta}
                   </p>
                 )}

@@ -189,10 +189,10 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
   }
 
   const btnClass = variant === 'hero'
-    ? 'btn-shimmer inline-flex items-center justify-center font-semibold text-base px-10 py-4 rounded-full transition-all cursor-pointer min-w-[220px] bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]'
+    ? 'btn-shimmer inline-flex items-center justify-center font-semibold text-base px-10 py-4 rounded-full transition-all cursor-pointer min-w-[220px] bg-[#1e1e2a] border border-white/[0.08] text-gray-200 hover:bg-[#262635] hover:border-white/15'
     : variant === 'bottom'
     ? 'btn-shimmer inline-flex items-center justify-center text-[14px] font-medium border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer'
-    : 'btn-shimmer hidden sm:inline-flex items-center justify-center font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[12.75px]'
+    : 'btn-shimmer hidden sm:inline-flex items-center justify-center font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[13px]'
 
   const monthLabel = `${t.monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
 
@@ -213,8 +213,8 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
               <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="rgb(52,211,153)" strokeWidth="2.5" strokeLinecap="round" strokeLinejoin="round"><path d="M20 6L9 17l-5-5"/></svg>
             </div>
             <h3 className="text-xl font-bold text-white mb-2">{t.successTitle}</h3>
-            <p className="text-sm text-gray-400 mb-8">{t.successMsg}</p>
-            <button onClick={() => setOpen(false)} className="text-sm font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">{t.close}</button>
+            <p className="text-base text-gray-400 mb-8">{t.successMsg}</p>
+            <button onClick={() => setOpen(false)} className="text-base font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">{t.close}</button>
           </div>
         ) : step === 'form' ? (
           <div className="p-6">
@@ -224,15 +224,15 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">{t.nameLabel}</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t.namePlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t.namePlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-500 focus:border-emerald-400/30 outline-none transition-colors" />
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">{t.emailLabel}</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-500 focus:border-emerald-400/30 outline-none transition-colors" />
               </div>
             </div>
             <label className="block text-sm font-medium text-gray-400 mb-2">{t.noteLabel}</label>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder={t.notePlaceholder} rows={3} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors resize-none mb-6" />
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder={t.notePlaceholder} rows={3} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-500 focus:border-emerald-400/30 outline-none transition-colors resize-none mb-6" />
             <button onClick={handleSubmit} disabled={!name.trim() || !email.trim()} className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-3.5 rounded-xl transition-colors text-base">{t.submitBtn}</button>
           </div>
         ) : (
@@ -244,11 +244,11 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
               <div className="w-9 h-9 rounded-lg bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center mb-3">
                 <span className="text-emerald-400 text-lg">✦</span>
               </div>
-              <p className="text-sm text-gray-500 mb-0.5">{t.brand}</p>
+              <p className="text-sm text-gray-400 mb-0.5">{t.brand}</p>
               <h3 className="text-base font-semibold text-white mb-0.5">
                 {t.meetingTitle} <span className="text-emerald-400">✨</span>
               </h3>
-              <p className="text-sm text-gray-500 mb-5">{t.meetingSub}</p>
+              <p className="text-sm text-gray-400 mb-5">{t.meetingSub}</p>
 
               <div className="space-y-2.5">
                 <div className="flex items-center gap-2.5 text-sm text-gray-400">
@@ -284,7 +284,7 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
               {/* Day headers */}
               <div className="grid grid-cols-7 mb-2">
                 {t.dayHeaders.map(d => (
-                  <div key={d} className="text-center text-[12px] font-semibold text-gray-500 py-2 tracking-wide">{d}</div>
+                  <div key={d} className="text-center text-[13px] font-semibold text-gray-400 py-2 tracking-wide">{d}</div>
                 ))}
               </div>
 
@@ -313,7 +313,7 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
                         }`}
                       >
                         {cell.monthLabel && (
-                          <span className="text-[8px] font-bold leading-none tracking-wider" style={{ color: isSelected ? 'black' : '#6b7280' }}>{cell.monthLabel}</span>
+                          <span className="text-[10px] font-bold leading-none tracking-wider" style={{ color: isSelected ? 'black' : '#6b7280' }}>{cell.monthLabel}</span>
                         )}
                         <span className="text-[15px] leading-none">{cell.day}</span>
                         {isToday && !isSelected && (
@@ -331,7 +331,7 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
               {/* Date header + 12h/24h toggle */}
               <div className="flex items-center justify-between mb-5">
                 <p className="text-[15px] font-semibold text-white">{selectedDateHeader || (isEn ? 'Select date' : 'Tarih seçin')}</p>
-                <div className="flex bg-[#1a1a22] rounded-md text-[11px] border border-white/[0.06] overflow-hidden">
+                <div className="flex bg-[#1a1a22] rounded-md text-xs border border-white/[0.06] overflow-hidden">
                   <button onClick={() => setUse24h(false)} className={`px-2.5 py-1 font-medium transition-colors ${!use24h ? 'bg-white/[0.12] text-white' : 'text-gray-500'}`}>{t.h12}</button>
                   <button onClick={() => setUse24h(true)} className={`px-2.5 py-1 font-medium transition-colors ${use24h ? 'bg-white/[0.12] text-white' : 'text-gray-500'}`}>{t.h24}</button>
                 </div>
@@ -359,7 +359,7 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
 
               {/* Confirm button */}
               {selectedDate && selectedTime && (
-                <button onClick={handleConfirmTime} className="mt-4 w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold py-3 rounded-xl transition-colors text-sm">
+                <button onClick={handleConfirmTime} className="mt-4 w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold py-3 rounded-xl transition-colors text-base">
                   {t.confirmBtn}
                 </button>
               )}

@@ -40,12 +40,12 @@ export default function DataDeletionContent({ locale = 'tr' }: { locale?: 'tr' |
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('intro.title')}</h2>
-            <p className="text-gray-700">{g('intro.content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('intro.content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section1Title')}</h2>
-            <p className="text-gray-700">
+            <p className="text-base text-gray-700 leading-relaxed">
               <strong>{g('section1GoogleTitle')}</strong>
               <br />
               {g('section1GoogleContent')}
@@ -59,17 +59,17 @@ export default function DataDeletionContent({ locale = 'tr' }: { locale?: 'tr' |
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section2Title')}</h2>
-            <p className="text-gray-700">{g('section2Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section2Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section3Title')}</h2>
-            <p className="text-gray-700">{g('section3Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section3Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section4Title')}</h2>
-            <p className="text-gray-700">{g('section4Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section4Content')}</p>
           </section>
         </div>
       </div>

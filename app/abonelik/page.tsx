@@ -107,8 +107,8 @@ export default function AbonelikPage() {
 
             {/* Notes */}
             <div className="mt-5 space-y-1">
-              <p className="text-xs text-gray-500">* {t('trialBadge')} — tüm standart planlar için geçerlidir.</p>
-              <p className="text-xs text-amber-400 font-medium">* {t('optimizationNote')}</p>
+              <p className="text-sm text-gray-500">* {t('trialBadge')} — tüm standart planlar için geçerlidir.</p>
+              <p className="text-sm text-amber-400 font-medium">* {t('optimizationNote')}</p>
             </div>
           </div>
         </div>

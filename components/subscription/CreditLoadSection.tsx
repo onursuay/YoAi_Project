@@ -33,7 +33,7 @@ export default function CreditLoadSection() {
       <div className="flex items-center gap-3 mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
         <Coins className="w-6 h-6 text-amber-500" />
         <div>
-          <p className="text-xs text-amber-600">{t('balance')}</p>
+          <p className="text-sm text-amber-600">{t('balance')}</p>
           <p className="text-2xl font-bold text-amber-700">{credits}</p>
         </div>
       </div>
@@ -67,7 +67,7 @@ export default function CreditLoadSection() {
                 </div>
                 <div>
                   <p className="text-sm font-semibold text-gray-900">{pkg.label}</p>
-                  <p className="text-xs text-gray-500">{pkg.credits} kredi</p>
+                  <p className="text-sm text-gray-500">{pkg.credits} kredi</p>
                 </div>
                 {pkg.popular && (
                   <span className="px-2 py-0.5 text-[10px] font-bold bg-primary text-white rounded-full">
@@ -102,7 +102,7 @@ export default function CreditLoadSection() {
       </button>
 
       {/* Info */}
-      <div className="space-y-1.5 text-xs text-gray-500 mt-4">
+      <div className="space-y-1.5 text-sm text-gray-500 mt-4">
         <p>{t('perGeneration')}</p>
         <p className="text-primary font-medium">{t('freeCredits')}</p>
       </div>

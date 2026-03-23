@@ -43,7 +43,7 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
             </span>
           )}
         </div>
-        <p className="text-xs text-gray-400 mt-1">
+        <p className="text-sm text-gray-400 mt-1">
           {t(`planDescriptions.${plan.id}`)}
         </p>
       </div>
@@ -61,7 +61,7 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
               <span className="text-sm text-gray-400">/ {t('perMonth')}</span>
             </div>
             {billingCycle === 'yearly' && (
-              <p className="text-xs text-gray-500 mt-1">
+              <p className="text-sm text-gray-500 mt-1">
                 ${yearlyTotal.toFixed(2)} / {t('yearlyBilled')}
               </p>
             )}
@@ -84,7 +84,7 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
 
       {/* Features */}
       <div className="flex-1">
-        <p className="text-xs font-semibold text-gray-400 mb-3">{t('features')}</p>
+        <p className="text-sm font-semibold text-gray-400 mb-3">{t('features')}</p>
         <ul className="space-y-2.5">
           {plan.features.map(feature => (
             <li key={feature} className="flex items-center gap-2 text-sm text-gray-300">

@@ -4,6 +4,7 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ScheduleModal from './ScheduleModal'
+import DemoModal from './DemoModal'
 
 interface Props {
   locale: string
@@ -48,7 +49,7 @@ function MIcon({ name }: { name: string }) {
 /* Shared pill style — same as "7 Gün Ücretsiz Dene" */
 const pillBase = 'btn-shimmer text-[14px] font-medium border border-emerald-400/30 text-emerald-400 px-5 py-2 rounded-full transition-colors cursor-pointer'
 
-export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) {
+export default function LandingHeader({ locale, ctaSchedule, ctaTrial, ctaDemo }: Props) {
   const isEn = locale === 'en'
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -94,7 +95,7 @@ export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) 
                         <MIcon name={item.icon} />
                         <span className="text-[13px] font-semibold">{isEn ? item.label.en : item.label.tr}</span>
                       </div>
-                      <p className="text-[11px] text-[#8a8f98] leading-relaxed">{isEn ? item.desc.en : item.desc.tr}</p>
+                      <p className="text-[12.5px] text-[#8a8f98] leading-relaxed">{isEn ? item.desc.en : item.desc.tr}</p>
                     </Link>
                   ))}
                 </div>
@@ -117,7 +118,7 @@ export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) 
                         <MIcon name={item.icon} />
                         <span className="text-[13px] font-semibold">{isEn ? item.label.en : item.label.tr}</span>
                       </div>
-                      <p className="text-[11px] text-[#8a8f98] leading-relaxed">{isEn ? item.desc.en : item.desc.tr}</p>
+                      <p className="text-[12.5px] text-[#8a8f98] leading-relaxed">{isEn ? item.desc.en : item.desc.tr}</p>
                     </Link>
                   ))}
                 </div>
@@ -136,8 +137,9 @@ export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) 
           <Link href="/login" className="hidden lg:inline-flex text-[14px] font-medium text-gray-400 hover:text-white px-3 py-2 transition-colors">
             {isEn ? 'Log In' : 'Giriş Yap'}
           </Link>
+          <DemoModal label={ctaDemo} locale={locale} />
           <ScheduleModal label={ctaSchedule} locale={locale} />
-          <Link href="/signup" className={`${pillBase} hover:bg-emerald-400/10`}>
+          <Link href="/signup" className={`${pillBase} bg-emerald-400/10 hover:bg-emerald-400/15`}>
             {ctaTrial}
           </Link>
         </div>

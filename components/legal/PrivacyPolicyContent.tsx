@@ -30,22 +30,22 @@ export default function PrivacyPolicyContent({ locale = 'tr' }: { locale?: 'tr' 
         <div className="bg-white rounded-lg p-8 space-y-6">
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('intro.title')}</h2>
-            <p className="text-gray-700">{g('intro.content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('intro.content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section1Title')}</h2>
-            <p className="text-gray-700">{g('section1Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section1Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section2Title')}</h2>
-            <p className="text-gray-700">{g('section2Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section2Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section3Title')}</h2>
-            <p className="text-gray-700">
+            <p className="text-base text-gray-700 leading-relaxed">
               <strong>{g('section3MetaTitle')}</strong>
               <br />
               {g('section3MetaContent')}
@@ -59,42 +59,42 @@ export default function PrivacyPolicyContent({ locale = 'tr' }: { locale?: 'tr' 
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section4Title')}</h2>
-            <p className="text-gray-700">{g('section4Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section4Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section5Title')}</h2>
-            <p className="text-gray-700">{g('section5Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section5Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section6Title')}</h2>
-            <p className="text-gray-700">{g('section6Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section6Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section7Title')}</h2>
-            <p className="text-gray-700">{g('section7Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section7Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section8Title')}</h2>
-            <p className="text-gray-700">{g('section8Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section8Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section9Title')}</h2>
-            <p className="text-gray-700">{g('section9Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section9Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('section10Title')}</h2>
-            <p className="text-gray-700">{g('section10Content')}</p>
+            <p className="text-base text-gray-700 leading-relaxed">{g('section10Content')}</p>
           </section>
 
           <section>
             <h2 className="text-xl font-semibold mb-3">{g('contact.title')}</h2>
-            <p className="text-gray-700">
+            <p className="text-base text-gray-700 leading-relaxed">
               E-posta: <a href={`mailto:${g('contact.email')}`} className="text-green-600 hover:underline">{g('contact.email')}</a>
             </p>
           </section>

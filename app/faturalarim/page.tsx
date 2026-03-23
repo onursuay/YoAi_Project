@@ -50,7 +50,7 @@ export default function FaturalarimPage() {
             {/* Left: Invoice Info */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h3 className="text-base font-bold text-gray-900 mb-1">{t('info')}</h3>
-              <p className="text-xs text-gray-500 mb-5">{t('infoDesc')}</p>
+              <p className="text-sm text-gray-500 mb-5">{t('infoDesc')}</p>
 
               {/* Type toggle */}
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1 mb-5">
@@ -80,7 +80,7 @@ export default function FaturalarimPage() {
                 {/* Name fields */}
                 <div className="grid grid-cols-2 gap-4">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('fullName')}</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('fullName')}</label>
                     <input
                       type="text"
                       value={info.fullName}
@@ -89,7 +89,7 @@ export default function FaturalarimPage() {
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('lastName')}</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('lastName')}</label>
                     <input
                       type="text"
                       value={info.phone}
@@ -102,7 +102,7 @@ export default function FaturalarimPage() {
 
                 {/* Phone */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('phone')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('phone')}</label>
                   <div className="flex gap-2">
                     <div className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50 shrink-0">
                       <span>🇹🇷</span>
@@ -120,7 +120,7 @@ export default function FaturalarimPage() {
 
                 {/* Address fields */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('address')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('address')}</label>
                   <div className="grid grid-cols-4 gap-2 mb-2">
                     <div className="flex items-center gap-1.5 px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-gray-50">
                       <span>🇹🇷</span>
@@ -161,7 +161,7 @@ export default function FaturalarimPage() {
                 {info.type === 'corporate' && (
                   <>
                     <div>
-                      <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('companyName')}</label>
+                      <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('companyName')}</label>
                       <input
                         type="text"
                         value={info.companyName || ''}
@@ -171,7 +171,7 @@ export default function FaturalarimPage() {
                     </div>
                     <div className="grid grid-cols-2 gap-4">
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('taxOffice')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('taxOffice')}</label>
                         <input
                           type="text"
                           value={info.taxOffice || ''}
@@ -180,7 +180,7 @@ export default function FaturalarimPage() {
                         />
                       </div>
                       <div>
-                        <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('taxNumber')}</label>
+                        <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('taxNumber')}</label>
                         <input
                           type="text"
                           value={info.taxNumber || ''}
@@ -204,7 +204,7 @@ export default function FaturalarimPage() {
             {/* Right: Invoice History */}
             <div className="bg-white rounded-2xl border border-gray-200 p-6">
               <h3 className="text-base font-bold text-gray-900 mb-1">{t('history')}</h3>
-              <p className="text-xs text-gray-500 mb-5">{t('historyDesc')}</p>
+              <p className="text-sm text-gray-500 mb-5">{t('historyDesc')}</p>
 
               {history.length === 0 ? (
                 <div className="text-center py-12">

@@ -72,9 +72,9 @@ export default function HesabimPage() {
                 </div>
                 <div>
                   <p className="text-sm font-medium text-gray-900">{t('profilePhoto')}</p>
-                  <p className="text-xs text-gray-400">{t('maxFileSize')}</p>
+                  <p className="text-sm text-gray-400">{t('maxFileSize')}</p>
                 </div>
-                <button className="ml-auto px-3 py-1.5 text-xs font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
+                <button className="ml-auto px-3 py-1.5 text-sm font-medium text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-50">
                   {t('uploadPhoto')}
                 </button>
               </div>
@@ -82,7 +82,7 @@ export default function HesabimPage() {
               {/* Name fields */}
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('firstName')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('firstName')}</label>
                   <input
                     type="text"
                     value={profile.firstName}
@@ -91,7 +91,7 @@ export default function HesabimPage() {
                   />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('lastName')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('lastName')}</label>
                   <input
                     type="text"
                     value={profile.lastName}
@@ -103,7 +103,7 @@ export default function HesabimPage() {
 
               {/* Email */}
               <div className="mb-4">
-                <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('email')}</label>
+                <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('email')}</label>
                 <input
                   type="email"
                   value={profile.email}
@@ -143,7 +143,7 @@ export default function HesabimPage() {
               <div className="space-y-4">
                 {/* Current password */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('passwordChange')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('passwordChange')}</label>
                   <div className="relative">
                     <input
                       type={showCurrentPw ? 'text' : 'password'}
@@ -163,7 +163,7 @@ export default function HesabimPage() {
 
                 {/* New password */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('newPassword')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('newPassword')}</label>
                   <div className="relative">
                     <input
                       type={showNewPw ? 'text' : 'password'}
@@ -183,7 +183,7 @@ export default function HesabimPage() {
 
                 {/* Confirm password */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('confirmPassword')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('confirmPassword')}</label>
                   <div className="relative">
                     <input
                       type={showConfirmPw ? 'text' : 'password'}
@@ -218,11 +218,11 @@ export default function HesabimPage() {
               {/* Referral Info */}
               <div>
                 <h4 className="text-sm font-bold text-gray-900 mb-1">{t('referral.info')}</h4>
-                <p className="text-xs text-gray-500 mb-4">{t('referral.infoDesc')}</p>
+                <p className="text-sm text-gray-500 mb-4">{t('referral.infoDesc')}</p>
 
                 {/* Referral code */}
                 <div className="mb-3">
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('referral.code')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('referral.code')}</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -242,7 +242,7 @@ export default function HesabimPage() {
 
                 {/* Referral link */}
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1.5">{t('referral.link')}</label>
+                  <label className="block text-sm font-medium text-gray-600 mb-1.5">{t('referral.link')}</label>
                   <div className="flex gap-2">
                     <input
                       type="text"
@@ -264,16 +264,16 @@ export default function HesabimPage() {
               {/* Earnings */}
               <div>
                 <h4 className="text-sm font-bold text-gray-900 mb-1">{t('referral.earnings')}</h4>
-                <p className="text-xs text-gray-500 mb-4">{t('referral.earningsDesc')}</p>
+                <p className="text-sm text-gray-500 mb-4">{t('referral.earningsDesc')}</p>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="bg-white rounded-xl p-4 text-center border border-gray-100">
                     <Users className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500 mb-1">{t('referral.referrals')}</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('referral.referrals')}</p>
                     <p className="text-2xl font-bold text-gray-900">0</p>
                   </div>
                   <div className="bg-white rounded-xl p-4 text-center border border-gray-100">
                     <BadgePercent className="w-6 h-6 text-gray-400 mx-auto mb-2" />
-                    <p className="text-xs text-gray-500 mb-1">{t('referral.discount')}</p>
+                    <p className="text-sm text-gray-500 mb-1">{t('referral.discount')}</p>
                     <p className="text-2xl font-bold text-gray-900">₺0</p>
                   </div>
                 </div>

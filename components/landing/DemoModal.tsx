@@ -37,8 +37,8 @@ export default function DemoModal({ label, locale, variant = 'nav' }: Props) {
   }
 
   const btnClass = variant === 'hero'
-    ? 'inline-flex items-center justify-center gap-2 border border-white/15 text-white hover:border-white/30 hover:bg-white/[0.06] font-semibold px-7 py-3.5 rounded-xl transition-all text-sm cursor-pointer min-w-[160px]'
-    : 'btn-shimmer hidden sm:inline-flex items-center justify-center gap-1.5 font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[12.75px]'
+    ? 'inline-flex items-center justify-center gap-2 border border-white/15 text-gray-300 hover:text-white hover:border-white/30 hover:bg-white/[0.06] font-semibold px-8 py-4 rounded-full transition-all text-base cursor-pointer min-w-[180px]'
+    : 'btn-shimmer hidden sm:inline-flex items-center justify-center gap-1.5 font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[13px]'
 
   const modalContent = open ? (
     <div className="fixed inset-0 z-[9999] flex items-center justify-center p-4" style={{ fontSize: '16px' }} onClick={() => setOpen(false)}>
