@@ -33,7 +33,7 @@ export async function GET(request: Request) {
   // Store state in httpOnly cookie
   const cookieStore = await cookies();
   const response = NextResponse.redirect(authorizeUrl.toString());
-  
+
   response.cookies.set("meta_oauth_state", state, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production",
@@ -41,6 +41,17 @@ export async function GET(request: Request) {
     maxAge: 60 * 10, // 10 minutes
     path: "/",
   });
+
+  // Ensure session_id exists before OAuth redirect so callback can persist to DB
+  if (!cookieStore.get('session_id')?.value) {
+    response.cookies.set('session_id', randomUUID(), {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30, // 30 days
+      path: '/',
+    });
+  }
 
   return response;
 }
