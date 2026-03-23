@@ -14,11 +14,6 @@ export default async function RootPage() {
       { title: 'Meta Ads Management', desc: 'Run Facebook and Instagram ad campaigns with smart targeting and budgeting.' },
       { title: 'AI Optimization', desc: 'Get AI-powered insights and automatic optimization suggestions for better ROAS.' },
     ],
-    legal: {
-      privacy: { label: 'Privacy Policy', href: '/privacy-policy' },
-      terms: { label: 'Terms of Service', href: '/terms' },
-      dataDeletion: { label: 'Data Deletion', href: '/data-deletion' },
-    },
     footer: '© 2025 YO Dijital. All rights reserved.',
   } : {
     title: 'YoAI – Yapay Zeka Destekli Reklam Yönetim Platformu',
@@ -29,12 +24,24 @@ export default async function RootPage() {
       { title: 'Meta Ads Yönetimi', desc: 'Facebook ve Instagram reklam kampanyalarınızı akıllı hedefleme ve bütçeleme ile yürütün.' },
       { title: 'Yapay Zeka Optimizasyonu', desc: 'Daha iyi ROAS için yapay zeka destekli içgörüler ve otomatik optimizasyon önerileri alın.' },
     ],
-    legal: {
-      privacy: { label: 'Gizlilik Politikası', href: '/gizlilik-politikasi' },
-      terms: { label: 'Kullanım Koşulları', href: '/kullanim-kosullari' },
-      dataDeletion: { label: 'Veri Silme', href: '/veri-silme' },
-    },
     footer: '© 2025 YO Dijital. Tüm hakları saklıdır.',
+  }
+
+  // Legal links always use absolute EN URLs for Google OAuth verification.
+  // Labels are locale-aware, hrefs are canonical EN routes.
+  const legal = {
+    privacy: {
+      label: locale === 'en' ? 'Privacy Policy' : 'Gizlilik Politikası',
+      href: 'https://yoai.yodijital.com/privacy-policy',
+    },
+    terms: {
+      label: locale === 'en' ? 'Terms of Service' : 'Kullanım Koşulları',
+      href: 'https://yoai.yodijital.com/terms',
+    },
+    dataDeletion: {
+      label: locale === 'en' ? 'Data Deletion' : 'Veri Silme',
+      href: 'https://yoai.yodijital.com/data-deletion',
+    },
   }
 
   return (
@@ -68,9 +75,9 @@ export default async function RootPage() {
         <div className="max-w-3xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-4 text-sm text-gray-500">
           <span>{content.footer}</span>
           <nav className="flex gap-4">
-            <Link href={content.legal.privacy.href} className="hover:text-gray-700">{content.legal.privacy.label}</Link>
-            <Link href={content.legal.terms.href} className="hover:text-gray-700">{content.legal.terms.label}</Link>
-            <Link href={content.legal.dataDeletion.href} className="hover:text-gray-700">{content.legal.dataDeletion.label}</Link>
+            <a href={legal.privacy.href} className="hover:text-gray-700">{legal.privacy.label}</a>
+            <a href={legal.terms.href} className="hover:text-gray-700">{legal.terms.label}</a>
+            <a href={legal.dataDeletion.href} className="hover:text-gray-700">{legal.dataDeletion.label}</a>
           </nav>
         </div>
       </footer>
