@@ -145,7 +145,7 @@ export default function SeoArticlesTab() {
       <div className="text-center py-16">
         <FileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
         <h3 className="text-base font-semibold text-gray-700 mb-1">{t('empty')}</h3>
-        <p className="text-sm text-gray-400 mb-4">{t('emptyDescription')}</p>
+        <p className="text-sm text-gray-500 mb-4">{t('emptyDescription')}</p>
         <Link
           href="/yoai"
           className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors"
@@ -276,7 +276,7 @@ export default function SeoArticlesTab() {
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm font-mono focus:ring-2 focus:ring-blue-500 focus:border-blue-500"
                 />
               </div>
-              <p className="text-xs text-gray-400">
+              <p className="text-xs text-gray-500">
                 {t('wordCount')}: {editContent.split(/\s+/).filter(Boolean).length}
               </p>
             </div>

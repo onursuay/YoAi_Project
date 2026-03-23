@@ -52,7 +52,7 @@ export default function KpiDisplay({ title, metrics, insights, currency = 'TRY' 
 
   return (
     <div>
-      <h4 className="text-ui font-medium text-gray-500 uppercase tracking-wider mb-2">{title}</h4>
+      <h4 className="text-ui font-medium text-gray-600 uppercase tracking-wider mb-2">{title}</h4>
       <div className="grid grid-cols-2 sm:grid-cols-3 gap-3">
         {metrics.map((metric, i) => {
           const isRanking = metric.format === 'ranking'
@@ -77,7 +77,7 @@ export default function KpiDisplay({ title, metrics, insights, currency = 'TRY' 
 
           return (
             <div key={`${metric.key}-${metric.actionType || ''}-${i}`} className="bg-gray-50 rounded-lg p-3">
-              <p className="text-ui text-gray-500 truncate">{t(labelKey)}</p>
+              <p className="text-ui text-gray-600 truncate">{t(labelKey)}</p>
               <p className={`text-sm font-semibold mt-1 ${valueColor}`}>{display}</p>
             </div>
           )

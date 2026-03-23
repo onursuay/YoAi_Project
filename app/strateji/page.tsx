@@ -152,15 +152,15 @@ export default function StratejiPage() {
                   </span>
                 </div>
                 <ul className="mt-2 space-y-1.5">
-                  <li className="flex items-start gap-2 text-xs text-gray-600">
+                  <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
                     Markanız için AI destekli reklam stratejisi oluşturun. Hedef kitle, bütçe dağılımı ve kampanya planı otomatik hazırlanır.
                   </li>
-                  <li className="flex items-start gap-2 text-xs text-gray-600">
+                  <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
                     İşletme bilgilerinizi girin &gt; AI strateji planı üretsin &gt; Uygulayın, AI optimize etsin.
                   </li>
-                  <li className="flex items-start gap-2 text-xs text-gray-600">
+                  <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
                     Plan aktifken haftalık metrik analizi ve AI optimizasyon önerileri otomatik gelir.
                   </li>
@@ -173,7 +173,7 @@ export default function StratejiPage() {
           <div>
             <div className="flex items-center justify-between mb-3">
               <h3 className="text-sm font-medium text-gray-700">Strateji Planları</h3>
-              <span className="text-xs text-gray-400">{instances.length} kayıt</span>
+              <span className="text-xs text-gray-500">{instances.length} kayıt</span>
             </div>
             <StrategyList
               instances={instances}

@@ -340,7 +340,7 @@ function ConfirmDialog({
           <p className="text-xs text-gray-600 mb-4">{t('confirmDesc')}</p>
 
           <div className="bg-gray-50 border border-gray-200 rounded-lg px-3 py-2.5 mb-4">
-            <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-1">{cs.entityName}</p>
+            <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">{cs.entityName}</p>
             {isDuplicate ? (
               <p className="text-xs text-blue-700 font-medium">{t('willBeCopied')}</p>
             ) : (
@@ -352,7 +352,7 @@ function ConfirmDialog({
             )}
           </div>
 
-          <div className="flex items-center gap-2 text-[10px] text-gray-400 mb-4">
+          <div className="flex items-center gap-2 text-xs text-gray-500 mb-4">
             <AlertTriangle className="w-3 h-3" />
             <span>{t(`riskLevels.${rec.risk}`)} {t('risk').toLowerCase()} — {t('confirmWarning')}</span>
           </div>
@@ -420,7 +420,7 @@ function DiffPanel({
                 <div className="flex items-center gap-2 mb-3">
                   <div className={`w-2 h-2 rounded-full ${RISK_COLORS[rec.risk]}`} />
                   <span className="text-xs font-semibold text-white">{cs.entityName}</span>
-                  <span className="text-[10px] px-2 py-0.5 bg-gray-700 text-gray-300 rounded-full font-medium">
+                  <span className="text-xs px-2 py-0.5 bg-gray-700 text-gray-300 rounded-full font-medium">
                     {t(`changeTypes.${cs.changeType}`)}
                   </span>
                 </div>

@@ -36,7 +36,7 @@ export default function AlertList({ alerts }: AlertListProps) {
             <div className="flex-1 min-w-0">
               <p className={`text-sm ${config.text}`}>{t(alertKey)}</p>
               {alert.threshold != null && (
-                <p className="text-caption text-gray-500 mt-1">
+                <p className="text-caption text-gray-600 mt-1">
                   {alert.currentValue.toFixed(2)} / {alert.threshold}
                 </p>
               )}

@@ -35,7 +35,7 @@ export default function ConfidenceGauge({ confidence, size = 44 }: ConfidenceGau
         />
       </svg>
       <span
-        className="absolute text-[10px] font-bold"
+        className="absolute text-xs font-bold"
         style={{ color }}
       >
         {Math.round(confidence * 100)}%

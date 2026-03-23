@@ -54,7 +54,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
           <div className="space-y-6">
             {/* Gate Scores */}
             <div>
-              <h4 className="text-ui font-medium text-gray-500 uppercase tracking-wider mb-3">{t('tabs.overview')}</h4>
+              <h4 className="text-ui font-medium text-gray-600 uppercase tracking-wider mb-3">{t('tabs.overview')}</h4>
               <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                 {(['delivery', 'efficiency', 'quality', 'saturation'] as const).map((gate) => {
                   const g = scoreResult.gateResults[gate]
@@ -62,7 +62,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
                     <div key={gate} className="flex items-center gap-3 bg-gray-50 rounded-lg p-3">
                       <ScoreBadge score={g.score} status={scoreResult.status} size={40} />
                       <div>
-                        <p className="text-ui text-gray-500">{t(`gates.${gate}`)}</p>
+                        <p className="text-ui text-gray-600">{t(`gates.${gate}`)}</p>
                         <p className={`text-sm font-semibold ${g.passed ? 'text-green-600' : 'text-red-500'}`}>
                           {g.score}/100
                         </p>
@@ -76,7 +76,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
             {/* Reasons */}
             {scoreResult.reasons.length > 0 && (
               <div>
-                <h4 className="text-ui font-medium text-gray-500 uppercase tracking-wider mb-2">
+                <h4 className="text-ui font-medium text-gray-600 uppercase tracking-wider mb-2">
                   {t('tabs.overview')}
                 </h4>
                 <ul className="space-y-1">
@@ -147,12 +147,12 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
         {activeTab === 'adsets' && (
           <div className="space-y-3">
             {campaign.adsets.length === 0 ? (
-              <p className="text-sm text-gray-400 text-center py-4">{t('noData')}</p>
+              <p className="text-sm text-gray-500 text-center py-4">{t('noData')}</p>
             ) : (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="text-left text-ui text-gray-500 border-b border-gray-200">
+                    <tr className="text-left text-ui text-gray-600 border-b border-gray-200">
                       <th className="pb-2 pr-4 font-medium">Ad Set</th>
                       <th className="pb-2 pr-4 font-medium">{t('metrics.spend')}</th>
                       <th className="pb-2 pr-4 font-medium">{t('metrics.impressions')}</th>
@@ -178,7 +178,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
                         <td className="py-2 pr-4 text-gray-700">
                           {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: campaign.currency }).format(adset.insights.cpc)}
                         </td>
-                        <td className="py-2 text-gray-500 text-ui">{safeT(t, `optimizationGoals.${adset.optimizationGoal}`, adset.optimizationGoal)}</td>
+                        <td className="py-2 text-gray-600 text-ui">{safeT(t, `optimizationGoals.${adset.optimizationGoal}`, adset.optimizationGoal)}</td>
                       </tr>
                     ))}
                   </tbody>
@@ -193,7 +193,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
           <div className="space-y-4">
             {/* Campaign actions */}
             <div>
-              <h4 className="text-ui font-medium text-gray-500 uppercase tracking-wider mb-2">{campaign.name}</h4>
+              <h4 className="text-ui font-medium text-gray-600 uppercase tracking-wider mb-2">{campaign.name}</h4>
               <QuickActions
                 entityType="campaign"
                 entityId={campaign.id}
@@ -209,7 +209,7 @@ export default function DetailPanel({ campaign, onSuccess, onError }: DetailPane
             {/* Adset actions */}
             {campaign.adsets.map((adset) => (
               <div key={adset.id}>
-                <h4 className="text-ui font-medium text-gray-500 mb-2">{adset.name}</h4>
+                <h4 className="text-ui font-medium text-gray-600 mb-2">{adset.name}</h4>
                 <QuickActions
                   entityType="adset"
                   entityId={adset.id}

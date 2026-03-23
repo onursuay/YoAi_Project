@@ -117,7 +117,7 @@ export default function AudienceList({
               : 'Henüz hedef kitle oluşturulmadı.'}
           </p>
           {!searchQuery.trim() && (
-            <p className="text-xs text-gray-300 mt-1">&quot;+ Yeni Kitle&quot; butonuyla başlayın.</p>
+            <p className="text-xs text-gray-500 mt-1">&quot;+ Yeni Kitle&quot; butonuyla başlayın.</p>
           )}
         </div>
       ) : (

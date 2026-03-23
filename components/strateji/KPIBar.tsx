@@ -73,7 +73,7 @@ export default function KPIBar() {
             >
               <div className="flex items-center gap-2">
                 <Icon className={`w-4 h-4 ${card.color}`} />
-                <span className="text-xs text-gray-500">{card.label}</span>
+                <span className="text-caption text-gray-600">{card.label}</span>
               </div>
               {loading ? (
                 <div className="h-6 bg-gray-100 rounded animate-pulse w-20 mt-1" />

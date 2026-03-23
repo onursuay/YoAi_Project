@@ -29,7 +29,7 @@ export default function FunnelChart({ insights }: FunnelChartProps) {
 
   if (!hasData) {
     return (
-      <div className="text-center py-8 text-sm text-gray-400">
+      <div className="text-center py-8 text-sm text-gray-500">
         {t('title')} — No data
       </div>
     )

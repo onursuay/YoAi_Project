@@ -16,7 +16,7 @@ export default function RiskBadge({ risk }: RiskBadgeProps) {
   const t = useTranslations('dashboard.optimizasyon.magicScan')
 
   return (
-    <span className={`inline-flex px-2 py-0.5 text-[10px] font-semibold rounded-full border ${RISK_STYLES[risk]}`}>
+    <span className={`inline-flex px-2 py-0.5 text-xs font-semibold rounded-full border ${RISK_STYLES[risk]}`}>
       {t(`riskLevels.${risk}`)}
     </span>
   )

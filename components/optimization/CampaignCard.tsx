@@ -102,13 +102,13 @@ export default function CampaignCard({ campaign, expanded, onToggle, onMagicScan
 
           {/* Triple badges */}
           <div className="flex items-center gap-1.5 mt-1">
-            <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium bg-blue-50 text-blue-600 rounded">
+            <span className="inline-flex px-1.5 py-0.5 text-xs font-medium bg-blue-50 text-blue-600 rounded">
               {safeT(t, `objectives.${triple.objective}`, triple.objective.replace(/_/g, ' '))}
             </span>
-            <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium bg-purple-50 text-purple-600 rounded">
+            <span className="inline-flex px-1.5 py-0.5 text-xs font-medium bg-purple-50 text-purple-600 rounded">
               {safeT(t, `optimizationGoals.${triple.optimizationGoal}`, triple.optimizationGoal)}
             </span>
-            <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium bg-gray-100 text-gray-600 rounded">
+            <span className="inline-flex px-1.5 py-0.5 text-xs font-medium bg-gray-100 text-gray-600 rounded">
               {safeT(t, `destinations.${triple.destination}`, triple.destination.replace(/_/g, ' '))}
             </span>
           </div>
@@ -117,21 +117,21 @@ export default function CampaignCard({ campaign, expanded, onToggle, onMagicScan
         {/* Quick KPI preview */}
         <div className="hidden sm:flex items-center gap-6 shrink-0">
           <div className="text-right">
-            <p className="text-caption text-gray-500">{t(`metrics.${northStarLabel}`)}</p>
+            <p className="text-caption text-gray-600">{t(`metrics.${northStarLabel}`)}</p>
             <p className="text-sm font-bold text-gray-900">
               {formatMetric(northStarValue, kpiTemplate.northStar.format, campaign.currency)}
             </p>
           </div>
           {firstEfficiency && (
             <div className="text-right">
-              <p className="text-caption text-gray-500">{t(`metrics.${efficiencyLabel}`)}</p>
+              <p className="text-caption text-gray-600">{t(`metrics.${efficiencyLabel}`)}</p>
               <p className="text-sm font-bold text-gray-900">
                 {formatMetric(efficiencyValue, firstEfficiency.format, campaign.currency)}
               </p>
             </div>
           )}
           <div className="text-right">
-            <p className="text-caption text-gray-500">{t('metrics.spend')}</p>
+            <p className="text-caption text-gray-600">{t('metrics.spend')}</p>
             <p className="text-sm font-bold text-gray-900">
               {formatMetric(insights.spend, 'currency', campaign.currency)}
             </p>
@@ -173,7 +173,7 @@ export default function CampaignCard({ campaign, expanded, onToggle, onMagicScan
                   <Zap className="w-4 h-4 text-green-600 shrink-0" />
                   <div>
                     <p className="text-caption font-medium text-gray-900">{t('magicScan.quickScan')}</p>
-                    <p className="text-[10px] text-gray-400">{t('magicScan.quickScanDesc')}</p>
+                    <p className="text-xs text-gray-500">{t('magicScan.quickScanDesc')}</p>
                   </div>
                 </button>
                 <button
@@ -186,7 +186,7 @@ export default function CampaignCard({ campaign, expanded, onToggle, onMagicScan
                       {t('magicScan.aiScan')}
                       <span className="ml-1 px-1 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded">PRO</span>
                     </p>
-                    <p className="text-caption text-gray-400">{t('magicScan.aiScanDesc')}</p>
+                    <p className="text-caption text-gray-500">{t('magicScan.aiScanDesc')}</p>
                   </div>
                 </button>
               </div>

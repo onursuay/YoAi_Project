@@ -190,7 +190,7 @@ export default async function RootPage() {
           </h1>
 
           {/* Subtitle */}
-          <p className="text-lg md:text-xl text-gray-400 leading-relaxed mb-8 max-w-4xl mx-auto">
+          <p className="text-lg md:text-xl text-gray-300 leading-relaxed mb-8 max-w-4xl mx-auto">
             {c.heroSub}
           </p>
 
@@ -261,7 +261,7 @@ export default async function RootPage() {
       </section>
 
       {/* ═══════════ TRUST STRIP ═══════════ */}
-      <section className="w-full border-y border-white/[0.04] py-5 px-6 bg-white/[0.01]">
+      <section id="entegrasyonlar" className="w-full border-y border-white/[0.04] py-6 px-6 bg-white/[0.01]">
         <div className="max-w-7xl mx-auto">
           <p className="text-xs text-gray-600 uppercase tracking-[0.2em] text-center mb-4 font-medium">{c.trustLabel}</p>
           <div className="flex flex-wrap justify-center items-center gap-3">
@@ -284,23 +284,23 @@ export default async function RootPage() {
       </section>
 
       {/* ═══════════ AI CAPABILITIES ═══════════ */}
-      <section className="relative w-full px-6 py-10 md:py-12">
+      <section id="ozellikler" className="relative w-full px-6 py-14 md:py-20">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/4 w-[500px] h-[500px] bg-emerald-500/[0.03] rounded-full blur-[120px]" />
         </div>
         <div className="relative max-w-7xl mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-8 md:mb-10">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">{c.capTitle}</h2>
             <p className="text-base text-gray-500 max-w-xl mx-auto leading-relaxed">{c.capSub}</p>
           </div>
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-4">
             {c.caps.map((cap, i) => (
-              <div key={i} className="group bg-white/[0.025] border border-white/[0.06] rounded-2xl p-6 hover:border-emerald-400/15 hover:bg-white/[0.04] transition-all duration-300">
+              <div key={i} className="group bg-white/[0.025] border border-white/[0.06] rounded-2xl p-6 hover:border-emerald-400/20 hover:bg-white/[0.04] hover:shadow-[0_0_30px_rgba(16,185,129,0.06)] transition-all duration-300">
                 <div className="w-10 h-10 rounded-xl bg-emerald-400/[0.08] border border-emerald-400/15 flex items-center justify-center mb-4 text-emerald-400 group-hover:shadow-[0_0_20px_rgba(16,185,129,0.1)] transition-all">
                   <Icon name={cap.svg} size={18} />
                 </div>
                 <h3 className="font-semibold text-white mb-1.5">{cap.title}</h3>
-                <p className="text-base text-gray-400 leading-relaxed">{cap.desc}</p>
+                <p className="text-base text-gray-300 leading-relaxed">{cap.desc}</p>
               </div>
             ))}
           </div>
@@ -308,23 +308,23 @@ export default async function RootPage() {
       </section>
 
       {/* ═══════════ PERFORMANCE ═══════════ */}
-      <section className="relative w-full px-6 py-10 md:py-12 bg-white/[0.015]">
+      <section className="relative w-full px-6 py-12 md:py-16 bg-white/[0.015]">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute bottom-0 right-1/4 w-[400px] h-[400px] bg-teal-500/[0.04] rounded-full blur-[120px]" />
         </div>
         <div className="relative max-w-7xl mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">{c.perfTitle}</h2>
             <p className="text-base text-gray-500 max-w-xl mx-auto leading-relaxed">{c.perfSub}</p>
           </div>
           <div className="grid md:grid-cols-3 gap-5">
             {c.perfs.map((perf, i) => (
-              <div key={i} className="relative bg-white/[0.025] border border-white/[0.06] rounded-2xl p-7 text-center overflow-hidden group">
+              <div key={i} className="relative bg-gradient-to-b from-white/[0.04] to-white/[0.02] border border-white/[0.06] rounded-2xl p-7 text-center overflow-hidden group">
                 <div className="absolute inset-0 bg-gradient-to-b from-emerald-400/[0.03] to-transparent opacity-0 group-hover:opacity-100 transition-opacity duration-500" />
                 <div className="relative">
                   <p className="text-4xl md:text-5xl font-black bg-gradient-to-r from-emerald-400 to-teal-300 bg-clip-text text-transparent mb-1.5">{perf.metric}</p>
                   <p className="text-base font-semibold text-white mb-2">{perf.label}</p>
-                  <p className="text-base text-gray-400 leading-relaxed">{perf.desc}</p>
+                  <p className="text-base text-gray-300 leading-relaxed">{perf.desc}</p>
                 </div>
               </div>
             ))}
@@ -333,9 +333,9 @@ export default async function RootPage() {
       </section>
 
       {/* ═══════════ COMMAND CENTER ═══════════ */}
-      <section className="w-full px-6 py-10 md:py-12">
+      <section className="w-full px-6 py-12 md:py-16">
         <div className="max-w-7xl mx-auto">
-          <div className="text-center mb-6">
+          <div className="text-center mb-8">
             <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">{c.cmdTitle}</h2>
             <p className="text-base text-gray-500 max-w-xl mx-auto leading-relaxed">{c.cmdSub}</p>
           </div>
@@ -346,7 +346,7 @@ export default async function RootPage() {
                   <div className="w-2 h-2 rounded-full bg-emerald-400 shadow-[0_0_6px_rgba(16,185,129,0.5)]" />
                 </div>
                 <h4 className="font-semibold text-white text-base mb-1.5">{cmd.title}</h4>
-                <p className="text-base text-gray-400 leading-relaxed">{cmd.desc}</p>
+                <p className="text-base text-gray-300 leading-relaxed">{cmd.desc}</p>
               </div>
             ))}
           </div>
@@ -354,17 +354,17 @@ export default async function RootPage() {
       </section>
 
       {/* ═══════════ BOTTOM CTA ═══════════ */}
-      <section className="relative w-full px-6 py-10 md:py-12">
+      <section className="relative w-full px-6 py-14 md:py-20">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full blur-[150px]" style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.08), transparent 70%)' }} />
         </div>
         <div className="relative max-w-2xl mx-auto text-center">
           <h2 className="text-3xl md:text-4xl font-bold tracking-tight mb-3">{c.ctaBottom}</h2>
-          <p className="text-base text-gray-500 mb-5 max-w-md mx-auto leading-relaxed">{c.ctaBottomSub}</p>
+          <p className="text-base text-gray-500 mb-6 max-w-md mx-auto leading-relaxed">{c.ctaBottomSub}</p>
           <div className="flex flex-wrap justify-center items-center gap-3">
             <Link
               href="/signup"
-              className="btn-shimmer inline-flex items-center gap-2 text-[14px] font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 px-7 py-3 rounded-full transition-all shadow-[0_0_20px_rgba(16,185,129,0.15)]"
+              className="btn-shimmer inline-flex items-center gap-2 text-[14px] font-semibold bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 px-7 py-3 rounded-full transition-all shadow-[0_0_30px_rgba(16,185,129,0.2)]"
             >
               {c.ctaTrial} <Icon name="arrow" size={14} />
             </Link>
@@ -377,15 +377,15 @@ export default async function RootPage() {
       {/* ═══════════ FOOTER ═══════════ */}
       <footer className="w-full border-t border-white/[0.05] py-6 px-6 bg-[#060609]">
         <div className="max-w-7xl mx-auto flex flex-col sm:flex-row items-center justify-between gap-3 text-sm">
-          <div className="flex items-center gap-3 text-gray-600">
-            <Image src="/logos/yoai-logo.png" alt="YoAI" width={40} height={16} className="object-contain brightness-0 invert opacity-25" />
+          <div className="flex items-center gap-3 text-gray-500">
+            <Image src="/logos/yoai-logo.png" alt="YoAI" width={40} height={16} className="object-contain brightness-0 invert opacity-40" />
             <span>{c.footer}</span>
           </div>
-          <nav className="flex gap-5 text-gray-600">
-            <a href={legal.privacy.href} className="hover:text-gray-400 transition-colors">{legal.privacy.label}</a>
-            <a href={legal.cookie.href} className="hover:text-gray-400 transition-colors">{legal.cookie.label}</a>
-            <a href={legal.terms.href} className="hover:text-gray-400 transition-colors">{legal.terms.label}</a>
-            <a href={legal.dataDeletion.href} className="hover:text-gray-400 transition-colors">{legal.dataDeletion.label}</a>
+          <nav className="flex gap-5 text-gray-500">
+            <a href={legal.privacy.href} className="hover:text-gray-300 transition-colors">{legal.privacy.label}</a>
+            <a href={legal.cookie.href} className="hover:text-gray-300 transition-colors">{legal.cookie.label}</a>
+            <a href={legal.terms.href} className="hover:text-gray-300 transition-colors">{legal.terms.label}</a>
+            <a href={legal.dataDeletion.href} className="hover:text-gray-300 transition-colors">{legal.dataDeletion.label}</a>
           </nav>
         </div>
       </footer>

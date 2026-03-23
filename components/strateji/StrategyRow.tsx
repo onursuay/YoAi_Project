@@ -38,10 +38,10 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
             <StatusBadge status={instance.status} size="sm" />
           </div>
           {subtitle && (
-            <p className="text-xs text-gray-500 truncate">{subtitle}</p>
+            <p className="text-sm text-gray-500 truncate">{subtitle}</p>
           )}
           {instance.monthly_budget_try && (
-            <p className="text-xs text-gray-400 mt-0.5">
+            <p className="text-sm text-gray-500 mt-0.5">
               {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(instance.monthly_budget_try)} / ay
             </p>
           )}

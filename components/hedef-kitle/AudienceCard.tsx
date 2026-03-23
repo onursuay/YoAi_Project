@@ -83,7 +83,7 @@ export default function AudienceCard({
           <div className="flex items-center gap-2">
             <p className="text-sm font-semibold text-gray-900 truncate">{audience.name}</p>
             {/* Origin badge */}
-            <span className={`shrink-0 text-[10px] px-1.5 py-0.5 rounded-full font-medium ${
+            <span className={`shrink-0 text-xs px-1.5 py-0.5 rounded-full font-medium ${
               audience.origin === 'local'
                 ? 'bg-green-50 text-green-600'
                 : 'bg-blue-50 text-blue-600'
@@ -136,30 +136,30 @@ export default function AudienceCard({
           <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
             {audience.origin === 'local' && audience.source && (
               <div>
-                <span className="text-gray-400 text-xs">Kaynak</span>
+                <span className="text-gray-500 text-caption">Kaynak</span>
                 <p className="text-gray-700">{SOURCE_LABELS[audience.source]?.tr ?? audience.source}</p>
               </div>
             )}
             {audience.subtype && (
               <div>
-                <span className="text-gray-400 text-xs">Alt Tür</span>
+                <span className="text-gray-500 text-caption">Alt Tür</span>
                 <p className="text-gray-700">{audience.subtype}</p>
               </div>
             )}
             {audience.approximateCount && (
               <div>
-                <span className="text-gray-400 text-xs">Tahmini Boyut</span>
+                <span className="text-gray-500 text-caption">Tahmini Boyut</span>
                 <p className="text-gray-700">{formatCount(audience.approximateCount)} kişi</p>
               </div>
             )}
             {audience.origin === 'local' && audience.metaAudienceId && (
               <div>
-                <span className="text-gray-400 text-xs">Meta ID</span>
+                <span className="text-gray-500 text-caption">Meta ID</span>
                 <p className="text-gray-700 font-mono text-xs">{audience.metaAudienceId}</p>
               </div>
             )}
             <div>
-              <span className="text-gray-400 text-xs">Oluşturulma</span>
+              <span className="text-gray-500 text-caption">Oluşturulma</span>
               <p className="text-gray-700">{new Date(audience.createdAt).toLocaleDateString('tr-TR')}</p>
             </div>
           </div>

@@ -31,11 +31,11 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
   /* ───── Translations ───── */
   const t = isEn ? {
     brand: 'YoAi',
-    meetingTitle: 'YoAi Product Demo',
-    meetingSub: '30-minute product walkthrough',
+    meetingTitle: 'YoAi Strategy Call',
+    meetingSub: '30-minute personalized product overview',
     duration: '30 min',
-    orgDefault: 'Europe/Istanbul timezone',
-    timezone: 'Europe/Istanbul',
+    orgDefault: 'Online meeting',
+    timezone: 'Istanbul (GMT+3)',
     monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     dayHeaders: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
     dayShort: ['Sun','Mon','Tue','Wed','Thu','Fri','Sat'],
@@ -45,21 +45,22 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
     emailLabel: 'Email',
     emailPlaceholder: 'you@company.com',
     noteLabel: 'Notes (optional)',
-    notePlaceholder: 'Anything you want us to know...',
+    notePlaceholder: 'Topics you\'d like to discuss...',
     submitBtn: 'Schedule Meeting',
     back: 'Back',
-    successTitle: 'Meeting Scheduled',
-    successMsg: 'A calendar invite will be sent to your email shortly.',
+    successTitle: 'Meeting Confirmed',
+    successMsg: 'We\'ll send a calendar invite to your email right away.',
     close: 'Close',
+    selectDateFirst: 'Select a date first',
     h12: '12h',
     h24: '24h',
   } : {
     brand: 'YoAi',
-    meetingTitle: 'YoAi Tanıtım Görüşmesi',
-    meetingSub: '30 dakikalık ürün tanıtımı',
+    meetingTitle: 'YoAi Strateji Görüşmesi',
+    meetingSub: '30 dakikalık birebir ürün tanıtımı',
     duration: '30 dakika',
-    orgDefault: 'Avrupa/İstanbul saati',
-    timezone: 'Europe/Istanbul',
+    orgDefault: 'Online görüşme',
+    timezone: 'İstanbul (GMT+3)',
     monthNames: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
     dayHeaders: ['PZT','SAL','ÇAR','PER','CUM','CMT','PAZ'],
     dayShort: ['Paz','Pzt','Sal','Çar','Per','Cum','Cmt'],
@@ -69,12 +70,13 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
     emailLabel: 'E-posta',
     emailPlaceholder: 'siz@sirket.com',
     noteLabel: 'Not (isteğe bağlı)',
-    notePlaceholder: 'Eklemek istediğiniz bir şey...',
+    notePlaceholder: 'Görüşmede öncelikli konunuz...',
     submitBtn: 'Görüşmeyi Planla',
     back: 'Geri',
-    successTitle: 'Görüşme Planlandı',
-    successMsg: 'Kısa sürede e-postanıza takvim davetiyesi göndereceğiz.',
+    successTitle: 'Görüşmeniz Onaylandı',
+    successMsg: 'Takvim davetiyenizi hemen e-postanıza gönderiyoruz.',
     close: 'Kapat',
+    selectDateFirst: 'Önce bir tarih seçin',
     h12: '12 sa',
     h24: '24 sa',
   }
@@ -157,6 +159,16 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
     return `${dow} ${d}`
   }, [selectedDate, t.dayShort])
 
+  // Format selected date for form step like "25 Mart 2026, Çarşamba"
+  const selectedDateFormatted = useMemo(() => {
+    if (!selectedDate) return ''
+    const [y, m, d] = selectedDate.split('-').map(Number)
+    const date = new Date(y, m - 1, d)
+    const dow = t.dayShort[date.getDay()]
+    const monthName = t.monthNames[m - 1]
+    return `${d} ${monthName} ${y}, ${dow}`
+  }, [selectedDate, t.dayShort, t.monthNames])
+
   const isDayAvailable = useCallback((_iso: string, isWeekend: boolean, isPast: boolean) => !isWeekend && !isPast, [])
 
   const prevMonth = () => setViewDate(new Date(viewDate.getFullYear(), viewDate.getMonth() - 1, 1))
@@ -218,9 +230,12 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
           </div>
         ) : step === 'form' ? (
           <div className="p-6">
-            <button onClick={() => setStep('calendar')} className="text-sm text-gray-500 hover:text-white mb-4 transition-colors">&larr; {t.back}</button>
+            <button onClick={() => setStep('calendar')} className="inline-flex items-center gap-1.5 text-sm font-medium text-gray-400 hover:text-white mb-4 transition-colors">
+              <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round"><path d="M15 18l-6-6 6-6"/></svg>
+              {t.back}
+            </button>
             <h3 className="text-xl font-bold text-white mb-1">{t.meetingTitle}</h3>
-            <p className="text-base text-gray-500 mb-6">{selectedDate} &middot; {selectedTime} &middot; {t.duration}</p>
+            <p className="text-base text-gray-500 mb-6">{selectedDateFormatted} &middot; {selectedTime} &middot; {t.duration}</p>
             <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
                 <label className="block text-sm font-medium text-gray-400 mb-2">{t.nameLabel}</label>
@@ -242,11 +257,11 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
             {/* ▌LEFT — Meeting info panel */}
             <div className="md:w-[220px] shrink-0 border-b md:border-b-0 md:border-r border-white/[0.06] p-5 flex flex-col">
               <div className="w-9 h-9 rounded-lg bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center mb-3">
-                <span className="text-emerald-400 text-lg">✦</span>
+                <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="rgb(52,211,153)" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round"><path d="M12 2L9 12l-7 0 5.5 4.5L5 22l7-5 7 5-2.5-5.5L22 12h-7z"/></svg>
               </div>
               <p className="text-sm text-gray-400 mb-0.5">{t.brand}</p>
               <h3 className="text-base font-semibold text-white mb-0.5">
-                {t.meetingTitle} <span className="text-emerald-400">✨</span>
+                {t.meetingTitle}
               </h3>
               <p className="text-sm text-gray-400 mb-5">{t.meetingSub}</p>
 
@@ -256,12 +271,12 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
                   {t.duration}
                 </div>
                 <div className="flex items-center gap-2.5 text-sm text-gray-400">
-                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M10 13a5 5 0 007.54.54l3-3a5 5 0 00-7.07-7.07l-1.72 1.71"/><path d="M14 11a5 5 0 00-7.54-.54l-3 3a5 5 0 007.07 7.07l1.71-1.71"/></svg>
+                  <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><path d="M15.05 5A5 5 0 0119 8.95M15.05 1A9 9 0 0123 8.94M22 16.92v3a2 2 0 01-2.18 2A19.86 19.86 0 013.09 5.18 2 2 0 015.11 3h3a2 2 0 012 1.72c.127.96.362 1.903.7 2.81a2 2 0 01-.45 2.11L8.91 11.09a16 16 0 006 6l1.45-1.45a2 2 0 012.11-.45c.907.338 1.85.573 2.81.7A2 2 0 0122 16.92z"/></svg>
                   {t.orgDefault}
                 </div>
                 <div className="flex items-center gap-2.5 text-sm text-gray-400">
                   <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5"><circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 014 10 15.3 15.3 0 01-4 10 15.3 15.3 0 01-4-10A15.3 15.3 0 0112 2z"/></svg>
-                  {t.timezone} <svg width="10" height="10" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" className="ml-0.5"><path d="M6 9l6 6 6-6"/></svg>
+                  {t.timezone}
                 </div>
               </div>
             </div>
@@ -339,17 +354,19 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
 
               {/* Scrollable time slots */}
               <div className="flex-1 overflow-y-auto space-y-2 max-h-[380px] pr-1">
-                {timeSlots.map(s => (
+                {!selectedDate ? (
+                  <div className="flex flex-col items-center justify-center py-10 text-center">
+                    <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" className="text-gray-600 mb-2"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg>
+                    <p className="text-sm text-gray-500">{t.selectDateFirst}</p>
+                  </div>
+                ) : timeSlots.map(s => (
                   <button
                     key={s.value}
                     onClick={() => setSelectedTime(s.value)}
-                    disabled={!selectedDate}
                     className={`w-full text-[14px] font-medium py-3 rounded-lg border text-center transition-all ${
                       selectedTime === s.value
                         ? 'bg-emerald-500/15 border-emerald-400/30 text-emerald-300 font-semibold'
-                        : selectedDate
-                        ? 'bg-[#1a1a22] border-[#2a2a35] text-white hover:border-[#3a3a48] hover:bg-[#222230]'
-                        : 'bg-[#1a1a22] border-[#2a2a35] text-gray-500 cursor-default'
+                        : 'bg-[#1a1a22] border-[#2a2a35] text-white hover:border-[#3a3a48] hover:bg-[#222230]'
                     }`}
                   >
                     {use24h ? s.label24 : s.label12}
@@ -357,12 +374,10 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
                 ))}
               </div>
 
-              {/* Confirm button */}
-              {selectedDate && selectedTime && (
-                <button onClick={handleConfirmTime} className="mt-4 w-full bg-emerald-500 hover:bg-emerald-400 text-black font-semibold py-3 rounded-xl transition-colors text-base">
-                  {t.confirmBtn}
-                </button>
-              )}
+              {/* Confirm button — always visible, disabled until selection complete */}
+              <button onClick={handleConfirmTime} disabled={!selectedDate || !selectedTime} className="mt-4 w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-3 rounded-xl transition-colors text-base">
+                {t.confirmBtn}
+              </button>
             </div>
           </div>
         )}

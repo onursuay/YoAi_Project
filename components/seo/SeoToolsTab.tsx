@@ -63,7 +63,7 @@ export default function SeoToolsTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
-        <p className="text-sm text-gray-500 mt-1">{t('description')}</p>
+        <p className="text-sm text-gray-600 mt-1">{t('description')}</p>
       </div>
       <div className="grid grid-cols-1 gap-6">
         <RobotsTxtGenerator t={t} />
@@ -644,7 +644,7 @@ function HtaccessGenerator({ t }: { t: (key: string) => string }) {
         <Section title={t('htaccess.errorPages')}>
           <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('htaccess.error404')}</label>
+              <label className="block text-caption text-gray-600 mb-1">{t('htaccess.error404')}</label>
               <input
                 type="text"
                 value={config.error404}
@@ -654,7 +654,7 @@ function HtaccessGenerator({ t }: { t: (key: string) => string }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('htaccess.error403')}</label>
+              <label className="block text-caption text-gray-600 mb-1">{t('htaccess.error403')}</label>
               <input
                 type="text"
                 value={config.error403}
@@ -664,7 +664,7 @@ function HtaccessGenerator({ t }: { t: (key: string) => string }) {
               />
             </div>
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('htaccess.error500')}</label>
+              <label className="block text-caption text-gray-600 mb-1">{t('htaccess.error500')}</label>
               <input
                 type="text"
                 value={config.error500}
@@ -743,7 +743,7 @@ function ToolCard({ icon, title, description, expanded, onToggle, children }: {
           {icon}
           <div className="text-left">
             <h3 className="text-sm font-semibold text-gray-900">{title}</h3>
-            <p className="text-xs text-gray-500">{description}</p>
+            <p className="text-sm text-gray-500">{description}</p>
           </div>
         </div>
         {expanded ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
@@ -787,7 +787,7 @@ function Toggle({ label, description, checked, onChange }: {
       </div>
       <div>
         <span className="text-sm text-gray-700">{label}</span>
-        {description && <p className="text-xs text-gray-400 mt-0.5">{description}</p>}
+        {description && <p className="text-xs text-gray-500 mt-0.5">{description}</p>}
       </div>
     </label>
   )
