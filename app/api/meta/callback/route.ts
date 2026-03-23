@@ -187,7 +187,9 @@ export async function GET(request: Request) {
   })
 
   // ============================================
-  // Step 4: Persist to DB (fire-and-forget, never blocks redirect)
+  // Step 4: Persist to DB (best-effort await, error-tolerant)
+  // Awaited to prevent dropped writes in serverless runtime.
+  // Cookie persistence above is the primary store; DB is supplementary.
   // ============================================
   const sessionId = cookieStore.get('session_id')?.value
   if (sessionId) {
@@ -200,7 +202,7 @@ export async function GET(request: Request) {
         status: 'active',
       })
     } catch (err) {
-      // DB write failure must NOT block user flow
+      // DB failure is non-fatal — cookies already set, redirect proceeds
       console.warn(`[Meta Callback][${requestId}] DB_PERSIST_FAIL:`, err instanceof Error ? err.message : 'unknown')
     }
   } else {

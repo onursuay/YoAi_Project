@@ -1,10 +1,10 @@
 import { NextIntlClientProvider } from 'next-intl'
-import enMessages from '@/locales/en.json'
+import trMessages from '@/locales/tr.json'
 import DataDeletionContent from '@/components/legal/DataDeletionContent'
 
-export default function DataDeletionPage() {
+export default function VeriSilmePage() {
   return (
-    <NextIntlClientProvider locale="en" messages={{ legal: enMessages.legal }}>
+    <NextIntlClientProvider locale="tr" messages={{ legal: trMessages.legal }}>
       <DataDeletionContent />
     </NextIntlClientProvider>
   )

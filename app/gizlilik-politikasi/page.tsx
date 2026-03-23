@@ -1,10 +1,10 @@
 import { NextIntlClientProvider } from 'next-intl'
-import enMessages from '@/locales/en.json'
+import trMessages from '@/locales/tr.json'
 import PrivacyPolicyContent from '@/components/legal/PrivacyPolicyContent'
 
-export default function PrivacyPolicyPage() {
+export default function GizlilikPolitikasiPage() {
   return (
-    <NextIntlClientProvider locale="en" messages={{ legal: enMessages.legal }}>
+    <NextIntlClientProvider locale="tr" messages={{ legal: trMessages.legal }}>
       <PrivacyPolicyContent />
     </NextIntlClientProvider>
   )
