@@ -1,72 +1,69 @@
-# Konum Sistemi — YoAI Google Ads Standart Referansı
+# Konum Sistemi — YoAI Google Ads Teknik Referansı
 
-Bu dosya tüm kampanya tiplerinde kullanılan konum hedefleme UI'ının standart yapısını tanımlar. Referans implementasyon: `PMaxLocationPicker.tsx`. Yeni kampanya tipi eklenirken bu standart birebir uygulanır.
-
-**Son güncelleme:** 22 Mart 2026
+**Son güncelleme:** 23 Mart 2026
 
 ---
 
-## Standart Konum UI — Tam Yapı
+## Mimari
 
-### 1. Kapsam Radyo Butonları
+```
+PMaxLocationPicker.tsx          → Referans implementasyon (PMax)
+StepLocationLanguage.tsx        → Search/Display/Video için (PMaxLocationPicker kopyası)
+LocationAdvancedModal.tsx       → Shared generic modal (konum + yarıçap)
+PMaxLocationMap.tsx             → Leaflet harita (renderMap prop ile geçilir)
+```
 
-3 seçenek, her zaman gösterilir:
+---
 
-- **Tüm ülkeler ve bölgeler** → `locations: [], geoSearchCountry: ''`
-- **Türkiye** → `geoSearchCountry: 'TR', locations: []`
-- **Başka bir yer girin** → arama input açılır
+## Bileşenler
 
-### 2. Arama Input (sadece "Başka bir yer girin" seçilince)
+### PMaxLocationPicker / StepLocationLanguage
 
-- Search ikonu solda, Loader2 sağda
+İkisi aynı yapı, sadece prop tipleri farklı:
+- PMax: `PMaxStepProps`
+- Search/diğerleri: `StepProps`
+
+**UI sırası:**
+1. Açıklama metni (`settings.locationsLabel`)
+2. 3 radyo: Tüm ülkeler / Türkiye / Başka bir yer girin
+3. "Başka bir yer girin" seçilince: arama input + dropdown
+4. Gelişmiş arama butonu (`<MapPin>`)
+5. Seçilen konumlar (mavi=dahil, kırmızı=hariç, toggle + X)
+6. Yer seçenekleri `<details>` accordion (PRESENCE_OR_INTEREST / PRESENCE_ONLY)
+
+**Arama:**
 - Debounce: 300ms, min 2 karakter
 - API: `GET /api/integrations/google-ads/geo-targets?q=...`
-- Placeholder: "Hedeflenecek veya hariç tutulacak konumları girin"
-- Alt not: "Örneğin; ülke, şehir, bölge veya posta kodu"
+- Dropdown: absolute, z-[100], shadow-lg, max-h-60
+- Her satır: "Dahil et" (mavi) + "Hariç Tut" (kırmızı) — eklenince "Eklendi"
 
-### 3. Dropdown Sonuçları
+---
 
+### LocationAdvancedModal (`shared/`)
+
+Generic modal. İki sekme:
+- **Konum** — arama + Dahil/Hariç + seçilen liste
+- **Yarıçap** — sadece `renderMap` prop verilirse görünür
+
+```tsx
+<LocationAdvancedModal
+  isOpen={advancedOpen}
+  onClose={() => setAdvancedOpen(false)}
+  state={state}
+  update={update}
+  t={t}
+  renderMap={(props) => <PMaxLocationMap {...props} />}  // opsiyonel
+/>
 ```
-absolute, z-[100], bg-white border rounded-lg shadow-lg max-h-60 overflow-y-auto
-Her satır: px-4 py-2.5 border-b border-gray-100 hover:bg-gray-50
-Eklendi: bg-blue-50/50 + "Eklendi" text-xs text-blue-600
-Eklenmedi: "Dahil et" (text-blue-600 hover:bg-blue-50) + "Hariç Tut" (text-red-600 hover:bg-red-50)
-```
-
-### 4. Gelişmiş Arama Butonu
-
-```
-<MapPin> Gelişmiş arama
-text-sm text-blue-600 hover:underline
-```
-
-Not: Harita/yarıçap sadece PMax'te aktiftir.
-
-### 5. Seçilen Konumlar
-
-```
-flex flex-wrap gap-2
-Dahil: bg-blue-100 text-blue-800 rounded-full px-3 py-1 text-xs
-Hariç: bg-red-100 text-red-800 rounded-full px-3 py-1 text-xs
-İçinde: isim + (Hariç) + "Dahil et"/"Hariç tut" toggle + X butonu
-```
-
-### 6. Yer Seçenekleri
-
-`<details>` accordion, `<summary>` = "Yer seçenekleri" (text-blue-600 + ChevronDown):
-
-- `PRESENCE_OR_INTEREST` → "Hedef konumlarda olan veya düzenli burada bulunan kullanıcılar"
-- `PRESENCE_ONLY` → "Hedef konumlarda olan kullanıcılar"
-
-Her seçenek: `p-2.5 rounded-lg border`, aktif: `border-blue-500 bg-blue-50`
 
 ---
 
 ## State Alanları
 
 ```typescript
-locations: SelectedLocation[]       // default: []
-geoSearchCountry: string            // default: ''
+locations: SelectedLocation[]        // default: []
+proximityTargets: ProximityTarget[]  // default: []
+geoSearchCountry: string             // default: ''
 locationTargetingMode: 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
 
 interface SelectedLocation {
@@ -76,24 +73,48 @@ interface SelectedLocation {
   targetType: string
   isNegative: boolean
 }
+
+interface ProximityTarget {
+  lat: number
+  lng: number
+  radiusMeters: number
+  label?: string
+}
 ```
 
 ---
 
-## Kampanya Tipi Durumu
+## Layout Kuralı
 
-| Kampanya | Dosya | Durum |
-|----------|-------|-------|
-| PERFORMANCE_MAX | `pmax/PMaxLocationPicker.tsx` | ✅ Referans |
-| SEARCH | `steps/StepCampaignSettingsSearch.tsx` | ✅ Tamamlandı |
-| DISPLAY | `display/steps/DisplayStepCampaignSettings.tsx` | ⚠️ Güncellenmeli |
-| VIDEO | — | ⏳ Bekliyor |
-| DEMAND_GEN | — | ⏳ Bekliyor |
+Search ve diğer kampanyalarda konum + dil ayrı `CollapsibleSection`:
+
+```tsx
+<CollapsibleSection title={t('settings.locationsTitle')}>
+  <StepLocationLanguage state={state} update={update} t={t} />
+</CollapsibleSection>
+
+<CollapsibleSection title={t('settings.languagesTitle')}>
+  {/* LANGUAGE_OPTIONS chip seçimi */}
+</CollapsibleSection>
+```
 
 ---
 
-## PMax'e Özel (Diğerleri için gerekli değil)
+## Kampanya Durumu
 
-- Yarıçap hedefleme (`proximityTargets`)
-- Harita (Leaflet, OpenStreetMap)
-- `PMaxLocationAdvancedModal`
+| Kampanya | Bileşen | Harita | Durum |
+|----------|---------|--------|-------|
+| PERFORMANCE_MAX | `PMaxLocationPicker` | ✅ | ✅ |
+| SEARCH | `StepLocationLanguage` | ✅ | ✅ |
+| DISPLAY | `StepLocationLanguage` | opsiyonel | ⏳ |
+| VIDEO | `StepLocationLanguage` | opsiyonel | ⏳ |
+| DEMAND_GEN | `StepLocationLanguage` | opsiyonel | ⏳ |
+
+---
+
+## Yeni Kampanya Eklerken
+
+1. `StepLocationLanguage` import et
+2. `CollapsibleSection` içine al
+3. Dil seçimini ayrı `CollapsibleSection` olarak ekle
+4. Harita isteniyorsa `renderMap` prop'unu geç
