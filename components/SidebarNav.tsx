@@ -43,22 +43,43 @@ export default function SidebarNav() {
     return pathname === href
   }
 
+  // Locale-aware legal hrefs for Kurumsal section
+  const locale = typeof document !== 'undefined'
+    ? (document.cookie.match(/NEXT_LOCALE=(\w+)/)?.[1] || 'tr')
+    : 'tr'
+
+  const legalHrefs: Record<string, Record<string, string>> = {
+    tr: {
+      'gizlilik-politikasi': '/gizlilik-politikasi',
+      'veri-silme': '/veri-silme',
+      'kullanim-sartlari': '/kullanim-kosullari',
+    },
+    en: {
+      'gizlilik-politikasi': '/privacy-policy',
+      'veri-silme': '/data-deletion',
+      'kullanim-sartlari': '/terms',
+    },
+  }
+
   const navItemsWithTranslations = useMemo(() => {
     const getTranslationKey = (id: string) => {
       // "hedef-kitle" → "hedefKitle" (camelCase)
       if (id === 'hedef-kitle') return 'hedefKitle'
       return id.replace(/-/g, '')
     }
-    
+
+    const currentLegalHrefs = legalHrefs[locale] || legalHrefs.tr
+
     return navItems.map(item => ({
       ...item,
       label: t(getTranslationKey(item.id)),
       children: item.children?.map(child => ({
         ...child,
-        label: t(getTranslationKey(child.id))
+        label: t(getTranslationKey(child.id)),
+        href: currentLegalHrefs[child.id] || child.href,
       }))
     }))
-  }, [t])
+  }, [t, locale])
 
   return (
     <div 
