@@ -110,11 +110,12 @@ export default async function RootPage() {
     footer: '2025 YO Dijital. Tüm hakları saklıdır.',
   }
 
-  // Legal links — absolute EN URLs for Google OAuth verification
+  // Legal links — locale-aware URLs
   const legal = {
-    privacy: { label: isEn ? 'Privacy Policy' : 'Gizlilik Politikası', href: 'https://yoai.yodijital.com/privacy-policy' },
-    terms: { label: isEn ? 'Terms of Service' : 'Kullanım Koşulları', href: 'https://yoai.yodijital.com/terms' },
-    dataDeletion: { label: isEn ? 'Data Deletion' : 'Veri Silme', href: 'https://yoai.yodijital.com/data-deletion' },
+    privacy: { label: isEn ? 'Privacy Policy' : 'Gizlilik Politikası', href: isEn ? '/privacy-policy' : '/gizlilik-politikasi' },
+    cookie: { label: isEn ? 'Cookie Policy' : 'Çerez Politikası', href: isEn ? '/cookie-policy' : '/cerez-politikasi' },
+    terms: { label: isEn ? 'Terms of Service' : 'Kullanım Koşulları', href: isEn ? '/terms' : '/kullanim-kosullari' },
+    dataDeletion: { label: isEn ? 'Data Deletion' : 'Veri Silme', href: isEn ? '/data-deletion' : '/veri-silme' },
   }
 
   /* ────────────────────── SVG Icons ────────────────────── */
@@ -380,6 +381,7 @@ export default async function RootPage() {
           </div>
           <nav className="flex gap-5 text-gray-600">
             <a href={legal.privacy.href} className="hover:text-gray-400 transition-colors">{legal.privacy.label}</a>
+            <a href={legal.cookie.href} className="hover:text-gray-400 transition-colors">{legal.cookie.label}</a>
             <a href={legal.terms.href} className="hover:text-gray-400 transition-colors">{legal.terms.label}</a>
             <a href={legal.dataDeletion.href} className="hover:text-gray-400 transition-colors">{legal.dataDeletion.label}</a>
           </nav>

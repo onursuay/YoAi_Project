@@ -57,6 +57,37 @@
         "label": "Confirmation Code"
       }
     },
+    "cookiePolicy": {
+      "title": "Cookie Policy",
+      "backToHome": "Back to Home",
+      "lastUpdated": "Last updated: 2026-03-23",
+      "company": "YO Dijital Medya A.Ş. · yoai.yodijital.com",
+      "intro": {
+        "title": "Introduction",
+        "content": "This Cookie Policy explains the cookies and similar technologies used on the platform provided by YO Dijital Medya Anonim Şirketi ('YoAi') at yoai.yodijital.com."
+      },
+      "section1Title": "1) What Are Cookies?",
+      "section1Content": "Cookies are small text files placed on your browser by websites. They are used to remember your preferences, manage your session, and collect usage statistics.",
+      "section2Title": "2) Types of Cookies We Use",
+      "section2Essential": "Essential Cookies: Required for core platform functionality. Session management (session_id), user authentication, and security checks fall under this category. The platform cannot function properly without these cookies.",
+      "section2Functional": "Functional Cookies: Used to remember your preferences such as language (NEXT_LOCALE), selected ad account, and dashboard settings.",
+      "section2Analytics": "Analytics Cookies: Help us understand how the platform is used. Page views, click rates, and performance metrics are collected through these cookies.",
+      "section2ThirdParty": "Third-Party Cookies: As part of Google Ads and Meta (Facebook) integrations, these platforms may set their own cookies. These cookies are subject to the respective platforms' privacy policies.",
+      "section3Title": "3) Cookie Retention Periods",
+      "section3Content": "Session cookies: Deleted when you close your browser. Persistent cookies: Stored for up to 30 days (e.g., session ID, user preferences). Third-party cookies: Varies according to the respective platform's policy.",
+      "section4Title": "4) Cookie Management",
+      "section4Content": "You can delete or block cookies through your browser settings. However, disabling essential cookies may negatively affect the platform's functionality. You can update your cookie preferences at any time through your browser settings.",
+      "section5Title": "5) Cloudflare Security Cookies",
+      "section5Content": "Our platform uses Cloudflare infrastructure. Cloudflare may set its own cookies (cf_clearance, __cf_bm, etc.) for bot protection and security verification. These cookies serve security purposes and are subject to Cloudflare's privacy policy.",
+      "section6Title": "6) Legal Basis",
+      "section6Content": "Cookie usage is carried out in accordance with the Turkish Personal Data Protection Law (KVKK) No. 6698 and the European Union General Data Protection Regulation (GDPR). Essential cookies are used under legitimate interest, while other cookies are used with your explicit consent.",
+      "section7Title": "7) Changes",
+      "section7Content": "This Cookie Policy may be updated from time to time. The current version is always published on this page.",
+      "contact": {
+        "title": "Contact",
+        "email": "info@yodijital.com"
+      }
+    },
     "terms": {
       "title": "Terms of Service",
       "backToHome": "Back to Home",

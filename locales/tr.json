@@ -57,6 +57,37 @@
         "label": "Onay Kodu"
       }
     },
+    "cookiePolicy": {
+      "title": "Çerez Politikası",
+      "backToHome": "Ana Sayfaya Dön",
+      "lastUpdated": "Son güncelleme: 2026-03-23",
+      "company": "YO Dijital Medya A.Ş. · yoai.yodijital.com",
+      "intro": {
+        "title": "Giriş",
+        "content": "Bu Çerez Politikası, YO Dijital Medya Anonim Şirketi ('YoAi') tarafından yoai.yodijital.com adresinde sunulan platformda kullanılan çerezler ve benzer teknolojiler hakkında sizi bilgilendirmek amacıyla hazırlanmıştır."
+      },
+      "section1Title": "1) Çerez Nedir?",
+      "section1Content": "Çerezler, web siteleri tarafından tarayıcınıza yerleştirilen küçük metin dosyalarıdır. Bu dosyalar, tercihlerinizi hatırlamak, oturumunuzu yönetmek ve kullanım istatistiklerini toplamak gibi amaçlarla kullanılır.",
+      "section2Title": "2) Kullandığımız Çerez Türleri",
+      "section2Essential": "Zorunlu Çerezler: Platformun temel işlevlerinin çalışması için gereklidir. Oturum yönetimi (session_id), kullanıcı kimlik doğrulama ve güvenlik kontrolleri bu kapsamdadır. Bu çerezler olmadan platform düzgün çalışmaz.",
+      "section2Functional": "İşlevsel Çerezler: Dil tercihi (NEXT_LOCALE), seçili reklam hesabı ve panel ayarları gibi tercihlerinizi hatırlamak için kullanılır.",
+      "section2Analytics": "Analitik Çerezler: Platformun nasıl kullanıldığını anlamamıza yardımcı olur. Sayfa görüntüleme, tıklama oranları ve performans ölçümleri bu çerezler aracılığıyla toplanır.",
+      "section2ThirdParty": "Üçüncü Taraf Çerezler: Google Ads ve Meta (Facebook) entegrasyonları kapsamında, bu platformların kendi çerezleri devreye girebilir. Bu çerezler ilgili platformların gizlilik politikalarına tabidir.",
+      "section3Title": "3) Çerez Saklama Süreleri",
+      "section3Content": "Oturum çerezleri: Tarayıcınızı kapattığınızda silinir. Kalıcı çerezler: En fazla 30 gün saklanır (örn. oturum kimliği, kullanıcı tercihleri). Üçüncü taraf çerezleri: İlgili platformun politikasına göre değişir.",
+      "section4Title": "4) Çerez Yönetimi",
+      "section4Content": "Tarayıcı ayarlarınızdan çerezleri silebilir veya engel koyabilirsiniz. Ancak zorunlu çerezlerin devre dışı bırakılması platformun çalışmasını olumsuz etkileyebilir. Çerez tercihlerinizi istediğiniz zaman tarayıcı ayarlarınızdan güncelleyebilirsiniz.",
+      "section5Title": "5) Cloudflare Güvenlik Çerezleri",
+      "section5Content": "Platformumuz Cloudflare altyapısını kullanmaktadır. Cloudflare, bot koruması ve güvenlik doğrulaması için kendi çerezlerini (cf_clearance, __cf_bm vb.) yerleştirebilir. Bu çerezler güvenlik amaçlıdır ve Cloudflare'in gizlilik politikasına tabidir.",
+      "section6Title": "6) Yasal Dayanak",
+      "section6Content": "Çerezlerin kullanımı, 6698 sayılı Kişisel Verilerin Korunması Kanunu (KVKK) ve Avrupa Birliği Genel Veri Koruma Tüzüğü (GDPR) kapsamında gerçekleştirilmektedir. Zorunlu çerezler meşru menfaat kapsamında, diğer çerezler açık rızanız ile kullanılmaktadır.",
+      "section7Title": "7) Değişiklikler",
+      "section7Content": "Bu Çerez Politikası zaman zaman güncellenebilir. Güncel versiyon her zaman bu sayfada yayınlanır.",
+      "contact": {
+        "title": "İletişim",
+        "email": "info@yodijital.com"
+      }
+    },
     "terms": {
       "title": "Kullanım Şartları",
       "backToHome": "Ana Sayfaya Dön",

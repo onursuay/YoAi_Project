@@ -11,7 +11,29 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'YO Dijital Medya Anonim Şirketi <
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, company, phone, password } = body
+    const { name, email, company, phone, password, turnstileToken } = body
+
+    // Cloudflare Turnstile verification
+    const turnstileSecret = process.env.TURNSTILE_SECRET_KEY
+    if (turnstileSecret) {
+      if (!turnstileToken) {
+        return NextResponse.json({ ok: false, error: 'turnstile_required' }, { status: 400 })
+      }
+      try {
+        const verifyRes = await fetch('https://challenges.cloudflare.com/turnstile/v0/siteverify', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ secret: turnstileSecret, response: turnstileToken }),
+        })
+        const verifyData = await verifyRes.json()
+        if (!verifyData.success) {
+          console.error('[Signup] Turnstile verification failed:', verifyData)
+          return NextResponse.json({ ok: false, error: 'turnstile_failed' }, { status: 403 })
+        }
+      } catch (err) {
+        console.error('[Signup] Turnstile verification error:', err instanceof Error ? err.message : 'unknown')
+      }
+    }
 
     // Validation
     if (!name?.trim()) {

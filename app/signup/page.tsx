@@ -40,6 +40,14 @@ const content = {
     passwordConfirmPlaceholder: 'Şifrenizi tekrar girin',
     hasAccount: 'Zaten hesabınız var mı?',
     login: 'Giriş Yap',
+    termsCheckbox: 'Kayıt olarak,',
+    privacyPolicy: 'Gizlilik Politikası',
+    termsOfService: 'Kullanım Koşulları',
+    cookiePolicy: 'Çerez Politikası',
+    termsAnd: 've',
+    termsAccept: "'nı kabul etmiş olursunuz.",
+    errorTerms: 'Devam etmek için politikaları kabul etmelisiniz.',
+    errorTurnstile: 'Lütfen güvenlik doğrulamasını tamamlayın.',
   },
   en: {
     title: 'Start Your Free Trial',
@@ -69,6 +77,14 @@ const content = {
     passwordConfirmPlaceholder: 'Re-enter your password',
     hasAccount: 'Already have an account?',
     login: 'Log In',
+    termsCheckbox: 'By signing up, you agree to the',
+    privacyPolicy: 'Privacy Policy',
+    termsOfService: 'Terms of Service',
+    cookiePolicy: 'Cookie Policy',
+    termsAnd: 'and',
+    termsAccept: '.',
+    errorTerms: 'You must accept the policies to continue.',
+    errorTurnstile: 'Please complete the security verification.',
   },
 } as const
 
@@ -86,7 +102,10 @@ export default function SignupPage() {
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const [acceptedTerms, setAcceptedTerms] = useState(false)
+  const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
+  const turnstileRef = useRef<HTMLDivElement>(null)
 
   useEffect(() => {
     const c = canvasRef.current
@@ -194,6 +213,33 @@ export default function SignupPage() {
     }
   }, [])
 
+  // Cloudflare Turnstile
+  useEffect(() => {
+    const siteKey = process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
+    if (!siteKey || !turnstileRef.current) return
+
+    // Load Turnstile script if not already loaded
+    if (!document.querySelector('script[src*="turnstile"]')) {
+      const script = document.createElement('script')
+      script.src = 'https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit'
+      script.async = true
+      script.onload = () => renderTurnstile(siteKey)
+      document.head.appendChild(script)
+    } else if ((window as any).turnstile) {
+      renderTurnstile(siteKey)
+    }
+
+    function renderTurnstile(key: string) {
+      if (!turnstileRef.current || turnstileRef.current.childElementCount > 0) return
+      ;(window as any).turnstile.render(turnstileRef.current, {
+        sitekey: key,
+        theme: 'dark',
+        callback: (token: string) => setTurnstileToken(token),
+        'expired-callback': () => setTurnstileToken(null),
+      })
+    }
+  }, [])
+
   // Phone input: only allow digits, +, spaces, parens, dashes
   function handlePhoneChange(val: string) {
     const clean = val.replace(/[^0-9+\s()-]/g, '')
@@ -225,6 +271,14 @@ export default function SignupPage() {
       setError(t.errorPhone)
       return
     }
+    if (!acceptedTerms) {
+      setError(t.errorTerms)
+      return
+    }
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
+      setError(t.errorTurnstile)
+      return
+    }
 
     setLoading(true)
 
@@ -238,6 +292,7 @@ export default function SignupPage() {
           password,
           company: company.trim() || undefined,
           phone: phone.trim() || undefined,
+          turnstileToken: turnstileToken || undefined,
         }),
       })
 
@@ -391,6 +446,28 @@ export default function SignupPage() {
                 autoComplete="new-password"
               />
             </div>
+
+            {/* Cloudflare Turnstile */}
+            <div ref={turnstileRef} className="flex justify-center" />
+
+            {/* Terms Checkbox */}
+            <label className="flex items-start gap-3 cursor-pointer">
+              <input
+                type="checkbox"
+                checked={acceptedTerms}
+                onChange={(e) => setAcceptedTerms(e.target.checked)}
+                className="mt-0.5 w-4 h-4 rounded border-white/20 bg-white/[0.04] text-emerald-500 focus:ring-emerald-500/30 accent-emerald-500"
+              />
+              <span className="text-sm text-gray-400 leading-relaxed">
+                {t.termsCheckbox}{' '}
+                <Link href={isEn ? '/privacy-policy' : '/gizlilik-politikasi'} target="_blank" className="text-emerald-400 hover:text-emerald-300 underline">{t.privacyPolicy}</Link>
+                {', '}
+                <Link href={isEn ? '/terms' : '/kullanim-kosullari'} target="_blank" className="text-emerald-400 hover:text-emerald-300 underline">{t.termsOfService}</Link>
+                {' '}{t.termsAnd}{' '}
+                <Link href={isEn ? '/cookie-policy' : '/cerez-politikasi'} target="_blank" className="text-emerald-400 hover:text-emerald-300 underline">{t.cookiePolicy}</Link>
+                {t.termsAccept}
+              </span>
+            </label>
 
             {/* Submit */}
             <button

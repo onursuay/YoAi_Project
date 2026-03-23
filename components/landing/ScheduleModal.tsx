@@ -55,7 +55,7 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
     h24: '24h',
   } : {
     brand: 'YoAi',
-    meetingTitle: 'YoAi kullanımı',
+    meetingTitle: 'YoAi Tanıtım Görüşmesi',
     meetingSub: 'YoAi ile kolay reklam',
     duration: '30dakika',
     orgDefault: 'Organizatörün varsayılan...',
@@ -218,22 +218,22 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
           </div>
         ) : step === 'form' ? (
           <div className="p-6">
-            <button onClick={() => setStep('calendar')} className="text-xs text-gray-500 hover:text-white mb-4 transition-colors">&larr; {t.back}</button>
-            <h3 className="text-lg font-bold text-white mb-1">{t.meetingTitle}</h3>
-            <p className="text-sm text-gray-500 mb-5">{selectedDate} &middot; {selectedTime} &middot; {t.duration}</p>
-            <div className="grid grid-cols-2 gap-3 mb-3">
+            <button onClick={() => setStep('calendar')} className="text-sm text-gray-500 hover:text-white mb-4 transition-colors">&larr; {t.back}</button>
+            <h3 className="text-xl font-bold text-white mb-1">{t.meetingTitle}</h3>
+            <p className="text-base text-gray-500 mb-6">{selectedDate} &middot; {selectedTime} &middot; {t.duration}</p>
+            <div className="grid grid-cols-2 gap-4 mb-4">
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">{t.nameLabel}</label>
-                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t.namePlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
+                <label className="block text-sm font-medium text-gray-400 mb-2">{t.nameLabel}</label>
+                <input type="text" value={name} onChange={e => setName(e.target.value)} placeholder={t.namePlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-400 mb-1.5">{t.emailLabel}</label>
-                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
+                <label className="block text-sm font-medium text-gray-400 mb-2">{t.emailLabel}</label>
+                <input type="email" value={email} onChange={e => setEmail(e.target.value)} placeholder={t.emailPlaceholder} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors" />
               </div>
             </div>
-            <label className="block text-xs font-medium text-gray-400 mb-1.5">{t.noteLabel}</label>
-            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder={t.notePlaceholder} rows={2} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-3 py-2.5 text-sm text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors resize-none mb-5" />
-            <button onClick={handleSubmit} disabled={!name.trim() || !email.trim()} className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-3 rounded-xl transition-colors text-sm">{t.submitBtn}</button>
+            <label className="block text-sm font-medium text-gray-400 mb-2">{t.noteLabel}</label>
+            <textarea value={note} onChange={e => setNote(e.target.value)} placeholder={t.notePlaceholder} rows={3} className="w-full bg-white/[0.04] border border-white/[0.08] rounded-lg px-4 py-3 text-base text-white placeholder-gray-600 focus:border-emerald-400/30 outline-none transition-colors resize-none mb-6" />
+            <button onClick={handleSubmit} disabled={!name.trim() || !email.trim()} className="w-full bg-emerald-500 hover:bg-emerald-400 disabled:bg-gray-700 disabled:text-gray-500 text-black font-semibold py-3.5 rounded-xl transition-colors text-base">{t.submitBtn}</button>
           </div>
         ) : (
           /* ── Calendar: exact 3-column layout matching reference ── */

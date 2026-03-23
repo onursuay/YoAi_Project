@@ -120,19 +120,25 @@ export const navItems: NavItem[] = [
       {
         id: 'gizlilik-politikasi',
         label: 'Gizlilik Politikası',
-        href: '/privacy-policy',
+        href: '/gizlilik-politikasi',
+        icon: FileText,
+      },
+      {
+        id: 'cerez-politikasi',
+        label: 'Çerez Politikası',
+        href: '/cerez-politikasi',
+        icon: FileText,
+      },
+      {
+        id: 'kullanim-kosullari',
+        label: 'Kullanım Koşulları',
+        href: '/kullanim-kosullari',
         icon: FileText,
       },
       {
         id: 'veri-silme',
         label: 'Veri Silme',
-        href: '/data-deletion',
-        icon: FileText,
-      },
-      {
-        id: 'kullanim-sartlari',
-        label: 'Kullanım Şartları',
-        href: '/terms',
+        href: '/veri-silme',
         icon: FileText,
       },
     ],
