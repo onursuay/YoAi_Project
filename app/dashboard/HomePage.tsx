@@ -146,10 +146,10 @@ export default function HomePage() {
     { id: 'yoai', label: 'YoAi', href: '/yoai', icon: Sparkles },
     { id: 'hedefKitle', label: isEn ? 'Target Audience' : 'Hedef Kitle', href: '/hedef-kitle', icon: Users, badge: 'AI' },
     { id: 'tasarim', label: isEn ? 'Design' : 'Tasarım', href: '/tasarim', icon: ImageIcon, badge: 'AI' },
-    { id: 'raporlar', label: isEn ? 'Reports' : 'Raporlar', href: '/dashboard/raporlar', icon: FileText },
+    { id: 'raporlar', label: isEn ? 'Reports' : 'Raporlar', href: '/raporlar', icon: FileText },
     { id: 'katalog', label: isEn ? 'Catalog' : 'Katalog', href: '/dashboard/katalog', icon: Package },
     { id: 'seo', label: 'SEO', href: '/seo', icon: Search },
-    { id: 'entegrasyon', label: isEn ? 'Integration' : 'Entegrasyon', href: '/dashboard/entegrasyon', icon: Puzzle },
+    { id: 'entegrasyon', label: isEn ? 'Integration' : 'Entegrasyon', href: '/entegrasyon', icon: Puzzle },
   ]
 
   return (
@@ -168,7 +168,7 @@ export default function HomePage() {
               status={googleStatus}
               loading={googleLoading}
               panelHref={ROUTES.GOOGLE_ADS}
-              connectHref="/dashboard/entegrasyon"
+              connectHref="/entegrasyon"
               t={t}
               metrics={googleKpis ? {
                 spend: { label: t('spend'), value: `₺${fmtCurrency(googleKpis.totals.cost)}`, delta: fmtDelta(googleKpis.changes.cost), chart: googleKpis.series.cost, color: googleKpis.changes.cost >= 0 ? 'red' as const : 'green' as const },

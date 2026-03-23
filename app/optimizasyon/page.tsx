@@ -211,7 +211,7 @@ export default function OptimizasyonPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-gray-500 text-sm">{t('connectPrompt')}</p>
-            <a href="/dashboard/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+            <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
               Entegrasyon
             </a>
           </div>
@@ -228,7 +228,7 @@ export default function OptimizasyonPage() {
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
             <p className="text-red-600 text-sm font-medium">Token expired</p>
-            <a href="/dashboard/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+            <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
               Yeniden Bağlan
             </a>
           </div>

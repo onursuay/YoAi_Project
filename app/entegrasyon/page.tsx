@@ -42,14 +42,14 @@ function EntegrasyonContent() {
     const metaParam = searchParams.get('meta')
     const googleParam = searchParams.get('google')
     if (metaParam === 'connected' || metaParam === 'error') {
-      window.history.replaceState({}, '', '/dashboard/entegrasyon')
+      window.history.replaceState({}, '', '/entegrasyon')
     }
     if (googleParam === 'config_missing') {
       setGoogleConfigMissing(true)
-      window.history.replaceState({}, '', '/dashboard/entegrasyon')
+      window.history.replaceState({}, '', '/entegrasyon')
     } else if (googleParam === 'connected' || googleParam === 'error') {
       setGoogleConfigMissing(false)
-      window.history.replaceState({}, '', '/dashboard/entegrasyon')
+      window.history.replaceState({}, '', '/entegrasyon')
     }
     let cancelled = false
     async function load() {
@@ -407,7 +407,7 @@ function EntegrasyonContent() {
                     <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
                   </button>
                 </div>
-                <div className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-400 text-sm font-medium">
+                <div className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-500 text-sm font-medium">
                   <AlertCircle className="w-4 h-4" />
                   <span>{t('tiktok.comingSoon')}</span>
                 </div>
@@ -519,7 +519,7 @@ function EntegrasyonContent() {
                     <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
                   </button>
                 </div>
-                <button disabled className="w-full px-4 py-2 bg-gray-100 text-gray-400 rounded-lg font-medium text-sm cursor-not-allowed">
+                <button disabled className="w-full px-4 py-2 bg-gray-100 text-gray-500 rounded-lg font-medium text-sm cursor-not-allowed">
                   {t('googleAnalytics.comingSoon')}
                 </button>
               </div>
@@ -540,7 +540,7 @@ function EntegrasyonContent() {
                     <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
                   </button>
                 </div>
-                <div className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-400 text-sm font-medium">
+                <div className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-500 text-sm font-medium">
                   <AlertCircle className="w-4 h-4" />
                   <span>{t('googleSearchConsole.comingSoon')}</span>
                 </div>

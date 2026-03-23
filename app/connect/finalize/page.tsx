@@ -40,7 +40,7 @@ export default function MetaFinalizePage() {
           console.log('[FINALIZE] META_SESSION_RETRY:', JSON.stringify({ connected: retryStatus.connected }))
 
           if (!retryStatus.connected) {
-            router.replace('/dashboard/entegrasyon?meta=error&reason=finalize_failed')
+            router.replace('/entegrasyon?meta=error&reason=finalize_failed')
             return
           }
           // If retry succeeded, continue with account fetch

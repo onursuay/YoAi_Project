@@ -255,7 +255,7 @@ export default function TasarimPage() {
             <div className="flex-1 p-4 space-y-4">
               {/* Prompt */}
               <div>
-                <label className="block text-caption font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   Prompt Yaz <span className="text-red-500">*</span>
                 </label>
                 <textarea
@@ -272,7 +272,7 @@ export default function TasarimPage() {
                   <button
                     onClick={handleEnhancePrompt}
                     disabled={isEnhancing}
-                    className="mt-1.5 flex items-center gap-1.5 px-3 py-1.5 text-caption font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
+                    className="mt-1.5 flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
                   >
                     {isEnhancing ? (
                       <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Geliştiriliyor...</>
@@ -285,7 +285,7 @@ export default function TasarimPage() {
 
               {/* Reference Image */}
               <div>
-                <label className="block text-caption font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   {mode === 'gorsel' ? 'Görsel Ekle' : 'Referans Görsel'}
                 </label>
                 <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
@@ -299,7 +299,7 @@ export default function TasarimPage() {
 
               {/* Aspect Ratio */}
               <div>
-                <label className="block text-caption font-medium text-gray-700 mb-1">
+                <label className="block text-sm font-medium text-gray-700 mb-1">
                   {mode === 'gorsel' ? 'En / Boy Oranı' : 'En / Boy Oranı'}
                 </label>
                 <div className="flex gap-2">
@@ -323,7 +323,7 @@ export default function TasarimPage() {
               {mode === 'gorsel' && (
                 <>
                   <div>
-                    <label className="block text-caption font-medium text-gray-700 mb-1">
+                    <label className="block text-sm font-medium text-gray-700 mb-1">
                       Başlık <span className="text-red-500">*</span>
                     </label>
                     <input
@@ -333,10 +333,10 @@ export default function TasarimPage() {
                       placeholder="Başlık"
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
-                    <p className="text-caption text-gray-400 text-right mt-1">{title.length} / 300</p>
+                    <p className="text-caption text-gray-500 text-right mt-1">{title.length} / 300</p>
                   </div>
                   <div>
-                    <label className="block text-caption font-medium text-gray-700 mb-1">Slogan</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">Slogan</label>
                     <input
                       type="text"
                       placeholder="--"
@@ -367,9 +367,9 @@ export default function TasarimPage() {
                 )}
               </button>
               {error && (
-                <p className="text-caption text-center text-red-500">{error}</p>
+                <p className="text-sm text-center text-red-500">{error}</p>
               )}
-              <p className="text-caption text-center text-gray-400">
+              <p className="text-caption text-center text-gray-500">
                 Üretilen her {mode === 'gorsel' ? 'görsel' : 'video'} için {COST_PER_GENERATION} kredi kullanılmaktadır.
               </p>
             </div>
@@ -505,7 +505,7 @@ export default function TasarimPage() {
                             <p className="text-sm font-medium text-gray-900">
                               {activeItem.prompt.slice(0, 40) || 'Adsız Tasarım'}
                             </p>
-                            <p className="text-caption text-gray-400">{activeItem.ratio}</p>
+                            <p className="text-caption text-gray-500">{activeItem.ratio}</p>
                           </div>
                           <div className="flex gap-2">
                             <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
@@ -622,7 +622,7 @@ export default function TasarimPage() {
                                   {/* Video badge + action buttons top-right — only when not playing */}
                                   {playingVideoId !== item.id && (
                                     <>
-                                      <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-[10px] text-white font-medium flex items-center gap-1 pointer-events-none">
+                                      <div className="absolute top-2 left-2 px-1.5 py-0.5 bg-black/60 rounded text-xs text-white font-medium flex items-center gap-1 pointer-events-none">
                                         <Film className="w-3 h-3" /> Video
                                       </div>
                                       <div className="absolute top-2 right-2 flex gap-1 opacity-0 group-hover:opacity-100 transition-opacity">
@@ -687,19 +687,19 @@ export default function TasarimPage() {
                             <div className="p-2.5">
                               <p className="text-caption font-medium text-gray-800 truncate">{item.prompt}</p>
                               <div className="flex items-center justify-between mt-1">
-                                <span className="text-[10px] text-gray-400">{item.ratio}</span>
+                                <span className="text-xs text-gray-500">{item.ratio}</span>
                                 <div className="flex items-center gap-1.5">
                                   {item.type === 'video' && playingVideoId === item.id && (
                                     <button
                                       onClick={() => setPlayingVideoId(null)}
-                                      className="text-[10px] text-gray-400 hover:text-gray-600 flex items-center gap-0.5"
+                                      className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-0.5"
                                       title="Durdur"
                                     >
                                       <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
                                       Durdur
                                     </button>
                                   )}
-                                  <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                                  <span className="text-xs text-gray-500 flex items-center gap-0.5">
                                     <Clock className="w-2.5 h-2.5" />
                                     {new Date(item.createdAt).toLocaleDateString('tr-TR')}
                                   </span>

@@ -198,7 +198,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
           {!isLoadingTargets && !notConnected && targets.length === 0 && (
             <div className="text-center py-6">
               <p className="text-sm text-gray-600 mb-2">{t('noPages')}</p>
-              <p className="text-xs text-gray-400">{t('reconnectHint')}</p>
+              <p className="text-xs text-gray-500">{t('reconnectHint')}</p>
             </div>
           )}
 
@@ -216,7 +216,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 </div>
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-gray-800 truncate">{item.prompt}</p>
-                  <p className="text-[10px] text-gray-400 mt-0.5">
+                  <p className="text-xs text-gray-500 mt-0.5">
                     {item.type === 'gorsel' ? 'Görsel' : 'Video'} • {item.ratio}
                   </p>
                 </div>
@@ -224,7 +224,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
               {/* Page selector */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('selectPage')}
                 </label>
                 <select
@@ -245,7 +245,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
               {/* Platform selection */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">
                   {t('platforms')}
                 </label>
                 <div className="space-y-2">
@@ -280,12 +280,12 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                         {t('publishToInstagram')}
                       </span>
                       {hasInstagram && selectedTarget?.instagram && (
-                        <span className="text-xs text-gray-400 ml-1.5">
+                        <span className="text-xs text-gray-500 ml-1.5">
                           @{selectedTarget.instagram.username}
                         </span>
                       )}
                       {!hasInstagram && (
-                        <p className="text-[10px] text-gray-400 mt-0.5">{t('noInstagram')}</p>
+                        <p className="text-xs text-gray-500 mt-0.5">{t('noInstagram')}</p>
                       )}
                     </div>
                   </label>
@@ -294,7 +294,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
               {/* Caption */}
               <div>
-                <label className="block text-xs font-medium text-gray-700 mb-1.5">
+                <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('caption')}
                 </label>
                 <textarea
@@ -306,7 +306,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#2BB673]/30 focus:border-[#2BB673]"
                 />
                 {publishToInstagram && (
-                  <p className="text-right text-[10px] text-gray-400 mt-1">
+                  <p className="text-right text-xs text-gray-500 mt-1">
                     {t('captionCount', { count: caption.length, max: IG_CAPTION_MAX })}
                   </p>
                 )}
@@ -316,7 +316,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
               {error && (
                 <div className="flex items-start gap-2 p-3 bg-red-50 border border-red-200 rounded-xl">
                   <AlertCircle className="w-4 h-4 text-red-500 mt-0.5 flex-shrink-0" />
-                  <p className="text-xs text-red-700 whitespace-pre-line">{error}</p>
+                  <p className="text-sm text-red-700 whitespace-pre-line">{error}</p>
                 </div>
               )}
             </>

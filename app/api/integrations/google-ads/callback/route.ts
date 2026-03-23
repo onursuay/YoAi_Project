@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   if (error) {
     return NextResponse.redirect(
       new URL(
-        `/dashboard/entegrasyon?google=error&reason=${encodeURIComponent(errorDescription || error)}`,
+        `/entegrasyon?google=error&reason=${encodeURIComponent(errorDescription || error)}`,
         origin
       ),
       { status: 302 }
@@ -29,7 +29,7 @@ export async function GET(request: Request) {
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?google=error&reason=missing_code_or_state', origin),
+      new URL('/entegrasyon?google=error&reason=missing_code_or_state', origin),
       { status: 302 }
     )
   }
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?google=error&reason=invalid_state', origin),
+      new URL('/entegrasyon?google=error&reason=invalid_state', origin),
       { status: 302 }
     )
   }
@@ -52,7 +52,7 @@ export async function GET(request: Request) {
 
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?google=error&reason=missing_app_config', origin),
+      new URL('/entegrasyon?google=error&reason=missing_app_config', origin),
       { status: 302 }
     )
   }
@@ -77,7 +77,7 @@ export async function GET(request: Request) {
     const reason = tokenJson?.error_description || tokenJson?.error || 'token_exchange_failed'
     return NextResponse.redirect(
       new URL(
-        `/dashboard/entegrasyon?google=error&reason=${encodeURIComponent(String(reason))}`,
+        `/entegrasyon?google=error&reason=${encodeURIComponent(String(reason))}`,
         origin
       ),
       { status: 302 }
@@ -87,7 +87,7 @@ export async function GET(request: Request) {
   console.log('GOOGLE_ADS_CALLBACK_HIT')
 
   const response = NextResponse.redirect(
-    new URL('/dashboard/entegrasyon?google=connected', origin),
+    new URL('/entegrasyon?google=connected', origin),
     { status: 302 }
   )
 

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
 
   if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) {
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?google=config_missing', origin),
+      new URL('/entegrasyon?google=config_missing', origin),
       { status: 302 }
     )
   }

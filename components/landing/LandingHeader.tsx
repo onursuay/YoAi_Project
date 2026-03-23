@@ -4,29 +4,27 @@ import { useState, useRef, useEffect } from 'react'
 import Image from 'next/image'
 import Link from 'next/link'
 import ScheduleModal from './ScheduleModal'
-import DemoModal from './DemoModal'
-
 interface Props {
   locale: string
   ctaSchedule: string
   ctaTrial: string
-  ctaDemo: string
+  ctaDemo?: string
 }
 
 const productItems = [
-  { icon: 'target', label: { tr: 'Strateji', en: 'Strategy' }, desc: { tr: 'Yapay zeka destekli reklam stratejileriyle tek tıkla reklamlarınızı otomatikleştirin', en: 'Automate your ads with AI-powered strategies' }, href: '/strateji' },
-  { icon: 'trending', label: { tr: 'Optimizasyon', en: 'Optimization' }, desc: { tr: 'Optimizasyon kurallarıyla reklamlarınızı optimize et', en: 'Optimize your ads with smart rules' }, href: '/optimizasyon' },
-  { icon: 'users', label: { tr: 'Hedef Kitle', en: 'Audience' }, desc: { tr: 'Yapay zeka algoritmaları ile en doğru hedef kitlelere ulaş', en: 'Reach the right audiences with AI' }, href: '/hedef-kitle' },
-  { icon: 'search', label: { tr: 'SEO', en: 'SEO' }, desc: { tr: 'SEO analizini saniyeler içinde gerçekleştir, ekstra araçlara gerek kalmadan öne çık', en: 'Run SEO analysis in seconds' }, href: '/seo' },
-  { icon: 'image', label: { tr: 'Tasarım', en: 'Design' }, desc: { tr: 'Reklam tasarımlarını kolayca hazırla', en: 'Easily prepare ad designs' }, href: '/tasarim' },
-  { icon: 'sparkle', label: { tr: 'YoAi', en: 'YoAi' }, desc: { tr: 'Blog ve görsel içeriklerinizi anında üret', en: 'Generate content instantly' }, href: '/yoai' },
+  { icon: 'target', label: { tr: 'Strateji', en: 'Strategy' }, desc: { tr: 'Yapay zeka destekli reklam stratejileriyle tek tıkla reklamlarınızı otomatikleştirin', en: 'Automate your ads with AI-powered strategies' }, href: '/#ozellikler' },
+  { icon: 'trending', label: { tr: 'Optimizasyon', en: 'Optimization' }, desc: { tr: 'Optimizasyon kurallarıyla reklamlarınızı optimize et', en: 'Optimize your ads with smart rules' }, href: '/#ozellikler' },
+  { icon: 'users', label: { tr: 'Hedef Kitle', en: 'Audience' }, desc: { tr: 'Yapay zeka algoritmaları ile en doğru hedef kitlelere ulaş', en: 'Reach the right audiences with AI' }, href: '/#ozellikler' },
+  { icon: 'search', label: { tr: 'SEO', en: 'SEO' }, desc: { tr: 'SEO analizini saniyeler içinde gerçekleştir, ekstra araçlara gerek kalmadan öne çık', en: 'Run SEO analysis in seconds' }, href: '/#ozellikler' },
+  { icon: 'image', label: { tr: 'Tasarım', en: 'Design' }, desc: { tr: 'Reklam tasarımlarını kolayca hazırla', en: 'Easily prepare ad designs' }, href: '/#ozellikler' },
+  { icon: 'sparkle', label: { tr: 'YoAi', en: 'YoAi' }, desc: { tr: 'Blog ve görsel içeriklerinizi anında üret', en: 'Generate content instantly' }, href: '/#ozellikler' },
 ]
 
 const integrationItems = [
-  { icon: 'meta', label: { tr: 'Meta', en: 'Meta' }, desc: { tr: 'Facebook, Instagram, WhatsApp reklamlarını kolayca yönet', en: 'Manage Facebook, Instagram, WhatsApp ads' }, href: '/meta-ads' },
-  { icon: 'google', label: { tr: 'Google', en: 'Google' }, desc: { tr: 'Google Ads ve YouTube reklamları ile potansiyel müşterilere ulaş', en: 'Reach customers with Google Ads' }, href: '/google-ads' },
-  { icon: 'analytics', label: { tr: 'Google Analytics', en: 'Google Analytics' }, desc: { tr: 'İstediğin metriklere kolayca ulaş', en: 'Access the metrics you need' }, href: '/dashboard/entegrasyon' },
-  { icon: 'console', label: { tr: 'Search Console', en: 'Search Console' }, desc: { tr: 'Site analizi, anahtar kelime takibi ve sıralama optimizasyonu', en: 'Site analysis and keyword tracking' }, href: '/seo' },
+  { icon: 'meta', label: { tr: 'Meta', en: 'Meta' }, desc: { tr: 'Facebook, Instagram, WhatsApp reklamlarını kolayca yönet', en: 'Manage Facebook, Instagram, WhatsApp ads' }, href: '/#entegrasyonlar' },
+  { icon: 'google', label: { tr: 'Google', en: 'Google' }, desc: { tr: 'Google Ads ve YouTube reklamları ile potansiyel müşterilere ulaş', en: 'Reach customers with Google Ads' }, href: '/#entegrasyonlar' },
+  { icon: 'analytics', label: { tr: 'Google Analytics', en: 'Google Analytics' }, desc: { tr: 'İstediğin metriklere kolayca ulaş', en: 'Access the metrics you need' }, href: '/#entegrasyonlar' },
+  { icon: 'console', label: { tr: 'Search Console', en: 'Search Console' }, desc: { tr: 'Site analizi, anahtar kelime takibi ve sıralama optimizasyonu', en: 'Site analysis and keyword tracking' }, href: '/#entegrasyonlar' },
 ]
 
 const menuIcons: Record<string, string> = {
@@ -49,7 +47,7 @@ function MIcon({ name }: { name: string }) {
 /* Shared pill style — same as "7 Gün Ücretsiz Dene" */
 const pillBase = 'btn-shimmer text-[14px] font-medium border border-emerald-400/30 text-emerald-400 px-5 py-2 rounded-full transition-colors cursor-pointer'
 
-export default function LandingHeader({ locale, ctaSchedule, ctaTrial, ctaDemo }: Props) {
+export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) {
   const isEn = locale === 'en'
   const [openMenu, setOpenMenu] = useState<string | null>(null)
   const timeoutRef = useRef<ReturnType<typeof setTimeout>>()
@@ -137,7 +135,6 @@ export default function LandingHeader({ locale, ctaSchedule, ctaTrial, ctaDemo }
           <Link href="/login" className="hidden lg:inline-flex text-[14px] font-medium text-gray-400 hover:text-white px-3 py-2 transition-colors">
             {isEn ? 'Log In' : 'Giriş Yap'}
           </Link>
-          <DemoModal label={ctaDemo} locale={locale} />
           <ScheduleModal label={ctaSchedule} locale={locale} />
           <Link href="/signup" className={`${pillBase} bg-emerald-400/10 hover:bg-emerald-400/15`}>
             {ctaTrial}

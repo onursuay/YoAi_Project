@@ -91,7 +91,7 @@ export const navItems: NavItem[] = [
   {
     id: 'raporlar',
     label: 'Raporlar',
-    href: '/dashboard/raporlar',
+    href: '/raporlar',
     icon: FileText,
   },
   {
@@ -109,7 +109,7 @@ export const navItems: NavItem[] = [
   {
     id: 'entegrasyon',
     label: 'Entegrasyon',
-    href: '/dashboard/entegrasyon',
+    href: '/entegrasyon',
     icon: Puzzle,
   },
   {

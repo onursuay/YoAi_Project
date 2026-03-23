@@ -18,14 +18,14 @@ export async function GET(request: Request) {
   if (error) {
     console.error(`[Meta Callback][${requestId}] OAuth error: ${error} - ${errorDescription}`)
     return NextResponse.redirect(
-      new URL(`/dashboard/entegrasyon?meta=error&reason=${encodeURIComponent(errorDescription || error)}`, url.origin)
+      new URL(`/entegrasyon?meta=error&reason=${encodeURIComponent(errorDescription || error)}`, url.origin)
     )
   }
 
   if (!code || !state) {
     console.error(`[Meta Callback][${requestId}] Missing code or state`)
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?meta=error&reason=missing_code_or_state', url.origin)
+      new URL('/entegrasyon?meta=error&reason=missing_code_or_state', url.origin)
     )
   }
 
@@ -35,7 +35,7 @@ export async function GET(request: Request) {
   if (!expectedState || expectedState !== state) {
     console.error(`[Meta Callback][${requestId}] Invalid state - expected:${expectedState?.slice(0,8)} got:${state?.slice(0,8)}`)
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?meta=error&reason=invalid_state', url.origin)
+      new URL('/entegrasyon?meta=error&reason=invalid_state', url.origin)
     )
   }
 
@@ -45,7 +45,7 @@ export async function GET(request: Request) {
   if (!appId || !appSecret) {
     console.error(`[Meta Callback][${requestId}] Missing app config`)
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?meta=error&reason=missing_app_config', url.origin)
+      new URL('/entegrasyon?meta=error&reason=missing_app_config', url.origin)
     )
   }
 
@@ -74,13 +74,13 @@ export async function GET(request: Request) {
       const reason = tokenJson?.error?.message || "token_exchange_failed"
       console.error(`[Meta Callback][${requestId}] Token exchange failed: ${reason}`)
       return NextResponse.redirect(
-        new URL(`/dashboard/entegrasyon?meta=error&reason=${encodeURIComponent(reason)}`, url.origin)
+        new URL(`/entegrasyon?meta=error&reason=${encodeURIComponent(reason)}`, url.origin)
       )
     }
   } catch (err) {
     console.error(`[Meta Callback][${requestId}] Token exchange network error:`, err)
     return NextResponse.redirect(
-      new URL('/dashboard/entegrasyon?meta=error&reason=network_error', url.origin)
+      new URL('/entegrasyon?meta=error&reason=network_error', url.origin)
     )
   }
 

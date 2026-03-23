@@ -290,7 +290,7 @@ export default function YoAiPage() {
                 })}
               </div>
 
-              <p className="mt-6 text-sm text-gray-400">
+              <p className="mt-6 text-sm text-gray-500">
                 Kalan kredi: {credits} | Konuşma başına: {COST_PER_CHAT} kredi
               </p>
             </div>
@@ -339,7 +339,7 @@ export default function YoAiPage() {
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0">
                     <Sparkles className="w-4 h-4 text-primary" />
                   </div>
-                  <div className="inline-flex items-center gap-2 text-sm text-gray-400 bg-white border border-gray-200 rounded-2xl px-4 py-3">
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded-2xl px-4 py-3">
                     <Loader2 className="w-4 h-4 animate-spin" />
                     Analiz ediliyor...
                   </div>
@@ -361,7 +361,7 @@ export default function YoAiPage() {
 
               {/* Streaming indicator */}
               {phase === 'generating' && (
-                <div className="flex items-center gap-2 text-sm text-gray-400 ml-11">
+                <div className="flex items-center gap-2 text-sm text-gray-500 ml-11">
                   <Loader2 className="w-3 h-3 animate-spin" />
                   YoAi içerik üretiyor...
                 </div>

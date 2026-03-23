@@ -124,7 +124,7 @@ export default function Topbar({
   const handleDisconnect = async () => {
     if (confirm(t('confirmDisconnect'))) {
       await fetch('/api/meta/disconnect', { method: 'POST' })
-      router.push('/dashboard/entegrasyon')
+      router.push('/entegrasyon')
     }
   }
 
