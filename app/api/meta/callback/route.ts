@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server"
 import { cookies } from "next/headers"
 import { META_BASE_URL } from "@/lib/metaConfig"
+import { upsertMetaConnection } from "@/lib/metaConnectionStore"
 
 const DEBUG = process.env.NODE_ENV === 'development'
 
@@ -184,6 +185,27 @@ export async function GET(request: Request) {
     path: "/",
     maxAge: cookieMaxAge,
   })
+
+  // ============================================
+  // Step 4: Persist to DB (fire-and-forget, never blocks redirect)
+  // ============================================
+  const sessionId = cookieStore.get('session_id')?.value
+  if (sessionId) {
+    try {
+      await upsertMetaConnection(sessionId, {
+        accessToken: finalAccessToken,
+        expiresAt: expiresAt,
+        tokenType: isLongLived ? 'long_lived' : 'short_lived',
+        scopes: grantedScopesParam || undefined,
+        status: 'active',
+      })
+    } catch (err) {
+      // DB write failure must NOT block user flow
+      console.warn(`[Meta Callback][${requestId}] DB_PERSIST_FAIL:`, err instanceof Error ? err.message : 'unknown')
+    }
+  } else {
+    if (DEBUG) console.log(`[Meta Callback][${requestId}] No session_id cookie, skipping DB persist`)
+  }
 
   console.log(`[Meta Callback][${requestId}] META_CONNECT_CALLBACK_SUCCESS: token_type=${isLongLived ? 'long_lived' : 'short_lived'} expires_in=${Math.round(tokenExpiresIn/86400)}d redirect=/connect/finalize`)
 

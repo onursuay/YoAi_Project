@@ -1,9 +1,11 @@
 /**
- * Resolves the server-side Meta credential context from cookies.
+ * Resolves the server-side Meta credential context.
  * Single source of truth for accessToken + adAccountId across all Meta API routes.
+ * Resolution order: DB-first → cookie fallback → null.
  * Never reads adAccountId or token from the request body.
  */
 import { MetaGraphClient } from './client'
+import { getMetaConnection } from '@/lib/metaConnectionStore'
 
 export interface MetaContext {
   client: MetaGraphClient
@@ -11,25 +13,45 @@ export interface MetaContext {
   fingerprintLast4: string // last 4 chars of access token for debug logs
   /** Raw user access token — server-side only, NEVER send to client */
   userAccessToken: string
+  /** Where the context was resolved from */
+  source: 'db' | 'cookie'
 }
 
 export async function resolveMetaContext(): Promise<MetaContext | null> {
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
 
+  // ── Tier 1: DB-first ──
+  const sessionId = cookieStore.get('session_id')?.value
+  if (sessionId) {
+    try {
+      const dbConn = await getMetaConnection(sessionId)
+      if (dbConn?.accessToken && dbConn.selectedAdAccountId) {
+        const accountId = normalizeAccountId(dbConn.selectedAdAccountId)
+        const fingerprintLast4 = dbConn.accessToken.length >= 4 ? dbConn.accessToken.slice(-4) : '****'
+        const client = new MetaGraphClient({ accessToken: dbConn.accessToken })
+        return { client, accountId, fingerprintLast4, userAccessToken: dbConn.accessToken, source: 'db' }
+      }
+    } catch {
+      // DB failure → fall through to cookie
+    }
+  }
+
+  // ── Tier 2: Cookie fallback (backward compatible) ──
   const accessToken = cookieStore.get('meta_access_token')?.value
   const rawAccountId = cookieStore.get('meta_selected_ad_account_id')?.value
 
   if (!accessToken || !rawAccountId) return null
 
-  const accountId = rawAccountId.startsWith('act_')
-    ? rawAccountId
-    : `act_${rawAccountId.replace('act_', '')}`
-
+  const accountId = normalizeAccountId(rawAccountId)
   const fingerprintLast4 = accessToken.length >= 4 ? accessToken.slice(-4) : '****'
   const client = new MetaGraphClient({ accessToken })
 
-  return { client, accountId, fingerprintLast4, userAccessToken: accessToken }
+  return { client, accountId, fingerprintLast4, userAccessToken: accessToken, source: 'cookie' }
+}
+
+function normalizeAccountId(id: string): string {
+  return id.startsWith('act_') ? id : `act_${id.replace('act_', '')}`
 }
 
 /**

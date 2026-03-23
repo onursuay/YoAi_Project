@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { metaGraphFetchJSON } from '@/lib/metaGraph'
+import { updateSelectedMetaAdAccount } from '@/lib/metaConnectionStore'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 
@@ -101,6 +102,14 @@ export async function POST(request: Request) {
       maxAge: 60 * 60 * 24 * 30,
       path: '/',
     })
+
+    // Persist selected account to DB (fire-and-forget)
+    const sessionId = cookieStore.get('session_id')?.value
+    if (sessionId) {
+      updateSelectedMetaAdAccount(sessionId, normalizedAdAccountId).catch((err) => {
+        if (DEBUG) console.warn('[Meta SelectAdAccount] DB_PERSIST_FAIL:', err instanceof Error ? err.message : 'unknown')
+      })
+    }
 
     return response
   } catch (error) {
