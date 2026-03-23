@@ -724,7 +724,8 @@
           "otherSettingsTitle": "Diğer ayarlar",
           "locationsAllCountries": "Tüm ülkeler ve bölgeler",
           "locationsCustom": "Başka bir yer girin",
-          "locationOptionsToggle": "Yer seçenekleri"
+          "locationOptionsToggle": "Yer seçenekleri",
+          "locationsLabel": "Bu kampanya için konumları seçin"
         },
         "location": {
           "description": "Hedeflemek istediğiniz konumları seçin. Boş bırakırsanız Türkiye geneli hedeflenir.",

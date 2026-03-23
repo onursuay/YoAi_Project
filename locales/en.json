@@ -724,7 +724,8 @@
           "otherSettingsTitle": "Other settings",
           "locationsAllCountries": "All countries and territories",
           "locationsCustom": "Enter another location",
-          "locationOptionsToggle": "Location options"
+          "locationOptionsToggle": "Location options",
+          "locationsLabel": "Select locations for this campaign"
         },
         "location": {
           "description": "Select the locations you want to target. If left empty, Turkey will be targeted.",

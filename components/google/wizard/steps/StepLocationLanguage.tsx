@@ -3,7 +3,7 @@
 import { useState, useEffect, useRef } from 'react'
 import { Search, X, MapPin, ChevronDown, Loader2 } from 'lucide-react'
 import type { StepProps, SelectedLocation, ProximityTarget } from '../shared/WizardTypes'
-import { inputCls, LANGUAGE_OPTIONS } from '../shared/WizardTypes'
+import { inputCls } from '../shared/WizardTypes'
 import LocationAdvancedModal from '../shared/LocationAdvancedModal'
 import PMaxLocationMap from '../pmax/PMaxLocationMap'
 
@@ -355,36 +355,6 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
         )}
       />
 
-      {/* ── Language Targeting ── */}
-      <div className="space-y-3 mt-4 pt-4 border-t border-gray-200">
-        <div>
-          <p className="text-sm font-medium text-gray-700 mb-2">{t('location.languageTargetingTitle')} <span className="text-red-500">*</span></p>
-          <p className="text-xs text-gray-500 mt-0.5 mb-2">{t('location.languageTargetingHint')}</p>
-        </div>
-        <div className="flex flex-wrap gap-2">
-          {LANGUAGE_OPTIONS.map(lang => {
-            const active = state.languageIds.includes(lang.id)
-            return (
-              <button
-                key={lang.id}
-                type="button"
-                onClick={() => toggleLanguage(lang.id)}
-                className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
-                  active
-                    ? 'border-blue-500 bg-blue-50 text-blue-700'
-                    : 'border-gray-200 hover:border-gray-300 text-gray-700'
-                }`}
-              >
-                {t(`summary.languageNames.${lang.id}`) || lang.name}
-                {active && <X className="w-3 h-3" />}
-              </button>
-            )
-          })}
-        </div>
-        {state.languageIds.length === 0 && (
-          <p className="text-xs text-red-500">{t('validation.languageRequired')}</p>
-        )}
-      </div>
     </div>
   )
 }

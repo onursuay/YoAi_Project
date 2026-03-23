@@ -4,10 +4,31 @@ import { useState } from 'react'
 import { ChevronDown, ChevronUp, Shield, Settings, Info } from 'lucide-react'
 import { useLocale } from 'next-intl'
 import type { StepProps } from '../shared/WizardTypes'
-import { inputCls } from '../shared/WizardTypes'
+import { inputCls, LANGUAGE_OPTIONS } from '../shared/WizardTypes'
 import StepLocationLanguage from './StepLocationLanguage'
 import StepAudience from './StepAudience'
 import StepAdSchedule from './StepAdSchedule'
+
+function CollapsibleSection({ title, defaultOpen = true, children }: {
+  title: string
+  defaultOpen?: boolean
+  children: React.ReactNode
+}) {
+  const [open, setOpen] = useState(defaultOpen)
+  return (
+    <div className="border border-gray-200 rounded-lg bg-white">
+      <button
+        type="button"
+        onClick={() => setOpen(!open)}
+        className="flex items-center justify-between w-full px-5 py-4 text-left"
+      >
+        <h4 className="text-sm font-semibold text-gray-900">{title}</h4>
+        {open ? <ChevronUp className="w-4 h-4 text-gray-400" /> : <ChevronDown className="w-4 h-4 text-gray-400" />}
+      </button>
+      {open && <div className="px-5 pb-5 pt-0">{children}</div>}
+    </div>
+  )
+}
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
@@ -60,11 +81,43 @@ export default function StepCampaignSettingsSearch({ state, update, t }: StepPro
         </section>
       )}
 
-      {/* 2. Locations & Languages */}
-      <section>
-        <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('steps.location')}</h4>
+      {/* 2. Locations */}
+      <CollapsibleSection title={t('settings.locationsTitle')}>
         <StepLocationLanguage state={state} update={update} t={t} />
-      </section>
+      </CollapsibleSection>
+
+      {/* 3. Languages */}
+      <CollapsibleSection title={t('settings.languagesTitle')}>
+        <div className="space-y-3">
+          <p className="text-sm text-gray-600 mb-2">{t('settings.languagesLabel')}</p>
+          <div className="flex flex-wrap gap-2">
+            {LANGUAGE_OPTIONS.map(lang => {
+              const selected = state.languageIds.includes(lang.id)
+              return (
+                <button
+                  key={lang.id}
+                  type="button"
+                  onClick={() => {
+                    const has = state.languageIds.includes(lang.id)
+                    update({ languageIds: has ? state.languageIds.filter(id => id !== lang.id) : [...state.languageIds, lang.id] })
+                  }}
+                  className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
+                    selected
+                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      : 'border-gray-200 hover:border-gray-300 text-gray-700'
+                  }`}
+                >
+                  {lang.name}
+                  {selected && <span className="text-blue-500 ml-1">×</span>}
+                </button>
+              )
+            })}
+          </div>
+          {state.languageIds.length === 0 && (
+            <p className="text-xs text-red-500">{t('validation.languageRequired')}</p>
+          )}
+        </div>
+      </CollapsibleSection>
 
       {/* 4. EU Political Ads — Google Ads style block */}
       <section className="border border-gray-100 rounded-md bg-white p-4">
