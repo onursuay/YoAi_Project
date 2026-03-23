@@ -31,10 +31,10 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
   /* ───── Translations ───── */
   const t = isEn ? {
     brand: 'YoAi',
-    meetingTitle: 'YoAi demo',
-    meetingSub: 'Easy advertising with YoAi',
-    duration: '30min',
-    orgDefault: "Organizer's default...",
+    meetingTitle: 'YoAi Product Demo',
+    meetingSub: '30-minute product walkthrough',
+    duration: '30 min',
+    orgDefault: 'Europe/Istanbul timezone',
     timezone: 'Europe/Istanbul',
     monthNames: ['January','February','March','April','May','June','July','August','September','October','November','December'],
     dayHeaders: ['MON','TUE','WED','THU','FRI','SAT','SUN'],
@@ -56,9 +56,9 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
   } : {
     brand: 'YoAi',
     meetingTitle: 'YoAi Tanıtım Görüşmesi',
-    meetingSub: 'YoAi ile kolay reklam',
-    duration: '30dakika',
-    orgDefault: 'Organizatörün varsayılan...',
+    meetingSub: '30 dakikalık ürün tanıtımı',
+    duration: '30 dakika',
+    orgDefault: 'Avrupa/İstanbul saati',
     timezone: 'Europe/Istanbul',
     monthNames: ['Ocak','Şubat','Mart','Nisan','Mayıs','Haziran','Temmuz','Ağustos','Eylül','Ekim','Kasım','Aralık'],
     dayHeaders: ['PZT','SAL','ÇAR','PER','CUM','CMT','PAZ'],

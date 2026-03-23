@@ -369,7 +369,7 @@ export default async function RootPage() {
               {c.ctaTrial} <Icon name="arrow" size={14} />
             </Link>
             <ScheduleModal label={c.ctaSchedule} locale={locale} variant="bottom" />
-            <DemoModal label={c.ctaDemo} locale={locale} variant="nav" />
+            <DemoModal label={c.ctaDemo} locale={locale} variant="bottom" />
           </div>
         </div>
       </section>

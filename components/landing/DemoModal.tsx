@@ -12,7 +12,7 @@ const DEMO_VIDEO_URL: string | null = null
 interface Props {
   label: string
   locale: string
-  variant?: 'nav' | 'hero'
+  variant?: 'nav' | 'hero' | 'bottom'
 }
 
 export default function DemoModal({ label, locale, variant = 'nav' }: Props) {
@@ -38,6 +38,8 @@ export default function DemoModal({ label, locale, variant = 'nav' }: Props) {
 
   const btnClass = variant === 'hero'
     ? 'inline-flex items-center justify-center gap-2 border border-white/15 text-gray-300 hover:text-white hover:border-white/30 hover:bg-white/[0.06] font-semibold px-8 py-4 rounded-full transition-all text-base cursor-pointer min-w-[180px]'
+    : variant === 'bottom'
+    ? 'btn-shimmer inline-flex items-center justify-center gap-1.5 text-[14px] font-medium border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer'
     : 'btn-shimmer hidden sm:inline-flex items-center justify-center gap-1.5 font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[13px]'
 
   const modalContent = open ? (
