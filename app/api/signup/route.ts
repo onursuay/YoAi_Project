@@ -105,7 +105,7 @@ export async function POST(request: Request) {
         await resend.emails.send({
           from: FROM_EMAIL,
           to: cleanEmail,
-          subject: 'YoAi — E-posta Doğrulama',
+          subject: 'E-Posta Adresi Doğrulama',
           html: `
             <div style="font-family: 'Inter', Arial, sans-serif; max-width: 480px; margin: 0 auto; padding: 40px 24px; background: #060609; color: #ffffff; border-radius: 16px;">
               <div style="text-align: center; margin-bottom: 32px;">
