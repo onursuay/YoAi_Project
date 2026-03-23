@@ -757,7 +757,17 @@
           "countryFR": "France",
           "countryNL": "Netherlands",
           "countryIT": "Italy",
-          "countryES": "Spain"
+          "countryES": "Spain",
+          "advancedSearchTitle": "Advanced location search",
+          "modeLocation": "Location",
+          "modeRadius": "Radius",
+          "searchLocations": "Search locations",
+          "typeToSearch": "Type to search",
+          "addressPlaceholder": "e.g. London or 51.50, -0.12",
+          "radius": "Radius",
+          "pinMode": "Pin mode",
+          "pinModeHint": "Click on the map to place a pin",
+          "saveProximity": "Save radius targeting"
         },
         "audience": {
           "segmentTitle": "Audience Segments",

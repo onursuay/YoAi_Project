@@ -757,7 +757,17 @@
           "added": "Eklendi",
           "advancedSearch": "Gelişmiş arama",
           "searchPlaceholderFull": "Hedeflenecek veya hariç tutulacak konumları girin",
-          "searchHint": "Örneğin; ülke, şehir, bölge veya posta kodu"
+          "searchHint": "Örneğin; ülke, şehir, bölge veya posta kodu",
+          "advancedSearchTitle": "Gelişmiş konum arama",
+          "modeLocation": "Konum",
+          "modeRadius": "Yarıçap",
+          "searchLocations": "Konum ara",
+          "typeToSearch": "Aramak için yazın",
+          "addressPlaceholder": "Örn: Ankara veya 39.93, 32.85",
+          "radius": "Yarıçap",
+          "pinMode": "Sabitleme modu",
+          "pinModeHint": "Haritaya tıklayarak pin bırakın",
+          "saveProximity": "Yarıçap hedeflemesini kaydet"
         },
         "audience": {
           "segmentTitle": "Kitle Segmentleri",
