@@ -29,8 +29,17 @@ const content = {
     backHome: 'Ana sayfaya dön',
     errorName: 'Ad soyad alanı zorunludur.',
     errorEmail: 'Geçerli bir e-posta adresi girin.',
+    errorPasswordShort: 'Şifre en az 8 karakter olmalıdır.',
+    errorPasswordMismatch: 'Şifreler eşleşmiyor.',
+    errorPhone: 'Geçerli bir telefon numarası girin.',
     errorAlreadyVerified: 'Bu e-posta adresi zaten doğrulanmış. Giriş yapabilirsiniz.',
     errorGeneric: 'Bir hata oluştu. Lütfen tekrar deneyin.',
+    passwordLabel: 'Şifre',
+    passwordPlaceholder: 'En az 8 karakter',
+    passwordConfirmLabel: 'Şifre Tekrar',
+    passwordConfirmPlaceholder: 'Şifrenizi tekrar girin',
+    hasAccount: 'Zaten hesabınız var mı?',
+    login: 'Giriş Yap',
   },
   en: {
     title: 'Start Your Free Trial',
@@ -49,8 +58,17 @@ const content = {
     backHome: 'Back to homepage',
     errorName: 'Full name is required.',
     errorEmail: 'Please enter a valid email address.',
+    errorPasswordShort: 'Password must be at least 8 characters.',
+    errorPasswordMismatch: 'Passwords do not match.',
+    errorPhone: 'Please enter a valid phone number.',
     errorAlreadyVerified: 'This email is already verified. You can log in.',
     errorGeneric: 'Something went wrong. Please try again.',
+    passwordLabel: 'Password',
+    passwordPlaceholder: 'At least 8 characters',
+    passwordConfirmLabel: 'Confirm Password',
+    passwordConfirmPlaceholder: 'Re-enter your password',
+    hasAccount: 'Already have an account?',
+    login: 'Log In',
   },
 } as const
 
@@ -62,10 +80,18 @@ export default function SignupPage() {
 
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
+  const [password, setPassword] = useState('')
+  const [passwordConfirm, setPasswordConfirm] = useState('')
   const [company, setCompany] = useState('')
   const [phone, setPhone] = useState('')
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+
+  // Phone input: only allow digits, +, spaces, parens, dashes
+  function handlePhoneChange(val: string) {
+    const clean = val.replace(/[^0-9+\s()-]/g, '')
+    setPhone(clean)
+  }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault()
@@ -76,8 +102,20 @@ export default function SignupPage() {
       setError(t.errorName)
       return
     }
-    if (!email.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email.trim() || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())) {
       setError(t.errorEmail)
+      return
+    }
+    if (!password || password.length < 8) {
+      setError(t.errorPasswordShort)
+      return
+    }
+    if (password !== passwordConfirm) {
+      setError(t.errorPasswordMismatch)
+      return
+    }
+    if (phone.trim() && !/^[+]?[0-9\s()-]{7,20}$/.test(phone.trim())) {
+      setError(t.errorPhone)
       return
     }
 
@@ -90,6 +128,7 @@ export default function SignupPage() {
         body: JSON.stringify({
           name: name.trim(),
           email: email.trim(),
+          password,
           company: company.trim() || undefined,
           phone: phone.trim() || undefined,
         }),
@@ -317,10 +356,40 @@ export default function SignupPage() {
               <input
                 type="tel"
                 value={phone}
-                onChange={(e) => setPhone(e.target.value)}
+                onChange={(e) => handlePhoneChange(e.target.value)}
                 placeholder={t.phonePlaceholder}
                 className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white placeholder-gray-500 outline-none transition focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
                 autoComplete="tel"
+              />
+            </div>
+
+            {/* Password */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                {t.passwordLabel} <span className="text-emerald-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder={t.passwordPlaceholder}
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white placeholder-gray-500 outline-none transition focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                autoComplete="new-password"
+              />
+            </div>
+
+            {/* Password Confirm */}
+            <div>
+              <label className="block text-sm font-medium text-gray-300 mb-1.5">
+                {t.passwordConfirmLabel} <span className="text-emerald-400">*</span>
+              </label>
+              <input
+                type="password"
+                value={passwordConfirm}
+                onChange={(e) => setPasswordConfirm(e.target.value)}
+                placeholder={t.passwordConfirmPlaceholder}
+                className="w-full rounded-lg border border-white/10 bg-white/[0.04] px-4 py-3 text-base text-white placeholder-gray-500 outline-none transition focus:border-emerald-500/50 focus:ring-1 focus:ring-emerald-500/30"
+                autoComplete="new-password"
               />
             </div>
 
@@ -338,6 +407,14 @@ export default function SignupPage() {
           <p className="text-base text-gray-500 text-center mt-5">
             {t.noCc}
           </p>
+
+          {/* Login link */}
+          <div className="mt-4 text-center">
+            <p className="text-sm text-gray-500">
+              {t.hasAccount}{' '}
+              <Link href="/login" className="text-emerald-400 hover:text-emerald-300 font-medium transition">{t.login}</Link>
+            </p>
+          </div>
         </div>
 
         {/* Back link */}

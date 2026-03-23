@@ -53,12 +53,16 @@ export default function UserProfileDropdown({ collapsed }: Props) {
     window.location.reload()
   }
 
-  const handleLogout = () => {
+  const handleLogout = async () => {
+    // Clear session via API
+    try {
+      await fetch('/api/auth/logout', { method: 'POST' })
+    } catch {}
     // Clear all YoAi localStorage
     const keys = Object.keys(localStorage).filter(k => k.startsWith('yoai-'))
     keys.forEach(k => localStorage.removeItem(k))
     setOpen(false)
-    router.push('/')
+    router.push('/login')
   }
 
   const menuItems = [

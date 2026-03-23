@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 import { Resend } from 'resend'
+import bcrypt from 'bcryptjs'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
@@ -10,19 +11,26 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'YoAi <noreply@yodijital.com>'
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { name, email, company, phone } = body
+    const { name, email, company, phone, password } = body
 
     // Validation
     if (!name?.trim()) {
       return NextResponse.json({ ok: false, error: 'name_required' }, { status: 400 })
     }
-    if (!email?.trim() || !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+    if (!email?.trim() || !/^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/.test(email.trim())) {
       return NextResponse.json({ ok: false, error: 'invalid_email' }, { status: 400 })
+    }
+    if (!password || password.length < 8) {
+      return NextResponse.json({ ok: false, error: 'password_too_short' }, { status: 400 })
+    }
+    if (phone?.trim() && !/^[+]?[0-9\s()-]{7,20}$/.test(phone.trim())) {
+      return NextResponse.json({ ok: false, error: 'invalid_phone' }, { status: 400 })
     }
 
     const cleanEmail = email.trim().toLowerCase()
     const cleanName = name.trim()
     const token = randomUUID()
+    const passwordHash = await bcrypt.hash(password, 12)
 
     if (!supabase) {
       console.error('[Signup] Supabase client not available')
@@ -49,6 +57,7 @@ export async function POST(request: Request) {
           name: cleanName,
           company: company?.trim() || null,
           phone: phone?.trim() || null,
+          password_hash: passwordHash,
           verification_token: token,
           status: 'pending',
           created_at: new Date().toISOString(),
@@ -60,6 +69,7 @@ export async function POST(request: Request) {
         email: cleanEmail,
         company: company?.trim() || null,
         phone: phone?.trim() || null,
+        password_hash: passwordHash,
         verification_token: token,
         status: 'pending',
       })

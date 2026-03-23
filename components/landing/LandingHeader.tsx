@@ -133,7 +133,7 @@ export default function LandingHeader({ locale, ctaSchedule, ctaTrial }: Props) 
 
         {/* Right CTAs */}
         <div className="flex items-center gap-2.5">
-          <Link href="/dashboard" className="hidden lg:inline-flex text-[14px] font-medium text-gray-400 hover:text-white px-3 py-2 transition-colors">
+          <Link href="/login" className="hidden lg:inline-flex text-[14px] font-medium text-gray-400 hover:text-white px-3 py-2 transition-colors">
             {isEn ? 'Log In' : 'Giriş Yap'}
           </Link>
           <ScheduleModal label={ctaSchedule} locale={locale} />
