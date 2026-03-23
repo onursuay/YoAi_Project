@@ -6,7 +6,7 @@ import bcrypt from 'bcryptjs'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
-const FROM_EMAIL = process.env.FROM_EMAIL || 'YoAi <noreply@yodijital.com>'
+const FROM_EMAIL = process.env.FROM_EMAIL || 'YO Dijital Medya Anonim Şirketi <info@yodijital.com>'
 
 export async function POST(request: Request) {
   try {

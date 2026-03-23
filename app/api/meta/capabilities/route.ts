@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
-import { createMetaClient } from '@/lib/meta/client'
+import { resolveMetaContext } from '@/lib/meta/context'
+import { getUserAccessToken } from '@/lib/meta/authHelpers'
 import { META_BASE_URL } from '@/lib/metaConfig'
 import { getCached, setCached } from '@/lib/meta/cache'
 
@@ -46,9 +46,11 @@ async function getGrantedScopes(accessToken: string): Promise<string[]> {
 
 export async function GET() {
   const requestId = crypto.randomUUID().slice(0, 8)
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get('meta_access_token')?.value
-  const adAccountIdRaw = cookieStore.get('meta_selected_ad_account_id')?.value
+
+  // DB-first: try resolveMetaContext (token + accountId)
+  const ctx = await resolveMetaContext()
+  // Fallback: token-only (connected but no account selected)
+  const accessToken = ctx?.userAccessToken ?? await getUserAccessToken()
 
   if (!accessToken) {
     return NextResponse.json({
@@ -68,16 +70,11 @@ export async function GET() {
     })
   }
 
-  const adAccountId = adAccountIdRaw?.startsWith('act_') ? adAccountIdRaw : adAccountIdRaw ? `act_${adAccountIdRaw.replace(/^act_/, '')}` : null
+  const adAccountId = ctx?.accountId ?? null
   const cacheKey = `${CAPABILITIES_CACHE_KEY_PREFIX}${adAccountId ?? 'no_account'}`
   const cached = getCached(cacheKey)
   if (cached && typeof cached === 'object' && cached.connected !== undefined) {
     return NextResponse.json(cached)
-  }
-
-  let metaClient: Awaited<ReturnType<typeof createMetaClient>> = null
-  if (adAccountId) {
-    metaClient = await createMetaClient()
   }
 
   const grantedScopes = await getGrantedScopes(accessToken)
@@ -104,7 +101,7 @@ export async function GET() {
 
   const reasons: Record<string, string> = {}
 
-  if (!metaClient) {
+  if (!ctx) {
     const payload = {
       ok: true,
       connected: true,
@@ -124,8 +121,8 @@ export async function GET() {
     return NextResponse.json(payload)
   }
 
-  const client = metaClient.client
-  const accountId = metaClient.accountId
+  const client = ctx.client
+  const accountId = ctx.accountId
 
   // Pages
   const userPagesRes = await client.get<{ data?: { id: string; name: string; access_token?: string; picture?: { data?: { url?: string } }; instagram_business_account?: { id: string; username: string; profile_picture_url?: string } }[] }>(

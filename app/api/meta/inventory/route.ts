@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
-import { createMetaClient } from '@/lib/meta/client'
+import { resolveMetaContext } from '@/lib/meta/context'
 import { META_BASE_URL } from '@/lib/metaConfig'
 import { runWhatsappSelfcheck } from '@/lib/meta/whatsappSelfcheck'
 
@@ -494,7 +494,8 @@ async function fetchWhatsAppPhoneNumbers(
   client: { get: (path: string, params?: Record<string, string>) => Promise<GraphResult<{ data?: unknown[]; owner_business?: { id?: string }; business?: { id?: string } }>> },
   requestId: string,
   pageId?: string,
-  pageAccessToken?: string
+  pageAccessToken?: string,
+  userAccessToken?: string
 ): Promise<{ numbers: InventoryWhatsAppNumber[]; error?: InventoryWhatsAppError; diagnostics: InventoryWhatsAppDiagnostics }> {
   const numbers: InventoryWhatsAppNumber[] = []
   const diagnostics: InventoryWhatsAppDiagnostics = {
@@ -688,10 +689,9 @@ async function fetchWhatsAppPhoneNumbers(
       }
 
       // Step 3: No specific business or scan returned 0 — scan ALL /me/businesses
-      // Use direct fetch with access token from cookies (mirrors how selfcheck works)
+      // Use access token passed from caller (DB-first via resolveMetaContext)
       try {
-        const cookieStore = await cookies()
-        const accessToken = cookieStore.get('meta_access_token')?.value
+        const accessToken = userAccessToken
 
         if (accessToken) {
           const bizListUrl = `https://graph.facebook.com/v24.0/me/businesses?fields=id,name&limit=50&access_token=${encodeURIComponent(accessToken)}`
@@ -745,7 +745,7 @@ async function fetchWhatsAppPhoneNumbers(
             return { numbers, diagnostics }
           }
         } else {
-          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL: no access token in cookies`)
+          console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL: no access token available`)
         }
       } catch (e) {
         console.warn(`[Inventory][${requestId}] WA_BUSINESS_FALLBACK_ALL failed:`, e instanceof Error ? e.message : e)
@@ -912,15 +912,15 @@ export async function GET(request: Request) {
       queryParams: Object.fromEntries(url.searchParams.entries()),
     }))
 
-    const metaClient = await createMetaClient()
-    if (!metaClient) {
+    const ctx = await resolveMetaContext()
+    if (!ctx) {
       return NextResponse.json(
         { ok: false, error: 'missing_token', message: 'Meta bağlantısı bulunamadı' },
         { status: 401 }
       )
     }
 
-    const { client, accountId } = metaClient
+    const { client, accountId } = ctx
 
     // Fetch pages + pixels + token permission snapshot in parallel.
     // WhatsApp fetch needs page access token (from fetchPages result), so it runs after.
@@ -936,7 +936,7 @@ export async function GET(request: Request) {
     // WABA fetch is auxiliary; page-level whatsapp_number/has_whatsapp_number is primary.
     // Run both in parallel so page-level resolution is not blocked by WABA (#100) errors.
     let [whatsappResult, pageLevelResult] = await Promise.all([
-      fetchWhatsAppPhoneNumbers(client as never, requestId, pageId, pageAccessToken),
+      fetchWhatsAppPhoneNumbers(client as never, requestId, pageId, pageAccessToken, ctx.userAccessToken),
       pageId ? fetchPageLevelWhatsApp(client as never, requestId, pageId, selectedPageRaw) : Promise.resolve<PageLevelWhatsAppResult>({ pageWhatsappNumber: null, pageHasWhatsApp: false, pageWhatsappSource: 'none', has_whatsapp_number: undefined, has_whatsapp_business_number: undefined }),
     ])
 

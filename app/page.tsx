@@ -96,7 +96,7 @@ export default async function RootPage() {
     ],
     ctaBottom: 'Reklam operasyonlarınızı dönüştürmeye hazır mısınız?',
     ctaBottomSub: '7 günlük ücretsiz denemenizi başlatın. Kredi kartı gerekmez.',
-    panelTitle: 'Kampanya Komutası',
+    panelTitle: 'Kampanya Performansı',
     panelPeriod: 'Son 30 gün',
     panelStatus: 'Tüm sistemler aktif',
     kpis: [
