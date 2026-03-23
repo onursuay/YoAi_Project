@@ -51,13 +51,15 @@ export default function SidebarNav() {
   const legalHrefs: Record<string, Record<string, string>> = {
     tr: {
       'gizlilik-politikasi': '/gizlilik-politikasi',
+      'cerez-politikasi': '/cerez-politikasi',
+      'kullanim-kosullari': '/kullanim-kosullari',
       'veri-silme': '/veri-silme',
-      'kullanim-sartlari': '/kullanim-kosullari',
     },
     en: {
       'gizlilik-politikasi': '/privacy-policy',
+      'cerez-politikasi': '/cookie-policy',
+      'kullanim-kosullari': '/terms',
       'veri-silme': '/data-deletion',
-      'kullanim-sartlari': '/terms',
     },
   }
 

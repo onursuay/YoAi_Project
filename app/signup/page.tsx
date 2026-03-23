@@ -104,6 +104,7 @@ export default function SignupPage() {
   const [error, setError] = useState('')
   const [acceptedTerms, setAcceptedTerms] = useState(false)
   const [turnstileToken, setTurnstileToken] = useState<string | null>(null)
+  const turnstileTokenRef = useRef<string | null>(null)
   const canvasRef = useRef<HTMLCanvasElement>(null)
   const turnstileRef = useRef<HTMLDivElement>(null)
 
@@ -234,8 +235,8 @@ export default function SignupPage() {
       ;(window as any).turnstile.render(turnstileRef.current, {
         sitekey: key,
         theme: 'dark',
-        callback: (token: string) => setTurnstileToken(token),
-        'expired-callback': () => setTurnstileToken(null),
+        callback: (token: string) => { turnstileTokenRef.current = token; setTurnstileToken(token) },
+        'expired-callback': () => { turnstileTokenRef.current = null; setTurnstileToken(null) },
       })
     }
   }, [])
@@ -275,7 +276,8 @@ export default function SignupPage() {
       setError(t.errorTerms)
       return
     }
-    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !turnstileToken) {
+    const cfToken = turnstileTokenRef.current || turnstileToken
+    if (process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY && !cfToken) {
       setError(t.errorTurnstile)
       return
     }
