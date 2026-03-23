@@ -106,6 +106,13 @@ export const CAMPAIGN_TYPE_BIDDING: Record<AdvertisingChannelType, BiddingStrate
   LOCAL: ['MAXIMIZE_CONVERSIONS'],
 }
 
+export interface ProximityTarget {
+  lat: number
+  lng: number
+  radiusMeters: number
+  label?: string
+}
+
 export interface SelectedLocation {
   id: string
   name: string
@@ -195,6 +202,7 @@ export interface WizardState {
   // Step 4: AI Max
   aiMax: AiMaxSettings
   locations: SelectedLocation[]
+  proximityTargets: ProximityTarget[]
   geoSearchCountry: string
   languageIds: string[]
   // Step 4: Audience
@@ -328,6 +336,7 @@ export const defaultState: WizardState = {
     creativeOptimization: true,
   },
   locations: [],
+  proximityTargets: [],
   geoSearchCountry: '',
   languageIds: ['1037'],
   selectedAudienceIds: [],
