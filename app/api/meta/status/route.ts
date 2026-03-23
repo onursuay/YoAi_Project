@@ -1,29 +1,21 @@
 import { NextResponse } from "next/server";
 import { cookies } from "next/headers";
 import { metaGraphFetch } from "@/lib/metaGraph";
+import { getUserAccessToken } from "@/lib/meta/authHelpers";
 
 export const dynamic = 'force-dynamic'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 
 export async function GET() {
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("meta_access_token");
+  const accessToken = await getUserAccessToken();
 
-  if (!accessToken || !accessToken.value) {
+  if (!accessToken) {
     return NextResponse.json({ connected: false });
   }
 
-  // Check token expiration if available
-  const expiresAtCookie = cookieStore.get("meta_access_expires_at");
-  if (expiresAtCookie) {
-    const expiresAt = parseInt(expiresAtCookie.value, 10);
-    if (Date.now() >= expiresAt) {
-      return NextResponse.json({ connected: false });
-    }
-  }
-
-  // Get selected ad account if available
+  // Get selected ad account if available (cookie-only — name is not in DB context)
+  const cookieStore = await cookies();
   const selectedAdAccountId = cookieStore.get("meta_selected_ad_account_id");
   const selectedAdAccountName = cookieStore.get(
     "meta_selected_ad_account_name",
@@ -57,27 +49,17 @@ export async function POST(request: Request) {
       );
     }
 
-    const cookieStore = await cookies();
-    const accessToken = cookieStore.get("meta_access_token");
+    const accessToken = await getUserAccessToken();
 
-    if (!accessToken || !accessToken.value) {
+    if (!accessToken) {
       return NextResponse.json({ error: "missing_token" }, { status: 401 });
-    }
-
-    // Check token expiration if available
-    const expiresAtCookie = cookieStore.get("meta_access_expires_at");
-    if (expiresAtCookie) {
-      const expiresAt = parseInt(expiresAtCookie.value, 10);
-      if (Date.now() >= expiresAt) {
-        return NextResponse.json({ error: "token_expired" }, { status: 401 });
-      }
     }
 
     // Update status via Meta Graph API
     const formData = new URLSearchParams();
     formData.append("status", status);
 
-    const response = await metaGraphFetch(`/${objectId}`, accessToken.value, {
+    const response = await metaGraphFetch(`/${objectId}`, accessToken, {
       method: "POST",
       body: formData.toString(),
       headers: {

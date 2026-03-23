@@ -1,10 +1,9 @@
 import { NextResponse } from 'next/server'
-import { createMetaClient } from '@/lib/meta/client'
+import { resolveMetaContext } from '@/lib/meta/context'
 import { validateAdPayload } from '@/lib/meta/spec/objectiveSpec'
 import { resolveInstagramUserId, type IgError } from '@/lib/meta/ig'
 import { buildIgDmLink } from '@/lib/meta/igLink'
 import { resolveLeadCreativeLink } from '@/lib/meta/resolveLeadCreativeLink'
-import { cookies } from 'next/headers'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 export const dynamic = 'force-dynamic'
@@ -75,17 +74,17 @@ export async function POST(request: Request) {
       })
     }
 
-    const metaClient = await createMetaClient()
-    if (!metaClient) {
+    const ctx = await resolveMetaContext()
+    if (!ctx) {
       return NextResponse.json(
         { ok: false, error: 'missing_token', message: 'Meta bağlantısı bulunamadı' },
         { status: 401 }
       )
     }
 
-    // User access token — needed for Page Access Token derivation in IG resolver
-    const cookieStore = await cookies()
-    const userAccessToken = cookieStore.get('meta_access_token')?.value
+    // Alias for backward compatibility within this file
+    const metaClient = { client: ctx.client, accountId: ctx.accountId }
+    const userAccessToken: string | undefined = ctx.userAccessToken
 
     const body = await request.json()
     const dd = typeof body.destinationDetails === 'string'

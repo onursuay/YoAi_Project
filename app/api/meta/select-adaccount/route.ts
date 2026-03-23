@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { metaGraphFetchJSON } from '@/lib/metaGraph'
+import { getUserAccessToken } from '@/lib/meta/authHelpers'
 import { updateSelectedMetaAdAccount } from '@/lib/metaConnectionStore'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
@@ -17,10 +18,9 @@ export async function POST(request: Request) {
       )
     }
 
-    const cookieStore = await cookies()
-    const accessToken = cookieStore.get('meta_access_token')
+    const accessToken = await getUserAccessToken()
 
-    if (!accessToken || !accessToken.value) {
+    if (!accessToken) {
       return NextResponse.json(
         { error: 'Not connected' },
         { status: 401 }
@@ -30,7 +30,7 @@ export async function POST(request: Request) {
     // Fetch user's ad accounts to validate
     const { data: accountsData, error: accountsError } = await metaGraphFetchJSON(
       '/me/adaccounts',
-      accessToken.value,
+      accessToken,
       {
         params: {
           fields: 'id',
@@ -62,7 +62,7 @@ export async function POST(request: Request) {
     // Fetch account name and currency from Meta API
     const { data: accountData } = await metaGraphFetchJSON(
       `/${normalizedAdAccountId}`,
-      accessToken.value,
+      accessToken,
       {
         params: {
           fields: 'name,currency',
@@ -104,6 +104,7 @@ export async function POST(request: Request) {
     })
 
     // Persist selected account to DB (fire-and-forget)
+    const cookieStore = await cookies()
     const sessionId = cookieStore.get('session_id')?.value
     if (sessionId) {
       updateSelectedMetaAdAccount(sessionId, normalizedAdAccountId).catch((err) => {
