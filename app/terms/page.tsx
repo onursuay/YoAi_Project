@@ -1,11 +1,5 @@
-import { NextIntlClientProvider } from 'next-intl'
-import enMessages from '@/locales/en.json'
 import TermsContent from '@/components/legal/TermsContent'
 
 export default function TermsPage() {
-  return (
-    <NextIntlClientProvider locale="en" messages={{ legal: enMessages.legal }}>
-      <TermsContent />
-    </NextIntlClientProvider>
-  )
+  return <TermsContent locale="en" />
 }

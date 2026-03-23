@@ -1,11 +1,5 @@
-import { NextIntlClientProvider } from 'next-intl'
-import enMessages from '@/locales/en.json'
 import DataDeletionContent from '@/components/legal/DataDeletionContent'
 
 export default function DataDeletionPage() {
-  return (
-    <NextIntlClientProvider locale="en" messages={{ legal: enMessages.legal }}>
-      <DataDeletionContent />
-    </NextIntlClientProvider>
-  )
+  return <DataDeletionContent locale="en" />
 }

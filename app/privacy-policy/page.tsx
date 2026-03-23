@@ -1,11 +1,5 @@
-import { NextIntlClientProvider } from 'next-intl'
-import enMessages from '@/locales/en.json'
 import PrivacyPolicyContent from '@/components/legal/PrivacyPolicyContent'
 
 export default function PrivacyPolicyPage() {
-  return (
-    <NextIntlClientProvider locale="en" messages={{ legal: enMessages.legal }}>
-      <PrivacyPolicyContent />
-    </NextIntlClientProvider>
-  )
+  return <PrivacyPolicyContent locale="en" />
 }

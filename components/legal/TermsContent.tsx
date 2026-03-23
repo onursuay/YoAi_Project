@@ -1,61 +1,74 @@
 'use client'
 
-import { useTranslations } from 'next-intl'
 import Link from 'next/link'
+import trMessages from '@/locales/tr.json'
+import enMessages from '@/locales/en.json'
 
-export default function TermsContent() {
-  const t = useTranslations('legal.terms')
+const messages = {
+  tr: (trMessages as Record<string, any>).legal.terms,
+  en: (enMessages as Record<string, any>).legal.terms,
+}
+
+function t(locale: 'tr' | 'en', key: string): string {
+  const parts = key.split('.')
+  let value: any = messages[locale]
+  for (const part of parts) value = value?.[part]
+  return typeof value === 'string' ? value : key
+}
+
+export default function TermsContent({ locale = 'tr' }: { locale?: 'tr' | 'en' }) {
+  const g = (key: string) => t(locale, key)
 
   return (
     <div className="min-h-screen bg-gray-50 py-12">
       <div className="max-w-4xl mx-auto px-4">
         <Link href="/" className="text-green-600 hover:underline mb-4 inline-block">
-          &larr; {t('backToHome')}
+          &larr; {g('backToHome')}
         </Link>
 
-        <p className="text-sm text-gray-500 mb-2">{t('lastUpdated')}</p>
-        <h1 className="text-3xl font-bold mb-2">{t('title')}</h1>
-        <p className="text-gray-600 mb-8">{t('company')}</p>
+        <p className="text-sm text-gray-500 mb-2">{g('lastUpdated')}</p>
+        <h1 className="text-3xl font-bold mb-2">{g('title')}</h1>
+        <p className="text-gray-600 mb-8">{g('company')}</p>
 
         <div className="bg-white rounded-lg p-8 space-y-6">
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section1Title')}</h2>
-            <p className="text-gray-700">{t('section1Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section1Title')}</h2>
+            <p className="text-gray-700">{g('section1Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section2Title')}</h2>
-            <p className="text-gray-700">{t('section2Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section2Title')}</h2>
+            <p className="text-gray-700">{g('section2Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section3Title')}</h2>
-            <p className="text-gray-700">{t('section3Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section3Title')}</h2>
+            <p className="text-gray-700">{g('section3Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section4Title')}</h2>
-            <p className="text-gray-700">{t('section4Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section4Title')}</h2>
+            <p className="text-gray-700">{g('section4Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section5Title')}</h2>
-            <p className="text-gray-700">{t('section5Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section5Title')}</h2>
+            <p className="text-gray-700">{g('section5Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section6Title')}</h2>
-            <p className="text-gray-700">{t('section6Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section6Title')}</h2>
+            <p className="text-gray-700">{g('section6Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section7Title')}</h2>
-            <p className="text-gray-700">{t('section7Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section7Title')}</h2>
+            <p className="text-gray-700">{g('section7Body')}</p>
           </section>
 
           <section>
-            <h2 className="text-xl font-semibold mb-3">{t('section8Title')}</h2>
-            <p className="text-gray-700">{t('section8Body')}</p>
+            <h2 className="text-xl font-semibold mb-3">{g('section8Title')}</h2>
+            <p className="text-gray-700">{g('section8Body')}</p>
           </section>
         </div>
       </div>
