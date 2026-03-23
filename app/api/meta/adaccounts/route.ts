@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { metaGraphFetchJSON } from '@/lib/metaGraph'
+import { getUserAccessToken } from '@/lib/meta/authHelpers'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,34 +10,21 @@ export async function GET() {
   const requestId = typeof crypto !== 'undefined' && crypto.randomUUID ? crypto.randomUUID().slice(0, 8) : Date.now().toString(36)
   console.log(`[AdAccounts][${requestId}] ADACCOUNTS_FETCH_START`)
 
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get('meta_access_token')
+  const accessToken = await getUserAccessToken()
 
-  if (!accessToken || !accessToken.value) {
-    console.warn(`[AdAccounts][${requestId}] ADACCOUNTS_FETCH_BLOCKED: no meta_access_token cookie`)
+  if (!accessToken) {
+    console.warn(`[AdAccounts][${requestId}] ADACCOUNTS_FETCH_BLOCKED: no meta_access_token`)
     return NextResponse.json(
       { error: 'Not connected', reason: 'no_token' },
       { status: 401, headers: { 'Cache-Control': 'no-store' } }
     )
   }
 
-  // Check token expiration if available
-  const expiresAtCookie = cookieStore.get('meta_access_expires_at')
-  if (expiresAtCookie) {
-    const expiresAt = parseInt(expiresAtCookie.value, 10)
-    if (Date.now() >= expiresAt) {
-      return NextResponse.json(
-        { error: 'Token expired' },
-        { status: 401 }
-      )
-    }
-  }
-
   try {
     // Fetch ad accounts from Meta Graph API using metaGraphFetch
     const { data, error } = await metaGraphFetchJSON(
       '/me/adaccounts',
-      accessToken.value,
+      accessToken,
       {
         params: {
           fields: 'id,name,account_status,currency,timezone_name,opportunity_score',

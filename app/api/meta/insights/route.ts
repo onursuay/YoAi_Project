@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
-import { cookies } from "next/headers";
 import { metaGraphFetch } from '@/lib/metaGraph'
+import { resolveMetaContext } from '@/lib/meta/context'
 import { metaFetchWithRateLimit, isRateLimitError, extractFbTraceId } from '@/lib/meta/rateLimit'
 import { getCacheKey, getCached, setCached } from '@/lib/meta/cache'
 
@@ -12,41 +12,17 @@ export async function GET(request: Request) {
   const since = searchParams.get("since");
   const until = searchParams.get("until");
 
-  const cookieStore = await cookies();
-  const accessToken = cookieStore.get("meta_access_token");
-  const selectedAdAccountId = cookieStore.get("meta_selected_ad_account_id");
+  const ctx = await resolveMetaContext()
 
-  if (!accessToken || !accessToken.value) {
+  if (!ctx) {
     return NextResponse.json(
       { error: "missing_token" },
       { status: 401 }
     );
   }
 
-  if (!selectedAdAccountId || !selectedAdAccountId.value) {
-    return NextResponse.json(
-      { error: "no_ad_account_selected" },
-      { status: 400 }
-    );
-  }
-
-  // Check token expiration if available
-  const expiresAtCookie = cookieStore.get("meta_access_expires_at");
-  if (expiresAtCookie) {
-    const expiresAt = parseInt(expiresAtCookie.value, 10);
-    if (Date.now() >= expiresAt) {
-      return NextResponse.json(
-        { error: "token_expired" },
-        { status: 401 }
-      );
-    }
-  }
-
   try {
-    // Ensure ad_account_id starts with 'act_'
-    const accountId = selectedAdAccountId.value.startsWith("act_")
-      ? selectedAdAccountId.value
-      : `act_${selectedAdAccountId.value.replace("act_", "")}`;
+    const accountId = ctx.accountId
 
     // Guard: never send both date_preset and time_range simultaneously
     const safeSince = datePreset ? null : since
@@ -85,7 +61,7 @@ export async function GET(request: Request) {
     }
 
     const { response, errorData } = await metaFetchWithRateLimit(
-      () => metaGraphFetch(`/${accountId}/insights`, accessToken.value, { params: insightsParams }),
+      () => metaGraphFetch(`/${accountId}/insights`, ctx.userAccessToken, { params: insightsParams }),
       3
     )
 
@@ -144,7 +120,7 @@ export async function GET(request: Request) {
       }
 
       const { response: campaignsResponse } = await metaFetchWithRateLimit(
-        () => metaGraphFetch(`/${accountId}/campaigns`, accessToken.value, { params: campaignsParams }),
+        () => metaGraphFetch(`/${accountId}/campaigns`, ctx.userAccessToken, { params: campaignsParams }),
         2 // Fewer retries for this non-critical call
       )
       
@@ -289,7 +265,7 @@ export async function GET(request: Request) {
     }
     try {
       const { response: dailyResponse } = await metaFetchWithRateLimit(
-        () => metaGraphFetch(`/${accountId}/insights`, accessToken.value, { params: dailyParams }),
+        () => metaGraphFetch(`/${accountId}/insights`, ctx.userAccessToken, { params: dailyParams }),
         2
       )
       if (dailyResponse.ok) {

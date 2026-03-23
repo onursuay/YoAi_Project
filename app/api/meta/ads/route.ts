@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { cookies } from 'next/headers'
 import { metaGraphFetch } from '@/lib/metaGraph'
+import { resolveMetaContext } from '@/lib/meta/context'
 import {
   getListCacheKey,
   getListCached,
@@ -23,19 +23,17 @@ export async function GET(request: Request) {
   const after = searchParams.get('after') || null
   const adAccountIdParam = searchParams.get('adAccountId')
 
-  const cookieStore = await cookies()
-  const accessToken = cookieStore.get('meta_access_token')
-  const selectedAdAccountIdCookie = cookieStore.get('meta_selected_ad_account_id')
+  const ctx = await resolveMetaContext()
 
-  if (!accessToken || !accessToken.value) {
+  if (!ctx) {
     return NextResponse.json({ error: 'missing_token' }, { status: 401 })
   }
 
-  // adAccountId is required: prefer query param, fallback to cookie
-  const selectedAdAccountId = adAccountIdParam || selectedAdAccountIdCookie?.value
+  // adAccountId is required: prefer query param, fallback to context
+  const selectedAdAccountId = adAccountIdParam || ctx.accountId
   if (!selectedAdAccountId) {
     return NextResponse.json(
-      { 
+      {
         ok: false,
         error: 'MISSING_AD_ACCOUNT_ID',
         code: 'MISSING_AD_ACCOUNT_ID',
@@ -43,14 +41,6 @@ export async function GET(request: Request) {
       },
       { status: 400 }
     )
-  }
-
-  const expiresAtCookie = cookieStore.get('meta_access_expires_at')
-  if (expiresAtCookie) {
-    const expiresAt = parseInt(expiresAtCookie.value, 10)
-    if (Date.now() >= expiresAt) {
-      return NextResponse.json({ error: 'token_expired' }, { status: 401 })
-    }
   }
 
   try {
@@ -92,7 +82,7 @@ export async function GET(request: Request) {
 
     const fetchResult = await withLock(`act:${accountId}`, () =>
       fetchWithBackoff(
-        () => metaGraphFetch(`/${accountId}/ads`, accessToken.value, { params: adParams }),
+        () => metaGraphFetch(`/${accountId}/ads`, ctx.userAccessToken, { params: adParams }),
         3
       )
     )
