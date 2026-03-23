@@ -29,6 +29,7 @@ const content = {
     backHome: 'Ana sayfaya dön',
     errorName: 'Ad soyad alanı zorunludur.',
     errorEmail: 'Geçerli bir e-posta adresi girin.',
+    errorAlreadyVerified: 'Bu e-posta adresi zaten doğrulanmış. Giriş yapabilirsiniz.',
     errorGeneric: 'Bir hata oluştu. Lütfen tekrar deneyin.',
   },
   en: {
@@ -48,6 +49,7 @@ const content = {
     backHome: 'Back to homepage',
     errorName: 'Full name is required.',
     errorEmail: 'Please enter a valid email address.',
+    errorAlreadyVerified: 'This email is already verified. You can log in.',
     errorGeneric: 'Something went wrong. Please try again.',
   },
 } as const
@@ -82,7 +84,7 @@ export default function SignupPage() {
     setLoading(true)
 
     try {
-      const res = await fetch('/api/session', {
+      const res = await fetch('/api/signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -90,15 +92,22 @@ export default function SignupPage() {
           email: email.trim(),
           company: company.trim() || undefined,
           phone: phone.trim() || undefined,
-          source: 'signup',
         }),
       })
 
+      const data = await res.json()
+
       if (!res.ok) {
-        throw new Error('session_error')
+        if (data.error === 'already_verified') {
+          setError(t.errorAlreadyVerified)
+        } else {
+          throw new Error(data.error || 'signup_error')
+        }
+        setLoading(false)
+        return
       }
 
-      router.push('/dashboard')
+      router.push('/signup/verify')
     } catch {
       setError(t.errorGeneric)
       setLoading(false)
@@ -107,18 +116,129 @@ export default function SignupPage() {
 
   return (
     <div
-      className="min-h-screen bg-[#060609] flex items-center justify-center px-4 py-12"
+      className="min-h-screen bg-[#060609] flex items-center justify-center px-4 py-6 relative overflow-hidden"
       style={{ fontSize: '16px' }}
     >
-      <div className="w-full max-w-md">
+      {/* Neural Network Canvas Animation */}
+      <canvas id="neural-canvas" className="absolute inset-0 w-full h-full pointer-events-none" aria-hidden="true" />
+      <script dangerouslySetInnerHTML={{ __html: `
+        (function() {
+          var c = document.getElementById('neural-canvas');
+          if (!c) return;
+          var ctx = c.getContext('2d');
+          var w, h, nodes = [], pulses = [];
+          var NODE_COUNT = 40;
+          var CONNECT_DIST = 180;
+          var PULSE_CHANCE = 0.008;
+
+          function resize() {
+            w = c.width = c.offsetWidth;
+            h = c.height = c.offsetHeight;
+          }
+          resize();
+          window.addEventListener('resize', resize);
+
+          // Create nodes
+          for (var i = 0; i < NODE_COUNT; i++) {
+            nodes.push({
+              x: Math.random() * w,
+              y: Math.random() * h,
+              vx: (Math.random() - 0.5) * 0.3,
+              vy: (Math.random() - 0.5) * 0.3,
+              r: Math.random() * 2 + 1.5
+            });
+          }
+
+          function addPulse(fromIdx, toIdx) {
+            pulses.push({ from: fromIdx, to: toIdx, t: 0, speed: 0.008 + Math.random() * 0.008 });
+          }
+
+          function draw() {
+            ctx.clearRect(0, 0, w, h);
+
+            // Move nodes
+            for (var i = 0; i < nodes.length; i++) {
+              var n = nodes[i];
+              n.x += n.vx;
+              n.y += n.vy;
+              if (n.x < 0 || n.x > w) n.vx *= -1;
+              if (n.y < 0 || n.y > h) n.vy *= -1;
+              n.x = Math.max(0, Math.min(w, n.x));
+              n.y = Math.max(0, Math.min(h, n.y));
+            }
+
+            // Draw connections
+            for (var i = 0; i < nodes.length; i++) {
+              for (var j = i + 1; j < nodes.length; j++) {
+                var dx = nodes[i].x - nodes[j].x;
+                var dy = nodes[i].y - nodes[j].y;
+                var dist = Math.sqrt(dx * dx + dy * dy);
+                if (dist < CONNECT_DIST) {
+                  var alpha = (1 - dist / CONNECT_DIST) * 0.35;
+                  ctx.beginPath();
+                  ctx.moveTo(nodes[i].x, nodes[i].y);
+                  ctx.lineTo(nodes[j].x, nodes[j].y);
+                  ctx.strokeStyle = 'rgba(255,255,255,' + alpha + ')';
+                  ctx.lineWidth = 0.8;
+                  ctx.stroke();
+
+                  // Random pulse
+                  if (Math.random() < PULSE_CHANCE && pulses.length < 15) {
+                    addPulse(i, j);
+                  }
+                }
+              }
+            }
+
+            // Draw pulses (data flowing between nodes)
+            for (var p = pulses.length - 1; p >= 0; p--) {
+              var pulse = pulses[p];
+              pulse.t += pulse.speed;
+              if (pulse.t > 1) { pulses.splice(p, 1); continue; }
+              var from = nodes[pulse.from];
+              var to = nodes[pulse.to];
+              var px = from.x + (to.x - from.x) * pulse.t;
+              var py = from.y + (to.y - from.y) * pulse.t;
+              var glow = Math.sin(pulse.t * Math.PI);
+              ctx.beginPath();
+              ctx.arc(px, py, 2, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(16,185,129,' + (glow * 0.8) + ')';
+              ctx.fill();
+              ctx.beginPath();
+              ctx.arc(px, py, 5, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(16,185,129,' + (glow * 0.2) + ')';
+              ctx.fill();
+            }
+
+            // Draw nodes
+            for (var i = 0; i < nodes.length; i++) {
+              var n = nodes[i];
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, n.r, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(255,255,255,0.25)';
+              ctx.fill();
+              // Subtle glow
+              ctx.beginPath();
+              ctx.arc(n.x, n.y, n.r + 3, 0, Math.PI * 2);
+              ctx.fillStyle = 'rgba(255,255,255,0.03)';
+              ctx.fill();
+            }
+
+            requestAnimationFrame(draw);
+          }
+          draw();
+        })();
+      ` }} />
+
+      <div className="w-full max-w-md relative z-10">
         {/* Logo */}
-        <div className="flex justify-center mb-8">
+        <div className="flex justify-center mb-5">
           <Link href="/">
             <Image
               src="/logos/yoai-logo.png"
               alt="YoAi"
-              width={120}
-              height={40}
+              width={80}
+              height={28}
               className="brightness-0 invert"
               priority
             />

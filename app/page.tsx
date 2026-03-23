@@ -3,6 +3,7 @@ import Image from 'next/image'
 import { cookies } from 'next/headers'
 import ScheduleModal from '@/components/landing/ScheduleModal'
 import DemoModal from '@/components/landing/DemoModal'
+import LandingHeader from '@/components/landing/LandingHeader'
 
 export default async function RootPage() {
   const cookieStore = await cookies()
@@ -166,29 +167,7 @@ export default async function RootPage() {
       ` }} />
 
       {/* ═══════════ HEADER ═══════════ */}
-      <header className="w-full sticky top-0 z-50 bg-[#060609]/80 backdrop-blur-2xl">
-        <div className="max-w-7xl mx-auto flex items-center justify-between px-6 py-3">
-          {/* Left: Logo */}
-          <Image src="/logos/yoai-logo.png" alt="YoAi" width={80} height={30} className="object-contain brightness-0 invert" />
-
-          {/* Right: CTA group */}
-          <div className="flex items-center gap-3">
-            <DemoModal label={c.ctaDemo} locale={locale} />
-            <ScheduleModal
-              label={c.ctaSchedule}
-              locale={locale}
-            />
-            <Link
-              href="/signup"
-              className="btn-shimmer text-[12.75px] font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors"
-            >
-              {c.ctaTrial}
-            </Link>
-          </div>
-        </div>
-        {/* Bottom gradient line */}
-        <div className="h-[1px] bg-gradient-to-r from-transparent via-emerald-500/20 to-transparent" />
-      </header>
+      <LandingHeader locale={locale} ctaSchedule={c.ctaSchedule} ctaTrial={c.ctaTrial} ctaDemo={c.ctaDemo} />
 
       {/* ═══════════ HERO — Centered layout ═══════════ */}
       <section className="relative w-full px-6 pt-10 pb-8 md:pt-16 md:pb-10 overflow-hidden">
@@ -196,7 +175,7 @@ export default async function RootPage() {
           <div className="absolute top-[15%] left-1/2 -translate-x-1/2 w-[1000px] h-[700px] rounded-full blur-[160px]" style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.07) 0%, rgba(20,184,166,0.03) 50%, transparent 80%)' }} />
         </div>
 
-        <div className="relative max-w-6xl mx-auto text-center">
+        <div className="relative max-w-7xl mx-auto text-center">
           {/* Badge */}
           <div className="btn-shimmer inline-flex items-center gap-2.5 text-[14px] font-medium text-emerald-400/90 border border-emerald-400/20 bg-emerald-400/[0.06] px-5 py-2.5 rounded-full mb-6">
             <Image src="/icons/ai-brain.png" alt="" width={18} height={18} style={{ filter: 'brightness(0) saturate(100%) invert(73%) sepia(52%) saturate(456%) hue-rotate(108deg) brightness(95%) contrast(91%)' }} />
@@ -383,13 +362,11 @@ export default async function RootPage() {
           <div className="flex flex-wrap justify-center items-center gap-3">
             <Link
               href="/signup"
-              className="group relative inline-flex items-center gap-2 bg-emerald-500 hover:bg-emerald-400 text-black font-semibold px-8 py-3.5 rounded-xl transition-all shadow-[0_0_30px_rgba(16,185,129,0.25)] hover:shadow-[0_0_40px_rgba(16,185,129,0.35)] overflow-hidden"
+              className="btn-shimmer inline-flex items-center gap-2 text-[14px] font-medium border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors"
             >
-              <span className="absolute inset-0 bg-gradient-to-r from-transparent via-white/20 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-700" />
-              <span className="relative">{c.ctaTrial}</span>
-              <Icon name="arrow" size={16} />
+              {c.ctaTrial} <Icon name="arrow" size={14} />
             </Link>
-            <ScheduleModal label={c.ctaSchedule} locale={locale} variant="hero" />
+            <ScheduleModal label={c.ctaSchedule} locale={locale} variant="bottom" />
           </div>
         </div>
       </section>

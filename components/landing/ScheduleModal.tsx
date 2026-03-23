@@ -8,7 +8,7 @@ const CONTACT_EMAIL = 'info@yodijital.com'
 interface Props {
   label: string
   locale: string
-  variant?: 'nav' | 'hero'
+  variant?: 'nav' | 'hero' | 'bottom'
 }
 
 export default function ScheduleModal({ label, locale, variant = 'nav' }: Props) {
@@ -190,6 +190,8 @@ export default function ScheduleModal({ label, locale, variant = 'nav' }: Props)
 
   const btnClass = variant === 'hero'
     ? 'btn-shimmer inline-flex items-center justify-center font-semibold text-base px-10 py-4 rounded-full transition-all cursor-pointer min-w-[220px] bg-gradient-to-r from-emerald-500 to-teal-500 text-black hover:from-emerald-400 hover:to-teal-400 shadow-[0_0_30px_rgba(16,185,129,0.2)] hover:shadow-[0_0_40px_rgba(16,185,129,0.3)]'
+    : variant === 'bottom'
+    ? 'btn-shimmer inline-flex items-center justify-center text-[14px] font-medium border border-emerald-400/30 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer'
     : 'btn-shimmer hidden sm:inline-flex items-center justify-center font-semibold border border-emerald-400/40 text-emerald-400 hover:bg-emerald-400/10 px-6 py-2.5 rounded-full transition-colors cursor-pointer text-[12.75px]'
 
   const monthLabel = `${t.monthNames[viewDate.getMonth()]} ${viewDate.getFullYear()}`
