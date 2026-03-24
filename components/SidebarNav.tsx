@@ -14,16 +14,13 @@ export default function SidebarNav() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
-  const [collapsed, setCollapsed] = useState<boolean>(false)
+  const [collapsed, setCollapsed] = useState<boolean>(() => {
+    if (typeof window === 'undefined') return false
+    try { return JSON.parse(localStorage.getItem('sidebar_collapsed') || 'false') } catch { return false }
+  })
   const [mounted, setMounted] = useState(false)
 
-  // Load collapsed state from localStorage on mount
   useEffect(() => {
-    const saved = localStorage.getItem('sidebar_collapsed')
-    if (saved !== null) {
-      setCollapsed(JSON.parse(saved))
-    }
-    // Delay enabling transitions to prevent flash on page load
     requestAnimationFrame(() => setMounted(true))
   }, [])
 
