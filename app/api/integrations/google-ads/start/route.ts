@@ -25,7 +25,11 @@ export async function GET(request: Request) {
     )
   }
 
+  const cookieStore = await cookies()
+  const sessionExists = !!cookieStore.get('session_id')?.value
+
   const state = randomBytes(24).toString('hex')
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'en'
   const authorizeUrl = new URL(GOOGLE_AUTH_URL)
   authorizeUrl.searchParams.set('client_id', clientId)
   authorizeUrl.searchParams.set('redirect_uri', redirectUri)
@@ -34,10 +38,7 @@ export async function GET(request: Request) {
   authorizeUrl.searchParams.set('access_type', 'offline')
   authorizeUrl.searchParams.set('prompt', 'consent')
   authorizeUrl.searchParams.set('state', state)
-  authorizeUrl.searchParams.set('hl', 'en')
-
-  const cookieStore = await cookies()
-  const sessionExists = !!cookieStore.get('session_id')?.value
+  authorizeUrl.searchParams.set('hl', locale)
   console.log('GOOGLE_ADS_START_SESSION_EXISTS', sessionExists)
   const response = NextResponse.redirect(authorizeUrl.toString(), { status: 302 })
   response.headers.set('Cache-Control', 'no-store, no-cache, must-revalidate')
