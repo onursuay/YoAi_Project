@@ -329,18 +329,7 @@ function EntegrasyonContent() {
                         if (confirm(t('google.disconnect'))) {
                           try {
                             await fetch('/api/integrations/google-ads/disconnect', { method: 'POST', credentials: 'include' })
-                            const statusRes = await fetch('/api/google/status', { credentials: 'include' })
-                            if (statusRes.ok) {
-                              const sd = await statusRes.json().catch(() => ({}))
-                              setGoogleStatus({
-                                connected: Boolean(sd?.connected),
-                                accountName: sd?.accountName ?? undefined,
-                                accountId: sd?.accountId ?? undefined,
-                                hasSelectedAccount: Boolean(sd?.hasSelectedAccount ?? sd?.accountId),
-                              })
-                            } else {
-                              setGoogleStatus({ connected: false })
-                            }
+                            setGoogleStatus({ connected: false })
                           } catch (e) {
                             console.error('Google Ads disconnect failed:', e)
                           }
