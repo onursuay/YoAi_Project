@@ -15,7 +15,7 @@ const EN_TO_TR: Record<string, string> = {
   'terms-of-service': 'terms',
 }
 
-/** TR slugs that have EN equivalents (for redirect when locale=en on TR URL) */
+/** TR slug → EN slug (for redirect when locale=en on TR URL) */
 const TR_TO_EN: Record<string, string> = {
   'strateji': 'strategy',
   'optimizasyon': 'optimization',
@@ -28,6 +28,13 @@ const TR_TO_EN: Record<string, string> = {
   'kullanim-kosullari': 'terms-of-service',
   'veri-silme': 'data-deletion',
 }
+
+/** All app slugs that need /en/ prefix when locale=en (includes same-slug routes) */
+const APP_SLUGS = new Set([
+  ...Object.keys(TR_TO_EN),
+  'meta-ads', 'google-ads', 'yoai', 'seo', 'dashboard',
+  'hesabim', 'abonelik', 'faturalarim',
+])
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
@@ -59,12 +66,19 @@ export function middleware(request: NextRequest) {
     return response
   }
 
-  // 2. If locale=en but user is on a TR slug URL → redirect to /en/en-slug
+  // 2. If locale=en but user is on a non-/en/ URL → redirect to /en/ equivalent
   const locale = request.cookies.get('NEXT_LOCALE')?.value
   if (locale === 'en') {
+    // Homepage: / → /en
+    if (pathname === '/') {
+      const url = request.nextUrl.clone()
+      url.pathname = '/en'
+      return NextResponse.redirect(url)
+    }
+    // App routes: /strateji → /en/strategy, /meta-ads → /en/meta-ads
     const firstSlug = pathname.split('/')[1]
-    if (firstSlug && TR_TO_EN[firstSlug]) {
-      const enSlug = TR_TO_EN[firstSlug]
+    if (firstSlug && APP_SLUGS.has(firstSlug)) {
+      const enSlug = TR_TO_EN[firstSlug] || firstSlug
       const rest = pathname.slice(firstSlug.length + 1)
       const url = request.nextUrl.clone()
       url.pathname = `/en/${enSlug}${rest}`
