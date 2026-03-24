@@ -10,7 +10,7 @@ import { metaFetch } from '@/lib/meta/clientFetch'
 import { ROUTES } from '@/lib/routes'
 import {
   ArrowRight, Target, TrendingUp, Sparkles, Users,
-  Image as ImageIcon, FileText, Search, Puzzle, Package, Loader2,
+  Image as ImageIcon, FileText, Search, Puzzle, Loader2,
   RefreshCw, AlertCircle,
 } from 'lucide-react'
 
@@ -147,7 +147,6 @@ export default function HomePage() {
     { id: 'hedefKitle', label: isEn ? 'Target Audience' : 'Hedef Kitle', href: '/hedef-kitle', icon: Users, badge: 'AI' },
     { id: 'tasarim', label: isEn ? 'Design' : 'Tasarım', href: '/tasarim', icon: ImageIcon, badge: 'AI' },
     { id: 'raporlar', label: isEn ? 'Reports' : 'Raporlar', href: '/raporlar', icon: FileText },
-    { id: 'katalog', label: isEn ? 'Catalog' : 'Katalog', href: '/dashboard/katalog', icon: Package },
     { id: 'seo', label: 'SEO', href: '/seo', icon: Search },
     { id: 'entegrasyon', label: isEn ? 'Integration' : 'Entegrasyon', href: '/entegrasyon', icon: Puzzle },
   ]

@@ -6,7 +6,6 @@ import {
   Users,
   Image,
   FileText,
-  Package,
   Search,
   Puzzle,
   Building2
@@ -93,12 +92,6 @@ export const navItems: NavItem[] = [
     label: 'Raporlar',
     href: '/raporlar',
     icon: FileText,
-  },
-  {
-    id: 'katalog',
-    label: 'Katalog',
-    href: '/dashboard/katalog',
-    icon: Package,
   },
   {
     id: 'seo',
