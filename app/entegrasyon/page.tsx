@@ -462,8 +462,8 @@ function EntegrasyonContent() {
                           </span>
                           <button
                             type="button"
-                            onClick={() => onGoogleManagerOrAccountClick(m)}
-                            disabled={!!selectingAccountId}
+                            onClick={() => !selectingAccountId && onGoogleManagerOrAccountClick(m)}
+                            disabled={selectingAccountId === m.customerId}
                             className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                           >
                             {selectingAccountId === m.customerId ? t('google.selecting') : t('google.selectLabel')}
@@ -482,8 +482,8 @@ function EntegrasyonContent() {
                           <span className="font-medium text-gray-900">{c.name} (ID: {c.customerId})</span>
                           <button
                             type="button"
-                            onClick={() => onGoogleChildClick(c)}
-                            disabled={!!selectingAccountId}
+                            onClick={() => !selectingAccountId && onGoogleChildClick(c)}
+                            disabled={selectingAccountId === c.customerId}
                             className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                           >
                             {selectingAccountId === c.customerId ? t('google.selecting') : t('google.selectLabel')}

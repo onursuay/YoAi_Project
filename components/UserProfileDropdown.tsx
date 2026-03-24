@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
 import { User, FileText, CreditCard, HelpCircle, Globe, LogOut, ChevronRight, Check } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
@@ -15,6 +15,7 @@ interface Props {
 
 export default function UserProfileDropdown({ collapsed }: Props) {
   const t = useTranslations('sidebar')
+  const locale = useLocale()
   const router = useRouter()
   const { subscription, isTrialActive: trial, trialDaysRemaining } = useSubscription()
   const [open, setOpen] = useState(false)
@@ -43,7 +44,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
   const fullName = `${profile.firstName} ${profile.lastName}`
 
   const statusLabel = trial
-    ? `Trial (${trialDaysRemaining} gün)`
+    ? (locale === 'tr' ? 'Deneme Sürümü' : `Trial (${trialDaysRemaining} days)`)
     : subscription.status === 'active'
     ? subscription.planId.charAt(0).toUpperCase() + subscription.planId.slice(1)
     : 'Free'
