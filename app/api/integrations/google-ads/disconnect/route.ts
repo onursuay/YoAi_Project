@@ -35,6 +35,7 @@ export async function POST() {
   response.cookies.set(COOKIE.LOGIN_CUSTOMER_ID, '', { maxAge: 0, path: '/' })
   response.cookies.set(COOKIE.ACCOUNT_NAME, '', { maxAge: 0, path: '/' })
   response.cookies.set(COOKIE.CUSTOMER_NAME, '', { maxAge: 0, path: '/' })
+  response.cookies.set(COOKIE.IS_MANAGER, '', { maxAge: 0, path: '/' })
 
   return response
 }

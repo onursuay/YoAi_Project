@@ -11,16 +11,20 @@ export async function GET() {
   const cookieStore = await cookies()
   const userId = getGoogleAdsUserId(cookieStore)
 
-  let hasToken = !!cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  let hasToken = false
   let customerId = cookieStore.get(COOKIE.CUSTOMER_ID)?.value
   let accountName = cookieStore.get(COOKIE.ACCOUNT_NAME)?.value
 
-  if (!hasToken && userId) {
+  if (userId) {
     const dbCtx = await getConnection(userId)
-    hasToken = !!dbCtx?.refreshToken
-    if (dbCtx) {
+    if (dbCtx?.refreshToken) {
+      hasToken = true
       customerId = customerId || dbCtx.customerId
     }
+  }
+
+  if (!hasToken) {
+    hasToken = !!cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
   }
 
   if (!hasToken) {

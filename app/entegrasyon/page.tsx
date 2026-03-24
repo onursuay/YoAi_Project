@@ -119,6 +119,10 @@ function EntegrasyonContent() {
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
         setGoogleAccountsError(data?.message || data?.error || 'Failed to load accounts')
+        if (res.status === 401) {
+          setGoogleStatus({ connected: false })
+          setGoogleAccountModalOpen(false)
+        }
         return
       }
       setGoogleManagers(data.customers || [])
