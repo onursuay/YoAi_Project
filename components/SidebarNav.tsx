@@ -73,7 +73,7 @@ export default function SidebarNav() {
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
         {!collapsed && (
-          <Link href="/" prefetch={false}>
+          <Link href="/dashboard" prefetch={false}>
             <Image
               src="/logos/yoai-logo.png"
               alt="YoAI"
