@@ -164,6 +164,32 @@ export async function upsertConnection(userId: string, input: UpsertConnectionIn
 }
 
 /**
+ * Check raw connection status without requiring customerId.
+ * Returns null only when supabase is unavailable (treat as no-row → cookie fallback).
+ * Returns { exists: false } when no DB row exists.
+ * Returns { exists: true, hasToken } when row exists (regardless of customerId).
+ * Use this for status checks; use getConnection for full context.
+ */
+export async function getConnectionStatus(userId: string): Promise<{
+  exists: boolean
+  hasToken: boolean
+  customerId: string | null
+}> {
+  if (!supabase) return { exists: false, hasToken: false, customerId: null }
+  const { data, error } = await supabase
+    .from('google_ads_connections')
+    .select('status, google_ads_refresh_token, google_ads_customer_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (error || !data) return { exists: false, hasToken: false, customerId: null }
+  return {
+    exists: true,
+    hasToken: data.status === 'active' && !!data.google_ads_refresh_token,
+    customerId: data.google_ads_customer_id?.replace(/-/g, '') || null,
+  }
+}
+
+/**
  * Revoke connection (mark status=revoked, clear token).
  */
 export async function revokeConnection(userId: string): Promise<void> {
