@@ -1,11 +1,14 @@
 'use client'
 
 import { useEffect, useState, useTransition } from 'react'
+import { usePathname } from 'next/navigation'
+import { mapPathToLocale } from '@/lib/routes'
 
 export default function LanguageSwitcher() {
   const [isPending, startTransition] = useTransition()
   const [currentLocale, setCurrentLocale] = useState('tr')
   const [mounted, setMounted] = useState(false)
+  const pathname = usePathname()
 
   useEffect(() => {
     setMounted(true)
@@ -13,11 +16,12 @@ export default function LanguageSwitcher() {
     setCurrentLocale(locale)
   }, [])
 
-  const changeLanguage = (locale: string) => {
+  const changeLanguage = (targetLocale: string) => {
     startTransition(() => {
-      document.cookie = `NEXT_LOCALE=${locale}; path=/; max-age=31536000`
-      setCurrentLocale(locale)
-      window.location.reload()
+      document.cookie = `NEXT_LOCALE=${targetLocale}; path=/; max-age=31536000`
+      setCurrentLocale(targetLocale)
+      const newPath = mapPathToLocale(pathname, targetLocale)
+      window.location.href = newPath
     })
   }
 

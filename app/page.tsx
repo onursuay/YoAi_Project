@@ -110,12 +110,12 @@ export default async function RootPage() {
     footer: '2025 YO Dijital. Tüm hakları saklıdır.',
   }
 
-  // Legal links — locale-aware URLs
+  // Legal links — locale-aware URLs (EN uses /en/ prefix for compliance)
   const legal = {
-    privacy: { label: isEn ? 'Privacy Policy' : 'Gizlilik Politikası', href: isEn ? '/privacy-policy' : '/gizlilik-politikasi' },
-    cookie: { label: isEn ? 'Cookie Policy' : 'Çerez Politikası', href: isEn ? '/cookie-policy' : '/cerez-politikasi' },
-    terms: { label: isEn ? 'Terms of Service' : 'Kullanım Koşulları', href: isEn ? '/terms' : '/kullanim-kosullari' },
-    dataDeletion: { label: isEn ? 'Data Deletion' : 'Veri Silme', href: isEn ? '/data-deletion' : '/veri-silme' },
+    privacy: { label: isEn ? 'Privacy Policy' : 'Gizlilik Politikası', href: isEn ? '/en/privacy-policy' : '/gizlilik-politikasi' },
+    cookie: { label: isEn ? 'Cookie Policy' : 'Çerez Politikası', href: isEn ? '/en/cookie-policy' : '/cerez-politikasi' },
+    terms: { label: isEn ? 'Terms of Service' : 'Kullanım Koşulları', href: isEn ? '/en/terms-of-service' : '/kullanim-kosullari' },
+    dataDeletion: { label: isEn ? 'Data Deletion' : 'Veri Silme', href: isEn ? '/en/data-deletion' : '/veri-silme' },
   }
 
   /* ────────────────────── SVG Icons ────────────────────── */

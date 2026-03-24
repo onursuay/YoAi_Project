@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { navItems } from '@/lib/nav'
+import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
 import { useState, useMemo, useEffect } from 'react'
@@ -43,42 +44,24 @@ export default function SidebarNav() {
     return pathname === href
   }
 
-  // Locale-aware legal hrefs for Kurumsal section
   const locale = typeof document !== 'undefined'
     ? (document.cookie.match(/NEXT_LOCALE=(\w+)/)?.[1] || 'tr')
     : 'tr'
 
-  const legalHrefs: Record<string, Record<string, string>> = {
-    tr: {
-      'gizlilik-politikasi': '/gizlilik-politikasi',
-      'cerez-politikasi': '/cerez-politikasi',
-      'kullanim-kosullari': '/kullanim-kosullari',
-      'veri-silme': '/veri-silme',
-    },
-    en: {
-      'gizlilik-politikasi': '/privacy-policy',
-      'cerez-politikasi': '/cookie-policy',
-      'kullanim-kosullari': '/terms',
-      'veri-silme': '/data-deletion',
-    },
-  }
-
   const navItemsWithTranslations = useMemo(() => {
     const getTranslationKey = (id: string) => {
-      // "hedef-kitle" → "hedefKitle" (camelCase)
       if (id === 'hedef-kitle') return 'hedefKitle'
       return id.replace(/-/g, '')
     }
 
-    const currentLegalHrefs = legalHrefs[locale] || legalHrefs.tr
-
     return navItems.map(item => ({
       ...item,
       label: t(getTranslationKey(item.id)),
+      href: item.href ? localePath(item.href, locale) : item.href,
       children: item.children?.map(child => ({
         ...child,
         label: t(getTranslationKey(child.id)),
-        href: currentLegalHrefs[child.id] || child.href,
+        href: child.href ? localePath(child.href, locale) : child.href,
       }))
     }))
   }, [t, locale])
