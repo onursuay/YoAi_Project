@@ -35,7 +35,7 @@ function EntegrasyonContent() {
   const [googleChildrenLoading, setGoogleChildrenLoading] = useState(false)
   const [googleAccountStep, setGoogleAccountStep] = useState<'managers' | 'children'>('managers')
   const [selectedGoogleManagerId, setSelectedGoogleManagerId] = useState<string | null>(null)
-  const [googleSelectLoading, setGoogleSelectLoading] = useState(false)
+  const [selectingAccountId, setSelectingAccountId] = useState<string | null>(null)
   const [googleAccountsError, setGoogleAccountsError] = useState<string | null>(null)
 
   useEffect(() => {
@@ -133,7 +133,7 @@ function EntegrasyonContent() {
   }
 
   const selectGoogleAccount = async (loginCustomerId: string, customerId: string, customerName?: string) => {
-    setGoogleSelectLoading(true)
+    setSelectingAccountId(customerId)
     setGoogleAccountsError(null)
     try {
       const res = await fetch('/api/integrations/google-ads/select-account', {
@@ -158,7 +158,7 @@ function EntegrasyonContent() {
     } catch (e) {
       setGoogleAccountsError(e instanceof Error ? e.message : 'Network error')
     } finally {
-      setGoogleSelectLoading(false)
+      setSelectingAccountId(null)
     }
   }
 
@@ -417,15 +417,15 @@ function EntegrasyonContent() {
 
           {/* Google Ads account selection modal */}
           {googleAccountModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !googleSelectLoading && setGoogleAccountModalOpen(false)}>
+            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !selectingAccountId && setGoogleAccountModalOpen(false)}>
               <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">{t('google.selectAccountTitle')}</h3>
                   <button
                     type="button"
-                    onClick={() => !googleSelectLoading && setGoogleAccountModalOpen(false)}
+                    onClick={() => !selectingAccountId && setGoogleAccountModalOpen(false)}
                     className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
-                    disabled={googleSelectLoading}
+                    disabled={!!selectingAccountId}
                   >
                     <span className="sr-only">Close</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
@@ -459,10 +459,10 @@ function EntegrasyonContent() {
                           <button
                             type="button"
                             onClick={() => onGoogleManagerOrAccountClick(m)}
-                            disabled={googleSelectLoading}
+                            disabled={!!selectingAccountId}
                             className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                           >
-                            {googleSelectLoading ? t('google.selecting') : t('google.selectLabel')}
+                            {selectingAccountId === m.customerId ? t('google.selecting') : t('google.selectLabel')}
                           </button>
                         </li>
                       ))}
@@ -479,10 +479,10 @@ function EntegrasyonContent() {
                           <button
                             type="button"
                             onClick={() => onGoogleChildClick(c)}
-                            disabled={googleSelectLoading}
+                            disabled={!!selectingAccountId}
                             className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                           >
-                            {googleSelectLoading ? t('google.selecting') : t('google.selectLabel')}
+                            {selectingAccountId === c.customerId ? t('google.selecting') : t('google.selectLabel')}
                           </button>
                         </li>
                       ))}
