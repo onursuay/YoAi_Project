@@ -29,13 +29,12 @@ export async function POST() {
     await revokeConnection(userId)
   }
 
-  const response = NextResponse.json({ success: true })
-  response.cookies.set(COOKIE.REFRESH_TOKEN, '', { maxAge: 0, path: '/' })
-  response.cookies.set(COOKIE.CUSTOMER_ID, '', { maxAge: 0, path: '/' })
-  response.cookies.set(COOKIE.LOGIN_CUSTOMER_ID, '', { maxAge: 0, path: '/' })
-  response.cookies.set(COOKIE.ACCOUNT_NAME, '', { maxAge: 0, path: '/' })
-  response.cookies.set(COOKIE.CUSTOMER_NAME, '', { maxAge: 0, path: '/' })
-  response.cookies.set(COOKIE.IS_MANAGER, '', { maxAge: 0, path: '/' })
+  cookieStore.delete(COOKIE.REFRESH_TOKEN)
+  cookieStore.delete(COOKIE.CUSTOMER_ID)
+  cookieStore.delete(COOKIE.LOGIN_CUSTOMER_ID)
+  cookieStore.delete(COOKIE.ACCOUNT_NAME)
+  cookieStore.delete(COOKIE.CUSTOMER_NAME)
+  cookieStore.delete(COOKIE.IS_MANAGER)
 
-  return response
+  return NextResponse.json({ success: true })
 }

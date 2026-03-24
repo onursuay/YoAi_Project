@@ -1,7 +1,7 @@
 import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { COOKIE } from '@/lib/google-ads/constants'
-import { getConnectionStatus } from '@/lib/googleAdsConnectionStore'
+import { getConnection } from '@/lib/googleAdsConnectionStore'
 import { getGoogleAdsUserId } from '@/lib/googleAdsUserId'
 
 /**
@@ -11,22 +11,16 @@ export async function GET() {
   const cookieStore = await cookies()
   const userId = getGoogleAdsUserId(cookieStore)
 
-  let hasToken = false
+  let hasToken = !!cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
   let customerId = cookieStore.get(COOKIE.CUSTOMER_ID)?.value
-  const accountName = cookieStore.get(COOKIE.ACCOUNT_NAME)?.value
+  let accountName = cookieStore.get(COOKIE.ACCOUNT_NAME)?.value
 
-  if (userId) {
-    const connStatus = await getConnectionStatus(userId)
-    if (connStatus.exists) {
-      // Row found in DB → trust DB completely, no cookie fallback
-      hasToken = connStatus.hasToken
-      if (connStatus.customerId) customerId = connStatus.customerId
-    } else {
-      // No DB row → cookie fallback (pre-migration / no session)
-      hasToken = !!cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
+  if (!hasToken && userId) {
+    const dbCtx = await getConnection(userId)
+    hasToken = !!dbCtx?.refreshToken
+    if (dbCtx) {
+      customerId = customerId || dbCtx.customerId
     }
-  } else {
-    hasToken = !!cookieStore.get(COOKIE.REFRESH_TOKEN)?.value
   }
 
   if (!hasToken) {
