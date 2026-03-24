@@ -15,6 +15,7 @@ export default function SidebarNav() {
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
   const [collapsed, setCollapsed] = useState<boolean>(false)
+  const [mounted, setMounted] = useState(false)
 
   // Load collapsed state from localStorage on mount
   useEffect(() => {
@@ -22,6 +23,8 @@ export default function SidebarNav() {
     if (saved !== null) {
       setCollapsed(JSON.parse(saved))
     }
+    // Delay enabling transitions to prevent flash on page load
+    requestAnimationFrame(() => setMounted(true))
   }, [])
 
   // Save collapsed state to localStorage
@@ -68,7 +71,7 @@ export default function SidebarNav() {
 
   return (
     <div 
-      className="bg-white border-r border-gray-200 h-screen flex flex-col transition-all duration-300"
+      className={`bg-white border-r border-gray-200 h-screen flex flex-col ${mounted ? 'transition-all duration-300' : ''}`}
       style={{ width: collapsed ? '72px' : '260px' }}
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between">
