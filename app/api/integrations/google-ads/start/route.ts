@@ -34,6 +34,7 @@ export async function GET(request: Request) {
   authorizeUrl.searchParams.set('access_type', 'offline')
   authorizeUrl.searchParams.set('prompt', 'consent')
   authorizeUrl.searchParams.set('state', state)
+  authorizeUrl.searchParams.set('hl', 'en')
 
   const cookieStore = await cookies()
   const sessionExists = !!cookieStore.get('session_id')?.value
