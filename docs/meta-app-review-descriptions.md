@@ -218,3 +218,16 @@ Each video must demonstrate:
 - Do NOT show any admin/developer tools — only the **user-facing interface**
 - Every claim in the permission description **must** be visible in the video
 - If a claim is not demonstrable, **remove it from the description** before submitting
+
+---
+
+## Platform Publishing Capabilities Reference
+
+| Feature | Facebook (Page) | Instagram (Business) |
+|---|---|---|
+| **Feed post (image)** | ✅ `/{page-id}/photos` | ✅ `/{ig-user-id}/media` (default) |
+| **Feed post (video)** | ✅ `/{page-id}/videos` | ✅ `/{ig-user-id}/media` (default) |
+| **Reels (video only)** | ✅ `/{page-id}/video_reels` (3-phase upload) | ✅ `media_type=REELS` |
+| **Stories (image + video)** | ❌ No public write API — only `GET /{page-id}/stories` (read-only). Must be published via Facebook app, Meta Business Suite, or Creator Studio. | ✅ `media_type=STORIES` (no caption support) |
+
+> **Note:** Facebook Stories publishing is not available via the Graph API as of v24.0. If Meta adds a write endpoint in the future, it can be integrated.
