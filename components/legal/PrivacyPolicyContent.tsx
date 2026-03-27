@@ -56,7 +56,7 @@ export default function PrivacyPolicyContent({ locale = 'tr' }: { locale?: 'tr' 
 
             <section>
               <h2 className="text-xl font-semibold mb-3 text-white">{g('section3Title')}</h2>
-              <p className="text-[14px] text-[#8a8f98] leading-relaxed">
+              <p className="text-[14px] text-[#8a8f98] leading-relaxed whitespace-pre-line">
                 <strong className="text-gray-300">{g('section3MetaTitle')}</strong>
                 <br />
                 {g('section3MetaContent')}
@@ -70,7 +70,16 @@ export default function PrivacyPolicyContent({ locale = 'tr' }: { locale?: 'tr' 
 
             <section>
               <h2 className="text-xl font-semibold mb-3 text-white">{g('section4Title')}</h2>
-              <p className="text-[14px] text-[#8a8f98] leading-relaxed">{g('section4Content')}</p>
+              <p className="text-[14px] text-[#8a8f98] leading-relaxed">
+                <strong className="text-gray-300">{g('section4SubATitle')}</strong>
+                <br />
+                {g('section4SubAContent')}
+              </p>
+              <p className="text-[14px] text-[#8a8f98] mt-3 whitespace-pre-line">
+                <strong className="text-gray-300">{g('section4SubBTitle')}</strong>
+                <br />
+                {g('section4SubBContent')}
+              </p>
             </section>
 
             <section>
