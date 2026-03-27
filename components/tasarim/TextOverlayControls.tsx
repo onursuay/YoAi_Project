@@ -179,7 +179,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
         <div className="space-y-3 pt-2">
             {/* Title */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('titleLabel')}</label>
+              <label className="block text-[11px] text-gray-500 mb-1">{t('titleLabel')}</label>
               <input
                 type="text"
                 value={title}
@@ -191,7 +191,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
             {/* Slogan */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('sloganLabel')}</label>
+              <label className="block text-[11px] text-gray-500 mb-1">{t('sloganLabel')}</label>
               <input
                 type="text"
                 value={slogan}
@@ -203,7 +203,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
             {/* Font */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('overlay.font')}</label>
+              <label className="block text-[11px] text-gray-500 mb-1">{t('overlay.font')}</label>
               <select
                 value={config.font}
                 onChange={e => update('font', e.target.value)}
@@ -219,7 +219,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
             {/* Font Size */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">
+              <label className="block text-[11px] text-gray-500 mb-1">
                 {t('overlay.fontSize')} — {config.fontSize}px
               </label>
               <input
@@ -232,7 +232,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
             {/* Color */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('overlay.color')}</label>
+              <label className="block text-[11px] text-gray-500 mb-1">{t('overlay.color')}</label>
               <div className="flex items-center gap-1.5 flex-wrap">
                 {COLORS.map(c => (
                   <button
@@ -256,7 +256,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
             {/* Text Position */}
             <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('overlay.position')}</label>
+              <label className="block text-[11px] text-gray-500 mb-1">{t('overlay.position')}</label>
               <PositionGrid value={config.position} onSelect={p => update('position', p)} />
             </div>
 
@@ -302,7 +302,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
           {/* Logo Size */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">
+            <label className="block text-[11px] text-gray-500 mb-1">
               {t('overlay.logoSize')} — {config.logoSize}%
             </label>
             <input
@@ -315,7 +315,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
           {/* Logo Position */}
           <div>
-            <label className="block text-xs text-gray-500 mb-1">{t('overlay.logoPosition')}</label>
+            <label className="block text-[11px] text-gray-500 mb-1">{t('overlay.logoPosition')}</label>
             <PositionGrid value={config.logoPosition} onSelect={p => update('logoPosition', p)} size="w-7 h-7" />
           </div>
         </div>
