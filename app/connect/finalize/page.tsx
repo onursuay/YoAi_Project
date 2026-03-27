@@ -2,9 +2,11 @@
 
 import { useEffect, useRef } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 
 export default function MetaFinalizePage() {
   const router = useRouter()
+  const locale = useLocale()
   const ranRef = useRef(false)
 
   useEffect(() => {
@@ -109,7 +111,9 @@ export default function MetaFinalizePage() {
     <div className="min-h-screen flex items-center justify-center bg-gray-50">
       <div className="text-center">
         <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-green-600 mx-auto mb-4" />
-        <p className="text-gray-700 font-medium">Bağlantı tamamlanıyor...</p>
+        <p className="text-gray-700 font-medium">
+          {locale === 'en' ? 'Completing connection...' : 'Bağlantı tamamlanıyor...'}
+        </p>
       </div>
     </div>
   )
