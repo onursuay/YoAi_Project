@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Upload, Trash2 } from 'lucide-react'
+import { Upload, Trash2, Type, ImagePlus } from 'lucide-react'
 
 export type TextPosition =
   | 'top-left' | 'top-center' | 'top-right'
@@ -144,30 +144,32 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
   return (
     <div className="space-y-3 pt-3 border-t border-gray-100">
-      <p className="text-xs font-medium text-gray-500 mb-1">{t('overlay.textLogo')}</p>
+      <label className="block text-sm font-medium text-gray-700 mb-1">{t('overlay.textLogo')}</label>
 
       {/* Toggle buttons */}
       <div className="flex gap-2">
         <button
           type="button"
           onClick={() => update('textEnabled', !config.textEnabled)}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium border transition-colors ${
             config.textEnabled
               ? 'bg-primary/10 border-primary text-primary'
               : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
           }`}
         >
+          <Type className="w-4 h-4" />
           {t('overlay.addText')}
         </button>
         <button
           type="button"
           onClick={() => update('logoEnabled', !config.logoEnabled)}
-          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+          className={`flex-1 flex items-center justify-center gap-1.5 py-2 rounded-lg text-sm font-medium border transition-colors ${
             config.logoEnabled
               ? 'bg-primary/10 border-primary text-primary'
               : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
           }`}
         >
+          <ImagePlus className="w-4 h-4" />
           {t('overlay.addLogo')}
         </button>
       </div>
