@@ -142,8 +142,8 @@ export default function SidebarNav() {
               <Image
                 src="/logos/yoai-logo.png"
                 alt="YoAI"
-                width={60}
-                height={24}
+                width={50}
+                height={20}
                 className="object-contain cursor-pointer"
               />
             </Link>
