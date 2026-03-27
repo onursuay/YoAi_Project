@@ -117,7 +117,8 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
           errors.push(`Facebook: ${data.message}`)
         }
       } catch {
-        errors.push('Facebook: Bağlantı hatası')
+        errors.push(`Facebook: ${t('connectionError')}`)
+
       }
     }
 
@@ -143,7 +144,8 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
           errors.push(`Instagram: ${data.message}`)
         }
       } catch {
-        errors.push('Instagram: Bağlantı hatası')
+        errors.push(`Instagram: ${t('connectionError')}`)
+
       }
     }
 
@@ -229,7 +231,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 <div className="min-w-0 flex-1">
                   <p className="text-xs font-medium text-gray-800 truncate">{item.prompt}</p>
                   <p className="text-xs text-gray-500 mt-0.5">
-                    {item.type === 'gorsel' ? 'Görsel' : 'Video'} • {item.ratio}
+                    {item.type === 'gorsel' ? t('mediaTypeImage') : t('mediaTypeVideo')} • {item.ratio}
                   </p>
                 </div>
               </div>

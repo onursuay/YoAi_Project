@@ -8,6 +8,7 @@ import { Image, Video, Loader2, Sparkles, Download, Coins, Upload, RefreshCw, Tr
 import { useCredits } from '@/components/providers/CreditProvider'
 import { COST_PER_GENERATION } from '@/lib/subscription/types'
 import PublishModal from '@/components/tasarim/PublishModal'
+import TextOverlayControls, { DEFAULT_OVERLAY, type OverlayConfig, type TextPosition } from '@/components/tasarim/TextOverlayControls'
 import { ToastContainer, type Toast, type ToastType } from '@/components/Toast'
 const LIBRARY_STORAGE_KEY = 'yoai-tasarim-library'
 
@@ -56,6 +57,8 @@ export default function TasarimPage() {
   const [mode, setMode] = useState<Mode>('gorsel')
   const [prompt, setPrompt] = useState('')
   const [title, setTitle] = useState('')
+  const [slogan, setSlogan] = useState('')
+  const [overlayConfig, setOverlayConfig] = useState<OverlayConfig>(DEFAULT_OVERLAY)
   const [ratio, setRatio] = useState<AspectRatio>('1:1')
   const [referenceImage, setReferenceImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
@@ -234,8 +237,149 @@ export default function TasarimPage() {
     reader.readAsDataURL(file)
   }
 
+  // --- Text Overlay helpers ---
+  const overlayPositionClasses = (pos: TextPosition): string => {
+    const map: Record<TextPosition, string> = {
+      'top-left': 'top-4 left-4 text-left',
+      'top-center': 'top-4 left-4 right-4 text-center',
+      'top-right': 'top-4 right-4 text-right',
+      'center-left': 'top-1/2 left-4 -translate-y-1/2 text-left',
+      'center': 'top-1/2 left-4 right-4 -translate-y-1/2 text-center',
+      'center-right': 'top-1/2 right-4 -translate-y-1/2 text-right',
+      'bottom-left': 'bottom-4 left-4 text-left',
+      'bottom-center': 'bottom-4 left-4 right-4 text-center',
+      'bottom-right': 'bottom-4 right-4 text-right',
+    }
+    return map[pos]
+  }
+
+  const overlayTextStyle = (sizeMult = 1): React.CSSProperties => ({
+    fontFamily: overlayConfig.font,
+    fontSize: `${overlayConfig.fontSize * sizeMult}px`,
+    color: overlayConfig.color,
+    textShadow: '0 1px 4px rgba(0,0,0,0.8), 0 0 12px rgba(0,0,0,0.4)',
+    lineHeight: 1.3,
+    wordBreak: 'break-word' as const,
+  })
+
+  const hasOverlayText = !!(title || slogan)
+  const useVideoScroll = overlayConfig.videoScroll && activeItem?.type === 'video'
+
+  const handleDownloadWithOverlay = useCallback(async () => {
+    if (!activeItem) return
+
+    // Video: direct download (overlay is preview-only)
+    if (activeItem.type === 'video') {
+      const a = document.createElement('a')
+      a.href = activeItem.url
+      a.download = `design-${activeItem.id}.mp4`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
+    // Image without overlay text: direct download
+    if (!title && !slogan) {
+      const a = document.createElement('a')
+      a.href = activeItem.url
+      a.download = `design-${activeItem.id}.jpg`
+      document.body.appendChild(a)
+      a.click()
+      document.body.removeChild(a)
+      return
+    }
+
+    // Image with overlay: bake text via Canvas
+    try {
+      const img = new window.Image()
+      img.crossOrigin = 'anonymous'
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        canvas.width = img.width
+        canvas.height = img.height
+        const ctx = canvas.getContext('2d')!
+        ctx.drawImage(img, 0, 0)
+
+        // Scale factor: preview max ~480px, actual image is larger
+        const scale = Math.max(img.width, img.height) / 480
+        const fontSize = overlayConfig.fontSize * scale
+        const padding = 16 * scale
+
+        ctx.shadowColor = 'rgba(0,0,0,0.8)'
+        ctx.shadowBlur = 4 * scale
+        ctx.shadowOffsetX = scale
+        ctx.shadowOffsetY = scale
+        ctx.fillStyle = overlayConfig.color
+
+        // Determine text alignment and anchor
+        const pos = overlayConfig.position
+        let textAlign: CanvasTextAlign = 'left'
+        let x = padding
+        if (pos.includes('center') && !pos.startsWith('center-l') && !pos.startsWith('center-r')) {
+          textAlign = 'center'; x = img.width / 2
+        } else if (pos.endsWith('center')) {
+          textAlign = 'center'; x = img.width / 2
+        } else if (pos.includes('right')) {
+          textAlign = 'right'; x = img.width - padding
+        }
+
+        let y = padding + fontSize
+        if (pos.startsWith('bottom')) {
+          y = img.height - padding - (slogan ? fontSize * 1.2 : 0)
+        } else if (pos.startsWith('center')) {
+          y = img.height / 2 - (slogan ? fontSize * 0.5 : 0)
+        }
+
+        ctx.textAlign = textAlign
+
+        if (title) {
+          ctx.font = `bold ${fontSize}px ${overlayConfig.font}`
+          ctx.fillText(title, x, y)
+        }
+        if (slogan) {
+          ctx.font = `${fontSize * 0.7}px ${overlayConfig.font}`
+          ctx.fillText(slogan, x, y + fontSize * 1.3)
+        }
+
+        canvas.toBlob(blob => {
+          if (!blob) return
+          const url = URL.createObjectURL(blob)
+          const a = document.createElement('a')
+          a.href = url
+          a.download = `design-${activeItem.id}.jpg`
+          document.body.appendChild(a)
+          a.click()
+          document.body.removeChild(a)
+          URL.revokeObjectURL(url)
+        }, 'image/jpeg', 0.95)
+      }
+      img.onerror = () => {
+        // Fallback: direct download without overlay
+        const a = document.createElement('a')
+        a.href = activeItem.url
+        a.download = `design-${activeItem.id}.jpg`
+        document.body.appendChild(a)
+        a.click()
+        document.body.removeChild(a)
+      }
+      img.src = activeItem.url
+    } catch {
+      window.open(activeItem.url, '_blank')
+    }
+  }, [activeItem, title, slogan, overlayConfig])
+
   return (
     <>
+      {/* Keyframes for video text scroll animation */}
+      <style>{`
+        @keyframes overlay-scroll-ltr {
+          0% { transform: translateX(-100%); opacity: 0; }
+          8% { opacity: 1; }
+          92% { opacity: 1; }
+          100% { transform: translateX(100%); opacity: 0; }
+        }
+      `}</style>
       <Topbar title={t('title')} description={t('description')} />
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="flex h-full">
@@ -333,31 +477,38 @@ export default function TasarimPage() {
                 </div>
               </div>
 
-              {/* Title - only for gorsel */}
-              {mode === 'gorsel' && (
-                <>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">
-                      {t('titleLabel')} <span className="text-red-500">*</span>
-                    </label>
-                    <input
-                      type="text"
-                      value={title}
-                      onChange={e => setTitle(e.target.value)}
-                      placeholder={t('titleLabel')}
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                    <p className="text-caption text-gray-500 text-right mt-1">{title.length} / 300</p>
-                  </div>
-                  <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('sloganLabel')}</label>
-                    <input
-                      type="text"
-                      placeholder="--"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                    />
-                  </div>
-                </>
+              {/* Title & Slogan */}
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">
+                  {t('titleLabel')}
+                </label>
+                <input
+                  type="text"
+                  value={title}
+                  onChange={e => setTitle(e.target.value)}
+                  placeholder={t('titleLabel')}
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+                <p className="text-caption text-gray-500 text-right mt-1">{title.length} / 300</p>
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('sloganLabel')}</label>
+                <input
+                  type="text"
+                  value={slogan}
+                  onChange={e => setSlogan(e.target.value)}
+                  placeholder="--"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                />
+              </div>
+
+              {/* Text Overlay Controls */}
+              {(title || slogan) && (
+                <TextOverlayControls
+                  config={overlayConfig}
+                  onChange={setOverlayConfig}
+                  mode={mode}
+                />
               )}
             </div>
 
@@ -513,6 +664,25 @@ export default function TasarimPage() {
                               className="w-full h-full object-cover animate-gallery-zoom"
                             />
                           )}
+
+                          {/* Live Text Overlay */}
+                          {hasOverlayText && (
+                            useVideoScroll ? (
+                              /* Video scroll: text moves left → right at bottom */
+                              <div className="absolute bottom-0 left-0 right-0 overflow-hidden pointer-events-none p-4">
+                                <div style={{ animation: 'overlay-scroll-ltr 8s linear infinite' }}>
+                                  {title && <p style={overlayTextStyle()}>{title}</p>}
+                                  {slogan && <p style={overlayTextStyle(0.7)} className="mt-0.5">{slogan}</p>}
+                                </div>
+                              </div>
+                            ) : (
+                              /* Static position overlay */
+                              <div className={`absolute pointer-events-none ${overlayPositionClasses(overlayConfig.position)}`}>
+                                {title && <p style={overlayTextStyle()}>{title}</p>}
+                                {slogan && <p style={overlayTextStyle(0.7)} className="mt-0.5">{slogan}</p>}
+                              </div>
+                            )
+                          )}
                         </div>
                         <div className="flex items-center justify-between w-full">
                           <div>
@@ -525,7 +695,10 @@ export default function TasarimPage() {
                             <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
                               <RefreshCw className="w-4 h-4" />
                             </button>
-                            <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
+                            <button
+                              onClick={handleDownloadWithOverlay}
+                              className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100"
+                            >
                               <Download className="w-4 h-4" />
                             </button>
                           </div>

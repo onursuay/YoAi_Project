@@ -2072,6 +2072,14 @@
       "enhanceFailed": "Prompt geliştirilemedi",
       "generationFailed": "Üretim başarısız oldu",
       "errorOccurred": "Bir hata oluştu",
+      "overlay": {
+        "title": "Metin Katmanı",
+        "font": "Yazı Tipi",
+        "fontSize": "Boyut",
+        "color": "Renk",
+        "position": "Konum",
+        "videoScroll": "Yazıyı kaydır (sol → sağ)"
+      },
       "publishModal": {
         "title": "Sosyal Medyada Yayınla",
         "selectPage": "Facebook Sayfası Seçin",
@@ -2095,7 +2103,10 @@
         "notConnected": "Meta hesabınız bağlanmamış. Yayınlamak için önce Meta hesabınızı bağlayın.",
         "connectMeta": "Meta Hesabını Bağla",
         "noPages": "Yayınlanabilecek Facebook sayfası bulunamadı.",
-        "reconnectHint": "Sayfa izinlerini vermek için Meta hesabınızı yeniden bağlayabilirsiniz."
+        "reconnectHint": "Sayfa izinlerini vermek için Meta hesabınızı yeniden bağlayabilirsiniz.",
+        "connectionError": "Bağlantı hatası",
+        "mediaTypeImage": "Görsel",
+        "mediaTypeVideo": "Video"
       }
     },
     "raporlar": {

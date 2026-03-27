@@ -2072,6 +2072,14 @@
       "enhanceFailed": "Failed to enhance prompt",
       "generationFailed": "Generation failed",
       "errorOccurred": "An error occurred",
+      "overlay": {
+        "title": "Text Overlay",
+        "font": "Font",
+        "fontSize": "Size",
+        "color": "Color",
+        "position": "Position",
+        "videoScroll": "Scroll text (left → right)"
+      },
       "publishModal": {
         "title": "Publish to Social Media",
         "selectPage": "Select Facebook Page",
@@ -2095,7 +2103,10 @@
         "notConnected": "Your Meta account is not connected. Connect your Meta account to publish.",
         "connectMeta": "Connect Meta Account",
         "noPages": "No Facebook pages found for publishing.",
-        "reconnectHint": "You can reconnect your Meta account to grant page permissions."
+        "reconnectHint": "You can reconnect your Meta account to grant page permissions.",
+        "connectionError": "Connection error",
+        "mediaTypeImage": "Image",
+        "mediaTypeVideo": "Video"
       }
     },
     "raporlar": {

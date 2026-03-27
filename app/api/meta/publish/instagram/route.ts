@@ -103,33 +103,31 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 2: For video (any publish type) and Stories, poll until container is ready
-    const needsPolling = mediaType === 'video' || publishType === 'stories'
-    if (needsPolling) {
-      for (let i = 0; i < MAX_POLLS; i++) {
-        await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
+    // Step 2: Poll until container is ready (all media types — images are usually instant but not guaranteed)
+    const pollDelay = mediaType === 'image' && publishType === 'feed' ? 2000 : POLL_INTERVAL_MS
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await new Promise((r) => setTimeout(r, pollDelay))
 
-        const statusResult = await client.get(`/${containerId}`, {
-          fields: 'status_code',
-        })
+      const statusResult = await client.get(`/${containerId}`, {
+        fields: 'status_code',
+      })
 
-        if (statusResult.ok) {
-          const statusCode = statusResult.data?.status_code
-          if (statusCode === 'FINISHED') break
-          if (statusCode === 'ERROR') {
-            return NextResponse.json(
-              { ok: false, error: 'ig_container_error', message: 'Instagram video işleme başarısız oldu' },
-              { status: 502 }
-            )
-          }
-        }
-
-        if (i === MAX_POLLS - 1) {
+      if (statusResult.ok) {
+        const statusCode = statusResult.data?.status_code
+        if (statusCode === 'FINISHED') break
+        if (statusCode === 'ERROR') {
           return NextResponse.json(
-            { ok: false, error: 'ig_timeout', message: 'Instagram video işleme zaman aşımına uğradı' },
-            { status: 504 }
+            { ok: false, error: 'ig_container_error', message: 'Instagram media processing failed' },
+            { status: 502 }
           )
         }
+      }
+
+      if (i === MAX_POLLS - 1) {
+        return NextResponse.json(
+          { ok: false, error: 'ig_timeout', message: 'Instagram media processing timed out' },
+          { status: 504 }
+        )
       }
     }
 
