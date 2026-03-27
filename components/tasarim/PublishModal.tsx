@@ -35,6 +35,7 @@ interface Props {
 const IG_CAPTION_MAX = 2200
 
 type IgPublishType = 'feed' | 'reels' | 'stories'
+type FbPublishType = 'feed' | 'reels'
 
 export default function PublishModal({ isOpen, onClose, item, onToast }: Props) {
   const t = useTranslations('dashboard.tasarim.publishModal')
@@ -46,14 +47,14 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
   const [publishToFacebook, setPublishToFacebook] = useState(true)
   const [publishToInstagram, setPublishToInstagram] = useState(false)
   const [igPublishType, setIgPublishType] = useState<IgPublishType>('feed')
+  const [fbPublishType, setFbPublishType] = useState<FbPublishType>('feed')
   const [caption, setCaption] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
 
-  // Reels only supports video — auto-correct if user switches
+  // Reels only supports video on both platforms
   const isVideo = item?.type === 'video'
-  const canReels = isVideo // Reels: video only per Instagram API
-  const canStories = true  // Stories: both image and video
+  const canReels = isVideo
 
   // Fetch targets when modal opens
   useEffect(() => {
@@ -66,6 +67,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
     setPublishToFacebook(true)
     setPublishToInstagram(false)
     setIgPublishType('feed')
+    setFbPublishType('feed')
 
     fetch('/api/meta/publish/targets')
       .then((res) => res.json())
@@ -106,7 +108,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
         const res = await fetch('/api/meta/publish/facebook', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ pageId: selectedPageId, mediaUrl: item.url, mediaType, caption }),
+          body: JSON.stringify({ pageId: selectedPageId, mediaUrl: item.url, mediaType, publishType: fbPublishType, caption }),
         })
         const data = await res.json()
         if (data.ok) {
@@ -269,6 +271,40 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     <Facebook className="w-4 h-4 text-[#1877F2]" />
                     <span className="text-sm text-gray-800">{t('publishToFacebook')}</span>
                   </label>
+
+                  {/* Facebook Publish Type — shown when Facebook is checked */}
+                  {publishToFacebook && (
+                    <div className="ml-7 flex gap-2">
+                      <button
+                        type="button"
+                        onClick={() => setFbPublishType('feed')}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                          fbPublishType === 'feed'
+                            ? 'border-[#1877F2] bg-[#1877F2]/5 text-[#1877F2] font-medium'
+                            : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        <LayoutGrid className="w-3 h-3" />
+                        {t('fbFeed')}
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => canReels && setFbPublishType('reels')}
+                        disabled={!canReels}
+                        className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg border text-xs transition-colors ${
+                          fbPublishType === 'reels'
+                            ? 'border-[#1877F2] bg-[#1877F2]/5 text-[#1877F2] font-medium'
+                            : !canReels
+                              ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                              : 'border-gray-200 text-gray-500 hover:border-gray-300'
+                        }`}
+                      >
+                        <Film className="w-3 h-3" />
+                        Reels
+                        {!canReels && <span className="text-[10px] text-gray-400">{t('fbReelsVideoOnly')}</span>}
+                      </button>
+                    </div>
+                  )}
 
                   <label
                     className={`flex items-center gap-3 p-3 border rounded-xl transition-colors ${

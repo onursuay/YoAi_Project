@@ -29,7 +29,33 @@ We use this permission only for the authenticated user's own Pages and advertisi
 
 ---
 
-## 2. leads_retrieval
+## 2. pages_manage_posts
+
+**Tell us how you'll use this permission:**
+
+YoAi is a SaaS advertising management platform with AI-powered creative generation. We use `pages_manage_posts` to allow users to publish content directly to their own Facebook Page from within YoAi.
+
+Specifically, we use this permission to:
+
+1. Publish AI-generated or user-uploaded images to the user's Facebook Page as feed posts.
+2. Publish AI-generated or user-uploaded videos to the user's Facebook Page as feed posts.
+3. Publish short-form vertical videos as Facebook Reels on the user's Page.
+
+**User flow:**
+- User logs into YoAi and connects their Meta account
+- User navigates to the Design section and creates or generates visual content
+- User clicks "Publish" and selects their Facebook Page
+- User chooses the publish type: Feed or Reels (Reels is available for video content only)
+- User writes a caption and confirms publication
+- YoAi publishes the content to the user's own Facebook Page
+- The content appears on the Page's timeline (for Feed) or Reels tab (for Reels)
+
+Content is published only after explicit user action. We do not publish content automatically. This permission is used only for the authenticated user's own Pages.
+
+---
+
+## 3. leads_retrieval
+
 
 **Tell us how you'll use this permission:**
 
@@ -178,10 +204,11 @@ Each video must demonstrate:
 | Permission | What to show in video |
 |---|---|
 | pages_manage_ads | Create campaign → select Page → ad created with Page identity |
+| pages_manage_posts | Design tool → generate content → publish to Facebook Page (Feed + Reels) |
 | leads_retrieval | Create Lead campaign → select lead form → view submitted leads in dashboard |
 | business_management | Create WhatsApp campaign → business asset discovery → WABA selection |
 | instagram_basic | Connect flow → IG account detected → profile info displayed → account confirmed |
-| instagram_content_publish | Create/upload content → preview → explicit publish click → post appears on IG |
+| instagram_content_publish | Create/upload content → preview → explicit publish click → post appears on IG (Feed, Reels, Stories) |
 | whatsapp_business_management | Create WhatsApp campaign → phone number list displayed → number selected |
 | whatsapp_business_messaging | Create CTWA campaign → WhatsApp number as destination → campaign created |
 

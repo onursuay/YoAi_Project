@@ -13,7 +13,6 @@ export const META_OAUTH_BASE_URL = `https://www.facebook.com/${META_GRAPH_VERSIO
  *  Each scope must have Advanced Access approval via Meta App Review.
  *
  *  Removed (no active feature / review risk):
- *  - pages_manage_posts      → reading posts uses pages_read_engagement; ad dark-posts use ads_management
  *  - pages_manage_metadata   → leadgen_tos check is non-critical; code handles missing scope gracefully
  *  - instagram_manage_messages → IG Direct ads use ads_management; no DM read/reply feature exists
  */
@@ -23,6 +22,7 @@ export const META_SCOPES = [
   "pages_show_list",
   "pages_read_engagement",
   "pages_manage_ads",
+  "pages_manage_posts",
   "leads_retrieval",
   "business_management",
   "instagram_basic",
