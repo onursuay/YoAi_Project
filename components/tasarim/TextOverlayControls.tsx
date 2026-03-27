@@ -196,7 +196,7 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
                 type="text"
                 value={slogan}
                 onChange={e => setSlogan(e.target.value)}
-                placeholder="--"
+                placeholder={t('sloganLabel')}
                 className="w-full px-2.5 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
             </div>
