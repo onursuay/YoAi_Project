@@ -58,7 +58,7 @@ export default function Topbar({
   // Notification ticker — real data from API
   const [notifications, setNotifications] = useState<{ icon: string; text: string; textEn: string; color: string }[]>([])
   const [activeNotif, setActiveNotif] = useState(0)
-  const [notifSliding, setNotifSliding] = useState(false)
+  const [notifKey, setNotifKey] = useState(0) // forces re-mount for animation restart
 
   useEffect(() => {
     fetch('/api/notifications')
@@ -74,12 +74,9 @@ export default function Topbar({
   useEffect(() => {
     if (notifications.length < 2) return
     const interval = setInterval(() => {
-      setNotifSliding(true)
-      setTimeout(() => {
-        setActiveNotif(prev => (prev + 1) % notifications.length)
-        setNotifSliding(false)
-      }, 400)
-    }, 5000)
+      setActiveNotif(prev => (prev + 1) % notifications.length)
+      setNotifKey(prev => prev + 1)
+    }, 7000) // 7s per notification (5s visible + 2s scroll)
     return () => clearInterval(interval)
   }, [notifications.length])
 
@@ -162,29 +159,41 @@ export default function Topbar({
   }
 
   return (
+    <>
+    <style>{`
+      @keyframes notif-scroll-ltr {
+        0% { transform: translateX(-100%); opacity: 0; }
+        5% { opacity: 1; }
+        70% { transform: translateX(0%); opacity: 1; }
+        95% { transform: translateX(60%); opacity: 1; }
+        100% { transform: translateX(80%); opacity: 0; }
+      }
+    `}</style>
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
         <div>
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
           <p className="text-sm text-gray-600 mt-1">{description}</p>
         </div>
-        {/* Notification ticker — real data */}
+        {/* Notification ticker — real data, left-to-right scroll */}
         {notifications.length > 0 && (
-          <div className="flex-1 mx-6 overflow-hidden">
-            <div className={`flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-lg transition-all duration-400 ${notifSliding ? 'opacity-0 -translate-y-3' : 'opacity-100 translate-y-0'}`}>
-              {(() => {
-                const n = notifications[activeNotif]
-                if (!n) return null
-                const Icon = ICON_MAP[n.icon] || Lightbulb
-                const text = locale === 'en' ? n.textEn : n.text
-                return (
-                  <>
-                    <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
-                    <span className="text-sm text-gray-600 truncate">{text}</span>
-                  </>
-                )
-              })()}
-            </div>
+          <div className="flex-1 mx-6 overflow-hidden relative rounded-lg bg-gray-50" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
+            {(() => {
+              const n = notifications[activeNotif]
+              if (!n) return null
+              const Icon = ICON_MAP[n.icon] || Lightbulb
+              const text = locale === 'en' ? n.textEn : n.text
+              return (
+                <div
+                  key={notifKey}
+                  className="flex items-center gap-2 px-4 py-1.5 whitespace-nowrap"
+                  style={{ animation: 'notif-scroll-ltr 7s linear forwards' }}
+                >
+                  <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
+                  <span className="text-sm text-gray-600">{text}</span>
+                </div>
+              )
+            })()}
           </div>
         )}
 
@@ -303,5 +312,6 @@ export default function Topbar({
         </div>
       </div>
     </div>
+    </>
   )
 }
