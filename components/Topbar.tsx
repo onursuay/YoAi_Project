@@ -76,7 +76,7 @@ export default function Topbar({
     const interval = setInterval(() => {
       setActiveNotif(prev => (prev + 1) % notifications.length)
       setNotifKey(prev => prev + 1)
-    }, 7000) // 7s per notification (5s visible + 2s scroll)
+    }, 6000) // 6s per notification (4.5s visible + 1.5s exit)
     return () => clearInterval(interval)
   }, [notifications.length])
 
@@ -161,12 +161,11 @@ export default function Topbar({
   return (
     <>
     <style>{`
-      @keyframes notif-scroll-ltr {
-        0% { transform: translateX(-100%); opacity: 0; }
-        5% { opacity: 1; }
-        70% { transform: translateX(0%); opacity: 1; }
-        95% { transform: translateX(60%); opacity: 1; }
-        100% { transform: translateX(80%); opacity: 0; }
+      @keyframes notif-stay-then-exit {
+        0% { transform: translateX(0); opacity: 1; }
+        75% { transform: translateX(0); opacity: 1; }
+        95% { transform: translateX(100%); opacity: 0; }
+        100% { transform: translateX(100%); opacity: 0; }
       }
     `}</style>
     <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -187,7 +186,7 @@ export default function Topbar({
                 <div
                   key={notifKey}
                   className="flex items-center gap-2 px-4 py-1.5 whitespace-nowrap"
-                  style={{ animation: 'notif-scroll-ltr 7s linear forwards' }}
+                  style={{ animation: 'notif-stay-then-exit 6s ease-in-out forwards' }}
                 >
                   <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
                   <span className="text-sm text-gray-600">{text}</span>
