@@ -2027,6 +2027,7 @@
     "tasarim": {
       "title": "Design",
       "description": "Create your visual designs",
+      "publishButton": "Publish",
       "publishModal": {
         "title": "Publish to Social Media",
         "selectPage": "Select Facebook Page",
@@ -2034,6 +2035,10 @@
         "publishToFacebook": "Publish to Facebook Page",
         "publishToInstagram": "Publish to Instagram",
         "noInstagram": "No Instagram account linked to this page",
+        "igPublishType": "Instagram Publish Type",
+        "igFeed": "Feed",
+        "igReelsVideoOnly": "Video only",
+        "igStoriesNoCaption": "Captions are not supported on Stories.",
         "caption": "Caption",
         "captionPlaceholder": "Write a caption for your post...",
         "captionCount": "{count} / {max}",

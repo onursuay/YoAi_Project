@@ -2,7 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, Send, Loader2, Facebook, Instagram, AlertCircle, Link2 } from 'lucide-react'
+import { X, Send, Loader2, Facebook, Instagram, AlertCircle, Link2, Film, BookImage, LayoutGrid } from 'lucide-react'
 import type { ToastType } from '@/components/Toast'
 
 interface GeneratedItem {
@@ -34,6 +34,8 @@ interface Props {
 
 const IG_CAPTION_MAX = 2200
 
+type IgPublishType = 'feed' | 'reels' | 'stories'
+
 export default function PublishModal({ isOpen, onClose, item, onToast }: Props) {
   const t = useTranslations('dashboard.tasarim.publishModal')
 
@@ -43,9 +45,15 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
   const [selectedPageId, setSelectedPageId] = useState('')
   const [publishToFacebook, setPublishToFacebook] = useState(true)
   const [publishToInstagram, setPublishToInstagram] = useState(false)
+  const [igPublishType, setIgPublishType] = useState<IgPublishType>('feed')
   const [caption, setCaption] = useState('')
   const [isPublishing, setIsPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Reels only supports video — auto-correct if user switches
+  const isVideo = item?.type === 'video'
+  const canReels = isVideo // Reels: video only per Instagram API
+  const canStories = true  // Stories: both image and video
 
   // Fetch targets when modal opens
   useEffect(() => {
@@ -57,6 +65,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
     setCaption('')
     setPublishToFacebook(true)
     setPublishToInstagram(false)
+    setIgPublishType('feed')
 
     fetch('/api/meta/publish/targets')
       .then((res) => res.json())
@@ -121,7 +130,8 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
             igUserId: selectedTarget.instagram.igUserId,
             mediaUrl: item.url,
             mediaType,
-            caption,
+            publishType: igPublishType,
+            caption: igPublishType === 'stories' ? undefined : caption,
           }),
         })
         const data = await res.json()
@@ -292,7 +302,67 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 </div>
               </div>
 
-              {/* Caption */}
+              {/* Instagram Publish Type */}
+              {publishToInstagram && (
+                <div>
+                  <label className="block text-sm font-medium text-gray-700 mb-2">
+                    {t('igPublishType')}
+                  </label>
+                  <div className="flex gap-2">
+                    {/* Feed */}
+                    <button
+                      type="button"
+                      onClick={() => setIgPublishType('feed')}
+                      className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-colors ${
+                        igPublishType === 'feed'
+                          ? 'border-[#E4405F] bg-[#E4405F]/5 text-[#E4405F] font-medium'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <LayoutGrid className="w-4 h-4" />
+                      {t('igFeed')}
+                    </button>
+
+                    {/* Reels */}
+                    <button
+                      type="button"
+                      onClick={() => canReels && setIgPublishType('reels')}
+                      disabled={!canReels}
+                      className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-colors ${
+                        igPublishType === 'reels'
+                          ? 'border-[#E4405F] bg-[#E4405F]/5 text-[#E4405F] font-medium'
+                          : !canReels
+                            ? 'border-gray-100 bg-gray-50 text-gray-300 cursor-not-allowed'
+                            : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <Film className="w-4 h-4" />
+                      Reels
+                      {!canReels && <span className="text-[10px] text-gray-400">{t('igReelsVideoOnly')}</span>}
+                    </button>
+
+                    {/* Stories */}
+                    <button
+                      type="button"
+                      onClick={() => setIgPublishType('stories')}
+                      className={`flex-1 flex flex-col items-center gap-1.5 p-3 rounded-xl border text-sm transition-colors ${
+                        igPublishType === 'stories'
+                          ? 'border-[#E4405F] bg-[#E4405F]/5 text-[#E4405F] font-medium'
+                          : 'border-gray-200 text-gray-600 hover:border-gray-300'
+                      }`}
+                    >
+                      <BookImage className="w-4 h-4" />
+                      Stories
+                    </button>
+                  </div>
+                  {igPublishType === 'stories' && (
+                    <p className="text-xs text-amber-600 mt-1.5">{t('igStoriesNoCaption')}</p>
+                  )}
+                </div>
+              )}
+
+              {/* Caption — hidden when ONLY Instagram Stories is selected (Stories don't support captions) */}
+              {!(publishToInstagram && igPublishType === 'stories' && !publishToFacebook) && (
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1.5">
                   {t('caption')}
@@ -305,12 +375,13 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   maxLength={IG_CAPTION_MAX}
                   className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm resize-none focus:outline-none focus:ring-2 focus:ring-[#2BB673]/30 focus:border-[#2BB673]"
                 />
-                {publishToInstagram && (
+                {publishToInstagram && igPublishType !== 'stories' && (
                   <p className="text-right text-xs text-gray-500 mt-1">
                     {t('captionCount', { count: caption.length, max: IG_CAPTION_MAX })}
                   </p>
                 )}
               </div>
+              )}
 
               {/* Error */}
               {error && (

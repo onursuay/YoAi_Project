@@ -1,9 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import Topbar from '@/components/Topbar'
-import { Image, Video, Loader2, Sparkles, Download, Coins, Upload, RefreshCw } from 'lucide-react'
+import PublishModal from '@/components/tasarim/PublishModal'
+import { ToastContainer, type Toast, type ToastType } from '@/components/Toast'
+import { Image, Video, Loader2, Sparkles, Download, Coins, Upload, RefreshCw, Send } from 'lucide-react'
 
 const COST_PER_GENERATION = 20
 
@@ -39,6 +41,16 @@ export default function TasarimGorselPage() {
   const [credits, setCredits] = useState(100)
   const [gallery, setGallery] = useState<GeneratedItem[]>(SAMPLE_GALLERY)
   const [activeItem, setActiveItem] = useState<GeneratedItem | null>(SAMPLE_GALLERY[0])
+  const [showPublishModal, setShowPublishModal] = useState(false)
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const addToast = useCallback((message: string, type: ToastType) => {
+    setToasts(prev => [...prev, { id: Date.now().toString(), message, type }])
+  }, [])
+
+  const removeToast = useCallback((id: string) => {
+    setToasts(prev => prev.filter(t => t.id !== id))
+  }, [])
 
   const handleGenerate = async () => {
     if (!prompt.trim()) return
@@ -273,6 +285,13 @@ export default function TasarimGorselPage() {
                         <button className="p-2 text-gray-500 hover:text-gray-700 rounded-lg hover:bg-gray-100">
                           <Download className="w-4 h-4" />
                         </button>
+                        <button
+                          onClick={() => setShowPublishModal(true)}
+                          className="inline-flex items-center gap-1.5 px-3 py-2 text-sm font-medium text-white bg-gradient-to-r from-[#833AB4] via-[#E1306C] to-[#F77737] rounded-lg hover:opacity-90 transition-opacity"
+                        >
+                          <Send className="w-3.5 h-3.5" />
+                          {t('publishButton')}
+                        </button>
                       </div>
                     </div>
                   </div>
@@ -315,6 +334,15 @@ export default function TasarimGorselPage() {
           </div>
         </div>
       </div>
+
+      <PublishModal
+        isOpen={showPublishModal}
+        onClose={() => setShowPublishModal(false)}
+        item={activeItem}
+        onToast={addToast}
+      />
+
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   )
 }

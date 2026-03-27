@@ -2027,6 +2027,7 @@
     "tasarim": {
       "title": "Tasarım",
       "description": "Görsel tasarımlarınızı oluşturun",
+      "publishButton": "Yayınla",
       "publishModal": {
         "title": "Sosyal Medyada Yayınla",
         "selectPage": "Facebook Sayfası Seçin",
@@ -2034,6 +2035,10 @@
         "publishToFacebook": "Facebook Sayfasında Yayınla",
         "publishToInstagram": "Instagram'da Yayınla",
         "noInstagram": "Bu sayfaya bağlı Instagram hesabı bulunamadı",
+        "igPublishType": "Instagram Yayın Türü",
+        "igFeed": "Akış",
+        "igReelsVideoOnly": "Sadece video",
+        "igStoriesNoCaption": "Stories'de açıklama metni desteklenmez.",
         "caption": "Açıklama",
         "captionPlaceholder": "Gönderiniz için bir açıklama yazın...",
         "captionCount": "{count} / {max}",

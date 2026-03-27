@@ -9,18 +9,21 @@ export const maxDuration = 120 // Allow up to 2 minutes for video processing
 const POLL_INTERVAL_MS = 5000
 const MAX_POLLS = 12 // 60 seconds max
 
+type PublishType = 'feed' | 'reels' | 'stories'
+
 interface PublishRequest {
   pageId: string
   igUserId: string
   mediaUrl: string
   mediaType: 'image' | 'video'
+  publishType?: PublishType
   caption?: string
 }
 
 export async function POST(request: NextRequest) {
   try {
     const body = (await request.json()) as PublishRequest
-    const { pageId, igUserId, mediaUrl, mediaType, caption } = body
+    const { pageId, igUserId, mediaUrl, mediaType, publishType = 'feed', caption } = body
 
     if (!pageId || !igUserId || !mediaUrl || !mediaType) {
       return NextResponse.json(
@@ -52,16 +55,36 @@ export async function POST(request: NextRequest) {
 
     const client = new MetaGraphClient({ accessToken: pageToken, timeout: 30000 })
 
+    // Validate: Reels only supports video
+    if (publishType === 'reels' && mediaType === 'image') {
+      return NextResponse.json(
+        { ok: false, error: 'invalid_request', message: 'Reels yalnızca video destekler' },
+        { status: 400 }
+      )
+    }
+
     // Step 1: Create media container
     const containerParams = new URLSearchParams()
-    if (caption) containerParams.append('caption', caption)
 
+    // Stories do not support captions per Instagram API
+    if (caption && publishType !== 'stories') {
+      containerParams.append('caption', caption)
+    }
+
+    // Set media URL
     if (mediaType === 'image') {
       containerParams.append('image_url', mediaUrl)
     } else {
       containerParams.append('video_url', mediaUrl)
-      containerParams.append('media_type', 'REELS')
     }
+
+    // Set media_type based on publishType
+    if (publishType === 'reels') {
+      containerParams.append('media_type', 'REELS')
+    } else if (publishType === 'stories') {
+      containerParams.append('media_type', 'STORIES')
+    }
+    // feed: no media_type needed (default behavior)
 
     const containerResult = await client.postForm(`/${igUserId}/media`, containerParams)
 
@@ -80,8 +103,9 @@ export async function POST(request: NextRequest) {
       )
     }
 
-    // Step 2: For video, poll until container is ready
-    if (mediaType === 'video') {
+    // Step 2: For video (any publish type) and Stories, poll until container is ready
+    const needsPolling = mediaType === 'video' || publishType === 'stories'
+    if (needsPolling) {
       for (let i = 0; i < MAX_POLLS; i++) {
         await new Promise((r) => setTimeout(r, POLL_INTERVAL_MS))
 
