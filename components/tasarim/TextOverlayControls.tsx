@@ -144,22 +144,37 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
 
   return (
     <div className="space-y-3 pt-3 border-t border-gray-100">
-      <p className="text-sm font-medium text-gray-700">{t('overlay.textLogo')}</p>
+      <p className="text-xs font-medium text-gray-500 mb-1">{t('overlay.textLogo')}</p>
 
-      {/* ─── Yazı Ekle ─── */}
-      <div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={config.textEnabled}
-            onChange={e => update('textEnabled', e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20"
-          />
-          <span className="text-sm text-gray-700">{t('overlay.addText')}</span>
-        </label>
+      {/* Toggle buttons */}
+      <div className="flex gap-2">
+        <button
+          type="button"
+          onClick={() => update('textEnabled', !config.textEnabled)}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+            config.textEnabled
+              ? 'bg-primary/10 border-primary text-primary'
+              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+          }`}
+        >
+          {t('overlay.addText')}
+        </button>
+        <button
+          type="button"
+          onClick={() => update('logoEnabled', !config.logoEnabled)}
+          className={`flex-1 py-2 rounded-lg text-sm font-medium border transition-colors ${
+            config.logoEnabled
+              ? 'bg-primary/10 border-primary text-primary'
+              : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
+          }`}
+        >
+          {t('overlay.addLogo')}
+        </button>
+      </div>
 
-        {config.textEnabled && (
-          <div className="mt-3 ml-6 space-y-3">
+      {/* ─── Text controls ─── */}
+      {config.textEnabled && (
+        <div className="space-y-3 pt-2">
             {/* Title */}
             <div>
               <label className="block text-xs text-gray-500 mb-1">{t('titleLabel')}</label>
@@ -255,70 +270,54 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
                 <span className="text-xs text-gray-600">{t('overlay.videoScroll')}</span>
               </label>
             )}
-          </div>
-        )}
-      </div>
+        </div>
+      )}
 
-      {/* ─── Logo Ekle ─── */}
-      <div>
-        <label className="flex items-center gap-2 cursor-pointer">
-          <input
-            type="checkbox"
-            checked={config.logoEnabled}
-            onChange={e => update('logoEnabled', e.target.checked)}
-            className="w-4 h-4 rounded border-gray-300 text-primary focus:ring-primary/20"
-          />
-          <span className="text-sm text-gray-700">{t('overlay.addLogo')}</span>
-        </label>
-
-        {config.logoEnabled && (
-          <div className="mt-3 ml-6 space-y-3">
-            {config.logo ? (
-              <>
-                {/* Logo preview + remove */}
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
-                    <img src={config.logo} alt="" className="max-w-full max-h-full object-contain" />
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => update('logo', null)}
-                    className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
-                  >
-                    <Trash2 className="w-3 h-3" />
-                    {t('overlay.removeLogo')}
-                  </button>
-                </div>
-              </>
-            ) : (
-              <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
-                <Upload className="w-4 h-4 text-gray-400" />
-                <span className="text-sm text-gray-500">{t('overlay.uploadLogo')}</span>
-                <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
-              </label>
-            )}
-
-            {/* Logo Size */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">
-                {t('overlay.logoSize')} — {config.logoSize}%
-              </label>
-              <input
-                type="range" min={5} max={50}
-                value={config.logoSize}
-                onChange={e => update('logoSize', Number(e.target.value))}
-                className="w-full accent-primary"
-              />
+      {/* ─── Logo controls ─── */}
+      {config.logoEnabled && (
+        <div className="space-y-3 pt-2">
+          {config.logo ? (
+            <div className="flex items-center gap-3">
+              <div className="w-12 h-12 rounded-lg border border-gray-200 bg-gray-50 overflow-hidden flex items-center justify-center">
+                <img src={config.logo} alt="" className="max-w-full max-h-full object-contain" />
+              </div>
+              <button
+                type="button"
+                onClick={() => update('logo', null)}
+                className="flex items-center gap-1 text-xs text-red-500 hover:text-red-700"
+              >
+                <Trash2 className="w-3 h-3" />
+                {t('overlay.removeLogo')}
+              </button>
             </div>
+          ) : (
+            <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
+              <Upload className="w-4 h-4 text-gray-400" />
+              <span className="text-sm text-gray-500">{t('overlay.uploadLogo')}</span>
+              <input type="file" accept="image/png,image/svg+xml,image/jpeg,image/webp" className="hidden" onChange={handleLogoUpload} />
+            </label>
+          )}
 
-            {/* Logo Position */}
-            <div>
-              <label className="block text-xs text-gray-500 mb-1">{t('overlay.logoPosition')}</label>
-              <PositionGrid value={config.logoPosition} onSelect={p => update('logoPosition', p)} size="w-7 h-7" />
-            </div>
+          {/* Logo Size */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">
+              {t('overlay.logoSize')} — {config.logoSize}%
+            </label>
+            <input
+              type="range" min={5} max={50}
+              value={config.logoSize}
+              onChange={e => update('logoSize', Number(e.target.value))}
+              className="w-full accent-primary"
+            />
           </div>
-        )}
-      </div>
+
+          {/* Logo Position */}
+          <div>
+            <label className="block text-xs text-gray-500 mb-1">{t('overlay.logoPosition')}</label>
+            <PositionGrid value={config.logoPosition} onSelect={p => update('logoPosition', p)} size="w-7 h-7" />
+          </div>
+        </div>
+      )}
     </div>
   )
 }

@@ -441,7 +441,7 @@ export default function TasarimPage() {
             </div>
 
             {/* Form */}
-            <div className="flex-1 p-4 space-y-4">
+            <div className="p-4 space-y-4">
               {/* Prompt */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
