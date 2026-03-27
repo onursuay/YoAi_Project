@@ -72,28 +72,47 @@ export default function SidebarNav() {
       style={{ width: collapsed ? '72px' : '260px' }}
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between min-h-[56px]">
-        {!collapsed && (
-          <Link href="/dashboard" prefetch={false} className="flex-shrink-0">
-            <Image
-              src="/logos/yoai-logo.png"
-              alt="YoAI"
-              width={60}
-              height={24}
-              className="object-contain cursor-pointer"
-            />
-          </Link>
+        {collapsed ? (
+          /* Collapsed: show logo, on hover show toggle button */
+          <div className="group relative flex items-center justify-center w-full">
+            <Link href="/dashboard" prefetch={false} className="group-hover:opacity-0 transition-opacity duration-200">
+              <Image
+                src="/logos/yoai-logo.png"
+                alt="YoAI"
+                width={32}
+                height={32}
+                className="object-contain"
+              />
+            </Link>
+            <button
+              onClick={toggleCollapse}
+              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-100 rounded-lg"
+              aria-label="Expand sidebar"
+            >
+              <PanelLeftOpen className="w-5 h-5 text-gray-600" />
+            </button>
+          </div>
+        ) : (
+          /* Expanded: logo + close button */
+          <>
+            <Link href="/dashboard" prefetch={false} className="flex-shrink-0">
+              <Image
+                src="/logos/yoai-logo.png"
+                alt="YoAI"
+                width={60}
+                height={24}
+                className="object-contain cursor-pointer"
+              />
+            </Link>
+            <button
+              onClick={toggleCollapse}
+              className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
+              aria-label="Collapse sidebar"
+            >
+              <PanelLeftClose className="w-5 h-5 text-gray-600" />
+            </button>
+          </>
         )}
-        <button
-          onClick={toggleCollapse}
-          className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
-          aria-label={collapsed ? 'Expand sidebar' : 'Collapse sidebar'}
-        >
-          {collapsed ? (
-            <PanelLeftOpen className="w-5 h-5 text-gray-600" />
-          ) : (
-            <PanelLeftClose className="w-5 h-5 text-gray-600" />
-          )}
-        </button>
       </div>
 
       <nav className="flex-1 overflow-y-auto p-4 space-y-1">
