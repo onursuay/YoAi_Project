@@ -1,8 +1,8 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import Topbar from '@/components/Topbar'
 import { Image, Video, Loader2, Sparkles, Download, Coins, Upload, RefreshCw, Trash2, Clock, ImageIcon, Film, Share2, Wand2 } from 'lucide-react'
 import { useCredits } from '@/components/providers/CreditProvider'
@@ -26,17 +26,31 @@ interface GeneratedItem {
 
 const ANIMATIONS = ['animate-gallery-float', 'animate-gallery-zoom', 'animate-gallery-drift']
 
-const SAMPLE_GALLERY: GeneratedItem[] = [
-  { id: '1', url: '/gallery/parfum.jpg', type: 'gorsel', prompt: 'Parfüm şişesi', ratio: '1:1', createdAt: new Date() },
-  { id: '2', url: '/gallery/hamburger.jpg', type: 'gorsel', prompt: 'Burger', ratio: '1:1', createdAt: new Date() },
-  { id: '3', url: '/gallery/modern-koltuk.jpg', type: 'gorsel', prompt: 'Modern koltuk', ratio: '1:1', createdAt: new Date() },
-  { id: '4', url: '/gallery/kol-saati.jpg', type: 'gorsel', prompt: 'Kol saati', ratio: '1:1', createdAt: new Date() },
-  { id: '5', url: '/gallery/pirlanta-yuzuk.jpg', type: 'gorsel', prompt: 'Pırlanta yüzük', ratio: '1:1', createdAt: new Date() },
-  { id: '6', url: '/gallery/kozmetik-urunleri.jpg', type: 'gorsel', prompt: 'Kozmetik ürünleri', ratio: '1:1', createdAt: new Date() },
-]
+const SAMPLE_GALLERY_PROMPTS: Record<string, { tr: string; en: string }> = {
+  '1': { tr: 'Parfüm şişesi', en: 'Perfume bottle' },
+  '2': { tr: 'Burger', en: 'Burger' },
+  '3': { tr: 'Modern koltuk', en: 'Modern sofa' },
+  '4': { tr: 'Kol saati', en: 'Wristwatch' },
+  '5': { tr: 'Pırlanta yüzük', en: 'Diamond ring' },
+  '6': { tr: 'Kozmetik ürünleri', en: 'Cosmetic products' },
+}
+
+function buildSampleGallery(locale: string): GeneratedItem[] {
+  const lang = locale === 'en' ? 'en' : 'tr'
+  return [
+    { id: '1', url: '/gallery/parfum.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['1'][lang], ratio: '1:1', createdAt: new Date() },
+    { id: '2', url: '/gallery/hamburger.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['2'][lang], ratio: '1:1', createdAt: new Date() },
+    { id: '3', url: '/gallery/modern-koltuk.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['3'][lang], ratio: '1:1', createdAt: new Date() },
+    { id: '4', url: '/gallery/kol-saati.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['4'][lang], ratio: '1:1', createdAt: new Date() },
+    { id: '5', url: '/gallery/pirlanta-yuzuk.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['5'][lang], ratio: '1:1', createdAt: new Date() },
+    { id: '6', url: '/gallery/kozmetik-urunleri.jpg', type: 'gorsel', prompt: SAMPLE_GALLERY_PROMPTS['6'][lang], ratio: '1:1', createdAt: new Date() },
+  ]
+}
 
 export default function TasarimPage() {
   const t = useTranslations('dashboard.tasarim')
+  const locale = useLocale()
+  const sampleGallery = useMemo(() => buildSampleGallery(locale), [locale])
   const router = useRouter()
   const { credits, spendCredits, refundCredits, hasEnoughCredits } = useCredits()
   const [mode, setMode] = useState<Mode>('gorsel')
@@ -45,8 +59,8 @@ export default function TasarimPage() {
   const [ratio, setRatio] = useState<AspectRatio>('1:1')
   const [referenceImage, setReferenceImage] = useState<string | null>(null)
   const [isGenerating, setIsGenerating] = useState(false)
-  const [gallery, setGallery] = useState<GeneratedItem[]>(SAMPLE_GALLERY)
-  const [activeItem, setActiveItem] = useState<GeneratedItem | null>(SAMPLE_GALLERY[0])
+  const [gallery, setGallery] = useState<GeneratedItem[]>(sampleGallery)
+  const [activeItem, setActiveItem] = useState<GeneratedItem | null>(sampleGallery[0])
   const [activeTab, setActiveTab] = useState<Tab>('tasarim')
 
   // Library: user-generated items persisted in localStorage (sync init to prevent data loss)
@@ -110,9 +124,9 @@ export default function TasarimPage() {
     })
     setActiveIndex(prev => {
       const nextIdx = prev + 1
-      return nextIdx >= SAMPLE_GALLERY.length ? 0 : nextIdx
+      return nextIdx >= sampleGallery.length ? 0 : nextIdx
     })
-  }, [])
+  }, [sampleGallery])
 
   useEffect(() => {
     const interval = setInterval(shuffleGallery, 3000)
@@ -142,7 +156,7 @@ export default function TasarimPage() {
       if (!res.ok) throw new Error(data.error || 'Enhancement failed')
       setPrompt(data.enhanced)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Prompt geliştirilemedi'
+      const message = err instanceof Error ? err.message : t('enhanceFailed')
       addToast(message, 'error')
     } finally {
       setIsEnhancing(false)
@@ -187,7 +201,7 @@ export default function TasarimPage() {
 
       if (!res.ok) {
         const errMsg = typeof data.error === 'string' ? data.error : JSON.stringify(data.error)
-        throw new Error(errMsg || 'Üretim başarısız oldu')
+        throw new Error(errMsg || t('generationFailed'))
       }
 
       const newItem: GeneratedItem = {
@@ -204,7 +218,7 @@ export default function TasarimPage() {
       setPinnedItem(newItem)
       saveToLibrary(newItem)
     } catch (err) {
-      const message = err instanceof Error ? err.message : 'Bir hata oluştu'
+      const message = err instanceof Error ? err.message : t('errorOccurred')
       setError(message)
       refundCredits() // Refund credits on error
     } finally {
@@ -237,7 +251,7 @@ export default function TasarimPage() {
                   }`}
                 >
                   <Image className="w-4 h-4" />
-                  Görsel Üret
+                  {t('modeImage')}
                 </button>
                 <button
                   onClick={() => setMode('video')}
@@ -246,7 +260,7 @@ export default function TasarimPage() {
                   }`}
                 >
                   <Video className="w-4 h-4" />
-                  Video Üret
+                  {t('modeVideo')}
                 </button>
               </div>
             </div>
@@ -256,14 +270,14 @@ export default function TasarimPage() {
               {/* Prompt */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  Prompt Yaz <span className="text-red-500">*</span>
+                  {t('promptLabel')} <span className="text-red-500">*</span>
                 </label>
                 <textarea
                   value={prompt}
                   onChange={e => setPrompt(e.target.value)}
                   placeholder={mode === 'gorsel'
-                    ? "Yeşil bir park, spor ayakkabı, 'Şimdi Satın Al' butonu, beyaz arkaplan..."
-                    : "Ürünün farklı açılardan gösterildiği dinamik bir video..."
+                    ? t('promptPlaceholderImage')
+                    : t('promptPlaceholderVideo')
                   }
                   className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary resize-none"
                   rows={5}
@@ -275,9 +289,9 @@ export default function TasarimPage() {
                     className="mt-1.5 flex items-center gap-1.5 px-3 py-1.5 text-sm font-medium text-indigo-600 bg-indigo-50 border border-indigo-200 rounded-lg hover:bg-indigo-100 transition-colors disabled:opacity-50"
                   >
                     {isEnhancing ? (
-                      <><Loader2 className="w-3.5 h-3.5 animate-spin" /> Geliştiriliyor...</>
+                      <><Loader2 className="w-3.5 h-3.5 animate-spin" /> {t('enhancing')}</>
                     ) : (
-                      <><Wand2 className="w-3.5 h-3.5" /> AI ile Geliştir</>
+                      <><Wand2 className="w-3.5 h-3.5" /> {t('enhanceWithAi')}</>
                     )}
                   </button>
                 )}
@@ -286,12 +300,12 @@ export default function TasarimPage() {
               {/* Reference Image */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {mode === 'gorsel' ? 'Görsel Ekle' : 'Referans Görsel'}
+                  {mode === 'gorsel' ? t('addImage') : t('referenceImage')}
                 </label>
                 <label className="flex items-center gap-2 px-3 py-2 border border-dashed border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors">
                   <Upload className="w-4 h-4 text-gray-400" />
                   <span className="text-sm text-gray-500">
-                    {referenceImage ? 'Görsel seçildi ✓' : mode === 'gorsel' ? 'Ürün Görseli' : 'Canlandırılacak Görsel'}
+                    {referenceImage ? t('imageSelected') : mode === 'gorsel' ? t('productImage') : t('animateImage')}
                   </span>
                   <input type="file" className="hidden" accept="image/*" onChange={handleFileUpload} />
                 </label>
@@ -300,7 +314,7 @@ export default function TasarimPage() {
               {/* Aspect Ratio */}
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {mode === 'gorsel' ? 'En / Boy Oranı' : 'En / Boy Oranı'}
+                  {t('aspectRatio')}
                 </label>
                 <div className="flex gap-2">
                   {(['16:9', '9:16', '4:3', '1:1'] as AspectRatio[]).map(r => (
@@ -324,19 +338,19 @@ export default function TasarimPage() {
                 <>
                   <div>
                     <label className="block text-sm font-medium text-gray-700 mb-1">
-                      Başlık <span className="text-red-500">*</span>
+                      {t('titleLabel')} <span className="text-red-500">*</span>
                     </label>
                     <input
                       type="text"
                       value={title}
                       onChange={e => setTitle(e.target.value)}
-                      placeholder="Başlık"
+                      placeholder={t('titleLabel')}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
                     />
                     <p className="text-caption text-gray-500 text-right mt-1">{title.length} / 300</p>
                   </div>
                   <div>
-                    <label className="block text-sm font-medium text-gray-700 mb-1">Slogan</label>
+                    <label className="block text-sm font-medium text-gray-700 mb-1">{t('sloganLabel')}</label>
                     <input
                       type="text"
                       placeholder="--"
@@ -357,12 +371,12 @@ export default function TasarimPage() {
                 {isGenerating ? (
                   <>
                     <Loader2 className="w-4 h-4 animate-spin" />
-                    Oluşturuluyor...
+                    {t('generating')}
                   </>
                 ) : (
                   <>
                     <Sparkles className="w-4 h-4" />
-                    {mode === 'gorsel' ? 'Görsel Oluştur' : 'Video Oluştur'}
+                    {mode === 'gorsel' ? t('generateImage') : t('generateVideo')}
                   </>
                 )}
               </button>
@@ -370,7 +384,7 @@ export default function TasarimPage() {
                 <p className="text-sm text-center text-red-500">{error}</p>
               )}
               <p className="text-caption text-center text-gray-500">
-                Üretilen her {mode === 'gorsel' ? 'görsel' : 'video'} için {COST_PER_GENERATION} kredi kullanılmaktadır.
+                {mode === 'gorsel' ? t('creditInfoImage', { cost: COST_PER_GENERATION }) : t('creditInfoVideo', { cost: COST_PER_GENERATION })}
               </p>
             </div>
           </div>
@@ -386,7 +400,7 @@ export default function TasarimPage() {
                     activeTab === 'tasarim' ? 'text-gray-900 bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Tasarım
+                  {t('tabDesign')}
                 </button>
                 <button
                   onClick={() => setActiveTab('kutuphane')}
@@ -394,19 +408,19 @@ export default function TasarimPage() {
                     activeTab === 'kutuphane' ? 'text-gray-900 bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
                 >
-                  Kütüphane {library.length > 0 && <span className="ml-1 text-caption text-primary">({library.length})</span>}
+                  {t('tabLibrary')} {library.length > 0 && <span className="ml-1 text-caption text-primary">({library.length})</span>}
                 </button>
               </div>
               <div className="flex items-center gap-3">
                 <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
                   <Coins className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-amber-700">{credits} Kredi</span>
+                  <span className="text-sm font-medium text-amber-700">{credits} {t('credits')}</span>
                 </div>
                 <button
                   onClick={() => router.push('/abonelik#krediler')}
                   className="px-3 py-1.5 text-sm font-medium text-white bg-primary rounded-lg hover:bg-primary/90 transition-colors"
                 >
-                  Kredi Yükle
+                  {t('buyCredits')}
                 </button>
               </div>
             </div>
@@ -459,9 +473,9 @@ export default function TasarimPage() {
                             <Sparkles className="w-9 h-9 text-indigo-300 animate-pulse" />
                           </div>
                           <p className="text-base font-medium text-white/90 mb-1">
-                            {mode === 'gorsel' ? 'Görsel oluşturuluyor' : 'Video oluşturuluyor'}
+                            {mode === 'gorsel' ? t('creatingImage') : t('creatingVideo')}
                           </p>
-                          <p className="text-sm text-white/40 mb-5">AI modeli çalışıyor...</p>
+                          <p className="text-sm text-white/40 mb-5">{t('aiWorking')}</p>
 
                           {/* Progress bar */}
                           <div className="w-56 mx-auto h-1.5 bg-white/10 rounded-full overflow-hidden">
@@ -503,7 +517,7 @@ export default function TasarimPage() {
                         <div className="flex items-center justify-between w-full">
                           <div>
                             <p className="text-sm font-medium text-gray-900">
-                              {activeItem.prompt.slice(0, 40) || 'Adsız Tasarım'}
+                              {activeItem.prompt.slice(0, 40) || t('untitledDesign')}
                             </p>
                             <p className="text-caption text-gray-500">{activeItem.ratio}</p>
                           </div>
@@ -520,15 +534,15 @@ export default function TasarimPage() {
                     ) : (
                       <div className="text-center">
                         <Image className="w-16 h-16 text-gray-300 mx-auto mb-4" />
-                        <p className="text-gray-500">Henüz oluşturulmuş tasarım yok</p>
-                        <p className="text-sm text-gray-400 mt-1">Sol paneli doldurup oluştur butonuna bas</p>
+                        <p className="text-gray-500">{t('noDesignsYet')}</p>
+                        <p className="text-sm text-gray-400 mt-1">{t('noDesignsHint')}</p>
                       </div>
                     )}
                   </div>
 
                   {/* Gallery sidebar — hidden during generation so AI animation fills full area */}
                   {!isGenerating && <div className="w-[280px] shrink-0 border-l border-gray-200 bg-white overflow-y-auto p-3">
-                    <p className="text-caption font-medium text-gray-500 mb-3 px-1">SON TASARIMLAR</p>
+                    <p className="text-caption font-medium text-gray-500 mb-3 px-1">{t('recentDesigns')}</p>
                     <div className="grid grid-cols-2 gap-2">
                       {gallery.map((item, idx) => (
                         <button
@@ -560,29 +574,29 @@ export default function TasarimPage() {
                   {library.length === 0 ? (
                     <div className="flex flex-col items-center justify-center h-full text-center">
                       <ImageIcon className="w-16 h-16 text-gray-300 mb-4" />
-                      <p className="text-gray-500 font-medium">Kütüphane boş</p>
-                      <p className="text-sm text-gray-400 mt-1">Ürettiğin görseller ve videolar burada görünecek</p>
+                      <p className="text-gray-500 font-medium">{t('libraryEmpty')}</p>
+                      <p className="text-sm text-gray-400 mt-1">{t('libraryEmptyHint')}</p>
                       <button
                         onClick={() => setActiveTab('tasarim')}
                         className="mt-4 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
                       >
-                        Tasarım Oluştur
+                        {t('createDesign')}
                       </button>
                     </div>
                   ) : (
                     <>
                       <div className="flex items-center justify-between mb-4">
                         <p className="text-sm font-medium text-gray-700">
-                          {library.length} tasarım
+                          {t('designCount', { count: library.length })}
                         </p>
                         <div className="flex gap-2 text-caption text-gray-500">
                           <span className="flex items-center gap-1">
                             <ImageIcon className="w-3 h-3" />
-                            {library.filter(i => i.type === 'gorsel').length} görsel
+                            {t('imageCount', { count: library.filter(i => i.type === 'gorsel').length })}
                           </span>
                           <span className="flex items-center gap-1">
                             <Film className="w-3 h-3" />
-                            {library.filter(i => i.type === 'video').length} video
+                            {t('videoCount', { count: library.filter(i => i.type === 'video').length })}
                           </span>
                         </div>
                       </div>
@@ -631,21 +645,21 @@ export default function TasarimPage() {
                                           download={`tasarim-${item.id}.mp4`}
                                           onClick={e => e.stopPropagation()}
                                           className="p-1.5 bg-white/90 rounded-lg shadow hover:bg-white transition-colors"
-                                          title="İndir"
+                                          title={t('download')}
                                         >
                                           <Download className="w-3.5 h-3.5 text-gray-700" />
                                         </a>
                                         <button
                                           onClick={e => { e.stopPropagation(); setPublishItem(item) }}
                                           className="p-1.5 bg-white/90 rounded-lg shadow hover:bg-blue-50 transition-colors"
-                                          title="Yayınla"
+                                          title={t('publish')}
                                         >
                                           <Share2 className="w-3.5 h-3.5 text-blue-600" />
                                         </button>
                                         <button
                                           onClick={e => { e.stopPropagation(); removeFromLibrary(item.id) }}
                                           className="p-1.5 bg-white/90 rounded-lg shadow hover:bg-red-50 transition-colors"
-                                          title="Sil"
+                                          title={t('delete')}
                                         >
                                           <Trash2 className="w-3.5 h-3.5 text-red-500" />
                                         </button>
@@ -662,21 +676,21 @@ export default function TasarimPage() {
                                       href={item.url}
                                       download={`tasarim-${item.id}.jpg`}
                                       className="p-2 bg-white rounded-lg shadow hover:bg-gray-100 transition-colors"
-                                      title="İndir"
+                                      title={t('download')}
                                     >
                                       <Download className="w-4 h-4 text-gray-700" />
                                     </a>
                                     <button
                                       onClick={() => setPublishItem(item)}
                                       className="p-2 bg-white rounded-lg shadow hover:bg-blue-50 transition-colors"
-                                      title="Yayınla"
+                                      title={t('publish')}
                                     >
                                       <Share2 className="w-4 h-4 text-blue-600" />
                                     </button>
                                     <button
                                       onClick={() => removeFromLibrary(item.id)}
                                       className="p-2 bg-white rounded-lg shadow hover:bg-red-50 transition-colors"
-                                      title="Sil"
+                                      title={t('delete')}
                                     >
                                       <Trash2 className="w-4 h-4 text-red-500" />
                                     </button>
@@ -693,15 +707,15 @@ export default function TasarimPage() {
                                     <button
                                       onClick={() => setPlayingVideoId(null)}
                                       className="text-xs text-gray-500 hover:text-gray-700 flex items-center gap-0.5"
-                                      title="Durdur"
+                                      title={t('stop')}
                                     >
                                       <svg className="w-2.5 h-2.5" viewBox="0 0 24 24" fill="currentColor"><path d="M6 19h4V5H6v14zm8-14v14h4V5h-4z"/></svg>
-                                      Durdur
+                                      {t('stop')}
                                     </button>
                                   )}
                                   <span className="text-xs text-gray-500 flex items-center gap-0.5">
                                     <Clock className="w-2.5 h-2.5" />
-                                    {new Date(item.createdAt).toLocaleDateString('tr-TR')}
+                                    {new Date(item.createdAt).toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR')}
                                   </span>
                                 </div>
                               </div>

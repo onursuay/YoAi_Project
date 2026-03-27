@@ -51,7 +51,7 @@ const OBJECTIVES = [
 
 const OBJECTIVE_LABELS: Record<string, Record<string, string>> = {
   OUTCOME_TRAFFIC: { tr: 'Trafik', en: 'Traffic' },
-  OUTCOME_AWARENESS: { tr: 'Bilinirlik', en: 'Bilinirlik' },
+  OUTCOME_AWARENESS: { tr: 'Bilinirlik', en: 'Awareness' },
   OUTCOME_ENGAGEMENT: { tr: 'Etkileşim', en: 'Engagement' },
   OUTCOME_LEADS: { tr: 'Potansiyel Müşteri', en: 'Leads' },
   OUTCOME_SALES: { tr: 'Satış', en: 'Sales' },

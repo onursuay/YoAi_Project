@@ -568,7 +568,7 @@ const translations = {
     adsetBudget: 'Ad Set Budget',
 
     // Objectives
-    OUTCOME_AWARENESS: 'Bilinirlik',
+    OUTCOME_AWARENESS: 'Awareness',
     OUTCOME_TRAFFIC: 'Traffic',
     OUTCOME_ENGAGEMENT: 'Engagement',
     OUTCOME_LEADS: 'Leads',

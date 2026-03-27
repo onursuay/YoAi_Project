@@ -79,7 +79,7 @@ const dict: Record<SpecLocale, Record<string, string>> = {
     'spec.engagement.on_page': 'Sayfa beğenisi',
   },
   en: {
-    'objective.AWARENESS': 'Bilinirlik',
+    'objective.AWARENESS': 'Awareness',
     'objective.TRAFFIC': 'Traffic',
     'objective.ENGAGEMENT': 'Engagement',
     'objective.LEADS': 'Leads',

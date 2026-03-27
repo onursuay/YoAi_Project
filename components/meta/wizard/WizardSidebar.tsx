@@ -12,7 +12,7 @@ interface WizardSidebarProps {
 }
 
 const OBJECTIVE_LABELS: Record<string, { tr: string; en: string }> = {
-  OUTCOME_AWARENESS:     { tr: 'Bilinirlik',          en: 'Bilinirlik' },
+  OUTCOME_AWARENESS:     { tr: 'Bilinirlik',          en: 'Awareness' },
   OUTCOME_TRAFFIC:       { tr: 'Trafik',              en: 'Traffic' },
   OUTCOME_ENGAGEMENT:    { tr: 'Etkileşim',          en: 'Engagement' },
   OUTCOME_LEADS:         { tr: 'Potansiyel Müşteri', en: 'Leads' },
