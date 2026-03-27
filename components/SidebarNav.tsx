@@ -70,7 +70,7 @@ export default function SidebarNav() {
 
   return (
     <div 
-      className={`bg-white border-r border-gray-200 h-screen flex flex-col ${mounted ? 'transition-[width] duration-300' : ''}`}
+      className={`bg-white border-r border-gray-200 h-screen flex flex-col ${mounted ? 'transition-[width,opacity] duration-300 opacity-100' : 'opacity-0'}`}
       style={{ width: collapsed ? '72px' : '260px' }}
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between min-h-[56px]">
