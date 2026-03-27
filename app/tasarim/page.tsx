@@ -253,19 +253,20 @@ export default function TasarimPage() {
     return map[pos]
   }
 
-  const logoPositionClasses = (pos: TextPosition): string => {
-    const map: Record<TextPosition, string> = {
-      'top-left': 'top-4 left-4',
-      'top-center': 'top-4 left-1/2 -translate-x-1/2',
-      'top-right': 'top-4 right-4',
-      'center-left': 'top-1/2 left-4 -translate-y-1/2',
-      'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
-      'center-right': 'top-1/2 right-4 -translate-y-1/2',
-      'bottom-left': 'bottom-4 left-4',
-      'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
-      'bottom-right': 'bottom-4 right-4',
+  const logoPositionStyle = (pos: TextPosition): React.CSSProperties => {
+    const base: React.CSSProperties = { position: 'absolute' }
+    // Vertical
+    if (pos.startsWith('top')) base.top = 16
+    else if (pos.startsWith('bottom')) base.bottom = 16
+    else { base.top = '50%'; base.transform = 'translateY(-50%)' }
+    // Horizontal
+    if (pos.endsWith('left')) base.left = 16
+    else if (pos.endsWith('right')) base.right = 16
+    else {
+      base.left = '50%'
+      base.transform = base.transform ? 'translate(-50%, -50%)' : 'translateX(-50%)'
     }
-    return map[pos]
+    return base
   }
 
   const overlayTextStyle = (sizeMult = 1): React.CSSProperties => ({
@@ -709,7 +710,7 @@ export default function TasarimPage() {
 
                           {/* Live Logo Overlay */}
                           {hasOverlayLogo && (
-                            <div className={`absolute pointer-events-none ${logoPositionClasses(overlayConfig.logoPosition)}`}>
+                            <div className="pointer-events-none" style={logoPositionStyle(overlayConfig.logoPosition)}>
                               <img
                                 src={overlayConfig.logo!}
                                 alt=""
