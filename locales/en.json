@@ -2078,7 +2078,11 @@
         "fontSize": "Size",
         "color": "Color",
         "position": "Position",
-        "videoScroll": "Scroll text (left → right)"
+        "videoScroll": "Scroll text (left → right)",
+        "uploadLogo": "Upload Logo",
+        "removeLogo": "Remove",
+        "logoSize": "Logo Size",
+        "logoPosition": "Logo Position"
       },
       "publishModal": {
         "title": "Publish to Social Media",

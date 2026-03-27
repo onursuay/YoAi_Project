@@ -263,61 +263,87 @@ export default function TasarimPage() {
   })
 
   const hasOverlayText = !!(title || slogan)
+  const hasOverlayLogo = !!overlayConfig.logo
+  const hasAnyOverlay = hasOverlayText || hasOverlayLogo
   const useVideoScroll = overlayConfig.videoScroll && activeItem?.type === 'video'
 
-  // Shared: render overlay text onto image via Canvas → returns data URL
-  const renderOverlayToDataUrl = useCallback((imageUrl: string): Promise<string> => {
+  // Helper: load an image as a promise
+  const loadImage = (src: string, crossOrigin = false): Promise<HTMLImageElement> => {
     return new Promise((resolve, reject) => {
       const img = new window.Image()
-      img.crossOrigin = 'anonymous'
-      img.onload = () => {
-        const canvas = document.createElement('canvas')
-        canvas.width = img.width
-        canvas.height = img.height
-        const ctx = canvas.getContext('2d')!
-        ctx.drawImage(img, 0, 0)
-
-        const scale = Math.max(img.width, img.height) / 480
-        const fontSize = overlayConfig.fontSize * scale
-        const padding = 16 * scale
-
-        ctx.shadowColor = 'rgba(0,0,0,0.8)'
-        ctx.shadowBlur = 4 * scale
-        ctx.shadowOffsetX = scale
-        ctx.shadowOffsetY = scale
-        ctx.fillStyle = overlayConfig.color
-
-        const pos = overlayConfig.position
-        let textAlign: CanvasTextAlign = 'left'
-        let x = padding
-        if (pos.endsWith('center') || pos === 'center') {
-          textAlign = 'center'; x = img.width / 2
-        } else if (pos.includes('right')) {
-          textAlign = 'right'; x = img.width - padding
-        }
-
-        let y = padding + fontSize
-        if (pos.startsWith('bottom')) {
-          y = img.height - padding - (slogan ? fontSize * 1.2 : 0)
-        } else if (pos.startsWith('center')) {
-          y = img.height / 2 - (slogan ? fontSize * 0.5 : 0)
-        }
-
-        ctx.textAlign = textAlign
-        if (title) {
-          ctx.font = `bold ${fontSize}px ${overlayConfig.font}`
-          ctx.fillText(title, x, y)
-        }
-        if (slogan) {
-          ctx.font = `${fontSize * 0.7}px ${overlayConfig.font}`
-          ctx.fillText(slogan, x, y + fontSize * 1.3)
-        }
-
-        resolve(canvas.toDataURL('image/jpeg', 0.95))
-      }
+      if (crossOrigin) img.crossOrigin = 'anonymous'
+      img.onload = () => resolve(img)
       img.onerror = () => reject(new Error('Image load failed'))
-      img.src = imageUrl
+      img.src = src
     })
+  }
+
+  // Shared: render overlay (text + logo) onto image via Canvas → returns data URL
+  const renderOverlayToDataUrl = useCallback(async (imageUrl: string): Promise<string> => {
+    const img = await loadImage(imageUrl, true)
+
+    const canvas = document.createElement('canvas')
+    canvas.width = img.width
+    canvas.height = img.height
+    const ctx = canvas.getContext('2d')!
+    ctx.drawImage(img, 0, 0)
+
+    const scale = Math.max(img.width, img.height) / 480
+    const padding = 16 * scale
+
+    // Draw logo
+    if (overlayConfig.logo) {
+      try {
+        const logoImg = await loadImage(overlayConfig.logo)
+        const logoW = img.width * (overlayConfig.logoSize / 100)
+        const logoH = (logoImg.height / logoImg.width) * logoW
+        const lp = overlayConfig.logoPosition
+        let lx = padding, ly = padding
+        if (lp.endsWith('center') || lp === 'center') lx = (img.width - logoW) / 2
+        else if (lp.includes('right')) lx = img.width - logoW - padding
+        if (lp.startsWith('center')) ly = (img.height - logoH) / 2
+        else if (lp.startsWith('bottom')) ly = img.height - logoH - padding
+        ctx.drawImage(logoImg, lx, ly, logoW, logoH)
+      } catch { /* skip logo on error */ }
+    }
+
+    // Draw text
+    if (title || slogan) {
+      const fontSize = overlayConfig.fontSize * scale
+      ctx.shadowColor = 'rgba(0,0,0,0.8)'
+      ctx.shadowBlur = 4 * scale
+      ctx.shadowOffsetX = scale
+      ctx.shadowOffsetY = scale
+      ctx.fillStyle = overlayConfig.color
+
+      const pos = overlayConfig.position
+      let textAlign: CanvasTextAlign = 'left'
+      let x = padding
+      if (pos.endsWith('center') || pos === 'center') {
+        textAlign = 'center'; x = img.width / 2
+      } else if (pos.includes('right')) {
+        textAlign = 'right'; x = img.width - padding
+      }
+
+      let y = padding + fontSize
+      if (pos.startsWith('bottom')) {
+        y = img.height - padding - (slogan ? fontSize * 1.2 : 0)
+      } else if (pos.startsWith('center')) {
+        y = img.height / 2 - (slogan ? fontSize * 0.5 : 0)
+      }
+
+      ctx.textAlign = textAlign
+      if (title) {
+        ctx.font = `bold ${fontSize}px ${overlayConfig.font}`
+        ctx.fillText(title, x, y)
+      }
+      if (slogan) {
+        ctx.font = `${fontSize * 0.7}px ${overlayConfig.font}`
+        ctx.fillText(slogan, x, y + fontSize * 1.3)
+      }
+    }
+
+    return canvas.toDataURL('image/jpeg', 0.95)
   }, [title, slogan, overlayConfig])
 
   // Download with overlay baked in (images) or direct (video)
@@ -325,7 +351,7 @@ export default function TasarimPage() {
     if (!activeItem) return
     const isImage = activeItem.type === 'gorsel'
 
-    if (isImage && title || isImage && slogan) {
+    if (isImage && hasAnyOverlay) {
       try {
         const dataUrl = await renderOverlayToDataUrl(activeItem.url)
         const a = document.createElement('a')
@@ -344,11 +370,11 @@ export default function TasarimPage() {
     document.body.appendChild(a)
     a.click()
     document.body.removeChild(a)
-  }, [activeItem, title, slogan, renderOverlayToDataUrl])
+  }, [activeItem, hasAnyOverlay, renderOverlayToDataUrl])
 
   // Publish: bake overlay into image, upload to CDN, then open modal
   const handlePublishItem = useCallback(async (item: GeneratedItem) => {
-    if ((!title && !slogan) || item.type === 'video') {
+    if (!hasAnyOverlay || item.type === 'video') {
       setPublishItem(item)
       return
     }
@@ -366,10 +392,16 @@ export default function TasarimPage() {
     } catch {
       setPublishItem(item) // fallback: publish without overlay
     }
-  }, [title, slogan, renderOverlayToDataUrl])
+  }, [hasAnyOverlay, renderOverlayToDataUrl])
 
   return (
     <>
+      {/* Google Fonts for overlay text */}
+      {/* eslint-disable-next-line @next/next/no-page-custom-font */}
+      <link
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script&family=Lato&family=Montserrat:wght@400;700&family=Open+Sans&family=Oswald&family=Playfair+Display&family=Poppins:wght@400;600&family=Raleway&family=Roboto&display=swap"
+        rel="stylesheet"
+      />
       {/* Keyframes for video text scroll animation */}
       <style>{`
         @keyframes overlay-scroll-ltr {
@@ -501,14 +533,13 @@ export default function TasarimPage() {
                 />
               </div>
 
-              {/* Text Overlay Controls */}
-              {(title || slogan) && (
-                <TextOverlayControls
-                  config={overlayConfig}
-                  onChange={setOverlayConfig}
-                  mode={mode}
-                />
-              )}
+              {/* Text & Logo Overlay Controls */}
+              <TextOverlayControls
+                config={overlayConfig}
+                onChange={setOverlayConfig}
+                mode={mode}
+                hasText={hasOverlayText}
+              />
             </div>
 
             {/* Generate Button */}
@@ -681,6 +712,18 @@ export default function TasarimPage() {
                                 {slogan && <p style={overlayTextStyle(0.7)} className="mt-0.5">{slogan}</p>}
                               </div>
                             )
+                          )}
+
+                          {/* Live Logo Overlay */}
+                          {hasOverlayLogo && (
+                            <div className={`absolute pointer-events-none ${overlayPositionClasses(overlayConfig.logoPosition)}`}>
+                              <img
+                                src={overlayConfig.logo!}
+                                alt=""
+                                style={{ width: `${overlayConfig.logoSize}%`, height: 'auto' }}
+                                className="drop-shadow-lg"
+                              />
+                            </div>
                           )}
                         </div>
                         <div className="flex items-center justify-between w-full">

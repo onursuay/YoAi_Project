@@ -2078,7 +2078,11 @@
         "fontSize": "Boyut",
         "color": "Renk",
         "position": "Konum",
-        "videoScroll": "Yazıyı kaydır (sol → sağ)"
+        "videoScroll": "Yazıyı kaydır (sol → sağ)",
+        "uploadLogo": "Logo Yükle",
+        "removeLogo": "Kaldır",
+        "logoSize": "Logo Boyutu",
+        "logoPosition": "Logo Konumu"
       },
       "publishModal": {
         "title": "Sosyal Medyada Yayınla",
