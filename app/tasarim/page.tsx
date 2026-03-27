@@ -399,7 +399,7 @@ export default function TasarimPage() {
       {/* Google Fonts for overlay text */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script&family=Inter:wght@400;700&family=Lato&family=Merriweather&family=Montserrat:wght@400;700&family=Nunito&family=Open+Sans&family=Oswald&family=Pacifico&family=Permanent+Marker&family=Playfair+Display&family=Poppins:wght@400;600&family=Quicksand&family=Raleway&family=Roboto&family=Rubik&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Abril+Fatface&family=Alfa+Slab+One&family=Bebas+Neue&family=Caveat&family=DM+Sans&family=Dancing+Script&family=Figtree&family=Great+Vibes&family=Inter:wght@400;700&family=Karla&family=Lato&family=Lobster&family=Lora&family=Manrope&family=Merriweather&family=Montserrat:wght@400;700&family=Noto+Sans&family=Noto+Serif&family=Nunito&family=Open+Sans&family=Oswald&family=Outfit&family=PT+Sans&family=PT+Serif&family=Pacifico&family=Permanent+Marker&family=Playfair+Display&family=Poppins:wght@400;600&family=Quicksand&family=Raleway&family=Righteous&family=Roboto&family=Rubik&family=Russo+One&family=Sacramento&family=Source+Sans+3&family=Source+Serif+4&display=swap"
         rel="stylesheet"
       />
       {/* Keyframes for video text scroll animation */}

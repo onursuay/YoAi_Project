@@ -38,7 +38,7 @@ const FONTS = [
   { value: "'Times New Roman', serif", label: 'Times New Roman' },
   { value: 'Verdana, sans-serif', label: 'Verdana' },
   { value: "'Courier New', monospace", label: 'Courier' },
-  // Google Fonts
+  // Google Fonts — Sans-serif
   { value: "'Inter', sans-serif", label: 'Inter' },
   { value: "'Roboto', sans-serif", label: 'Roboto' },
   { value: "'Open Sans', sans-serif", label: 'Open Sans' },
@@ -47,15 +47,38 @@ const FONTS = [
   { value: "'Poppins', sans-serif", label: 'Poppins' },
   { value: "'Nunito', sans-serif", label: 'Nunito' },
   { value: "'Rubik', sans-serif", label: 'Rubik' },
-  { value: "'Playfair Display', serif", label: 'Playfair Display' },
-  { value: "'Merriweather', serif", label: 'Merriweather' },
-  { value: "'Oswald', sans-serif", label: 'Oswald' },
-  { value: "'Bebas Neue', sans-serif", label: 'Bebas Neue' },
   { value: "'Raleway', sans-serif", label: 'Raleway' },
   { value: "'Quicksand', sans-serif", label: 'Quicksand' },
+  { value: "'DM Sans', sans-serif", label: 'DM Sans' },
+  { value: "'Manrope', sans-serif", label: 'Manrope' },
+  { value: "'Figtree', sans-serif", label: 'Figtree' },
+  { value: "'Source Sans 3', sans-serif", label: 'Source Sans' },
+  { value: "'PT Sans', sans-serif", label: 'PT Sans' },
+  { value: "'Noto Sans', sans-serif", label: 'Noto Sans' },
+  { value: "'Karla', sans-serif", label: 'Karla' },
+  { value: "'Outfit', sans-serif", label: 'Outfit' },
+  // Google Fonts — Serif
+  { value: "'Playfair Display', serif", label: 'Playfair Display' },
+  { value: "'Merriweather', serif", label: 'Merriweather' },
+  { value: "'Lora', serif", label: 'Lora' },
+  { value: "'PT Serif', serif", label: 'PT Serif' },
+  { value: "'Source Serif 4', serif", label: 'Source Serif' },
+  { value: "'Noto Serif', serif", label: 'Noto Serif' },
+  // Google Fonts — Display / Başlık
+  { value: "'Oswald', sans-serif", label: 'Oswald' },
+  { value: "'Bebas Neue', sans-serif", label: 'Bebas Neue' },
+  { value: "'Abril Fatface', serif", label: 'Abril Fatface' },
+  { value: "'Alfa Slab One', serif", label: 'Alfa Slab One' },
+  { value: "'Righteous', sans-serif", label: 'Righteous' },
+  { value: "'Russo One', sans-serif", label: 'Russo One' },
+  { value: "'Lobster', cursive", label: 'Lobster' },
+  // Google Fonts — El Yazısı
   { value: "'Dancing Script', cursive", label: 'Dancing Script' },
   { value: "'Pacifico', cursive", label: 'Pacifico' },
   { value: "'Permanent Marker', cursive", label: 'Permanent Marker' },
+  { value: "'Caveat', cursive", label: 'Caveat' },
+  { value: "'Great Vibes', cursive", label: 'Great Vibes' },
+  { value: "'Sacramento', cursive", label: 'Sacramento' },
 ]
 
 const COLORS = ['#FFFFFF', '#000000', '#FF3B30', '#FFD60A', '#34C759', '#007AFF', '#FF9500', '#AF52DE']
