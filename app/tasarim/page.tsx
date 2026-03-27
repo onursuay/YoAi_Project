@@ -238,7 +238,7 @@ export default function TasarimPage() {
   }
 
   // --- Text Overlay helpers ---
-  const overlayPositionClasses = (pos: TextPosition): string => {
+  const textPositionClasses = (pos: TextPosition): string => {
     const map: Record<TextPosition, string> = {
       'top-left': 'top-4 left-4 text-left',
       'top-center': 'top-4 left-4 right-4 text-center',
@@ -249,6 +249,21 @@ export default function TasarimPage() {
       'bottom-left': 'bottom-4 left-4 text-left',
       'bottom-center': 'bottom-4 left-4 right-4 text-center',
       'bottom-right': 'bottom-4 right-4 text-right',
+    }
+    return map[pos]
+  }
+
+  const logoPositionClasses = (pos: TextPosition): string => {
+    const map: Record<TextPosition, string> = {
+      'top-left': 'top-4 left-4',
+      'top-center': 'top-4 left-1/2 -translate-x-1/2',
+      'top-right': 'top-4 right-4',
+      'center-left': 'top-1/2 left-4 -translate-y-1/2',
+      'center': 'top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2',
+      'center-right': 'top-1/2 right-4 -translate-y-1/2',
+      'bottom-left': 'bottom-4 left-4',
+      'bottom-center': 'bottom-4 left-1/2 -translate-x-1/2',
+      'bottom-right': 'bottom-4 right-4',
     }
     return map[pos]
   }
@@ -685,7 +700,7 @@ export default function TasarimPage() {
                               </div>
                             ) : (
                               /* Static position overlay */
-                              <div className={`absolute pointer-events-none ${overlayPositionClasses(overlayConfig.position)}`}>
+                              <div className={`absolute pointer-events-none ${textPositionClasses(overlayConfig.position)}`}>
                                 {title && <p style={overlayTextStyle()}>{title}</p>}
                                 {slogan && <p style={overlayTextStyle(0.7)} className="mt-0.5">{slogan}</p>}
                               </div>
@@ -694,7 +709,7 @@ export default function TasarimPage() {
 
                           {/* Live Logo Overlay */}
                           {hasOverlayLogo && (
-                            <div className={`absolute pointer-events-none ${overlayPositionClasses(overlayConfig.logoPosition)}`}>
+                            <div className={`absolute pointer-events-none ${logoPositionClasses(overlayConfig.logoPosition)}`}>
                               <img
                                 src={overlayConfig.logo!}
                                 alt=""
