@@ -2073,6 +2073,9 @@
       "generationFailed": "Üretim başarısız oldu",
       "errorOccurred": "Bir hata oluştu",
       "overlay": {
+        "textLogo": "Yazı / Logo",
+        "addText": "Yazı Ekle",
+        "addLogo": "Logo Ekle",
         "title": "Metin Katmanı",
         "font": "Yazı Tipi",
         "fontSize": "Boyut",

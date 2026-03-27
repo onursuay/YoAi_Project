@@ -2073,6 +2073,9 @@
       "generationFailed": "Generation failed",
       "errorOccurred": "An error occurred",
       "overlay": {
+        "textLogo": "Text / Logo",
+        "addText": "Add Text",
+        "addLogo": "Add Logo",
         "title": "Text Overlay",
         "font": "Font",
         "fontSize": "Size",

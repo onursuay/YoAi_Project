@@ -262,8 +262,8 @@ export default function TasarimPage() {
     wordBreak: 'break-word' as const,
   })
 
-  const hasOverlayText = !!(title || slogan)
-  const hasOverlayLogo = !!overlayConfig.logo
+  const hasOverlayText = overlayConfig.textEnabled && !!(title || slogan)
+  const hasOverlayLogo = overlayConfig.logoEnabled && !!overlayConfig.logo
   const hasAnyOverlay = hasOverlayText || hasOverlayLogo
   const useVideoScroll = overlayConfig.videoScroll && activeItem?.type === 'video'
 
@@ -292,7 +292,7 @@ export default function TasarimPage() {
     const padding = 16 * scale
 
     // Draw logo
-    if (overlayConfig.logo) {
+    if (overlayConfig.logoEnabled && overlayConfig.logo) {
       try {
         const logoImg = await loadImage(overlayConfig.logo)
         const logoW = img.width * (overlayConfig.logoSize / 100)
@@ -308,7 +308,7 @@ export default function TasarimPage() {
     }
 
     // Draw text
-    if (title || slogan) {
+    if (overlayConfig.textEnabled && (title || slogan)) {
       const fontSize = overlayConfig.fontSize * scale
       ctx.shadowColor = 'rgba(0,0,0,0.8)'
       ctx.shadowBlur = 4 * scale
@@ -508,37 +508,15 @@ export default function TasarimPage() {
                 </div>
               </div>
 
-              {/* Title & Slogan */}
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">
-                  {t('titleLabel')}
-                </label>
-                <input
-                  type="text"
-                  value={title}
-                  onChange={e => setTitle(e.target.value)}
-                  placeholder={t('titleLabel')}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-                <p className="text-caption text-gray-500 text-right mt-1">{title.length} / 300</p>
-              </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">{t('sloganLabel')}</label>
-                <input
-                  type="text"
-                  value={slogan}
-                  onChange={e => setSlogan(e.target.value)}
-                  placeholder="--"
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-                />
-              </div>
-
-              {/* Text & Logo Overlay Controls */}
+              {/* Yazı / Logo Overlay Controls */}
               <TextOverlayControls
                 config={overlayConfig}
                 onChange={setOverlayConfig}
                 mode={mode}
-                hasText={hasOverlayText}
+                title={title}
+                setTitle={setTitle}
+                slogan={slogan}
+                setSlogan={setSlogan}
               />
             </div>
 
