@@ -97,8 +97,23 @@ export default function SidebarNav() {
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between min-h-[56px]">
         {collapsed ? (
-          /* Collapsed: logo ↔ button hint animation + hover */
-          <div className="group relative flex items-center justify-center w-full h-8">
+          /* Collapsed: logo ↔ button hint animation + hover + glow */
+          <div className="group relative flex items-center justify-center w-full h-10 rounded-lg overflow-hidden">
+            {/* Green glow particles — only during transition */}
+            <div
+              className={`absolute inset-0 transition-opacity duration-500 pointer-events-none ${showHintButton ? 'opacity-100' : 'opacity-0'}`}
+              aria-hidden="true"
+            >
+              <span className="absolute top-1 left-1 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" style={{ animationDuration: '1.5s' }} />
+              <span className="absolute top-0 right-2 w-1 h-1 rounded-full bg-emerald-300 animate-ping" style={{ animationDuration: '2s', animationDelay: '0.3s' }} />
+              <span className="absolute bottom-1 left-3 w-1 h-1 rounded-full bg-emerald-500 animate-ping" style={{ animationDuration: '1.8s', animationDelay: '0.5s' }} />
+              <span className="absolute bottom-0 right-1 w-1.5 h-1.5 rounded-full bg-emerald-400 animate-ping" style={{ animationDuration: '1.6s', animationDelay: '0.2s' }} />
+              <span className="absolute top-1/2 left-0 w-1 h-1 rounded-full bg-emerald-300 animate-ping" style={{ animationDuration: '2.2s', animationDelay: '0.7s' }} />
+              <span className="absolute top-1/2 right-0 w-1 h-1 rounded-full bg-emerald-400 animate-ping" style={{ animationDuration: '1.4s', animationDelay: '0.4s' }} />
+              {/* Subtle border glow */}
+              <div className="absolute inset-0 rounded-lg ring-1 ring-emerald-400/40 shadow-[0_0_8px_rgba(16,185,129,0.3)]" />
+            </div>
+
             <Link
               href="/dashboard"
               prefetch={false}
@@ -114,10 +129,10 @@ export default function SidebarNav() {
             </Link>
             <button
               onClick={toggleCollapse}
-              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100 hover:bg-gray-100 rounded-lg ${showHintButton ? 'opacity-100' : 'opacity-0'}`}
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100 rounded-lg ${showHintButton ? 'opacity-100' : 'opacity-0'}`}
               aria-label="Expand sidebar"
             >
-              <PanelLeftOpen className="w-5 h-5 text-gray-600" />
+              <PanelLeftOpen className="w-6 h-6 text-emerald-500" />
             </button>
           </div>
         ) : (
