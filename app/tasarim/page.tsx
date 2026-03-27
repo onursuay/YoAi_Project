@@ -399,7 +399,7 @@ export default function TasarimPage() {
       {/* Google Fonts for overlay text */}
       {/* eslint-disable-next-line @next/next/no-page-custom-font */}
       <link
-        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script&family=Lato&family=Montserrat:wght@400;700&family=Open+Sans&family=Oswald&family=Playfair+Display&family=Poppins:wght@400;600&family=Raleway&family=Roboto&display=swap"
+        href="https://fonts.googleapis.com/css2?family=Bebas+Neue&family=Dancing+Script&family=Inter:wght@400;700&family=Lato&family=Merriweather&family=Montserrat:wght@400;700&family=Nunito&family=Open+Sans&family=Oswald&family=Pacifico&family=Permanent+Marker&family=Playfair+Display&family=Poppins:wght@400;600&family=Quicksand&family=Raleway&family=Roboto&family=Rubik&display=swap"
         rel="stylesheet"
       />
       {/* Keyframes for video text scroll animation */}

@@ -39,16 +39,23 @@ const FONTS = [
   { value: 'Verdana, sans-serif', label: 'Verdana' },
   { value: "'Courier New', monospace", label: 'Courier' },
   // Google Fonts
+  { value: "'Inter', sans-serif", label: 'Inter' },
   { value: "'Roboto', sans-serif", label: 'Roboto' },
   { value: "'Open Sans', sans-serif", label: 'Open Sans' },
   { value: "'Montserrat', sans-serif", label: 'Montserrat' },
   { value: "'Lato', sans-serif", label: 'Lato' },
   { value: "'Poppins', sans-serif", label: 'Poppins' },
+  { value: "'Nunito', sans-serif", label: 'Nunito' },
+  { value: "'Rubik', sans-serif", label: 'Rubik' },
   { value: "'Playfair Display', serif", label: 'Playfair Display' },
+  { value: "'Merriweather', serif", label: 'Merriweather' },
   { value: "'Oswald', sans-serif", label: 'Oswald' },
   { value: "'Bebas Neue', sans-serif", label: 'Bebas Neue' },
   { value: "'Raleway', sans-serif", label: 'Raleway' },
+  { value: "'Quicksand', sans-serif", label: 'Quicksand' },
   { value: "'Dancing Script', cursive", label: 'Dancing Script' },
+  { value: "'Pacifico', cursive", label: 'Pacifico' },
+  { value: "'Permanent Marker', cursive", label: 'Permanent Marker' },
 ]
 
 const COLORS = ['#FFFFFF', '#000000', '#FF3B30', '#FFD60A', '#34C759', '#007AFF', '#FF9500', '#AF52DE']
