@@ -15,20 +15,23 @@ export default function SidebarNav() {
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
   const [collapsed, setCollapsed] = useState<boolean>(true)
-  const [mounted, setMounted] = useState(false)
+  const [ready, setReady] = useState(false)
+  const [animate, setAnimate] = useState(false)
 
+  // Read saved state, mark ready, then enable transitions
   useEffect(() => {
     try {
       const saved = localStorage.getItem('sidebar_collapsed')
       if (saved !== null) setCollapsed(JSON.parse(saved))
     } catch { /* ignore */ }
-    requestAnimationFrame(() => requestAnimationFrame(() => setMounted(true)))
+    setReady(true)
+    requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
   }, [])
 
-  // Save collapsed state to localStorage (skip initial mount)
+  // Persist collapsed state (only after first render)
   useEffect(() => {
-    if (mounted) localStorage.setItem('sidebar_collapsed', JSON.stringify(collapsed))
-  }, [collapsed, mounted])
+    if (ready) localStorage.setItem('sidebar_collapsed', JSON.stringify(collapsed))
+  }, [collapsed, ready])
 
   const toggleCollapse = () => {
     setCollapsed((prev) => !prev)
@@ -67,9 +70,13 @@ export default function SidebarNav() {
     }))
   }, [t, locale])
 
+  if (!ready) {
+    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: '72px' }} />
+  }
+
   return (
-    <div 
-      className={`bg-white border-r border-gray-200 h-screen flex flex-col ${mounted ? 'transition-[width] duration-300' : ''}`}
+    <div
+      className={`bg-white border-r border-gray-200 h-screen flex flex-col ${animate ? 'transition-[width] duration-300' : ''}`}
       style={{ width: collapsed ? '72px' : '260px' }}
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between min-h-[56px]">
