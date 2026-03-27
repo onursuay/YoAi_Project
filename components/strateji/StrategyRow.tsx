@@ -1,6 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
+import { useLocale } from 'next-intl'
 import { ChevronRight, RotateCcw, AlertTriangle, Eye, Play, Trash2 } from 'lucide-react'
 import type { StrategyInstance } from '@/lib/strategy/types'
 import { GOAL_TYPES } from '@/lib/strategy/constants'
@@ -15,8 +16,9 @@ interface StrategyRowProps {
 
 export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRowProps) {
   const router = useRouter()
+  const locale = useLocale() as 'tr' | 'en'
 
-  const goalLabel = GOAL_TYPES.find(g => g.value === instance.goal_type)?.label || instance.goal_type
+  const goalLabel = GOAL_TYPES.find(g => g.value === instance.goal_type)?.label[locale] || instance.goal_type
   const subtitle = [instance.brand, goalLabel, instance.time_horizon_days ? `${instance.time_horizon_days} gün` : null]
     .filter(Boolean)
     .join(' / ')

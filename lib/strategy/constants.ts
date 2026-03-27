@@ -41,12 +41,12 @@ export const STATUS_COLORS: Record<InstanceStatus, { bg: string; text: string; d
 
 // Hedef tipleri — Meta kampanya hedefleriyle birebir eşleşir
 export const GOAL_TYPES = [
-  { value: 'awareness', label: 'Bilinirlik', description: 'Marka bilinirliği ve erişim' },
-  { value: 'traffic', label: 'Trafik', description: 'Web sitesi veya uygulama trafiği' },
-  { value: 'engagement', label: 'Etkileşim', description: 'Beğeni, yorum, paylaşım ve mesaj' },
-  { value: 'leads', label: 'Potansiyel Müşteriler', description: 'Form, mesaj veya arama ile lead toplama' },
-  { value: 'app', label: 'Uygulama Tanıtımı', description: 'Uygulama yükleme ve uygulama içi etkinlik' },
-  { value: 'sales', label: 'Satışlar', description: 'E-ticaret satışı ve dönüşüm' },
+  { value: 'awareness', label: { tr: 'Bilinirlik', en: 'Awareness' }, description: { tr: 'Marka bilinirliği ve erişim', en: 'Brand awareness and reach' } },
+  { value: 'traffic', label: { tr: 'Trafik', en: 'Traffic' }, description: { tr: 'Web sitesi veya uygulama trafiği', en: 'Website or app traffic' } },
+  { value: 'engagement', label: { tr: 'Etkileşim', en: 'Engagement' }, description: { tr: 'Beğeni, yorum, paylaşım ve mesaj', en: 'Likes, comments, shares and messages' } },
+  { value: 'leads', label: { tr: 'Potansiyel Müşteriler', en: 'Leads' }, description: { tr: 'Form, mesaj veya arama ile lead toplama', en: 'Collect leads via forms, messages or calls' } },
+  { value: 'app', label: { tr: 'Uygulama Tanıtımı', en: 'App Promotion' }, description: { tr: 'Uygulama yükleme ve uygulama içi etkinlik', en: 'App installs and in-app activity' } },
+  { value: 'sales', label: { tr: 'Satışlar', en: 'Sales' }, description: { tr: 'E-ticaret satışı ve dönüşüm', en: 'E-commerce sales and conversions' } },
 ] as const
 
 // Sektörler

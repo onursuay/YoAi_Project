@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useLocale } from 'next-intl'
 import { Save, Zap, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import type { InputPayload, GoalType } from '@/lib/strategy/types'
 import { GOAL_TYPES, INDUSTRIES, TIME_HORIZONS, GEOGRAPHIES } from '@/lib/strategy/constants'
@@ -16,6 +17,7 @@ interface WizardPhase1Props {
 const DEFAULT_INTEGRATIONS = { pixel: 'yellow' as const, analytics: 'yellow' as const, crm: 'red' as const }
 
 export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAndAnalyze, saving }: WizardPhase1Props) {
+  const locale = useLocale() as 'tr' | 'en'
   const [form, setForm] = useState<InputPayload>({
     goal_type: initialData?.goal_type || 'sales',
     product: initialData?.product || '',
@@ -74,8 +76,8 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
                   : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
-              <span className="block text-sm font-medium">{g.label}</span>
-              <span className="block text-[10px] mt-0.5 opacity-70">{g.description}</span>
+              <span className="block text-sm font-medium">{g.label[locale]}</span>
+              <span className="block text-[10px] mt-0.5 opacity-70">{g.description[locale]}</span>
             </button>
           ))}
         </div>
