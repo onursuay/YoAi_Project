@@ -710,14 +710,16 @@ export default function TasarimPage() {
 
                           {/* Live Logo Overlay */}
                           {hasOverlayLogo && (
-                            <div className="pointer-events-none" style={logoPositionStyle(overlayConfig.logoPosition)}>
-                              <img
-                                src={overlayConfig.logo!}
-                                alt=""
-                                style={{ width: `${overlayConfig.logoSize}%`, height: 'auto' }}
-                                className="drop-shadow-lg"
-                              />
-                            </div>
+                            <img
+                              src={overlayConfig.logo!}
+                              alt=""
+                              className="pointer-events-none drop-shadow-lg"
+                              style={{
+                                ...logoPositionStyle(overlayConfig.logoPosition),
+                                width: `${overlayConfig.logoSize}%`,
+                                height: 'auto',
+                              }}
+                            />
                           )}
                         </div>
                         <div className="flex items-center justify-between w-full">
