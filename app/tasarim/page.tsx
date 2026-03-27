@@ -265,33 +265,9 @@ export default function TasarimPage() {
   const hasOverlayText = !!(title || slogan)
   const useVideoScroll = overlayConfig.videoScroll && activeItem?.type === 'video'
 
-  const handleDownloadWithOverlay = useCallback(async () => {
-    if (!activeItem) return
-
-    // Video: direct download (overlay is preview-only)
-    if (activeItem.type === 'video') {
-      const a = document.createElement('a')
-      a.href = activeItem.url
-      a.download = `design-${activeItem.id}.mp4`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      return
-    }
-
-    // Image without overlay text: direct download
-    if (!title && !slogan) {
-      const a = document.createElement('a')
-      a.href = activeItem.url
-      a.download = `design-${activeItem.id}.jpg`
-      document.body.appendChild(a)
-      a.click()
-      document.body.removeChild(a)
-      return
-    }
-
-    // Image with overlay: bake text via Canvas
-    try {
+  // Shared: render overlay text onto image via Canvas → returns data URL
+  const renderOverlayToDataUrl = useCallback((imageUrl: string): Promise<string> => {
+    return new Promise((resolve, reject) => {
       const img = new window.Image()
       img.crossOrigin = 'anonymous'
       img.onload = () => {
@@ -301,7 +277,6 @@ export default function TasarimPage() {
         const ctx = canvas.getContext('2d')!
         ctx.drawImage(img, 0, 0)
 
-        // Scale factor: preview max ~480px, actual image is larger
         const scale = Math.max(img.width, img.height) / 480
         const fontSize = overlayConfig.fontSize * scale
         const padding = 16 * scale
@@ -312,13 +287,10 @@ export default function TasarimPage() {
         ctx.shadowOffsetY = scale
         ctx.fillStyle = overlayConfig.color
 
-        // Determine text alignment and anchor
         const pos = overlayConfig.position
         let textAlign: CanvasTextAlign = 'left'
         let x = padding
-        if (pos.includes('center') && !pos.startsWith('center-l') && !pos.startsWith('center-r')) {
-          textAlign = 'center'; x = img.width / 2
-        } else if (pos.endsWith('center')) {
+        if (pos.endsWith('center') || pos === 'center') {
           textAlign = 'center'; x = img.width / 2
         } else if (pos.includes('right')) {
           textAlign = 'right'; x = img.width - padding
@@ -332,7 +304,6 @@ export default function TasarimPage() {
         }
 
         ctx.textAlign = textAlign
-
         if (title) {
           ctx.font = `bold ${fontSize}px ${overlayConfig.font}`
           ctx.fillText(title, x, y)
@@ -342,32 +313,60 @@ export default function TasarimPage() {
           ctx.fillText(slogan, x, y + fontSize * 1.3)
         }
 
-        canvas.toBlob(blob => {
-          if (!blob) return
-          const url = URL.createObjectURL(blob)
-          const a = document.createElement('a')
-          a.href = url
-          a.download = `design-${activeItem.id}.jpg`
-          document.body.appendChild(a)
-          a.click()
-          document.body.removeChild(a)
-          URL.revokeObjectURL(url)
-        }, 'image/jpeg', 0.95)
+        resolve(canvas.toDataURL('image/jpeg', 0.95))
       }
-      img.onerror = () => {
-        // Fallback: direct download without overlay
+      img.onerror = () => reject(new Error('Image load failed'))
+      img.src = imageUrl
+    })
+  }, [title, slogan, overlayConfig])
+
+  // Download with overlay baked in (images) or direct (video)
+  const handleDownloadWithOverlay = useCallback(async () => {
+    if (!activeItem) return
+    const isImage = activeItem.type === 'gorsel'
+
+    if (isImage && title || isImage && slogan) {
+      try {
+        const dataUrl = await renderOverlayToDataUrl(activeItem.url)
         const a = document.createElement('a')
-        a.href = activeItem.url
+        a.href = dataUrl
         a.download = `design-${activeItem.id}.jpg`
         document.body.appendChild(a)
         a.click()
         document.body.removeChild(a)
-      }
-      img.src = activeItem.url
-    } catch {
-      window.open(activeItem.url, '_blank')
+        return
+      } catch { /* fallback below */ }
     }
-  }, [activeItem, title, slogan, overlayConfig])
+
+    const a = document.createElement('a')
+    a.href = activeItem.url
+    a.download = `design-${activeItem.id}.${isImage ? 'jpg' : 'mp4'}`
+    document.body.appendChild(a)
+    a.click()
+    document.body.removeChild(a)
+  }, [activeItem, title, slogan, renderOverlayToDataUrl])
+
+  // Publish: bake overlay into image, upload to CDN, then open modal
+  const handlePublishItem = useCallback(async (item: GeneratedItem) => {
+    if ((!title && !slogan) || item.type === 'video') {
+      setPublishItem(item)
+      return
+    }
+
+    try {
+      const dataUrl = await renderOverlayToDataUrl(item.url)
+      const res = await fetch('/api/tasarim/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ dataUrl }),
+      })
+      const data = await res.json()
+      if (!res.ok) throw new Error(data.error)
+      setPublishItem({ ...item, url: data.url })
+    } catch {
+      setPublishItem(item) // fallback: publish without overlay
+    }
+  }, [title, slogan, renderOverlayToDataUrl])
 
   return (
     <>
@@ -701,6 +700,12 @@ export default function TasarimPage() {
                             >
                               <Download className="w-4 h-4" />
                             </button>
+                            <button
+                              onClick={() => handlePublishItem(activeItem)}
+                              className="p-2 text-gray-500 hover:text-blue-600 rounded-lg hover:bg-blue-50"
+                            >
+                              <Share2 className="w-4 h-4" />
+                            </button>
                           </div>
                         </div>
                       </div>
@@ -823,7 +828,7 @@ export default function TasarimPage() {
                                           <Download className="w-3.5 h-3.5 text-gray-700" />
                                         </a>
                                         <button
-                                          onClick={e => { e.stopPropagation(); setPublishItem(item) }}
+                                          onClick={e => { e.stopPropagation(); handlePublishItem(item) }}
                                           className="p-1.5 bg-white/90 rounded-lg shadow hover:bg-blue-50 transition-colors"
                                           title={t('publish')}
                                         >
@@ -854,7 +859,7 @@ export default function TasarimPage() {
                                       <Download className="w-4 h-4 text-gray-700" />
                                     </a>
                                     <button
-                                      onClick={() => setPublishItem(item)}
+                                      onClick={() => handlePublishItem(item)}
                                       className="p-2 bg-white rounded-lg shadow hover:bg-blue-50 transition-colors"
                                       title={t('publish')}
                                     >
