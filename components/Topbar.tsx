@@ -1,10 +1,14 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useState, useEffect, useRef, useCallback } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, Bell } from 'lucide-react'
+import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, type LucideIcon } from 'lucide-react'
 import LanguageSwitcher from './LanguageSwitcher'
+
+const ICON_MAP: Record<string, LucideIcon> = {
+  TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle,
+}
 
 interface TopbarProps {
   title: string
@@ -51,25 +55,24 @@ export default function Topbar({
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const locale = useLocale()
 
-  // Notification ticker
-  const notifications = locale === 'en' ? [
-    { icon: TrendingUp, text: 'Your campaign performance increased by 15% this week', color: 'text-emerald-500' },
-    { icon: Lightbulb, text: 'New optimization recommendations available', color: 'text-amber-500' },
-    { icon: Target, text: '3 new potential leads detected', color: 'text-blue-500' },
-    { icon: Zap, text: 'Your AI strategy report is ready', color: 'text-purple-500' },
-    { icon: BarChart3, text: 'Monthly report generated — review your insights', color: 'text-cyan-500' },
-  ] : [
-    { icon: TrendingUp, text: 'Kampanya performansınız bu hafta %15 arttı', color: 'text-emerald-500' },
-    { icon: Lightbulb, text: 'Yeni optimizasyon önerileri mevcut', color: 'text-amber-500' },
-    { icon: Target, text: '3 yeni potansiyel müşteri tespit edildi', color: 'text-blue-500' },
-    { icon: Zap, text: 'AI strateji raporunuz hazır', color: 'text-purple-500' },
-    { icon: BarChart3, text: 'Aylık rapor oluşturuldu — içgörülerinizi inceleyin', color: 'text-cyan-500' },
-  ]
-
+  // Notification ticker — real data from API
+  const [notifications, setNotifications] = useState<{ icon: string; text: string; textEn: string; color: string }[]>([])
   const [activeNotif, setActiveNotif] = useState(0)
   const [notifSliding, setNotifSliding] = useState(false)
 
   useEffect(() => {
+    fetch('/api/notifications')
+      .then(r => r.json())
+      .then(data => {
+        if (data.ok && data.notifications?.length > 0) {
+          setNotifications(data.notifications)
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (notifications.length < 2) return
     const interval = setInterval(() => {
       setNotifSliding(true)
       setTimeout(() => {
@@ -165,17 +168,25 @@ export default function Topbar({
           <h1 className="text-2xl font-bold text-gray-900">{title}</h1>
           <p className="text-sm text-gray-600 mt-1">{description}</p>
         </div>
-        {/* Notification ticker */}
-        <div className="flex-1 mx-6 overflow-hidden">
-          <div className={`flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-lg transition-all duration-400 ${notifSliding ? 'opacity-0 -translate-y-3' : 'opacity-100 translate-y-0'}`}>
-            {(() => { const n = notifications[activeNotif]; const Icon = n.icon; return (
-              <>
-                <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
-                <span className="text-sm text-gray-600 truncate">{n.text}</span>
-              </>
-            ); })()}
+        {/* Notification ticker — real data */}
+        {notifications.length > 0 && (
+          <div className="flex-1 mx-6 overflow-hidden">
+            <div className={`flex items-center gap-2 px-4 py-1.5 bg-gray-50 rounded-lg transition-all duration-400 ${notifSliding ? 'opacity-0 -translate-y-3' : 'opacity-100 translate-y-0'}`}>
+              {(() => {
+                const n = notifications[activeNotif]
+                if (!n) return null
+                const Icon = ICON_MAP[n.icon] || Lightbulb
+                const text = locale === 'en' ? n.textEn : n.text
+                return (
+                  <>
+                    <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
+                    <span className="text-sm text-gray-600 truncate">{text}</span>
+                  </>
+                )
+              })()}
+            </div>
           </div>
-        </div>
+        )}
 
         <div className="flex items-center gap-3">
           {/* 1. Google Ads account (only when props set from Google page) */}
