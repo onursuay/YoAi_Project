@@ -7,7 +7,7 @@ import { navItems } from '@/lib/nav'
 import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
-import { useState, useMemo, useEffect } from 'react'
+import { useState, useMemo, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 
 export default function SidebarNav() {
@@ -31,6 +31,22 @@ export default function SidebarNav() {
   // Persist collapsed state (only after first render)
   useEffect(() => {
     if (ready) localStorage.setItem('sidebar_collapsed', JSON.stringify(collapsed))
+  }, [collapsed, ready])
+
+  // Collapsed hint animation: logo 5s → button 1s → loop
+  const [showHintButton, setShowHintButton] = useState(false)
+
+  useEffect(() => {
+    if (!collapsed || !ready) return
+    setShowHintButton(false)
+    const loop = () => {
+      const t1 = setTimeout(() => setShowHintButton(true), 5000)
+      const t2 = setTimeout(() => setShowHintButton(false), 6000)
+      const t3 = setTimeout(loop, 6000)
+      return [t1, t2, t3]
+    }
+    let timers = loop()
+    return () => timers.forEach(clearTimeout)
   }, [collapsed, ready])
 
   const toggleCollapse = () => {
@@ -81,9 +97,13 @@ export default function SidebarNav() {
     >
       <div className="p-4 border-b border-gray-200 flex items-center justify-between min-h-[56px]">
         {collapsed ? (
-          /* Collapsed: show logo, on hover show toggle button */
-          <div className="group relative flex items-center justify-center w-full">
-            <Link href="/dashboard" prefetch={false} className="group-hover:opacity-0 transition-opacity duration-200">
+          /* Collapsed: logo ↔ button hint animation + hover */
+          <div className="group relative flex items-center justify-center w-full h-8">
+            <Link
+              href="/dashboard"
+              prefetch={false}
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-0 ${showHintButton ? 'opacity-0' : 'opacity-100'}`}
+            >
               <Image
                 src="/logos/yoai-logo.png"
                 alt="YoAI"
@@ -94,7 +114,7 @@ export default function SidebarNav() {
             </Link>
             <button
               onClick={toggleCollapse}
-              className="absolute inset-0 flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity duration-200 hover:bg-gray-100 rounded-lg"
+              className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100 hover:bg-gray-100 rounded-lg ${showHintButton ? 'opacity-100' : 'opacity-0'}`}
               aria-label="Expand sidebar"
             >
               <PanelLeftOpen className="w-5 h-5 text-gray-600" />
