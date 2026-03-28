@@ -355,51 +355,51 @@ function RaporlarContent() {
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-6xl mx-auto">
 
-          {/* Provider Tabs + Date filter inline */}
-          <div className="flex flex-wrap items-center gap-3 mb-6">
-            {PROVIDERS.map((p) => {
-              const conn = connections[p.key]
-              const isActive = activeProvider === p.key
-              const isConnected = conn.connected && conn.hasSelection
+          {/* Provider Tabs */}
+          <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
+            <div className="flex flex-wrap items-center gap-3">
+              {PROVIDERS.map((p) => {
+                const conn = connections[p.key]
+                const isActive = activeProvider === p.key
+                const isConnected = conn.connected && conn.hasSelection
 
-              return (
-                <button
-                  key={p.key}
-                  onClick={() => isConnected && setActiveProvider(p.key)}
-                  disabled={!isConnected}
-                  className={`
-                    flex items-center gap-3 px-5 py-3 rounded-xl border-2 font-medium text-sm transition-all
-                    ${isActive
-                      ? 'border-primary bg-primary/5 text-gray-900 shadow-sm'
-                      : isConnected
-                        ? 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
-                        : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'
-                    }
-                  `}
-                >
-                  <img src={p.icon} alt="" className="h-5 w-5 object-contain" />
-                  <span>{t(`providers.${p.key}`)}</span>
-                  {isConnected ? (
-                    <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
-                  ) : (
-                    <span className="text-xs text-gray-400">{t('notConnected')}</span>
-                  )}
-                </button>
-              )
-            })}
+                return (
+                  <button
+                    key={p.key}
+                    onClick={() => isConnected && setActiveProvider(p.key)}
+                    disabled={!isConnected}
+                    className={`
+                      flex items-center gap-3 px-5 py-3 rounded-xl border-2 font-medium text-sm transition-all
+                      ${isActive
+                        ? 'border-primary bg-primary/5 text-gray-900 shadow-sm'
+                        : isConnected
+                          ? 'border-gray-200 bg-white text-gray-700 hover:border-gray-300 hover:shadow-sm'
+                          : 'border-gray-200 bg-gray-50 text-gray-400 cursor-not-allowed opacity-60'
+                      }
+                    `}
+                  >
+                    <img src={p.icon} alt="" className="h-5 w-5 object-contain" />
+                    <span>{t(`providers.${p.key}`)}</span>
+                    {isConnected ? (
+                      <span className="inline-block w-2 h-2 rounded-full bg-green-500" />
+                    ) : (
+                      <span className="text-xs text-gray-400">{t('notConnected')}</span>
+                    )}
+                  </button>
+                )
+              })}
+            </div>
 
-            {/* Date filter inline */}
+            {/* Date filter + Refresh — always same row, right-aligned */}
             {activeProvider && currentConn?.connected && currentConn?.hasSelection && (
-              <>
-                <div className="ml-auto">
-                  <DateRangePicker
-                    onDateChange={(startDate, endDate) => {
-                      setDateFrom(startDate)
-                      setDateTo(endDate)
-                    }}
-                    locale={locale === 'en' ? 'en' : 'tr'}
-                  />
-                </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <DateRangePicker
+                  onDateChange={(startDate, endDate) => {
+                    setDateFrom(startDate)
+                    setDateTo(endDate)
+                  }}
+                  locale={locale === 'en' ? 'en' : 'tr'}
+                />
                 <button
                   onClick={handleRefresh}
                   disabled={reportLoading}
@@ -408,7 +408,7 @@ function RaporlarContent() {
                   <RefreshCw className={`w-4 h-4 ${reportLoading ? 'animate-spin' : ''}`} />
                   {t('refresh')}
                 </button>
-              </>
+              </div>
             )}
           </div>
 

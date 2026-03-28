@@ -33,6 +33,16 @@ interface PlatformStatus {
   accountName: string
 }
 
+interface GAReport {
+  kpis: { key: string; value: number; changePercent: number; format: string }[]
+  dailySeries: { date: string; users: number; sessions: number; engagedSessions: number }[]
+}
+
+interface GSCReport {
+  kpis: { key: string; value: number; changePercent: number; format: string }[]
+  dailySeries: { date: string; clicks: number; impressions: number; ctr: number; position: number }[]
+}
+
 /* ── Helpers ── */
 
 function getDefaultDateRange() {
@@ -72,6 +82,16 @@ export default function HomePage() {
   const [metaInsights, setMetaInsights] = useState<MetaInsights | null>(null)
   const [metaLoading, setMetaLoading] = useState(true)
 
+  // Google Analytics state
+  const [gaStatus, setGaStatus] = useState<PlatformStatus | null>(null)
+  const [gaReport, setGaReport] = useState<GAReport | null>(null)
+  const [gaLoading, setGaLoading] = useState(true)
+
+  // Google Search Console state
+  const [gscStatus, setGscStatus] = useState<PlatformStatus | null>(null)
+  const [gscReport, setGscReport] = useState<GSCReport | null>(null)
+  const [gscLoading, setGscLoading] = useState(true)
+
   // Formatters
   const fmtCurrency = useCallback((v: number) => {
     return v.toLocaleString(localeString, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
@@ -83,14 +103,18 @@ export default function HomePage() {
   const fetchData = useCallback(async () => {
     setGoogleLoading(true)
     setMetaLoading(true)
+    setGaLoading(true)
+    setGscLoading(true)
 
-    // Parallel status + KPI fetches
-    const [googleSel, metaStat] = await Promise.all([
+    // Parallel status fetches
+    const [googleSel, metaStat, gaStat, gscStat] = await Promise.all([
       fetch('/api/integrations/google-ads/selected', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
       metaFetch('/api/meta/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+      fetch('/api/integrations/google-analytics/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+      fetch('/api/integrations/google-search-console/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
     ])
 
-    // Google status
+    // Google Ads status
     const googleConnected = !!googleSel?.selected || !!googleSel?.customerId
     const googleName = googleSel?.customerName || googleSel?.selected?.customerName || ''
     setGoogleStatus({ connected: googleConnected, accountName: googleName })
@@ -98,6 +122,14 @@ export default function HomePage() {
     // Meta status
     const metaConnected = metaStat?.connected === true
     setMetaStatus({ connected: metaConnected, accountName: metaStat?.adAccountName || '' })
+
+    // Google Analytics status
+    const gaConnected = gaStat?.connected === true && gaStat?.hasSelectedProperty === true
+    setGaStatus({ connected: gaConnected, accountName: gaStat?.propertyName || '' })
+
+    // Google Search Console status
+    const gscConnected = gscStat?.connected === true && gscStat?.hasSelectedSite === true
+    setGscStatus({ connected: gscConnected, accountName: gscStat?.siteName || gscStat?.siteUrl || '' })
 
     // Fetch KPIs for connected platforms
     const kpiPromises: Promise<void>[] = []
@@ -131,6 +163,30 @@ export default function HomePage() {
       setMetaLoading(false)
     }
 
+    if (gaConnected) {
+      kpiPromises.push(
+        fetch(`/api/integrations/google-analytics/reports?from=${dateRange.from}&to=${dateRange.to}`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(data => { if (data?.kpis) setGaReport(data) })
+          .catch(() => {})
+          .finally(() => setGaLoading(false))
+      )
+    } else {
+      setGaLoading(false)
+    }
+
+    if (gscConnected) {
+      kpiPromises.push(
+        fetch(`/api/integrations/google-search-console/reports?from=${dateRange.from}&to=${dateRange.to}`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(data => { if (data?.kpis) setGscReport(data) })
+          .catch(() => {})
+          .finally(() => setGscLoading(false))
+      )
+    } else {
+      setGscLoading(false)
+    }
+
     await Promise.all(kpiPromises)
   }, [dateRange])
 
@@ -138,6 +194,46 @@ export default function HomePage() {
 
   // Period label
   const periodLabel = isEn ? 'Last 30 Days' : 'Son 30 Gün'
+
+  // GA KPI helpers
+  const gaKpi = (key: string) => gaReport?.kpis?.find(k => k.key === key)
+  const gaKpiValue = (key: string, fmt: 'int' | 'pct' | 'dec' = 'int') => {
+    const kpi = gaKpi(key)
+    if (!kpi) return '–'
+    if (fmt === 'pct') return `%${(kpi.value * 100).toFixed(1)}`
+    if (fmt === 'dec') return kpi.value.toFixed(1)
+    return fmtInt(kpi.value)
+  }
+  const gaKpiDelta = (key: string) => {
+    const kpi = gaKpi(key)
+    if (!kpi || kpi.changePercent == null) return ''
+    return fmtDelta(kpi.changePercent)
+  }
+  const gaKpiColor = (key: string): 'green' | 'red' | 'gray' => {
+    const kpi = gaKpi(key)
+    if (!kpi || kpi.changePercent == null) return 'gray'
+    return kpi.changePercent >= 0 ? 'green' : 'red'
+  }
+
+  // GSC KPI helpers
+  const gscKpi = (key: string) => gscReport?.kpis?.find(k => k.key === key)
+  const gscKpiValue = (key: string, fmt: 'int' | 'pct' | 'dec' = 'int') => {
+    const kpi = gscKpi(key)
+    if (!kpi) return '–'
+    if (fmt === 'pct') return `%${(kpi.value * 100).toFixed(1)}`
+    if (fmt === 'dec') return kpi.value.toFixed(1)
+    return fmtInt(kpi.value)
+  }
+  const gscKpiDelta = (key: string) => {
+    const kpi = gscKpi(key)
+    if (!kpi || kpi.changePercent == null) return ''
+    return fmtDelta(kpi.changePercent)
+  }
+  const gscKpiColor = (key: string): 'green' | 'red' | 'gray' => {
+    const kpi = gscKpi(key)
+    if (!kpi || kpi.changePercent == null) return 'gray'
+    return kpi.changePercent >= 0 ? 'green' : 'red'
+  }
 
   // Quick access sections (from nav)
   const quickAccessItems = [
@@ -157,50 +253,94 @@ export default function HomePage() {
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6 space-y-8">
 
-          {/* Platform Summary Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
+          {/* Reklam Platformları */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('adPlatforms')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
 
-            {/* Google Ads Card */}
-            <PlatformCard
-              platformName="Google Ads"
-              iconSrc="/platform-icons/google-ads.svg"
-              status={googleStatus}
-              loading={googleLoading}
-              panelHref={ROUTES.GOOGLE_ADS}
-              connectHref="/entegrasyon"
-              t={t}
-              metrics={googleKpis ? {
-                spend: { label: t('spend'), value: `₺${fmtCurrency(googleKpis.totals.cost)}`, delta: fmtDelta(googleKpis.changes.cost), chart: googleKpis.series.cost, color: googleKpis.changes.cost >= 0 ? 'red' as const : 'green' as const },
-                clicks: { label: t('clicks'), value: fmtInt(googleKpis.totals.clicks), delta: fmtDelta(googleKpis.changes.clicks), chart: googleKpis.series.clicks, color: googleKpis.changes.clicks >= 0 ? 'green' as const : 'red' as const },
-                impressions: { label: t('impressions'), value: fmtInt(googleKpis.totals.impressions), delta: fmtDelta(googleKpis.changes.impressions), chart: googleKpis.series.impressions, color: googleKpis.changes.impressions >= 0 ? 'green' as const : 'red' as const },
-              } : undefined}
-              periodLabel={periodLabel}
-            />
+              {/* Google Ads Card */}
+              <PlatformCard
+                platformName="Google Ads"
+                iconSrc="/platform-icons/google-ads.svg"
+                status={googleStatus}
+                loading={googleLoading}
+                panelHref={ROUTES.GOOGLE_ADS}
+                connectHref="/entegrasyon"
+                t={t}
+                metrics={googleKpis ? {
+                  spend: { label: t('spend'), value: `₺${fmtCurrency(googleKpis.totals.cost)}`, delta: fmtDelta(googleKpis.changes.cost), chart: googleKpis.series.cost, color: googleKpis.changes.cost >= 0 ? 'red' as const : 'green' as const },
+                  clicks: { label: t('clicks'), value: fmtInt(googleKpis.totals.clicks), delta: fmtDelta(googleKpis.changes.clicks), chart: googleKpis.series.clicks, color: googleKpis.changes.clicks >= 0 ? 'green' as const : 'red' as const },
+                  impressions: { label: t('impressions'), value: fmtInt(googleKpis.totals.impressions), delta: fmtDelta(googleKpis.changes.impressions), chart: googleKpis.series.impressions, color: googleKpis.changes.impressions >= 0 ? 'green' as const : 'red' as const },
+                } : undefined}
+                periodLabel={periodLabel}
+              />
 
-            {/* Meta Ads Card */}
-            <PlatformCard
-              platformName="Meta Ads"
-              iconSrc="/platform-icons/meta.svg"
-              status={metaStatus}
-              loading={metaLoading}
-              panelHref={ROUTES.META_ADS}
-              connectHref="/api/meta/login"
-              t={t}
-              metrics={metaInsights ? {
-                spend: { label: t('spend'), value: `₺${fmtCurrency(metaInsights.spendTRY)}`, delta: '', chart: [0, 0], color: 'gray' as const },
-                clicks: { label: t('clicks'), value: fmtInt(metaInsights.clicks), delta: '', chart: [0, 0], color: 'gray' as const },
-                impressions: { label: t('impressions'), value: fmtInt(metaInsights.impressions), delta: '', chart: [0, 0], color: 'gray' as const },
-              } : undefined}
-              periodLabel={periodLabel}
-            />
+              {/* Meta Ads Card */}
+              <PlatformCard
+                platformName="Meta Ads"
+                iconSrc="/platform-icons/meta.svg"
+                status={metaStatus}
+                loading={metaLoading}
+                panelHref={ROUTES.META_ADS}
+                connectHref="/api/meta/login"
+                t={t}
+                metrics={metaInsights ? {
+                  spend: { label: t('spend'), value: `₺${fmtCurrency(metaInsights.spendTRY)}`, delta: '', chart: [0, 0], color: 'gray' as const },
+                  clicks: { label: t('clicks'), value: fmtInt(metaInsights.clicks), delta: '', chart: [0, 0], color: 'gray' as const },
+                  impressions: { label: t('impressions'), value: fmtInt(metaInsights.impressions), delta: '', chart: [0, 0], color: 'gray' as const },
+                } : undefined}
+                periodLabel={periodLabel}
+              />
 
-            {/* TikTok Coming Soon Card */}
-            <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-60">
-              <Image src="/platform-icons/tiktok.svg" alt="TikTok" width={40} height={40} className="mb-3 grayscale" />
-              <h3 className="text-base font-semibold text-gray-500">TikTok Ads</h3>
-              <span className="mt-2 px-3 py-1 text-xs font-medium bg-gray-200 text-gray-500 rounded-full">
-                {t('comingSoon')}
-              </span>
+              {/* TikTok Coming Soon Card */}
+              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-60">
+                <Image src="/platform-icons/tiktok.svg" alt="TikTok" width={40} height={40} className="mb-3 grayscale" />
+                <h3 className="text-base font-semibold text-gray-500">TikTok Ads</h3>
+                <span className="mt-2 px-3 py-1 text-xs font-medium bg-gray-200 text-gray-500 rounded-full">
+                  {t('comingSoon')}
+                </span>
+              </div>
+            </div>
+          </div>
+
+          {/* Raporlama Platformları */}
+          <div>
+            <h2 className="text-lg font-semibold text-gray-900 mb-4">{t('reportingPlatforms')}</h2>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+
+              {/* Google Analytics Card */}
+              <PlatformCard
+                platformName="Google Analytics"
+                iconSrc="/platform-icons/google-analytics.svg"
+                status={gaStatus}
+                loading={gaLoading}
+                panelHref="/entegrasyon"
+                connectHref="/entegrasyon"
+                t={t}
+                metrics={gaReport ? {
+                  spend: { label: t('users'), value: gaKpiValue('users'), delta: gaKpiDelta('users'), chart: gaReport.dailySeries.map(d => d.users), color: gaKpiColor('users') },
+                  clicks: { label: t('sessions'), value: gaKpiValue('sessions'), delta: gaKpiDelta('sessions'), chart: gaReport.dailySeries.map(d => d.sessions), color: gaKpiColor('sessions') },
+                  impressions: { label: t('engagementRate'), value: gaKpiValue('engagementRate', 'pct'), delta: gaKpiDelta('engagementRate'), chart: gaReport.dailySeries.map(d => d.engagedSessions), color: gaKpiColor('engagementRate') },
+                } : undefined}
+                periodLabel={periodLabel}
+              />
+
+              {/* Google Search Console Card */}
+              <PlatformCard
+                platformName="Search Console"
+                iconSrc="/platform-icons/google-search-console.svg"
+                status={gscStatus}
+                loading={gscLoading}
+                panelHref="/entegrasyon"
+                connectHref="/entegrasyon"
+                t={t}
+                metrics={gscReport ? {
+                  spend: { label: t('clicks'), value: gscKpiValue('clicks'), delta: gscKpiDelta('clicks'), chart: gscReport.dailySeries.map(d => d.clicks), color: gscKpiColor('clicks') },
+                  clicks: { label: t('impressions'), value: gscKpiValue('impressions'), delta: gscKpiDelta('impressions'), chart: gscReport.dailySeries.map(d => d.impressions), color: gscKpiColor('impressions') },
+                  impressions: { label: t('avgPosition'), value: gscKpiValue('position', 'dec'), delta: gscKpiDelta('position'), chart: gscReport.dailySeries.map(d => d.position), color: gscKpiColor('position') },
+                } : undefined}
+                periodLabel={periodLabel}
+              />
             </div>
           </div>
 
