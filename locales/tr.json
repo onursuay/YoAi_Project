@@ -1618,6 +1618,36 @@
         }
       }
     },
+    "tiktok": {
+      "title": "TikTok Ads",
+      "description": "TikTok reklam kampanyalarınızı yönetin",
+      "connectButton": "TikTok Ads'i Bağla",
+      "disconnectButton": "Bağlantıyı Kes",
+      "selectAccount": "Hesap Seç",
+      "notConnected": {
+        "title": "TikTok Ads bağlı değil",
+        "description": "TikTok Ads hesabınızı bağlamadan veriler görüntülenemez."
+      },
+      "tabs": {
+        "campaigns": "Kampanyalar"
+      },
+      "table": {
+        "objective": "Amaç",
+        "conversions": "Dönüşüm",
+        "reach": "Erişim"
+      },
+      "kpi": {
+        "conversions": "Dönüşüm",
+        "reach": "Erişim"
+      },
+      "noCampaigns": "Kampanya bulunamadı",
+      "campaignCount": "kampanya",
+      "toastMessages": {
+        "connected": "TikTok Ads başarıyla bağlandı",
+        "disconnected": "TikTok Ads bağlantısı kesildi",
+        "error": "Bir hata oluştu"
+      }
+    },
     "entegrasyon": {
       "title": "Entegrasyon",
       "description": "Reklam ve raporlama platformlarınızı bağlayın",
@@ -1658,7 +1688,15 @@
       },
       "tiktok": {
         "name": "TikTok Ads",
-        "comingSoon": "Yakında"
+        "connected": "Bağlı",
+        "notConnected": "Bağlanmadı",
+        "connectButton": "TikTok Ads'i Bağla",
+        "openDashboard": "TikTok Ads'e Git",
+        "changeAccount": "Hesap Değiştir",
+        "selectAccount": "TikTok Ads Hesabı Seç",
+        "disconnect": "TikTok Ads bağlantısını kesmek istediğinize emin misiniz?",
+        "account": "Hesap",
+        "noAccounts": "Erişilebilir hesap bulunamadı."
       },
       "googleAnalytics": {
         "name": "Google Analytics",

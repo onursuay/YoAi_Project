@@ -1618,6 +1618,36 @@
         }
       }
     },
+    "tiktok": {
+      "title": "TikTok Ads",
+      "description": "Manage your TikTok ad campaigns",
+      "connectButton": "Connect TikTok Ads",
+      "disconnectButton": "Disconnect",
+      "selectAccount": "Select Account",
+      "notConnected": {
+        "title": "TikTok Ads not connected",
+        "description": "Connect your TikTok Ads account to view data."
+      },
+      "tabs": {
+        "campaigns": "Campaigns"
+      },
+      "table": {
+        "objective": "Objective",
+        "conversions": "Conversions",
+        "reach": "Reach"
+      },
+      "kpi": {
+        "conversions": "Conversions",
+        "reach": "Reach"
+      },
+      "noCampaigns": "No campaigns found",
+      "campaignCount": "campaigns",
+      "toastMessages": {
+        "connected": "TikTok Ads connected successfully",
+        "disconnected": "TikTok Ads disconnected",
+        "error": "An error occurred"
+      }
+    },
     "entegrasyon": {
       "title": "Integration",
       "description": "Connect your advertising and reporting platforms",
@@ -1658,7 +1688,15 @@
       },
       "tiktok": {
         "name": "TikTok Ads",
-        "comingSoon": "Coming Soon"
+        "connected": "Connected",
+        "notConnected": "Not Connected",
+        "connectButton": "Connect TikTok Ads",
+        "openDashboard": "Go to TikTok Ads",
+        "changeAccount": "Change Account",
+        "selectAccount": "Select TikTok Ads Account",
+        "disconnect": "Are you sure you want to disconnect TikTok Ads?",
+        "account": "Account",
+        "noAccounts": "No accessible accounts found."
       },
       "googleAnalytics": {
         "name": "Google Analytics",
