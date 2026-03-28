@@ -7,10 +7,16 @@ import Topbar from '@/components/Topbar'
 import {
   BarChart3,
   TrendingUp,
+  TrendingDown,
   AlertCircle,
   Loader2,
   RefreshCw,
   ChevronDown,
+  ArrowUpRight,
+  ArrowDownRight,
+  Minus,
+  Calendar,
+  CalendarDays,
 } from 'lucide-react'
 import {
   LineChart,
@@ -62,6 +68,41 @@ interface ReportPayload {
   fetchedAt: string
 }
 
+interface CampaignMetrics {
+  spend?: number
+  cost?: number
+  impressions: number
+  clicks: number
+  ctr: number
+  reach?: number
+  purchases?: number
+  roas?: number
+  conversions?: number
+  conversionsValue?: number
+}
+
+interface CampaignComparison {
+  id: string
+  name: string
+  status: string
+  objective?: string
+  weekly: {
+    current: CampaignMetrics | null
+    previous: CampaignMetrics | null
+    changes: Record<string, number> | null
+  }
+  monthly: {
+    current: CampaignMetrics | null
+    previous: CampaignMetrics | null
+    changes: Record<string, number> | null
+  }
+}
+
+interface CampaignComparisonPayload {
+  campaigns: CampaignComparison[]
+  fetchedAt: string
+}
+
 /* ────── Provider configs ────── */
 
 const PROVIDERS: ProviderConfig[] = [
@@ -104,6 +145,9 @@ function RaporlarContent() {
   const [reportError, setReportError] = useState<string | null>(null)
   const [dateFrom, setDateFrom] = useState(getDefaultDateFrom)
   const [dateTo, setDateTo] = useState(getDefaultDateTo)
+  const [comparisonData, setComparisonData] = useState<Record<string, CampaignComparisonPayload>>({})
+  const [comparisonLoading, setComparisonLoading] = useState(false)
+  const [comparisonTab, setComparisonTab] = useState<'weekly' | 'monthly'>('weekly')
 
   // Load all connection statuses
   useEffect(() => {
@@ -237,6 +281,41 @@ function RaporlarContent() {
     }
   }, [activeProvider, connectionsLoading, fetchReport])
 
+  // Fetch campaign comparison data for Meta Ads and Google Ads
+  const fetchComparison = useCallback(async (provider: ProviderKey) => {
+    if (provider !== 'meta_ads' && provider !== 'google_ads') return
+    const conn = connections[provider]
+    if (!conn?.connected || !conn?.hasSelection) return
+
+    const cacheKey = `comparison_${provider}_${dateFrom}_${dateTo}`
+    if (comparisonData[cacheKey]) return
+
+    setComparisonLoading(true)
+    try {
+      const url = provider === 'meta_ads'
+        ? `/api/meta/campaign-comparison?from=${dateFrom}&to=${dateTo}`
+        : `/api/integrations/google-ads/campaign-comparison?from=${dateFrom}&to=${dateTo}`
+
+      const res = await fetch(url, { credentials: 'include' })
+      if (!res.ok) return
+      const data = await res.json()
+      setComparisonData((prev) => ({ ...prev, [cacheKey]: data }))
+    } catch {
+      // Non-critical
+    } finally {
+      setComparisonLoading(false)
+    }
+  }, [connections, dateFrom, dateTo, comparisonData])
+
+  useEffect(() => {
+    if (activeProvider && !connectionsLoading) {
+      fetchComparison(activeProvider)
+    }
+  }, [activeProvider, connectionsLoading, fetchComparison])
+
+  const currentComparisonKey = activeProvider ? `comparison_${activeProvider}_${dateFrom}_${dateTo}` : ''
+  const currentComparison = comparisonData[currentComparisonKey] || null
+
   const currentCacheKey = activeProvider ? `${activeProvider}_${dateFrom}_${dateTo}` : ''
   const currentReport = reportData[currentCacheKey] || null
   const currentConn = activeProvider ? connections[activeProvider] : null
@@ -258,7 +337,14 @@ function RaporlarContent() {
       delete next[cacheKey]
       return next
     })
+    const compKey = `comparison_${activeProvider}_${dateFrom}_${dateTo}`
+    setComparisonData((prev) => {
+      const next = { ...prev }
+      delete next[compKey]
+      return next
+    })
     fetchReport(activeProvider)
+    fetchComparison(activeProvider)
   }
 
   return (
@@ -359,6 +445,18 @@ function RaporlarContent() {
                     <KpiCard key={kpi.key} kpi={kpi} t={t} />
                   ))}
                 </div>
+              )}
+
+              {/* Campaign Performance Comparison */}
+              {(activeProvider === 'meta_ads' || activeProvider === 'google_ads') && (
+                <CampaignComparisonSection
+                  provider={activeProvider}
+                  data={currentComparison}
+                  loading={comparisonLoading}
+                  tab={comparisonTab}
+                  onTabChange={setComparisonTab}
+                  t={t}
+                />
               )}
 
               {/* Daily Trend Chart */}
@@ -512,6 +610,202 @@ function ReportSkeleton() {
       </div>
     </div>
   )
+}
+
+/* ────── Campaign Comparison Section ────── */
+
+function CampaignComparisonSection({
+  provider,
+  data,
+  loading,
+  tab,
+  onTabChange,
+  t,
+}: {
+  provider: ProviderKey
+  data: CampaignComparisonPayload | null
+  loading: boolean
+  tab: 'weekly' | 'monthly'
+  onTabChange: (tab: 'weekly' | 'monthly') => void
+  t: (key: string, opts?: Record<string, string>) => string
+}) {
+  const isMeta = provider === 'meta_ads'
+
+  // Define metrics based on provider
+  const metrics = isMeta
+    ? [
+        { key: 'spend', label: t('metrics.spend', { defaultMessage: 'Harcama' }), format: 'currency' as const },
+        { key: 'impressions', label: t('metrics.impressions', { defaultMessage: 'Gösterim' }), format: 'number' as const },
+        { key: 'clicks', label: t('metrics.clicks', { defaultMessage: 'Tıklama' }), format: 'number' as const },
+        { key: 'ctr', label: 'TO', format: 'percent' as const },
+        { key: 'reach', label: t('metrics.reach', { defaultMessage: 'Erişim' }), format: 'number' as const },
+        { key: 'roas', label: 'ROAS', format: 'decimal' as const },
+      ]
+    : [
+        { key: 'cost', label: t('metrics.cost', { defaultMessage: 'Maliyet' }), format: 'currency' as const },
+        { key: 'impressions', label: t('metrics.impressions', { defaultMessage: 'Gösterim' }), format: 'number' as const },
+        { key: 'clicks', label: t('metrics.clicks', { defaultMessage: 'Tıklama' }), format: 'number' as const },
+        { key: 'ctr', label: 'TO', format: 'percent' as const },
+        { key: 'conversions', label: t('metrics.conversions', { defaultMessage: 'Dönüşüm' }), format: 'number' as const },
+        { key: 'conversionsValue', label: t('metrics.conversionsValue', { defaultMessage: 'Dönüşüm Değeri' }), format: 'currency' as const },
+      ]
+
+  if (loading && !data) {
+    return (
+      <div className="bg-white rounded-2xl border border-gray-200 p-6">
+        <div className="animate-pulse space-y-4">
+          <div className="h-5 bg-gray-200 rounded w-48" />
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            {[1, 2, 3, 4].map((i) => (
+              <div key={i} className="h-40 bg-gray-100 rounded-xl" />
+            ))}
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  if (!data?.campaigns?.length) return null
+
+  const campaigns = data.campaigns
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+      {/* Header with toggle */}
+      <div className="flex items-center justify-between mb-5">
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <BarChart3 className="w-5 h-5 text-primary" />
+          Kampanya Performans Kıyaslaması
+        </h3>
+        <div className="flex bg-gray-100 rounded-lg p-0.5">
+          <button
+            onClick={() => onTabChange('weekly')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              tab === 'weekly'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <Calendar className="w-3.5 h-3.5" />
+            Haftalık
+          </button>
+          <button
+            onClick={() => onTabChange('monthly')}
+            className={`flex items-center gap-1.5 px-3 py-1.5 rounded-md text-xs font-medium transition-all ${
+              tab === 'monthly'
+                ? 'bg-white text-gray-900 shadow-sm'
+                : 'text-gray-500 hover:text-gray-700'
+            }`}
+          >
+            <CalendarDays className="w-3.5 h-3.5" />
+            Aylık
+          </button>
+        </div>
+      </div>
+
+      <p className="text-xs text-gray-400 mb-4">
+        {tab === 'weekly'
+          ? 'Son 7 gün vs bir önceki 7 gün'
+          : 'Son 30 gün vs bir önceki 30 gün'}
+      </p>
+
+      {/* Campaign Cards Grid */}
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+        {campaigns.map((campaign) => {
+          const periodData = tab === 'weekly' ? campaign.weekly : campaign.monthly
+          const current = periodData.current as Record<string, number> | null
+          const changes = periodData.changes
+
+          if (!current) return null
+
+          return (
+            <div
+              key={campaign.id}
+              className="border border-gray-200 rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all"
+            >
+              {/* Campaign Name & Status */}
+              <div className="flex items-start justify-between mb-3">
+                <div className="flex-1 min-w-0">
+                  <h4 className="text-sm font-semibold text-gray-900 truncate" title={campaign.name}>
+                    {campaign.name}
+                  </h4>
+                  {campaign.objective && (
+                    <span className="text-[10px] text-gray-400 uppercase tracking-wider">
+                      {campaign.objective.replace('OUTCOME_', '').replace(/_/g, ' ')}
+                    </span>
+                  )}
+                </div>
+                <span className={`shrink-0 ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
+                  campaign.status === 'ACTIVE' || campaign.status === 'ENABLED'
+                    ? 'bg-green-50 text-green-700'
+                    : 'bg-gray-100 text-gray-500'
+                }`}>
+                  {campaign.status === 'ACTIVE' || campaign.status === 'ENABLED' ? 'Aktif' : 'Duraklatıldı'}
+                </span>
+              </div>
+
+              {/* Metrics Grid */}
+              <div className="grid grid-cols-3 gap-3">
+                {metrics.map((metric) => {
+                  const value = current[metric.key] ?? 0
+                  const change = changes?.[metric.key]
+                  const formattedValue = formatComparisonValue(value, metric.format)
+                  const isPositive = (change ?? 0) > 0
+                  const isNeutral = change === undefined || change === null || change === 0
+                  // For cost/spend: lower is better
+                  const isCostMetric = metric.key === 'spend' || metric.key === 'cost'
+                  const changeIsGood = isCostMetric ? !isPositive : isPositive
+
+                  return (
+                    <div key={metric.key} className="text-center">
+                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5 truncate" title={metric.label}>
+                        {metric.label}
+                      </p>
+                      <p className="text-sm font-bold text-gray-900">{formattedValue}</p>
+                      {!isNeutral && (
+                        <div className={`flex items-center justify-center gap-0.5 mt-0.5 ${
+                          changeIsGood ? 'text-green-600' : 'text-red-500'
+                        }`}>
+                          {isPositive ? (
+                            <ArrowUpRight className="w-3 h-3" />
+                          ) : (
+                            <ArrowDownRight className="w-3 h-3" />
+                          )}
+                          <span className="text-[11px] font-semibold">
+                            {isPositive ? '+' : ''}{change!.toFixed(1)}%
+                          </span>
+                        </div>
+                      )}
+                      {isNeutral && (
+                        <div className="flex items-center justify-center gap-0.5 mt-0.5 text-gray-300">
+                          <Minus className="w-3 h-3" />
+                          <span className="text-[11px]">0%</span>
+                        </div>
+                      )}
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          )
+        })}
+      </div>
+    </div>
+  )
+}
+
+function formatComparisonValue(value: number, format: 'currency' | 'number' | 'percent' | 'decimal'): string {
+  if (isNaN(value)) return '-'
+  switch (format) {
+    case 'currency':
+      return `$${value.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 })}`
+    case 'percent':
+      return `${value.toFixed(1)}%`
+    case 'decimal':
+      return value.toFixed(1)
+    default:
+      return value >= 1000 ? value.toLocaleString() : String(Math.round(value * 100) / 100)
+  }
 }
 
 /* ────── Format helpers ────── */
