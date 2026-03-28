@@ -1656,12 +1656,37 @@
       },
       "googleAnalytics": {
         "name": "Google Analytics",
+        "connected": "Connected",
         "notConnected": "Not Connected",
-        "comingSoon": "Coming Soon"
+        "connectButton": "Connect Google Analytics",
+        "disconnectConfirm": "Are you sure you want to disconnect Google Analytics?",
+        "disconnectLabel": "Disconnect",
+        "property": "Property",
+        "selectProperty": "Select Property",
+        "selectPropertyTitle": "Select GA4 property",
+        "changeProperty": "Change Property",
+        "noProperties": "No accessible properties found.",
+        "selectLabel": "Select",
+        "selecting": "Selecting...",
+        "loading": "Loading...",
+        "lastSync": "Last sync"
       },
       "googleSearchConsole": {
         "name": "Google Search Console",
-        "comingSoon": "Coming Soon"
+        "connected": "Connected",
+        "notConnected": "Not Connected",
+        "connectButton": "Connect Search Console",
+        "disconnectConfirm": "Are you sure you want to disconnect Search Console?",
+        "disconnectLabel": "Disconnect",
+        "site": "Site",
+        "selectSite": "Select Site",
+        "selectSiteTitle": "Select site property",
+        "changeSite": "Change Site",
+        "noSites": "No accessible sites found.",
+        "selectLabel": "Select",
+        "selecting": "Selecting...",
+        "loading": "Loading...",
+        "lastSync": "Last sync"
       }
     },
     "yoai": {
@@ -2118,7 +2143,62 @@
     },
     "raporlar": {
       "title": "Reports",
-      "description": "View your reports"
+      "description": "View performance data across all your platforms",
+      "providers": {
+        "meta_ads": "Meta Ads",
+        "google_ads": "Google Ads",
+        "google_analytics": "Google Analytics",
+        "google_search_console": "Search Console"
+      },
+      "notConnected": "Not connected",
+      "noConnection": "No connection found",
+      "noConnectionDesc": "Connect a platform from the Integration page to view reports.",
+      "error": "Failed to load data",
+      "retry": "Retry",
+      "refresh": "Refresh",
+      "dailyTrend": "Daily Trend",
+      "noData": "No data found for this period",
+      "fetchedAt": "Last updated",
+      "metrics": {
+        "users": "Users",
+        "sessions": "Sessions",
+        "engagedSessions": "Engaged Sessions",
+        "engagementRate": "Engagement Rate",
+        "avgSessionDuration": "Avg. Session Duration",
+        "conversions": "Conversions",
+        "totalRevenue": "Total Revenue",
+        "clicks": "Clicks",
+        "impressions": "Impressions",
+        "ctr": "CTR",
+        "position": "Avg. Position",
+        "spend": "Spend",
+        "cpc": "CPC",
+        "reach": "Reach",
+        "purchases": "Purchases",
+        "roas": "ROAS",
+        "cost": "Cost",
+        "averageCpc": "Avg. CPC",
+        "conversionRate": "Conversion Rate",
+        "costPerConversion": "Cost per Conversion",
+        "sourceMedium": "Source / Medium",
+        "landingPage": "Landing Page",
+        "avgDuration": "Avg. Duration",
+        "device": "Device",
+        "query": "Query",
+        "page": "Page",
+        "country": "Country",
+        "campaign": "Campaign",
+        "name": "Name"
+      },
+      "tables": {
+        "sourceMedium": "Source / Medium",
+        "landingPages": "Landing Pages",
+        "devices": "Device Breakdown",
+        "queries": "Search Queries",
+        "pages": "Pages",
+        "countries": "Country Breakdown",
+        "campaigns": "Campaigns"
+      }
     },
     "katalog": {
       "title": "Catalog",

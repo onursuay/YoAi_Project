@@ -1656,12 +1656,37 @@
       },
       "googleAnalytics": {
         "name": "Google Analytics",
+        "connected": "Bağlı",
         "notConnected": "Bağlanmadı",
-        "comingSoon": "Yakında"
+        "connectButton": "Google Analytics Bağla",
+        "disconnectConfirm": "Google Analytics bağlantısını kesmek istediğinize emin misiniz?",
+        "disconnectLabel": "Kes",
+        "property": "Property",
+        "selectProperty": "Property Seç",
+        "selectPropertyTitle": "GA4 property seçin",
+        "changeProperty": "Property Değiştir",
+        "noProperties": "Erişilebilir property bulunamadı.",
+        "selectLabel": "Seç",
+        "selecting": "Seçiliyor...",
+        "loading": "Yükleniyor...",
+        "lastSync": "Son senkron"
       },
       "googleSearchConsole": {
         "name": "Google Search Console",
-        "comingSoon": "Yakında"
+        "connected": "Bağlı",
+        "notConnected": "Bağlanmadı",
+        "connectButton": "Search Console Bağla",
+        "disconnectConfirm": "Search Console bağlantısını kesmek istediğinize emin misiniz?",
+        "disconnectLabel": "Kes",
+        "site": "Site",
+        "selectSite": "Site Seç",
+        "selectSiteTitle": "Site property seçin",
+        "changeSite": "Site Değiştir",
+        "noSites": "Erişilebilir site bulunamadı.",
+        "selectLabel": "Seç",
+        "selecting": "Seçiliyor...",
+        "loading": "Yükleniyor...",
+        "lastSync": "Son senkron"
       }
     },
     "yoai": {
@@ -2118,7 +2143,62 @@
     },
     "raporlar": {
       "title": "Raporlar",
-      "description": "Raporlarınızı görüntüleyin"
+      "description": "Tüm platformlarınızın performans verilerini görüntüleyin",
+      "providers": {
+        "meta_ads": "Meta Ads",
+        "google_ads": "Google Ads",
+        "google_analytics": "Google Analytics",
+        "google_search_console": "Search Console"
+      },
+      "notConnected": "Bağlı değil",
+      "noConnection": "Bağlantı bulunamadı",
+      "noConnectionDesc": "Raporları görüntülemek için önce Entegrasyon sayfasından bir platform bağlayın.",
+      "error": "Veri yüklenemedi",
+      "retry": "Tekrar Dene",
+      "refresh": "Yenile",
+      "dailyTrend": "Günlük Trend",
+      "noData": "Bu dönem için veri bulunamadı",
+      "fetchedAt": "Son güncelleme",
+      "metrics": {
+        "users": "Kullanıcılar",
+        "sessions": "Oturumlar",
+        "engagedSessions": "Etkileşimli Oturumlar",
+        "engagementRate": "Etkileşim Oranı",
+        "avgSessionDuration": "Ort. Oturum Süresi",
+        "conversions": "Dönüşümler",
+        "totalRevenue": "Toplam Gelir",
+        "clicks": "Tıklama",
+        "impressions": "Gösterim",
+        "ctr": "TO",
+        "position": "Ort. Sıra",
+        "spend": "Harcama",
+        "cpc": "TBM",
+        "reach": "Erişim",
+        "purchases": "Satın Alma",
+        "roas": "ROAS",
+        "cost": "Maliyet",
+        "averageCpc": "Ort. TBM",
+        "conversionRate": "Dönüşüm Oranı",
+        "costPerConversion": "Dönüşüm Maliyeti",
+        "sourceMedium": "Kaynak / Ortam",
+        "landingPage": "Giriş Sayfası",
+        "avgDuration": "Ort. Süre",
+        "device": "Cihaz",
+        "query": "Sorgu",
+        "page": "Sayfa",
+        "country": "Ülke",
+        "campaign": "Kampanya",
+        "name": "Ad"
+      },
+      "tables": {
+        "sourceMedium": "Kaynak / Ortam",
+        "landingPages": "Giriş Sayfaları",
+        "devices": "Cihaz Dağılımı",
+        "queries": "Arama Sorguları",
+        "pages": "Sayfalar",
+        "countries": "Ülke Dağılımı",
+        "campaigns": "Kampanyalar"
+      }
     },
     "katalog": {
       "title": "Katalog",
