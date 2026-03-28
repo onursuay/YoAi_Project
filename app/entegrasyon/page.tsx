@@ -406,6 +406,10 @@ function EntegrasyonContent() {
     return d.toLocaleString()
   }
 
+  const formatSiteUrl = (url: string) => {
+    return url.replace(/^sc-domain:/, '').replace(/^https?:\/\//, '').replace(/\/$/, '')
+  }
+
   return (
     <>
       <Topbar 
@@ -758,7 +762,7 @@ function EntegrasyonContent() {
                     <ul className="space-y-2">
                       {gscSites.map((s) => (
                         <li key={s.siteUrl} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                          <span className="font-medium text-gray-900 truncate mr-2">{s.siteUrl}</span>
+                          <span className="font-medium text-gray-900 truncate mr-2">{formatSiteUrl(s.siteUrl)}</span>
                           <button
                             type="button"
                             onClick={() => !gscSelectingUrl && selectGSCSite(s.siteUrl)}
@@ -804,6 +808,24 @@ function EntegrasyonContent() {
                       </span>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (gaStatus.connected) {
+                        handleGADisconnect()
+                      } else {
+                        handleGAConnect()
+                      }
+                    }}
+                    disabled={isLoading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      gaStatus.connected ? 'bg-green-500' : 'bg-gray-300'
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      gaStatus.connected ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
                 </div>
 
                 {gaStatus.connected && gaStatus.hasSelectedProperty && gaStatus.propertyName && (
@@ -817,23 +839,14 @@ function EntegrasyonContent() {
                 )}
 
                 {gaStatus.connected && gaStatus.hasSelectedProperty && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={openGAPropertyModal}
-                      disabled={isLoading}
-                      className="flex-1 flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      {t('googleAnalytics.changeProperty')}
-                    </button>
-                    <button
-                      onClick={handleGADisconnect}
-                      disabled={isLoading}
-                      className="btn-h-sm px-3 rounded-lg text-ui text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                    >
-                      {t('googleAnalytics.disconnectLabel')}
-                    </button>
-                  </div>
+                  <button
+                    onClick={openGAPropertyModal}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    {t('googleAnalytics.changeProperty')}
+                  </button>
                 )}
 
                 {gaStatus.connected && !gaStatus.hasSelectedProperty && (
@@ -878,12 +891,30 @@ function EntegrasyonContent() {
                       </span>
                     </div>
                   </div>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      if (gscStatus.connected) {
+                        handleGSCDisconnect()
+                      } else {
+                        handleGSCConnect()
+                      }
+                    }}
+                    disabled={isLoading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      gscStatus.connected ? 'bg-green-500' : 'bg-gray-300'
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      gscStatus.connected ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
+                  </button>
                 </div>
 
                 {gscStatus.connected && gscStatus.hasSelectedSite && gscStatus.siteUrl && (
                   <div className="mb-3 p-3 bg-green-50 rounded-lg">
                     <p className="text-caption text-green-900 font-medium mb-1">{t('googleSearchConsole.site')}</p>
-                    <p className="text-sm text-green-800 truncate">{gscStatus.siteName || gscStatus.siteUrl}</p>
+                    <p className="text-sm text-green-800 truncate">{formatSiteUrl(gscStatus.siteName || gscStatus.siteUrl)}</p>
                     {gscStatus.lastSyncAt && (
                       <p className="text-caption text-green-700 mt-1">{t('googleSearchConsole.lastSync')}: {formatSyncTime(gscStatus.lastSyncAt)}</p>
                     )}
@@ -891,23 +922,14 @@ function EntegrasyonContent() {
                 )}
 
                 {gscStatus.connected && gscStatus.hasSelectedSite && (
-                  <div className="flex gap-2">
-                    <button
-                      onClick={openGSCSiteModal}
-                      disabled={isLoading}
-                      className="flex-1 flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                    >
-                      <RefreshCw className="w-4 h-4" />
-                      {t('googleSearchConsole.changeSite')}
-                    </button>
-                    <button
-                      onClick={handleGSCDisconnect}
-                      disabled={isLoading}
-                      className="btn-h-sm px-3 rounded-lg text-ui text-red-600 hover:bg-red-50 transition-colors disabled:opacity-50"
-                    >
-                      {t('googleSearchConsole.disconnectLabel')}
-                    </button>
-                  </div>
+                  <button
+                    onClick={openGSCSiteModal}
+                    disabled={isLoading}
+                    className="w-full flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    {t('googleSearchConsole.changeSite')}
+                  </button>
                 )}
 
                 {gscStatus.connected && !gscStatus.hasSelectedSite && (
