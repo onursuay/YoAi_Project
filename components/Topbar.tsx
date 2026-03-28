@@ -167,14 +167,9 @@ export default function Topbar({
         95% { transform: translateX(100%); opacity: 0; }
         100% { transform: translateX(100%); opacity: 0; }
       }
-      @keyframes notif-border-rotate {
-        0%   { --angle: 0deg; }
-        100% { --angle: 360deg; }
-      }
-      @property --angle {
-        syntax: '<angle>';
-        initial-value: 0deg;
-        inherits: false;
+      @keyframes beam-dash {
+        0%   { stroke-dashoffset: 0; }
+        100% { stroke-dashoffset: -1000; }
       }
     `}</style>
     <div className="bg-white border-b border-gray-200 px-6 py-4">
@@ -185,14 +180,31 @@ export default function Topbar({
         </div>
         {/* Notification ticker — real data, left-to-right scroll */}
         {notifications.length > 0 && (
-          <div
-            className="flex-1 mx-6 relative rounded-lg p-[2px]"
-            style={{
-              background: 'conic-gradient(from var(--angle), transparent 40%, #10b981 50%, #34d399 55%, #10b981 60%, transparent 70%)',
-              animation: 'notif-border-rotate 2.5s linear infinite',
-            }}
-          >
-            <div className="bg-white rounded-[6px] overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
+          <div className="flex-1 mx-6 relative rounded-lg border border-gray-100">
+            {/* SVG border beam — single light segment traveling around the border */}
+            <svg className="absolute inset-0 w-full h-full rounded-lg pointer-events-none" style={{ overflow: 'visible' }}>
+              <rect
+                x="0.5" y="0.5"
+                width="calc(100% - 1px)" height="calc(100% - 1px)"
+                rx="7" ry="7"
+                fill="none"
+                stroke="url(#beam-gradient)"
+                strokeWidth="2"
+                strokeDasharray="80 920"
+                style={{ animation: 'beam-dash 4s linear infinite' }}
+                pathLength="1000"
+              />
+              <defs>
+                <linearGradient id="beam-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="transparent" />
+                  <stop offset="30%" stopColor="#10b981" stopOpacity="0.4" />
+                  <stop offset="50%" stopColor="#34d399" stopOpacity="1" />
+                  <stop offset="70%" stopColor="#10b981" stopOpacity="0.4" />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+              </defs>
+            </svg>
+            <div className="bg-white rounded-lg overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
               {(() => {
                 const n = notifications[activeNotif]
                 if (!n) return null
