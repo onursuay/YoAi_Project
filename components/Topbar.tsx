@@ -167,10 +167,15 @@ export default function Topbar({
         95% { transform: translateX(100%); opacity: 0; }
         100% { transform: translateX(100%); opacity: 0; }
       }
-      @keyframes snake-top    { 0% { left: -30%; } 100% { left: 100%; } }
-      @keyframes snake-right  { 0% { top: -30%; }  100% { top: 100%; } }
-      @keyframes snake-bottom { 0% { right: -30%; } 100% { right: 100%; } }
-      @keyframes snake-left   { 0% { bottom: -30%; } 100% { bottom: 100%; } }
+      @keyframes notif-border-rotate {
+        0%   { --angle: 0deg; }
+        100% { --angle: 360deg; }
+      }
+      @property --angle {
+        syntax: '<angle>';
+        initial-value: 0deg;
+        inherits: false;
+      }
     `}</style>
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -180,19 +185,14 @@ export default function Topbar({
         </div>
         {/* Notification ticker — real data, left-to-right scroll */}
         {notifications.length > 0 && (
-          <div className="flex-1 mx-6 relative rounded-lg border border-gray-100">
-            {/* 4 snake lights — continuous, chasing around the border */}
-            <div className="absolute inset-0 rounded-lg overflow-hidden pointer-events-none">
-              {/* Top edge: left → right */}
-              <div className="absolute top-0 left-0 h-[2px] w-[30%] rounded-full" style={{ background: 'linear-gradient(90deg, transparent, #10b981, #34d399, transparent)', animation: 'snake-top 2s linear infinite' }} />
-              {/* Right edge: top → bottom */}
-              <div className="absolute top-0 right-0 w-[2px] h-[30%] rounded-full" style={{ background: 'linear-gradient(180deg, transparent, #10b981, #34d399, transparent)', animation: 'snake-right 2s linear infinite', animationDelay: '0.5s' }} />
-              {/* Bottom edge: right → left */}
-              <div className="absolute bottom-0 right-0 h-[2px] w-[30%] rounded-full" style={{ background: 'linear-gradient(270deg, transparent, #10b981, #34d399, transparent)', animation: 'snake-bottom 2s linear infinite', animationDelay: '1s' }} />
-              {/* Left edge: bottom → top */}
-              <div className="absolute bottom-0 left-0 w-[2px] h-[30%] rounded-full" style={{ background: 'linear-gradient(0deg, transparent, #10b981, #34d399, transparent)', animation: 'snake-left 2s linear infinite', animationDelay: '1.5s' }} />
-            </div>
-            <div className="bg-white rounded-lg overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
+          <div
+            className="flex-1 mx-6 relative rounded-lg p-[2px]"
+            style={{
+              background: 'conic-gradient(from var(--angle), transparent 40%, #10b981 50%, #34d399 55%, #10b981 60%, transparent 70%)',
+              animation: 'notif-border-rotate 2.5s linear infinite',
+            }}
+          >
+            <div className="bg-white rounded-[6px] overflow-hidden relative" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
               {(() => {
                 const n = notifications[activeNotif]
                 if (!n) return null
