@@ -183,23 +183,44 @@ export default function Topbar({
           <div className="flex-1 mx-6 relative rounded-lg border border-gray-100">
             {/* SVG border beam — single light segment traveling around the border */}
             <svg className="absolute inset-0 w-full h-full rounded-lg pointer-events-none" style={{ overflow: 'visible' }}>
+              {/* Glow layer — wider, softer, behind */}
               <rect
                 x="0.5" y="0.5"
                 width="calc(100% - 1px)" height="calc(100% - 1px)"
                 rx="7" ry="7"
                 fill="none"
-                stroke="url(#beam-gradient)"
-                strokeWidth="2"
+                stroke="url(#beam-glow)"
+                strokeWidth="6"
+                strokeDasharray="100 900"
+                style={{ animation: 'beam-dash 4s linear infinite', filter: 'blur(3px)' }}
+                pathLength="1000"
+              />
+              {/* Core beam — sharp, bright */}
+              <rect
+                x="0.5" y="0.5"
+                width="calc(100% - 1px)" height="calc(100% - 1px)"
+                rx="7" ry="7"
+                fill="none"
+                stroke="url(#beam-core)"
+                strokeWidth="2.5"
                 strokeDasharray="80 920"
                 style={{ animation: 'beam-dash 4s linear infinite' }}
                 pathLength="1000"
               />
               <defs>
-                <linearGradient id="beam-gradient" x1="0%" y1="0%" x2="100%" y2="0%">
+                <linearGradient id="beam-glow" x1="0%" y1="0%" x2="100%" y2="0%">
                   <stop offset="0%" stopColor="transparent" />
-                  <stop offset="30%" stopColor="#10b981" stopOpacity="0.4" />
-                  <stop offset="50%" stopColor="#34d399" stopOpacity="1" />
-                  <stop offset="70%" stopColor="#10b981" stopOpacity="0.4" />
+                  <stop offset="25%" stopColor="#059669" stopOpacity="0.2" />
+                  <stop offset="50%" stopColor="#10b981" stopOpacity="0.5" />
+                  <stop offset="75%" stopColor="#059669" stopOpacity="0.2" />
+                  <stop offset="100%" stopColor="transparent" />
+                </linearGradient>
+                <linearGradient id="beam-core" x1="0%" y1="0%" x2="100%" y2="0%">
+                  <stop offset="0%" stopColor="transparent" />
+                  <stop offset="20%" stopColor="#059669" stopOpacity="0.6" />
+                  <stop offset="45%" stopColor="#10b981" stopOpacity="1" />
+                  <stop offset="55%" stopColor="#34d399" stopOpacity="1" />
+                  <stop offset="80%" stopColor="#059669" stopOpacity="0.6" />
                   <stop offset="100%" stopColor="transparent" />
                 </linearGradient>
               </defs>
