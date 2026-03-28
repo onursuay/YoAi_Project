@@ -2,8 +2,9 @@
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
 import { useSearchParams } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import Topbar from '@/components/Topbar'
+import DateRangePicker from '@/components/DateRangePicker'
 import {
   BarChart3,
   TrendingUp,
@@ -130,6 +131,7 @@ function getDefaultDateTo(): string {
 
 function RaporlarContent() {
   const t = useTranslations('dashboard.raporlar')
+  const locale = useLocale()
   const searchParams = useSearchParams()
 
   const [connections, setConnections] = useState<Record<ProviderKey, ConnectionState>>({
@@ -389,19 +391,13 @@ function RaporlarContent() {
             {/* Date filter inline */}
             {activeProvider && currentConn?.connected && currentConn?.hasSelection && (
               <>
-                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 ml-auto">
-                  <input
-                    type="date"
-                    value={dateFrom}
-                    onChange={(e) => setDateFrom(e.target.value)}
-                    className="text-sm text-gray-700 border-none outline-none bg-transparent"
-                  />
-                  <span className="text-gray-400">—</span>
-                  <input
-                    type="date"
-                    value={dateTo}
-                    onChange={(e) => setDateTo(e.target.value)}
-                    className="text-sm text-gray-700 border-none outline-none bg-transparent"
+                <div className="ml-auto">
+                  <DateRangePicker
+                    onDateChange={(startDate, endDate) => {
+                      setDateFrom(startDate)
+                      setDateTo(endDate)
+                    }}
+                    locale={locale === 'en' ? 'en' : 'tr'}
                   />
                 </div>
                 <button
