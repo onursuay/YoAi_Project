@@ -167,6 +167,10 @@ export default function Topbar({
         95% { transform: translateX(100%); opacity: 0; }
         100% { transform: translateX(100%); opacity: 0; }
       }
+      @keyframes notif-border-glow {
+        0% { background-position: 0% 50%; }
+        100% { background-position: 200% 50%; }
+      }
     `}</style>
     <div className="bg-white border-b border-gray-200 px-6 py-4">
       <div className="flex items-center justify-between">
@@ -176,23 +180,25 @@ export default function Topbar({
         </div>
         {/* Notification ticker — real data, left-to-right scroll */}
         {notifications.length > 0 && (
-          <div className="flex-1 mx-6 overflow-hidden relative rounded-lg bg-gray-50" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
-            {(() => {
-              const n = notifications[activeNotif]
-              if (!n) return null
-              const Icon = ICON_MAP[n.icon] || Lightbulb
-              const text = locale === 'en' ? n.textEn : n.text
-              return (
-                <div
-                  key={notifKey}
-                  className="flex items-center gap-2 px-4 py-1.5 whitespace-nowrap"
-                  style={{ animation: 'notif-stay-then-exit 6s ease-in-out forwards' }}
-                >
-                  <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
-                  <span className="text-sm text-gray-600">{text}</span>
-                </div>
-              )
-            })()}
+          <div className="flex-1 mx-6 relative rounded-lg p-[1.5px]" style={{ background: 'linear-gradient(90deg, transparent 0%, #10b981 25%, #34d399 50%, #10b981 75%, transparent 100%)', backgroundSize: '200% 100%', animation: 'notif-border-glow 3s linear infinite' }}>
+            <div className="bg-white rounded-[5px] overflow-hidden" style={{ maskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)', WebkitMaskImage: 'linear-gradient(to right, black 0%, black 85%, transparent 100%)' }}>
+              {(() => {
+                const n = notifications[activeNotif]
+                if (!n) return null
+                const Icon = ICON_MAP[n.icon] || Lightbulb
+                const text = locale === 'en' ? n.textEn : n.text
+                return (
+                  <div
+                    key={notifKey}
+                    className="flex items-center gap-2 px-4 py-1.5 whitespace-nowrap"
+                    style={{ animation: 'notif-stay-then-exit 6s ease-in-out forwards' }}
+                  >
+                    <Icon className={`w-4 h-4 shrink-0 ${n.color}`} />
+                    <span className="text-sm text-gray-600">{text}</span>
+                  </div>
+                )
+              })()}
+            </div>
           </div>
         )}
 
