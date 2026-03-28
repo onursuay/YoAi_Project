@@ -1,6 +1,6 @@
 'use client'
 
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, type LucideIcon } from 'lucide-react'
@@ -46,6 +46,7 @@ export default function Topbar({
   googleChangeAccountLabel = 'Change Account',
 }: TopbarProps) {
   const router = useRouter()
+  const pathname = usePathname()
   const t = useTranslations('dashboard.meta.accounts')
   const isAppReview = process.env.NEXT_PUBLIC_APP_REVIEW_MODE === 'true'
   const [showDropdown, setShowDropdown] = useState(false)
@@ -60,16 +61,34 @@ export default function Topbar({
   const [activeNotif, setActiveNotif] = useState(0)
   const [notifKey, setNotifKey] = useState(0) // forces re-mount for animation restart
 
+  // Derive page context from pathname
+  const pageContext = (() => {
+    const p = pathname?.toLowerCase() || ''
+    if (p.includes('meta-ads') || p.includes('meta')) return 'meta'
+    if (p.includes('google-ads') || p.includes('google')) return 'google'
+    if (p.includes('seo')) return 'seo'
+    if (p.includes('strateji') || p.includes('strategy')) return 'strategy'
+    if (p.includes('optimizasyon') || p.includes('optimization')) return 'optimization'
+    if (p.includes('tasarim') || p.includes('design')) return 'design'
+    if (p.includes('raporlar') || p.includes('reports')) return 'reports'
+    if (p.includes('hedef-kitle') || p.includes('target-audience')) return 'audience'
+    return 'dashboard'
+  })()
+
   useEffect(() => {
-    fetch('/api/notifications')
+    setActiveNotif(0)
+    setNotifKey(0)
+    fetch(`/api/notifications?context=${pageContext}`)
       .then(r => r.json())
       .then(data => {
         if (data.ok && data.notifications?.length > 0) {
           setNotifications(data.notifications)
+        } else {
+          setNotifications([])
         }
       })
       .catch(() => {})
-  }, [])
+  }, [pageContext])
 
   useEffect(() => {
     if (notifications.length < 2) return
