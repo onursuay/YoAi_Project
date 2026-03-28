@@ -2207,7 +2207,24 @@
       "monthlyDesc": "Last 30 days vs previous 30 days",
       "active": "Active",
       "previousPeriod": "Previous Period",
-      "currentPeriod": "Current Period"
+      "currentPeriod": "Current Period",
+      "objectives": {
+        "engagement": "Engagement",
+        "traffic": "Traffic",
+        "awareness": "Awareness",
+        "leads": "Leads",
+        "sales": "Sales",
+        "app promotion": "App Promotion",
+        "conversions": "Conversions",
+        "reach": "Reach",
+        "brand awareness": "Brand Awareness",
+        "video views": "Video Views",
+        "messages": "Messages",
+        "store traffic": "Store Traffic",
+        "link clicks": "Link Clicks",
+        "post engagement": "Post Engagement",
+        "page likes": "Page Likes"
+      }
     },
     "katalog": {
       "title": "Catalog",

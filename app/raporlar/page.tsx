@@ -735,7 +735,7 @@ function CampaignComparisonSection({
                   </h4>
                   {campaign.objective && (
                     <span className="text-[10px] text-gray-400 uppercase tracking-wider">
-                      {campaign.objective.replace('OUTCOME_', '').replace(/_/g, ' ')}
+                      {t(`objectives.${campaign.objective.replace('OUTCOME_', '').replace(/_/g, ' ').toLowerCase()}`, { defaultMessage: campaign.objective.replace('OUTCOME_', '').replace(/_/g, ' ') })}
                     </span>
                   )}
                 </div>

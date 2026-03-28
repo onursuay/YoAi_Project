@@ -2207,7 +2207,24 @@
       "monthlyDesc": "Son 30 gün vs bir önceki 30 gün",
       "active": "Aktif",
       "previousPeriod": "Önceki Dönem",
-      "currentPeriod": "Mevcut Dönem"
+      "currentPeriod": "Mevcut Dönem",
+      "objectives": {
+        "engagement": "Etkileşim",
+        "traffic": "Trafik",
+        "awareness": "Farkındalık",
+        "leads": "Potansiyel Müşteri",
+        "sales": "Satış",
+        "app promotion": "Uygulama Tanıtımı",
+        "conversions": "Dönüşüm",
+        "reach": "Erişim",
+        "brand awareness": "Marka Bilinirliği",
+        "video views": "Video Görüntüleme",
+        "messages": "Mesajlar",
+        "store traffic": "Mağaza Trafiği",
+        "link clicks": "Bağlantı Tıklamaları",
+        "post engagement": "Gönderi Etkileşimi",
+        "page likes": "Sayfa Beğenileri"
+      }
     },
     "katalog": {
       "title": "Katalog",
