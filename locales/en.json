@@ -2180,6 +2180,7 @@
         "averageCpc": "Avg. CPC",
         "conversionRate": "Conversion Rate",
         "costPerConversion": "Cost per Conversion",
+        "conversionsValue": "Conversion Value",
         "sourceMedium": "Source / Medium",
         "landingPage": "Landing Page",
         "avgDuration": "Avg. Duration",
@@ -2198,7 +2199,15 @@
         "pages": "Pages",
         "countries": "Country Breakdown",
         "campaigns": "Campaigns"
-      }
+      },
+      "campaignComparison": "Campaign Performance Comparison",
+      "weekly": "Weekly",
+      "monthly": "Monthly",
+      "weeklyDesc": "Last 7 days vs previous 7 days",
+      "monthlyDesc": "Last 30 days vs previous 30 days",
+      "active": "Active",
+      "previousPeriod": "Previous Period",
+      "currentPeriod": "Current Period"
     },
     "katalog": {
       "title": "Catalog",

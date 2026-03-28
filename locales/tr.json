@@ -2180,6 +2180,7 @@
         "averageCpc": "Ort. TBM",
         "conversionRate": "Dönüşüm Oranı",
         "costPerConversion": "Dönüşüm Maliyeti",
+        "conversionsValue": "Dönüşüm Değeri",
         "sourceMedium": "Kaynak / Ortam",
         "landingPage": "Giriş Sayfası",
         "avgDuration": "Ort. Süre",
@@ -2198,7 +2199,15 @@
         "pages": "Sayfalar",
         "countries": "Ülke Dağılımı",
         "campaigns": "Kampanyalar"
-      }
+      },
+      "campaignComparison": "Kampanya Performans Kıyaslaması",
+      "weekly": "Haftalık",
+      "monthly": "Aylık",
+      "weeklyDesc": "Son 7 gün vs bir önceki 7 gün",
+      "monthlyDesc": "Son 30 gün vs bir önceki 30 gün",
+      "active": "Aktif",
+      "previousPeriod": "Önceki Dönem",
+      "currentPeriod": "Mevcut Dönem"
     },
     "katalog": {
       "title": "Katalog",

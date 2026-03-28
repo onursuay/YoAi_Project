@@ -353,8 +353,8 @@ function RaporlarContent() {
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-6xl mx-auto">
 
-          {/* Provider Tabs */}
-          <div className="flex flex-wrap gap-3 mb-6">
+          {/* Provider Tabs + Date filter inline */}
+          <div className="flex flex-wrap items-center gap-3 mb-6">
             {PROVIDERS.map((p) => {
               const conn = connections[p.key]
               const isActive = activeProvider === p.key
@@ -385,36 +385,36 @@ function RaporlarContent() {
                 </button>
               )
             })}
-          </div>
 
-          {/* Date filter + Refresh */}
-          {activeProvider && currentConn?.connected && currentConn?.hasSelection && (
-            <div className="flex items-center gap-3 mb-6 flex-wrap">
-              <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2">
-                <input
-                  type="date"
-                  value={dateFrom}
-                  onChange={(e) => setDateFrom(e.target.value)}
-                  className="text-sm text-gray-700 border-none outline-none bg-transparent"
-                />
-                <span className="text-gray-400">—</span>
-                <input
-                  type="date"
-                  value={dateTo}
-                  onChange={(e) => setDateTo(e.target.value)}
-                  className="text-sm text-gray-700 border-none outline-none bg-transparent"
-                />
-              </div>
-              <button
-                onClick={handleRefresh}
-                disabled={reportLoading}
-                className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
-              >
-                <RefreshCw className={`w-4 h-4 ${reportLoading ? 'animate-spin' : ''}`} />
-                {t('refresh')}
-              </button>
-            </div>
-          )}
+            {/* Date filter inline */}
+            {activeProvider && currentConn?.connected && currentConn?.hasSelection && (
+              <>
+                <div className="flex items-center gap-2 bg-white border border-gray-200 rounded-lg px-3 py-2 ml-auto">
+                  <input
+                    type="date"
+                    value={dateFrom}
+                    onChange={(e) => setDateFrom(e.target.value)}
+                    className="text-sm text-gray-700 border-none outline-none bg-transparent"
+                  />
+                  <span className="text-gray-400">—</span>
+                  <input
+                    type="date"
+                    value={dateTo}
+                    onChange={(e) => setDateTo(e.target.value)}
+                    className="text-sm text-gray-700 border-none outline-none bg-transparent"
+                  />
+                </div>
+                <button
+                  onClick={handleRefresh}
+                  disabled={reportLoading}
+                  className="flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-lg text-sm text-gray-600 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  <RefreshCw className={`w-4 h-4 ${reportLoading ? 'animate-spin' : ''}`} />
+                  {t('refresh')}
+                </button>
+              </>
+            )}
+          </div>
 
           {/* Content Area */}
           {connectionsLoading ? (
@@ -634,20 +634,20 @@ function CampaignComparisonSection({
   // Define metrics based on provider
   const metrics = isMeta
     ? [
-        { key: 'spend', label: t('metrics.spend', { defaultMessage: 'Harcama' }), format: 'currency' as const },
-        { key: 'impressions', label: t('metrics.impressions', { defaultMessage: 'Gösterim' }), format: 'number' as const },
-        { key: 'clicks', label: t('metrics.clicks', { defaultMessage: 'Tıklama' }), format: 'number' as const },
-        { key: 'ctr', label: 'TO', format: 'percent' as const },
-        { key: 'reach', label: t('metrics.reach', { defaultMessage: 'Erişim' }), format: 'number' as const },
-        { key: 'roas', label: 'ROAS', format: 'decimal' as const },
+        { key: 'spend', label: t('metrics.spend'), format: 'currency' as const },
+        { key: 'impressions', label: t('metrics.impressions'), format: 'number' as const },
+        { key: 'clicks', label: t('metrics.clicks'), format: 'number' as const },
+        { key: 'ctr', label: t('metrics.ctr'), format: 'percent' as const },
+        { key: 'reach', label: t('metrics.reach'), format: 'number' as const },
+        { key: 'roas', label: t('metrics.roas'), format: 'decimal' as const },
       ]
     : [
-        { key: 'cost', label: t('metrics.cost', { defaultMessage: 'Maliyet' }), format: 'currency' as const },
-        { key: 'impressions', label: t('metrics.impressions', { defaultMessage: 'Gösterim' }), format: 'number' as const },
-        { key: 'clicks', label: t('metrics.clicks', { defaultMessage: 'Tıklama' }), format: 'number' as const },
-        { key: 'ctr', label: 'TO', format: 'percent' as const },
-        { key: 'conversions', label: t('metrics.conversions', { defaultMessage: 'Dönüşüm' }), format: 'number' as const },
-        { key: 'conversionsValue', label: t('metrics.conversionsValue', { defaultMessage: 'Dönüşüm Değeri' }), format: 'currency' as const },
+        { key: 'cost', label: t('metrics.cost'), format: 'currency' as const },
+        { key: 'impressions', label: t('metrics.impressions'), format: 'number' as const },
+        { key: 'clicks', label: t('metrics.clicks'), format: 'number' as const },
+        { key: 'ctr', label: t('metrics.ctr'), format: 'percent' as const },
+        { key: 'conversions', label: t('metrics.conversions'), format: 'number' as const },
+        { key: 'conversionsValue', label: t('metrics.conversionsValue'), format: 'currency' as const },
       ]
 
   if (loading && !data) {
@@ -667,7 +667,12 @@ function CampaignComparisonSection({
 
   if (!data?.campaigns?.length) return null
 
-  const campaigns = data.campaigns
+  // Only show active campaigns
+  const campaigns = data.campaigns.filter(
+    (c) => c.status === 'ACTIVE' || c.status === 'ENABLED'
+  )
+
+  if (!campaigns.length) return null
 
   return (
     <div className="bg-white rounded-2xl border border-gray-200 p-6">
@@ -675,7 +680,7 @@ function CampaignComparisonSection({
       <div className="flex items-center justify-between mb-5">
         <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
           <BarChart3 className="w-5 h-5 text-primary" />
-          Kampanya Performans Kıyaslaması
+          {t('campaignComparison')}
         </h3>
         <div className="flex bg-gray-100 rounded-lg p-0.5">
           <button
@@ -687,7 +692,7 @@ function CampaignComparisonSection({
             }`}
           >
             <Calendar className="w-3.5 h-3.5" />
-            Haftalık
+            {t('weekly')}
           </button>
           <button
             onClick={() => onTabChange('monthly')}
@@ -698,22 +703,21 @@ function CampaignComparisonSection({
             }`}
           >
             <CalendarDays className="w-3.5 h-3.5" />
-            Aylık
+            {t('monthly')}
           </button>
         </div>
       </div>
 
       <p className="text-xs text-gray-400 mb-4">
-        {tab === 'weekly'
-          ? 'Son 7 gün vs bir önceki 7 gün'
-          : 'Son 30 gün vs bir önceki 30 gün'}
+        {tab === 'weekly' ? t('weeklyDesc') : t('monthlyDesc')}
       </p>
 
-      {/* Campaign Cards Grid */}
-      <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+      {/* Campaign Cards */}
+      <div className="space-y-6">
         {campaigns.map((campaign) => {
           const periodData = tab === 'weekly' ? campaign.weekly : campaign.monthly
           const current = periodData.current as Record<string, number> | null
+          const previous = periodData.previous as Record<string, number> | null
           const changes = periodData.changes
 
           if (!current) return null
@@ -721,10 +725,10 @@ function CampaignComparisonSection({
           return (
             <div
               key={campaign.id}
-              className="border border-gray-200 rounded-xl p-4 hover:border-primary/30 hover:shadow-sm transition-all"
+              className="border border-gray-200 rounded-xl overflow-hidden hover:border-primary/30 hover:shadow-sm transition-all"
             >
-              {/* Campaign Name & Status */}
-              <div className="flex items-start justify-between mb-3">
+              {/* Campaign Header */}
+              <div className="flex items-center justify-between px-5 py-3 bg-gray-50 border-b border-gray-100">
                 <div className="flex-1 min-w-0">
                   <h4 className="text-sm font-semibold text-gray-900 truncate" title={campaign.name}>
                     {campaign.name}
@@ -735,57 +739,84 @@ function CampaignComparisonSection({
                     </span>
                   )}
                 </div>
-                <span className={`shrink-0 ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium ${
-                  campaign.status === 'ACTIVE' || campaign.status === 'ENABLED'
-                    ? 'bg-green-50 text-green-700'
-                    : 'bg-gray-100 text-gray-500'
-                }`}>
-                  {campaign.status === 'ACTIVE' || campaign.status === 'ENABLED' ? 'Aktif' : 'Duraklatıldı'}
+                <span className="shrink-0 ml-2 inline-flex items-center px-2 py-0.5 rounded-full text-[10px] font-medium bg-green-50 text-green-700">
+                  {t('active')}
                 </span>
               </div>
 
-              {/* Metrics Grid */}
-              <div className="grid grid-cols-3 gap-3">
-                {metrics.map((metric) => {
-                  const value = current[metric.key] ?? 0
-                  const change = changes?.[metric.key]
-                  const formattedValue = formatComparisonValue(value, metric.format)
-                  const isPositive = (change ?? 0) > 0
-                  const isNeutral = change === undefined || change === null || change === 0
-                  // For cost/spend: lower is better
-                  const isCostMetric = metric.key === 'spend' || metric.key === 'cost'
-                  const changeIsGood = isCostMetric ? !isPositive : isPositive
+              {/* Previous vs Current side by side */}
+              <div className="grid grid-cols-2 divide-x divide-gray-100">
+                {/* Previous Period */}
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-wider mb-3">
+                    {t('previousPeriod')}
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {metrics.map((metric) => {
+                      const value = previous?.[metric.key] ?? 0
+                      return (
+                        <div key={metric.key} className="text-center">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5 truncate" title={metric.label}>
+                            {metric.label}
+                          </p>
+                          <p className="text-sm font-bold text-gray-500">{formatComparisonValue(value, metric.format)}</p>
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
 
-                  return (
-                    <div key={metric.key} className="text-center">
-                      <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5 truncate" title={metric.label}>
-                        {metric.label}
-                      </p>
-                      <p className="text-sm font-bold text-gray-900">{formattedValue}</p>
-                      {!isNeutral && (
-                        <div className={`flex items-center justify-center gap-0.5 mt-0.5 ${
-                          changeIsGood ? 'text-green-600' : 'text-red-500'
-                        }`}>
-                          {isPositive ? (
-                            <ArrowUpRight className="w-3 h-3" />
-                          ) : (
-                            <ArrowDownRight className="w-3 h-3" />
-                          )}
-                          <span className="text-[11px] font-semibold">
-                            {isPositive ? '+' : ''}{change!.toFixed(1)}%
-                          </span>
+                {/* Current Period */}
+                <div className="p-4">
+                  <p className="text-[10px] font-semibold text-primary uppercase tracking-wider mb-3">
+                    {t('currentPeriod')}
+                  </p>
+                  <div className="grid grid-cols-3 gap-3">
+                    {metrics.map((metric) => {
+                      const value = current[metric.key] ?? 0
+                      return (
+                        <div key={metric.key} className="text-center">
+                          <p className="text-[10px] font-medium text-gray-400 uppercase tracking-wider mb-0.5 truncate" title={metric.label}>
+                            {metric.label}
+                          </p>
+                          <p className="text-sm font-bold text-gray-900">{formatComparisonValue(value, metric.format)}</p>
                         </div>
-                      )}
-                      {isNeutral && (
-                        <div className="flex items-center justify-center gap-0.5 mt-0.5 text-gray-300">
-                          <Minus className="w-3 h-3" />
-                          <span className="text-[11px]">0%</span>
-                        </div>
-                      )}
-                    </div>
-                  )
-                })}
+                      )
+                    })}
+                  </div>
+                </div>
               </div>
+
+              {/* Change Summary Bar */}
+              {changes && (
+                <div className="px-5 py-3 bg-gray-50 border-t border-gray-100">
+                  <div className="flex flex-wrap items-center gap-4">
+                    {metrics.map((metric) => {
+                      const change = changes[metric.key]
+                      const isNeutral = change === undefined || change === null || change === 0
+                      const isPositive = (change ?? 0) > 0
+                      const isCostMetric = metric.key === 'spend' || metric.key === 'cost'
+                      const changeIsGood = isCostMetric ? !isPositive : isPositive
+
+                      return (
+                        <div key={metric.key} className="flex items-center gap-1.5">
+                          <span className="text-[10px] font-medium text-gray-400 uppercase">{metric.label}</span>
+                          {isNeutral ? (
+                            <span className="text-[11px] text-gray-300 font-medium flex items-center gap-0.5">
+                              <Minus className="w-3 h-3" /> 0%
+                            </span>
+                          ) : (
+                            <span className={`text-[11px] font-semibold flex items-center gap-0.5 ${changeIsGood ? 'text-green-600' : 'text-red-500'}`}>
+                              {isPositive ? <ArrowUpRight className="w-3 h-3" /> : <ArrowDownRight className="w-3 h-3" />}
+                              {isPositive ? '+' : ''}{change!.toFixed(1)}%
+                            </span>
+                          )}
+                        </div>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
             </div>
           )
         })}
