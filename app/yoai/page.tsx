@@ -21,6 +21,8 @@ import {
   type ContentCategory,
 } from '@/lib/yoai/types'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
+import type { ExecutableAction, ActionResult } from '@/lib/yoai/actionTypes'
+import ActionConfirmDialog from '@/components/yoai/ActionConfirmDialog'
 import {
   Sparkles,
   RotateCcw,
@@ -37,6 +39,19 @@ export default function YoAiPage() {
   const [phase, setPhase] = useState<ChatPhase>('idle')
   const [detectedIntent, setDetectedIntent] = useState<ContentCategory | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
+
+  // ── Action Execution State ──
+  const [pendingAction, setPendingAction] = useState<ExecutableAction | null>(null)
+
+  const handleExecuteAction = useCallback((action: ExecutableAction) => {
+    setPendingAction(action)
+  }, [])
+
+  const handleActionSuccess = useCallback(() => {
+    // Invalidate cache + re-fetch after successful action
+    try { sessionStorage.removeItem('yoai_cc_deep_cache') } catch {}
+    setPendingAction(null)
+  }, [])
 
   // ── Command Center Data (with sessionStorage cache) ──
   const CACHE_KEY = 'yoai_cc_deep_cache'
@@ -256,7 +271,7 @@ export default function YoAiPage() {
 
             <InsightStream insights={insightsForStream} loading={ccLoading} />
 
-            <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} />
+            <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
 
             <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} />
 
@@ -318,6 +333,15 @@ export default function YoAiPage() {
           </div>
         )}
       </div>
+
+      {/* Action Confirm Dialog */}
+      {pendingAction && (
+        <ActionConfirmDialog
+          action={pendingAction}
+          onClose={() => setPendingAction(null)}
+          onSuccess={handleActionSuccess}
+        />
+      )}
     </>
   )
 }
