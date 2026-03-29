@@ -51,20 +51,13 @@ export default function AdImageGenerator({ prompt, aspectRatio = '1:1', classNam
     finally { setLoading(false) }
   }
 
-  // Auto-generate on mount
+  // Check cache on mount (don't auto-generate)
   useEffect(() => {
-    if (generatedRef.current) return
-    generatedRef.current = true
-
-    // Check cache
     try {
       const cached = sessionStorage.getItem(`yoai_adimg_${btoa(prompt).slice(0, 20)}`)
-      if (cached) { setImageUrl(cached); return }
+      if (cached) setImageUrl(cached)
     } catch {}
-
-    generateImage()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  }, [prompt])
 
   if (imageUrl) {
     return (
@@ -92,7 +85,9 @@ export default function AdImageGenerator({ prompt, aspectRatio = '1:1', classNam
           Tekrar dene
         </button>
       ) : (
-        <Loader2 className="w-4 h-4 text-gray-300 animate-spin" />
+        <button onClick={(e) => { e.stopPropagation(); generateImage() }} className="flex flex-col items-center gap-1">
+          <span className="text-[10px] text-primary font-medium hover:underline">AI Görsel Oluştur</span>
+        </button>
       )}
     </div>
   )
