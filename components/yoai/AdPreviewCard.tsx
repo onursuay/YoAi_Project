@@ -109,6 +109,24 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
           </div>
         )}
 
+        {/* Source campaign reference */}
+        {proposal.sourceCampaignName && (
+          <div className="bg-gray-50 rounded-lg px-3 py-2 mb-2 text-[10px]">
+            <span className="text-gray-400">Referans kampanya:</span>{' '}
+            <span className="text-gray-700 font-medium">{proposal.sourceCampaignName}</span>
+          </div>
+        )}
+
+        {/* Suggested changes */}
+        {proposal.suggestedChanges && proposal.suggestedChanges.length > 0 && (
+          <div className="bg-emerald-50 rounded-lg px-3 py-2 mb-2">
+            <p className="text-[10px] font-semibold text-emerald-700 mb-1">Yapılan Değişiklikler</p>
+            {proposal.suggestedChanges.slice(0, 3).map((c, i) => (
+              <p key={i} className="text-[10px] text-emerald-800">• {c}</p>
+            ))}
+          </div>
+        )}
+
         {/* Competitor insight */}
         {proposal.competitorInsight && (
           <div className={`rounded-lg px-3 py-2 mb-2 ${isGoogle ? 'bg-amber-50' : 'bg-blue-50/50'}`}>
@@ -122,6 +140,15 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
           <p className="text-[10px] font-semibold text-gray-500 mb-0.5">AI Gerekçesi</p>
           <p className="text-xs text-gray-600 line-clamp-2">{proposal.reasoning}</p>
         </div>
+
+        {/* Analyzed parameters */}
+        {proposal.analyzedParameters && proposal.analyzedParameters.length > 0 && (
+          <div className="flex flex-wrap gap-1 mt-2">
+            {proposal.analyzedParameters.map((p, i) => (
+              <span key={i} className="text-[8px] bg-gray-100 text-gray-500 px-1.5 py-0.5 rounded">{p}</span>
+            ))}
+          </div>
+        )}
 
         <p className={`text-[11px] font-semibold mt-2 ${isGoogle ? 'text-blue-600' : 'text-blue-700'}`}>{proposal.expectedPerformance}</p>
       </div>
