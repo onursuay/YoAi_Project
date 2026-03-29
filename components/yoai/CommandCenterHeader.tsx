@@ -1,6 +1,6 @@
 'use client'
 
-import { Activity, AlertTriangle, TrendingUp, Clock, Zap, Loader2 } from 'lucide-react'
+import { Activity, AlertTriangle, TrendingUp, Clock, Zap, Loader2, Sparkles } from 'lucide-react'
 import type { DeepHealthOverview } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -8,9 +8,10 @@ interface Props {
   lastAnalysis: string | null
   loading: boolean
   aiGenerated: boolean
+  onCreateAd?: () => void
 }
 
-export default function CommandCenterHeader({ health, lastAnalysis, loading, aiGenerated }: Props) {
+export default function CommandCenterHeader({ health, lastAnalysis, loading, aiGenerated, onCreateAd }: Props) {
   const formattedTime = lastAnalysis
     ? new Date(lastAnalysis).toLocaleString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric', hour: '2-digit', minute: '2-digit' })
     : '—'
@@ -41,12 +42,23 @@ export default function CommandCenterHeader({ health, lastAnalysis, loading, aiG
               Tüm reklam hesaplarınızı AI destekli olarak izleyin, riskleri tespit edin ve optimizasyon fırsatlarını değerlendirin.
             </p>
           </div>
-          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-800/60 rounded-lg px-3 py-2 border border-gray-700/50 shrink-0">
+          <div className="flex items-center gap-3 shrink-0">
+            {onCreateAd && !loading && (
+              <button
+                onClick={onCreateAd}
+                className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
+              >
+                <Sparkles className="w-3.5 h-3.5" />
+                AI Reklam Oluştur
+              </button>
+            )}
+          <div className="flex items-center gap-2 text-xs text-gray-500 bg-gray-800/60 rounded-lg px-3 py-2 border border-gray-700/50">
             {loading ? (
               <><Loader2 className="w-3.5 h-3.5 animate-spin" /><span>Derin analiz yapılıyor...</span></>
             ) : (
               <><Clock className="w-3.5 h-3.5" /><span>Son analiz: {formattedTime}</span><span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" /></>
             )}
+          </div>
           </div>
         </div>
 

@@ -11,6 +11,7 @@ import RecommendedActions from '@/components/yoai/RecommendedActions'
 import ApprovalFlowPreview from '@/components/yoai/ApprovalFlowPreview'
 import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
+import AdCreationWizard from '@/components/yoai/AdCreationWizard'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { CATEGORIES } from '@/lib/yoai/categories'
 import { OFF_TOPIC_MESSAGE } from '@/lib/yoai/prompts'
@@ -42,6 +43,7 @@ export default function YoAiPage() {
 
   // ── Action Execution State ──
   const [pendingAction, setPendingAction] = useState<ExecutableAction | null>(null)
+  const [showAdWizard, setShowAdWizard] = useState(false)
 
   const handleExecuteAction = useCallback((action: ExecutableAction) => {
     setPendingAction(action)
@@ -263,6 +265,7 @@ export default function YoAiPage() {
               lastAnalysis={ccData?.lastAnalysis ?? null}
               loading={ccLoading}
               aiGenerated={ccData?.aiGenerated ?? false}
+              onCreateAd={() => setShowAdWizard(true)}
             />
 
             <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
@@ -333,6 +336,14 @@ export default function YoAiPage() {
           </div>
         )}
       </div>
+
+      {/* Ad Creation Wizard */}
+      {showAdWizard && (
+        <AdCreationWizard
+          onClose={() => setShowAdWizard(false)}
+          connectedPlatforms={ccData?.connectedPlatforms ?? []}
+        />
+      )}
 
       {/* Action Confirm Dialog */}
       {pendingAction && (
