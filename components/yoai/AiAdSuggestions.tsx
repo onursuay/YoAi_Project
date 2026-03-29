@@ -124,7 +124,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
           {metaProposals.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">Meta</span>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-500 text-white">Meta</span>
                 {metaProposals.length} öneri
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -139,7 +139,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
           {googleProposals.length > 0 && (
             <div>
               <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-700">Google</span>
+                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-500 via-red-500 via-yellow-400 to-green-500 text-white">Google</span>
                 {googleProposals.length} öneri
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
