@@ -1,172 +1,204 @@
 /* ──────────────────────────────────────────────────────────
-   Competitor Analyzer — Phase 4 Enhanced
-   Auto keyword extraction, Meta Ad Library, Google Auction,
-   AI creative comparison, competitor-informed ad creation.
+   Competitor Analyzer — v2
+
+   Flow:
+   1. Analyze user's own ads (texts, CTAs, formats, objectives)
+   2. Extract industry/product keywords from ad content
+   3. Search Meta Ad Library for competitor ads in same space
+   4. Compare user ads vs competitor ads
+   5. Identify gaps, opportunities, and competitive advantages
+   6. Feed findings into AI ad creator
    ────────────────────────────────────────────────────────── */
 
-import type { DeepCampaignInsight, Platform } from './analysisTypes'
+import type { DeepCampaignInsight, AdsetInsight, AdInsight, Platform } from './analysisTypes'
 
 /* ── Types ── */
-export interface GoogleCompetitor {
-  domain: string
-  impressionShare: number
-  overlapRate: number
-  positionAboveRate: number
-  topOfPageRate: number
-  outRankingShare: number
+export interface UserAdProfile {
+  keywords: string[]              // extracted from ad content
+  themes: string[]                // messaging themes (price, quality, urgency etc.)
+  ctaTypes: string[]              // CTA types used
+  formats: string[]               // ad formats used
+  platforms: Platform[]
+  topPerformingAds: { name: string; ctr: number; platform: Platform }[]
+  weakAds: { name: string; ctr: number; issues: string[] }[]
+  avgCtr: number
+  avgCpc: number
+  totalSpend: number
 }
 
-export interface MetaAdLibraryAd {
+export interface CompetitorAd {
   id: string
   pageName: string
   pageId: string
-  adCreativeBody?: string
-  adCreativeLinkTitle?: string
-  adCreativeDescription?: string
-  adStartDate?: string
-  adEndDate?: string
+  body: string
+  title: string
+  description: string
+  startDate: string
   platforms: string[]
   isActive: boolean
 }
 
-export interface CompetitorInsight {
-  id: string
-  title: string
-  description: string
-  platform: Platform
-  type: 'opportunity' | 'threat' | 'info'
+export interface CompetitorComparison {
+  // What competitors do that user doesn't
+  competitorThemes: string[]
+  competitorCTAs: string[]
+  competitorFormats: string[]
+  // Gaps and opportunities
+  gaps: CompetitorGap[]
+  // Summary for AI ad creation
+  competitorSummary: string
 }
 
-export interface CompetitorData {
-  google: GoogleCompetitor[]
-  metaAds: MetaAdLibraryAd[]
-  aiInsights: CompetitorInsight[]
-  extractedKeywords: string[]
+export interface CompetitorGap {
+  id: string
+  type: 'messaging' | 'format' | 'cta' | 'positioning'
+  title: string
+  description: string
+  priority: 'high' | 'medium' | 'low'
+  recommendation: string
+}
+
+export interface FullCompetitorAnalysis {
+  userProfile: UserAdProfile
+  competitorAds: CompetitorAd[]
+  comparison: CompetitorComparison
   errors: string[]
 }
 
-/* ── Extract keywords from campaign names ── */
-export function extractKeywordsFromCampaigns(campaigns: DeepCampaignInsight[]): string[] {
+/* ── Step 1: Analyze user's own ads ── */
+export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile {
+  const keywords: string[] = []
+  const themes = new Set<string>()
+  const ctaTypes = new Set<string>()
+  const formats = new Set<string>()
+  const platforms = new Set<Platform>()
+  const allAds: { name: string; ctr: number; platform: Platform; spend: number }[] = []
+
+  const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat', 'bugün', 'acele']
+  const priceWords = ['indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', 'uygun', 'hesaplı']
+  const qualityWords = ['kaliteli', 'profesyonel', 'uzman', 'garanti', 'güvenilir', 'premium']
+  const socialProofWords = ['binlerce', 'müşteri', 'yıldız', 'puan', 'değerlendirme', 'tercih']
+
+  // Stop words for keyword extraction
   const stopWords = new Set([
+    've', 'ile', 'için', 'bir', 'bu', 'da', 'de', 'den', 'dan', 'olan',
+    'gibi', 'daha', 'en', 'çok', 'her', 'tüm', 'biz', 'siz', 'the', 'and',
     'campaign', 'kampanya', 'reklam', 'ads', 'ad', 'set', 'grup', 'group',
-    'test', 'v1', 'v2', 'v3', 'copy', 'kopya', 'new', 'yeni', 'old', 'eski',
-    'the', 'bir', 've', 'ile', 'için', 'den', 'dan', 'de', 'da',
-    'search', 'display', 'video', 'pmax', 'performance', 'max',
-    'yo', '//', 'set', 'ekim', 'ocak', 'mart', 'nisan', 'mayıs', 'haziran',
-    'temmuz', 'ağustos', 'eylül', 'kasım', 'aralık', 'şubat',
-    '2024', '2025', '2026', 'tr', 'en',
+    'test', 'v1', 'v2', 'copy', 'kopya', 'yeni', 'search', 'display',
+    'yo', '//', '2024', '2025', '2026', 'tr', 'en',
   ])
 
-  const wordCount = new Map<string, number>()
+  let totalSpend = 0
+  let totalClicks = 0
+  let totalImpressions = 0
 
-  for (const c of campaigns) {
-    // Extract words from campaign name
-    const words = c.campaignName
-      .replace(/[^a-zA-ZğüşöçıİĞÜŞÖÇ\s]/g, ' ')
-      .split(/\s+/)
-      .map(w => w.toLowerCase().trim())
-      .filter(w => w.length > 2 && !stopWords.has(w))
+  for (const campaign of campaigns) {
+    platforms.add(campaign.platform)
+    totalSpend += campaign.metrics.spend
+    totalClicks += campaign.metrics.clicks
+    totalImpressions += campaign.metrics.impressions
 
-    for (const word of words) {
-      wordCount.set(word, (wordCount.get(word) || 0) + 1)
-    }
+    // Extract from campaign name
+    extractWords(campaign.campaignName, stopWords).forEach(w => keywords.push(w))
 
-    // Also extract from adset names
-    for (const as of c.adsets) {
-      const asWords = as.name
-        .replace(/[^a-zA-ZğüşöçıİĞÜŞÖÇ\s]/g, ' ')
-        .split(/\s+/)
-        .map(w => w.toLowerCase().trim())
-        .filter(w => w.length > 2 && !stopWords.has(w))
-      for (const word of asWords) {
-        wordCount.set(word, (wordCount.get(word) || 0) + 1)
+    for (const adset of campaign.adsets) {
+      extractWords(adset.name, stopWords).forEach(w => keywords.push(w))
+
+      for (const ad of adset.ads) {
+        // Collect ad info
+        allAds.push({
+          name: ad.name,
+          ctr: ad.metrics.ctr,
+          platform: campaign.platform,
+          spend: ad.metrics.spend,
+        })
+
+        if (ad.format) formats.add(ad.format)
+
+        // Analyze ad name for themes
+        const lower = ad.name.toLowerCase()
+        if (urgencyWords.some(w => lower.includes(w))) themes.add('aciliyet')
+        if (priceWords.some(w => lower.includes(w))) themes.add('fiyat_avantaji')
+        if (qualityWords.some(w => lower.includes(w))) themes.add('kalite')
+        if (socialProofWords.some(w => lower.includes(w))) themes.add('sosyal_kanit')
+
+        extractWords(ad.name, stopWords).forEach(w => keywords.push(w))
       }
     }
   }
 
-  // Return top keywords sorted by frequency
-  return Array.from(wordCount.entries())
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 5)
-    .map(([word]) => word)
-}
-
-/* ── Fetch Google Auction competitors ── */
-export async function fetchGoogleCompetitors(cookieHeader: string, baseUrl: string): Promise<{ competitors: GoogleCompetitor[]; errors: string[] }> {
-  const errors: string[] = []
-  const competitors: GoogleCompetitor[] = []
-
-  try {
-    const campaignsRes = await fetch(`${baseUrl}/api/integrations/google-ads/campaigns?showInactive=0`, {
-      headers: { Cookie: cookieHeader },
-    })
-
-    if (!campaignsRes.ok) return { competitors, errors: ['Google kampanya verisi alınamadı'] }
-
-    const campaignsData = await campaignsRes.json()
-    const campaigns = campaignsData.campaigns || []
-
-    const topCampaigns = campaigns
-      .filter((c: any) => c.amountSpent > 0)
-      .sort((a: any, b: any) => (b.amountSpent || 0) - (a.amountSpent || 0))
-      .slice(0, 5)
-
-    const domainMap = new Map<string, GoogleCompetitor>()
-
-    for (const campaign of topCampaigns) {
-      try {
-        const res = await fetch(`${baseUrl}/api/integrations/google-ads/campaigns/${campaign.campaignId}/competitor-auction-insights`, {
-          headers: { Cookie: cookieHeader },
-        })
-        if (res.ok) {
-          const data = await res.json()
-          const rows = data.competitors || data.data || []
-          for (const row of rows) {
-            const domain = row.domain || row.displayDomain || ''
-            if (!domain) continue
-            const existing = domainMap.get(domain)
-            if (existing) {
-              existing.impressionShare = (existing.impressionShare + (row.impressionShare || 0)) / 2
-              existing.overlapRate = (existing.overlapRate + (row.overlapRate || 0)) / 2
-              existing.positionAboveRate = (existing.positionAboveRate + (row.positionAboveRate || 0)) / 2
-              existing.topOfPageRate = (existing.topOfPageRate + (row.topOfPageRate || 0)) / 2
-              existing.outRankingShare = (existing.outRankingShare + (row.outRankingShare || 0)) / 2
-            } else {
-              domainMap.set(domain, { domain, impressionShare: row.impressionShare || 0, overlapRate: row.overlapRate || 0, positionAboveRate: row.positionAboveRate || 0, topOfPageRate: row.topOfPageRate || 0, outRankingShare: row.outRankingShare || 0 })
-            }
-          }
-        }
-      } catch { /* skip */ }
-    }
-
-    competitors.push(...Array.from(domainMap.values()).sort((a, b) => b.impressionShare - a.impressionShare))
-  } catch (e) {
-    console.error('[CompetitorAnalyzer] Google error:', e)
-    errors.push('Google rakip verisi alınamadı')
+  // Deduplicate and rank keywords
+  const wordCount = new Map<string, number>()
+  for (const w of keywords) {
+    wordCount.set(w, (wordCount.get(w) || 0) + 1)
   }
+  const topKeywords = Array.from(wordCount.entries())
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 10)
+    .map(([w]) => w)
 
-  return { competitors, errors }
+  // Top/weak performing ads
+  const sortedAds = allAds.filter(a => a.spend > 0).sort((a, b) => b.ctr - a.ctr)
+  const topPerformingAds = sortedAds.slice(0, 5).map(a => ({ name: a.name, ctr: a.ctr, platform: a.platform }))
+  const weakAds = sortedAds.slice(-3).reverse().map(a => ({
+    name: a.name,
+    ctr: a.ctr,
+    issues: [a.ctr < 0.01 ? 'Çok düşük CTR' : 'Düşük performans'],
+  }))
+
+  return {
+    keywords: topKeywords,
+    themes: Array.from(themes),
+    ctaTypes: Array.from(ctaTypes),
+    formats: Array.from(formats),
+    platforms: Array.from(platforms),
+    topPerformingAds,
+    weakAds,
+    avgCtr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
+    avgCpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
+    totalSpend,
+  }
 }
 
-/* ── Fetch Meta Ad Library ── */
-export async function fetchMetaAdLibrary(
-  query: string,
-  country: string,
+/* ── Step 2: Search Meta Ad Library ── */
+export async function searchCompetitorAds(
+  keywords: string[],
   cookieHeader: string,
   baseUrl: string,
-): Promise<{ ads: MetaAdLibraryAd[]; errors: string[] }> {
+): Promise<{ ads: CompetitorAd[]; errors: string[] }> {
+  if (keywords.length === 0) {
+    return { ads: [], errors: ['Anahtar kelime bulunamadı'] }
+  }
+
+  const searchQuery = keywords.slice(0, 3).join(' ')
   const errors: string[] = []
-  const ads: MetaAdLibraryAd[] = []
+  const ads: CompetitorAd[] = []
 
   try {
-    const res = await fetch(`${baseUrl}/api/yoai/competitors/meta-ad-library?q=${encodeURIComponent(query)}&country=${country}`, {
-      headers: { Cookie: cookieHeader },
-    })
+    const res = await fetch(
+      `${baseUrl}/api/yoai/competitors/meta-ad-library?q=${encodeURIComponent(searchQuery)}&country=TR`,
+      { headers: { Cookie: cookieHeader } },
+    )
+
     if (res.ok) {
       const data = await res.json()
-      if (data.ok && Array.isArray(data.data)) ads.push(...data.data)
+      if (data.ok && Array.isArray(data.data)) {
+        for (const ad of data.data) {
+          ads.push({
+            id: ad.id,
+            pageName: ad.pageName || '',
+            pageId: ad.pageId || '',
+            body: ad.adCreativeBody || '',
+            title: ad.adCreativeLinkTitle || '',
+            description: ad.adCreativeDescription || '',
+            startDate: ad.adStartDate || '',
+            platforms: ad.platforms || [],
+            isActive: ad.isActive ?? true,
+          })
+        }
+      }
     } else {
-      errors.push('Meta Ad Library verisi alınamadı')
+      errors.push('Meta Ad Library erişim hatası')
     }
   } catch (e) {
     console.error('[CompetitorAnalyzer] Meta Ad Library error:', e)
@@ -176,108 +208,130 @@ export async function fetchMetaAdLibrary(
   return { ads, errors }
 }
 
-/* ── AI Competitor Creative Comparison ── */
-export async function analyzeCompetitorsWithAI(
-  googleCompetitors: GoogleCompetitor[],
-  metaAds: MetaAdLibraryAd[],
-  userCampaigns: DeepCampaignInsight[],
-): Promise<CompetitorInsight[]> {
-  const insights: CompetitorInsight[] = []
+/* ── Step 3: Compare user ads vs competitor ads ── */
+export function compareWithCompetitors(
+  userProfile: UserAdProfile,
+  competitorAds: CompetitorAd[],
+): CompetitorComparison {
+  const gaps: CompetitorGap[] = []
+  const competitorThemes = new Set<string>()
+  const competitorCTAs = new Set<string>()
+  const competitorFormats = new Set<string>()
 
-  // Deterministic insights from Google
-  for (const comp of googleCompetitors.slice(0, 5)) {
-    if (comp.impressionShare > 0.5) {
-      insights.push({
-        id: `google_threat_${comp.domain}`,
-        title: `${comp.domain} yüksek gösterim payına sahip`,
-        description: `Bu rakip %${(comp.impressionShare * 100).toFixed(0)} gösterim payıyla sizi geçiyor. Teklif stratejinizi ve reklam kalitesini gözden geçirin.`,
-        platform: 'Google',
-        type: 'threat',
-      })
+  const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat']
+  const priceWords = ['indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', 'uygun']
+  const qualityWords = ['kaliteli', 'profesyonel', 'uzman', 'garanti', 'güvenilir']
+  const socialProofWords = ['binlerce', 'müşteri', 'yıldız', 'puan', 'tercih']
+  const ctaWords = ['hemen al', 'şimdi başla', 'ücretsiz dene', 'teklif al', 'iletişime geç', 'incele']
+
+  for (const ad of competitorAds) {
+    const text = `${ad.body} ${ad.title} ${ad.description}`.toLowerCase()
+    if (urgencyWords.some(w => text.includes(w))) competitorThemes.add('aciliyet')
+    if (priceWords.some(w => text.includes(w))) competitorThemes.add('fiyat_avantaji')
+    if (qualityWords.some(w => text.includes(w))) competitorThemes.add('kalite')
+    if (socialProofWords.some(w => text.includes(w))) competitorThemes.add('sosyal_kanit')
+    for (const cta of ctaWords) {
+      if (text.includes(cta)) competitorCTAs.add(cta)
     }
-    if (comp.positionAboveRate > 0.4) {
-      insights.push({
-        id: `google_above_${comp.domain}`,
-        title: `${comp.domain} sizin üstünüzde konumlanıyor`,
-        description: `%${(comp.positionAboveRate * 100).toFixed(0)} oranında üstte. Ad Rank için kalite puanı ve teklifleri iyileştirin.`,
-        platform: 'Google',
-        type: 'info',
+    for (const p of ad.platforms) competitorFormats.add(p)
+  }
+
+  // Find gaps: competitor themes that user doesn't use
+  let gapIdx = 0
+  const themeLabels: Record<string, string> = {
+    aciliyet: 'Aciliyet mesajı',
+    fiyat_avantaji: 'Fiyat/indirim vurgusu',
+    kalite: 'Kalite vurgusu',
+    sosyal_kanit: 'Sosyal kanıt',
+  }
+
+  for (const theme of competitorThemes) {
+    if (!userProfile.themes.includes(theme)) {
+      gapIdx++
+      gaps.push({
+        id: `gap_${gapIdx}`,
+        type: 'messaging',
+        title: `Rakipler "${themeLabels[theme] || theme}" kullanıyor`,
+        description: `Rakip reklamlarda ${themeLabels[theme] || theme} mesajı tespit edildi ancak sizin reklamlarınızda bu tema bulunmuyor.`,
+        priority: 'high',
+        recommendation: `Reklam metinlerinize ${themeLabels[theme] || theme} unsuru ekleyin.`,
       })
     }
   }
 
-  // AI-powered creative comparison (if Meta ads available)
-  if (metaAds.length > 0) {
-    // Extract competitor patterns
-    const competitorTexts = metaAds.slice(0, 10).map(a => a.adCreativeBody || '').filter(Boolean)
-    const competitorTitles = metaAds.slice(0, 10).map(a => a.adCreativeLinkTitle || '').filter(Boolean)
-    const competitorPages = [...new Set(metaAds.map(a => a.pageName))].slice(0, 5)
-
-    // CTA patterns from competitors
-    const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat', 'bugün', 'acele']
-    const priceWords = ['indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', '%', 'tl', '₺']
-    const socialProof = ['binlerce', 'müşteri', 'yıldız', 'puan', 'değerlendirme', 'tercih']
-
-    let hasUrgency = false, hasPrice = false, hasSocialProof = false
-    for (const text of competitorTexts) {
-      const lower = text.toLowerCase()
-      if (urgencyWords.some(w => lower.includes(w))) hasUrgency = true
-      if (priceWords.some(w => lower.includes(w))) hasPrice = true
-      if (socialProof.some(w => lower.includes(w))) hasSocialProof = true
-    }
-
-    if (hasUrgency) {
-      insights.push({
-        id: 'meta_urgency',
-        title: 'Rakipler aciliyet mesajı kullanıyor',
-        description: `${competitorPages.slice(0, 3).join(', ')} gibi rakipler "şimdi", "sınırlı süre" gibi aciliyet ifadeleri kullanıyor. Bu stratejiyi değerlendirin.`,
-        platform: 'Meta',
-        type: 'opportunity',
-      })
-    }
-
-    if (hasPrice) {
-      insights.push({
-        id: 'meta_price',
-        title: 'Rakipler fiyat/indirim vurgusu yapıyor',
-        description: 'Rakip reklamlarda fiyat avantajı ve indirim mesajları öne çıkıyor. Rekabetçi fiyatlama mesajınızı gözden geçirin.',
-        platform: 'Meta',
-        type: 'info',
-      })
-    }
-
-    if (hasSocialProof) {
-      insights.push({
-        id: 'meta_social_proof',
-        title: 'Rakipler sosyal kanıt kullanıyor',
-        description: 'Rakipler müşteri sayısı, değerlendirme puanı gibi sosyal kanıtlar kullanıyor. Bu unsuru reklamlarınıza ekleyin.',
-        platform: 'Meta',
-        type: 'opportunity',
-      })
-    }
-
-    // Check active competitor count
-    const activeCount = metaAds.filter(a => a.isActive).length
-    if (activeCount > 10) {
-      insights.push({
-        id: 'meta_high_competition',
-        title: `${activeCount} aktif rakip reklam tespit edildi`,
-        description: 'Bu sektörde yoğun rekabet var. Farklılaşma stratejisi ve güçlü değer önerisi ile öne çıkmanız gerekiyor.',
-        platform: 'Meta',
-        type: 'threat',
+  // If user uses something competitors don't → competitive advantage
+  for (const theme of userProfile.themes) {
+    if (!competitorThemes.has(theme)) {
+      gapIdx++
+      gaps.push({
+        id: `advantage_${gapIdx}`,
+        type: 'positioning',
+        title: `"${themeLabels[theme] || theme}" sizin avantajınız`,
+        description: `Bu tema rakiplerde görülmüyor — farklılaşma noktanız olabilir.`,
+        priority: 'low',
+        recommendation: `Bu mesajı daha güçlü vurgulayarak rekabet avantajı elde edin.`,
       })
     }
   }
 
-  if (googleCompetitors.length === 0 && metaAds.length === 0) {
-    insights.push({
-      id: 'no_data',
-      title: 'Rakip verisi bulunamadı',
-      description: 'Rakip analizi için aktif kampanyalarınız gereklidir.',
-      platform: 'Google',
-      type: 'info',
+  // Active competitor count
+  const activeCompetitors = new Set(competitorAds.filter(a => a.isActive).map(a => a.pageName)).size
+  if (activeCompetitors > 5) {
+    gapIdx++
+    gaps.push({
+      id: `competition_${gapIdx}`,
+      type: 'positioning',
+      title: `${activeCompetitors} aktif rakip tespit edildi`,
+      description: `Bu alanda yoğun rekabet var. Güçlü farklılaşma stratejisi gerekiyor.`,
+      priority: 'medium',
+      recommendation: 'Benzersiz değer önerinizi öne çıkarın ve niş hedefleme yapın.',
     })
   }
 
-  return insights
+  // Build summary for AI
+  const competitorSummary = competitorAds.length > 0
+    ? `${competitorAds.length} rakip reklam analiz edildi. ${activeCompetitors} farklı reklamveren tespit edildi. Rakiplerin kullandığı temalar: ${Array.from(competitorThemes).map(t => themeLabels[t] || t).join(', ')}. Rakiplerin CTA'ları: ${Array.from(competitorCTAs).join(', ') || 'tespit edilemedi'}. Kullanıcının mevcut temaları: ${userProfile.themes.map(t => themeLabels[t] || t).join(', ') || 'belirgin tema yok'}. Tespit edilen boşluklar: ${gaps.filter(g => g.type === 'messaging').map(g => g.title).join('; ') || 'yok'}.`
+    : 'Rakip verisi bulunamadı.'
+
+  return {
+    competitorThemes: Array.from(competitorThemes),
+    competitorCTAs: Array.from(competitorCTAs),
+    competitorFormats: Array.from(competitorFormats),
+    gaps,
+    competitorSummary,
+  }
+}
+
+/* ── Full Pipeline ── */
+export async function runFullCompetitorAnalysis(
+  campaigns: DeepCampaignInsight[],
+  cookieHeader: string,
+  baseUrl: string,
+): Promise<FullCompetitorAnalysis> {
+  const errors: string[] = []
+
+  // Step 1: Analyze user ads
+  const userProfile = analyzeUserAds(campaigns)
+
+  // Step 2: Search competitors
+  const { ads: competitorAds, errors: searchErrors } = await searchCompetitorAds(
+    userProfile.keywords,
+    cookieHeader,
+    baseUrl,
+  )
+  errors.push(...searchErrors)
+
+  // Step 3: Compare
+  const comparison = compareWithCompetitors(userProfile, competitorAds)
+
+  return { userProfile, competitorAds, comparison, errors }
+}
+
+/* ── Helper ── */
+function extractWords(text: string, stopWords: Set<string>): string[] {
+  return text
+    .replace(/[^a-zA-ZğüşöçıİĞÜŞÖÇ\s]/g, ' ')
+    .split(/\s+/)
+    .map(w => w.toLowerCase().trim())
+    .filter(w => w.length > 2 && !stopWords.has(w))
 }

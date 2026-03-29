@@ -1,111 +1,46 @@
 import { NextResponse } from 'next/server'
-import type { AdProposal } from '@/lib/yoai/adCreator'
+import type { FullAdProposal } from '@/lib/yoai/adCreator'
 
 export const dynamic = 'force-dynamic'
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/create-ad
-   Creates an ad from an approved AdProposal.
-   Calls existing Meta/Google ad creation endpoints internally.
+   Full Auto: Creates campaign + ad set + ad from FullAdProposal.
+   Uses existing Meta/Google campaign creation endpoints.
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { proposal } = body as { proposal: AdProposal }
+    const { proposal } = body as { proposal: FullAdProposal }
 
     if (!proposal?.platform || !proposal?.primaryText) {
       return NextResponse.json({ ok: false, error: 'Geçersiz reklam önerisi' }, { status: 400 })
     }
 
-    // Forward cookies for auth
     const cookieHeader = request.headers.get('cookie') || ''
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
-    if (proposal.platform === 'Meta') {
-      // Meta requires: campaignId -> adsetId -> ad
-      // For MVP, we need an existing adset to add the ad to
-      if (!proposal.adsetId) {
-        return NextResponse.json({
-          ok: false,
-          error: 'Meta reklam oluşturmak için bir reklam seti (adset) seçilmelidir.',
-          requiresAdset: true,
-        }, { status: 400 })
-      }
-
-      // Call existing Meta ads/create endpoint
-      const res = await fetch(`${baseUrl}/api/meta/ads/create`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-        body: JSON.stringify({
-          name: `YoAi — ${proposal.headline}`,
-          adsetId: proposal.adsetId,
-          pageId: '', // Will be resolved by the ads/create endpoint from adset
-          objective: 'OUTCOME_TRAFFIC', // Default
-          creative: {
-            format: proposal.format || 'single_image',
-            primaryText: proposal.primaryText,
-            headline: proposal.headline,
-            description: proposal.description,
-            callToAction: proposal.callToAction || 'LEARN_MORE',
-            websiteUrl: proposal.finalUrl,
-          },
-          status: 'PAUSED', // Always create paused
-        }),
-      })
-
-      const data = await res.json().catch(() => ({}))
-      if (!res.ok || data.ok === false) {
-        return NextResponse.json({
-          ok: false,
-          error: data.error_user_msg || data.message || data.error || 'Meta reklam oluşturulamadı',
-        }, { status: 422 })
-      }
-
-      return NextResponse.json({
-        ok: true,
-        platform: 'Meta',
-        adId: data.adId,
-        creativeId: data.creativeId,
-        message: 'Reklam başarıyla oluşturuldu (PAUSED durumunda).',
-      })
-    }
-
     if (proposal.platform === 'Google') {
-      // Google: create a full campaign or add to existing
+      // Google: full campaign create (campaign + ad group + RSA)
       if (!proposal.headlines?.length || !proposal.descriptions?.length) {
         return NextResponse.json({ ok: false, error: 'Google RSA için başlıklar ve açıklamalar gereklidir.' }, { status: 400 })
       }
 
-      if (!proposal.finalUrl) {
-        return NextResponse.json({ ok: false, error: 'Google reklam için final URL gereklidir.' }, { status: 400 })
-      }
+      const budgetMicros = (proposal.dailyBudget || 50) * 1_000_000
 
-      if (proposal.campaignId && proposal.adGroupId) {
-        // Add ad to existing ad group — use ads create logic
-        // Google doesn't have a direct "create ad in adgroup" endpoint in our routes,
-        // so we'll use the campaign create endpoint with minimum setup
-        return NextResponse.json({
-          ok: false,
-          error: 'Mevcut reklam grubuna ekleme özelliği yakında aktif olacaktır. Şimdilik yeni kampanya oluşturabilirsiniz.',
-          requiresNewCampaign: true,
-        }, { status: 400 })
-      }
-
-      // Create full campaign
       const res = await fetch(`${baseUrl}/api/integrations/google-ads/campaigns/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
         body: JSON.stringify({
-          campaignName: `YoAi — ${proposal.headline || proposal.headlines?.[0] || 'Yeni Kampanya'}`,
+          campaignName: proposal.campaignName || `YoAi — ${proposal.headlines[0]}`,
           advertisingChannelType: 'SEARCH',
-          dailyBudgetMicros: 50_000_000, // 50 TRY default — user should adjust
-          biddingStrategy: 'MAXIMIZE_CLICKS',
-          adGroupName: `YoAi Ad Group — ${proposal.headline || proposal.headlines?.[0] || 'Grup'}`,
-          finalUrl: proposal.finalUrl,
-          headlines: proposal.headlines || [proposal.headline, proposal.primaryText.slice(0, 30), proposal.description.slice(0, 30)],
-          descriptions: proposal.descriptions || [proposal.description, proposal.primaryText.slice(0, 90)],
-          keywords: [], // Empty — user should add keywords
-          status: 'PAUSED',
+          dailyBudgetMicros: budgetMicros,
+          biddingStrategy: proposal.biddingStrategy || 'MAXIMIZE_CLICKS',
+          adGroupName: proposal.adsetName || `YoAi Ad Group`,
+          finalUrl: proposal.finalUrl || 'https://example.com',
+          headlines: proposal.headlines,
+          descriptions: proposal.descriptions,
+          keywords: (proposal.keywords || []).map(k => ({ text: k, matchType: 'BROAD' })),
         }),
       })
 
@@ -122,7 +57,112 @@ export async function POST(request: Request) {
         platform: 'Google',
         campaignResourceName: data.campaignResourceName,
         adGroupResourceName: data.adGroupResourceName,
-        message: 'Kampanya ve reklam başarıyla oluşturuldu (PAUSED durumunda). Anahtar kelimeleri eklemeyi unutmayın.',
+        message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu (PAUSED). Kampanyayı aktif etmek için Google Ads sayfasına gidin.`,
+      })
+    }
+
+    if (proposal.platform === 'Meta') {
+      // Meta: Step 1 — Create Campaign
+      const campaignRes = await fetch(`${baseUrl}/api/meta/campaigns/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+        body: JSON.stringify({
+          name: proposal.campaignName || `YoAi — ${proposal.headline}`,
+          objective: proposal.campaignObjective || 'OUTCOME_TRAFFIC',
+          status: 'PAUSED',
+        }),
+      })
+
+      const campaignData = await campaignRes.json().catch(() => ({}))
+      if (!campaignRes.ok || campaignData.ok === false) {
+        return NextResponse.json({
+          ok: false,
+          error: campaignData.error_user_msg || campaignData.message || 'Meta kampanya oluşturulamadı',
+        }, { status: 422 })
+      }
+
+      const campaignId = campaignData.campaignId || campaignData.data?.id
+      if (!campaignId) {
+        return NextResponse.json({ ok: false, error: 'Kampanya ID alınamadı' }, { status: 422 })
+      }
+
+      // Step 2 — Create Ad Set
+      const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+        body: JSON.stringify({
+          campaignId,
+          name: proposal.adsetName || `YoAi Reklam Seti`,
+          pageId: '', // Will be resolved from account
+          dailyBudget: proposal.dailyBudget || 35,
+          optimizationGoal: proposal.optimizationGoal || 'LINK_CLICKS',
+          conversionLocation: 'WEBSITE',
+          status: 'PAUSED',
+          targeting: {
+            geo_locations: { countries: ['TR'] },
+          },
+        }),
+      })
+
+      const adsetData = await adsetRes.json().catch(() => ({}))
+      if (!adsetRes.ok || adsetData.ok === false) {
+        return NextResponse.json({
+          ok: false,
+          error: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti oluşturulamadı: ${adsetData.error_user_msg || adsetData.message || 'hata'}`,
+          campaignId,
+        }, { status: 422 })
+      }
+
+      const adsetId = adsetData.adsetId || adsetData.data?.id
+
+      // Step 3 — Create Ad (if adset created successfully)
+      if (adsetId) {
+        const adRes = await fetch(`${baseUrl}/api/meta/ads/create`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
+          body: JSON.stringify({
+            name: proposal.adName || `YoAi Reklam`,
+            adsetId,
+            pageId: '', // Will be resolved
+            objective: proposal.campaignObjective || 'OUTCOME_TRAFFIC',
+            creative: {
+              format: 'single_image',
+              primaryText: proposal.primaryText,
+              headline: proposal.headline,
+              description: proposal.description,
+              callToAction: proposal.callToAction || 'LEARN_MORE',
+              websiteUrl: proposal.finalUrl,
+            },
+            status: 'PAUSED',
+          }),
+        })
+
+        const adData = await adRes.json().catch(() => ({}))
+        if (!adRes.ok || adData.ok === false) {
+          return NextResponse.json({
+            ok: true,
+            platform: 'Meta',
+            campaignId,
+            adsetId,
+            message: `Kampanya ve reklam seti oluşturuldu ancak reklam oluşturulamadı: ${adData.error_user_msg || adData.message || 'hata'}. Meta Ads sayfasından reklamı manuel ekleyebilirsiniz.`,
+          })
+        }
+
+        return NextResponse.json({
+          ok: true,
+          platform: 'Meta',
+          campaignId,
+          adsetId,
+          adId: adData.adId,
+          message: `"${proposal.campaignName}" kampanyası tam yapıyla oluşturuldu (PAUSED). Kampanya + Reklam Seti + Reklam hazır. Meta Ads sayfasından aktif edebilirsiniz.`,
+        })
+      }
+
+      return NextResponse.json({
+        ok: true,
+        platform: 'Meta',
+        campaignId,
+        message: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti ID alınamadı. Meta Ads sayfasından tamamlayabilirsiniz.`,
       })
     }
 

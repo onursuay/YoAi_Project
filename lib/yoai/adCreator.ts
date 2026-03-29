@@ -1,194 +1,169 @@
 /* ──────────────────────────────────────────────────────────
-   AI Ad Creator — Phase 3
-   Analyzes winning patterns, identifies gaps,
-   generates complete ad proposals via AI.
+   AI Ad Creator — v2 (Full Auto)
+
+   Input:  User ad analysis + competitor analysis + platform knowledge
+   Output: Complete campaign structure (campaign + ad set + ad)
+           ready to be published via existing Meta/Google APIs.
    ────────────────────────────────────────────────────────── */
 
-import type { DeepCampaignInsight, AdsetInsight, AdInsight, Platform } from './analysisTypes'
+import type { DeepCampaignInsight, Platform } from './analysisTypes'
+import type { UserAdProfile, CompetitorComparison, CompetitorAd } from './competitorAnalyzer'
 
 /* ── Types ── */
-export interface WinningPattern {
-  topCampaigns: { name: string; platform: Platform; ctr: number; roas: number | null; spend: number }[]
-  topFormats: { format: string; count: number; avgCtr: number }[]
-  avgMetrics: { ctr: number; cpc: number; roas: number | null }
-}
-
-export interface AdProposal {
+export interface FullAdProposal {
   id: string
   platform: Platform
-  campaignId?: string
-  campaignName?: string
-  adsetId?: string
-  adGroupId?: string
-  // Creative
-  primaryText: string
-  headline: string
-  description: string
-  callToAction: string
+
+  // Campaign level
+  campaignName: string
+  campaignObjective: string      // Meta: OUTCOME_TRAFFIC etc. Google: SEARCH etc.
+  dailyBudget: number            // in currency units (TRY)
+
+  // Ad Set / Ad Group level
+  adsetName: string
+  targetingDescription: string   // human-readable targeting summary
+  optimizationGoal?: string      // Meta only
+  biddingStrategy?: string       // Google only
+
+  // Ad level
+  adName: string
+  primaryText: string            // Meta main text / Google description
+  headline: string               // Meta headline
+  description: string            // Meta description / Google description 2
+  callToAction: string           // Meta CTA type
+
   // Google RSA specific
-  headlines?: string[]       // 3-15 headlines for RSA
-  descriptions?: string[]    // 2-4 descriptions for RSA
+  headlines?: string[]           // 5-10 headlines (max 30 chars each)
+  descriptions?: string[]        // 2-4 descriptions (max 90 chars each)
   finalUrl?: string
-  // Meta specific
-  format?: 'single_image' | 'single_video' | 'carousel'
+  keywords?: string[]            // suggested keywords
+
   // Context
-  targetAudience: string
-  reasoning: string
+  reasoning: string              // why this ad was proposed (competitor gaps + data)
+  competitorInsight: string      // what competitors do differently
   expectedPerformance: string
   confidence: number
 }
 
-export interface CompetitorContext {
-  googleCompetitors?: { domain: string; impressionShare: number }[]
-  metaAds?: { pageName: string; adCreativeBody?: string; adCreativeLinkTitle?: string }[]
-}
-
-export interface AdCreationContext {
-  platform: Platform
-  campaignId?: string
-  campaigns: DeepCampaignInsight[]
-  objective?: string
-  competitors?: CompetitorContext
-}
-
-/* ── Analyze winning patterns ── */
-export function analyzeWinningPatterns(campaigns: DeepCampaignInsight[]): WinningPattern {
-  // Top campaigns by CTR
-  const sorted = [...campaigns]
-    .filter(c => c.metrics.impressions > 100)
-    .sort((a, b) => (b.metrics.ctr * 100) - (a.metrics.ctr * 100))
-
-  const topCampaigns = sorted.slice(0, 5).map(c => ({
-    name: c.campaignName,
-    platform: c.platform,
-    ctr: c.metrics.ctr * 100,
-    roas: c.metrics.roas,
-    spend: c.metrics.spend,
-  }))
-
-  // Collect ad formats
-  const formatMap = new Map<string, { count: number; totalCtr: number }>()
-  for (const c of campaigns) {
-    for (const as of c.adsets) {
-      for (const ad of as.ads) {
-        const fmt = ad.format || 'unknown'
-        const existing = formatMap.get(fmt) || { count: 0, totalCtr: 0 }
-        existing.count++
-        existing.totalCtr += ad.metrics.ctr * 100
-        formatMap.set(fmt, existing)
-      }
-    }
-  }
-  const topFormats = Array.from(formatMap.entries())
-    .map(([format, data]) => ({ format, count: data.count, avgCtr: data.count > 0 ? data.totalCtr / data.count : 0 }))
-    .sort((a, b) => b.avgCtr - a.avgCtr)
-
-  // Average metrics
-  const withData = campaigns.filter(c => c.metrics.impressions > 0)
-  const totalSpend = withData.reduce((s, c) => s + c.metrics.spend, 0)
-  const totalClicks = withData.reduce((s, c) => s + c.metrics.clicks, 0)
-  const totalImpressions = withData.reduce((s, c) => s + c.metrics.impressions, 0)
-  let roasSum = 0, roasCount = 0
-  for (const c of withData) {
-    if (c.metrics.roas != null) { roasSum += c.metrics.roas; roasCount++ }
-  }
-
-  return {
-    topCampaigns,
-    topFormats,
-    avgMetrics: {
-      ctr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
-      cpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
-      roas: roasCount > 0 ? roasSum / roasCount : null,
-    },
-  }
-}
-
-/* ── Generate ad proposals via AI ── */
-export async function generateAdProposals(context: AdCreationContext): Promise<{
-  proposals: AdProposal[]
-  patterns: WinningPattern
+export interface AdCreationResult {
+  proposals: FullAdProposal[]
   aiGenerated: boolean
   error?: string
-}> {
-  const patterns = analyzeWinningPatterns(context.campaigns)
+}
 
-  // Build context for AI
-  const campaignContext = context.campaigns.slice(0, 10).map(c => ({
-    platform: c.platform,
-    name: c.campaignName,
-    objective: c.objective,
-    ctr: (c.metrics.ctr * 100).toFixed(2) + '%',
-    cpc: '₺' + c.metrics.cpc.toFixed(2),
-    roas: c.metrics.roas?.toFixed(2) || 'N/A',
-    spend: '₺' + c.metrics.spend.toFixed(0),
-    score: c.score,
-    topAdsets: c.adsets.slice(0, 3).map(as => ({
-      name: as.name,
-      ctr: (as.metrics.ctr * 100).toFixed(2) + '%',
-      ads: as.ads.slice(0, 3).map(ad => ({
-        name: ad.name,
-        ctr: (ad.metrics.ctr * 100).toFixed(2) + '%',
-        format: ad.format,
-      })),
-    })),
-  }))
+/* ── Build AI prompt with all context ── */
+function buildFullAutoPrompt(
+  platform: Platform,
+  userProfile: UserAdProfile,
+  comparison: CompetitorComparison,
+  competitorAds: CompetitorAd[],
+  campaigns: DeepCampaignInsight[],
+): { system: string; user: string } {
+  const isGoogle = platform === 'Google'
 
-  const targetCampaign = context.campaignId
-    ? context.campaigns.find(c => c.id === context.campaignId)
-    : null
+  const system = `Sen YoAi platformunun reklam oluşturma AI'ısın. Görevin:
+1. Kullanıcının mevcut reklamlarını analiz etmek
+2. Rakip reklamlarını incelemek
+3. Kullanıcı reklamları ile rakip reklamlarını kıyaslamak
+4. Bu kıyaslamadan çıkan boşlukları ve fırsatları kullanarak TAM BİR REKLAM YAPISI oluşturmak
 
-  const isGoogle = context.platform === 'Google'
+PLATFORM: ${platform}
+${isGoogle ? `
+GOOGLE ADS KURALLARI:
+- Kampanya tipi: SEARCH (RSA — Responsive Search Ad)
+- Başlıklar: minimum 5, maximum 10 adet, her biri max 30 karakter
+- Açıklamalar: minimum 2, maximum 4 adet, her biri max 90 karakter
+- Final URL gerekli
+- Anahtar kelimeler öner
+- Teklif stratejisi: MAXIMIZE_CLICKS veya MAXIMIZE_CONVERSIONS
+- Bütçe TRY cinsinden (minimum 50 TRY/gün)
+` : `
+META ADS KURALLARI:
+- Kampanya amacı: OUTCOME_TRAFFIC, OUTCOME_ENGAGEMENT, OUTCOME_LEADS, OUTCOME_SALES
+- Birincil metin: 125 karakter ideal, max 250
+- Başlık: max 40 karakter
+- Açıklama: max 30 karakter
+- CTA: LEARN_MORE, SHOP_NOW, SIGN_UP, CONTACT_US, GET_OFFER, SEND_MESSAGE
+- Optimizasyon hedefi: LINK_CLICKS, LANDING_PAGE_VIEWS, LEAD_GENERATION, OFFSITE_CONVERSIONS
+- Bütçe TRY cinsinden (minimum 35 TRY/gün)
+`}
 
-  const systemPrompt = `Sen YoAi platformunun reklam oluşturma AI'ısın. Kullanıcının mevcut reklam verilerini analiz ederek yeni reklam önerileri oluşturuyorsun.
-
-KURALLAR:
-- Mevcut en iyi performans gösteren reklamlardaki kalıpları analiz et
-- Kullanıcının sektörüne ve hedefine uygun metin yaz
-- Türkçe reklam metinleri oluştur
-- ${isGoogle ? 'Google Responsive Search Ad (RSA) formatında: 5-10 başlık (max 30 karakter), 2-4 açıklama (max 90 karakter)' : 'Meta Ads formatında: birincil metin, başlık, açıklama, CTA'}
-- Her öneri için neden bu şekilde önerildiğini açıkla
-- Beklenen performansı tahmin et
-- 2-3 farklı varyasyon oluştur
-- Rakip analizi verisi varsa, rakiplerin kullandığı mesaj stratejilerini referans al ve farklılaşma öner
-- Rakiplerin güçlü yönlerini not et ama kullanıcıyı farklılaştır
+ÖNEMLİ KURALLAR:
+- Türkçe reklam metinleri yaz
+- Rakiplerin güçlü yönlerini analiz et ama kullanıcıyı FARKLILAŞTIR
+- Rakiplerin kullanmadığı ama kullanıcının kullanabileceği temaları öne çıkar
+- Tespit edilen boşluklara odaklan
+- Gerçekçi performans tahmini yap (mevcut CTR ve CPC verilerine dayalı)
+- Her öneri için NEDEN bu şekilde önerildiğini detaylı açıkla
+- 2-3 farklı varyasyon oluştur (her biri farklı strateji)
 
 SADECE aşağıdaki JSON formatında yanıt ver:
 {
   "proposals": [
     {
       "id": "proposal_1",
-      "platform": "${context.platform}",
-      ${targetCampaign ? `"campaignId": "${targetCampaign.id}",\n      "campaignName": "${targetCampaign.campaignName}",` : ''}
-      "primaryText": "Ana reklam metni (Türkçe, 125 karakter ideal)",
-      "headline": "Başlık (Türkçe, 25-30 karakter)",
-      "description": "Açıklama (Türkçe, 90 karakter max)",
-      "callToAction": "${isGoogle ? 'N/A' : 'LEARN_MORE veya SHOP_NOW veya SIGN_UP vb.'}",
-      ${isGoogle ? `"headlines": ["Başlık 1 (max 30)", "Başlık 2", "Başlık 3", "Başlık 4", "Başlık 5"],\n      "descriptions": ["Açıklama 1 (max 90)", "Açıklama 2"],` : `"format": "single_image",`}
-      "targetAudience": "Hedef kitle tanımı (Türkçe)",
-      "reasoning": "Neden bu reklam önerildi (Türkçe, mevcut verilere dayalı)",
-      "expectedPerformance": "Beklenen CTR, CPC tahmini (Türkçe)",
-      "confidence": 75
+      "platform": "${platform}",
+      "campaignName": "Kampanya adı (Türkçe)",
+      "campaignObjective": "${isGoogle ? 'SEARCH' : 'OUTCOME_TRAFFIC veya uygun amaç'}",
+      "dailyBudget": ${isGoogle ? '50' : '35'},
+      "adsetName": "Reklam seti / Ad group adı",
+      "targetingDescription": "Hedefleme açıklaması (Türkçe)",
+      ${isGoogle ? `"biddingStrategy": "MAXIMIZE_CLICKS",` : `"optimizationGoal": "LINK_CLICKS",`}
+      "adName": "Reklam adı",
+      "primaryText": "Ana metin (Türkçe)",
+      "headline": "Başlık (Türkçe)",
+      "description": "Açıklama (Türkçe)",
+      ${isGoogle ? `"headlines": ["Başlık 1", "Başlık 2", "Başlık 3", "Başlık 4", "Başlık 5"],
+      "descriptions": ["Açıklama 1", "Açıklama 2"],
+      "finalUrl": "https://ornek.com",
+      "keywords": ["anahtar kelime 1", "anahtar kelime 2"],` : `"callToAction": "LEARN_MORE",`}
+      "reasoning": "Bu reklam neden önerildi — rakip analizi ve veri bazlı gerekçe (Türkçe, detaylı)",
+      "competitorInsight": "Rakipler şunu yapıyor ama siz yapmıyorsunuz / Rakiplerden farklılaşma noktanız (Türkçe)",
+      "expectedPerformance": "Beklenen CTR ve CPC tahmini (Türkçe)",
+      "confidence": 80
     }
   ]
 }`
 
-  const userMessage = `Platform: ${context.platform}
-${targetCampaign ? `Hedef Kampanya: ${targetCampaign.campaignName} (${targetCampaign.objective})` : 'Genel öneri — en iyi performans gösteren kampanyalara göre'}
+  const topCompetitorTexts = competitorAds
+    .slice(0, 8)
+    .map((a, i) => `  ${i + 1}. [${a.pageName}] "${a.body?.slice(0, 120) || a.title || 'metin yok'}"`)
+    .join('\n')
 
-Mevcut kampanya performansları:
-${JSON.stringify(campaignContext, null, 2)}
+  const userCampaignSummary = campaigns.slice(0, 8).map((c, i) =>
+    `  ${i + 1}. ${c.platform} | ${c.campaignName} | CTR: ${(c.metrics.ctr * 100).toFixed(1)}% | CPC: ₺${c.metrics.cpc.toFixed(2)} | Harcama: ₺${c.metrics.spend.toFixed(0)} | Skor: ${c.score}/100`
+  ).join('\n')
 
-Ortalama metrikler: CTR ${patterns.avgMetrics.ctr.toFixed(2)}%, CPC ₺${patterns.avgMetrics.cpc.toFixed(2)}, ROAS ${patterns.avgMetrics.roas?.toFixed(2) || 'N/A'}
+  const user = `KULLANICININ MEVCUT REKLAM PROFİLİ:
+- Anahtar kelimeler: ${userProfile.keywords.join(', ')}
+- Mesaj temaları: ${userProfile.themes.length > 0 ? userProfile.themes.join(', ') : 'belirgin tema yok'}
+- Ortalama CTR: %${userProfile.avgCtr.toFixed(2)}
+- Ortalama CPC: ₺${userProfile.avgCpc.toFixed(2)}
+- Toplam harcama: ₺${userProfile.totalSpend.toFixed(0)}
+- En iyi reklamlar: ${userProfile.topPerformingAds.map(a => `${a.name} (CTR: ${(a.ctr * 100).toFixed(1)}%)`).join(', ') || 'yok'}
 
-${isGoogle ? '5-10 başlık ve 2-4 açıklama ile Responsive Search Ad (RSA) oluştur.' : 'Meta Ads formatında 2-3 reklam varyasyonu oluştur.'}
-${context.competitors?.googleCompetitors?.length ? `\nGoogle Rakipler:\n${context.competitors.googleCompetitors.slice(0, 5).map(c => `- ${c.domain}: %${(c.impressionShare * 100).toFixed(0)} gösterim payı`).join('\n')}` : ''}
-${context.competitors?.metaAds?.length ? `\nMeta Rakip Reklamları:\n${context.competitors.metaAds.slice(0, 5).map(a => `- ${a.pageName}: "${a.adCreativeBody?.slice(0, 80) || a.adCreativeLinkTitle || ''}"`).join('\n')}\n\nRakiplerin mesaj stratejilerini analiz et ve farklılaşan öneriler sun.` : ''}
-2-3 farklı varyasyon öner.`
+KAMPANYA DETAYLARI:
+${userCampaignSummary}
 
-  // Call AI
-  let aiContent: string | null = null
+RAKİP REKLAM ANALİZİ (Meta Ad Library):
+${topCompetitorTexts || '  Rakip verisi bulunamadı'}
 
+RAKİP KARŞILAŞTIRMA SONUCU:
+${comparison.competitorSummary}
+
+TESPİT EDİLEN BOŞLUKLAR:
+${comparison.gaps.map(g => `- [${g.priority}] ${g.title}: ${g.recommendation}`).join('\n') || '- Belirgin boşluk tespit edilemedi'}
+
+GÖREV: ${platform} için 2-3 farklı tam reklam yapısı (kampanya + reklam seti + reklam) oluştur.
+Her biri farklı bir strateji kullansın (ör. biri fiyat odaklı, biri kalite odaklı, biri aciliyet odaklı).
+Rakiplerin boşluklarından faydalanarak farklılaşan reklamlar öner.`
+
+  return { system, user }
+}
+
+/* ── Call AI ── */
+async function callAI(system: string, user: string): Promise<string | null> {
+  // OpenAI
   const openaiKey = process.env.OPENAI_API_KEY
   if (openaiKey) {
     try {
@@ -199,65 +174,69 @@ ${context.competitors?.metaAds?.length ? `\nMeta Rakip Reklamları:\n${context.c
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
         body: JSON.stringify({
           model,
-          messages: [{ role: 'system', content: systemPrompt }, { role: 'user', content: userMessage }],
+          messages: [{ role: 'system', content: system }, { role: 'user', content: user }],
           temperature: 0.7,
-          max_tokens: 3000,
+          max_tokens: 4000,
           response_format: { type: 'json_object' },
         }),
         signal: AbortSignal.timeout(30000),
       })
       if (res.ok) {
         const data = await res.json()
-        aiContent = data.choices?.[0]?.message?.content ?? null
+        return data.choices?.[0]?.message?.content ?? null
       }
-    } catch (e) {
-      console.error('[AdCreator] OpenAI error:', e)
-    }
+    } catch (e) { console.error('[AdCreator] OpenAI error:', e) }
   }
 
   // Claude fallback
-  if (!aiContent) {
-    const claudeKey = process.env.ANTHROPIC_API_KEY
-    if (claudeKey) {
-      try {
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-          body: JSON.stringify({
-            model: 'claude-sonnet-4-20250514',
-            max_tokens: 3000,
-            system: systemPrompt,
-            messages: [{ role: 'user', content: userMessage }],
-          }),
-          signal: AbortSignal.timeout(30000),
-        })
-        if (res.ok) {
-          const data = await res.json()
-          aiContent = data.content?.[0]?.text ?? null
-        }
-      } catch (e) {
-        console.error('[AdCreator] Claude error:', e)
+  const claudeKey = process.env.ANTHROPIC_API_KEY
+  if (claudeKey) {
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 4000, system, messages: [{ role: 'user', content: user }] }),
+        signal: AbortSignal.timeout(30000),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        return data.content?.[0]?.text ?? null
       }
-    }
+    } catch (e) { console.error('[AdCreator] Claude error:', e) }
   }
 
+  return null
+}
+
+/* ── Main: Generate Full Auto Proposals ── */
+export async function generateFullAutoProposals(
+  platform: Platform,
+  userProfile: UserAdProfile,
+  comparison: CompetitorComparison,
+  competitorAds: CompetitorAd[],
+  campaigns: DeepCampaignInsight[],
+): Promise<AdCreationResult> {
+  const { system, user } = buildFullAutoPrompt(platform, userProfile, comparison, competitorAds, campaigns)
+
+  const aiContent = await callAI(system, user)
+
   if (!aiContent) {
-    return { proposals: [], patterns, aiGenerated: false, error: 'AI servisi yanıt vermedi' }
+    return { proposals: [], aiGenerated: false, error: 'AI servisi yanıt vermedi' }
   }
 
   try {
     const parsed = JSON.parse(aiContent)
-    const proposals: AdProposal[] = Array.isArray(parsed.proposals)
-      ? parsed.proposals.map((p: AdProposal, i: number) => ({
+    const proposals: FullAdProposal[] = Array.isArray(parsed.proposals)
+      ? parsed.proposals.map((p: FullAdProposal, i: number) => ({
           ...p,
           id: p.id || `proposal_${i + 1}`,
-          platform: context.platform,
+          platform,
         }))
       : []
 
-    return { proposals, patterns, aiGenerated: true }
+    return { proposals, aiGenerated: true }
   } catch (e) {
     console.error('[AdCreator] Parse error:', e)
-    return { proposals: [], patterns, aiGenerated: false, error: 'AI yanıtı işlenemedi' }
+    return { proposals: [], aiGenerated: false, error: 'AI yanıtı işlenemedi' }
   }
 }

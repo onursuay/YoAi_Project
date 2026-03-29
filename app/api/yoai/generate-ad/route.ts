@@ -1,20 +1,25 @@
 import { NextResponse } from 'next/server'
-import { generateAdProposals, type AdCreationContext } from '@/lib/yoai/adCreator'
+import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
+import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
-import { fetchGoogleCompetitors, extractKeywordsFromCampaigns } from '@/lib/yoai/competitorAnalyzer'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 
 export const dynamic = 'force-dynamic'
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/generate-ad
-   Generates AI ad proposals based on campaign + competitor data.
+   Full pipeline:
+   1. Fetch user campaigns
+   2. Analyze user ads
+   3. Search competitors via Meta Ad Library
+   4. Compare user vs competitors
+   5. Generate full campaign+adset+ad proposals
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { platform, campaignId } = body as { platform: Platform; campaignId?: string }
+    const { platform } = body as { platform: Platform }
 
     if (!platform || !['Meta', 'Google'].includes(platform)) {
       return NextResponse.json({ ok: false, error: 'Platform gerekli (Meta veya Google)' }, { status: 400 })
@@ -23,47 +28,41 @@ export async function POST(request: Request) {
     const cookieHeader = request.headers.get('cookie') || ''
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
-    // Fetch campaign data + competitor data in parallel
-    const [metaResult, googleResult, googleCompetitors, metaAdLibrary] = await Promise.all([
-      platform === 'Meta' ? fetchMetaDeep().catch(() => ({ campaigns: [], errors: [] })) : Promise.resolve({ campaigns: [], errors: [] }),
-      platform === 'Google' ? fetchGoogleDeep().catch(() => ({ campaigns: [], errors: [] })) : Promise.resolve({ campaigns: [], errors: [] }),
-      // Competitor data
-      fetchGoogleCompetitors(cookieHeader, baseUrl).catch(() => ({ competitors: [], errors: [] })),
-      // Meta Ad Library — auto keyword search
-      (async () => {
-        try {
-          const allCampaigns = [...(await fetchMetaDeep().catch(() => ({ campaigns: [] }))).campaigns, ...(await fetchGoogleDeep().catch(() => ({ campaigns: [] }))).campaigns]
-          const keywords = extractKeywordsFromCampaigns(allCampaigns)
-          if (keywords.length === 0) return { ads: [] }
-          const res = await fetch(`${baseUrl}/api/yoai/competitors/meta-ad-library?q=${encodeURIComponent(keywords.join(' '))}&country=TR`, {
-            headers: { Cookie: cookieHeader },
-          })
-          const data = await res.json()
-          return { ads: data.ok ? (data.data || []) : [] }
-        } catch { return { ads: [] } }
-      })(),
+    // 1. Fetch campaigns
+    const [metaResult, googleResult] = await Promise.all([
+      fetchMetaDeep().catch(() => ({ campaigns: [], errors: [] })),
+      fetchGoogleDeep().catch(() => ({ campaigns: [], errors: [] })),
     ])
-
     const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
 
     if (allCampaigns.length === 0) {
       return NextResponse.json({ ok: false, error: 'Analiz edilecek kampanya bulunamadı' }, { status: 404 })
     }
 
-    const context: AdCreationContext = {
+    // 2-3-4. Full competitor analysis pipeline
+    const competitorAnalysis = await runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl)
+
+    // 5. Generate proposals
+    const result = await generateFullAutoProposals(
       platform,
-      campaignId,
-      campaigns: allCampaigns,
-      objective: campaignId ? allCampaigns.find(c => c.id === campaignId)?.objective : undefined,
-      competitors: {
-        googleCompetitors: googleCompetitors.competitors.slice(0, 5).map(c => ({ domain: c.domain, impressionShare: c.impressionShare })),
-        metaAds: metaAdLibrary.ads.slice(0, 5).map((a: any) => ({ pageName: a.pageName, adCreativeBody: a.adCreativeBody, adCreativeLinkTitle: a.adCreativeLinkTitle })),
+      competitorAnalysis.userProfile,
+      competitorAnalysis.comparison,
+      competitorAnalysis.competitorAds,
+      allCampaigns,
+    )
+
+    return NextResponse.json({
+      ok: true,
+      data: {
+        ...result,
+        competitorAnalysis: {
+          userProfile: competitorAnalysis.userProfile,
+          competitorCount: competitorAnalysis.competitorAds.length,
+          gaps: competitorAnalysis.comparison.gaps,
+          summary: competitorAnalysis.comparison.competitorSummary,
+        },
       },
-    }
-
-    const result = await generateAdProposals(context)
-
-    return NextResponse.json({ ok: true, data: result })
+    })
   } catch (error) {
     console.error('[Generate Ad] Error:', error)
     return NextResponse.json(
