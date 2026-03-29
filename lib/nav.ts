@@ -57,14 +57,12 @@ export const navItems: NavItem[] = [
     label: 'Strateji',
     href: '/strateji',
     icon: Target,
-    badge: 'AI',
   },
   {
     id: 'optimizasyon',
     label: 'Optimizasyon',
     href: '/optimizasyon',
     icon: TrendingUp,
-    badge: 'AI',
   },
   {
     id: 'yoai',
@@ -77,14 +75,12 @@ export const navItems: NavItem[] = [
     label: 'Hedef Kitle',
     href: '/hedef-kitle',
     icon: Users,
-    badge: 'AI',
   },
   {
     id: 'tasarim',
     label: 'Tasarım',
     href: '/tasarim',
     icon: Image,
-    badge: 'AI',
   },
   {
     id: 'raporlar',
