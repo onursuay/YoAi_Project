@@ -53,6 +53,7 @@ function EntegrasyonContent() {
   const router = useRouter()
   const [metaStatus, setMetaStatus] = useState<PlatformStatus>({ connected: false })
   const [googleStatus, setGoogleStatus] = useState<PlatformStatus>({ connected: false })
+  const [tiktokStatus, setTiktokStatus] = useState<PlatformStatus>({ connected: false })
   const [isLoading, setIsLoading] = useState(true)
   const [googleConfigMissing, setGoogleConfigMissing] = useState(false)
   const [googleAccountModalOpen, setGoogleAccountModalOpen] = useState(false)
@@ -102,14 +103,19 @@ function EntegrasyonContent() {
     if (gscParam === 'connected' || gscParam === 'error' || gscParam === 'config_missing') {
       window.history.replaceState({}, '', '/entegrasyon')
     }
+    const tiktokParam = searchParams.get('tiktok')
+    if (tiktokParam === 'connected' || tiktokParam === 'error') {
+      window.history.replaceState({}, '', '/entegrasyon')
+    }
     let cancelled = false
     async function load() {
       try {
         // Bootstrap session_id before any OAuth flow (credentials required for cookie)
         await fetch('/api/session', { credentials: 'include' })
-        const [metaRes, googleRes, gaRes, gscRes] = await Promise.all([
+        const [metaRes, googleRes, tiktokRes, gaRes, gscRes] = await Promise.all([
           fetch('/api/meta/status', { credentials: 'include' }),
           fetch('/api/google/status', { credentials: 'include' }),
+          fetch('/api/tiktok/status', { credentials: 'include' }),
           fetch('/api/integrations/google-analytics/status', { credentials: 'include' }),
           fetch('/api/integrations/google-search-console/status', { credentials: 'include' }),
         ])
@@ -128,6 +134,15 @@ function EntegrasyonContent() {
             accountName: data?.accountName ?? undefined,
             accountId: data?.accountId ?? undefined,
             hasSelectedAccount: Boolean(data?.hasSelectedAccount ?? data?.accountId),
+          })
+        }
+        if (!cancelled && tiktokRes.ok) {
+          const data = await tiktokRes.json().catch(() => ({}))
+          setTiktokStatus({
+            connected: Boolean(data?.connected),
+            accountName: data?.advertiserName ?? undefined,
+            accountId: data?.advertiserId ?? undefined,
+            hasSelectedAccount: Boolean(data?.advertiserId),
           })
         }
         if (!cancelled && gaRes.ok) {
@@ -601,7 +616,9 @@ function EntegrasyonContent() {
               </div>
 
               {/* TikTok Ads */}
-              <div className="bg-white rounded-xl border-2 border-gray-200 cardPad opacity-50">
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+                tiktokStatus.connected ? 'border-primary' : 'border-gray-200'
+              }`}>
                 <div className="flex items-start justify-between mb-4">
                   <div className="flex items-start gap-3">
                     <div className="h-10 w-10 rounded-xl bg-transparent flex items-center justify-center">
@@ -609,17 +626,71 @@ function EntegrasyonContent() {
                     </div>
                     <div>
                       <h4 className="font-semibold text-gray-900">{t('tiktok.name')}</h4>
-                      <p className="text-sm text-gray-500">{t('tiktok.comingSoon')}</p>
+                      <span className={`inline-block mt-1 px-2.5 py-0.5 text-xs font-medium rounded-full border ${
+                        tiktokStatus.connected ? 'bg-green-50 text-green-600 border-green-200' : 'bg-gray-50 text-gray-500 border-gray-200'
+                      }`}>
+                        {tiktokStatus.connected ? t('tiktok.connected') : t('tiktok.notConnected')}
+                      </span>
                     </div>
                   </div>
-                  <button disabled className="relative inline-flex h-6 w-11 items-center rounded-full bg-gray-300 cursor-not-allowed">
-                    <span className="inline-block h-4 w-4 transform rounded-full bg-white translate-x-1" />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (tiktokStatus.connected) {
+                        if (confirm(t('tiktok.disconnect'))) {
+                          try {
+                            await fetch('/api/integrations/tiktok-ads/disconnect', { method: 'POST', credentials: 'include' })
+                            setTiktokStatus({ connected: false })
+                          } catch (e) {
+                            console.error('TikTok Ads disconnect failed:', e)
+                          }
+                        }
+                      } else {
+                        window.location.href = '/api/integrations/tiktok-ads/start'
+                      }
+                    }}
+                    disabled={isLoading}
+                    className={`relative inline-flex h-6 w-11 items-center rounded-full transition-colors ${
+                      tiktokStatus.connected ? 'bg-green-500' : 'bg-gray-300'
+                    } ${isLoading ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer'}`}
+                  >
+                    <span className={`inline-block h-4 w-4 transform rounded-full bg-white transition-transform ${
+                      tiktokStatus.connected ? 'translate-x-6' : 'translate-x-1'
+                    }`} />
                   </button>
                 </div>
-                <div className="w-full flex items-center justify-center gap-2 px-4 py-2 text-gray-500 text-sm font-medium">
-                  <AlertCircle className="w-4 h-4" />
-                  <span>{t('tiktok.comingSoon')}</span>
-                </div>
+
+                {tiktokStatus.connected && (tiktokStatus.accountName || tiktokStatus.accountId) && (
+                  <div className="mb-3 p-3 bg-green-50 rounded-lg">
+                    <p className="text-caption text-green-900 font-medium mb-1">{t('tiktok.account')}</p>
+                    <p className="text-sm text-green-800">{tiktokStatus.accountName || tiktokStatus.accountId}</p>
+                  </div>
+                )}
+
+                {tiktokStatus.connected && (
+                  <button
+                    onClick={() => window.location.href = '/api/integrations/tiktok-ads/start'}
+                    disabled={isLoading}
+                    type="button"
+                    className="w-full flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
+                  >
+                    <RefreshCw className="w-4 h-4" />
+                    {t('tiktok.changeAccount')}
+                  </button>
+                )}
+
+                {!tiktokStatus.connected && (
+                  <button
+                    onClick={() => window.location.href = '/api/integrations/tiktok-ads/start'}
+                    disabled={isLoading}
+                    className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-primary text-white hover:bg-primary/90 transition-colors ${isLoading ? 'opacity-50 cursor-not-allowed' : ''}`}
+                  >
+                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                    </svg>
+                    {t('tiktok.connectButton')}
+                  </button>
+                )}
               </div>
             </div>
           </div>

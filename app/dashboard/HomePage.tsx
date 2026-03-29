@@ -267,6 +267,25 @@ export default function HomePage() {
     return kpi.changePercent >= 0 ? 'green' : 'red'
   }
 
+  // TikTok demo data (shown when not connected, replaced with real data after API approval)
+  const tiktokDemoMetrics = !tiktokKpis && !tiktokLoading ? {
+    spend: {
+      label: t('spend'), value: '₺12.450,00', delta: '↑ %18.3',
+      chart: [320, 380, 410, 350, 420, 480, 390, 450, 510, 470, 530, 490, 560, 520, 580, 540, 600, 570, 620, 590, 650, 610, 680, 640, 700, 670, 730, 690, 750, 720],
+      color: 'red' as const,
+    },
+    clicks: {
+      label: t('clicks'), value: '4.820', delta: '↑ %24.6',
+      chart: [120, 145, 160, 135, 170, 190, 155, 180, 200, 175, 210, 195, 220, 205, 235, 215, 245, 225, 255, 240, 265, 250, 275, 260, 285, 270, 295, 280, 310, 300],
+      color: 'green' as const,
+    },
+    impressions: {
+      label: t('impressions'), value: '89.340', delta: '↑ %31.2',
+      chart: [2100, 2400, 2650, 2300, 2700, 2900, 2500, 2800, 3100, 2750, 3200, 2950, 3300, 3050, 3450, 3150, 3500, 3250, 3600, 3400, 3700, 3500, 3800, 3600, 3900, 3700, 4000, 3800, 4100, 3950],
+      color: 'green' as const,
+    },
+  } : undefined
+
   // Meta series helpers (period-over-period from daily series)
   const metaSeriesDelta = (series?: number[]): string => {
     if (!series || series.length < 4) return ''
@@ -357,8 +376,9 @@ export default function HomePage() {
                   spend: { label: t('spend'), value: `₺${fmtCurrency(tiktokKpis.totals.cost)}`, delta: fmtDelta(tiktokKpis.changes.cost), chart: tiktokKpis.series.cost, color: tiktokKpis.changes.cost >= 0 ? 'red' as const : 'green' as const },
                   clicks: { label: t('clicks'), value: fmtInt(tiktokKpis.totals.clicks), delta: fmtDelta(tiktokKpis.changes.clicks), chart: tiktokKpis.series.clicks, color: tiktokKpis.changes.clicks >= 0 ? 'green' as const : 'red' as const },
                   impressions: { label: t('impressions'), value: fmtInt(tiktokKpis.totals.impressions), delta: fmtDelta(tiktokKpis.changes.impressions), chart: tiktokKpis.series.impressions, color: tiktokKpis.changes.impressions >= 0 ? 'green' as const : 'red' as const },
-                } : undefined}
+                } : tiktokDemoMetrics}
                 periodLabel={periodLabel}
+                isDemo={!tiktokKpis && !tiktokLoading && !!tiktokDemoMetrics}
               />
             </div>
           </div>
@@ -443,9 +463,10 @@ interface PlatformCardProps {
   t: (key: string) => string
   metrics?: { spend: MetricData; clicks: MetricData; impressions: MetricData }
   periodLabel: string
+  isDemo?: boolean
 }
 
-function PlatformCard({ platformName, iconSrc, status, loading, panelHref, connectHref, t, metrics, periodLabel }: PlatformCardProps) {
+function PlatformCard({ platformName, iconSrc, status, loading, panelHref, connectHref, t, metrics, periodLabel, isDemo }: PlatformCardProps) {
   const connected = status?.connected ?? false
 
   return (
@@ -479,7 +500,7 @@ function PlatformCard({ platformName, iconSrc, status, loading, panelHref, conne
           <div className="flex items-center justify-center py-8 text-gray-400">
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
-        ) : !connected ? (
+        ) : (!connected && !isDemo) ? (
           <div className="py-6 text-center">
             <AlertCircle className="w-8 h-8 text-gray-300 mx-auto mb-2" />
             <p className="text-sm text-gray-400 mb-3">{t('notConnected')}</p>
@@ -491,22 +512,29 @@ function PlatformCard({ platformName, iconSrc, status, loading, panelHref, conne
             </a>
           </div>
         ) : metrics ? (
-          <div className="grid grid-cols-3 gap-3">
-            {[metrics.spend, metrics.clicks, metrics.impressions].map((m, i) => (
-              <div key={i} className="min-w-0">
-                <p className="text-xs text-gray-400 mb-0.5 truncate">{m.label}</p>
-                <p className="text-xs text-gray-500">{periodLabel}</p>
-                <p className="text-sm font-semibold text-gray-900 mt-1 truncate">{m.value}</p>
-                {m.delta && (
-                  <p className={`text-xs mt-0.5 ${m.color === 'green' ? 'text-green-500' : m.color === 'red' ? 'text-red-500' : 'text-gray-400'}`}>
-                    {m.delta}
-                  </p>
-                )}
-                <div className="h-8 mt-1">
-                  <MiniChart data={m.chart.length >= 2 ? m.chart : [0, 0]} color={m.color} />
-                </div>
+          <div className={isDemo ? 'relative' : ''}>
+            {isDemo && (
+              <div className="absolute -top-1 right-0 px-2 py-0.5 text-[10px] font-medium bg-amber-100 text-amber-700 rounded-full z-10">
+                Demo
               </div>
-            ))}
+            )}
+            <div className={`grid grid-cols-3 gap-3 ${isDemo ? 'opacity-80' : ''}`}>
+              {[metrics.spend, metrics.clicks, metrics.impressions].map((m, i) => (
+                <div key={i} className="min-w-0">
+                  <p className="text-xs text-gray-400 mb-0.5 truncate">{m.label}</p>
+                  <p className="text-xs text-gray-500">{periodLabel}</p>
+                  <p className="text-sm font-semibold text-gray-900 mt-1 truncate">{m.value}</p>
+                  {m.delta && (
+                    <p className={`text-xs mt-0.5 ${m.color === 'green' ? 'text-green-500' : m.color === 'red' ? 'text-red-500' : 'text-gray-400'}`}>
+                      {m.delta}
+                    </p>
+                  )}
+                  <div className="h-8 mt-1">
+                    <MiniChart data={m.chart.length >= 2 ? m.chart : [0, 0]} color={m.color} />
+                  </div>
+                </div>
+              ))}
+            </div>
           </div>
         ) : (
           <div className="py-6 text-center">
