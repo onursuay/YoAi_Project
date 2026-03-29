@@ -296,7 +296,7 @@ export default function YoAiPage() {
               />
             )}
 
-            <CompetitorDashboard />
+            <CompetitorDashboard campaigns={ccData?.campaigns ?? []} />
 
             <AnalysisCapabilities />
 

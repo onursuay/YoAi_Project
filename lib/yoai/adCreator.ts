@@ -38,11 +38,17 @@ export interface AdProposal {
   confidence: number
 }
 
+export interface CompetitorContext {
+  googleCompetitors?: { domain: string; impressionShare: number }[]
+  metaAds?: { pageName: string; adCreativeBody?: string; adCreativeLinkTitle?: string }[]
+}
+
 export interface AdCreationContext {
   platform: Platform
   campaignId?: string
   campaigns: DeepCampaignInsight[]
   objective?: string
+  competitors?: CompetitorContext
 }
 
 /* ── Analyze winning patterns ── */
@@ -144,6 +150,8 @@ KURALLAR:
 - Her öneri için neden bu şekilde önerildiğini açıkla
 - Beklenen performansı tahmin et
 - 2-3 farklı varyasyon oluştur
+- Rakip analizi verisi varsa, rakiplerin kullandığı mesaj stratejilerini referans al ve farklılaşma öner
+- Rakiplerin güçlü yönlerini not et ama kullanıcıyı farklılaştır
 
 SADECE aşağıdaki JSON formatında yanıt ver:
 {
@@ -174,6 +182,8 @@ ${JSON.stringify(campaignContext, null, 2)}
 Ortalama metrikler: CTR ${patterns.avgMetrics.ctr.toFixed(2)}%, CPC ₺${patterns.avgMetrics.cpc.toFixed(2)}, ROAS ${patterns.avgMetrics.roas?.toFixed(2) || 'N/A'}
 
 ${isGoogle ? '5-10 başlık ve 2-4 açıklama ile Responsive Search Ad (RSA) oluştur.' : 'Meta Ads formatında 2-3 reklam varyasyonu oluştur.'}
+${context.competitors?.googleCompetitors?.length ? `\nGoogle Rakipler:\n${context.competitors.googleCompetitors.slice(0, 5).map(c => `- ${c.domain}: %${(c.impressionShare * 100).toFixed(0)} gösterim payı`).join('\n')}` : ''}
+${context.competitors?.metaAds?.length ? `\nMeta Rakip Reklamları:\n${context.competitors.metaAds.slice(0, 5).map(a => `- ${a.pageName}: "${a.adCreativeBody?.slice(0, 80) || a.adCreativeLinkTitle || ''}"`).join('\n')}\n\nRakiplerin mesaj stratejilerini analiz et ve farklılaşan öneriler sun.` : ''}
 2-3 farklı varyasyon öner.`
 
   // Call AI

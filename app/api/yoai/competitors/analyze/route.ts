@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { analyzeCompetitors, type GoogleCompetitor, type MetaAdLibraryAd } from '@/lib/yoai/competitorAnalyzer'
+import { analyzeCompetitorsWithAI, type GoogleCompetitor, type MetaAdLibraryAd } from '@/lib/yoai/competitorAnalyzer'
 
 export const dynamic = 'force-dynamic'
 
@@ -15,9 +15,10 @@ export async function POST(request: Request) {
       metaAds: MetaAdLibraryAd[]
     }
 
-    const insights = await analyzeCompetitors(
+    const insights = await analyzeCompetitorsWithAI(
       googleCompetitors || [],
       metaAds || [],
+      [], // user campaigns passed separately if needed
     )
 
     return NextResponse.json({ ok: true, data: { insights } })
