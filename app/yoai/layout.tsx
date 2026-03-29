@@ -1,3 +1,5 @@
+'use client'
+
 import SidebarNav from '@/components/SidebarNav'
 
 export default function YoAiLayout({
