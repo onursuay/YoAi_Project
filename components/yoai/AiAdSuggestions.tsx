@@ -120,35 +120,45 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         </div>
       ) : (
         <div className="space-y-6">
-          {/* Meta proposals */}
-          {metaProposals.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-blue-500 text-white">Meta</span>
-                {metaProposals.length} öneri
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {metaProposals.map((p, i) => (
-                  <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Group by platform, then show all proposals */}
+          {[
+            { platform: 'Meta' as const, badge: 'bg-[#1877F2]', items: metaProposals },
+            { platform: 'Google' as const, badge: 'bg-gray-800', items: googleProposals },
+          ].filter(g => g.items.length > 0).map(group => {
+            const existing = group.items.filter(p => !p.isNewObjective)
+            const newSuggestions = group.items.filter(p => p.isNewObjective)
 
-          {/* Google proposals */}
-          {googleProposals.length > 0 && (
-            <div>
-              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
-                <span className="text-[11px] font-semibold px-2.5 py-1 rounded-lg bg-gradient-to-r from-blue-500 via-red-500 via-yellow-400 to-green-500 text-white">Google</span>
-                {googleProposals.length} öneri
-              </h3>
-              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                {googleProposals.map((p, i) => (
-                  <AdPreviewCard key={p.id || `google_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
-                ))}
+            return (
+              <div key={group.platform}>
+                <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                  <span className={`text-[11px] font-semibold px-2.5 py-1 rounded-lg ${group.badge} text-white`}>{group.platform}</span>
+                  {group.items.length} öneri
+                  {newSuggestions.length > 0 && <span className="text-[10px] text-emerald-600">({newSuggestions.length} yeni amaç)</span>}
+                </h3>
+
+                {/* Existing objective improvements */}
+                {existing.length > 0 && (
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
+                    {existing.map((p, i) => (
+                      <AdPreviewCard key={p.id || `${group.platform}_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+                    ))}
+                  </div>
+                )}
+
+                {/* New objective suggestions */}
+                {newSuggestions.length > 0 && (
+                  <div>
+                    <p className="text-[11px] text-emerald-600 font-medium mb-2">Henüz kullanmadığınız kampanya amaçları:</p>
+                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {newSuggestions.map((p, i) => (
+                        <AdPreviewCard key={p.id || `${group.platform}_new_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
-            </div>
-          )}
+            )
+          })}
         </div>
       )}
     </div>

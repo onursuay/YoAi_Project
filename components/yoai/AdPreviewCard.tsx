@@ -22,34 +22,38 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
       ? 'border border-gray-200 bg-white hover:shadow-md'
       : 'border border-gray-200 bg-white hover:shadow-md'
 
-  // Google gradient border effect via top bar
-  const googleTopBar = isGoogle ? (
-    <div className="h-1 rounded-t-2xl bg-gradient-to-r from-blue-500 via-red-500 via-yellow-400 to-green-500" />
-  ) : null
-
-  // Meta blue top bar
-  const metaTopBar = !isGoogle ? (
-    <div className="h-1 rounded-t-2xl bg-gradient-to-r from-blue-500 to-blue-600" />
-  ) : null
-
   return (
     <button
       onClick={onSelect}
       className={`text-left w-full rounded-2xl overflow-hidden transition-all duration-200 ${borderStyle}`}
     >
-      {/* Color bar */}
-      {googleTopBar || metaTopBar}
+      {/* Color bar — flush to top edge */}
+      {isGoogle ? (
+        <div className="h-1.5 flex">
+          <div className="flex-1 bg-[#4285F4]" />
+          <div className="flex-1 bg-[#EA4335]" />
+          <div className="flex-1 bg-[#FBBC05]" />
+          <div className="flex-1 bg-[#34A853]" />
+        </div>
+      ) : (
+        <div className="h-1.5 bg-[#1877F2]" />
+      )}
 
       <div className="p-5">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
-          <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
-            isGoogle
-              ? 'bg-gradient-to-r from-blue-50 via-red-50 to-green-50 text-gray-700 border border-gray-200'
-              : 'bg-blue-50 text-blue-700 border border-blue-100'
-          }`}>
-            {isGoogle ? 'Google Search Reklam' : 'Meta Reklam'}
-          </span>
+          <div className="flex items-center gap-1.5">
+            <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${
+              isGoogle
+                ? 'bg-gray-50 text-gray-700 border border-gray-200'
+                : 'bg-[#1877F2]/10 text-[#1877F2] border border-[#1877F2]/20'
+            }`}>
+              {proposal.objectiveLabel || (isGoogle ? 'Google Reklam' : 'Meta Reklam')}
+            </span>
+            {proposal.isNewObjective && (
+              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-50 text-emerald-700 border border-emerald-200">Yeni Öneri</span>
+            )}
+          </div>
           <span className="text-[10px] text-gray-400">%{proposal.confidence} güven</span>
         </div>
 
