@@ -12,6 +12,7 @@ import ApprovalFlowPreview from '@/components/yoai/ApprovalFlowPreview'
 import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
+import CompetitorDashboard from '@/components/yoai/CompetitorDashboard'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { CATEGORIES } from '@/lib/yoai/categories'
 import { OFF_TOPIC_MESSAGE } from '@/lib/yoai/prompts'
@@ -277,6 +278,8 @@ export default function YoAiPage() {
             <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
 
             <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} />
+
+            <CompetitorDashboard />
 
             <AnalysisCapabilities />
 
