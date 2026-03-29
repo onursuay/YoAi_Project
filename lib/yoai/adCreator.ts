@@ -6,7 +6,7 @@
            ready to be published via existing Meta/Google APIs.
    ────────────────────────────────────────────────────────── */
 
-import type { DeepCampaignInsight, Platform } from './analysisTypes'
+import type { DeepCampaignInsight, Platform, StructuralIssue } from './analysisTypes'
 import type { UserAdProfile, CompetitorComparison, CompetitorAd } from './competitorAnalyzer'
 
 /* ── Types ── */
@@ -58,6 +58,7 @@ function buildFullAutoPrompt(
   comparison: CompetitorComparison,
   competitorAds: CompetitorAd[],
   campaigns: DeepCampaignInsight[],
+  structuralIssues?: StructuralIssue[],
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
 
@@ -154,9 +155,15 @@ ${comparison.competitorSummary}
 TESPİT EDİLEN BOŞLUKLAR:
 ${comparison.gaps.map(g => `- [${g.priority}] ${g.title}: ${g.recommendation}`).join('\n') || '- Belirgin boşluk tespit edilemedi'}
 
+YAPISAL SORUNLAR (Platform bilgisi analizi):
+${structuralIssues && structuralIssues.length > 0
+  ? structuralIssues.filter(i => i.platform === platform).map(i => `- [${i.severity}] ${i.title}: ${i.currentValue} → ${i.recommendedValue}. ${i.reasoning}`).join('\n')
+  : '- Yapısal sorun tespit edilmedi'}
+
 GÖREV: ${platform} için 2-3 farklı tam reklam yapısı (kampanya + reklam seti + reklam) oluştur.
 Her biri farklı bir strateji kullansın (ör. biri fiyat odaklı, biri kalite odaklı, biri aciliyet odaklı).
-Rakiplerin boşluklarından faydalanarak farklılaşan reklamlar öner.`
+Rakiplerin boşluklarından faydalanarak farklılaşan reklamlar öner.
+Yapısal sorunlarda tespit edilen hataları DÜZELTİLMİŞ haliyle öner (ör. yanlış dönüşüm hedefi varsa doğrusunu kullan).`
 
   return { system, user }
 }
@@ -215,8 +222,9 @@ export async function generateFullAutoProposals(
   comparison: CompetitorComparison,
   competitorAds: CompetitorAd[],
   campaigns: DeepCampaignInsight[],
+  structuralIssues?: StructuralIssue[],
 ): Promise<AdCreationResult> {
-  const { system, user } = buildFullAutoPrompt(platform, userProfile, comparison, competitorAds, campaigns)
+  const { system, user } = buildFullAutoPrompt(platform, userProfile, comparison, competitorAds, campaigns, structuralIssues)
 
   const aiContent = await callAI(system, user)
 

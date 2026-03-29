@@ -7,6 +7,7 @@
 import { fetchMetaDeep } from './metaDeepFetcher'
 import { fetchGoogleDeep } from './googleDeepFetcher'
 import { summarizeWithAI } from './aiAnalysisSummarizer'
+import { runStructuralAnalysis } from './platformKnowledge'
 import type {
   DeepAnalysisResult,
   DeepCampaignInsight,
@@ -100,19 +101,38 @@ export async function runDeepAnalysis(): Promise<DeepAnalysisResult> {
   // 3. Aggregate KPIs
   const kpis = aggregateKpis(allCampaigns)
 
-  // 4. Run AI summarization (on top campaigns only, to limit tokens)
+  // 4. Run structural analysis (objective, bidding, destination mismatches)
+  const structuralAnalysis = runStructuralAnalysis(allCampaigns)
+
+  // 5. Run AI summarization (includes structural issues in context)
   const topCampaigns = allCampaigns.slice(0, 15)
   const aiResult = await summarizeWithAI(topCampaigns)
 
-  // 5. Merge AI summaries back into campaign insights
-  // (summaries are separate for rendering flexibility)
+  // 6. Merge structural issues into actions
+  const structuralActions = structuralAnalysis.issues.map((issue, i) => ({
+    id: `structural_${i}`,
+    title: issue.title,
+    reason: issue.description,
+    expectedImpact: `${issue.currentValue} → ${issue.recommendedValue}`,
+    requiresApproval: true,
+    priority: issue.severity === 'critical' ? 'high' as const : issue.severity === 'warning' ? 'medium' as const : 'low' as const,
+    campaignName: issue.campaignName,
+    campaignId: issue.campaignId,
+    platform: issue.platform,
+    targetEntityType: 'campaign' as const,
+    targetEntityId: issue.campaignId,
+    actionType: issue.category,
+  }))
+
+  const allActions = [...structuralActions, ...aiResult.actions]
 
   return {
     campaigns: allCampaigns,
     kpis,
     aiSummaries: aiResult.summaries,
-    actions: aiResult.actions,
+    actions: allActions,
     drafts: aiResult.drafts,
+    structuralIssues: structuralAnalysis.issues,
     lastAnalysis: new Date().toISOString(),
     aiGenerated: aiResult.aiGenerated,
     errors,

@@ -179,6 +179,21 @@ export interface DeepActionDraft {
   targetEntityId: string
 }
 
+/* ── Structural Issue (from platform knowledge engine) ── */
+export interface StructuralIssue {
+  id: string
+  severity: 'critical' | 'warning' | 'info'
+  category: string
+  title: string
+  description: string
+  currentValue: string
+  recommendedValue: string
+  reasoning: string
+  platform: Platform
+  campaignId: string
+  campaignName: string
+}
+
 /* ── Full Deep Analysis Result ── */
 export interface DeepAnalysisResult {
   campaigns: DeepCampaignInsight[]
@@ -186,6 +201,7 @@ export interface DeepAnalysisResult {
   aiSummaries: AISummary[]
   actions: DeepAction[]
   drafts: DeepActionDraft[]
+  structuralIssues?: StructuralIssue[]
   lastAnalysis: string
   aiGenerated: boolean
   errors: string[]

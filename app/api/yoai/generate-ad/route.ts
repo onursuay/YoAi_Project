@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
 import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
+import { runStructuralAnalysis } from '@/lib/yoai/platformKnowledge'
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
 import type { Platform } from '@/lib/yoai/analysisTypes'
@@ -39,16 +40,20 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Analiz edilecek kampanya bulunamadı' }, { status: 404 })
     }
 
-    // 2-3-4. Full competitor analysis pipeline
-    const competitorAnalysis = await runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl)
+    // 2-3-4. Full competitor analysis + structural analysis
+    const [competitorAnalysis, structuralAnalysis] = await Promise.all([
+      runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl),
+      Promise.resolve(runStructuralAnalysis(allCampaigns)),
+    ])
 
-    // 5. Generate proposals
+    // 5. Generate proposals (with competitor + structural data)
     const result = await generateFullAutoProposals(
       platform,
       competitorAnalysis.userProfile,
       competitorAnalysis.comparison,
       competitorAnalysis.competitorAds,
       allCampaigns,
+      structuralAnalysis.issues,
     )
 
     return NextResponse.json({
