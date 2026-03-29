@@ -27,6 +27,22 @@ const PLATFORM_STYLE: Record<string, { bg: string; text: string }> = {
   Google: { bg: 'bg-red-50', text: 'text-red-700' },
 }
 
+// Turkish labels for action categories
+const CATEGORY_TR: Record<string, string> = {
+  objective: 'Kampanya Amacı',
+  destination: 'Dönüşüm Hedefi',
+  optimization_goal: 'Optimizasyon',
+  bidding: 'Teklif Stratejisi',
+  targeting: 'Hedefleme',
+  budget: 'Bütçe',
+  conversion: 'Dönüşüm Takibi',
+  refresh_creative: 'Kreatif',
+  duplicate: 'Kopyalama',
+  pause: 'Durum',
+  increase_budget: 'Bütçe',
+  decrease_budget: 'Bütçe',
+}
+
 // Map AI action types to executable action types
 function toExecutableActionType(actionType: string): ActionType | null {
   const map: Record<string, ActionType> = {
@@ -104,6 +120,7 @@ export default function RecommendedActions({ actions, loading, onExecuteAction }
                   <div className="flex items-center gap-1.5">
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${platform.bg} ${platform.text}`}>{action.platform}</span>
                     <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${priority.bg} ${priority.color}`}>{priority.label}</span>
+                    <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{CATEGORY_TR[action.actionType] || action.actionType}</span>
                   </div>
                 </div>
 
@@ -134,6 +151,9 @@ export default function RecommendedActions({ actions, loading, onExecuteAction }
                       <ShieldCheck className="w-3 h-3" />
                       Onay gerekli
                     </span>
+                  )}
+                  {!canExecute && !action.requiresApproval && (
+                    <span className="text-[10px] text-gray-400 ml-auto">İnceleme gerekli</span>
                   )}
                 </div>
               </div>
