@@ -56,9 +56,16 @@ export default function SidebarNav() {
 
   const toggleGroup = (id: string) => {
     setOpenGroups((prev) =>
-      prev.includes(id) ? prev.filter((g) => g !== id) : [...prev, id]
+      prev.includes(id) ? [] : [id]
     )
   }
+
+  // Close accordion groups when main content area is clicked
+  useEffect(() => {
+    const handler = () => setOpenGroups([])
+    window.addEventListener('sidebar:close-groups', handler)
+    return () => window.removeEventListener('sidebar:close-groups', handler)
+  }, [])
 
   const isActive = (href?: string) => {
     if (!href) return false
@@ -253,7 +260,7 @@ export default function SidebarNav() {
         })}
       </nav>
 
-      <SidebarInfoCards collapsed={collapsed} />
+      {pathname.endsWith('/dashboard') && <SidebarInfoCards collapsed={collapsed} />}
 
       <div className="p-4 border-t border-gray-200">
         <UserProfileDropdown collapsed={collapsed} />
