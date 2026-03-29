@@ -280,14 +280,14 @@ export default function YoAiPage() {
 
             <HealthOverviewCards health={healthOverview} loading={ccLoading} />
 
-            <InsightStream insights={insightsForStream} loading={ccLoading} />
-
             {!ccLoading && ccData && (
               <AiAdSuggestions
                 connectedPlatforms={ccData.connectedPlatforms}
                 onOpenWizard={() => setShowAdWizard(true)}
               />
             )}
+
+            <InsightStream insights={insightsForStream} loading={ccLoading} />
 
             <AnalysisCapabilities />
 
