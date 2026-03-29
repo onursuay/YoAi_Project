@@ -7,6 +7,7 @@ import { navItems } from '@/lib/nav'
 import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
+import SidebarInfoCards from '@/components/SidebarInfoCards'
 import { useState, useMemo, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 
@@ -251,6 +252,8 @@ export default function SidebarNav() {
           )
         })}
       </nav>
+
+      <SidebarInfoCards collapsed={collapsed} />
 
       <div className="p-4 border-t border-gray-200">
         <UserProfileDropdown collapsed={collapsed} />
