@@ -66,8 +66,9 @@ export default function YoAiPage() {
     fetchCommandCenter()
   }, [fetchCommandCenter])
 
-  // Auto-scroll
+  // Auto-scroll — only during active chat, not on dashboard
   useEffect(() => {
+    if (messages.length === 0) return
     scrollRef.current?.scrollTo({ top: scrollRef.current.scrollHeight, behavior: 'smooth' })
   }, [messages, phase])
 
