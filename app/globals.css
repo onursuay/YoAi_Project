@@ -475,3 +475,31 @@ table tbody tr {
   line-height: 1.25;
   font-weight: 700;
 }
+
+/* YoAi Algoritma Merkezi icon — light sweep on icon shape */
+@keyframes yoai-icon-sweep {
+  0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
+  20% { opacity: 1; }
+  80% { opacity: 1; }
+  100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
+}
+
+.yoai-icon-glow::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: 0;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(43, 182, 115, 0.15) 30%,
+    rgba(43, 182, 115, 0.4) 50%,
+    rgba(43, 182, 115, 0.15) 70%,
+    transparent 100%
+  );
+  animation: yoai-icon-sweep 2.5s ease-in-out infinite;
+  pointer-events: none;
+  z-index: 0;
+}

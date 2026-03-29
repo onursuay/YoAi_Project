@@ -32,10 +32,10 @@ export default function CommandCenterHeader({ health, lastAnalysis, loading, aiG
         {/* Row 1: Title + description */}
         <div className="mb-4">
           <div className="flex items-center gap-3 mb-1">
-            <div className="w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center">
-              <Activity className="w-4.5 h-4.5 text-primary" />
+            <div className="yoai-icon-glow w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center relative overflow-hidden">
+              <Activity className="w-4.5 h-4.5 text-primary relative z-10" />
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight">YoAi Command Center</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">YoAi Algoritma Merkezi</h1>
           </div>
           <p className="text-gray-400 text-xs ml-12">
             Reklam hesaplarınızı AI ile izleyin, riskleri tespit edin, fırsatları değerlendirin.
