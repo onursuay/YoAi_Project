@@ -7,12 +7,9 @@ import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 import HealthOverviewCards from '@/components/yoai/HealthOverviewCards'
 import InsightStream from '@/components/yoai/InsightStream'
-import RecommendedActions from '@/components/yoai/RecommendedActions'
-import ApprovalFlowPreview from '@/components/yoai/ApprovalFlowPreview'
 import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
-import CompetitorDashboard from '@/components/yoai/CompetitorDashboard'
 import AiAdSuggestions from '@/components/yoai/AiAdSuggestions'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { CATEGORIES } from '@/lib/yoai/categories'
@@ -24,7 +21,7 @@ import {
   type ContentCategory,
 } from '@/lib/yoai/types'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
-import type { ExecutableAction, ActionResult } from '@/lib/yoai/actionTypes'
+import type { ExecutableAction } from '@/lib/yoai/actionTypes'
 import ActionConfirmDialog from '@/components/yoai/ActionConfirmDialog'
 import {
   Sparkles,
@@ -285,18 +282,12 @@ export default function YoAiPage() {
 
             <InsightStream insights={insightsForStream} loading={ccLoading} />
 
-            <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
-
-            <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
-
             {!ccLoading && ccData && (
               <AiAdSuggestions
                 connectedPlatforms={ccData.connectedPlatforms}
                 onOpenWizard={() => setShowAdWizard(true)}
               />
             )}
-
-            <CompetitorDashboard />
 
             <AnalysisCapabilities />
 
