@@ -21,6 +21,7 @@ export default function AbonelikPage() {
   } = useSubscription()
 
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
+  const [adAccountCount, setAdAccountCount] = useState(2)
 
   // Scroll to #krediler if hash present
   useEffect(() => {
@@ -86,12 +87,12 @@ export default function AbonelikPage() {
                   }`}
                 >
                   {t('yearly')}
-                  <span className="ml-1.5 text-xs text-primary font-bold">-20%</span>
+                  <span className="ml-1.5 text-xs text-primary font-bold">-30%</span>
                 </button>
               </div>
             </div>
 
-            {/* Plan cards — 4 equal columns, plenty of room */}
+            {/* Plan cards — 4 equal columns */}
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
               {SUBSCRIPTION_PLANS.map(plan => (
                 <PlanCard
@@ -101,13 +102,15 @@ export default function AbonelikPage() {
                   isCurrentPlan={subscription.planId === plan.id}
                   onSelect={handleSelectPlan}
                   highlighted={plan.id === 'premium'}
+                  adAccountCount={adAccountCount}
+                  onAccountChange={setAdAccountCount}
                 />
               ))}
             </div>
 
             {/* Notes */}
             <div className="mt-5 space-y-1">
-              <p className="text-sm text-gray-500">* {t('trialBadge')} — tüm standart planlar için geçerlidir.</p>
+              <p className="text-sm text-gray-500">* {t('trialBadge')} — Premium plan için geçerlidir.</p>
               <p className="text-sm text-amber-400 font-medium">* {t('optimizationNote')}</p>
             </div>
           </div>

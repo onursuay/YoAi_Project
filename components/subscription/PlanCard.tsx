@@ -2,6 +2,7 @@
 
 import { Check, Minus, Plus } from 'lucide-react'
 import type { SubscriptionPlan, BillingCycle } from '@/lib/subscription/types'
+import { getMonthlyPrice, getYearlyPrice, getYearlyMonthlyPrice, PLAN_SECTION_TITLES } from '@/lib/subscription/plans'
 import { useTranslations } from 'next-intl'
 
 interface Props {
@@ -10,13 +11,36 @@ interface Props {
   isCurrentPlan: boolean
   onSelect: (planId: string) => void
   highlighted?: boolean
+  adAccountCount: number
+  onAccountChange: (count: number) => void
 }
 
-export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, highlighted }: Props) {
+export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, highlighted, adAccountCount, onAccountChange }: Props) {
   const t = useTranslations('subscription')
   const isEnterprise = plan.id === 'enterprise'
-  const price = billingCycle === 'monthly' ? plan.monthlyPrice : plan.yearlyPrice / 12
-  const yearlyTotal = plan.yearlyPrice
+
+  const accounts = isEnterprise ? plan.adAccountLimit : adAccountCount
+  const monthlyPrice = getMonthlyPrice(plan.id, accounts)
+  const yearlyTotal = getYearlyPrice(plan.id, accounts)
+  const yearlyMonthly = getYearlyMonthlyPrice(plan.id, accounts)
+  const displayPrice = billingCycle === 'monthly' ? monthlyPrice : yearlyMonthly
+
+  // Original monthly price (for strikethrough when yearly)
+  const originalMonthlyTotal = monthlyPrice * 12
+
+  const sectionTitle = PLAN_SECTION_TITLES[plan.id] || t('features')
+
+  const handleDecrease = () => {
+    if (!isEnterprise && adAccountCount > 2) {
+      onAccountChange(adAccountCount - 1)
+    }
+  }
+
+  const handleIncrease = () => {
+    if (!isEnterprise && adAccountCount < 10) {
+      onAccountChange(adAccountCount + 1)
+    }
+  }
 
   return (
     <div
@@ -26,18 +50,22 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
           : 'border-gray-700 hover:border-gray-600'
       }`}
     >
-      {/* Popular badge */}
-      {highlighted && (
+      {/* Popular / Trial badge */}
+      {highlighted && plan.trialDays > 0 ? (
+        <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
+          {t('trialBadge')}
+        </div>
+      ) : highlighted ? (
         <div className="absolute -top-3 left-1/2 -translate-x-1/2 px-4 py-1 bg-primary text-white text-[10px] font-bold rounded-full uppercase tracking-wide">
           {t('popular') ?? 'En Popüler'}
         </div>
-      )}
+      ) : null}
 
       {/* Header */}
       <div className="mb-4">
         <div className="flex items-center gap-2">
           <h3 className="text-lg font-bold text-white">{plan.name}</h3>
-          {plan.trialDays > 0 && !isEnterprise && (
+          {plan.trialDays > 0 && !highlighted && !isEnterprise && (
             <span className="px-2 py-0.5 text-[10px] font-semibold bg-primary/20 text-primary rounded-full">
               {t('trialBadge')}
             </span>
@@ -57,12 +85,13 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
         ) : (
           <>
             <div className="flex items-baseline gap-1">
-              <span className="text-3xl font-bold text-white">${price.toFixed(2)}</span>
-              <span className="text-sm text-gray-400">/ {t('perMonth')}</span>
+              <span className="text-3xl font-bold text-white">${displayPrice.toFixed(2)}</span>
+              <span className="text-sm text-gray-400">/ {billingCycle === 'yearly' ? 'ay' : t('perMonth')}</span>
             </div>
             {billingCycle === 'yearly' && (
               <p className="text-sm text-gray-500 mt-1">
-                ${yearlyTotal.toFixed(2)} / {t('yearlyBilled')}
+                <span className="line-through">${originalMonthlyTotal.toFixed(2)}</span>
+                {' '}${yearlyTotal.toFixed(2)}/yıl
               </p>
             )}
           </>
@@ -71,20 +100,52 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
 
       {/* Ad accounts */}
       <div className="flex items-center gap-2 mb-5 pb-5 border-b border-gray-700">
-        <button className="p-1 rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500">
-          <Minus className="w-3 h-3" />
-        </button>
-        <span className="text-sm text-gray-300">
-          {plan.adAccountLimit === -1 ? '6+' : plan.adAccountLimit} {t('adAccounts')}
-        </span>
-        <button className="p-1 rounded border border-gray-600 text-gray-400 hover:text-white hover:border-gray-500">
-          <Plus className="w-3 h-3" />
-        </button>
+        {isEnterprise ? (
+          <>
+            <button disabled className="p-1 rounded border border-gray-600 text-gray-500 cursor-not-allowed">
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="text-sm text-gray-300">
+              {plan.adAccountLimit} {t('adAccounts')}
+            </span>
+            <button disabled className="p-1 rounded border border-gray-600 text-gray-500 cursor-not-allowed">
+              <Plus className="w-3 h-3" />
+            </button>
+          </>
+        ) : (
+          <>
+            <button
+              onClick={handleDecrease}
+              disabled={adAccountCount <= 2}
+              className={`p-1 rounded border transition-colors ${
+                adAccountCount <= 2
+                  ? 'border-gray-700 text-gray-600 cursor-not-allowed'
+                  : 'border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 cursor-pointer'
+              }`}
+            >
+              <Minus className="w-3 h-3" />
+            </button>
+            <span className="text-sm text-gray-300">
+              {adAccountCount} {t('adAccounts')}
+            </span>
+            <button
+              onClick={handleIncrease}
+              disabled={adAccountCount >= 10}
+              className={`p-1 rounded border transition-colors ${
+                adAccountCount >= 10
+                  ? 'border-gray-700 text-gray-600 cursor-not-allowed'
+                  : 'border-gray-600 text-gray-400 hover:text-white hover:border-gray-500 cursor-pointer'
+              }`}
+            >
+              <Plus className="w-3 h-3" />
+            </button>
+          </>
+        )}
       </div>
 
       {/* Features */}
       <div className="flex-1">
-        <p className="text-sm font-semibold text-gray-400 mb-3">{t('features')}</p>
+        <p className="text-sm font-semibold text-gray-400 mb-3">{sectionTitle}</p>
         <ul className="space-y-2.5">
           {plan.features.map(feature => (
             <li key={feature} className="flex items-center gap-2 text-sm text-gray-300">
