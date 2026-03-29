@@ -17,30 +17,30 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
   // Meta: blue border
   const borderStyle = selected
     ? isGoogle
-      ? 'border border-t-0 border-gray-300 bg-white shadow-lg'
-      : 'border border-t-0 border-blue-300 bg-blue-50/20 shadow-lg'
+      ? 'border border-gray-300 bg-white shadow-lg'
+      : 'border border-blue-300 bg-blue-50/20 shadow-lg'
     : isGoogle
-      ? 'border border-t-0 border-gray-200 bg-white hover:shadow-md'
-      : 'border border-t-0 border-gray-200 bg-white hover:shadow-md'
+      ? 'border border-gray-200 bg-white hover:shadow-md'
+      : 'border border-gray-200 bg-white hover:shadow-md'
 
   return (
     <button
       onClick={onSelect}
-      className={`text-left w-full rounded-2xl overflow-hidden transition-all duration-200 ${borderStyle}`}
+      className={`relative text-left w-full rounded-2xl overflow-hidden transition-all duration-200 ${borderStyle}`}
     >
-      {/* Color bar — flush to top edge */}
+      {/* Color bar — absolute, flush to top edge */}
       {isGoogle ? (
-        <div className="h-1.5 flex">
+        <div className="absolute top-0 left-0 right-0 h-[5px] flex z-10">
           <div className="flex-1 bg-[#4285F4]" />
           <div className="flex-1 bg-[#EA4335]" />
           <div className="flex-1 bg-[#FBBC05]" />
           <div className="flex-1 bg-[#34A853]" />
         </div>
       ) : (
-        <div className="h-1.5 bg-[#1877F2]" />
+        <div className="absolute top-0 left-0 right-0 h-[5px] bg-[#1877F2] z-10" />
       )}
 
-      <div className="p-5">
+      <div className="p-5 pt-4 mt-[5px]">
         {/* Header */}
         <div className="flex items-center justify-between mb-3">
           <div className="flex items-center gap-1.5">
