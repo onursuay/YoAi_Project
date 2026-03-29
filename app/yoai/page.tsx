@@ -24,9 +24,6 @@ import {
   Sparkles,
   RotateCcw,
   Loader2,
-  Send,
-  Wand2,
-  MessageSquarePlus,
   RefreshCcw,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
@@ -38,7 +35,6 @@ export default function YoAiPage() {
   const [messages, setMessages] = useState<ChatMessage[]>([])
   const [phase, setPhase] = useState<ChatPhase>('idle')
   const [detectedIntent, setDetectedIntent] = useState<ContentCategory | null>(null)
-  const [inputValue, setInputValue] = useState('')
   const scrollRef = useRef<HTMLDivElement>(null)
 
   // ── Command Center Data ──
@@ -88,7 +84,6 @@ export default function YoAiPage() {
       }
       setMessages([userMsg])
       setPhase('detecting')
-      setInputValue('')
 
       try {
         const res = await fetch('/api/yoai/detect-intent', {
@@ -262,12 +257,6 @@ export default function YoAiPage() {
     setDetectedIntent(null)
   }
 
-  const handleInputSubmit = () => {
-    if (inputValue.trim()) {
-      handleSend(inputValue.trim())
-    }
-  }
-
   const isIdleWithNoMessages = messages.length === 0 && phase === 'idle'
 
   return (
@@ -276,7 +265,7 @@ export default function YoAiPage() {
       <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50">
         {isIdleWithNoMessages ? (
           /* ── Command Center Dashboard ── */
-          <div className="max-w-6xl mx-auto px-6 py-6 space-y-8 pb-48">
+          <div className="max-w-6xl mx-auto px-6 py-6 space-y-8 pb-12">
             {/* Error banner */}
             {ccError && !ccLoading && (
               <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3">
@@ -291,7 +280,7 @@ export default function YoAiPage() {
               </div>
             )}
 
-            {/* API-level errors (e.g. platform not connected) */}
+            {/* API-level errors */}
             {ccData?.errors && ccData.errors.length > 0 && (
               <div className="space-y-2">
                 {ccData.errors.map((err, i) => (
@@ -313,25 +302,21 @@ export default function YoAiPage() {
             {/* 2. Health Overview Cards */}
             <HealthOverviewCards health={ccData?.health ?? null} loading={ccLoading} />
 
-            {/* 3. Two-column: Insights + Actions */}
-            <div className="grid grid-cols-1 xl:grid-cols-5 gap-8">
-              <div className="xl:col-span-3">
-                <InsightStream insights={ccData?.insights ?? []} loading={ccLoading} />
-              </div>
-              <div className="xl:col-span-2 space-y-8">
-                <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} />
-              </div>
-            </div>
+            {/* 3. AI Insight Stream — full width */}
+            <InsightStream insights={ccData?.insights ?? []} loading={ccLoading} />
 
-            {/* 4. Approval Flow */}
+            {/* 4. Önerilen Aksiyonlar — full width */}
+            <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} />
+
+            {/* 5. Onay Akışı — full width */}
             <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} />
 
-            {/* 5. Analysis Capabilities */}
+            {/* 6. AI Analiz Yetenekleri */}
             <AnalysisCapabilities />
 
             {/* Refresh button */}
             {!ccLoading && (
-              <div className="flex justify-center">
+              <div className="flex justify-center pb-4">
                 <button
                   onClick={fetchCommandCenter}
                   className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition-all"
@@ -344,7 +329,7 @@ export default function YoAiPage() {
           </div>
         ) : (
           /* ── Chat Area ── */
-          <div className="max-w-4xl mx-auto p-6 pb-48">
+          <div className="max-w-4xl mx-auto p-6 pb-12">
             <div className="space-y-4">
               {messages.map((message) => (
                 <div
@@ -427,70 +412,6 @@ export default function YoAiPage() {
           </div>
         )}
       </div>
-
-      {/* ── Premium Input Area ── */}
-      {phase === 'idle' && (
-        <div className="fixed bottom-0 left-0 right-0 z-30">
-          <div className="h-8 bg-gradient-to-t from-gray-50 to-transparent pointer-events-none" />
-          <div className="bg-gray-50 px-4 pb-5 pt-1">
-            <div className="max-w-3xl mx-auto">
-              <div className="relative bg-white rounded-2xl border border-gray-200 shadow-lg shadow-gray-200/50 hover:shadow-xl hover:border-gray-300 transition-all duration-300">
-                {/* Quick action chips */}
-                <div className="flex items-center gap-2 px-4 pt-3 pb-1">
-                  <button
-                    onClick={() => handleSend('Yeni reklam metni oluştur')}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/5 text-primary rounded-lg text-[11px] font-medium hover:bg-primary/10 transition-colors"
-                  >
-                    <Wand2 className="w-3 h-3" />
-                    Reklam Metni
-                  </button>
-                  <button
-                    onClick={() => handleSend('SEO makale yaz')}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/5 text-primary rounded-lg text-[11px] font-medium hover:bg-primary/10 transition-colors"
-                  >
-                    <MessageSquarePlus className="w-3 h-3" />
-                    SEO Makale
-                  </button>
-                  <button
-                    onClick={() => handleSend('Sosyal medya postu oluştur')}
-                    className="inline-flex items-center gap-1 px-2.5 py-1 bg-primary/5 text-primary rounded-lg text-[11px] font-medium hover:bg-primary/10 transition-colors"
-                  >
-                    <Sparkles className="w-3 h-3" />
-                    Sosyal Medya
-                  </button>
-                  <span className="ml-auto text-[10px] text-gray-400">
-                    {credits} kredi
-                  </span>
-                </div>
-
-                {/* Input row */}
-                <div className="flex items-end gap-2 px-4 pb-3 pt-1">
-                  <textarea
-                    value={inputValue}
-                    onChange={(e) => setInputValue(e.target.value)}
-                    onKeyDown={(e) => {
-                      if (e.key === 'Enter' && !e.shiftKey) {
-                        e.preventDefault()
-                        handleInputSubmit()
-                      }
-                    }}
-                    placeholder="YoAi'ye sorun — içerik oluşturun, analiz isteyin, strateji geliştirin..."
-                    className="flex-1 min-h-[44px] max-h-[120px] px-0 py-2 border-0 resize-none focus:outline-none focus:ring-0 text-sm text-gray-900 placeholder:text-gray-400 bg-transparent"
-                    rows={1}
-                  />
-                  <button
-                    onClick={handleInputSubmit}
-                    disabled={!inputValue.trim()}
-                    className="w-9 h-9 rounded-xl bg-primary text-white flex items-center justify-center hover:bg-primary/90 transition-colors disabled:opacity-30 disabled:cursor-not-allowed shrink-0 mb-0.5"
-                  >
-                    <Send className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
     </>
   )
 }

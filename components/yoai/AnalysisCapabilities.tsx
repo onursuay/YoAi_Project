@@ -19,42 +19,42 @@ interface Capability {
 
 const CAPABILITIES: Capability[] = [
   {
-    title: 'Campaign Objective Understanding',
+    title: 'Kampanya Hedef Analizi',
     description: 'Kampanya hedeflerini analiz eder ve KPI uyumluluğunu değerlendirir.',
     icon: Brain,
     color: 'text-violet-600',
     bg: 'bg-violet-50',
   },
   {
-    title: 'KPI Interpretation',
+    title: 'KPI Yorumlama',
     description: 'CTR, CPC, ROAS, CPL gibi metrikleri sektör ortalamalarıyla karşılaştırır.',
     icon: BarChart3,
     color: 'text-blue-600',
     bg: 'bg-blue-50',
   },
   {
-    title: 'Anomaly Detection',
+    title: 'Anomali Tespiti',
     description: 'Metrik sapmalarını ve anormal performans değişikliklerini tespit eder.',
     icon: Search,
     color: 'text-red-600',
     bg: 'bg-red-50',
   },
   {
-    title: 'Creative Fatigue Detection',
+    title: 'Kreatif Yorgunluk Tespiti',
     description: 'Frequency artışı, CTR düşüşü ve kreatif yorgunluk sinyallerini izler.',
     icon: Palette,
     color: 'text-amber-600',
     bg: 'bg-amber-50',
   },
   {
-    title: 'Budget Efficiency Check',
+    title: 'Bütçe Verimlilik Kontrolü',
     description: 'Bütçe dağılımını ve harcama verimliğini optimize eder.',
     icon: Wallet,
     color: 'text-emerald-600',
     bg: 'bg-emerald-50',
   },
   {
-    title: 'Conversion Path Mismatch',
+    title: 'Dönüşüm Yolu Uyumsuzluğu',
     description: 'Reklam mesajı ile landing page arasındaki uyumsuzlukları analiz eder.',
     icon: Route,
     color: 'text-indigo-600',

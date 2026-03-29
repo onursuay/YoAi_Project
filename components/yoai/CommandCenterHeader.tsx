@@ -90,9 +90,8 @@ export default function CommandCenterHeader({ health, lastAnalysis, loading, aiG
                 YoAi Command Center
               </h1>
             </div>
-            <p className="text-gray-400 text-sm max-w-lg">
-              Tüm reklam hesaplarınızı AI destekli olarak izleyin, riskleri tespit edin ve
-              optimizasyon fırsatlarını değerlendirin.
+            <p className="text-gray-400 text-sm whitespace-nowrap">
+              Tüm reklam hesaplarınızı AI destekli olarak izleyin, riskleri tespit edin ve optimizasyon fırsatlarını değerlendirin.
             </p>
           </div>
 

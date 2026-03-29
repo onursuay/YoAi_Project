@@ -6,7 +6,6 @@ import {
   X,
   Clock,
   Zap,
-  Info,
   Inbox,
 } from 'lucide-react'
 import type { ActionDraft } from '@/lib/yoai/commandCenter'
@@ -42,14 +41,10 @@ export default function ApprovalFlowPreview({ drafts, loading }: Props) {
         </div>
       </div>
 
-      {/* Info banner */}
-      <div className="flex items-start gap-2.5 bg-blue-50/70 border border-blue-100 rounded-xl px-4 py-3 mb-4">
-        <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />
-        <p className="text-xs text-blue-700 leading-relaxed">
-          Aksiyon pipeline&apos;ı henüz aktif değildir. Taslaklar AI analizi sonucu oluşturulmuştur
-          ancak uygulanabilmesi için backend entegrasyonu gereklidir.
-        </p>
-      </div>
+      {/* Subtle info note */}
+      <p className="text-[11px] text-gray-400 mb-4">
+        Taslaklar AI analizi sonucu oluşturulmuştur. Onay mekanizması yakında aktif olacaktır.
+      </p>
 
       {loading ? (
         <div className="space-y-3">
