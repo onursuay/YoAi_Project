@@ -37,10 +37,30 @@ export default function YoAiPage() {
   const [detectedIntent, setDetectedIntent] = useState<ContentCategory | null>(null)
   const scrollRef = useRef<HTMLDivElement>(null)
 
-  // ── Command Center Data ──
+  // ── Command Center Data (with sessionStorage cache) ──
+  const CACHE_KEY = 'yoai_cc_cache'
+  const CACHE_TTL = 10 * 60 * 1000 // 10 minutes
+
   const [ccData, setCcData] = useState<CommandCenterData | null>(null)
   const [ccLoading, setCcLoading] = useState(true)
   const [ccError, setCcError] = useState<string | null>(null)
+
+  // Load from cache on mount
+  useEffect(() => {
+    try {
+      const raw = sessionStorage.getItem(CACHE_KEY)
+      if (raw) {
+        const cached = JSON.parse(raw) as { data: CommandCenterData; ts: number }
+        if (Date.now() - cached.ts < CACHE_TTL) {
+          setCcData(cached.data)
+          setCcLoading(false)
+          return
+        }
+      }
+    } catch { /* ignore */ }
+    fetchCommandCenter()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   const fetchCommandCenter = useCallback(async () => {
     setCcLoading(true)
@@ -51,6 +71,9 @@ export default function YoAiPage() {
       const json = await res.json()
       if (json.ok && json.data) {
         setCcData(json.data)
+        try {
+          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.data, ts: Date.now() }))
+        } catch { /* storage full */ }
       } else {
         setCcError('Veri alınamadı')
       }
@@ -61,10 +84,6 @@ export default function YoAiPage() {
       setCcLoading(false)
     }
   }, [])
-
-  useEffect(() => {
-    fetchCommandCenter()
-  }, [fetchCommandCenter])
 
   // Auto-scroll — only during active chat, not on dashboard
   useEffect(() => {
