@@ -32,7 +32,7 @@ const TR_TO_EN: Record<string, string> = {
 /** All app slugs that need /en/ prefix when locale=en (includes same-slug routes) */
 const APP_SLUGS = new Set([
   ...Object.keys(TR_TO_EN),
-  'meta-ads', 'google-ads', 'yoai', 'seo', 'dashboard',
+  'meta-ads', 'google-ads', 'tiktok-ads', 'yoai', 'seo', 'dashboard',
   'hesabim', 'abonelik', 'faturalarim',
 ])
 

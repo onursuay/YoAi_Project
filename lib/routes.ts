@@ -2,6 +2,7 @@ export const ROUTES = {
   DASHBOARD: '/dashboard',
   GOOGLE_ADS: '/google-ads',
   META_ADS: '/meta-ads',
+  TIKTOK_ADS: '/tiktok-ads',
   OPTIMIZATION: '/optimizasyon',
   STRATEGY: '/strateji',
   MY_ACCOUNT: '/hesabim',

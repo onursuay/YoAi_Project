@@ -46,10 +46,9 @@ export const navItems: NavItem[] = [
       {
         id: 'tiktok',
         label: 'TikTok',
-        href: '#',
+        href: ROUTES.TIKTOK_ADS,
         icon: LayoutDashboard,
         iconPath: '/platform-icons/tiktok.svg',
-        disabled: true,
       },
     ],
   },

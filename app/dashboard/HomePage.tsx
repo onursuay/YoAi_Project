@@ -26,6 +26,7 @@ interface MetaInsights {
   spendTRY: number; impressions: number; clicks: number; reach: number
   ctr: number; cpcTRY: number; purchases: number; roas: number
   engagement?: number; results?: number
+  series?: { spend: number[]; impressions: number[]; clicks: number[]; reach: number[]; dates: string[] }
 }
 
 interface PlatformStatus {
@@ -82,6 +83,11 @@ export default function HomePage() {
   const [metaInsights, setMetaInsights] = useState<MetaInsights | null>(null)
   const [metaLoading, setMetaLoading] = useState(true)
 
+  // TikTok state
+  const [tiktokStatus, setTiktokStatus] = useState<PlatformStatus | null>(null)
+  const [tiktokKpis, setTiktokKpis] = useState<GoogleKpis | null>(null)
+  const [tiktokLoading, setTiktokLoading] = useState(true)
+
   // Google Analytics state
   const [gaStatus, setGaStatus] = useState<PlatformStatus | null>(null)
   const [gaReport, setGaReport] = useState<GAReport | null>(null)
@@ -103,13 +109,15 @@ export default function HomePage() {
   const fetchData = useCallback(async () => {
     setGoogleLoading(true)
     setMetaLoading(true)
+    setTiktokLoading(true)
     setGaLoading(true)
     setGscLoading(true)
 
     // Parallel status fetches
-    const [googleSel, metaStat, gaStat, gscStat] = await Promise.all([
+    const [googleSel, metaStat, tiktokStat, gaStat, gscStat] = await Promise.all([
       fetch('/api/integrations/google-ads/selected', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
       metaFetch('/api/meta/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
+      fetch('/api/tiktok/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
       fetch('/api/integrations/google-analytics/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
       fetch('/api/integrations/google-search-console/status', { cache: 'no-store' }).then(r => r.json()).catch(() => null),
     ])
@@ -122,6 +130,10 @@ export default function HomePage() {
     // Meta status
     const metaConnected = metaStat?.connected === true
     setMetaStatus({ connected: metaConnected, accountName: metaStat?.adAccountName || '' })
+
+    // TikTok status
+    const tiktokConnected = tiktokStat?.connected === true
+    setTiktokStatus({ connected: tiktokConnected, accountName: tiktokStat?.advertiserName || '' })
 
     // Google Analytics status
     const gaConnected = gaStat?.connected === true && gaStat?.hasSelectedProperty === true
@@ -161,6 +173,26 @@ export default function HomePage() {
       )
     } else {
       setMetaLoading(false)
+    }
+
+    if (tiktokConnected) {
+      kpiPromises.push(
+        fetch(`/api/integrations/tiktok-ads/dashboard-kpis?from=${dateRange.from}&to=${dateRange.to}`, { cache: 'no-store' })
+          .then(r => r.json())
+          .then(data => {
+            if (data?.totals) {
+              setTiktokKpis({
+                totals: { cost: data.totals.cost, clicks: data.totals.clicks, impressions: data.totals.impressions, conversions: data.totals.conversions, conversionsValue: 0, avgCtr: data.totals.avgCtr },
+                changes: { cost: data.changes.cost, clicks: data.changes.clicks, impressions: data.changes.impressions, conversions: data.changes.conversions, conversionsValue: 0, ctr: data.changes.ctr || 0 },
+                series: { cost: data.series.cost, clicks: data.series.clicks, impressions: data.series.impressions, conversions: data.series.conversions, conversionsValue: [], ctr: data.series.ctr || [] },
+              })
+            }
+          })
+          .catch(() => {})
+          .finally(() => setTiktokLoading(false))
+      )
+    } else {
+      setTiktokLoading(false)
     }
 
     if (gaConnected) {
@@ -235,6 +267,26 @@ export default function HomePage() {
     return kpi.changePercent >= 0 ? 'green' : 'red'
   }
 
+  // Meta series helpers (period-over-period from daily series)
+  const metaSeriesDelta = (series?: number[]): string => {
+    if (!series || series.length < 4) return ''
+    const mid = Math.floor(series.length / 2)
+    const first = series.slice(0, mid).reduce((a, b) => a + b, 0)
+    const second = series.slice(mid).reduce((a, b) => a + b, 0)
+    if (first === 0) return second > 0 ? '↑ %100' : ''
+    const pct = ((second - first) / first) * 100
+    return `${pct >= 0 ? '↑' : '↓'} %${Math.abs(pct).toFixed(1)}`
+  }
+  const metaSeriesColor = (series?: number[], invertColor = false): 'green' | 'red' | 'gray' => {
+    if (!series || series.length < 4) return 'gray'
+    const mid = Math.floor(series.length / 2)
+    const first = series.slice(0, mid).reduce((a, b) => a + b, 0)
+    const second = series.slice(mid).reduce((a, b) => a + b, 0)
+    const up = second >= first
+    if (invertColor) return up ? 'red' : 'green' // spend: up = bad
+    return up ? 'green' : 'red'
+  }
+
   // Quick access sections (from nav)
   const quickAccessItems = [
     { id: 'strateji', label: isEn ? 'Strategy' : 'Strateji', href: '/strateji', icon: Target, badge: 'AI' },
@@ -285,21 +337,29 @@ export default function HomePage() {
                 connectHref="/api/meta/login"
                 t={t}
                 metrics={metaInsights ? {
-                  spend: { label: t('spend'), value: `₺${fmtCurrency(metaInsights.spendTRY)}`, delta: '', chart: [0, 0], color: 'gray' as const },
-                  clicks: { label: t('clicks'), value: fmtInt(metaInsights.clicks), delta: '', chart: [0, 0], color: 'gray' as const },
-                  impressions: { label: t('impressions'), value: fmtInt(metaInsights.impressions), delta: '', chart: [0, 0], color: 'gray' as const },
+                  spend: { label: t('spend'), value: `₺${fmtCurrency(metaInsights.spendTRY)}`, delta: metaSeriesDelta(metaInsights.series?.spend), chart: metaInsights.series?.spend || [0, 0], color: metaSeriesColor(metaInsights.series?.spend, true) },
+                  clicks: { label: t('clicks'), value: fmtInt(metaInsights.clicks), delta: metaSeriesDelta(metaInsights.series?.clicks), chart: metaInsights.series?.clicks || [0, 0], color: metaSeriesColor(metaInsights.series?.clicks) },
+                  impressions: { label: t('impressions'), value: fmtInt(metaInsights.impressions), delta: metaSeriesDelta(metaInsights.series?.impressions), chart: metaInsights.series?.impressions || [0, 0], color: metaSeriesColor(metaInsights.series?.impressions) },
                 } : undefined}
                 periodLabel={periodLabel}
               />
 
-              {/* TikTok Coming Soon Card */}
-              <div className="bg-gray-50 border-2 border-dashed border-gray-200 rounded-xl p-6 flex flex-col items-center justify-center text-center opacity-60">
-                <Image src="/platform-icons/tiktok.svg" alt="TikTok" width={40} height={40} className="mb-3 grayscale" />
-                <h3 className="text-base font-semibold text-gray-500">TikTok Ads</h3>
-                <span className="mt-2 px-3 py-1 text-xs font-medium bg-gray-200 text-gray-500 rounded-full">
-                  {t('comingSoon')}
-                </span>
-              </div>
+              {/* TikTok Ads Card */}
+              <PlatformCard
+                platformName="TikTok Ads"
+                iconSrc="/platform-icons/tiktok.svg"
+                status={tiktokStatus}
+                loading={tiktokLoading}
+                panelHref={ROUTES.TIKTOK_ADS}
+                connectHref="/entegrasyon"
+                t={t}
+                metrics={tiktokKpis ? {
+                  spend: { label: t('spend'), value: `₺${fmtCurrency(tiktokKpis.totals.cost)}`, delta: fmtDelta(tiktokKpis.changes.cost), chart: tiktokKpis.series.cost, color: tiktokKpis.changes.cost >= 0 ? 'red' as const : 'green' as const },
+                  clicks: { label: t('clicks'), value: fmtInt(tiktokKpis.totals.clicks), delta: fmtDelta(tiktokKpis.changes.clicks), chart: tiktokKpis.series.clicks, color: tiktokKpis.changes.clicks >= 0 ? 'green' as const : 'red' as const },
+                  impressions: { label: t('impressions'), value: fmtInt(tiktokKpis.totals.impressions), delta: fmtDelta(tiktokKpis.changes.impressions), chart: tiktokKpis.series.impressions, color: tiktokKpis.changes.impressions >= 0 ? 'green' as const : 'red' as const },
+                } : undefined}
+                periodLabel={periodLabel}
+              />
             </div>
           </div>
 

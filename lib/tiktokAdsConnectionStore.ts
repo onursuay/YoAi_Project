@@ -7,6 +7,7 @@
 
 import { supabase } from '@/lib/supabase/client'
 import { LOG_EVENTS } from '@/lib/tiktok-ads/constants'
+import { encrypt as encryptToken, decrypt as decryptToken } from '@/lib/tiktok-ads/crypto'
 
 /** Mask token for any log output. Never log full token. */
 export function maskToken(token: string | null): string {
@@ -68,10 +69,19 @@ export async function getConnection(userId: string): Promise<TikTokConnectionCon
     }
   }
 
+  // Decrypt token if encrypted (contains : separator from AES-256-GCM format)
+  let accessToken = row.access_token
+  if (accessToken.includes(':')) {
+    const decrypted = decryptToken(accessToken)
+    if (decrypted) {
+      accessToken = decrypted
+    }
+  }
+
   console.log(LOG_EVENTS.DB_LOOKUP_OK, { userId: userId.slice(0, 8) + '…' })
 
   return {
-    accessToken: row.access_token,
+    accessToken,
     advertiserId: row.advertiser_id || '',
     advertiserName: row.advertiser_name || undefined,
   }
@@ -115,7 +125,9 @@ export async function upsertConnection(userId: string, input: UpsertConnectionIn
   if (input.tokenScope !== undefined) payload.token_scope = input.tokenScope
 
   if (input.accessToken !== undefined && input.accessToken !== '') {
-    payload.access_token = input.accessToken
+    // Encrypt token before storing
+    const encrypted = encryptToken(input.accessToken)
+    payload.access_token = encrypted || input.accessToken // Fallback to plaintext if encryption not configured
   } else if (existing) {
     payload.access_token = (existing as { access_token?: string }).access_token
   }
