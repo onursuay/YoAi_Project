@@ -320,7 +320,7 @@ export default function HomePage() {
 
   return (
     <>
-      <Topbar title={t('title')} description={t('description')} />
+      <Topbar title={t('title')} description={t('description')} showTicker />
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6 space-y-8">
 

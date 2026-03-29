@@ -260,7 +260,7 @@ export default function SidebarNav() {
         })}
       </nav>
 
-      {pathname.endsWith('/dashboard') && <SidebarInfoCards collapsed={collapsed} />}
+      <SidebarInfoCards collapsed={collapsed} />
 
       <div className="p-4 border-t border-gray-200">
         <UserProfileDropdown collapsed={collapsed} />

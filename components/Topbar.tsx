@@ -22,6 +22,8 @@ interface TopbarProps {
   adAccountName?: string
   /** Show Meta connection area even when no account is selected (reveals Not Connected state) */
   showMetaSection?: boolean
+  /** Show notification ticker (default: false, only enabled on dashboard) */
+  showTicker?: boolean
   /** Google Ads: selected account name + change-account action (only used on Google page) */
   googleAccountName?: string
   onGoogleChangeAccount?: () => void
@@ -41,6 +43,7 @@ export default function Topbar({
   actionButton,
   adAccountName,
   showMetaSection = false,
+  showTicker = false,
   googleAccountName,
   onGoogleChangeAccount,
   googleChangeAccountLabel = 'Change Account',
@@ -76,6 +79,7 @@ export default function Topbar({
   })()
 
   useEffect(() => {
+    if (!showTicker) { setNotifications([]); return }
     setActiveNotif(0)
     setNotifKey(0)
     fetch(`/api/notifications?context=${pageContext}`)
@@ -88,7 +92,7 @@ export default function Topbar({
         }
       })
       .catch(() => {})
-  }, [pageContext])
+  }, [pageContext, showTicker])
 
   useEffect(() => {
     if (notifications.length < 2) return
