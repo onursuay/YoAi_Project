@@ -5,7 +5,7 @@ import { useTranslations } from 'next-intl'
 import Topbar from '@/components/Topbar'
 import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
-import HealthOverviewCards from '@/components/yoai/HealthOverviewCards'
+// HealthOverviewCards removed — stats moved into CommandCenterHeader
 import InsightStream from '@/components/yoai/InsightStream'
 import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
@@ -280,15 +280,19 @@ export default function YoAiPage() {
               onCreateAd={() => setShowAdWizard(true)}
             />
 
-            {/* Günlük Brifing + Sağlık Skoru yan yana */}
+            <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
+
+            {/* Günlük Brifing + Sağlık Skoru */}
             <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
               <DailyBriefing data={ccData} loading={ccLoading} />
               <HealthScore campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
             </div>
 
-            <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
-
-            <HealthOverviewCards health={healthOverview} loading={ccLoading} />
+            {/* Akıllı Bütçe + Haftalık Rapor */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+              <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
+              <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
+            </div>
 
             {!ccLoading && ccData && (
               <AiAdSuggestions
@@ -298,12 +302,6 @@ export default function YoAiPage() {
             )}
 
             <InsightStream insights={insightsForStream} loading={ccLoading} />
-
-            {/* Akıllı Bütçe + Haftalık Rapor yan yana */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
-              <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
-            </div>
 
             <AnalysisCapabilities />
 
