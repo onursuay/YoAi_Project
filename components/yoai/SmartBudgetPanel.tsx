@@ -144,9 +144,6 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
         ))}
       </div>
 
-      <p className="text-[10px] text-gray-400 mt-3 text-center">
-        Öneriler mevcut performans verilerine dayanmaktadır
-      </p>
     </div>
   )
 }

@@ -89,17 +89,6 @@ export default function KpiDashboard({ kpis, loading }: Props) {
         })}
       </div>
 
-      {/* Platform breakdown */}
-      {kpis.platformBreakdown.length > 1 && (
-        <div className="flex items-center gap-4 mt-3">
-          {kpis.platformBreakdown.map(pb => (
-            <div key={pb.platform} className="flex items-center gap-2 text-[11px] text-gray-500">
-              <span className={`w-2 h-2 rounded-full ${pb.platform === 'Meta' ? 'bg-blue-500' : 'bg-red-500'}`} />
-              <span>{pb.platform}: ₺{fmt(pb.spend)} · {pb.campaignCount} kampanya</span>
-            </div>
-          ))}
-        </div>
-      )}
     </div>
   )
 }
