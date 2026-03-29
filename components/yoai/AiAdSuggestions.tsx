@@ -136,26 +136,12 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
                   {newSuggestions.length > 0 && <span className="text-[10px] text-emerald-600">({newSuggestions.length} yeni amaç)</span>}
                 </h3>
 
-                {/* Existing objective improvements */}
-                {existing.length > 0 && (
-                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4 mb-4">
-                    {existing.map((p, i) => (
-                      <AdPreviewCard key={p.id || `${group.platform}_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
-                    ))}
-                  </div>
-                )}
-
-                {/* New objective suggestions */}
-                {newSuggestions.length > 0 && (
-                  <div>
-                    <p className="text-[11px] text-emerald-600 font-medium mb-2">Henüz kullanmadığınız kampanya amaçları:</p>
-                    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                      {newSuggestions.map((p, i) => (
-                        <AdPreviewCard key={p.id || `${group.platform}_new_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
-                      ))}
-                    </div>
-                  </div>
-                )}
+                {/* All proposals in single grid — 3 per row */}
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                  {group.items.map((p, i) => (
+                    <AdPreviewCard key={p.id || `${group.platform}_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+                  ))}
+                </div>
               </div>
             )
           })}

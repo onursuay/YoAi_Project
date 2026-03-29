@@ -17,11 +17,11 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
   // Meta: blue border
   const borderStyle = selected
     ? isGoogle
-      ? 'border-2 bg-white shadow-lg ring-1 ring-blue-400/30'
-      : 'border-2 border-blue-500 bg-blue-50/30 shadow-lg'
+      ? 'border border-t-0 border-gray-300 bg-white shadow-lg'
+      : 'border border-t-0 border-blue-300 bg-blue-50/20 shadow-lg'
     : isGoogle
-      ? 'border border-gray-200 bg-white hover:shadow-md'
-      : 'border border-gray-200 bg-white hover:shadow-md'
+      ? 'border border-t-0 border-gray-200 bg-white hover:shadow-md'
+      : 'border border-t-0 border-gray-200 bg-white hover:shadow-md'
 
   return (
     <button
