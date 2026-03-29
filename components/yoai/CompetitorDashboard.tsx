@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { Search, Loader2, Globe, AlertTriangle, TrendingUp, Info, Inbox } from 'lucide-react'
 import type { GoogleCompetitor, MetaAdLibraryAd, CompetitorInsight } from '@/lib/yoai/competitorAnalyzer'
 
@@ -13,6 +13,12 @@ export default function CompetitorDashboard() {
   const [metaQuery, setMetaQuery] = useState('')
   const [metaSearched, setMetaSearched] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Auto-load Google competitors on mount
+  const autoLoaded = useCallback(() => {
+    if (googleData === null && !loading) fetchGoogle()
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
+  useEffect(() => { autoLoaded() }, [autoLoaded])
 
   const fetchGoogle = async () => {
     setLoading(true)

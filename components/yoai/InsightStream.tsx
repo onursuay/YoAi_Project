@@ -1,6 +1,6 @@
 'use client'
 
-import { AlertTriangle, TrendingUp, Eye, CheckCircle2, Inbox, ChevronDown, ChevronUp } from 'lucide-react'
+import { AlertTriangle, TrendingUp, Eye, CheckCircle2, Inbox, Layers, X } from 'lucide-react'
 import { useState } from 'react'
 import type { DeepCampaignInsight, InsightStatus, RiskLevel } from '@/lib/yoai/analysisTypes'
 
@@ -35,7 +35,7 @@ interface Props {
 }
 
 export default function InsightStream({ insights, loading }: Props) {
-  const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [drillDown, setDrillDown] = useState<CampaignWithAI | null>(null)
 
   return (
     <div>
@@ -48,7 +48,7 @@ export default function InsightStream({ insights, loading }: Props) {
 
       {loading ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {[1, 2, 3].map(i => <div key={i} className="h-[280px] bg-white rounded-2xl border border-gray-100 animate-pulse" />)}
+          {[1, 2, 3].map(i => <div key={i} className="h-[260px] bg-white rounded-2xl border border-gray-100 animate-pulse" />)}
         </div>
       ) : insights.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
@@ -61,7 +61,6 @@ export default function InsightStream({ insights, loading }: Props) {
             const status = STATUS_MAP[insight.insightStatus] || STATUS_MAP.monitoring
             const risk = RISK_MAP[insight.riskLevel] || RISK_MAP.low
             const platform = PLATFORM_STYLE[insight.platform] || { bg: 'bg-gray-50', text: 'text-gray-700' }
-            const isExpanded = expandedId === insight.id
             const totalAds = insight.adsets.reduce((s, as) => s + as.ads.length, 0)
 
             return (
@@ -92,13 +91,11 @@ export default function InsightStream({ insights, loading }: Props) {
                         {tag.id.replace(/_/g, ' ')}
                       </span>
                     ))}
-                    {insight.problemTags.length > 3 && (
-                      <span className="text-[9px] text-gray-400">+{insight.problemTags.length - 3}</span>
-                    )}
+                    {insight.problemTags.length > 3 && <span className="text-[9px] text-gray-400">+{insight.problemTags.length - 3}</span>}
                   </div>
                 )}
 
-                {/* Summary (from AI) */}
+                {/* Summary */}
                 {insight.summary && <p className="text-xs text-gray-600 leading-relaxed mb-2 flex-1 line-clamp-2">{insight.summary}</p>}
 
                 {/* Metrics */}
@@ -120,59 +117,80 @@ export default function InsightStream({ insights, loading }: Props) {
                   </div>
                 )}
 
-                {/* Footer: risk + confidence + expand */}
-                <div className="flex items-center justify-between pt-2 border-t border-gray-50">
+                {/* Footer */}
+                <div className="flex items-center justify-between pt-2 border-t border-gray-50 mt-auto">
                   <div className="flex items-center gap-1.5">
                     <span className={`w-2 h-2 rounded-full ${risk.dot}`} />
                     <span className={`text-[11px] font-semibold ${risk.color}`}>{risk.label}</span>
+                    <span className="text-[10px] text-gray-400 ml-1">%{insight.confidence}</span>
                   </div>
-                  <div className="flex items-center gap-3">
-                    <span className="text-[11px] font-bold text-gray-900">%{insight.confidence}</span>
-                    {insight.adsets.length > 0 && (
-                      <button
-                        onClick={() => setExpandedId(isExpanded ? null : insight.id)}
-                        className="text-[10px] text-primary flex items-center gap-0.5 hover:underline"
-                      >
-                        {insight.adsets.length} adset · {totalAds} reklam
-                        {isExpanded ? <ChevronUp className="w-3 h-3" /> : <ChevronDown className="w-3 h-3" />}
-                      </button>
-                    )}
-                  </div>
+                  {insight.adsets.length > 0 && (
+                    <button
+                      onClick={() => setDrillDown(insight)}
+                      className="text-[10px] text-primary font-medium flex items-center gap-1 hover:underline"
+                    >
+                      <Layers className="w-3 h-3" />
+                      {insight.adsets.length} adset · {totalAds} reklam
+                    </button>
+                  )}
                 </div>
-
-                {/* Expanded: adset drill-down */}
-                {isExpanded && insight.adsets.length > 0 && (
-                  <div className="mt-3 pt-3 border-t border-gray-100 space-y-2">
-                    {insight.adsets.map(as => (
-                      <div key={as.id} className="bg-gray-50 rounded-lg p-3">
-                        <div className="flex items-center justify-between mb-1">
-                          <span className="text-[11px] font-semibold text-gray-800">{as.name}</span>
-                          <span className="text-[9px] text-gray-400">{as.status}</span>
-                        </div>
-                        <div className="flex gap-3 text-[10px] text-gray-500">
-                          <span>₺{as.metrics.spend.toFixed(0)}</span>
-                          <span>{as.metrics.clicks} tık</span>
-                          <span>CTR {(as.metrics.ctr * 100).toFixed(1)}%</span>
-                        </div>
-                        {/* Ads within adset */}
-                        {as.ads.length > 0 && (
-                          <div className="mt-2 space-y-1">
-                            {as.ads.slice(0, 5).map(ad => (
-                              <div key={ad.id} className="flex items-center justify-between text-[9px] bg-white rounded px-2 py-1">
-                                <span className="text-gray-600 truncate max-w-[60%]">{ad.name}</span>
-                                <span className="text-gray-400">₺{ad.metrics.spend.toFixed(0)} · {(ad.metrics.ctr * 100).toFixed(1)}%</span>
-                              </div>
-                            ))}
-                            {as.ads.length > 5 && <span className="text-[9px] text-gray-400 pl-2">+{as.ads.length - 5} reklam daha</span>}
-                          </div>
-                        )}
-                      </div>
-                    ))}
-                  </div>
-                )}
               </div>
             )
           })}
+        </div>
+      )}
+
+      {/* Drill-down Modal */}
+      {drillDown && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+          <div className="absolute inset-0 bg-black/40" onClick={() => setDrillDown(null)} />
+          <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-2xl max-h-[80vh] overflow-y-auto animate-popup-scale">
+            <div className="sticky top-0 bg-white border-b border-gray-100 px-6 py-4 flex items-center justify-between rounded-t-2xl z-10">
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <span className={`text-[11px] font-semibold px-2 py-0.5 rounded-md ${PLATFORM_STYLE[drillDown.platform]?.bg} ${PLATFORM_STYLE[drillDown.platform]?.text}`}>{drillDown.platform}</span>
+                  <span className="text-[10px] text-gray-400">Skor: {drillDown.score}/100</span>
+                </div>
+                <h3 className="text-base font-semibold text-gray-900">{drillDown.campaignName}</h3>
+              </div>
+              <button onClick={() => setDrillDown(null)} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
+            </div>
+
+            <div className="px-6 py-4 space-y-4">
+              {drillDown.adsets.map(as => (
+                <div key={as.id} className="bg-gray-50 rounded-xl p-4">
+                  <div className="flex items-center justify-between mb-2">
+                    <h4 className="text-sm font-semibold text-gray-800">{as.name}</h4>
+                    <span className={`text-[10px] px-1.5 py-0.5 rounded ${as.status === 'ACTIVE' || as.status === 'ENABLED' ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-200 text-gray-600'}`}>{as.status}</span>
+                  </div>
+                  <div className="flex gap-4 text-[11px] text-gray-500 mb-3">
+                    <span>₺{as.metrics.spend.toFixed(0)}</span>
+                    <span>{as.metrics.clicks} tıklama</span>
+                    <span>CTR {(as.metrics.ctr * 100).toFixed(1)}%</span>
+                    {as.metrics.roas != null && <span>ROAS {as.metrics.roas.toFixed(1)}x</span>}
+                  </div>
+                  {as.ads.length > 0 && (
+                    <div className="space-y-1.5">
+                      <p className="text-[10px] text-gray-400 font-medium">Reklamlar ({as.ads.length})</p>
+                      {as.ads.map(ad => (
+                        <div key={ad.id} className="flex items-center justify-between bg-white rounded-lg px-3 py-2 text-xs">
+                          <div className="flex items-center gap-2 min-w-0">
+                            <span className={`w-1.5 h-1.5 rounded-full shrink-0 ${ad.status === 'ACTIVE' || ad.status === 'ENABLED' ? 'bg-emerald-500' : 'bg-gray-300'}`} />
+                            <span className="text-gray-700 truncate">{ad.name}</span>
+                          </div>
+                          <div className="flex gap-3 text-[10px] text-gray-500 shrink-0 ml-2">
+                            <span>₺{ad.metrics.spend.toFixed(0)}</span>
+                            <span>{ad.metrics.clicks} tık</span>
+                            <span>CTR {(ad.metrics.ctr * 100).toFixed(1)}%</span>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
       )}
     </div>

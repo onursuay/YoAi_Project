@@ -198,6 +198,8 @@ export interface DeepHealthOverview {
   activeCampaigns: number
   totalAdsets: number
   totalAds: number
+  activeAdsets: number
+  activeAds: number
   criticalAlerts: number
   opportunities: number
   pendingApprovals: number

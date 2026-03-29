@@ -13,6 +13,7 @@ import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
 import CompetitorDashboard from '@/components/yoai/CompetitorDashboard'
+import AiAdSuggestions from '@/components/yoai/AiAdSuggestions'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { CATEGORIES } from '@/lib/yoai/categories'
 import { OFF_TOPIC_MESSAGE } from '@/lib/yoai/prompts'
@@ -211,17 +212,26 @@ export default function YoAiPage() {
   const isIdleWithNoMessages = messages.length === 0 && phase === 'idle'
 
   // ── Derived data for components ──
-  const healthOverview = ccData ? {
-    connectedAccounts: { count: ccData.connectedPlatforms.length, platforms: ccData.connectedPlatforms },
-    activeCampaigns: ccData.kpis.activeCampaigns,
-    totalAdsets: ccData.campaigns.reduce((s, c) => s + c.adsets.length, 0),
-    totalAds: ccData.campaigns.reduce((s, c) => s + c.adsets.reduce((s2, as) => s2 + as.ads.length, 0), 0),
-    criticalAlerts: ccData.campaigns.filter(c => c.riskLevel === 'critical' || c.riskLevel === 'high').length,
-    opportunities: ccData.actions.filter(a => a.priority === 'high').length,
-    pendingApprovals: ccData.drafts.length,
-    draftActions: ccData.actions.length,
-    kpis: ccData.kpis,
-  } : null
+  const healthOverview = ccData ? (() => {
+    const activeCampaigns = ccData.campaigns.filter(c => c.status === 'ACTIVE' || c.status === 'ENABLED')
+    const allAdsets = ccData.campaigns.flatMap(c => c.adsets)
+    const activeAdsets = allAdsets.filter(as => as.status === 'ACTIVE' || as.status === 'ENABLED')
+    const allAds = allAdsets.flatMap(as => as.ads)
+    const activeAds = allAds.filter(ad => ad.status === 'ACTIVE' || ad.status === 'ENABLED')
+    return {
+      connectedAccounts: { count: ccData.connectedPlatforms.length, platforms: ccData.connectedPlatforms },
+      activeCampaigns: activeCampaigns.length,
+      totalAdsets: allAdsets.length,
+      totalAds: allAds.length,
+      activeAdsets: activeAdsets.length,
+      activeAds: activeAds.length,
+      criticalAlerts: ccData.campaigns.filter(c => c.riskLevel === 'critical' || c.riskLevel === 'high').length,
+      opportunities: ccData.actions.filter(a => a.priority === 'high').length,
+      pendingApprovals: ccData.drafts.length,
+      draftActions: ccData.actions.length,
+      kpis: ccData.kpis,
+    }
+  })() : null
 
   // Map campaigns + AI summaries for InsightStream
   const insightsForStream = ccData ? ccData.campaigns.map(c => {
@@ -278,6 +288,13 @@ export default function YoAiPage() {
             <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
 
             <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} />
+
+            {!ccLoading && ccData && (
+              <AiAdSuggestions
+                connectedPlatforms={ccData.connectedPlatforms}
+                onOpenWizard={() => setShowAdWizard(true)}
+              />
+            )}
 
             <CompetitorDashboard />
 

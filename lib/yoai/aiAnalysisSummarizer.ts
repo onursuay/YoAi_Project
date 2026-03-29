@@ -155,6 +155,102 @@ async function callAI(userMessage: string): Promise<string | null> {
   return null
 }
 
+/* ── Deterministic Fallback ── */
+const PROBLEM_ACTIONS: Record<string, { title: string; reason: string; impact: string; actionType: string; priority: 'high' | 'medium' | 'low' }> = {
+  LOW_CTR: { title: 'Reklam metnini ve kreatifleri yenile', reason: 'CTR düşük — reklam dikkat çekemiyor', impact: 'CTR artışı bekleniyor', actionType: 'refresh_creative', priority: 'high' },
+  HIGH_CPC: { title: 'Teklif stratejisini gözden geçir', reason: 'CPC çok yüksek — bütçe verimsiz harcanıyor', impact: 'CPC düşüşü ve daha fazla tıklama', actionType: 'decrease_budget', priority: 'high' },
+  HIGH_CPA: { title: 'Dönüşüm maliyetini azalt', reason: 'Dönüşüm başı maliyet çok yüksek', impact: 'CPA düşüşü bekleniyor', actionType: 'decrease_budget', priority: 'high' },
+  LOW_ROAS: { title: 'ROAS iyileştirmesi gerekli', reason: 'Reklam harcaması geri dönmüyor', impact: 'ROAS artışı hedefleniyor', actionType: 'decrease_budget', priority: 'high' },
+  HIGH_FREQUENCY: { title: 'Kreatif yorgunluğunu gider', reason: 'Frequency yüksek — aynı kişiler tekrar tekrar görüyor', impact: 'Taze kreatifle etkileşim artışı', actionType: 'refresh_creative', priority: 'medium' },
+  CRITICAL_FREQUENCY: { title: 'Acil kreatif değişikliği', reason: 'Frequency kritik seviyede — kitlede reklam körlüğü', impact: 'Reklam yorgunluğunun giderilmesi', actionType: 'refresh_creative', priority: 'high' },
+  BUDGET_UNDERUTILIZED: { title: 'Bütçeyi artır', reason: 'Mevcut bütçe tam kullanılmıyor', impact: 'Daha fazla gösterim ve tıklama', actionType: 'increase_budget', priority: 'medium' },
+  QUALITY_BELOW_AVERAGE: { title: 'Reklam kalitesini iyileştir', reason: 'Meta kalite puanı ortalamanın altında', impact: 'Daha düşük CPC ve daha iyi dağılım', actionType: 'refresh_creative', priority: 'medium' },
+  ADSET_IMBALANCE: { title: 'Reklam seti dağılımını dengele', reason: 'Reklam setleri arası performans dengesizliği', impact: 'Bütçe verimliliği artışı', actionType: 'duplicate', priority: 'low' },
+  SINGLE_ADSET_RISK: { title: 'Yeni reklam seti oluştur', reason: 'Tek reklam setiyle çalışmak riskli', impact: 'A/B test imkanı ve risk azaltma', actionType: 'duplicate', priority: 'medium' },
+  NO_DELIVERY: { title: 'Kampanyayı kontrol et', reason: 'Kampanya teslim yapmıyor — gösterim yok', impact: 'Teslimatın başlaması', actionType: 'pause', priority: 'high' },
+  IMPRESSION_SHARE_BUDGET_LOST: { title: 'Bütçeyi artır', reason: 'Bütçe yetersizliğinden gösterim payı kaybediliyor', impact: 'Gösterim payı artışı', actionType: 'increase_budget', priority: 'high' },
+  IMPRESSION_SHARE_RANK_LOST: { title: 'Ad Rank iyileştir', reason: 'Reklam sıralaması nedeniyle gösterim kaybı', impact: 'Daha iyi konum ve gösterim payı', actionType: 'increase_budget', priority: 'medium' },
+}
+
+function generateDeterministicResults(campaigns: DeepCampaignInsight[]) {
+  const summaries: AISummary[] = []
+  const actions: DeepAction[] = []
+  const drafts: DeepActionDraft[] = []
+  let actionIdx = 0
+
+  for (const c of campaigns) {
+    // Summary
+    const problemNames = c.problemTags.map(p => {
+      const labels: Record<string, string> = {
+        LOW_CTR: 'düşük CTR', HIGH_CPC: 'yüksek CPC', HIGH_CPA: 'yüksek CPA', LOW_ROAS: 'düşük ROAS',
+        HIGH_FREQUENCY: 'yüksek frequency', CRITICAL_FREQUENCY: 'kritik frequency',
+        BUDGET_UNDERUTILIZED: 'bütçe düşük kullanım', QUALITY_BELOW_AVERAGE: 'düşük kalite',
+        NO_DELIVERY: 'teslimat yok', ADSET_IMBALANCE: 'set dengesizliği', SINGLE_ADSET_RISK: 'tek set riski',
+        IMPRESSION_SHARE_BUDGET_LOST: 'bütçe kayıp', IMPRESSION_SHARE_RANK_LOST: 'sıra kayıp',
+      }
+      return labels[p.id] || p.id
+    })
+
+    summaries.push({
+      campaignId: c.id,
+      summary: c.problemTags.length > 0
+        ? `${c.problemTags.length} sorun: ${problemNames.join(', ')}. Harcama ₺${c.metrics.spend.toFixed(0)}, CTR ${(c.metrics.ctr * 100).toFixed(1)}%.`
+        : `Kampanya stabil. Harcama ₺${c.metrics.spend.toFixed(0)}, CTR ${(c.metrics.ctr * 100).toFixed(1)}%.`,
+      recommendation: c.problemTags.length > 0
+        ? PROBLEM_ACTIONS[c.problemTags[0].id]?.reason || 'Detaylı inceleme önerilir.'
+        : 'Performans izlenmeye devam edilebilir.',
+      confidence: c.score,
+      insightStatus: c.score < 30 ? 'review_needed' as const : c.score >= 70 ? 'monitoring' as const : 'review_needed' as const,
+    })
+
+    // Actions from problem tags
+    for (const tag of c.problemTags) {
+      const template = PROBLEM_ACTIONS[tag.id]
+      if (!template) continue
+      actionIdx++
+      actions.push({
+        id: `det_action_${actionIdx}`,
+        title: template.title,
+        reason: template.reason,
+        expectedImpact: template.impact,
+        requiresApproval: true,
+        priority: template.priority,
+        campaignName: c.campaignName,
+        campaignId: c.id,
+        platform: c.platform,
+        targetEntityType: 'campaign',
+        targetEntityId: c.id,
+        actionType: template.actionType,
+      })
+    }
+  }
+
+  // Generate drafts from top actions
+  for (const action of actions.slice(0, 5)) {
+    drafts.push({
+      id: `det_draft_${action.id}`,
+      title: action.title,
+      description: `${action.campaignName}: ${action.reason}`,
+      platform: action.platform,
+      campaign: action.campaignName,
+      campaignId: action.campaignId,
+      createdAt: 'Otomatik',
+      type: action.actionType.includes('budget') ? 'budget' as const
+        : action.actionType.includes('creative') ? 'creative' as const
+        : action.actionType.includes('pause') ? 'status' as const
+        : 'targeting' as const,
+      targetEntityType: action.targetEntityType,
+      targetEntityId: action.targetEntityId,
+    })
+  }
+
+  // Sort actions by priority
+  const priorityOrder = { high: 0, medium: 1, low: 2 }
+  actions.sort((a, b) => priorityOrder[a.priority] - priorityOrder[b.priority])
+
+  return { summaries, actions: actions.slice(0, 10), drafts, aiGenerated: false }
+}
+
 /* ── Main ── */
 export async function summarizeWithAI(campaigns: DeepCampaignInsight[]): Promise<{
   summaries: AISummary[]
@@ -172,22 +268,8 @@ export async function summarizeWithAI(campaigns: DeepCampaignInsight[]): Promise
   const aiContent = await callAI(userMessage)
 
   if (!aiContent) {
-    // Deterministic fallback — generate basic summaries from problem tags
-    const summaries: AISummary[] = campaigns.map(c => ({
-      campaignId: c.id,
-      summary: c.problemTags.length > 0
-        ? `${c.problemTags.length} sorun tespit edildi: ${c.problemTags.map(p => p.id).join(', ')}`
-        : 'Kampanya stabil görünüyor.',
-      recommendation: c.score < 50
-        ? 'Kampanya performansı düşük, detaylı inceleme önerilir.'
-        : 'Mevcut performans kabul edilebilir seviyede.',
-      confidence: c.score,
-      insightStatus: c.score < 30 ? 'review_needed' as const
-        : c.score >= 70 ? 'monitoring' as const
-        : 'review_needed' as const,
-    }))
-
-    return { summaries, actions: [], drafts: [], aiGenerated: false }
+    // Deterministic fallback — generate summaries + actions from problem tags
+    return generateDeterministicResults(campaigns)
   }
 
   try {
