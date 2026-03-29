@@ -173,7 +173,7 @@ export default function CompetitorDashboard() {
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
             <h3 className="text-sm font-semibold text-gray-900 mb-3">Reklam Profiliniz</h3>
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
+            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
               <div>
                 <p className="text-[10px] text-gray-400">Ort. CTR</p>
                 <p className="font-bold text-gray-900">%{userProfile.avgCtr.toFixed(2)}</p>
@@ -190,6 +190,39 @@ export default function CompetitorDashboard() {
                 <p className="text-[10px] text-gray-400">Platformlar</p>
                 <p className="font-bold text-gray-900">{userProfile.platforms.join(', ')}</p>
               </div>
+            </div>
+            {/* Structural parameters */}
+            <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
+              {userProfile.objectives.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Kampanya Amaçları</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.objectives.map(o => <span key={o} className="text-[9px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded">{o.replace('OUTCOME_', '')}</span>)}</div>
+                </div>
+              )}
+              {userProfile.destinations.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Dönüşüm Hedefleri</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.destinations.map(d => <span key={d} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{d}</span>)}</div>
+                </div>
+              )}
+              {userProfile.optimizationGoals.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Optimizasyon Hedefleri</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.optimizationGoals.map(g => <span key={g} className="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{g}</span>)}</div>
+                </div>
+              )}
+              {userProfile.biddingStrategies.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Teklif Stratejileri</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.biddingStrategies.map(b => <span key={b} className="text-[9px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded">{b}</span>)}</div>
+                </div>
+              )}
+              {userProfile.channelTypes.length > 0 && (
+                <div>
+                  <p className="text-[10px] text-gray-400 mb-1">Kanal Tipleri</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.channelTypes.map(c => <span key={c} className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">{c}</span>)}</div>
+                </div>
+              )}
             </div>
           </div>
 

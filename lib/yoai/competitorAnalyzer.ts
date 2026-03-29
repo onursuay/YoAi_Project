@@ -24,6 +24,12 @@ export interface UserAdProfile {
   avgCtr: number
   avgCpc: number
   totalSpend: number
+  // Structural parameters
+  objectives: string[]            // campaign objectives used
+  destinations: string[]          // conversion destinations used
+  optimizationGoals: string[]     // optimization goals used
+  biddingStrategies: string[]     // bidding strategies used
+  channelTypes: string[]          // Google channel types
 }
 
 export interface CompetitorAd {
@@ -72,6 +78,11 @@ export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile 
   const ctaTypes = new Set<string>()
   const formats = new Set<string>()
   const platforms = new Set<Platform>()
+  const objectives = new Set<string>()
+  const destinations = new Set<string>()
+  const optimizationGoals = new Set<string>()
+  const biddingStrategies = new Set<string>()
+  const channelTypes = new Set<string>()
   const allAds: { name: string; ctr: number; platform: Platform; spend: number }[] = []
 
   const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat', 'bugün', 'acele']
@@ -97,6 +108,13 @@ export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile 
     totalSpend += campaign.metrics.spend
     totalClicks += campaign.metrics.clicks
     totalImpressions += campaign.metrics.impressions
+
+    // Capture structural parameters
+    if (campaign.objective) objectives.add(campaign.objective)
+    if (campaign.triple?.destination) destinations.add(campaign.triple.destination)
+    if (campaign.triple?.optimizationGoal) optimizationGoals.add(campaign.triple.optimizationGoal)
+    if (campaign.biddingStrategy) biddingStrategies.add(campaign.biddingStrategy)
+    if (campaign.channelType) channelTypes.add(campaign.channelType)
 
     // Extract from campaign name
     extractWords(campaign.campaignName, stopWords).forEach(w => keywords.push(w))
@@ -157,6 +175,11 @@ export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile 
     avgCtr: totalImpressions > 0 ? (totalClicks / totalImpressions) * 100 : 0,
     avgCpc: totalClicks > 0 ? totalSpend / totalClicks : 0,
     totalSpend,
+    objectives: Array.from(objectives),
+    destinations: Array.from(destinations),
+    optimizationGoals: Array.from(optimizationGoals),
+    biddingStrategies: Array.from(biddingStrategies),
+    channelTypes: Array.from(channelTypes),
   }
 }
 

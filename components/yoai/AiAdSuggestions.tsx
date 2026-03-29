@@ -4,7 +4,6 @@ import { useState, useEffect } from 'react'
 import { Sparkles, Loader2, Inbox } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
-import type { CompetitorGap } from '@/lib/yoai/competitorAnalyzer'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -14,52 +13,73 @@ interface Props {
 
 export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Props) {
   const [proposals, setProposals] = useState<FullAdProposal[]>([])
-  const [gaps, setGaps] = useState<CompetitorGap[]>([])
-  const [competitorCount, setCompetitorCount] = useState(0)
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
+  const [competitorInfo, setCompetitorInfo] = useState<{ competitorCount: number; summary: string } | null>(null)
 
   useEffect(() => {
     if (connectedPlatforms.length === 0) { setLoading(false); return }
 
     // Try cache
     try {
-      const cached = sessionStorage.getItem('yoai_ad_suggestions_v2')
+      const cached = sessionStorage.getItem('yoai_ad_suggestions_v3')
       if (cached) {
         const data = JSON.parse(cached)
         if (Date.now() - data.ts < 15 * 60 * 1000) {
           setProposals(data.proposals || [])
-          setGaps(data.gaps || [])
-          setCompetitorCount(data.competitorCount || 0)
+          setCompetitorInfo(data.competitorInfo || null)
           setLoading(false)
           return
         }
       }
     } catch { /* ignore */ }
 
-    const platform = connectedPlatforms[0]
-    fetch('/api/yoai/generate-ad', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ platform }),
-    })
-      .then(r => r.json())
-      .then(json => {
-        if (json.ok && json.data) {
-          const p = json.data.proposals || []
-          const g = json.data.competitorAnalysis?.gaps || []
-          const c = json.data.competitorAnalysis?.competitorCount || 0
-          setProposals(p)
-          setGaps(g)
-          setCompetitorCount(c)
-          try { sessionStorage.setItem('yoai_ad_suggestions_v2', JSON.stringify({ proposals: p, gaps: g, competitorCount: c, ts: Date.now() })) } catch {}
-        } else {
-          setError(json.data?.error || json.error || 'Öneri oluşturulamadı')
-        }
+    // Generate for ALL connected platforms in parallel
+    const fetchAll = async () => {
+      const allProposals: FullAdProposal[] = []
+      let lastCompetitorInfo = null
+
+      const fetches = connectedPlatforms.map(async (platform) => {
+        try {
+          const res = await fetch('/api/yoai/generate-ad', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({ platform }),
+          })
+          const json = await res.json()
+          if (json.ok && json.data?.proposals?.length > 0) {
+            allProposals.push(...json.data.proposals)
+            if (json.data.competitorAnalysis) {
+              lastCompetitorInfo = json.data.competitorAnalysis
+            }
+          }
+        } catch { /* skip failed platform */ }
       })
-      .catch(() => setError('Bağlantı hatası'))
-      .finally(() => setLoading(false))
+
+      await Promise.all(fetches)
+
+      if (allProposals.length > 0) {
+        setProposals(allProposals)
+        setCompetitorInfo(lastCompetitorInfo)
+        try {
+          sessionStorage.setItem('yoai_ad_suggestions_v3', JSON.stringify({
+            proposals: allProposals,
+            competitorInfo: lastCompetitorInfo,
+            ts: Date.now(),
+          }))
+        } catch { /* storage full */ }
+      } else {
+        setError('Reklam önerisi üretilemedi')
+      }
+      setLoading(false)
+    }
+
+    fetchAll()
   }, [connectedPlatforms])
+
+  // Group by platform
+  const metaProposals = proposals.filter(p => p.platform === 'Meta')
+  const googleProposals = proposals.filter(p => p.platform === 'Google')
 
   return (
     <div>
@@ -67,9 +87,9 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         <div>
           <h2 className="text-lg font-semibold text-gray-900">AI Reklam Önerileri</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            {competitorCount > 0
-              ? `${competitorCount} rakip reklam analiz edildi → ${gaps.length} boşluk tespit edildi → Reklamlar oluşturuldu`
-              : 'Mevcut performans + rakip analizi ile oluşturuldu'}
+            {competitorInfo
+              ? `${competitorInfo.competitorCount} rakip analiz edildi → Reklamlar + rakip karşılaştırma ile oluşturuldu`
+              : 'Mevcut performans + platform bilgisi + rakip analizi ile oluşturuldu'}
           </p>
         </div>
         <button onClick={onOpenWizard} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-[11px] font-medium hover:bg-primary/90 transition-colors">
@@ -82,7 +102,11 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-3" />
           <p className="text-sm text-gray-500">AI reklam önerileri hazırlanıyor...</p>
-          <p className="text-xs text-gray-400 mt-1">Reklamlar analiz ediliyor → Rakipler aranıyor → Öneriler oluşturuluyor</p>
+          <p className="text-xs text-gray-400 mt-1">
+            {connectedPlatforms.length > 1
+              ? `${connectedPlatforms.join(' + ')} için öneriler oluşturuluyor`
+              : 'Reklamlar analiz ediliyor → Rakipler aranıyor → Öneriler üretiliyor'}
+          </p>
         </div>
       ) : error ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
@@ -92,13 +116,39 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       ) : proposals.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
           <Sparkles className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Reklam önerisi üretilemedi. AI servisini kontrol edin.</p>
+          <p className="text-sm text-gray-500">Reklam önerisi üretilemedi.</p>
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {proposals.map((p, i) => (
-            <AdPreviewCard key={p.id || i} proposal={p} selected={false} onSelect={onOpenWizard} />
-          ))}
+        <div className="space-y-6">
+          {/* Meta proposals */}
+          {metaProposals.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-blue-50 text-blue-700">Meta</span>
+                {metaProposals.length} öneri
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {metaProposals.map((p, i) => (
+                  <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+                ))}
+              </div>
+            </div>
+          )}
+
+          {/* Google proposals */}
+          {googleProposals.length > 0 && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-700">Google</span>
+                {googleProposals.length} öneri
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+                {googleProposals.map((p, i) => (
+                  <AdPreviewCard key={p.id || `google_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+                ))}
+              </div>
+            </div>
+          )}
         </div>
       )}
     </div>

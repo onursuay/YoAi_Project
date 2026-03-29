@@ -287,7 +287,7 @@ export default function YoAiPage() {
 
             <RecommendedActions actions={ccData?.actions ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
 
-            <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} />
+            <ApprovalFlowPreview drafts={ccData?.drafts ?? []} loading={ccLoading} onExecuteAction={handleExecuteAction} />
 
             {!ccLoading && ccData && (
               <AiAdSuggestions
