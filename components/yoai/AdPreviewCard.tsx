@@ -2,6 +2,7 @@
 
 import { Globe } from 'lucide-react'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
+import AdImageGenerator from './AdImageGenerator'
 
 interface Props {
   proposal: FullAdProposal
@@ -97,7 +98,7 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
               <div><p className="text-[11px] font-semibold text-gray-900">İşletmeniz</p><p className="text-[9px] text-gray-400">Sponsorlu</p></div>
             </div>
             <div className="px-3 pb-2 pt-1"><p className="text-sm text-gray-900 leading-relaxed">{proposal.primaryText}</p></div>
-            <div className="bg-blue-50/50 h-28 flex items-center justify-center"><span className="text-[10px] text-blue-300">Görsel alanı</span></div>
+            <AdImageGenerator prompt={proposal.primaryText || proposal.headline} aspectRatio="1:1" className="h-36 bg-blue-50/50" />
             <div className="flex items-center justify-between px-3 py-2 bg-blue-50/20">
               <div className="min-w-0">
                 <p className="text-sm font-semibold text-gray-900 truncate">{proposal.headline}</p>
