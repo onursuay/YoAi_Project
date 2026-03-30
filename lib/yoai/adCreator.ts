@@ -453,11 +453,10 @@ ${fitAnalyses.length} öneri bekleniyor.`
 }
 
 /* ── Call AI ── */
-async function callAI(system: string, user: string): Promise<string | null> {
+async function callAI(system: string, user: string): Promise<{ content: string | null; error?: string }> {
   const openaiKey = process.env.OPENAI_API_KEY
   if (!openaiKey) {
-    console.error('[AdCreator] OPENAI_API_KEY not set')
-    return null
+    return { content: null, error: 'OPENAI_API_KEY not set' }
   }
 
   try {
@@ -467,19 +466,23 @@ async function callAI(system: string, user: string): Promise<string | null> {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 16000, response_format: { type: 'json_object' } }),
-      signal: AbortSignal.timeout(50000),
+      signal: AbortSignal.timeout(55000),
     })
     if (res.ok) {
       const data = await res.json()
-      return data.choices?.[0]?.message?.content ?? null
+      const content = data.choices?.[0]?.message?.content ?? null
+      const finishReason = data.choices?.[0]?.finish_reason
+      if (!content) {
+        return { content: null, error: `OpenAI 200 OK but content=null, finish_reason=${finishReason}, usage=${JSON.stringify(data.usage)}` }
+      }
+      return { content }
     }
     const errBody = await res.text().catch(() => '')
-    console.error(`[AdCreator] OpenAI non-200: ${res.status} — ${errBody.slice(0, 300)}`)
+    return { content: null, error: `OpenAI ${res.status}: ${errBody.slice(0, 300)}` }
   } catch (e) {
-    console.error('[AdCreator] OpenAI error:', e)
+    const msg = e instanceof Error ? e.message : String(e)
+    return { content: null, error: `OpenAI exception: ${msg}` }
   }
-
-  return null
 }
 
 /* ── Main Entry ── */
@@ -509,9 +512,11 @@ export async function generateFullAutoProposals(
 
   // 3. Call AI to generate proposals based on fit analyses
   console.log(`[AdCreator] ${platform}: calling AI for ${fitAnalyses.length} campaigns...`)
-  const { system, user } = buildPrompt(platform, fitAnalyses, userProfile, comparison, competitorAds, structuralIssues)
-  const aiContent = await callAI(system, user)
-  console.log(`[AdCreator] ${platform}: AI returned ${aiContent ? aiContent.length : 0} chars`)
+  const { system, user: userPrompt } = buildPrompt(platform, fitAnalyses, userProfile, comparison, competitorAds, structuralIssues)
+  const aiResult = await callAI(system, userPrompt)
+  const aiContent = aiResult.content
+  const aiError = aiResult.error
+  console.log(`[AdCreator] ${platform}: AI returned ${aiContent ? aiContent.length : 0} chars${aiError ? `, error: ${aiError}` : ''}`)
 
   let proposals: FullAdProposal[] = []
   let aiGenerated = false
@@ -578,6 +583,7 @@ export async function generateFullAutoProposals(
       fitAnalysesCount: fitAnalyses.length,
       aiContentLength: aiContent ? aiContent.length : 0,
       aiContentPreview: aiContent ? aiContent.slice(0, 150) : 'NULL — AI returned nothing',
+      aiError: aiError || null,
       proposalsCount: proposals.length,
     },
   }
