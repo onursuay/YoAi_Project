@@ -138,7 +138,26 @@ export async function POST(request: Request) {
 
           // Auto-complete: generate ONLY for missing platforms, keep existing proposals
           console.log(`[GenerateAd] Auto-completing missing platforms: ${missingPlatforms.join(', ')}. Connected: [${actuallyConnected.join(', ')}], Persisted: [${[...persistedPlatforms].join(', ')}]`)
-          const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
+          let allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
+
+          // FALLBACK: if fresh fetch returned 0 campaigns for a missing platform,
+          // try command_center_data which may have campaigns from the daily cron run.
+          // This handles cases where fetchGoogleDeep() fails transiently but the
+          // daily run successfully fetched Google campaigns earlier.
+          if (run.command_center_data?.campaigns) {
+            const ccCampaigns = run.command_center_data.campaigns as any[]
+            for (const p of missingPlatforms) {
+              const freshCount = allCampaigns.filter((c: any) => c.platform === p).length
+              if (freshCount === 0) {
+                const fallback = ccCampaigns.filter((c: any) => c.platform === p)
+                if (fallback.length > 0) {
+                  console.log(`[GenerateAd] Fresh ${p} fetch returned 0 campaigns. Using ${fallback.length} campaigns from command_center_data as fallback.`)
+                  allCampaigns = [...allCampaigns, ...fallback]
+                }
+              }
+            }
+          }
+
           const { proposals: newProposals, fitAnalyses: newFitAnalyses } = await generateForPlatforms(missingPlatforms, allCampaigns)
 
           // Merge: existing persisted + newly generated
