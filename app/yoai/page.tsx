@@ -2,7 +2,7 @@
 
 import { useState, useRef, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import Topbar from '@/components/Topbar'
+import YoAlgoritmaHeader from '@/components/yoai/YoAlgoritmaHeader'
 import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 // HealthOverviewCards removed — stats moved into CommandCenterHeader
@@ -237,7 +237,8 @@ export default function YoAiPage() {
 
   return (
     <>
-      <Topbar title={t('title')} description={t('description')} />
+      {/* Custom header — no language selector, with recommendations ticker */}
+      <YoAlgoritmaHeader actions={ccData?.actions} />
       <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50">
         {isIdleWithNoMessages ? (
           <div className="max-w-6xl mx-auto px-6 py-6 space-y-8 pb-12">
