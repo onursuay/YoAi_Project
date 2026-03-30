@@ -454,38 +454,30 @@ ${fitAnalyses.length} öneri bekleniyor.`
 /* ── Call AI ── */
 async function callAI(system: string, user: string): Promise<string | null> {
   const openaiKey = process.env.OPENAI_API_KEY
-  if (openaiKey) {
-    try {
-      const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
-      const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-      const res = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
-        signal: AbortSignal.timeout(45000),
-      })
-      if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
-      const errBody = await res.text().catch(() => '')
-      console.error(`[AdCreator] OpenAI non-200: ${res.status} — ${errBody.slice(0, 200)}`)
-    } catch (e) { console.error('[AdCreator] OpenAI error:', e) }
+  if (!openaiKey) {
+    console.error('[AdCreator] OPENAI_API_KEY not set')
+    return null
   }
 
-  const claudeKey = process.env.ANTHROPIC_API_KEY
-  if (claudeKey) {
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] }),
-        signal: AbortSignal.timeout(45000),
-      })
-      if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
-      const errBody = await res.text().catch(() => '')
-      console.error(`[AdCreator] Claude non-200: ${res.status} — ${errBody.slice(0, 200)}`)
-    } catch (e) { console.error('[AdCreator] Claude error:', e) }
+  try {
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
+      signal: AbortSignal.timeout(50000),
+    })
+    if (res.ok) {
+      const data = await res.json()
+      return data.choices?.[0]?.message?.content ?? null
+    }
+    const errBody = await res.text().catch(() => '')
+    console.error(`[AdCreator] OpenAI non-200: ${res.status} — ${errBody.slice(0, 300)}`)
+  } catch (e) {
+    console.error('[AdCreator] OpenAI error:', e)
   }
 
-  console.error(`[AdCreator] All AI providers failed. Keys: OpenAI=${openaiKey ? 'set' : 'MISSING'}, Claude=${claudeKey ? 'set' : 'MISSING'}`)
   return null
 }
 
