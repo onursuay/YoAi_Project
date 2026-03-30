@@ -43,10 +43,10 @@ export default function DailyBriefing({ data, loading }: Props) {
   const priorities: { icon: React.ElementType; text: string; type: 'critical' | 'warning' | 'success' | 'info' }[] = []
 
   if (criticalCampaigns.length > 0) {
-    priorities.push({ icon: AlertTriangle, text: `${criticalCampaigns.length} kampanya kritik durumda — acil müdahale önerilir.`, type: 'critical' })
+    priorities.push({ icon: AlertTriangle, text: `${criticalCampaigns.length} kampanya kritik durumda, acil müdahale önerilir.`, type: 'critical' })
   }
   if (lowRoasCampaigns.length > 0) {
-    priorities.push({ icon: TrendingDown, text: `${lowRoasCampaigns.length} kampanyada ROAS 1x altında — harcama geri dönmüyor.`, type: 'warning' })
+    priorities.push({ icon: TrendingDown, text: `${lowRoasCampaigns.length} kampanyada ROAS 1x altında, harcama geri dönmüyor.`, type: 'warning' })
   }
   if (highPerformers > 0) {
     priorities.push({ icon: TrendingUp, text: `${highPerformers} kampanya yüksek performans gösteriyor.`, type: 'success' })
@@ -54,7 +54,7 @@ export default function DailyBriefing({ data, loading }: Props) {
   if (kpis.totalClicks > 0) {
     const convRate = (kpis.totalConversions / kpis.totalClicks) * 100
     if (convRate < 1) {
-      priorities.push({ icon: Target, text: `Dönüşüm oranı %${convRate.toFixed(2)} — landing page optimizasyonu değerlendirin.`, type: 'warning' })
+      priorities.push({ icon: Target, text: `Dönüşüm oranı %${convRate.toFixed(2)}, landing page optimizasyonu değerlendirin.`, type: 'warning' })
     }
   }
   if (actionCount > 0) {

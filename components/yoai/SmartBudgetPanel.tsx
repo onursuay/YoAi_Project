@@ -41,7 +41,7 @@ function computeBudgetSuggestions(campaigns: DeepCampaignInsight[]): BudgetSugge
       suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.7), reason: `Düşük performans (${score}/100)`, direction: 'decrease' })
     }
     if (roas != null && roas < 1 && c.metrics.spend > 100) {
-      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.6), reason: `ROAS ${roas.toFixed(1)}x — zarar`, direction: 'decrease' })
+      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.6), reason: `ROAS ${roas.toFixed(1)}x, zarar riski`, direction: 'decrease' })
     }
   }
 
@@ -62,45 +62,95 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
   const decreases = suggestions.filter(s => s.direction === 'decrease')
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      {/* Header */}
-      <div className="flex items-center justify-between mb-4">
-        <div>
-          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><Wallet className="w-4 h-4 text-primary" />Bütçe Dağılımı</h2>
-          <p className="text-[11px] text-gray-400 mt-0.5">Performansa dayalı bütçe optimizasyonu</p>
-        </div>
-        <div className="text-right">
-          <p className={`text-lg font-bold ${diff > 0 ? 'text-emerald-600' : diff < 0 ? 'text-red-600' : 'text-gray-600'}`}>
-            {diff > 0 ? '+' : ''}₺{diff.toFixed(0)}
-          </p>
-          <p className="text-[10px] text-gray-400">günlük fark</p>
-        </div>
-      </div>
-
-      {/* Suggestions */}
-      <div className="space-y-1.5">
-        {suggestions.map(sg => (
-          <div key={sg.campaignId + sg.direction} className="flex items-center gap-3 rounded-lg px-3 py-2 hover:bg-gray-50 transition-colors">
-            <span className={`text-[9px] font-semibold px-1.5 py-0.5 rounded shrink-0 ${sg.platform === 'Meta' ? 'bg-[#1877F2]/10 text-[#1877F2]' : 'bg-gray-100 text-gray-600'}`}>
-              {sg.platform}
-            </span>
-            <p className="text-[12px] text-gray-700 truncate flex-1">{sg.campaignName}</p>
-            <div className="flex items-center gap-1.5 shrink-0 text-[12px]">
-              <span className="text-gray-400">₺{sg.currentBudget}</span>
-              <ArrowRight className="w-3 h-3 text-gray-300" />
-              <span className={`font-semibold ${sg.direction === 'increase' ? 'text-emerald-600' : 'text-red-600'}`}>
-                ₺{sg.suggestedBudget}
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+      <div className="p-6">
+        {/* Header */}
+        <div className="flex items-start justify-between mb-5">
+          <div>
+            <h2 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+              <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/8">
+                <Wallet className="w-4 h-4 text-primary" />
               </span>
-            </div>
-            <TrendingUp className={`w-3.5 h-3.5 shrink-0 ${sg.direction === 'increase' ? 'text-emerald-400' : 'text-red-400 rotate-180'}`} />
+              Bütçe Dağılımı
+            </h2>
+            <p className="text-[11px] text-gray-400 mt-1 ml-9 tracking-wide">Performansa dayalı bütçe optimizasyonu</p>
           </div>
-        ))}
-      </div>
+          <div className="text-right">
+            <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
+              diff > 0 ? 'bg-emerald-50 text-emerald-700' : diff < 0 ? 'bg-rose-50 text-rose-700' : 'bg-gray-50 text-gray-600'
+            }`}>
+              {diff > 0 ? '+' : ''}₺{diff.toFixed(0)}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-1">günlük fark</p>
+          </div>
+        </div>
 
-      {/* Summary footer */}
-      <div className="flex items-center gap-4 mt-3 pt-3 border-t border-gray-50 text-[10px] text-gray-400">
-        {increases.length > 0 && <span className="text-emerald-600">{increases.length} artış önerisi</span>}
-        {decreases.length > 0 && <span className="text-red-600">{decreases.length} azalma önerisi</span>}
+        {/* Summary bar */}
+        <div className="bg-gray-50/80 rounded-xl px-4 py-3 mb-5 flex items-center gap-4">
+          {increases.length > 0 && (
+            <span className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
+              {increases.length} artış önerisi
+            </span>
+          )}
+          {decreases.length > 0 && (
+            <span className="flex items-center gap-1.5 text-[12px] font-medium text-rose-700">
+              <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
+              {decreases.length} azalma önerisi
+            </span>
+          )}
+          <span className="ml-auto text-[11px] text-gray-400">{suggestions.length} kampanya</span>
+        </div>
+
+        {/* Suggestion rows */}
+        <div className="space-y-2">
+          {suggestions.map(sg => {
+            const isIncrease = sg.direction === 'increase'
+            return (
+              <div
+                key={sg.campaignId + sg.direction}
+                className={`group flex items-center gap-3 rounded-xl px-4 py-3 border transition-all duration-200 ${
+                  isIncrease
+                    ? 'border-emerald-100/80 bg-emerald-50/30 hover:bg-emerald-50/60'
+                    : 'border-rose-100/80 bg-rose-50/20 hover:bg-rose-50/40'
+                }`}
+              >
+                {/* Platform badge */}
+                <span className={`text-[10px] font-semibold px-2 py-1 rounded-md shrink-0 tracking-wide ${
+                  sg.platform === 'Meta'
+                    ? 'bg-[#1877F2]/8 text-[#1877F2]/90'
+                    : 'bg-gray-100/80 text-gray-500'
+                }`}>
+                  {sg.platform}
+                </span>
+
+                {/* Campaign info */}
+                <div className="flex-1 min-w-0">
+                  <p className="text-[13px] font-medium text-gray-800 truncate leading-snug">{sg.campaignName}</p>
+                  <p className="text-[10px] text-gray-400 mt-0.5 leading-snug">{sg.reason}</p>
+                </div>
+
+                {/* Budget values */}
+                <div className="flex items-center gap-2 shrink-0">
+                  <span className="text-[12px] text-gray-400 tabular-nums">₺{sg.currentBudget}</span>
+                  <ArrowRight className="w-3 h-3 text-gray-300" />
+                  <span className={`text-[13px] font-semibold tabular-nums ${
+                    isIncrease ? 'text-emerald-700' : 'text-rose-700'
+                  }`}>
+                    ₺{sg.suggestedBudget}
+                  </span>
+                </div>
+
+                {/* Trend icon */}
+                <TrendingUp className={`w-3.5 h-3.5 shrink-0 transition-transform duration-200 ${
+                  isIncrease
+                    ? 'text-emerald-400 group-hover:translate-y-[-1px]'
+                    : 'text-rose-400 rotate-180 group-hover:translate-y-[1px]'
+                }`} />
+              </div>
+            )
+          })}
+        </div>
       </div>
     </div>
   )
