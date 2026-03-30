@@ -106,15 +106,18 @@ export async function upsertDailyRun(run: DailyRun): Promise<DailyRun | null> {
     // Don't create duplicate running
     if (existing.status === 'running' && run.status === 'running') return existing as DailyRun
 
+    // Only update fields that are provided (non-null) to avoid overwriting
+    const updatePayload: Record<string, any> = {
+      status: run.status,
+      error_message: run.error_message || null,
+      updated_at: now,
+    }
+    if (run.command_center_data != null) updatePayload.command_center_data = run.command_center_data
+    if (run.ad_proposals_data != null) updatePayload.ad_proposals_data = run.ad_proposals_data
+
     const { data, error } = await supabase
       .from('yoai_daily_runs')
-      .update({
-        status: run.status,
-        command_center_data: run.command_center_data,
-        ad_proposals_data: run.ad_proposals_data,
-        error_message: run.error_message || null,
-        updated_at: now,
-      })
+      .update(updatePayload)
       .eq('id', existing.id)
       .select()
       .single()
