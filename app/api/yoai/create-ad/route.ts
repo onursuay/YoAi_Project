@@ -19,7 +19,10 @@ export async function POST(request: Request) {
     }
 
     const cookieHeader = request.headers.get('cookie') || ''
-    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+    // Derive baseUrl from the incoming request to avoid localhost fallback on Vercel
+    const requestUrl = new URL(request.url)
+    const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || `${requestUrl.protocol}//${requestUrl.host}`
+    console.log(`[CreateAd] baseUrl: ${baseUrl}, platform: ${proposal.platform}`)
 
     if (proposal.platform === 'Google') {
       // Google: full campaign create (campaign + ad group + RSA)
