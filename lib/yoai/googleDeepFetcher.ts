@@ -94,25 +94,30 @@ export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: Dee
 
   let googleCtx
   try {
+    // 1) Try cookie-based context first (works in browser, includes DB backfill)
+    googleCtx = await getGoogleAdsContext()
+  } catch (e) {
+    // 2) Cookie-based failed (cron context or no session) — try DB lookup
     if (userId) {
-      // Headless/cron context: resolve from DB directly, no cookies needed
-      const { getConnection } = await import('@/lib/googleAdsConnectionStore')
-      const { getGoogleAdsAccessToken } = await import('@/lib/googleAdsAuth')
-      const dbCtx = await getConnection(userId)
-      if (!dbCtx?.refreshToken || !dbCtx?.customerId) {
+      try {
+        const { getConnection } = await import('@/lib/googleAdsConnectionStore')
+        const { getGoogleAdsAccessToken } = await import('@/lib/googleAdsAuth')
+        const dbCtx = await getConnection(userId)
+        if (dbCtx?.refreshToken && dbCtx?.customerId) {
+          const accessToken = await getGoogleAdsAccessToken(dbCtx.refreshToken)
+          googleCtx = { accessToken, customerId: dbCtx.customerId, loginCustomerId: dbCtx.loginCustomerId, locale: 'tr' }
+        }
+      } catch (dbErr) {
+        console.error('[GoogleDeepFetcher] DB fallback error:', dbErr)
+      }
+    }
+    if (!googleCtx) {
+      const err = e as { code?: string }
+      if (err?.code === 'google_ads_not_connected') {
         return { campaigns, errors: [], connected: false }
       }
-      const accessToken = await getGoogleAdsAccessToken(dbCtx.refreshToken)
-      googleCtx = { accessToken, customerId: dbCtx.customerId, loginCustomerId: dbCtx.loginCustomerId, locale: 'tr' }
-    } else {
-      googleCtx = await getGoogleAdsContext()
+      return { campaigns, errors: ['Google Ads bağlantı hatası'], connected: false }
     }
-  } catch (e) {
-    const err = e as { code?: string }
-    if (err?.code === 'google_ads_not_connected') {
-      return { campaigns, errors: [], connected: false }
-    }
-    return { campaigns, errors: ['Google Ads bağlantı hatası'], connected: false }
   }
 
   const now = new Date()

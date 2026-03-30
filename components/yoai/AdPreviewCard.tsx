@@ -2,7 +2,6 @@
 
 import { Globe } from 'lucide-react'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
-import AdImageGenerator from './AdImageGenerator'
 
 interface Props {
   proposal: FullAdProposal
@@ -86,7 +85,9 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
                 <div><p className="text-[10px] font-semibold text-gray-900">İşletmeniz</p><p className="text-[8px] text-gray-400">Sponsorlu</p></div>
               </div>
               <div className="px-3 py-2 flex-1"><p className="text-[12px] text-gray-900 leading-relaxed line-clamp-3">{proposal.primaryText}</p></div>
-              <AdImageGenerator prompt={proposal.primaryText || proposal.headline} aspectRatio="1:1" className="h-24 bg-gray-50" />
+              <div className="h-24 bg-gradient-to-br from-blue-50 to-indigo-50 flex items-center justify-center">
+                <img src="/ai-birf.jpg" alt="" className="w-full h-full object-cover" />
+              </div>
               <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
                 <div className="min-w-0">
                   <p className="text-[11px] font-semibold text-gray-900 truncate">{proposal.headline}</p>

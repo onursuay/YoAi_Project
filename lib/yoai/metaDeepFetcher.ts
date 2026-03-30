@@ -56,10 +56,11 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
-  let ctx: Awaited<ReturnType<typeof resolveMetaContext>> = null
+  // 1) Try cookie-based context first (works in browser)
+  let ctx = await resolveMetaContext()
 
-  if (userId) {
-    // Headless/cron context: resolve from DB directly, no cookies needed
+  // 2) Cookie-based failed — try DB lookup (cron context)
+  if (!ctx && userId) {
     try {
       const { getMetaConnection } = await import('@/lib/metaConnectionStore')
       const dbConn = await getMetaConnection(userId)
@@ -76,14 +77,12 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
         }
       }
     } catch (e) {
-      console.error('[MetaDeepFetcher] DB context error:', e)
+      console.error('[MetaDeepFetcher] DB fallback error:', e)
     }
-  } else {
-    ctx = await resolveMetaContext()
   }
 
   if (!ctx) {
-    return { campaigns, errors: userId ? [] : ['Meta bağlantısı bulunamadı'], connected: false }
+    return { campaigns, errors: ['Meta bağlantısı bulunamadı'], connected: false }
   }
 
   try {
@@ -96,7 +95,7 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
     const params: Record<string, string> = {
       fields: campaignFields,
       limit: String(MAX_CAMPAIGNS),
-      effective_status: '["ACTIVE","PAUSED","WITH_ISSUES"]',
+      effective_status: '["ACTIVE"]',
     }
 
     const response = await metaGraphFetch(
