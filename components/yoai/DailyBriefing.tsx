@@ -1,6 +1,6 @@
 'use client'
 
-import { Sun, AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap } from 'lucide-react'
+import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -16,94 +16,71 @@ export default function DailyBriefing({ data, loading }: Props) {
   const criticalCampaigns = campaigns.filter(c => c.riskLevel === 'critical' || c.riskLevel === 'high')
   const lowRoasCampaigns = campaigns.filter(c => c.metrics.roas != null && c.metrics.roas < 1 && c.metrics.spend > 100)
   const highPerformers = campaigns.filter(c => c.score >= 80).length
+  const actionCount = data.actions.length
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
 
-  // Build briefing items
-  const items: { icon: React.ElementType; color: string; text: string; type: 'info' | 'warning' | 'success' }[] = []
+  // Build prioritized items
+  const priorities: { icon: React.ElementType; text: string; type: 'critical' | 'warning' | 'success' | 'info' }[] = []
 
-  // Spending summary
-  items.push({
-    icon: DollarSign,
-    color: 'text-emerald-600',
-    text: `Son 7 günde toplam ₺${kpis.totalSpend.toFixed(0)} harcandı, ${kpis.totalConversions} dönüşüm elde edildi.`,
-    type: 'info',
-  })
-
-  // Critical alerts
   if (criticalCampaigns.length > 0) {
-    items.push({
-      icon: AlertTriangle,
-      color: 'text-red-600',
-      text: `${criticalCampaigns.length} kampanya kritik durumda — acil müdahale önerilir.`,
-      type: 'warning',
-    })
+    priorities.push({ icon: AlertTriangle, text: `${criticalCampaigns.length} kampanya kritik durumda — acil müdahale önerilir.`, type: 'critical' })
   }
-
-  // Low ROAS warning
   if (lowRoasCampaigns.length > 0) {
-    items.push({
-      icon: TrendingDown,
-      color: 'text-orange-600',
-      text: `${lowRoasCampaigns.length} kampanyada ROAS 1x altında — reklam harcaması geri dönmüyor.`,
-      type: 'warning',
-    })
+    priorities.push({ icon: TrendingDown, text: `${lowRoasCampaigns.length} kampanyada ROAS 1x altında — harcama geri dönmüyor.`, type: 'warning' })
   }
-
-  // High performers
   if (highPerformers > 0) {
-    items.push({
-      icon: TrendingUp,
-      color: 'text-emerald-600',
-      text: `${highPerformers} kampanya yüksek performans gösteriyor (80+ puan).`,
-      type: 'success',
-    })
+    priorities.push({ icon: TrendingUp, text: `${highPerformers} kampanya yüksek performans gösteriyor.`, type: 'success' })
   }
-
-  // Conversion rate
   if (kpis.totalClicks > 0) {
     const convRate = (kpis.totalConversions / kpis.totalClicks) * 100
     if (convRate < 1) {
-      items.push({
-        icon: Target,
-        color: 'text-amber-600',
-        text: `Dönüşüm oranı %${convRate.toFixed(2)} — sektör ortalamasının altında. Landing page optimizasyonu değerlendirin.`,
-        type: 'warning',
-      })
+      priorities.push({ icon: Target, text: `Dönüşüm oranı %${convRate.toFixed(2)} — landing page optimizasyonu değerlendirin.`, type: 'warning' })
     }
   }
-
-  // Action count
-  const actionCount = data.actions.length
   if (actionCount > 0) {
-    items.push({
-      icon: Zap,
-      color: 'text-primary',
-      text: `Bugün yapmanız önerilen ${actionCount} aksiyon var.`,
-      type: 'info',
-    })
+    priorities.push({ icon: Zap, text: `${actionCount} aksiyon önerisi mevcut.`, type: 'info' })
   }
 
-  if (items.length === 0) return null
+  if (priorities.length === 0) return null
+
+  const typeStyles = {
+    critical: 'border-l-red-500 bg-red-50/50',
+    warning: 'border-l-amber-500 bg-amber-50/50',
+    success: 'border-l-emerald-500 bg-emerald-50/50',
+    info: 'border-l-blue-500 bg-blue-50/50',
+  }
+  const iconStyles = {
+    critical: 'text-red-600',
+    warning: 'text-amber-600',
+    success: 'text-emerald-600',
+    info: 'text-blue-600',
+  }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-5">
-      <div className="flex items-center gap-2 mb-3">
-        <Sun className="w-5 h-5 text-amber-500" />
-        <div>
-          <h2 className="text-sm font-semibold text-gray-900">Günlük AI Brifing</h2>
-          <p className="text-[10px] text-gray-400">{today}</p>
-        </div>
+    <div className="bg-white rounded-2xl border border-gray-100 p-6">
+      {/* Header */}
+      <div className="mb-4">
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
+        <h2 className="text-base font-semibold text-gray-900 mt-0.5">Günlük Brifing</h2>
       </div>
 
+      {/* Executive summary */}
+      <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4">
+        <p className="text-sm text-gray-700 leading-relaxed">
+          Son 7 günde <strong className="text-gray-900">₺{kpis.totalSpend.toFixed(0)}</strong> harcanarak{' '}
+          <strong className="text-gray-900">{kpis.totalConversions}</strong> dönüşüm elde edildi.{' '}
+          {criticalCampaigns.length > 0 ? `${criticalCampaigns.length} kampanya dikkat gerektiriyor.` : 'Genel durum stabil.'}
+        </p>
+      </div>
+
+      {/* Priority items */}
       <div className="space-y-2">
-        {items.map((item, i) => {
+        {priorities.map((item, i) => {
           const Icon = item.icon
           return (
-            <div key={i} className={`flex items-start gap-2.5 rounded-lg px-3 py-2 ${
-              item.type === 'warning' ? 'bg-amber-50' : item.type === 'success' ? 'bg-emerald-50' : 'bg-gray-50'
-            }`}>
-              <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${item.color}`} />
-              <p className="text-xs text-gray-700 leading-relaxed">{item.text}</p>
+            <div key={i} className={`flex items-start gap-3 rounded-lg px-3 py-2.5 border-l-[3px] ${typeStyles[item.type]}`}>
+              <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconStyles[item.type]}`} />
+              <p className="text-[13px] text-gray-700 leading-relaxed">{item.text}</p>
             </div>
           )
         })}
