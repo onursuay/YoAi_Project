@@ -466,7 +466,7 @@ async function callAI(system: string, user: string): Promise<string | null> {
     const res = await fetch(`${baseUrl}/chat/completions`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-      body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
+      body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 16000, response_format: { type: 'json_object' } }),
       signal: AbortSignal.timeout(50000),
     })
     if (res.ok) {
