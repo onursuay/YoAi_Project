@@ -106,21 +106,24 @@ export async function POST(request: Request) {
             })
           }
 
-          // Partial data: check if other platform is connected and has campaigns
+          // Partial data: check if other platform is CONNECTED (not just has campaigns)
           const [metaResult, googleResult] = await fetchBothPlatforms()
-          console.log(`[GenerateAd] Checking missing platforms. Meta: ${metaResult.campaigns.length} campaigns, Google: ${googleResult.campaigns.length} campaigns`)
+          console.log(`[GenerateAd] Checking missing platforms. Meta: ${metaResult.campaigns.length} campaigns (connected: ${metaResult.connected}), Google: ${googleResult.campaigns.length} campaigns (connected: ${googleResult.connected})`)
 
-          const platformsWithCampaigns: Platform[] = []
-          if (metaResult.campaigns.length > 0) platformsWithCampaigns.push('Meta')
-          if (googleResult.campaigns.length > 0) platformsWithCampaigns.push('Google')
+          // Use CONNECTED flag, not campaign count.
+          // If Google is connected but returned 0 campaigns (transient error, API issue),
+          // we still want to detect it as "missing" and attempt generation.
+          const actuallyConnected: Platform[] = []
+          if (metaResult.connected) actuallyConnected.push('Meta')
+          if (googleResult.connected) actuallyConnected.push('Google')
 
-          const missingPlatforms = platformsWithCampaigns.filter(p => !persistedPlatforms.has(p))
+          const missingPlatforms = actuallyConnected.filter(p => !persistedPlatforms.has(p))
 
           if (missingPlatforms.length === 0) {
-            // No connected platform is missing — return persisted as-is
+            // All connected platforms already have proposals — return persisted as-is
             const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
             const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-            console.log(`[GenerateAd] No missing platforms. Returning persisted.`)
+            console.log(`[GenerateAd] No missing platforms. Connected: [${actuallyConnected.join(', ')}], Persisted: [${[...persistedPlatforms].join(', ')}]. Returning persisted.`)
             return NextResponse.json({
               ok: true,
               data: {
@@ -134,7 +137,7 @@ export async function POST(request: Request) {
           }
 
           // Auto-complete: generate ONLY for missing platforms, keep existing proposals
-          console.log(`[GenerateAd] Auto-completing missing platforms: ${missingPlatforms.join(', ')}`)
+          console.log(`[GenerateAd] Auto-completing missing platforms: ${missingPlatforms.join(', ')}. Connected: [${actuallyConnected.join(', ')}], Persisted: [${[...persistedPlatforms].join(', ')}]`)
           const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
           const { proposals: newProposals, fitAnalyses: newFitAnalyses } = await generateForPlatforms(missingPlatforms, allCampaigns)
 
@@ -188,10 +191,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Analiz edilecek kampanya bulunamadı' }, { status: 404 })
     }
 
+    // Use connected flag — generateFullAutoProposals handles 0 campaigns gracefully
     const effectivePlatforms: Platform[] = []
-    if (metaResult.campaigns.length > 0) effectivePlatforms.push('Meta')
-    if (googleResult.campaigns.length > 0) effectivePlatforms.push('Google')
-    console.log(`[GenerateAd] Effective platforms: ${effectivePlatforms.join(', ')}`)
+    if (metaResult.connected) effectivePlatforms.push('Meta')
+    if (googleResult.connected) effectivePlatforms.push('Google')
+    console.log(`[GenerateAd] Effective platforms: ${effectivePlatforms.join(', ')} (Meta: ${metaResult.campaigns.length} campaigns, Google: ${googleResult.campaigns.length} campaigns)`)
 
     const { proposals: allProposals, fitAnalyses: allFitAnalyses } = await generateForPlatforms(effectivePlatforms, allCampaigns)
 
