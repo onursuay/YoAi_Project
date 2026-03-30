@@ -451,41 +451,55 @@ ${fitAnalyses.length} öneri bekleniyor.`
   return { system, user }
 }
 
-/* ── Call AI ── */
+/* ── Call AI (with retry) ── */
 async function callAI(system: string, user: string): Promise<string | null> {
+  // Try OpenAI (with 1 retry)
   const openaiKey = process.env.OPENAI_API_KEY
   if (openaiKey) {
-    try {
-      const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
-      const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-      const res = await fetch(`${baseUrl}/chat/completions`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-        body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
-        signal: AbortSignal.timeout(60000),
-      })
-      if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
-      const errBody = await res.text().catch(() => '')
-      console.error(`[AdCreator] OpenAI non-200: ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
-    } catch (e) { console.error('[AdCreator] OpenAI error:', e) }
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+    const body = JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } })
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) { console.log('[AdCreator] OpenAI retry...'); await new Promise(r => setTimeout(r, 2000)) }
+        const res = await fetch(`${baseUrl}/chat/completions`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+          body,
+          signal: AbortSignal.timeout(60000),
+        })
+        if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
+        const errBody = await res.text().catch(() => '')
+        console.error(`[AdCreator] OpenAI non-200 (attempt ${attempt + 1}): ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
+        if (res.status !== 429 && res.status < 500) break // Don't retry client errors
+      } catch (e) { console.error(`[AdCreator] OpenAI error (attempt ${attempt + 1}):`, e) }
+    }
   }
 
+  // Fallback: Try Claude (with 1 retry)
   const claudeKey = process.env.ANTHROPIC_API_KEY
   if (claudeKey) {
-    try {
-      const res = await fetch('https://api.anthropic.com/v1/messages', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] }),
-        signal: AbortSignal.timeout(60000),
-      })
-      if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
-      const errBody = await res.text().catch(() => '')
-      console.error(`[AdCreator] Claude non-200: ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
-    } catch (e) { console.error('[AdCreator] Claude error:', e) }
+    const body = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] })
+
+    for (let attempt = 0; attempt < 2; attempt++) {
+      try {
+        if (attempt > 0) { console.log('[AdCreator] Claude retry...'); await new Promise(r => setTimeout(r, 2000)) }
+        const res = await fetch('https://api.anthropic.com/v1/messages', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
+          body,
+          signal: AbortSignal.timeout(60000),
+        })
+        if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
+        const errBody = await res.text().catch(() => '')
+        console.error(`[AdCreator] Claude non-200 (attempt ${attempt + 1}): ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
+        if (res.status !== 429 && res.status < 500) break
+      } catch (e) { console.error(`[AdCreator] Claude error (attempt ${attempt + 1}):`, e) }
+    }
   }
 
-  console.error('[AdCreator] All AI providers failed or no API keys configured')
+  console.error('[AdCreator] All AI providers failed or no API keys configured. OpenAI key: ' + (openaiKey ? 'set' : 'MISSING') + ', Claude key: ' + (claudeKey ? 'set' : 'MISSING'))
   return null
 }
 
@@ -526,38 +540,41 @@ export async function generateFullAutoProposals(
   if (aiContent) {
     try {
       const parsed = JSON.parse(aiContent)
-      console.log(`[AdCreator] ${platform}: parsed ${Array.isArray(parsed.proposals) ? parsed.proposals.length : 0} proposals`)
-      proposals = Array.isArray(parsed.proposals)
-        ? parsed.proposals.map((p: FullAdProposal, i: number) => {
-            // Derive impactLevel from the source campaign's fitScore
-            // Fallback: medium (if source not found, treat as moderate impact)
-            const sourceFit = fitAnalyses.find(fa => fa.campaignId === p.sourceCampaignId)
-            let impactLevel: 'critical' | 'high' | 'medium' | 'low' = 'medium'
-            if (sourceFit) {
-              const fs = sourceFit.fitScore
-              const wc = sourceFit.weaknesses?.length ?? 0
-              if (fs < 30 || wc >= 4) impactLevel = 'critical'
-              else if (fs < 50 || wc >= 3) impactLevel = 'high'
-              else if (fs < 70 || wc >= 1) impactLevel = 'medium'
-              else impactLevel = 'low'
-            }
+      const rawProposals = Array.isArray(parsed.proposals) ? parsed.proposals : []
+      console.log(`[AdCreator] ${platform}: parsed ${rawProposals.length} raw proposals`)
+      // Filter out null/undefined entries to prevent spread crash
+      proposals = rawProposals
+        .filter((p: any) => p != null && typeof p === 'object')
+        .map((p: FullAdProposal, i: number) => {
+          const sourceFit = fitAnalyses.find(fa => fa.campaignId === p.sourceCampaignId)
+          let impactLevel: 'critical' | 'high' | 'medium' | 'low' = 'medium'
+          if (sourceFit) {
+            const fs = sourceFit.fitScore
+            const wc = sourceFit.weaknesses?.length ?? 0
+            if (fs < 30 || wc >= 4) impactLevel = 'critical'
+            else if (fs < 50 || wc >= 3) impactLevel = 'high'
+            else if (fs < 70 || wc >= 1) impactLevel = 'medium'
+            else impactLevel = 'low'
+          }
 
-            return {
-              ...p,
-              id: p.id || `proposal_${i + 1}`,
-              platform,
-              proposalType: p.proposalType || 'optimization',
-              impactLevel,
-              isNewObjective: p.isNewObjective || false,
-              analyzedParameters: p.analyzedParameters || [],
-              suggestedChanges: p.suggestedChanges || [],
-            }
-          })
-        : []
+          return {
+            ...p,
+            id: p.id || `proposal_${platform.toLowerCase()}_${i + 1}`,
+            platform,
+            proposalType: p.proposalType || 'optimization',
+            impactLevel,
+            isNewObjective: p.isNewObjective || false,
+            analyzedParameters: p.analyzedParameters || [],
+            suggestedChanges: p.suggestedChanges || [],
+          }
+        })
       aiGenerated = true
+      console.log(`[AdCreator] ${platform}: ${proposals.length} valid proposals after filter`)
     } catch (e) {
-      console.error('[AdCreator] Parse error:', e)
+      console.error(`[AdCreator] ${platform} parse error:`, e, 'content preview:', aiContent?.slice(0, 200))
     }
+  } else {
+    console.error(`[AdCreator] ${platform}: AI returned null — no proposals generated`)
   }
 
   // 4. Build summary

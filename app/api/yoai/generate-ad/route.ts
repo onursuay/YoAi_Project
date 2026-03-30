@@ -160,6 +160,25 @@ export async function POST(request: Request) {
 
           const { proposals: newProposals, fitAnalyses: newFitAnalyses } = await generateForPlatforms(missingPlatforms, allCampaigns)
 
+          if (newProposals.length === 0) {
+            // AI generation failed for missing platforms — return persisted as-is
+            // DO NOT persist the failed result (avoid overwriting good data with bad counts)
+            console.error(`[GenerateAd] Auto-complete produced 0 proposals for ${missingPlatforms.join(', ')}. Returning persisted data unchanged.`)
+            const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
+            const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
+            return NextResponse.json({
+              ok: true,
+              data: {
+                proposals: persistedProposals,
+                fitAnalyses: persistedFitAnalyses,
+                summary: { ...(run.ad_proposals_data.summary || {}), metaCount, googleCount, proposalsGenerated: persistedProposals.length },
+              },
+              persisted: true,
+              run_date: run.run_date,
+              _debug: { autoCompleteAttempted: missingPlatforms, produced: 0 },
+            })
+          }
+
           // Merge: existing persisted + newly generated
           const mergedProposals = [...persistedProposals, ...newProposals]
           const mergedFitAnalyses = [...persistedFitAnalyses, ...newFitAnalyses]
