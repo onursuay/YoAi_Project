@@ -50,16 +50,10 @@ export async function POST(request: Request) {
         }
       }
 
-      // No persisted data and no forceGenerate — return empty
-      return NextResponse.json({
-        ok: true,
-        data: { proposals: [], fitAnalyses: [], summary: {} },
-        persisted: false,
-        message: 'Henüz günlük analiz oluşturulmadı.',
-      })
+      // No persisted data — fall through to live generation below
     }
 
-    // 2. Force generate (only from AdCreationWizard — explicit user action)
+    // 2. Live generation (when no persisted data exists or forceGenerate)
     const cookieHeader = request.headers.get('cookie') || ''
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
