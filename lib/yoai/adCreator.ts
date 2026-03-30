@@ -462,9 +462,11 @@ async function callAI(system: string, user: string): Promise<string | null> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
         body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(60000),
       })
       if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
+      const errBody = await res.text().catch(() => '')
+      console.error(`[AdCreator] OpenAI non-200: ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
     } catch (e) { console.error('[AdCreator] OpenAI error:', e) }
   }
 
@@ -475,12 +477,15 @@ async function callAI(system: string, user: string): Promise<string | null> {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
         body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] }),
-        signal: AbortSignal.timeout(45000),
+        signal: AbortSignal.timeout(60000),
       })
       if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
+      const errBody = await res.text().catch(() => '')
+      console.error(`[AdCreator] Claude non-200: ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
     } catch (e) { console.error('[AdCreator] Claude error:', e) }
   }
 
+  console.error('[AdCreator] All AI providers failed or no API keys configured')
   return null
 }
 
@@ -510,8 +515,10 @@ export async function generateFullAutoProposals(
   const fitAnalyses = activeCampaigns.map(analyzeCampaignFit)
 
   // 3. Call AI to generate proposals based on fit analyses
+  console.log(`[AdCreator] ${platform}: calling AI for ${fitAnalyses.length} campaigns...`)
   const { system, user } = buildPrompt(platform, fitAnalyses, userProfile, comparison, competitorAds, structuralIssues)
   const aiContent = await callAI(system, user)
+  console.log(`[AdCreator] ${platform}: AI returned ${aiContent ? aiContent.length : 0} chars`)
 
   let proposals: FullAdProposal[] = []
   let aiGenerated = false
@@ -519,6 +526,7 @@ export async function generateFullAutoProposals(
   if (aiContent) {
     try {
       const parsed = JSON.parse(aiContent)
+      console.log(`[AdCreator] ${platform}: parsed ${Array.isArray(parsed.proposals) ? parsed.proposals.length : 0} proposals`)
       proposals = Array.isArray(parsed.proposals)
         ? parsed.proposals.map((p: FullAdProposal, i: number) => {
             // Derive impactLevel from the source campaign's fitScore
