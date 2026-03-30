@@ -2,7 +2,6 @@
 
 import { useState, useRef, useCallback } from 'react'
 import ToggleSwitch from '@/components/ToggleSwitch'
-import CircularProgress from '@/components/CircularProgress'
 import { Edit } from 'lucide-react'
 import Link from 'next/link'
 import type { GoogleCampaign, GoogleAdGroup, GoogleAd } from '@/hooks/google/useGoogleAdsCampaigns'
@@ -226,20 +225,6 @@ export default function GoogleTableReal({
                           <span className={`inline-block px-2.5 py-0.5 text-xs font-medium rounded-full border ${pill}`}>
                             {label}
                           </span>
-                        </td>
-                      )
-                    }
-
-                    // ── Opt Score (campaigns only) ──────────────────────────
-                    if (col.key === 'optScore') {
-                      const campaign = item as GoogleCampaign
-                      return (
-                        <td key={col.key} className="px-4 py-4">
-                          {campaign.optScorePct != null ? (
-                            <CircularProgress percentage={campaign.optScorePct} />
-                          ) : (
-                            <span className="text-gray-400">—</span>
-                          )}
                         </td>
                       )
                     }

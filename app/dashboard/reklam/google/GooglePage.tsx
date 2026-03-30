@@ -158,7 +158,6 @@ export default function GooglePage() {
     if (activeTab === 'kampanyalar') {
       return [
         ...baseCols,
-        { key: 'optScore', label: tTable('table.optScore') },
         { key: 'campaign', label: tTable('table.campaign') },
         { key: 'budget', label: tTable('table.budget') },
         { key: 'spent', label: tTable('table.spent') },
