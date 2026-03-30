@@ -9,14 +9,16 @@ import type { Platform } from '@/lib/yoai/analysisTypes'
 interface Props {
   onClose: () => void
   connectedPlatforms: Platform[]
+  initialProposal?: FullAdProposal | null
 }
 
 type Step = 'platform' | 'generating' | 'preview' | 'publishing' | 'done'
 
-export default function AdCreationWizard({ onClose, connectedPlatforms }: Props) {
-  const [step, setStep] = useState<Step>('platform')
-  const [platform, setPlatform] = useState<Platform | null>(null)
-  const [proposals, setProposals] = useState<FullAdProposal[]>([])
+export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal }: Props) {
+  // If opened with a specific proposal, skip directly to preview
+  const [step, setStep] = useState<Step>(initialProposal ? 'preview' : 'platform')
+  const [platform, setPlatform] = useState<Platform | null>(initialProposal?.platform as Platform || null)
+  const [proposals, setProposals] = useState<FullAdProposal[]>(initialProposal ? [initialProposal] : [])
   const [selectedIndex, setSelectedIndex] = useState(0)
   const [error, setError] = useState<string | null>(null)
   const [competitorInfo, setCompetitorInfo] = useState<{ competitorCount: number; summary: string } | null>(null)

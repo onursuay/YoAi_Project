@@ -8,7 +8,7 @@ import type { Platform } from '@/lib/yoai/analysisTypes'
 
 interface Props {
   connectedPlatforms: Platform[]
-  onOpenWizard: () => void
+  onOpenWizard: (proposal?: FullAdProposal) => void
 }
 
 interface Summary {
@@ -138,7 +138,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
             <RefreshCw className={`w-3 h-3 ${regenerating ? 'animate-spin' : ''}`} />
             {regenerating ? 'Yenileniyor...' : 'Yeniden Oluştur'}
           </button>
-          <button onClick={onOpenWizard} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-[11px] font-medium hover:bg-primary/90 transition-colors">
+          <button onClick={() => onOpenWizard()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-[11px] font-medium hover:bg-primary/90 transition-colors">
             <Sparkles className="w-3 h-3" />
             Yeni Oluştur
           </button>
@@ -169,7 +169,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {metaProposals.map((p, i) => (
-              <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+              <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
             ))}
           </div>
         </div>
@@ -184,7 +184,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {googleProposals.map((p, i) => (
-              <AdPreviewCard key={p.id || `google_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+              <AdPreviewCard key={p.id || `google_${i}`} proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
             ))}
           </div>
         </div>

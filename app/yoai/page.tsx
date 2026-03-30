@@ -47,6 +47,7 @@ export default function YoAiPage() {
   // ── Action Execution State ──
   const [pendingAction, setPendingAction] = useState<ExecutableAction | null>(null)
   const [showAdWizard, setShowAdWizard] = useState(false)
+  const [wizardProposal, setWizardProposal] = useState<any>(null)
 
   const handleExecuteAction = useCallback((action: ExecutableAction) => {
     setPendingAction(action)
@@ -321,7 +322,7 @@ export default function YoAiPage() {
             {!ccLoading && ccData && (
               <AiAdSuggestions
                 connectedPlatforms={ccData.connectedPlatforms}
-                onOpenWizard={() => setShowAdWizard(true)}
+                onOpenWizard={(proposal) => { setWizardProposal(proposal || null); setShowAdWizard(true) }}
               />
             )}
 
@@ -386,8 +387,9 @@ export default function YoAiPage() {
       {/* Ad Creation Wizard */}
       {showAdWizard && (
         <AdCreationWizard
-          onClose={() => setShowAdWizard(false)}
+          onClose={() => { setShowAdWizard(false); setWizardProposal(null) }}
           connectedPlatforms={ccData?.connectedPlatforms ?? []}
+          initialProposal={wizardProposal}
         />
       )}
 
