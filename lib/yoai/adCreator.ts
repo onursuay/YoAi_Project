@@ -99,6 +99,7 @@ export interface AdCreationResult {
   }
   aiGenerated: boolean
   error?: string
+  _debug?: any
 }
 
 /* ── Platform Knowledge (inline — references docs/*.md) ── */
