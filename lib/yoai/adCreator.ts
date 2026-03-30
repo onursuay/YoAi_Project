@@ -507,64 +507,69 @@ export async function generateFullAutoProposals(
     }
   }
 
-  // 2. Limit to top 5 campaigns by spend (prevents AI timeout for large accounts)
-  const topCampaigns = activeCampaigns
-    .sort((a, b) => b.metrics.spend - a.metrics.spend)
-    .slice(0, 5)
+  // 2. Run deterministic fit analysis for each campaign
+  const fitAnalyses = activeCampaigns.map(analyzeCampaignFit)
 
-  // Run deterministic fit analysis for each campaign
-  const fitAnalyses = topCampaigns.map(analyzeCampaignFit)
-
-  // 3. Call AI to generate proposals based on fit analyses
-  console.log(`[AdCreator] ${platform}: calling AI for ${fitAnalyses.length} campaigns...`)
-  const { system, user: userPrompt } = buildPrompt(platform, fitAnalyses, userProfile, comparison, competitorAds, structuralIssues)
-  const aiResult = await callAI(system, userPrompt)
-  const aiContent = aiResult.content
-  const aiError = aiResult.error
-  console.log(`[AdCreator] ${platform}: AI returned ${aiContent ? aiContent.length : 0} chars${aiError ? `, error: ${aiError}` : ''}`)
-
+  // 3. Call AI in batches of 3 to avoid timeout (7 campaigns = 3+3+1 batches)
+  const BATCH_SIZE = 3
   let proposals: FullAdProposal[] = []
   let aiGenerated = false
+  let aiError: string | undefined
 
-  if (aiContent) {
-    try {
-      const parsed = JSON.parse(aiContent)
-      const rawProposals = Array.isArray(parsed.proposals) ? parsed.proposals : []
-      console.log(`[AdCreator] ${platform}: parsed ${rawProposals.length} raw proposals`)
-      // Filter out null/undefined entries to prevent spread crash
-      proposals = rawProposals
-        .filter((p: any) => p != null && typeof p === 'object')
-        .map((p: FullAdProposal, i: number) => {
-          const sourceFit = fitAnalyses.find(fa => fa.campaignId === p.sourceCampaignId)
-          let impactLevel: 'critical' | 'high' | 'medium' | 'low' = 'medium'
-          if (sourceFit) {
-            const fs = sourceFit.fitScore
-            const wc = sourceFit.weaknesses?.length ?? 0
-            if (fs < 30 || wc >= 4) impactLevel = 'critical'
-            else if (fs < 50 || wc >= 3) impactLevel = 'high'
-            else if (fs < 70 || wc >= 1) impactLevel = 'medium'
-            else impactLevel = 'low'
-          }
+  for (let batchStart = 0; batchStart < fitAnalyses.length; batchStart += BATCH_SIZE) {
+    const batch = fitAnalyses.slice(batchStart, batchStart + BATCH_SIZE)
+    const batchNum = Math.floor(batchStart / BATCH_SIZE) + 1
+    const totalBatches = Math.ceil(fitAnalyses.length / BATCH_SIZE)
 
-          return {
-            ...p,
-            id: p.id || `proposal_${platform.toLowerCase()}_${i + 1}`,
-            platform,
-            proposalType: p.proposalType || 'optimization',
-            impactLevel,
-            isNewObjective: p.isNewObjective || false,
-            analyzedParameters: p.analyzedParameters || [],
-            suggestedChanges: p.suggestedChanges || [],
-          }
-        })
-      aiGenerated = true
-      console.log(`[AdCreator] ${platform}: ${proposals.length} valid proposals after filter`)
-    } catch (e) {
-      console.error(`[AdCreator] ${platform} parse error:`, e, 'content preview:', aiContent?.slice(0, 200))
+    console.log(`[AdCreator] ${platform}: batch ${batchNum}/${totalBatches} — ${batch.length} campaigns`)
+    const { system, user: userPrompt } = buildPrompt(platform, batch, userProfile, comparison, competitorAds, structuralIssues)
+    const aiResult = await callAI(system, userPrompt)
+
+    if (aiResult.error) {
+      console.error(`[AdCreator] ${platform} batch ${batchNum} error: ${aiResult.error}`)
+      aiError = aiResult.error
+      continue // Skip failed batch, try next
     }
-  } else {
-    console.error(`[AdCreator] ${platform}: AI returned null — no proposals generated`)
+
+    if (aiResult.content) {
+      try {
+        const parsed = JSON.parse(aiResult.content)
+        const rawProposals = Array.isArray(parsed.proposals) ? parsed.proposals : []
+        const batchProposals = rawProposals
+          .filter((p: any) => p != null && typeof p === 'object')
+          .map((p: FullAdProposal, i: number) => {
+            const sourceFit = batch.find(fa => fa.campaignId === p.sourceCampaignId)
+            let impactLevel: 'critical' | 'high' | 'medium' | 'low' = 'medium'
+            if (sourceFit) {
+              const fs = sourceFit.fitScore
+              const wc = sourceFit.weaknesses?.length ?? 0
+              if (fs < 30 || wc >= 4) impactLevel = 'critical'
+              else if (fs < 50 || wc >= 3) impactLevel = 'high'
+              else if (fs < 70 || wc >= 1) impactLevel = 'medium'
+              else impactLevel = 'low'
+            }
+            return {
+              ...p,
+              id: p.id || `proposal_${platform.toLowerCase()}_${batchStart + i + 1}`,
+              platform,
+              proposalType: p.proposalType || 'optimization',
+              impactLevel,
+              isNewObjective: p.isNewObjective || false,
+              analyzedParameters: p.analyzedParameters || [],
+              suggestedChanges: p.suggestedChanges || [],
+            }
+          })
+        proposals.push(...batchProposals)
+        aiGenerated = true
+        console.log(`[AdCreator] ${platform} batch ${batchNum}: ${batchProposals.length} proposals`)
+      } catch (e) {
+        console.error(`[AdCreator] ${platform} batch ${batchNum} parse error:`, e)
+        aiError = `Parse error in batch ${batchNum}`
+      }
+    }
   }
+
+  console.log(`[AdCreator] ${platform}: total ${proposals.length} proposals from ${Math.ceil(fitAnalyses.length / BATCH_SIZE)} batches`)
 
   // 4. Build summary
   const criticalIssues = fitAnalyses.filter(fa => fa.fitScore < 40).length
