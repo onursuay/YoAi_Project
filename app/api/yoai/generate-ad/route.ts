@@ -53,19 +53,19 @@ export async function POST(request: Request) {
         Promise.resolve(runStructuralAnalysis(allCampaigns)),
       ])
 
-      const results = await Promise.all(
-        platforms.map(async (p) => {
-          try {
-            console.log(`[GenerateAd] Generating for ${p}...`)
-            const result = await generateFullAutoProposals(p, competitorAnalysis.userProfile, competitorAnalysis.comparison, competitorAnalysis.competitorAds, allCampaigns, structuralAnalysis.issues)
-            console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
-            return result
-          } catch (e) {
-            console.error(`[GenerateAd] ${p} failed:`, e)
-            return null
-          }
-        })
-      )
+      // Run SEQUENTIALLY to avoid API rate limits (parallel calls caused one to fail)
+      const results: (Awaited<ReturnType<typeof generateFullAutoProposals>> | null)[] = []
+      for (const p of platforms) {
+        try {
+          console.log(`[GenerateAd] Generating for ${p}...`)
+          const result = await generateFullAutoProposals(p, competitorAnalysis.userProfile, competitorAnalysis.comparison, competitorAnalysis.competitorAds, allCampaigns, structuralAnalysis.issues)
+          console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
+          results.push(result)
+        } catch (e) {
+          console.error(`[GenerateAd] ${p} failed:`, e)
+          results.push(null)
+        }
+      }
 
       const proposals: any[] = []
       const fitAnalyses: any[] = []
