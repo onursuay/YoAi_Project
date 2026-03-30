@@ -69,15 +69,15 @@ export async function GET(request: Request) {
         // Mark running
         await upsertDailyRun({ user_id: userId, run_date: today, status: 'running', command_center_data: null, ad_proposals_data: null })
 
-        // Run analysis
-        const commandCenterData = await runDeepAnalysis().catch(() => null)
+        // Run analysis — pass userId so fetchers can resolve credentials from DB (no cookies in cron)
+        const commandCenterData = await runDeepAnalysis(userId).catch(() => null)
 
         // Run proposals
         let adProposalsData: any = { proposals: [], fitAnalyses: [], summary: {} }
         try {
           const [metaResult, googleResult] = await Promise.all([
-            fetchMetaDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
-            fetchGoogleDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
+            fetchMetaDeep(userId).catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
+            fetchGoogleDeep(userId).catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
           ])
           const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
           if (allCampaigns.length > 0) {

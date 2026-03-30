@@ -52,13 +52,38 @@ function scoreToRisk(score: number): 'low' | 'medium' | 'high' | 'critical' {
 }
 
 /* ── Main Fetch ── */
-export async function fetchMetaDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
+export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
-  const ctx = await resolveMetaContext()
+  let ctx: Awaited<ReturnType<typeof resolveMetaContext>> = null
+
+  if (userId) {
+    // Headless/cron context: resolve from DB directly, no cookies needed
+    try {
+      const { getMetaConnection } = await import('@/lib/metaConnectionStore')
+      const dbConn = await getMetaConnection(userId)
+      if (dbConn?.accessToken && dbConn.selectedAdAccountId) {
+        const accountId = dbConn.selectedAdAccountId.startsWith('act_')
+          ? dbConn.selectedAdAccountId
+          : `act_${dbConn.selectedAdAccountId}`
+        ctx = {
+          client: null as any,
+          accountId,
+          fingerprintLast4: dbConn.accessToken.slice(-4),
+          userAccessToken: dbConn.accessToken,
+          source: 'db' as const,
+        }
+      }
+    } catch (e) {
+      console.error('[MetaDeepFetcher] DB context error:', e)
+    }
+  } else {
+    ctx = await resolveMetaContext()
+  }
+
   if (!ctx) {
-    return { campaigns, errors: ['Meta bağlantısı bulunamadı'], connected: false }
+    return { campaigns, errors: userId ? [] : ['Meta bağlantısı bulunamadı'], connected: false }
   }
 
   try {

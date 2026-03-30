@@ -88,13 +88,25 @@ type AdRow = {
 }
 
 /* ── Main Fetch ── */
-export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
+export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
   let googleCtx
   try {
-    googleCtx = await getGoogleAdsContext()
+    if (userId) {
+      // Headless/cron context: resolve from DB directly, no cookies needed
+      const { getConnection } = await import('@/lib/googleAdsConnectionStore')
+      const { getGoogleAdsAccessToken } = await import('@/lib/googleAdsAuth')
+      const dbCtx = await getConnection(userId)
+      if (!dbCtx?.refreshToken || !dbCtx?.customerId) {
+        return { campaigns, errors: [], connected: false }
+      }
+      const accessToken = await getGoogleAdsAccessToken(dbCtx.refreshToken)
+      googleCtx = { accessToken, customerId: dbCtx.customerId, loginCustomerId: dbCtx.loginCustomerId, locale: 'tr' }
+    } else {
+      googleCtx = await getGoogleAdsContext()
+    }
   } catch (e) {
     const err = e as { code?: string }
     if (err?.code === 'google_ads_not_connected') {

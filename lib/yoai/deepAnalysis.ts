@@ -73,17 +73,18 @@ function aggregateKpis(campaigns: DeepCampaignInsight[]): AggregatedKpis {
 }
 
 /* ── Main Orchestrator ── */
-export async function runDeepAnalysis(): Promise<DeepAnalysisResult> {
+export async function runDeepAnalysis(userId?: string): Promise<DeepAnalysisResult> {
   const errors: string[] = []
   const connectedPlatforms: Platform[] = []
 
   // 1. Fetch data from both platforms in parallel
+  // userId allows headless/cron context to bypass cookies
   const [metaResult, googleResult] = await Promise.all([
-    fetchMetaDeep().catch(e => {
+    fetchMetaDeep(userId).catch(e => {
       console.error('[DeepAnalysis] Meta fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Meta veri çekme hatası'], connected: false }
     }),
-    fetchGoogleDeep().catch(e => {
+    fetchGoogleDeep(userId).catch(e => {
       console.error('[DeepAnalysis] Google fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Google Ads veri çekme hatası'], connected: false }
     }),
