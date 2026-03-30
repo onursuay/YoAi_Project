@@ -77,20 +77,21 @@ export async function POST(request: Request) {
       return { proposals, fitAnalyses }
     }
 
-    // 1. Try persisted data (unless user explicitly forces regeneration)
+    // 1. Try persisted data ONLY if complete (both platforms have proposals)
     if (!forceGenerate && userId) {
       const run = await getBestAvailableRun(userId)
 
       if (run?.ad_proposals_data?.proposals) {
         const persistedProposals = run.ad_proposals_data.proposals as any[]
-        const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
 
         if (persistedProposals.length > 0) {
-          // Which platforms already have proposals in persisted data?
           const persistedPlatforms = new Set(persistedProposals.map((p: any) => p.platform as Platform))
 
-          // Fast path: if both platforms already covered, return immediately (no fetch)
+          // ONLY return persisted data if BOTH platforms are represented.
+          // If incomplete → fall through to full live generation.
+          // Auto-complete was unreliable — just regenerate everything.
           if (persistedPlatforms.has('Meta') && persistedPlatforms.has('Google')) {
+            const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
             const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
             const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
             console.log(`[GenerateAd] Persisted data complete (Meta: ${metaCount}, Google: ${googleCount}). Returning.`)
@@ -105,118 +106,9 @@ export async function POST(request: Request) {
               run_date: run.run_date,
             })
           }
-
-          // Partial data: check if other platform is CONNECTED (not just has campaigns)
-          const [metaResult, googleResult] = await fetchBothPlatforms()
-          console.log(`[GenerateAd] Checking missing platforms. Meta: ${metaResult.campaigns.length} campaigns (connected: ${metaResult.connected}), Google: ${googleResult.campaigns.length} campaigns (connected: ${googleResult.connected})`)
-
-          // Use CONNECTED flag, not campaign count.
-          // If Google is connected but returned 0 campaigns (transient error, API issue),
-          // we still want to detect it as "missing" and attempt generation.
-          const actuallyConnected: Platform[] = []
-          if (metaResult.connected) actuallyConnected.push('Meta')
-          if (googleResult.connected) actuallyConnected.push('Google')
-
-          const missingPlatforms = actuallyConnected.filter(p => !persistedPlatforms.has(p))
-
-          if (missingPlatforms.length === 0) {
-            // All connected platforms already have proposals — return persisted as-is
-            const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
-            const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-            console.log(`[GenerateAd] No missing platforms. Connected: [${actuallyConnected.join(', ')}], Persisted: [${[...persistedPlatforms].join(', ')}]. Returning persisted.`)
-            return NextResponse.json({
-              ok: true,
-              data: {
-                proposals: persistedProposals,
-                fitAnalyses: persistedFitAnalyses,
-                summary: { ...(run.ad_proposals_data.summary || {}), metaCount, googleCount, proposalsGenerated: persistedProposals.length },
-              },
-              persisted: true,
-              run_date: run.run_date,
-            })
-          }
-
-          // Auto-complete: generate ONLY for missing platforms, keep existing proposals
-          console.log(`[GenerateAd] Auto-completing missing platforms: ${missingPlatforms.join(', ')}. Connected: [${actuallyConnected.join(', ')}], Persisted: [${[...persistedPlatforms].join(', ')}]`)
-          let allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
-
-          // FALLBACK: if fresh fetch returned 0 campaigns for a missing platform,
-          // try command_center_data which may have campaigns from the daily cron run.
-          // This handles cases where fetchGoogleDeep() fails transiently but the
-          // daily run successfully fetched Google campaigns earlier.
-          if (run.command_center_data?.campaigns) {
-            const ccCampaigns = run.command_center_data.campaigns as any[]
-            for (const p of missingPlatforms) {
-              const freshCount = allCampaigns.filter((c: any) => c.platform === p).length
-              if (freshCount === 0) {
-                const fallback = ccCampaigns.filter((c: any) => c.platform === p)
-                if (fallback.length > 0) {
-                  console.log(`[GenerateAd] Fresh ${p} fetch returned 0 campaigns. Using ${fallback.length} campaigns from command_center_data as fallback.`)
-                  allCampaigns = [...allCampaigns, ...fallback]
-                }
-              }
-            }
-          }
-
-          const { proposals: newProposals, fitAnalyses: newFitAnalyses } = await generateForPlatforms(missingPlatforms, allCampaigns)
-
-          if (newProposals.length === 0) {
-            // AI generation failed for missing platforms — return persisted as-is
-            // DO NOT persist the failed result (avoid overwriting good data with bad counts)
-            console.error(`[GenerateAd] Auto-complete produced 0 proposals for ${missingPlatforms.join(', ')}. Returning persisted data unchanged.`)
-            const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
-            const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-            return NextResponse.json({
-              ok: true,
-              data: {
-                proposals: persistedProposals,
-                fitAnalyses: persistedFitAnalyses,
-                summary: { ...(run.ad_proposals_data.summary || {}), metaCount, googleCount, proposalsGenerated: persistedProposals.length },
-              },
-              persisted: true,
-              run_date: run.run_date,
-              _debug: { autoCompleteAttempted: missingPlatforms, produced: 0 },
-            })
-          }
-
-          // Merge: existing persisted + newly generated
-          const mergedProposals = [...persistedProposals, ...newProposals]
-          const mergedFitAnalyses = [...persistedFitAnalyses, ...newFitAnalyses]
-          const metaCount = mergedProposals.filter((p: any) => p.platform === 'Meta').length
-          const googleCount = mergedProposals.filter((p: any) => p.platform === 'Google').length
-          const mergedSummary = {
-            totalCampaignsAnalyzed: (run.ad_proposals_data.summary?.totalCampaignsAnalyzed || 0) + allCampaigns.filter((c: any) => missingPlatforms.includes(c.platform)).length,
-            criticalIssues: (run.ad_proposals_data.summary?.criticalIssues || 0),
-            opportunities: (run.ad_proposals_data.summary?.opportunities || 0),
-            proposalsGenerated: mergedProposals.length,
-            metaCount,
-            googleCount,
-          }
-
-          console.log(`[GenerateAd] Merged: ${mergedProposals.length} proposals (Meta: ${metaCount}, Google: ${googleCount})`)
-
-          // Persist merged data so next page load is instant
-          try {
-            await upsertDailyRun({
-              user_id: userId,
-              run_date: run.run_date,
-              status: 'completed',
-              command_center_data: null,
-              ad_proposals_data: { proposals: mergedProposals, fitAnalyses: mergedFitAnalyses, summary: mergedSummary },
-            })
-            console.log(`[GenerateAd] Persisted merged data (${mergedProposals.length} proposals)`)
-          } catch (e) {
-            console.error('[GenerateAd] Persist merge error:', e)
-          }
-
-          return NextResponse.json({
-            ok: true,
-            data: { proposals: mergedProposals, fitAnalyses: mergedFitAnalyses, summary: mergedSummary },
-            persisted: false,
-          })
+          // Incomplete persisted data → fall through to live generation
+          console.log(`[GenerateAd] Persisted data incomplete (platforms: ${[...persistedPlatforms].join(', ')}). Generating live.`)
         }
-        // Persisted data is empty → fall through to live generation
-        console.log(`[GenerateAd] Persisted data has 0 proposals. Generating live.`)
       }
     }
 
@@ -239,10 +131,11 @@ export async function POST(request: Request) {
 
     const metaCount = allProposals.filter((p: any) => p.platform === 'Meta').length
     const googleCount = allProposals.filter((p: any) => p.platform === 'Google').length
+    // totalCampaignsAnalyzed = only ACTIVE campaigns that were actually analyzed (from fitAnalyses)
     const totalSummary = {
-      totalCampaignsAnalyzed: allCampaigns.length,
-      criticalIssues: 0,
-      opportunities: 0,
+      totalCampaignsAnalyzed: allFitAnalyses.length,
+      criticalIssues: allFitAnalyses.filter((fa: any) => fa.fitScore < 40).length,
+      opportunities: allFitAnalyses.filter((fa: any) => fa.weaknesses?.length > 0).length,
       proposalsGenerated: allProposals.length,
       metaCount,
       googleCount,

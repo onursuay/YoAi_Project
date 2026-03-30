@@ -2,7 +2,7 @@
    Google Ads Deep Fetcher — hierarchical campaign+adgroup+ad data
    ────────────────────────────────────────────────────────── */
 
-import { getGoogleAdsContext, searchGAds } from '@/lib/googleAdsAuth'
+import { getGoogleAdsAccessToken, searchGAds } from '@/lib/googleAdsAuth'
 import { computeDerivedMetrics } from '@/lib/google-ads/helpers'
 import { runGoogleRuleEngine, type GoogleRuleContext } from './googleRuleEngine'
 import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, GoogleProblemTag } from './analysisTypes'
@@ -92,32 +92,53 @@ export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: Dee
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
+  // Resolve Google Ads credentials — same approach as working management endpoints.
+  // Bypass getGoogleAdsContext() which has proven unreliable in this context.
+  let refreshToken: string | undefined
+  let customerId: string | undefined
+  let loginCustomerId: string | undefined
+
+  // 1) Try cookies (browser context)
+  try {
+    const { cookies } = await import('next/headers')
+    const cookieStore = await cookies()
+    refreshToken = cookieStore.get('google_refresh_token')?.value
+    customerId = cookieStore.get('google_ads_customer_id')?.value
+    loginCustomerId = cookieStore.get('google_ads_login_customer_id')?.value
+    if (!userId) userId = cookieStore.get('session_id')?.value
+  } catch { /* cookies not available */ }
+
+  // 2) If no cookie credentials, try DB (cron context or cookie-less)
+  if (!refreshToken && userId) {
+    try {
+      const { getConnection } = await import('@/lib/googleAdsConnectionStore')
+      const dbCtx = await getConnection(userId)
+      if (dbCtx?.refreshToken && dbCtx?.customerId) {
+        refreshToken = dbCtx.refreshToken
+        customerId = dbCtx.customerId
+        loginCustomerId = dbCtx.loginCustomerId
+      }
+    } catch (e) {
+      console.error('[GoogleDeepFetcher] DB lookup error:', e)
+    }
+  }
+
+  if (!refreshToken || !customerId) {
+    return { campaigns, errors: [], connected: false }
+  }
+
   let googleCtx
   try {
-    // 1) Try cookie-based context first (works in browser, includes DB backfill)
-    googleCtx = await getGoogleAdsContext()
+    const accessToken = await getGoogleAdsAccessToken(refreshToken)
+    googleCtx = {
+      accessToken,
+      customerId: customerId.replace(/-/g, ''),
+      loginCustomerId: (loginCustomerId || customerId).replace(/-/g, ''),
+      locale: 'tr',
+    }
   } catch (e) {
-    // 2) Cookie-based failed (cron context or no session) — try DB lookup
-    if (userId) {
-      try {
-        const { getConnection } = await import('@/lib/googleAdsConnectionStore')
-        const { getGoogleAdsAccessToken } = await import('@/lib/googleAdsAuth')
-        const dbCtx = await getConnection(userId)
-        if (dbCtx?.refreshToken && dbCtx?.customerId) {
-          const accessToken = await getGoogleAdsAccessToken(dbCtx.refreshToken)
-          googleCtx = { accessToken, customerId: dbCtx.customerId, loginCustomerId: dbCtx.loginCustomerId, locale: 'tr' }
-        }
-      } catch (dbErr) {
-        console.error('[GoogleDeepFetcher] DB fallback error:', dbErr)
-      }
-    }
-    if (!googleCtx) {
-      const err = e as { code?: string }
-      if (err?.code === 'google_ads_not_connected') {
-        return { campaigns, errors: [], connected: false }
-      }
-      return { campaigns, errors: ['Google Ads bağlantı hatası'], connected: false }
-    }
+    console.error('[GoogleDeepFetcher] Token exchange error:', e)
+    return { campaigns, errors: ['Google Ads token hatası'], connected: false }
   }
 
   const now = new Date()
