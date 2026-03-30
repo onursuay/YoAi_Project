@@ -69,7 +69,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       return (b.confidence || 0) - (a.confidence || 0)
     })
 
-    console.log(`[AiAdSuggestions] Total proposals: ${allProposals.length}, persisted: ${wasPersisted}`)
+    console.log(`[AiAdSuggestions] Total proposals: ${allProposals.length}, persisted: ${wasPersisted}, Meta: ${allProposals.filter(p => p.platform === 'Meta').length}, Google: ${allProposals.filter(p => p.platform === 'Google').length}`)
 
     setProposals(allProposals)
     setSummary(totalSummary)
@@ -116,6 +116,11 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
     )
   }
 
+  const metaProposals = proposals.filter(p => p.platform === 'Meta')
+  const googleProposals = proposals.filter(p => p.platform === 'Google')
+  const newMetaCount = metaProposals.filter(p => p.isNewObjective).length
+  const newGoogleCount = googleProposals.filter(p => p.isNewObjective).length
+
   return (
     <div>
       {/* Header */}
@@ -155,12 +160,35 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         </div>
       </div>
 
-      {/* All proposals — horizontal cards, single column */}
-      <div className="space-y-4">
-        {proposals.map((p, i) => (
-          <AdPreviewCard key={p.id || `proposal_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
-        ))}
-      </div>
+      {/* Meta proposals */}
+      {metaProposals.length > 0 && (
+        <div className="mb-6">
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-bold text-white bg-[#1877F2] px-2.5 py-1 rounded">Meta</span>
+            <span className="text-[12px] text-gray-500">{metaProposals.length} öneri{newMetaCount > 0 ? ` (${newMetaCount} yeni amaç)` : ''}</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {metaProposals.map((p, i) => (
+              <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+            ))}
+          </div>
+        </div>
+      )}
+
+      {/* Google proposals */}
+      {googleProposals.length > 0 && (
+        <div>
+          <div className="flex items-center gap-2 mb-3">
+            <span className="text-[11px] font-bold text-white bg-gray-800 px-2.5 py-1 rounded">Google</span>
+            <span className="text-[12px] text-gray-500">{googleProposals.length} öneri{newGoogleCount > 0 ? ` (${newGoogleCount} yeni amaç)` : ''}</span>
+          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {googleProposals.map((p, i) => (
+              <AdPreviewCard key={p.id || `google_${i}`} proposal={p} selected={false} onSelect={onOpenWizard} />
+            ))}
+          </div>
+        </div>
+      )}
     </div>
   )
 }
