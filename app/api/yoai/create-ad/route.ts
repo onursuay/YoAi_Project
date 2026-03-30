@@ -90,6 +90,23 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'Kampanya ID alınamadı' }, { status: 422 })
       }
 
+      // Step 1.5 — Resolve pageId from capabilities
+      let resolvedPageId = ''
+      try {
+        const capRes = await fetch(`${baseUrl}/api/meta/capabilities`, {
+          method: 'GET',
+          headers: { Cookie: cookieHeader },
+        })
+        const capData = await capRes.json().catch(() => ({}))
+        const pages = capData.assets?.pages || []
+        if (pages.length > 0) {
+          resolvedPageId = pages[0].id
+        }
+        console.log(`[CreateAd] Resolved pageId: ${resolvedPageId || '(none)'} from ${pages.length} pages`)
+      } catch (e) {
+        console.warn('[CreateAd] Failed to resolve pageId from capabilities:', e)
+      }
+
       // Step 2 — Create Ad Set
       // Map destination type to conversion location
       const conversionLocationMap: Record<string, string> = {
@@ -102,15 +119,28 @@ export async function POST(request: Request) {
       }
       const conversionLocation = conversionLocationMap[proposal.destinationType || ''] || 'WEBSITE'
 
+      // Resolve optimization goal based on objective + destination
+      const objectiveGoalDefaults: Record<string, Record<string, string>> = {
+        OUTCOME_TRAFFIC: { WEBSITE: 'LINK_CLICKS', APP: 'LINK_CLICKS' },
+        OUTCOME_ENGAGEMENT: { ON_AD: 'POST_ENGAGEMENT', WEBSITE: 'LINK_CLICKS', MESSENGER: 'CONVERSATIONS', WHATSAPP: 'CONVERSATIONS' },
+        OUTCOME_AWARENESS: { WEBSITE: 'REACH' },
+        OUTCOME_LEADS: { ON_AD: 'LEAD_GENERATION', WEBSITE: 'OFFSITE_CONVERSIONS', MESSENGER: 'CONVERSATIONS', WHATSAPP: 'REPLIES' },
+        OUTCOME_SALES: { WEBSITE: 'OFFSITE_CONVERSIONS' },
+        OUTCOME_APP_PROMOTION: { APP: 'APP_INSTALLS' },
+      }
+      const objective = proposal.campaignObjective || 'OUTCOME_TRAFFIC'
+      const defaultGoal = objectiveGoalDefaults[objective]?.[conversionLocation] || 'LINK_CLICKS'
+      const optimizationGoal = proposal.optimizationGoal || defaultGoal
+
       const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
         body: JSON.stringify({
           campaignId,
           name: proposal.adsetName || `YoAi Reklam Seti`,
-          pageId: '', // Will be resolved from account
+          pageId: resolvedPageId,
           dailyBudget: proposal.dailyBudget || 35,
-          optimizationGoal: proposal.optimizationGoal || 'LINK_CLICKS',
+          optimizationGoal,
           conversionLocation,
           status: 'PAUSED',
           targeting: {
@@ -120,11 +150,19 @@ export async function POST(request: Request) {
       })
 
       const adsetData = await adsetRes.json().catch(() => ({}))
+      console.log('[CreateAd] adset response status:', adsetRes.status, 'body:', JSON.stringify(adsetData))
       if (!adsetRes.ok || adsetData.ok === false) {
+        // adsets/create returns error as object (Meta API error) or string
+        const metaErr = adsetData.error
+        const errMsg = adsetData.error_user_msg
+          || adsetData.message
+          || (typeof metaErr === 'object' && metaErr ? (metaErr.error_user_msg || metaErr.message || JSON.stringify(metaErr)) : metaErr)
+          || 'hata'
         return NextResponse.json({
           ok: false,
-          error: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti oluşturulamadı: ${adsetData.error_user_msg || adsetData.message || 'hata'}`,
+          error: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti oluşturulamadı: ${errMsg}`,
           campaignId,
+          _adsetDebug: adsetData,
         }, { status: 422 })
       }
 
@@ -138,7 +176,7 @@ export async function POST(request: Request) {
           body: JSON.stringify({
             name: proposal.adName || `YoAi Reklam`,
             adsetId,
-            pageId: '', // Will be resolved
+            pageId: resolvedPageId,
             objective: proposal.campaignObjective || 'OUTCOME_TRAFFIC',
             creative: {
               format: 'single_image',
