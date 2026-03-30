@@ -84,8 +84,16 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       // Merge all proposals into single list
       const allProposals = [...metaProposals, ...googleProposals]
 
-      // Sort: highest confidence first, then highest fitScore implication
-      allProposals.sort((a, b) => (b.confidence || 0) - (a.confidence || 0))
+      // Sort: 1) impact/proposalType desc (optimization > new_campaign)
+      //        2) confidence desc
+      //        3) equal = preserve original order (stable sort)
+      const impactOrder: Record<string, number> = { optimization: 0, new_campaign: 1 }
+      allProposals.sort((a, b) => {
+        const impactA = impactOrder[a.proposalType || 'optimization'] ?? 1
+        const impactB = impactOrder[b.proposalType || 'optimization'] ?? 1
+        if (impactA !== impactB) return impactA - impactB
+        return (b.confidence || 0) - (a.confidence || 0)
+      })
 
       // Log counts for debugging
       console.log(`[AiAdSuggestions] Meta: ${metaProposals.length}, Google: ${googleProposals.length}, Total: ${allProposals.length}`)
