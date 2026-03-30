@@ -251,15 +251,37 @@ export default function YoAiPage() {
               </div>
             )}
 
-            {/* No daily run yet — empty state */}
+            {/* No daily run yet — empty state with manual trigger */}
             {!ccLoading && !ccData && !ccError && (
               <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
                 <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz günlük analiz oluşturulmadı</h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
                   YoAi Algoritma Merkezi her gün saat 10:00'da otomatik olarak tüm reklamlarınızı analiz eder ve AI kampanya önerileri oluşturur.
-                  İlk analiz kısa süre içinde hazır olacaktır.
                 </p>
+                <button
+                  onClick={async () => {
+                    setCcLoading(true)
+                    try {
+                      const res = await fetch('/api/yoai/daily-run', { method: 'POST' })
+                      const json = await res.json()
+                      if (json.ok) {
+                        // Re-read persisted data
+                        await fetchCommandCenter()
+                      } else {
+                        setCcError(json.error || 'Analiz başlatılamadı')
+                        setCcLoading(false)
+                      }
+                    } catch {
+                      setCcError('Bağlantı hatası')
+                      setCcLoading(false)
+                    }
+                  }}
+                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  <Sparkles className="w-4 h-4" />
+                  İlk Analizi Başlat
+                </button>
               </div>
             )}
 
