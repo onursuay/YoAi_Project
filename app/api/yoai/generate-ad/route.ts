@@ -69,14 +69,14 @@ export async function POST(request: Request) {
 
       const proposals: any[] = []
       const fitAnalyses: any[] = []
-      const platformDebug: any[] = []
+      const debugInfo: any[] = []
       for (const r of results) {
         if (!r) continue
         proposals.push(...r.proposals)
         fitAnalyses.push(...r.fitAnalyses)
-        if ((r as any)._debug) platformDebug.push((r as any)._debug)
+        if ((r as any)._debug) debugInfo.push((r as any)._debug)
       }
-      return { proposals, fitAnalyses }
+      return { proposals, fitAnalyses, debugInfo }
     }
 
     // 1. Try persisted data ONLY if complete (both platforms have proposals)
@@ -129,7 +129,7 @@ export async function POST(request: Request) {
     if (googleResult.connected) effectivePlatforms.push('Google')
     console.log(`[GenerateAd] Effective platforms: ${effectivePlatforms.join(', ')} (Meta: ${metaResult.campaigns.length} campaigns, Google: ${googleResult.campaigns.length} campaigns)`)
 
-    const { proposals: allProposals, fitAnalyses: allFitAnalyses } = await generateForPlatforms(effectivePlatforms, allCampaigns)
+    const { proposals: allProposals, fitAnalyses: allFitAnalyses, debugInfo: platformDebug } = await generateForPlatforms(effectivePlatforms, allCampaigns)
 
     const metaCount = allProposals.filter((p: any) => p.platform === 'Meta').length
     const googleCount = allProposals.filter((p: any) => p.platform === 'Google').length
