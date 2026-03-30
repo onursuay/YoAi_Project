@@ -81,18 +81,20 @@ export async function runDeepAnalysis(): Promise<DeepAnalysisResult> {
   const [metaResult, googleResult] = await Promise.all([
     fetchMetaDeep().catch(e => {
       console.error('[DeepAnalysis] Meta fetch failed:', e)
-      return { campaigns: [] as DeepCampaignInsight[], errors: ['Meta veri çekme hatası'] }
+      return { campaigns: [] as DeepCampaignInsight[], errors: ['Meta veri çekme hatası'], connected: false }
     }),
     fetchGoogleDeep().catch(e => {
       console.error('[DeepAnalysis] Google fetch failed:', e)
-      return { campaigns: [] as DeepCampaignInsight[], errors: ['Google Ads veri çekme hatası'] }
+      return { campaigns: [] as DeepCampaignInsight[], errors: ['Google Ads veri çekme hatası'], connected: false }
     }),
   ])
 
   errors.push(...metaResult.errors, ...googleResult.errors)
 
-  if (metaResult.campaigns.length > 0) connectedPlatforms.push('Meta')
-  if (googleResult.campaigns.length > 0) connectedPlatforms.push('Google')
+  // Use connection status (has credentials), not campaign count.
+  // Old logic: campaigns.length > 0 → missed platforms with 0 active campaigns.
+  if (metaResult.connected) connectedPlatforms.push('Meta')
+  if (googleResult.connected) connectedPlatforms.push('Google')
 
   // 2. Combine campaigns, sort by spend
   const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]

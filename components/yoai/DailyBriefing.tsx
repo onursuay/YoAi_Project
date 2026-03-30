@@ -11,14 +11,23 @@ interface Props {
 
 export default function DailyBriefing({ data, loading }: Props) {
   const [revealed, setRevealed] = useState(false)
+  const [imageReady, setImageReady] = useState(false)
 
-  // Trigger reveal animation on mount
+  // Trigger reveal animation only after image is loaded
   useEffect(() => {
-    if (!loading && data) {
-      const timer = setTimeout(() => setRevealed(true), 100)
+    if (!loading && data && imageReady) {
+      const timer = setTimeout(() => setRevealed(true), 400)
       return () => clearTimeout(timer)
     }
-  }, [loading, data])
+  }, [loading, data, imageReady])
+
+  // Fallback: if image takes too long (>3s), reveal anyway
+  useEffect(() => {
+    if (!loading && data && !imageReady) {
+      const fallback = setTimeout(() => setImageReady(true), 3000)
+      return () => clearTimeout(fallback)
+    }
+  }, [loading, data, imageReady])
 
   if (loading || !data) return null
 
@@ -102,7 +111,7 @@ export default function DailyBriefing({ data, loading }: Props) {
 
       {/* Top layer: image overlay — slides up to reveal content */}
       <div
-        className="absolute inset-0 z-10 transition-transform ease-linear pointer-events-none"
+        className="absolute inset-0 z-10 bg-white transition-transform ease-linear pointer-events-none"
         style={{
           transform: revealed ? 'translateY(-100%)' : 'translateY(0)',
           transitionDuration: '600ms',
@@ -112,6 +121,8 @@ export default function DailyBriefing({ data, loading }: Props) {
           src="/ai-birf.jpg"
           alt=""
           className="w-full h-full object-cover rounded-2xl"
+          onLoad={() => setImageReady(true)}
+          onError={() => setImageReady(true)}
         />
       </div>
     </div>

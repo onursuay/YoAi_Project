@@ -76,8 +76,8 @@ export async function GET(request: Request) {
         let adProposalsData: any = { proposals: [], fitAnalyses: [], summary: {} }
         try {
           const [metaResult, googleResult] = await Promise.all([
-            fetchMetaDeep().catch(() => ({ campaigns: [], errors: [] })),
-            fetchGoogleDeep().catch(() => ({ campaigns: [], errors: [] })),
+            fetchMetaDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
+            fetchGoogleDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
           ])
           const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
           if (allCampaigns.length > 0) {
@@ -171,8 +171,8 @@ export async function POST(request: Request) {
     let adProposalsData: any = { metaProposals: [], googleProposals: [], summary: {} }
     try {
       const [metaResult, googleResult] = await Promise.all([
-        fetchMetaDeep().catch(() => ({ campaigns: [], errors: [] })),
-        fetchGoogleDeep().catch(() => ({ campaigns: [], errors: [] })),
+        fetchMetaDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
+        fetchGoogleDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
       ])
       const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
 

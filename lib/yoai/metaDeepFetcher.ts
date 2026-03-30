@@ -52,13 +52,13 @@ function scoreToRisk(score: number): 'low' | 'medium' | 'high' | 'critical' {
 }
 
 /* ── Main Fetch ── */
-export async function fetchMetaDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[] }> {
+export async function fetchMetaDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
   const ctx = await resolveMetaContext()
   if (!ctx) {
-    return { campaigns, errors: ['Meta bağlantısı bulunamadı'] }
+    return { campaigns, errors: ['Meta bağlantısı bulunamadı'], connected: false }
   }
 
   try {
@@ -82,7 +82,7 @@ export async function fetchMetaDeep(): Promise<{ campaigns: DeepCampaignInsight[
 
     if (!response.ok) {
       errors.push('Meta kampanya verisi alınamadı')
-      return { campaigns, errors }
+      return { campaigns, errors, connected: true }
     }
 
     const data = await response.json().catch(() => ({ data: [] }))
@@ -193,5 +193,5 @@ export async function fetchMetaDeep(): Promise<{ campaigns: DeepCampaignInsight[
   // Sort by spend descending
   campaigns.sort((a, b) => b.metrics.spend - a.metrics.spend)
 
-  return { campaigns, errors }
+  return { campaigns, errors, connected: true }
 }

@@ -88,7 +88,7 @@ type AdRow = {
 }
 
 /* ── Main Fetch ── */
-export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[] }> {
+export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
 
@@ -98,9 +98,9 @@ export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsigh
   } catch (e) {
     const err = e as { code?: string }
     if (err?.code === 'google_ads_not_connected') {
-      return { campaigns, errors: [] } // Not an error, just not connected
+      return { campaigns, errors: [], connected: false }
     }
-    return { campaigns, errors: ['Google Ads bağlantı hatası'] }
+    return { campaigns, errors: ['Google Ads bağlantı hatası'], connected: false }
   }
 
   const now = new Date()
@@ -176,7 +176,7 @@ export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsigh
 
     // 2. Fetch ad groups
     const campaignIds = Array.from(campaignMap.keys())
-    if (campaignIds.length === 0) return { campaigns, errors }
+    if (campaignIds.length === 0) return { campaigns, errors, connected: true }
 
     const adGroupQuery = `
       SELECT ad_group.id, ad_group.name, ad_group.status,
@@ -359,5 +359,5 @@ export async function fetchGoogleDeep(): Promise<{ campaigns: DeepCampaignInsigh
 
   campaigns.sort((a, b) => b.metrics.spend - a.metrics.spend)
 
-  return { campaigns, errors }
+  return { campaigns, errors, connected: true }
 }
