@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowRight, TrendingUp } from 'lucide-react'
+import { ArrowRight, TrendingUp, Wallet } from 'lucide-react'
 import type { DeepCampaignInsight } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -66,7 +66,7 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-base font-semibold text-gray-900">Bütçe Dağılımı</h2>
+          <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><Wallet className="w-4 h-4 text-primary" />Bütçe Dağılımı</h2>
           <p className="text-[11px] text-gray-400 mt-0.5">Performansa dayalı bütçe optimizasyonu</p>
         </div>
         <div className="text-right">

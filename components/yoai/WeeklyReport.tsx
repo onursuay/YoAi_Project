@@ -1,6 +1,6 @@
 'use client'
 
-import { TrendingUp, TrendingDown } from 'lucide-react'
+import { TrendingUp, TrendingDown, CalendarDays } from 'lucide-react'
 import type { DeepCampaignInsight, AggregatedKpis } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -33,7 +33,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-base font-semibold text-gray-900">Haftalık Özet</h2>
+        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><CalendarDays className="w-4 h-4 text-primary" />Haftalık Özet</h2>
         <p className="text-[11px] text-gray-400 mt-0.5">Son 7 günlük performans</p>
       </div>
 

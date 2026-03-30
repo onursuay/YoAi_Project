@@ -7,6 +7,7 @@ import {
   Palette,
   Wallet,
   Route,
+  Cpu,
 } from 'lucide-react'
 
 interface Capability {
@@ -66,7 +67,7 @@ export default function AnalysisCapabilities() {
   return (
     <div>
       <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900">AI Analiz Yetenekleri</h2>
+        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-1.5"><Cpu className="w-4 h-4 text-primary" />AI Analiz Yetenekleri</h2>
         <p className="text-xs text-gray-400 mt-0.5">
           YoAi&apos;nin kampanyalarınızı değerlendirmek için kullandığı analiz katmanları
         </p>

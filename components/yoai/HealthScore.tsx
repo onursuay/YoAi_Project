@@ -1,6 +1,6 @@
 'use client'
 
-import { ArrowUp } from 'lucide-react'
+import { ArrowUp, HeartPulse } from 'lucide-react'
 import type { DeepCampaignInsight, AggregatedKpis } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -112,7 +112,7 @@ export default function HealthScore({ campaigns, kpis, loading }: Props) {
       {/* Header — matches DailyBriefing language */}
       <div className="mb-5">
         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Hesap Durumu</p>
-        <h2 className="text-base font-semibold text-gray-900 mt-0.5">Sağlık Skoru</h2>
+        <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5"><HeartPulse className="w-4 h-4 text-primary" />Sağlık Skoru</h2>
       </div>
 
       {/* Score + Level hero area */}

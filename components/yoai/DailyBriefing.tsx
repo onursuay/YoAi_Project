@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap } from 'lucide-react'
+import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap, Newspaper } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -83,7 +83,7 @@ export default function DailyBriefing({ data, loading }: Props) {
         {/* Header */}
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
-          <h2 className="text-base font-semibold text-gray-900 mt-0.5">Günlük Brifing</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5"><Newspaper className="w-4 h-4 text-primary" />Günlük Brifing</h2>
         </div>
 
         {/* Executive summary */}

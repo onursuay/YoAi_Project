@@ -126,7 +126,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       {/* Header */}
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">AI Reklam Önerileri</h2>
+          <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-1.5"><Sparkles className="w-4 h-4 text-primary" />AI Reklam Önerileri</h2>
           <p className="text-xs text-gray-400 mt-0.5">Kampanya amacı bazlı derin analiz ve AI kampanya önerileri</p>
         </div>
         <div className="flex items-center gap-2">
