@@ -451,55 +451,41 @@ ${fitAnalyses.length} öneri bekleniyor.`
   return { system, user }
 }
 
-/* ── Call AI (with retry) ── */
+/* ── Call AI ── */
 async function callAI(system: string, user: string): Promise<string | null> {
-  // Try OpenAI (with 1 retry)
   const openaiKey = process.env.OPENAI_API_KEY
   if (openaiKey) {
-    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
-    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-    const body = JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } })
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) { console.log('[AdCreator] OpenAI retry...'); await new Promise(r => setTimeout(r, 2000)) }
-        const res = await fetch(`${baseUrl}/chat/completions`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
-          body,
-          signal: AbortSignal.timeout(60000),
-        })
-        if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
-        const errBody = await res.text().catch(() => '')
-        console.error(`[AdCreator] OpenAI non-200 (attempt ${attempt + 1}): ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
-        if (res.status !== 429 && res.status < 500) break // Don't retry client errors
-      } catch (e) { console.error(`[AdCreator] OpenAI error (attempt ${attempt + 1}):`, e) }
-    }
+    try {
+      const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+      const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+      const res = await fetch(`${baseUrl}/chat/completions`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+        body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 6000, response_format: { type: 'json_object' } }),
+        signal: AbortSignal.timeout(45000),
+      })
+      if (res.ok) { const data = await res.json(); return data.choices?.[0]?.message?.content ?? null }
+      const errBody = await res.text().catch(() => '')
+      console.error(`[AdCreator] OpenAI non-200: ${res.status} — ${errBody.slice(0, 200)}`)
+    } catch (e) { console.error('[AdCreator] OpenAI error:', e) }
   }
 
-  // Fallback: Try Claude (with 1 retry)
   const claudeKey = process.env.ANTHROPIC_API_KEY
   if (claudeKey) {
-    const body = JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] })
-
-    for (let attempt = 0; attempt < 2; attempt++) {
-      try {
-        if (attempt > 0) { console.log('[AdCreator] Claude retry...'); await new Promise(r => setTimeout(r, 2000)) }
-        const res = await fetch('https://api.anthropic.com/v1/messages', {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
-          body,
-          signal: AbortSignal.timeout(60000),
-        })
-        if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
-        const errBody = await res.text().catch(() => '')
-        console.error(`[AdCreator] Claude non-200 (attempt ${attempt + 1}): ${res.status} ${res.statusText} — ${errBody.slice(0, 300)}`)
-        if (res.status !== 429 && res.status < 500) break
-      } catch (e) { console.error(`[AdCreator] Claude error (attempt ${attempt + 1}):`, e) }
-    }
+    try {
+      const res = await fetch('https://api.anthropic.com/v1/messages', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', 'x-api-key': claudeKey, 'anthropic-version': '2023-06-01' },
+        body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 6000, system, messages: [{ role: 'user', content: user }] }),
+        signal: AbortSignal.timeout(45000),
+      })
+      if (res.ok) { const data = await res.json(); return data.content?.[0]?.text ?? null }
+      const errBody = await res.text().catch(() => '')
+      console.error(`[AdCreator] Claude non-200: ${res.status} — ${errBody.slice(0, 200)}`)
+    } catch (e) { console.error('[AdCreator] Claude error:', e) }
   }
 
-  console.error('[AdCreator] All AI providers failed or no API keys configured. OpenAI key: ' + (openaiKey ? 'set' : 'MISSING') + ', Claude key: ' + (claudeKey ? 'set' : 'MISSING'))
+  console.error(`[AdCreator] All AI providers failed. Keys: OpenAI=${openaiKey ? 'set' : 'MISSING'}, Claude=${claudeKey ? 'set' : 'MISSING'}`)
   return null
 }
 
