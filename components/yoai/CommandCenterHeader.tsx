@@ -38,7 +38,7 @@ export default function CommandCenterHeader({ health, lastAnalysis, loading, aiG
             <div className="yoai-icon-glow w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center relative overflow-hidden">
               <Activity className="w-4.5 h-4.5 text-primary relative z-10" />
             </div>
-            <h1 className="text-xl font-bold text-white tracking-tight">YoAi Algoritma Merkezi</h1>
+            <h1 className="text-xl font-bold text-white tracking-tight">YoAlgoritma Merkezi</h1>
           </div>
 
           <div className="flex items-center gap-2">

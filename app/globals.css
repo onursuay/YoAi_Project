@@ -476,7 +476,7 @@ table tbody tr {
   font-weight: 700;
 }
 
-/* YoAi Algoritma Merkezi icon — light sweep on icon shape */
+/* YoAlgoritma Merkezi icon — light sweep on icon shape */
 @keyframes yoai-icon-sweep {
   0% { transform: translateX(-150%) skewX(-20deg); opacity: 0; }
   20% { opacity: 1; }
