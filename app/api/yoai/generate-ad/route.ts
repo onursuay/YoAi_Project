@@ -11,8 +11,9 @@ export const dynamic = 'force-dynamic'
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/generate-ad
-   Reads persisted ad proposals from daily run.
-   Falls back to live generation only if no persisted data.
+   READ ONLY by default — reads persisted ad proposals.
+   Live generation ONLY with explicit forceGenerate: true
+   (used by AdCreationWizard, never by page load).
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {
@@ -23,7 +24,7 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'Platform gerekli (Meta veya Google)' }, { status: 400 })
     }
 
-    // 1. Try persisted data (unless force generate)
+    // 1. Read persisted data (default behavior — page load)
     if (!forceGenerate) {
       const { cookies } = await import('next/headers')
       const cookieStore = await cookies()
@@ -36,25 +37,29 @@ export async function POST(request: Request) {
           const allProposals = run.ad_proposals_data.proposals
           const platformProposals = allProposals.filter((p: any) => p.platform === platform)
 
-          if (platformProposals.length > 0) {
-            return NextResponse.json({
-              ok: true,
-              data: {
-                proposals: platformProposals,
-                fitAnalyses: (run.ad_proposals_data.fitAnalyses || []).filter((fa: any) => fa.platform === platform),
-                summary: run.ad_proposals_data.summary || {},
-              },
-              persisted: true,
-              run_date: run.run_date,
-            })
-          }
+          return NextResponse.json({
+            ok: true,
+            data: {
+              proposals: platformProposals,
+              fitAnalyses: (run.ad_proposals_data.fitAnalyses || []).filter((fa: any) => fa.platform === platform),
+              summary: run.ad_proposals_data.summary || {},
+            },
+            persisted: true,
+            run_date: run.run_date,
+          })
         }
       }
+
+      // No persisted data and no forceGenerate — return empty
+      return NextResponse.json({
+        ok: true,
+        data: { proposals: [], fitAnalyses: [], summary: {} },
+        persisted: false,
+        message: 'Henüz günlük analiz oluşturulmadı.',
+      })
     }
 
-    // 2. Fallback: live generation
-    console.log(`[GenerateAd] No persisted ${platform} proposals — running live generation`)
-
+    // 2. Force generate (only from AdCreationWizard — explicit user action)
     const cookieHeader = request.headers.get('cookie') || ''
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
@@ -82,7 +87,7 @@ export async function POST(request: Request) {
       structuralAnalysis.issues,
     )
 
-    return NextResponse.json({ ok: true, data: result, persisted: false })
+    return NextResponse.json({ ok: true, data: result, persisted: false, forceGenerated: true })
   } catch (error) {
     console.error('[Generate Ad] Error:', error)
     return NextResponse.json(

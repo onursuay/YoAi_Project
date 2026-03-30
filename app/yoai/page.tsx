@@ -79,6 +79,10 @@ export default function YoAiPage() {
       if (json.ok && json.data) {
         setCcData(json.data)
         setCcRunDate(json.run_date || null)
+      } else if (json.ok && !json.data) {
+        // No persisted run yet — show empty state (don't generate)
+        setCcData(null)
+        setCcRunDate(null)
       } else {
         setCcError('Veri alınamadı')
       }
@@ -244,6 +248,18 @@ export default function YoAiPage() {
                   <RefreshCcw className="w-3 h-3" />
                   Tekrar Dene
                 </button>
+              </div>
+            )}
+
+            {/* No daily run yet — empty state */}
+            {!ccLoading && !ccData && !ccError && (
+              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
+                <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-4" />
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz günlük analiz oluşturulmadı</h3>
+                <p className="text-sm text-gray-500 max-w-md mx-auto">
+                  YoAi Algoritma Merkezi her gün saat 10:00'da otomatik olarak tüm reklamlarınızı analiz eder ve AI kampanya önerileri oluşturur.
+                  İlk analiz kısa süre içinde hazır olacaktır.
+                </p>
               </div>
             )}
 

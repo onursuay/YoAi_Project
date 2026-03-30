@@ -14,12 +14,115 @@ import {
 } from '@/lib/yoai/dailyRunStore'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120 // allow up to 2 minutes for full analysis
+
+/* ────────────────────────────────────────────────────────────
+   GET /api/yoai/daily-run
+   Called by Vercel Cron (schedule: "0 7 * * *" = 10:00 Istanbul).
+   Runs daily analysis for all active users with connections.
+   ──────────────────────────────────────────────────────────── */
+export async function GET(request: Request) {
+  // Verify cron secret (Vercel sends Authorization: Bearer <CRON_SECRET>)
+  const authHeader = request.headers.get('authorization')
+  const cronSecret = process.env.CRON_SECRET
+  if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  try {
+    const { supabase } = await import('@/lib/supabase/client')
+    if (!supabase) {
+      return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 500 })
+    }
+
+    // Find all users with Meta or Google connections
+    const userIds = new Set<string>()
+
+    const { data: metaConns } = await supabase
+      .from('meta_connections')
+      .select('user_id')
+      .eq('status', 'active')
+
+    const { data: googleConns } = await supabase
+      .from('google_ads_connections')
+      .select('user_id')
+      .eq('status', 'active')
+
+    metaConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
+    googleConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
+
+    if (userIds.size === 0) {
+      return NextResponse.json({ ok: true, message: 'Aktif kullanıcı yok', users: 0 })
+    }
+
+    // Run for each user
+    const today = getTurkeyDate()
+    let completed = 0
+    let skipped = 0
+    let failed = 0
+
+    for (const userId of userIds) {
+      try {
+        if (await isTodayCompleted(userId)) { skipped++; continue }
+        if (await isRunning(userId)) { skipped++; continue }
+
+        // Mark running
+        await upsertDailyRun({ user_id: userId, run_date: today, status: 'running', command_center_data: null, ad_proposals_data: null })
+
+        // Run analysis
+        const commandCenterData = await runDeepAnalysis().catch(() => null)
+
+        // Run proposals
+        let adProposalsData: any = { proposals: [], fitAnalyses: [], summary: {} }
+        try {
+          const [metaResult, googleResult] = await Promise.all([
+            fetchMetaDeep().catch(() => ({ campaigns: [], errors: [] })),
+            fetchGoogleDeep().catch(() => ({ campaigns: [], errors: [] })),
+          ])
+          const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
+          if (allCampaigns.length > 0) {
+            const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
+            const competitorAnalysis = await runFullCompetitorAnalysis(allCampaigns, '', baseUrl).catch(() => ({
+              userProfile: { keywords: [], themes: [], ctaTypes: [], formats: [], platforms: [], topPerformingAds: [], weakAds: [], avgCtr: 0, avgCpc: 0, totalSpend: 0, objectives: [], destinations: [], optimizationGoals: [], biddingStrategies: [], channelTypes: [] },
+              competitorAds: [], comparison: { competitorThemes: [], competitorCTAs: [], competitorFormats: [], gaps: [], competitorSummary: '' }, errors: [],
+            }))
+            const structuralAnalysis = runStructuralAnalysis(allCampaigns)
+            const platforms = [...new Set(allCampaigns.map(c => c.platform))] as ('Meta' | 'Google')[]
+            const allProposals: any[] = []
+            const allFitAnalyses: any[] = []
+            const totalSummary = { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }
+            for (const platform of platforms) {
+              try {
+                const r = await generateFullAutoProposals(platform, competitorAnalysis.userProfile, competitorAnalysis.comparison, competitorAnalysis.competitorAds, allCampaigns, structuralAnalysis.issues)
+                allProposals.push(...r.proposals); allFitAnalyses.push(...r.fitAnalyses)
+                totalSummary.totalCampaignsAnalyzed += r.summary.totalCampaignsAnalyzed; totalSummary.criticalIssues += r.summary.criticalIssues
+                totalSummary.opportunities += r.summary.opportunities; totalSummary.proposalsGenerated += r.summary.proposalsGenerated
+                totalSummary.metaCount += r.summary.metaCount; totalSummary.googleCount += r.summary.googleCount
+              } catch {}
+            }
+            adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary }
+          }
+        } catch {}
+
+        await upsertDailyRun({ user_id: userId, run_date: today, status: 'completed', command_center_data: commandCenterData, ad_proposals_data: adProposalsData })
+        completed++
+      } catch (e) {
+        console.error(`[DailyRun] User ${userId} failed:`, e)
+        await upsertDailyRun({ user_id: userId, run_date: today, status: 'failed', command_center_data: null, ad_proposals_data: null, error_message: String(e) }).catch(() => {})
+        failed++
+      }
+    }
+
+    return NextResponse.json({ ok: true, message: 'Günlük analiz tamamlandı', date: today, users: userIds.size, completed, skipped, failed })
+  } catch (error) {
+    console.error('[DailyRun Cron] Error:', error)
+    return NextResponse.json({ ok: false, error: String(error) }, { status: 500 })
+  }
+}
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/daily-run
-   Scheduled daily analysis run.
-   Called by cron at 10:00 Europe/Istanbul or manually.
-   Produces command center data + ad proposals, persists to DB.
+   Manual trigger for a single user (from UI or testing).
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {

@@ -1,14 +1,12 @@
 import { NextResponse } from 'next/server'
-import { getBestAvailableRun, getTurkeyDate } from '@/lib/yoai/dailyRunStore'
-import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
+import { getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
 
 export const dynamic = 'force-dynamic'
 
 /* ────────────────────────────────────────────────────────────
    GET /api/yoai/command-center
-   Reads persisted daily run results.
-   Does NOT re-run analysis on every request.
-   Falls back to live analysis only if no persisted run exists.
+   READ ONLY — reads persisted daily run results.
+   NEVER runs live analysis. If no run exists, returns empty.
    ──────────────────────────────────────────────────────────── */
 export async function GET() {
   try {
@@ -20,7 +18,6 @@ export async function GET() {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
     }
 
-    // 1. Try to read persisted run
     const run = await getBestAvailableRun(userId)
 
     if (run && run.command_center_data) {
@@ -33,15 +30,15 @@ export async function GET() {
       }, { headers: { 'Cache-Control': 'no-store' } })
     }
 
-    // 2. Fallback: no persisted run exists yet — run live analysis once
-    // This happens only on first-ever use before any daily run has completed
-    console.log('[CommandCenter] No persisted run found — running live analysis as fallback')
-    const result = await runDeepAnalysis()
-
-    return NextResponse.json(
-      { ok: true, data: result, persisted: false, run_date: getTurkeyDate() },
-      { headers: { 'Cache-Control': 'no-store' } },
-    )
+    // No persisted run — return empty state (no live analysis)
+    return NextResponse.json({
+      ok: true,
+      data: null,
+      persisted: false,
+      run_date: null,
+      run_status: 'no_run',
+      message: 'Henüz günlük analiz oluşturulmadı. Analiz her gün 10:00\'da otomatik çalışır.',
+    }, { headers: { 'Cache-Control': 'no-store' } })
   } catch (error) {
     console.error('[Command Center] Error:', error)
     return NextResponse.json(
