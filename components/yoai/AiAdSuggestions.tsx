@@ -29,20 +29,6 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
   useEffect(() => {
     if (connectedPlatforms.length === 0) { setLoading(false); return }
 
-    // Cache
-    try {
-      const cached = sessionStorage.getItem('yoai_ad_suggestions_v6')
-      if (cached) {
-        const d = JSON.parse(cached)
-        if (Date.now() - d.ts < 15 * 60 * 1000) {
-          setProposals(d.proposals || [])
-          setSummary(d.summary || {})
-          setLoading(false)
-          return
-        }
-      }
-    } catch {}
-
     const fetchAll = async () => {
       const metaProposals: FullAdProposal[] = []
       const googleProposals: FullAdProposal[] = []
@@ -101,7 +87,6 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
 
       setProposals(allProposals)
       setSummary(totalSummary)
-      try { sessionStorage.setItem('yoai_ad_suggestions_v6', JSON.stringify({ proposals: allProposals, summary: totalSummary, ts: Date.now() })) } catch {}
       if (allProposals.length === 0) setError('AI kampanya önerisi üretilemedi')
       setLoading(false)
     }

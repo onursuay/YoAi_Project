@@ -58,26 +58,13 @@ export default function YoAiPage() {
     setPendingAction(null)
   }, [])
 
-  // ── Command Center Data (with sessionStorage cache) ──
-  const CACHE_KEY = 'yoai_cc_deep_cache'
-  const CACHE_TTL = 10 * 60 * 1000
-
+  // ── Command Center Data (reads persisted daily run — no re-analysis on refresh) ──
   const [ccData, setCcData] = useState<DeepAnalysisResult | null>(null)
   const [ccLoading, setCcLoading] = useState(true)
   const [ccError, setCcError] = useState<string | null>(null)
+  const [ccRunDate, setCcRunDate] = useState<string | null>(null)
 
   useEffect(() => {
-    try {
-      const raw = sessionStorage.getItem(CACHE_KEY)
-      if (raw) {
-        const cached = JSON.parse(raw) as { data: DeepAnalysisResult; ts: number }
-        if (Date.now() - cached.ts < CACHE_TTL) {
-          setCcData(cached.data)
-          setCcLoading(false)
-          return
-        }
-      }
-    } catch { /* ignore */ }
     fetchCommandCenter()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
@@ -91,9 +78,7 @@ export default function YoAiPage() {
       const json = await res.json()
       if (json.ok && json.data) {
         setCcData(json.data)
-        try {
-          sessionStorage.setItem(CACHE_KEY, JSON.stringify({ data: json.data, ts: Date.now() }))
-        } catch { /* storage full */ }
+        setCcRunDate(json.run_date || null)
       } else {
         setCcError('Veri alınamadı')
       }
@@ -305,13 +290,10 @@ export default function YoAiPage() {
 
             <AnalysisCapabilities />
 
-            {!ccLoading && (
-              <div className="flex justify-center pb-4">
-                <button onClick={fetchCommandCenter} className="inline-flex items-center gap-2 px-4 py-2 bg-white border border-gray-200 text-gray-600 rounded-xl text-sm hover:bg-gray-50 hover:border-gray-300 transition-all">
-                  <RefreshCcw className="w-4 h-4" />
-                  Analizi Yenile
-                </button>
-              </div>
+            {!ccLoading && ccRunDate && (
+              <p className="text-center text-[10px] text-gray-400 pb-4">
+                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 10:00'da otomatik güncellenir
+              </p>
             )}
           </div>
         ) : (
