@@ -55,17 +55,35 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
     if (!selected) return
     setStep('publishing')
 
+    console.log('[AdCreationWizard] Publishing proposal:', JSON.stringify({
+      platform: selected.platform,
+      campaignName: selected.campaignName,
+      hasHeadlines: !!selected.headlines?.length,
+      hasDescriptions: !!selected.descriptions?.length,
+      hasPrimaryText: !!selected.primaryText,
+      dailyBudget: selected.dailyBudget,
+      biddingStrategy: selected.biddingStrategy,
+      finalUrl: selected.finalUrl,
+    }))
+
     try {
       const res = await fetch('/api/yoai/create-ad', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ proposal: selected }),
       })
-      const json = await res.json()
+      const text = await res.text()
+      console.log(`[AdCreationWizard] Response status: ${res.status}, body: ${text.slice(0, 500)}`)
+
+      let json: any
+      try { json = JSON.parse(text) } catch { json = { ok: false, error: `Invalid JSON: ${text.slice(0, 200)}` } }
+
       setPublishResult({ ok: json.ok, message: json.message || json.error || 'İşlem tamamlandı' })
       setStep('done')
-    } catch {
-      setPublishResult({ ok: false, message: 'Bağlantı hatası' })
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.error('[AdCreationWizard] Fetch error:', msg)
+      setPublishResult({ ok: false, message: `Bağlantı hatası: ${msg}` })
       setStep('done')
     }
   }
