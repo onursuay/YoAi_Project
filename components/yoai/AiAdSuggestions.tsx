@@ -41,6 +41,16 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       })
       const json = await res.json()
 
+      // === DEBUG: Browser console'da görmek için ===
+      console.log('[AiAdSuggestions] API Response:', JSON.stringify({
+        ok: json.ok,
+        persisted: json.persisted,
+        proposalCount: json.data?.proposals?.length,
+        summary: json.data?.summary,
+        _debug: json._debug,
+        error: json.error,
+      }, null, 2))
+
       if (json.ok && json.data?.proposals) {
         allProposals = json.data.proposals as FullAdProposal[]
         totalSummary = json.data.summary || totalSummary

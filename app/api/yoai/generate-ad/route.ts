@@ -69,10 +69,12 @@ export async function POST(request: Request) {
 
       const proposals: any[] = []
       const fitAnalyses: any[] = []
+      const platformDebug: any[] = []
       for (const r of results) {
         if (!r) continue
         proposals.push(...r.proposals)
         fitAnalyses.push(...r.fitAnalyses)
+        if ((r as any)._debug) platformDebug.push((r as any)._debug)
       }
       return { proposals, fitAnalyses }
     }
@@ -163,6 +165,14 @@ export async function POST(request: Request) {
       ok: true,
       data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary },
       persisted: false,
+      _debug: {
+        metaCampaigns: metaResult.campaigns.length,
+        metaConnected: metaResult.connected,
+        googleCampaigns: googleResult.campaigns.length,
+        googleConnected: googleResult.connected,
+        effectivePlatforms,
+        platformResults: platformDebug,
+      },
     })
   } catch (error) {
     console.error('[Generate Ad] Error:', error)

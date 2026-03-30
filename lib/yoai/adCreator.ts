@@ -571,5 +571,13 @@ export async function generateFullAutoProposals(
       googleCount: platform === 'Google' ? proposals.length : 0,
     },
     aiGenerated,
+    _debug: {
+      platform,
+      activeCampaignsFound: activeCampaigns.length,
+      fitAnalysesCount: fitAnalyses.length,
+      aiContentLength: aiContent ? aiContent.length : 0,
+      aiContentPreview: aiContent ? aiContent.slice(0, 150) : 'NULL — AI returned nothing',
+      proposalsCount: proposals.length,
+    },
   }
 }
