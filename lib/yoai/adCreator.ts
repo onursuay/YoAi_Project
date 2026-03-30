@@ -466,7 +466,7 @@ async function callAI(system: string, user: string): Promise<{ content: string |
       method: 'POST',
       headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
       body: JSON.stringify({ model, messages: [{ role: 'system', content: system }, { role: 'user', content: user }], temperature: 0.6, max_tokens: 16000, response_format: { type: 'json_object' } }),
-      signal: AbortSignal.timeout(55000),
+      signal: AbortSignal.timeout(90000),
     })
     if (res.ok) {
       const data = await res.json()
@@ -507,8 +507,13 @@ export async function generateFullAutoProposals(
     }
   }
 
-  // 2. Run deterministic fit analysis for each campaign
-  const fitAnalyses = activeCampaigns.map(analyzeCampaignFit)
+  // 2. Limit to top 5 campaigns by spend (prevents AI timeout for large accounts)
+  const topCampaigns = activeCampaigns
+    .sort((a, b) => b.metrics.spend - a.metrics.spend)
+    .slice(0, 5)
+
+  // Run deterministic fit analysis for each campaign
+  const fitAnalyses = topCampaigns.map(analyzeCampaignFit)
 
   // 3. Call AI to generate proposals based on fit analyses
   console.log(`[AdCreator] ${platform}: calling AI for ${fitAnalyses.length} campaigns...`)
@@ -569,7 +574,7 @@ export async function generateFullAutoProposals(
     fitAnalyses,
     proposals,
     summary: {
-      totalCampaignsAnalyzed: fitAnalyses.length,
+      totalCampaignsAnalyzed: activeCampaigns.length,
       criticalIssues,
       opportunities,
       proposalsGenerated: proposals.length,
