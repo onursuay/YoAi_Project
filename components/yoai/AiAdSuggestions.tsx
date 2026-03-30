@@ -87,10 +87,11 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       // Sort: 1) impactLevel desc (critical > high > medium > low)
       //        2) confidence desc
       //        3) equal = preserve original order (stable sort)
+      // impactLevel is always set at generation (fallback: medium)
       const impactRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
       allProposals.sort((a, b) => {
-        const rankA = impactRank[a.impactLevel || 'medium'] ?? 2
-        const rankB = impactRank[b.impactLevel || 'medium'] ?? 2
+        const rankA = impactRank[a.impactLevel] ?? 2
+        const rankB = impactRank[b.impactLevel] ?? 2
         if (rankA !== rankB) return rankA - rankB
         return (b.confidence || 0) - (a.confidence || 0)
       })

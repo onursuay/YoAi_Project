@@ -522,14 +522,17 @@ export async function generateFullAutoProposals(
       proposals = Array.isArray(parsed.proposals)
         ? parsed.proposals.map((p: FullAdProposal, i: number) => {
             // Derive impactLevel from the source campaign's fitScore
+            // Fallback: medium (if source not found, treat as moderate impact)
             const sourceFit = fitAnalyses.find(fa => fa.campaignId === p.sourceCampaignId)
-            const fitScore = sourceFit?.fitScore ?? 70
-            const weaknessCount = sourceFit?.weaknesses?.length ?? 0
-            let impactLevel: 'critical' | 'high' | 'medium' | 'low'
-            if (fitScore < 30 || weaknessCount >= 4) impactLevel = 'critical'
-            else if (fitScore < 50 || weaknessCount >= 3) impactLevel = 'high'
-            else if (fitScore < 70 || weaknessCount >= 1) impactLevel = 'medium'
-            else impactLevel = 'low'
+            let impactLevel: 'critical' | 'high' | 'medium' | 'low' = 'medium'
+            if (sourceFit) {
+              const fs = sourceFit.fitScore
+              const wc = sourceFit.weaknesses?.length ?? 0
+              if (fs < 30 || wc >= 4) impactLevel = 'critical'
+              else if (fs < 50 || wc >= 3) impactLevel = 'high'
+              else if (fs < 70 || wc >= 1) impactLevel = 'medium'
+              else impactLevel = 'low'
+            }
 
             return {
               ...p,
