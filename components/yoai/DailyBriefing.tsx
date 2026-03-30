@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
@@ -9,6 +10,16 @@ interface Props {
 }
 
 export default function DailyBriefing({ data, loading }: Props) {
+  const [revealed, setRevealed] = useState(false)
+
+  // Trigger reveal animation on mount
+  useEffect(() => {
+    if (!loading && data) {
+      const timer = setTimeout(() => setRevealed(true), 100)
+      return () => clearTimeout(timer)
+    }
+  }, [loading, data])
+
   if (loading || !data) return null
 
   const { campaigns, kpis } = data
@@ -57,33 +68,51 @@ export default function DailyBriefing({ data, loading }: Props) {
   }
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6">
-      {/* Header */}
-      <div className="mb-4">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
-        <h2 className="text-base font-semibold text-gray-900 mt-0.5">Günlük Brifing</h2>
+    <div className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden">
+      {/* Bottom layer: actual content */}
+      <div className="p-6">
+        {/* Header */}
+        <div className="mb-4">
+          <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
+          <h2 className="text-base font-semibold text-gray-900 mt-0.5">Günlük Brifing</h2>
+        </div>
+
+        {/* Executive summary */}
+        <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4">
+          <p className="text-sm text-gray-700 leading-relaxed">
+            Son 7 günde <strong className="text-gray-900">₺{kpis.totalSpend.toFixed(0)}</strong> harcanarak{' '}
+            <strong className="text-gray-900">{kpis.totalConversions}</strong> dönüşüm elde edildi.{' '}
+            {criticalCampaigns.length > 0 ? `${criticalCampaigns.length} kampanya dikkat gerektiriyor.` : 'Genel durum stabil.'}
+          </p>
+        </div>
+
+        {/* Priority items */}
+        <div className="space-y-2">
+          {priorities.map((item, i) => {
+            const Icon = item.icon
+            return (
+              <div key={i} className={`flex items-start gap-3 rounded-lg px-3 py-2.5 border-l-[3px] ${typeStyles[item.type]}`}>
+                <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconStyles[item.type]}`} />
+                <p className="text-[13px] text-gray-700 leading-relaxed">{item.text}</p>
+              </div>
+            )
+          })}
+        </div>
       </div>
 
-      {/* Executive summary */}
-      <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4">
-        <p className="text-sm text-gray-700 leading-relaxed">
-          Son 7 günde <strong className="text-gray-900">₺{kpis.totalSpend.toFixed(0)}</strong> harcanarak{' '}
-          <strong className="text-gray-900">{kpis.totalConversions}</strong> dönüşüm elde edildi.{' '}
-          {criticalCampaigns.length > 0 ? `${criticalCampaigns.length} kampanya dikkat gerektiriyor.` : 'Genel durum stabil.'}
-        </p>
-      </div>
-
-      {/* Priority items */}
-      <div className="space-y-2">
-        {priorities.map((item, i) => {
-          const Icon = item.icon
-          return (
-            <div key={i} className={`flex items-start gap-3 rounded-lg px-3 py-2.5 border-l-[3px] ${typeStyles[item.type]}`}>
-              <Icon className={`w-4 h-4 mt-0.5 shrink-0 ${iconStyles[item.type]}`} />
-              <p className="text-[13px] text-gray-700 leading-relaxed">{item.text}</p>
-            </div>
-          )
-        })}
+      {/* Top layer: image overlay — slides up to reveal content */}
+      <div
+        className="absolute inset-0 z-10 transition-transform ease-linear pointer-events-none"
+        style={{
+          transform: revealed ? 'translateY(-100%)' : 'translateY(0)',
+          transitionDuration: '600ms',
+        }}
+      >
+        <img
+          src="/ai-birf.jpg"
+          alt=""
+          className="w-full h-full object-cover rounded-2xl"
+        />
       </div>
     </div>
   )
