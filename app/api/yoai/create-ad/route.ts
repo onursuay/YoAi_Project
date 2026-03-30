@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/create-ad
@@ -13,8 +14,8 @@ export async function POST(request: Request) {
     const body = await request.json()
     const { proposal } = body as { proposal: FullAdProposal }
 
-    if (!proposal?.platform || !proposal?.primaryText) {
-      return NextResponse.json({ ok: false, error: 'Geçersiz reklam önerisi' }, { status: 400 })
+    if (!proposal?.platform) {
+      return NextResponse.json({ ok: false, error: 'Geçersiz reklam önerisi — platform eksik' }, { status: 400 })
     }
 
     const cookieHeader = request.headers.get('cookie') || ''
