@@ -91,6 +91,17 @@ export async function POST(request: Request) {
       }
 
       // Step 2 — Create Ad Set
+      // Map destination type to conversion location
+      const conversionLocationMap: Record<string, string> = {
+        WEBSITE: 'WEBSITE',
+        ON_AD: 'ON_AD',
+        MESSAGING_INSTAGRAM_DIRECT_WHATSAPP: 'MESSENGER',
+        MESSAGING_MESSENGER_WHATSAPP: 'MESSENGER',
+        APP: 'APP',
+        PHONE_CALL: 'PHONE_CALL',
+      }
+      const conversionLocation = conversionLocationMap[proposal.destinationType || ''] || 'WEBSITE'
+
       const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
@@ -100,7 +111,7 @@ export async function POST(request: Request) {
           pageId: '', // Will be resolved from account
           dailyBudget: proposal.dailyBudget || 35,
           optimizationGoal: proposal.optimizationGoal || 'LINK_CLICKS',
-          conversionLocation: 'WEBSITE',
+          conversionLocation,
           status: 'PAUSED',
           targeting: {
             geo_locations: { countries: ['TR'] },
