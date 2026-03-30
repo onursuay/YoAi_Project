@@ -3,6 +3,7 @@ import { getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120
 
 /* ────────────────────────────────────────────────────────────
    GET /api/yoai/command-center

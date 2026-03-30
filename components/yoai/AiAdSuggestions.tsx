@@ -30,50 +30,27 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
     if (connectedPlatforms.length === 0) { setLoading(false); return }
 
     const fetchAll = async () => {
-      const metaProposals: FullAdProposal[] = []
-      const googleProposals: FullAdProposal[] = []
-      const totalSummary: Summary = { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }
+      let allProposals: FullAdProposal[] = []
+      let totalSummary: Summary = { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }
 
-      // Fetch EACH connected platform
-      await Promise.all(connectedPlatforms.map(async (platform) => {
-        try {
-          const res = await fetch('/api/yoai/generate-ad', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ platform }),
-          })
-          const json = await res.json()
+      // Single API call with all platforms
+      try {
+        const res = await fetch('/api/yoai/generate-ad', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ platforms: connectedPlatforms }),
+        })
+        const json = await res.json()
 
-          if (json.ok && json.data?.proposals) {
-            const platformProposals = json.data.proposals as FullAdProposal[]
-            // Ensure each proposal has correct platform tag
-            const tagged = platformProposals.map(p => ({ ...p, platform: platform as Platform }))
-
-            if (platform === 'Meta') metaProposals.push(...tagged)
-            else googleProposals.push(...tagged)
-
-            const s = json.data.summary
-            if (s) {
-              totalSummary.totalCampaignsAnalyzed += s.totalCampaignsAnalyzed || 0
-              totalSummary.criticalIssues += s.criticalIssues || 0
-              totalSummary.opportunities += s.opportunities || 0
-              totalSummary.proposalsGenerated += s.proposalsGenerated || 0
-              totalSummary.metaCount += s.metaCount || 0
-              totalSummary.googleCount += s.googleCount || 0
-            }
-          }
-        } catch (e) {
-          console.error(`[AiAdSuggestions] ${platform} fetch error:`, e)
+        if (json.ok && json.data?.proposals) {
+          allProposals = json.data.proposals as FullAdProposal[]
+          totalSummary = json.data.summary || totalSummary
         }
-      }))
+      } catch (e) {
+        console.error('[AiAdSuggestions] fetch error:', e)
+      }
 
-      // Merge all proposals into single list
-      const allProposals = [...metaProposals, ...googleProposals]
-
-      // Sort: 1) impactLevel desc (critical > high > medium > low)
-      //        2) confidence desc
-      //        3) equal = preserve original order (stable sort)
-      // impactLevel is always set at generation (fallback: medium)
+      // Sort: 1) impactLevel desc  2) confidence desc  3) stable order
       const impactRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
       allProposals.sort((a, b) => {
         const rankA = impactRank[a.impactLevel] ?? 2
@@ -82,8 +59,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         return (b.confidence || 0) - (a.confidence || 0)
       })
 
-      // Log counts for debugging
-      console.log(`[AiAdSuggestions] Meta: ${metaProposals.length}, Google: ${googleProposals.length}, Total: ${allProposals.length}`)
+      console.log(`[AiAdSuggestions] Total proposals: ${allProposals.length}`)
 
       setProposals(allProposals)
       setSummary(totalSummary)

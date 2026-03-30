@@ -8,23 +8,29 @@ import { getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 120
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/generate-ad
-   READ ONLY by default — reads persisted ad proposals.
-   Live generation ONLY with explicit forceGenerate: true
-   (used by AdCreationWizard, never by page load).
+   Accepts { platform } or { platforms: ["Meta","Google"] }.
+   Reads persisted → falls back to live generation.
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {
     const body = await request.json()
-    const { platform, forceGenerate } = body as { platform: Platform; forceGenerate?: boolean }
-
-    if (!platform || !['Meta', 'Google'].includes(platform)) {
-      return NextResponse.json({ ok: false, error: 'Platform gerekli (Meta veya Google)' }, { status: 400 })
+    const { platform, platforms, forceGenerate } = body as {
+      platform?: Platform
+      platforms?: Platform[]
+      forceGenerate?: boolean
     }
 
-    // 1. Read persisted data (default behavior — page load)
+    // Support both single platform and multi-platform
+    const targetPlatforms: Platform[] = platforms || (platform ? [platform] : [])
+    if (targetPlatforms.length === 0) {
+      return NextResponse.json({ ok: false, error: 'Platform gerekli' }, { status: 400 })
+    }
+
+    // 1. Try persisted data
     if (!forceGenerate) {
       const { cookies } = await import('next/headers')
       const cookieStore = await cookies()
@@ -35,25 +41,25 @@ export async function POST(request: Request) {
 
         if (run?.ad_proposals_data?.proposals) {
           const allProposals = run.ad_proposals_data.proposals
-          const platformProposals = allProposals.filter((p: any) => p.platform === platform)
+          const filtered = allProposals.filter((p: any) => targetPlatforms.includes(p.platform))
 
-          return NextResponse.json({
-            ok: true,
-            data: {
-              proposals: platformProposals,
-              fitAnalyses: (run.ad_proposals_data.fitAnalyses || []).filter((fa: any) => fa.platform === platform),
-              summary: run.ad_proposals_data.summary || {},
-            },
-            persisted: true,
-            run_date: run.run_date,
-          })
+          if (filtered.length > 0) {
+            return NextResponse.json({
+              ok: true,
+              data: {
+                proposals: filtered,
+                fitAnalyses: (run.ad_proposals_data.fitAnalyses || []).filter((fa: any) => targetPlatforms.includes(fa.platform)),
+                summary: run.ad_proposals_data.summary || {},
+              },
+              persisted: true,
+              run_date: run.run_date,
+            })
+          }
         }
       }
-
-      // No persisted data — fall through to live generation below
     }
 
-    // 2. Live generation (when no persisted data exists or forceGenerate)
+    // 2. Live generation
     const cookieHeader = request.headers.get('cookie') || ''
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
@@ -68,25 +74,41 @@ export async function POST(request: Request) {
     }
 
     const [competitorAnalysis, structuralAnalysis] = await Promise.all([
-      runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl),
+      runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl).catch(() => ({
+        userProfile: { keywords: [], themes: [], ctaTypes: [], formats: [], platforms: [], topPerformingAds: [], weakAds: [], avgCtr: 0, avgCpc: 0, totalSpend: 0, objectives: [], destinations: [], optimizationGoals: [], biddingStrategies: [], channelTypes: [] },
+        competitorAds: [], comparison: { competitorThemes: [], competitorCTAs: [], competitorFormats: [], gaps: [], competitorSummary: '' }, errors: [],
+      })),
       Promise.resolve(runStructuralAnalysis(allCampaigns)),
     ])
 
-    const result = await generateFullAutoProposals(
-      platform,
-      competitorAnalysis.userProfile,
-      competitorAnalysis.comparison,
-      competitorAnalysis.competitorAds,
-      allCampaigns,
-      structuralAnalysis.issues,
-    )
+    // Generate for ALL target platforms in one call
+    const allProposals: any[] = []
+    const allFitAnalyses: any[] = []
+    const totalSummary = { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }
 
-    return NextResponse.json({ ok: true, data: result, persisted: false, forceGenerated: true })
+    for (const p of targetPlatforms) {
+      try {
+        const result = await generateFullAutoProposals(p, competitorAnalysis.userProfile, competitorAnalysis.comparison, competitorAnalysis.competitorAds, allCampaigns, structuralAnalysis.issues)
+        allProposals.push(...result.proposals)
+        allFitAnalyses.push(...result.fitAnalyses)
+        totalSummary.totalCampaignsAnalyzed += result.summary.totalCampaignsAnalyzed
+        totalSummary.criticalIssues += result.summary.criticalIssues
+        totalSummary.opportunities += result.summary.opportunities
+        totalSummary.proposalsGenerated += result.summary.proposalsGenerated
+        totalSummary.metaCount += result.summary.metaCount
+        totalSummary.googleCount += result.summary.googleCount
+      } catch (e) {
+        console.error(`[GenerateAd] ${p} failed:`, e)
+      }
+    }
+
+    return NextResponse.json({
+      ok: true,
+      data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary },
+      persisted: false,
+    })
   } catch (error) {
     console.error('[Generate Ad] Error:', error)
-    return NextResponse.json(
-      { ok: false, error: error instanceof Error ? error.message : 'Bilinmeyen hata' },
-      { status: 500 },
-    )
+    return NextResponse.json({ ok: false, error: error instanceof Error ? error.message : 'Bilinmeyen hata' }, { status: 500 })
   }
 }
