@@ -141,6 +141,7 @@ export async function POST(request: Request) {
           pageId: resolvedPageId,
           dailyBudget: proposal.dailyBudget || 35,
           optimizationGoal,
+          billingEvent: 'IMPRESSIONS',
           conversionLocation,
           status: 'PAUSED',
           targeting: {
