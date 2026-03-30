@@ -79,6 +79,7 @@ export interface FullAdProposal {
   competitorInsight: string   // what competitors do differently
   expectedPerformance: string // expected CTR, CPC
   confidence: number          // 0-100
+  impactLevel: 'critical' | 'high' | 'medium' | 'low' // real impact based on source campaign health
   isNewObjective: boolean
   // What was analyzed to produce this
   analyzedParameters: string[] // list of parameters that were considered
@@ -519,15 +520,28 @@ export async function generateFullAutoProposals(
     try {
       const parsed = JSON.parse(aiContent)
       proposals = Array.isArray(parsed.proposals)
-        ? parsed.proposals.map((p: FullAdProposal, i: number) => ({
-            ...p,
-            id: p.id || `proposal_${i + 1}`,
-            platform,
-            proposalType: p.proposalType || 'optimization',
-            isNewObjective: p.isNewObjective || false,
-            analyzedParameters: p.analyzedParameters || [],
-            suggestedChanges: p.suggestedChanges || [],
-          }))
+        ? parsed.proposals.map((p: FullAdProposal, i: number) => {
+            // Derive impactLevel from the source campaign's fitScore
+            const sourceFit = fitAnalyses.find(fa => fa.campaignId === p.sourceCampaignId)
+            const fitScore = sourceFit?.fitScore ?? 70
+            const weaknessCount = sourceFit?.weaknesses?.length ?? 0
+            let impactLevel: 'critical' | 'high' | 'medium' | 'low'
+            if (fitScore < 30 || weaknessCount >= 4) impactLevel = 'critical'
+            else if (fitScore < 50 || weaknessCount >= 3) impactLevel = 'high'
+            else if (fitScore < 70 || weaknessCount >= 1) impactLevel = 'medium'
+            else impactLevel = 'low'
+
+            return {
+              ...p,
+              id: p.id || `proposal_${i + 1}`,
+              platform,
+              proposalType: p.proposalType || 'optimization',
+              impactLevel,
+              isNewObjective: p.isNewObjective || false,
+              analyzedParameters: p.analyzedParameters || [],
+              suggestedChanges: p.suggestedChanges || [],
+            }
+          })
         : []
       aiGenerated = true
     } catch (e) {

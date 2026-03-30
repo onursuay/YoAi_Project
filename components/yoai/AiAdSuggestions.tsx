@@ -84,14 +84,14 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
       // Merge all proposals into single list
       const allProposals = [...metaProposals, ...googleProposals]
 
-      // Sort: 1) impact/proposalType desc (optimization > new_campaign)
+      // Sort: 1) impactLevel desc (critical > high > medium > low)
       //        2) confidence desc
       //        3) equal = preserve original order (stable sort)
-      const impactOrder: Record<string, number> = { optimization: 0, new_campaign: 1 }
+      const impactRank: Record<string, number> = { critical: 0, high: 1, medium: 2, low: 3 }
       allProposals.sort((a, b) => {
-        const impactA = impactOrder[a.proposalType || 'optimization'] ?? 1
-        const impactB = impactOrder[b.proposalType || 'optimization'] ?? 1
-        if (impactA !== impactB) return impactA - impactB
+        const rankA = impactRank[a.impactLevel || 'medium'] ?? 2
+        const rankB = impactRank[b.impactLevel || 'medium'] ?? 2
+        if (rankA !== rankB) return rankA - rankB
         return (b.confidence || 0) - (a.confidence || 0)
       })
 
