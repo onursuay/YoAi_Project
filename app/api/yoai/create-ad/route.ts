@@ -1,35 +1,15 @@
 import { NextResponse } from 'next/server'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
+import { isDestinationAllowed, getAllowedDestinations, getDefaultOptimizationGoal, isOptimizationGoalAllowed } from '@/lib/meta/spec/objectiveSpec'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
-/**
- * Meta API'de kesin çalışan objective → adset parametre kombinasyonları.
- * Çalışan CampaignWizard + TrafficWizard'dan birebir alındı.
- * AI proposal'ın destination/goal önerisini yoksayıp bu sabit değerleri kullanıyoruz.
- *
- * destination_type: Meta API enum — WEBSITE, MESSENGER, APP, WHATSAPP, INSTAGRAM_DIRECT
- *   ON_AD/ON_PAGE/CALL → destination_type GÖNDERİLMEZ (Meta enum değil, subcode 1815715)
- * optimization_goal: POST_ENGAGEMENT, LINK_CLICKS, REACH, LEAD_GENERATION, OFFSITE_CONVERSIONS, APP_INSTALLS vb.
- * billing_event: her zaman IMPRESSIONS
- */
-const SAFE_META_DEFAULTS: Record<string, {
-  destination_type: string | null  // null = gönderilmez
-  optimization_goal: string
-}> = {
-  OUTCOME_TRAFFIC:       { destination_type: 'WEBSITE', optimization_goal: 'LINK_CLICKS' },
-  OUTCOME_ENGAGEMENT:    { destination_type: null,      optimization_goal: 'POST_ENGAGEMENT' },
-  OUTCOME_AWARENESS:     { destination_type: null,      optimization_goal: 'REACH' },
-  OUTCOME_LEADS:         { destination_type: null,      optimization_goal: 'LEAD_GENERATION' },
-  OUTCOME_SALES:         { destination_type: 'WEBSITE', optimization_goal: 'OFFSITE_CONVERSIONS' },
-  OUTCOME_APP_PROMOTION: { destination_type: 'APP',     optimization_goal: 'APP_INSTALLS' },
-}
-
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/create-ad
    Full Auto: Creates campaign + ad set from FullAdProposal.
-   Uses existing Meta/Google campaign creation endpoints.
+   AI mevcut kampanyayı analiz edip iyileştirilmiş yapı önerir.
+   Önerilen değerler objectiveSpec'e göre doğrulanır.
    ──────────────────────────────────────────────────────────── */
 export async function POST(request: Request) {
   try {
@@ -89,7 +69,24 @@ export async function POST(request: Request) {
     /* ═══════════════ META ═══════════════ */
     if (proposal.platform === 'Meta') {
       const objective = proposal.campaignObjective || 'OUTCOME_TRAFFIC'
-      const safeDefaults = SAFE_META_DEFAULTS[objective] || SAFE_META_DEFAULTS.OUTCOME_TRAFFIC
+
+      // ── AI önerisi → objectiveSpec doğrulaması ──
+      // AI'ın önerdiği destination ve goal'u kullan, geçersizse spec'ten default al
+      let destination = proposal.destinationType || ''
+      let optimizationGoal = proposal.optimizationGoal || ''
+
+      // Destination geçerli mi? Değilse spec'ten ilk izin verilen destination'ı al
+      if (!destination || !isDestinationAllowed(objective, destination)) {
+        const allowed = getAllowedDestinations(objective)
+        destination = allowed.includes('WEBSITE' as never) ? 'WEBSITE' : allowed[0] || 'WEBSITE'
+      }
+
+      // OptimizationGoal geçerli mi? Değilse spec'ten default al
+      if (!optimizationGoal || !isOptimizationGoalAllowed(objective, destination, optimizationGoal)) {
+        optimizationGoal = getDefaultOptimizationGoal(objective, destination)
+      }
+
+      console.log(`[CreateAd] AI proposed: dest=${proposal.destinationType} goal=${proposal.optimizationGoal} → validated: dest=${destination} goal=${optimizationGoal}`)
 
       // Step 1 — Create Campaign
       const campaignRes = await fetch(`${baseUrl}/api/meta/campaigns/create`, {
@@ -115,7 +112,7 @@ export async function POST(request: Request) {
         return NextResponse.json({ ok: false, error: 'Kampanya ID alınamadı' }, { status: 422 })
       }
 
-      // Step 1.5 — Resolve pageId from capabilities (wizard ile aynı: ilk sayfayı seç)
+      // Step 1.5 — Resolve pageId from capabilities (wizard ile aynı)
       let resolvedPageId = ''
       try {
         const capRes = await fetch(`${baseUrl}/api/meta/capabilities`, {
@@ -131,32 +128,26 @@ export async function POST(request: Request) {
         console.warn('[CreateAd] Failed to resolve pageId:', e)
       }
 
-      // Step 2 — Create Ad Set (SAFE_META_DEFAULTS kullan, AI önerisini yoksay)
-      const adsetBody: Record<string, unknown> = {
-        campaignId,
-        name: proposal.adsetName || `YoAi Reklam Seti`,
-        pageId: resolvedPageId,
-        dailyBudget: proposal.dailyBudget || 35,
-        optimizationGoal: safeDefaults.optimization_goal,
-        billingEvent: 'IMPRESSIONS',
-        status: 'PAUSED',
-        targeting: {
-          geo_locations: { countries: ['TR'] },
-        },
-      }
-
-      // destination_type sadece Meta API enum ise gönder (WEBSITE, APP, MESSENGER vb.)
-      // ON_AD, ON_PAGE, CALL gibi internal değerler için gönderilmez
-      if (safeDefaults.destination_type) {
-        adsetBody.destination_type = safeDefaults.destination_type
-      }
-
-      console.log(`[CreateAd] META adset: objective=${objective} destination_type=${safeDefaults.destination_type || '(omitted)'} optimization_goal=${safeDefaults.optimization_goal} pageId=${resolvedPageId}`)
-
+      // Step 2 — Create Ad Set
+      // destination_type: adsets/create route zaten ON_AD/ON_PAGE/CALL için
+      // destination_type'ı Meta API'ye göndermemeyi biliyor (subcode 1815715 koruması).
+      // Biz her zaman AI'ın doğrulanmış destination değerini gönderiyoruz.
       const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-        body: JSON.stringify(adsetBody),
+        body: JSON.stringify({
+          campaignId,
+          name: proposal.adsetName || `YoAi Reklam Seti`,
+          pageId: resolvedPageId,
+          dailyBudget: proposal.dailyBudget || 35,
+          optimizationGoal,
+          billingEvent: 'IMPRESSIONS',
+          destination_type: destination,
+          status: 'PAUSED',
+          targeting: {
+            geo_locations: { countries: ['TR'] },
+          },
+        }),
       })
 
       const adsetData = await adsetRes.json().catch(() => ({}))
@@ -170,7 +161,10 @@ export async function POST(request: Request) {
           ok: false,
           error: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti oluşturulamadı: ${errMsg}`,
           campaignId,
-          _debug: { objective, sent: safeDefaults, adsetResponse: adsetData },
+          _debug: {
+            objective, destination, optimizationGoal,
+            aiProposed: { dest: proposal.destinationType, goal: proposal.optimizationGoal },
+          },
         }, { status: 422 })
       }
 
