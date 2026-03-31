@@ -2377,14 +2377,29 @@ export default function MetaPage() {
     return totals
   }, [campaignsForKpi])
 
+  // Effective campaign filter: single selection OR checkbox multi-selection
+  const effectiveCampaignFilter = useMemo(() => {
+    if (selectedCampaignId) return [selectedCampaignId]
+    if (selectedCampaignIds.length > 0) return selectedCampaignIds
+    return []
+  }, [selectedCampaignId, selectedCampaignIds])
+
+  // Effective adset filter: single selection OR checkbox multi-selection
+  const effectiveAdsetFilter = useMemo(() => {
+    if (selectedAdsetId) return [selectedAdsetId]
+    if (selectedAdsetIds.length > 0) return selectedAdsetIds
+    return []
+  }, [selectedAdsetId, selectedAdsetIds])
+
   const filteredAdsets = useMemo(() => {
     const rows =
       (isRefreshingAdsets && (!adsets || adsets.length === 0) && lastGoodAdsetsRef.current)
         ? lastGoodAdsetsRef.current
         : adsets
     let filtered = rows || []
-    if (selectedCampaignId) {
-      filtered = filtered.filter(a => a.campaignId === selectedCampaignId)
+    if (effectiveCampaignFilter.length > 0) {
+      const campSet = new Set(effectiveCampaignFilter)
+      filtered = filtered.filter(a => campSet.has(a.campaignId))
     }
     filtered = filtered.filter(a => !ALWAYS_HIDDEN.includes(a.effective_status ?? a.status ?? '') || loadingAdSetStatus[a.id])
     if (!showInactive) {
@@ -2396,7 +2411,7 @@ export default function MetaPage() {
       )
     }
     return filtered
-  }, [adsets, selectedCampaignId, showInactive, searchQuery, isRefreshingAdsets, loadingAdSetStatus])
+  }, [adsets, effectiveCampaignFilter, showInactive, searchQuery, isRefreshingAdsets, loadingAdSetStatus])
 
   const filteredAds = useMemo(() => {
     const rows =
@@ -2404,10 +2419,12 @@ export default function MetaPage() {
         ? lastGoodAdsRef.current
         : ads
     let filtered = rows || []
-    if (selectedAdsetId) {
-      filtered = filtered.filter(a => a.adsetId === selectedAdsetId)
-    } else if (selectedCampaignId) {
-      filtered = filtered.filter(a => a.campaignId === selectedCampaignId)
+    if (effectiveAdsetFilter.length > 0) {
+      const adsetSet = new Set(effectiveAdsetFilter)
+      filtered = filtered.filter(a => adsetSet.has(a.adsetId))
+    } else if (effectiveCampaignFilter.length > 0) {
+      const campSet = new Set(effectiveCampaignFilter)
+      filtered = filtered.filter(a => campSet.has(a.campaignId))
     }
     filtered = filtered.filter(a => !ALWAYS_HIDDEN.includes(a.effective_status ?? a.status ?? '') || loadingAdStatus[a.id])
     if (!showInactive) {
@@ -2419,7 +2436,7 @@ export default function MetaPage() {
       )
     }
     return filtered
-  }, [ads, selectedAdsetId, selectedCampaignId, showInactive, searchQuery, isRefreshingAds, loadingAdStatus])
+  }, [ads, effectiveAdsetFilter, effectiveCampaignFilter, showInactive, searchQuery, isRefreshingAds, loadingAdStatus])
 
   // When any edit overlay opens, preload missing tab data so sidebar tree is complete
   useEffect(() => {
@@ -2831,11 +2848,31 @@ export default function MetaPage() {
               )
             })()}
 
-            {/* Adset filter context banner on reklamlar tab */}
-            {selectedAdsetId && !selectedAdId && activeTab === 'reklamlar' && (
+            {/* Campaign filter context banner on reklam-setleri & reklamlar tabs */}
+            {effectiveCampaignFilter.length > 0 && (activeTab === 'reklam-setleri' || (activeTab === 'reklamlar' && effectiveAdsetFilter.length === 0)) && (
               <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100 text-sm text-blue-700">
-                <span className="text-blue-500">{t('actions.1adsetSelected')}</span>
-                <button onClick={() => setSelectedAdsetId(null)} className="ml-auto text-blue-500 hover:text-blue-700 transition-colors">
+                <span className="text-blue-500">
+                  {effectiveCampaignFilter.length === 1
+                    ? (campaigns.find(c => c.id === effectiveCampaignFilter[0])?.name || effectiveCampaignFilter[0])
+                    : `${effectiveCampaignFilter.length} kampanya seçili`
+                  }
+                </span>
+                <button onClick={() => { setSelectedCampaignId(null); setSelectedCampaignIds([]); setSelectedAdsetId(null); setSelectedAdsetIds([]); setSelectedAdId(null); setSelectedAdIds([]) }} className="ml-auto text-blue-500 hover:text-blue-700 transition-colors">
+                  × {t('actions.removeFilter')}
+                </button>
+              </div>
+            )}
+
+            {/* Adset filter context banner on reklamlar tab */}
+            {effectiveAdsetFilter.length > 0 && activeTab === 'reklamlar' && (
+              <div className="flex items-center gap-2 px-4 py-2 bg-blue-50 border-b border-blue-100 text-sm text-blue-700">
+                <span className="text-blue-500">
+                  {effectiveAdsetFilter.length === 1
+                    ? (adsets.find(a => a.id === effectiveAdsetFilter[0])?.name || effectiveAdsetFilter[0])
+                    : `${effectiveAdsetFilter.length} reklam seti seçili`
+                  }
+                </span>
+                <button onClick={() => { setSelectedAdsetId(null); setSelectedAdsetIds([]); setSelectedAdId(null); setSelectedAdIds([]) }} className="ml-auto text-blue-500 hover:text-blue-700 transition-colors">
                   × {t('actions.removeFilter')}
                 </button>
               </div>
@@ -2867,6 +2904,7 @@ export default function MetaPage() {
                   onAdsetSelect={setSelectedAdsetId}
                   selectedAdId={selectedAdId}
                   onAdSelect={setSelectedAdId}
+                  onTabChange={handleTabChange}
                   onEditBudgetAdset={handleEditBudgetClick}
                   onEditCampaignBudgetClick={handleEditCampaignBudgetClick}
                   localeString={localeString}

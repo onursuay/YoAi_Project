@@ -36,6 +36,7 @@ export interface MetaTableRealProps {
   onDuplicate: (type: 'campaign' | 'adset' | 'ad', id: string) => void
   onDelete: (type: 'campaign' | 'adset' | 'ad', item: any) => void
   onEdit: (type: 'campaign' | 'adset' | 'ad', item: any) => void
+  onTabChange?: (tab: string) => void
   selectedIds?: string[]
   onSelectAll?: (ids: string[]) => void
   onDeselectAll?: () => void
@@ -69,6 +70,7 @@ export default function MetaTableReal({
   onAdsetSelect,
   selectedAdId,
   onAdSelect,
+  onTabChange,
   selectedIds,
   onSelectAll,
   onDeselectAll,
@@ -286,11 +288,36 @@ export default function MetaTableReal({
                       )
                     }
 
-                    // ── İsim sütunları (sadece metin) ────────────────────────
+                    // ── İsim sütunları ──────────────────────────────────────
                     if (col.key === 'campaign' || col.key === 'adset' || col.key === 'ad') {
+                      const canDrillDown = (col.key === 'campaign' || col.key === 'adset')
+                      const handleNameClick = () => {
+                        if (col.key === 'campaign') {
+                          onCampaignSelect(item.id)
+                          onAdsetSelect(null)
+                          onAdSelect(null)
+                          onTabChange?.('reklam-setleri')
+                        } else if (col.key === 'adset') {
+                          if (!selectedCampaignId && item.campaignId) {
+                            onCampaignSelect(item.campaignId)
+                          }
+                          onAdsetSelect(item.id)
+                          onAdSelect(null)
+                          onTabChange?.('reklamlar')
+                        }
+                      }
                       return (
                         <td key={col.key} className="px-4 py-4 text-sm">
-                          <span className="text-ui text-gray-900">{item.name}</span>
+                          {canDrillDown ? (
+                            <button
+                              onClick={handleNameClick}
+                              className="text-ui text-gray-900 hover:text-blue-600 hover:underline transition-colors text-left"
+                            >
+                              {item.name}
+                            </button>
+                          ) : (
+                            <span className="text-ui text-gray-900">{item.name}</span>
+                          )}
                         </td>
                       )
                     }
