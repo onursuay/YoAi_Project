@@ -176,46 +176,16 @@ export async function POST(request: Request) {
 
       const adsetId = adsetData.adsetId || adsetData.data?.id
 
-      // Step 3 — Create Ad (if adset created successfully)
+      // Step 3 — Create Ad (if adset created successfully and creative media exists)
       if (adsetId) {
-        const adRes = await fetch(`${baseUrl}/api/meta/ads/create`, {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
-          body: JSON.stringify({
-            name: proposal.adName || `YoAi Reklam`,
-            adsetId,
-            pageId: resolvedPageId,
-            objective: proposal.campaignObjective || 'OUTCOME_TRAFFIC',
-            creative: {
-              format: 'single_image',
-              primaryText: proposal.primaryText,
-              headline: proposal.headline,
-              description: proposal.description,
-              callToAction: proposal.callToAction || 'LEARN_MORE',
-              websiteUrl: proposal.finalUrl,
-            },
-            status: 'PAUSED',
-          }),
-        })
-
-        const adData = await adRes.json().catch(() => ({}))
-        if (!adRes.ok || adData.ok === false) {
-          return NextResponse.json({
-            ok: true,
-            platform: 'Meta',
-            campaignId,
-            adsetId,
-            message: `Kampanya ve reklam seti oluşturuldu ancak reklam oluşturulamadı: ${adData.error_user_msg || adData.message || 'hata'}. Meta Ads sayfasından reklamı manuel ekleyebilirsiniz.`,
-          })
-        }
-
+        // AI proposals don't include imageHash/videoId — ad creation requires media.
+        // Skip ad creation; user completes the ad in Meta Ads Manager.
         return NextResponse.json({
           ok: true,
           platform: 'Meta',
           campaignId,
           adsetId,
-          adId: adData.adId,
-          message: `"${proposal.campaignName}" kampanyası tam yapıyla oluşturuldu (PAUSED). Kampanya + Reklam Seti + Reklam hazır. Meta Ads sayfasından aktif edebilirsiniz.`,
+          message: `"${proposal.campaignName}" kampanyası ve reklam seti başarıyla oluşturuldu (PAUSED). Reklam görselini Meta Ads Manager'dan ekleyerek kampanyayı tamamlayabilirsiniz.`,
         })
       }
 
