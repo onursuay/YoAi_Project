@@ -1,11 +1,17 @@
 'use client'
 
-import { AlertTriangle, TrendingUp, TrendingDown, Target, Zap, Newspaper, Eye, Users, BarChart3, DollarSign } from 'lucide-react'
+import { AlertTriangle, TrendingUp, TrendingDown, Target, Zap, Newspaper, Eye, Users, BarChart3, DollarSign, Shield, Layers, ArrowRight } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
 interface Props {
   data: DeepAnalysisResult | null
   loading: boolean
+}
+
+function fmtCompact(n: number): string {
+  if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
+  if (n >= 1_000) return `${(n / 1_000).toFixed(1)}K`
+  return n.toLocaleString('tr-TR')
 }
 
 export default function DailyBriefing({ data, loading }: Props) {
@@ -24,6 +30,36 @@ export default function DailyBriefing({ data, loading }: Props) {
   const avgFrequency = totalReach > 0 ? kpis.totalImpressions / totalReach : 0
   const avgCpm = kpis.totalImpressions > 0 ? (kpis.totalSpend / kpis.totalImpressions) * 1000 : 0
   const avgCpc = kpis.weightedCpc
+
+  // Platform dağılımı
+  const metaCampaigns = activeCampaigns.filter(c => c.platform === 'Meta')
+  const googleCampaigns = activeCampaigns.filter(c => c.platform === 'Google')
+  const metaSpend = metaCampaigns.reduce((s, c) => s + c.metrics.spend, 0)
+  const googleSpend = googleCampaigns.reduce((s, c) => s + c.metrics.spend, 0)
+  const metaClicks = metaCampaigns.reduce((s, c) => s + c.metrics.clicks, 0)
+  const googleClicks = googleCampaigns.reduce((s, c) => s + c.metrics.clicks, 0)
+  const metaConv = metaCampaigns.reduce((s, c) => s + c.metrics.conversions, 0)
+  const googleConv = googleCampaigns.reduce((s, c) => s + c.metrics.conversions, 0)
+
+  // Risk dağılımı
+  const riskCounts = {
+    critical: campaigns.filter(c => c.riskLevel === 'critical').length,
+    high: campaigns.filter(c => c.riskLevel === 'high').length,
+    medium: campaigns.filter(c => c.riskLevel === 'medium').length,
+    low: campaigns.filter(c => c.riskLevel === 'low').length,
+  }
+  const totalRiskCampaigns = riskCounts.critical + riskCounts.high + riskCounts.medium + riskCounts.low
+
+  // Top aksiyonlar
+  const topActions = data.actions
+    .sort((a, b) => {
+      const p = { high: 3, medium: 2, low: 1 }
+      return (p[b.priority] ?? 0) - (p[a.priority] ?? 0)
+    })
+    .slice(0, 3)
+
+  // Yapısal sorunlar
+  const structuralIssues = data.structuralIssues?.filter(s => s.severity === 'critical' || s.severity === 'warning') ?? []
 
   // Build prioritized items
   const priorities: { icon: React.ElementType; text: string; type: 'critical' | 'warning' | 'success' | 'info' }[] = []
@@ -74,9 +110,11 @@ export default function DailyBriefing({ data, loading }: Props) {
     info: 'text-blue-600',
   }
 
+  const priorityColors = { high: 'text-red-600 bg-red-50', medium: 'text-amber-600 bg-amber-50', low: 'text-gray-500 bg-gray-50' }
+
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-fit">
-      <div className="p-6">
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
+      <div className="p-6 flex-1 flex flex-col">
         {/* Header */}
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
@@ -99,11 +137,11 @@ export default function DailyBriefing({ data, loading }: Props) {
         {/* Mini KPI bar */}
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
-            <p className="text-xs font-bold text-gray-900">₺{kpis.totalSpend >= 1000 ? (kpis.totalSpend / 1000).toFixed(1) + 'K' : kpis.totalSpend.toFixed(0)}</p>
+            <p className="text-xs font-bold text-gray-900">₺{fmtCompact(kpis.totalSpend)}</p>
             <p className="text-[9px] text-gray-400">Harcama</p>
           </div>
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
-            <p className="text-xs font-bold text-gray-900">{kpis.totalImpressions >= 1000 ? (kpis.totalImpressions / 1000).toFixed(1) + 'K' : kpis.totalImpressions}</p>
+            <p className="text-xs font-bold text-gray-900">{fmtCompact(kpis.totalImpressions)}</p>
             <p className="text-[9px] text-gray-400">Gösterim</p>
           </div>
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
@@ -117,7 +155,7 @@ export default function DailyBriefing({ data, loading }: Props) {
         </div>
 
         {/* Priority items */}
-        <div className="space-y-2">
+        <div className="space-y-2 mb-4">
           {priorities.map((item, i) => {
             const Icon = item.icon
             return (
@@ -128,6 +166,107 @@ export default function DailyBriefing({ data, loading }: Props) {
             )
           })}
         </div>
+
+        {/* Platform Karşılaştırma */}
+        {(metaCampaigns.length > 0 || googleCampaigns.length > 0) && (
+          <div className="mb-4">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
+              <Layers className="w-3 h-3" />Platform Karşılaştırma
+            </p>
+            <div className="border border-gray-100 rounded-xl overflow-hidden">
+              <table className="w-full text-[11px]">
+                <thead>
+                  <tr className="bg-gray-50/80">
+                    <th className="text-left px-3 py-2 font-medium text-gray-500">Platform</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">Harcama</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">Tıklama</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">Dönüşüm</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {metaCampaigns.length > 0 && (
+                    <tr className="border-t border-gray-50">
+                      <td className="px-3 py-2 font-medium text-[#1877F2]">Meta</td>
+                      <td className="px-3 py-2 text-right text-gray-700">₺{fmtCompact(metaSpend)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtCompact(metaClicks)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtCompact(metaConv)}</td>
+                    </tr>
+                  )}
+                  {googleCampaigns.length > 0 && (
+                    <tr className="border-t border-gray-50">
+                      <td className="px-3 py-2 font-medium text-gray-700">Google</td>
+                      <td className="px-3 py-2 text-right text-gray-700">₺{fmtCompact(googleSpend)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtCompact(googleClicks)}</td>
+                      <td className="px-3 py-2 text-right text-gray-700">{fmtCompact(googleConv)}</td>
+                    </tr>
+                  )}
+                </tbody>
+              </table>
+            </div>
+          </div>
+        )}
+
+        {/* Risk Dağılımı */}
+        {totalRiskCampaigns > 0 && (
+          <div className="mb-4">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
+              <Shield className="w-3 h-3" />Risk Dağılımı
+            </p>
+            <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
+              {riskCounts.critical > 0 && <div className="bg-red-500 transition-all" style={{ width: `${(riskCounts.critical / totalRiskCampaigns) * 100}%` }} />}
+              {riskCounts.high > 0 && <div className="bg-orange-400 transition-all" style={{ width: `${(riskCounts.high / totalRiskCampaigns) * 100}%` }} />}
+              {riskCounts.medium > 0 && <div className="bg-amber-300 transition-all" style={{ width: `${(riskCounts.medium / totalRiskCampaigns) * 100}%` }} />}
+              {riskCounts.low > 0 && <div className="bg-emerald-400 transition-all" style={{ width: `${(riskCounts.low / totalRiskCampaigns) * 100}%` }} />}
+            </div>
+            <div className="flex items-center gap-3 mt-1.5 flex-wrap">
+              {riskCounts.critical > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />Kritik: {riskCounts.critical}</span>}
+              {riskCounts.high > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-orange-400" />Yüksek: {riskCounts.high}</span>}
+              {riskCounts.medium > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-amber-300" />Orta: {riskCounts.medium}</span>}
+              {riskCounts.low > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Düşük: {riskCounts.low}</span>}
+            </div>
+          </div>
+        )}
+
+        {/* Top Aksiyonlar */}
+        {topActions.length > 0 && (
+          <div className="mb-4">
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
+              <Zap className="w-3 h-3" />Öncelikli Aksiyonlar
+            </p>
+            <div className="space-y-1.5">
+              {topActions.map((action, i) => (
+                <div key={action.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 bg-gray-50/60 border border-gray-100/60">
+                  <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${priorityColors[action.priority]}`}>
+                    {action.priority === 'high' ? 'ACİL' : action.priority === 'medium' ? 'ORTA' : 'DÜŞÜK'}
+                  </span>
+                  <div className="flex-1 min-w-0">
+                    <p className="text-[11px] text-gray-800 font-medium truncate">{action.title}</p>
+                    <p className="text-[9px] text-gray-400 truncate">{action.campaignName}</p>
+                  </div>
+                  <ArrowRight className="w-3 h-3 text-gray-300 shrink-0" />
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
+
+        {/* Yapısal Sorunlar */}
+        {structuralIssues.length > 0 && (
+          <div>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5">Yapısal Sorunlar</p>
+            <div className="space-y-1.5">
+              {structuralIssues.slice(0, 3).map((issue) => (
+                <div key={issue.id} className={`flex items-start gap-2 rounded-lg px-3 py-2 ${issue.severity === 'critical' ? 'bg-red-50/50 border border-red-100/50' : 'bg-amber-50/50 border border-amber-100/50'}`}>
+                  <AlertTriangle className={`w-3 h-3 mt-0.5 shrink-0 ${issue.severity === 'critical' ? 'text-red-500' : 'text-amber-500'}`} />
+                  <div className="min-w-0">
+                    <p className="text-[11px] text-gray-800 font-medium">{issue.title}</p>
+                    <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1">{issue.description}</p>
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+        )}
       </div>
     </div>
   )
