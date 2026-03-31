@@ -108,7 +108,8 @@ export default function HealthScore({ campaigns, kpis, loading }: Props) {
   const weakAreas = breakdown.filter(b => (b.score / b.maxScore) < 0.48)
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 h-full flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-100 h-full flex flex-col overflow-hidden">
+      <div className="p-6 flex-1 overflow-y-auto">
       {/* Header — matches DailyBriefing language */}
       <div className="mb-5">
         <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Hesap Durumu</p>
@@ -196,6 +197,7 @@ export default function HealthScore({ campaigns, kpis, loading }: Props) {
           </div>
         </div>
       )}
+      </div>
     </div>
   )
 }

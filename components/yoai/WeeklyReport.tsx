@@ -77,7 +77,8 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
   const top3 = sorted.slice(0, 3)
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 p-6 h-full flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-100 h-full flex flex-col overflow-hidden">
+      <div className="p-6 flex-1 overflow-y-auto">
       {/* Header */}
       <div className="mb-4">
         <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><CalendarDays className="w-4 h-4 text-primary" />Haftalık Özet</h2>
@@ -259,6 +260,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
             </div>
           </div>
         )}
+      </div>
       </div>
     </div>
   )

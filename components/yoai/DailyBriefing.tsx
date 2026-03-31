@@ -114,7 +114,7 @@ export default function DailyBriefing({ data, loading }: Props) {
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
-      <div className="p-6 flex-1 flex flex-col">
+      <div className="p-6 flex-1 overflow-y-auto">
         {/* Header */}
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>

@@ -307,14 +307,14 @@ export default function YoAiPage() {
 
             <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
 
-            {/* Günlük Brifing + Sağlık Skoru — eşit yükseklik */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Günlük Brifing + Sağlık Skoru — sabit yükseklik */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: '480px' }}>
               <DailyBriefing data={ccData} loading={ccLoading} />
               <HealthScore campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
             </div>
 
-            {/* Bütçe Dağılımı + Haftalık Özet — eşit yükseklik */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {/* Bütçe Dağılımı + Haftalık Özet — sabit yükseklik */}
+            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: '480px' }}>
               <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
               <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
             </div>
