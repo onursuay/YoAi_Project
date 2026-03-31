@@ -171,6 +171,15 @@ export async function POST(request: Request) {
           error: `Kampanya oluşturuldu (${campaignId}) ancak reklam seti oluşturulamadı: ${errMsg}`,
           campaignId,
           _adsetDebug: adsetData,
+          _sentPayload: {
+            objective,
+            destination_type: conversionLocation,
+            optimizationGoal,
+            pageId: resolvedPageId,
+            proposalDestinationType: proposal.destinationType,
+            proposalOptimizationGoal: proposal.optimizationGoal,
+            proposalObjective: proposal.campaignObjective,
+          },
         }, { status: 422 })
       }
 
