@@ -161,6 +161,12 @@ function resolveDestinationConfig(
   if (objective === 'OUTCOME_AWARENESS') {
     needsDestinationType = false
   }
+  // ON_AD, ON_PAGE, CALL: Meta API'de geçerli destination_type enum değerleri DEĞİL.
+  // Bu destination'larda destination_type gönderilmemeli (subcode 1815715).
+  // Meta geçerli enum: MESSENGER, WHATSAPP, INSTAGRAM_DIRECT, WEBSITE, APP, UNDEFINED.
+  if (['ON_AD', 'ON_PAGE', 'CALL', 'PHONE_CALL'].includes(destinationType)) {
+    needsDestinationType = false
+  }
   // ENGAGEMENT + WEBSITE: destination_type göndermemeli. Meta "WEBSITE" destination_type'ı
   // conversion tracking (pixel) gerektiriyor olarak yorumluyor → subcode 2490408.
   // Optimization goal (LINK_CLICKS, LANDING_PAGE_VIEWS, REACH) tek başına yeterli.
