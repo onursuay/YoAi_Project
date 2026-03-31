@@ -2397,12 +2397,9 @@ export default function MetaPage() {
         ? lastGoodAdsetsRef.current
         : adsets
     let filtered = rows || []
-    // DEBUG: log filter state
-    console.log('[FILTER DEBUG] effectiveCampaignFilter:', effectiveCampaignFilter, 'selectedCampaignId:', selectedCampaignId, 'selectedCampaignIds:', selectedCampaignIds, 'total adsets:', filtered.length, 'sample campaignIds:', filtered.slice(0, 3).map((a: any) => a.campaignId))
     if (effectiveCampaignFilter.length > 0) {
       const campSet = new Set(effectiveCampaignFilter)
       filtered = filtered.filter(a => campSet.has(a.campaignId))
-      console.log('[FILTER DEBUG] after campaign filter:', filtered.length)
     }
     filtered = filtered.filter(a => !ALWAYS_HIDDEN.includes(a.effective_status ?? a.status ?? '') || loadingAdSetStatus[a.id])
     if (!showInactive) {
@@ -2919,12 +2916,27 @@ export default function MetaPage() {
                   onDelete={() => {}}
                   onEdit={() => {}}
                   selectedIds={selectedIds}
-                  onSelectAll={(ids) => (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(ids)}
-                  onDeselectAll={() => (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)([])}
+                  onSelectAll={(ids) => {
+                    (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(ids)
+                    if (activeTab === 'kampanyalar' && ids.length > 0) setSelectedCampaignId(ids[0])
+                    else if (activeTab === 'reklam-setleri' && ids.length > 0) setSelectedAdsetId(ids[0])
+                  }}
+                  onDeselectAll={() => {
+                    (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)([])
+                    if (activeTab === 'kampanyalar') setSelectedCampaignId(null)
+                    else if (activeTab === 'reklam-setleri') setSelectedAdsetId(null)
+                  }}
                   onRowSelect={(id: string, checked: boolean) => {
-                    (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(prev =>
-                      checked ? [...prev, id] : prev.filter(x => x !== id)
-                    )
+                    (setSelectedIds as React.Dispatch<React.SetStateAction<string[]>>)(prev => {
+                      const next = checked ? [...prev, id] : prev.filter(x => x !== id)
+                      // Sync single-select filter state for cross-tab filtering
+                      if (activeTab === 'kampanyalar') {
+                        setSelectedCampaignId(next.length === 1 ? next[0] : next.length > 0 ? next[0] : null)
+                      } else if (activeTab === 'reklam-setleri') {
+                        setSelectedAdsetId(next.length === 1 ? next[0] : next.length > 0 ? next[0] : null)
+                      }
+                      return next
+                    })
                   }}
                 />
               ) : (
