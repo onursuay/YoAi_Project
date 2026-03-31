@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
+import { isDestinationAllowed, getAllowedDestinations, getDefaultOptimizationGoal } from '@/lib/meta/spec/objectiveSpec'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -116,21 +117,25 @@ export async function POST(request: Request) {
         MESSAGING_MESSENGER_WHATSAPP: 'MESSENGER',
         APP: 'APP',
         PHONE_CALL: 'PHONE_CALL',
-      }
-      const conversionLocation = conversionLocationMap[proposal.destinationType || ''] || 'WEBSITE'
-
-      // Resolve optimization goal based on objective + destination
-      const objectiveGoalDefaults: Record<string, Record<string, string>> = {
-        OUTCOME_TRAFFIC: { WEBSITE: 'LINK_CLICKS', APP: 'LINK_CLICKS' },
-        OUTCOME_ENGAGEMENT: { ON_AD: 'POST_ENGAGEMENT', WEBSITE: 'LINK_CLICKS', MESSENGER: 'CONVERSATIONS', WHATSAPP: 'CONVERSATIONS' },
-        OUTCOME_AWARENESS: { WEBSITE: 'REACH' },
-        OUTCOME_LEADS: { ON_AD: 'LEAD_GENERATION', WEBSITE: 'OFFSITE_CONVERSIONS', MESSENGER: 'CONVERSATIONS', WHATSAPP: 'REPLIES' },
-        OUTCOME_SALES: { WEBSITE: 'OFFSITE_CONVERSIONS' },
-        OUTCOME_APP_PROMOTION: { APP: 'APP_INSTALLS' },
+        MESSENGER: 'MESSENGER',
+        WHATSAPP: 'WHATSAPP',
+        INSTAGRAM_DIRECT: 'INSTAGRAM_DIRECT',
+        CALL: 'CALL',
+        ON_PAGE: 'ON_PAGE',
       }
       const objective = proposal.campaignObjective || 'OUTCOME_TRAFFIC'
-      const defaultGoal = objectiveGoalDefaults[objective]?.[conversionLocation] || 'LINK_CLICKS'
-      const optimizationGoal = proposal.optimizationGoal || defaultGoal
+      let conversionLocation = conversionLocationMap[proposal.destinationType || ''] || 'WEBSITE'
+
+      // Validate destination against objective — fallback to first allowed destination
+      if (!isDestinationAllowed(objective, conversionLocation)) {
+        const allowed = getAllowedDestinations(objective)
+        const fallback = allowed.includes('WEBSITE' as never) ? 'WEBSITE' : allowed[0] || 'WEBSITE'
+        console.log(`[CreateAd] destination ${conversionLocation} invalid for ${objective}, fallback to ${fallback}`)
+        conversionLocation = fallback
+      }
+
+      // Resolve optimization goal from spec
+      const optimizationGoal = proposal.optimizationGoal || getDefaultOptimizationGoal(objective, conversionLocation)
 
       const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
         method: 'POST',
