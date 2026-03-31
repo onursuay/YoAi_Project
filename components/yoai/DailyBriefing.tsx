@@ -1,6 +1,5 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
 import { AlertTriangle, TrendingUp, TrendingDown, Target, Zap, Newspaper, Eye, Users, BarChart3, DollarSign } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
@@ -9,42 +8,7 @@ interface Props {
   loading: boolean
 }
 
-type Phase = 'idle' | 'dissolving' | 'dissolved' | 'active'
-
 export default function DailyBriefing({ data, loading }: Props) {
-  const [imageReady, setImageReady] = useState(false)
-  const [phase, setPhase] = useState<Phase>('idle')
-
-  // 5 saniye sabit bekle, sonra çözülmeye başla
-  useEffect(() => {
-    if (!loading && data && imageReady && phase === 'idle') {
-      const timer = setTimeout(() => setPhase('dissolving'), 5000)
-      return () => clearTimeout(timer)
-    }
-  }, [loading, data, imageReady, phase])
-
-  // Çözülme animasyonu 2.5s sonra settled state'e geçsin
-  useEffect(() => {
-    if (phase === 'dissolving') {
-      const timer = setTimeout(() => setPhase('dissolved'), 2500)
-      return () => clearTimeout(timer)
-    }
-  }, [phase])
-
-  // Fallback: görsel 3s içinde yüklenmezse devam et
-  useEffect(() => {
-    if (!loading && data && !imageReady) {
-      const fallback = setTimeout(() => setImageReady(true), 3000)
-      return () => clearTimeout(fallback)
-    }
-  }, [loading, data, imageReady])
-
-  const handleClick = useCallback(() => {
-    if (phase === 'dissolved' || phase === 'dissolving') {
-      setPhase('active')
-    }
-  }, [phase])
-
   if (loading || !data) return null
 
   const { campaigns, kpis } = data
@@ -110,23 +74,9 @@ export default function DailyBriefing({ data, loading }: Props) {
     info: 'text-blue-600',
   }
 
-  const isDissolving = phase === 'dissolving' || phase === 'dissolved'
-  const isActive = phase === 'active'
-
   return (
-    <div
-      className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden h-fit"
-      style={{ cursor: isDissolving ? 'pointer' : 'default' }}
-      onClick={handleClick}
-    >
-      {/* Alt katman: veri içeriği */}
-      <div
-        className="p-6"
-        style={{
-          transition: 'opacity 0.8s ease',
-          opacity: isActive ? 1 : phase === 'dissolved' ? 0.95 : 1,
-        }}
-      >
+    <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-fit">
+      <div className="p-6">
         {/* Header */}
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
@@ -179,82 +129,6 @@ export default function DailyBriefing({ data, loading }: Props) {
           })}
         </div>
       </div>
-
-      {/* Üst katman: görsel + dijital çözülme efekti */}
-      {!isActive && (
-        <div
-          className="absolute inset-0 z-10 overflow-hidden rounded-2xl"
-          style={{
-            transition: 'opacity 0.8s ease',
-            opacity: isActive ? 0 : 1,
-            pointerEvents: isDissolving ? 'none' : 'auto',
-          }}
-        >
-          {/* Ana görsel — çözülme mask + filter */}
-          <img
-            src="/ai-birf.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            onLoad={() => setImageReady(true)}
-            onError={() => setImageReady(true)}
-            style={{
-              transition: 'filter 2.5s ease, opacity 2.5s ease',
-              opacity: isDissolving ? 0.45 : 1,
-              filter: isDissolving ? 'brightness(1.12) contrast(0.92) saturate(0.85)' : 'none',
-              WebkitMaskImage: isDissolving
-                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2.5px, rgba(0,0,0,0.08) 2.5px, rgba(0,0,0,0.08) 4px)'
-                : 'none',
-              maskImage: isDissolving
-                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2.5px, rgba(0,0,0,0.08) 2.5px, rgba(0,0,0,0.08) 4px)'
-                : 'none',
-              animation: isDissolving ? 'briefing-micro-shift 3.5s ease-in-out infinite' : 'none',
-            }}
-          />
-
-          {/* Ghost copy — hafif offset ile pixel kırılma hissi */}
-          <img
-            src="/ai-birf.jpg"
-            alt=""
-            className="absolute inset-0 w-full h-full object-cover"
-            style={{
-              transition: 'opacity 2.5s ease',
-              opacity: isDissolving ? 0.15 : 0,
-              transform: 'translate(1.5px, -1px)',
-              filter: 'brightness(1.3) saturate(0.6)',
-              mixBlendMode: 'screen',
-              WebkitMaskImage: isDissolving
-                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2.5px, rgba(0,0,0,0.5) 2.5px, rgba(0,0,0,0.5) 4px)'
-                : 'none',
-              maskImage: isDissolving
-                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2.5px, rgba(0,0,0,0.5) 2.5px, rgba(0,0,0,0.5) 4px)'
-                : 'none',
-              pointerEvents: 'none',
-            }}
-          />
-
-          {/* Scanline overlay — ince yatay çizgi hissi */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              transition: 'opacity 2.5s ease',
-              opacity: isDissolving ? 0.12 : 0,
-              background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.15) 2px, rgba(255,255,255,0.15) 3px)',
-              animation: isDissolving ? 'briefing-scanline-drift 8s linear infinite' : 'none',
-            }}
-          />
-
-          {/* Hafif ışık süzülme overlay */}
-          <div
-            className="absolute inset-0 pointer-events-none"
-            style={{
-              transition: 'opacity 2.5s ease',
-              opacity: isDissolving ? 0.08 : 0,
-              background: 'linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%)',
-              animation: isDissolving ? 'briefing-light-filter 5s ease-in-out infinite' : 'none',
-            }}
-          />
-        </div>
-      )}
     </div>
   )
 }
