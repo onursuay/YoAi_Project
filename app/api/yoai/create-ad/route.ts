@@ -137,6 +137,8 @@ export async function POST(request: Request) {
       // Resolve optimization goal from spec
       const optimizationGoal = proposal.optimizationGoal || getDefaultOptimizationGoal(objective, conversionLocation)
 
+      console.log(`[CreateAd] adset payload: objective=${objective} destination_type=${conversionLocation} optimizationGoal=${optimizationGoal} pageId=${resolvedPageId}`)
+
       const adsetRes = await fetch(`${baseUrl}/api/meta/adsets/create`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json', Cookie: cookieHeader },
@@ -147,7 +149,7 @@ export async function POST(request: Request) {
           dailyBudget: proposal.dailyBudget || 35,
           optimizationGoal,
           billingEvent: 'IMPRESSIONS',
-          conversionLocation,
+          destination_type: conversionLocation,
           status: 'PAUSED',
           targeting: {
             geo_locations: { countries: ['TR'] },
