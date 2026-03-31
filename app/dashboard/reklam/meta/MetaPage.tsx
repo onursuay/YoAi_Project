@@ -2397,9 +2397,12 @@ export default function MetaPage() {
         ? lastGoodAdsetsRef.current
         : adsets
     let filtered = rows || []
+    // DEBUG: log filter state
+    console.log('[FILTER DEBUG] effectiveCampaignFilter:', effectiveCampaignFilter, 'selectedCampaignId:', selectedCampaignId, 'selectedCampaignIds:', selectedCampaignIds, 'total adsets:', filtered.length, 'sample campaignIds:', filtered.slice(0, 3).map((a: any) => a.campaignId))
     if (effectiveCampaignFilter.length > 0) {
       const campSet = new Set(effectiveCampaignFilter)
       filtered = filtered.filter(a => campSet.has(a.campaignId))
+      console.log('[FILTER DEBUG] after campaign filter:', filtered.length)
     }
     filtered = filtered.filter(a => !ALWAYS_HIDDEN.includes(a.effective_status ?? a.status ?? '') || loadingAdSetStatus[a.id])
     if (!showInactive) {
