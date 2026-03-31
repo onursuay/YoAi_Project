@@ -308,15 +308,23 @@ export default function YoAiPage() {
             <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
 
             {/* Günlük Brifing + Sağlık Skoru */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <DailyBriefing data={ccData} loading={ccLoading} />
-              <HealthScore campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
+            <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+              <div className="w-full lg:w-1/2 min-w-0">
+                <DailyBriefing data={ccData} loading={ccLoading} />
+              </div>
+              <div className="w-full lg:w-1/2 min-w-0">
+                <HealthScore campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
+              </div>
             </div>
 
             {/* Akıllı Bütçe + Haftalık Rapor */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
-              <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
+            <div className="flex flex-col lg:flex-row lg:items-start gap-4">
+              <div className="w-full lg:w-1/2 min-w-0">
+                <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
+              </div>
+              <div className="w-full lg:w-1/2 min-w-0">
+                <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
+              </div>
             </div>
 
             {!ccLoading && ccData && (

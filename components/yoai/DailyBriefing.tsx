@@ -1,7 +1,7 @@
 'use client'
 
-import { useState, useEffect } from 'react'
-import { AlertTriangle, TrendingUp, TrendingDown, DollarSign, Target, Zap, Newspaper } from 'lucide-react'
+import { useState, useEffect, useCallback } from 'react'
+import { AlertTriangle, TrendingUp, TrendingDown, Target, Zap, Newspaper, Eye, Users, BarChart3, DollarSign } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -9,25 +9,41 @@ interface Props {
   loading: boolean
 }
 
-export default function DailyBriefing({ data, loading }: Props) {
-  const [revealed, setRevealed] = useState(false)
-  const [imageReady, setImageReady] = useState(false)
+type Phase = 'idle' | 'dissolving' | 'dissolved' | 'active'
 
-  // Trigger reveal animation only after image is loaded
+export default function DailyBriefing({ data, loading }: Props) {
+  const [imageReady, setImageReady] = useState(false)
+  const [phase, setPhase] = useState<Phase>('idle')
+
+  // 5 saniye sabit bekle, sonra çözülmeye başla
   useEffect(() => {
-    if (!loading && data && imageReady) {
-      const timer = setTimeout(() => setRevealed(true), 400)
+    if (!loading && data && imageReady && phase === 'idle') {
+      const timer = setTimeout(() => setPhase('dissolving'), 5000)
       return () => clearTimeout(timer)
     }
-  }, [loading, data, imageReady])
+  }, [loading, data, imageReady, phase])
 
-  // Fallback: if image takes too long (>3s), reveal anyway
+  // Çözülme animasyonu 2.5s sonra settled state'e geçsin
+  useEffect(() => {
+    if (phase === 'dissolving') {
+      const timer = setTimeout(() => setPhase('dissolved'), 2500)
+      return () => clearTimeout(timer)
+    }
+  }, [phase])
+
+  // Fallback: görsel 3s içinde yüklenmezse devam et
   useEffect(() => {
     if (!loading && data && !imageReady) {
       const fallback = setTimeout(() => setImageReady(true), 3000)
       return () => clearTimeout(fallback)
     }
   }, [loading, data, imageReady])
+
+  const handleClick = useCallback(() => {
+    if (phase === 'dissolved' || phase === 'dissolving') {
+      setPhase('active')
+    }
+  }, [phase])
 
   if (loading || !data) return null
 
@@ -38,6 +54,12 @@ export default function DailyBriefing({ data, loading }: Props) {
   const highPerformers = campaigns.filter(c => c.score >= 80).length
   const actionCount = data.actions.length
   const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
+
+  // Ek metrikler
+  const totalReach = activeCampaigns.reduce((s, c) => s + (c.metrics.reach ?? 0), 0)
+  const avgFrequency = totalReach > 0 ? kpis.totalImpressions / totalReach : 0
+  const avgCpm = kpis.totalImpressions > 0 ? (kpis.totalSpend / kpis.totalImpressions) * 1000 : 0
+  const avgCpc = kpis.weightedCpc
 
   // Build prioritized items
   const priorities: { icon: React.ElementType; text: string; type: 'critical' | 'warning' | 'success' | 'info' }[] = []
@@ -56,6 +78,18 @@ export default function DailyBriefing({ data, loading }: Props) {
     if (convRate < 1) {
       priorities.push({ icon: Target, text: `Dönüşüm oranı %${convRate.toFixed(2)}, landing page optimizasyonu değerlendirin.`, type: 'warning' })
     }
+  }
+  if (kpis.totalImpressions > 0) {
+    priorities.push({ icon: Eye, text: `Toplam ${kpis.totalImpressions.toLocaleString('tr-TR')} görüntüleme, CPM: ₺${avgCpm.toFixed(2)}`, type: 'info' })
+  }
+  if (totalReach > 0) {
+    priorities.push({ icon: Users, text: `${totalReach.toLocaleString('tr-TR')} kişiye ulaşıldı, ort. sıklık: ${avgFrequency.toFixed(1)}x`, type: 'info' })
+  }
+  if (avgFrequency > 3) {
+    priorities.push({ icon: BarChart3, text: `Frekans ${avgFrequency.toFixed(1)}x — reklam yorgunluğu riski, hedef kitle genişletmeyi düşünün.`, type: 'warning' })
+  }
+  if (avgCpc > 10) {
+    priorities.push({ icon: DollarSign, text: `Ortalama tıklama maliyeti ₺${avgCpc.toFixed(2)}, reklam metinleri ve hedefleme gözden geçirilmeli.`, type: 'warning' })
   }
   if (actionCount > 0) {
     priorities.push({ icon: Zap, text: `${actionCount} aksiyon önerisi mevcut.`, type: 'info' })
@@ -76,14 +110,29 @@ export default function DailyBriefing({ data, loading }: Props) {
     info: 'text-blue-600',
   }
 
+  const isDissolving = phase === 'dissolving' || phase === 'dissolved'
+  const isActive = phase === 'active'
+
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden">
-      {/* Bottom layer: actual content */}
-      <div className="p-6">
+    <div
+      className="relative bg-white rounded-2xl border border-gray-100 overflow-hidden h-fit"
+      style={{ cursor: isDissolving ? 'pointer' : 'default' }}
+      onClick={handleClick}
+    >
+      {/* Alt katman: veri içeriği */}
+      <div
+        className="p-6"
+        style={{
+          transition: 'opacity 0.8s ease',
+          opacity: isActive ? 1 : phase === 'dissolved' ? 0.95 : 1,
+        }}
+      >
         {/* Header */}
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
-          <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5"><Newspaper className="w-4 h-4 text-primary" />Günlük Brifing</h2>
+          <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5">
+            <Newspaper className="w-4 h-4 text-primary" />Günlük Brifing
+          </h2>
         </div>
 
         {/* Executive summary */}
@@ -91,8 +140,30 @@ export default function DailyBriefing({ data, loading }: Props) {
           <p className="text-sm text-gray-700 leading-relaxed">
             Son 7 günde <strong className="text-gray-900">₺{kpis.totalSpend.toFixed(0)}</strong> harcanarak{' '}
             <strong className="text-gray-900">{kpis.totalConversions}</strong> dönüşüm elde edildi.{' '}
+            <strong className="text-gray-900">{kpis.totalImpressions.toLocaleString('tr-TR')}</strong> görüntüleme{' '}
+            ve <strong className="text-gray-900">{kpis.totalClicks.toLocaleString('tr-TR')}</strong> tıklama gerçekleşti.{' '}
             {criticalCampaigns.length > 0 ? `${criticalCampaigns.length} kampanya dikkat gerektiriyor.` : 'Genel durum stabil.'}
           </p>
+        </div>
+
+        {/* Mini KPI bar */}
+        <div className="grid grid-cols-4 gap-2 mb-4">
+          <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
+            <p className="text-xs font-bold text-gray-900">₺{kpis.totalSpend >= 1000 ? (kpis.totalSpend / 1000).toFixed(1) + 'K' : kpis.totalSpend.toFixed(0)}</p>
+            <p className="text-[9px] text-gray-400">Harcama</p>
+          </div>
+          <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
+            <p className="text-xs font-bold text-gray-900">{kpis.totalImpressions >= 1000 ? (kpis.totalImpressions / 1000).toFixed(1) + 'K' : kpis.totalImpressions}</p>
+            <p className="text-[9px] text-gray-400">Gösterim</p>
+          </div>
+          <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
+            <p className="text-xs font-bold text-gray-900">%{kpis.weightedCtr.toFixed(1)}</p>
+            <p className="text-[9px] text-gray-400">TO</p>
+          </div>
+          <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
+            <p className="text-xs font-bold text-gray-900">₺{avgCpm.toFixed(1)}</p>
+            <p className="text-[9px] text-gray-400">CPM</p>
+          </div>
         </div>
 
         {/* Priority items */}
@@ -109,22 +180,81 @@ export default function DailyBriefing({ data, loading }: Props) {
         </div>
       </div>
 
-      {/* Top layer: image overlay — slides up to reveal content */}
-      <div
-        className="absolute inset-0 z-10 bg-white transition-transform ease-linear pointer-events-none"
-        style={{
-          transform: revealed ? 'translateY(-100%)' : 'translateY(0)',
-          transitionDuration: '600ms',
-        }}
-      >
-        <img
-          src="/ai-birf.jpg"
-          alt=""
-          className="w-full h-full object-cover rounded-2xl"
-          onLoad={() => setImageReady(true)}
-          onError={() => setImageReady(true)}
-        />
-      </div>
+      {/* Üst katman: görsel + dijital çözülme efekti */}
+      {!isActive && (
+        <div
+          className="absolute inset-0 z-10 overflow-hidden rounded-2xl"
+          style={{
+            transition: 'opacity 0.8s ease',
+            opacity: isActive ? 0 : 1,
+            pointerEvents: isDissolving ? 'none' : 'auto',
+          }}
+        >
+          {/* Ana görsel — çözülme mask + filter */}
+          <img
+            src="/ai-birf.jpg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            onLoad={() => setImageReady(true)}
+            onError={() => setImageReady(true)}
+            style={{
+              transition: 'filter 2.5s ease, opacity 2.5s ease',
+              opacity: isDissolving ? 0.45 : 1,
+              filter: isDissolving ? 'brightness(1.12) contrast(0.92) saturate(0.85)' : 'none',
+              WebkitMaskImage: isDissolving
+                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2.5px, rgba(0,0,0,0.08) 2.5px, rgba(0,0,0,0.08) 4px)'
+                : 'none',
+              maskImage: isDissolving
+                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.8) 0px, rgba(0,0,0,0.8) 2.5px, rgba(0,0,0,0.08) 2.5px, rgba(0,0,0,0.08) 4px)'
+                : 'none',
+              animation: isDissolving ? 'briefing-micro-shift 3.5s ease-in-out infinite' : 'none',
+            }}
+          />
+
+          {/* Ghost copy — hafif offset ile pixel kırılma hissi */}
+          <img
+            src="/ai-birf.jpg"
+            alt=""
+            className="absolute inset-0 w-full h-full object-cover"
+            style={{
+              transition: 'opacity 2.5s ease',
+              opacity: isDissolving ? 0.15 : 0,
+              transform: 'translate(1.5px, -1px)',
+              filter: 'brightness(1.3) saturate(0.6)',
+              mixBlendMode: 'screen',
+              WebkitMaskImage: isDissolving
+                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2.5px, rgba(0,0,0,0.5) 2.5px, rgba(0,0,0,0.5) 4px)'
+                : 'none',
+              maskImage: isDissolving
+                ? 'repeating-linear-gradient(0deg, rgba(0,0,0,0.05) 0px, rgba(0,0,0,0.05) 2.5px, rgba(0,0,0,0.5) 2.5px, rgba(0,0,0,0.5) 4px)'
+                : 'none',
+              pointerEvents: 'none',
+            }}
+          />
+
+          {/* Scanline overlay — ince yatay çizgi hissi */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              transition: 'opacity 2.5s ease',
+              opacity: isDissolving ? 0.12 : 0,
+              background: 'repeating-linear-gradient(0deg, transparent 0px, transparent 2px, rgba(255,255,255,0.15) 2px, rgba(255,255,255,0.15) 3px)',
+              animation: isDissolving ? 'briefing-scanline-drift 8s linear infinite' : 'none',
+            }}
+          />
+
+          {/* Hafif ışık süzülme overlay */}
+          <div
+            className="absolute inset-0 pointer-events-none"
+            style={{
+              transition: 'opacity 2.5s ease',
+              opacity: isDissolving ? 0.08 : 0,
+              background: 'linear-gradient(135deg, transparent 30%, rgba(255,255,255,0.2) 50%, transparent 70%)',
+              animation: isDissolving ? 'briefing-light-filter 5s ease-in-out infinite' : 'none',
+            }}
+          />
+        </div>
+      )}
     </div>
   )
 }

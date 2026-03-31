@@ -62,7 +62,7 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
   const decreases = suggestions.filter(s => s.direction === 'decrease')
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden">
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-[0_1px_3px_rgba(0,0,0,0.04)] overflow-hidden h-fit">
       <div className="p-6">
         {/* Header */}
         <div className="flex items-start justify-between mb-5">
