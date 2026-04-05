@@ -10,6 +10,7 @@ import {
   isRateLimitError,
   extractFbTraceId,
 } from '@/lib/meta/listFetch'
+import { getResultTypeFromObjective, extractResultsCount } from '@/lib/meta/resultExtraction'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 // No cache - always fresh data
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
     if (DEBUG) console.log('[Meta Campaigns] dateFilter:', { datePreset, since: safeSince, until: safeUntil, omittedDateParams: !datePreset && !safeSince && !safeUntil })
 
     const campaignParams: Record<string, string> = {
-      fields: `id,name,status,effective_status,daily_budget,lifetime_budget,${insightsModifier}`,
+      fields: `id,name,status,effective_status,objective,daily_budget,lifetime_budget,${insightsModifier}`,
       limit: '50',
       effective_status: '["ACTIVE","PAUSED","PENDING_REVIEW","IN_PROCESS","PREAPPROVED","WITH_ISSUES","CAMPAIGN_PAUSED","ADSET_PAUSED"]',
     }
@@ -168,6 +169,10 @@ export async function GET(request: Request) {
         if (purchaseValue) roas = parseFloat(purchaseValue.value || '0') / spend
       }
 
+      const objective = campaign.objective || ''
+      const resultType = getResultTypeFromObjective(objective)
+      const results = extractResultsCount(resultType, insight)
+
       return {
         id: campaign.id,
         name: campaign.name || 'Unnamed Campaign',
@@ -175,6 +180,9 @@ export async function GET(request: Request) {
         effective_status: effectiveStatus,
         statusLabel: getStatusLabel(effectiveStatus),
         statusColor: getStatusColor(effectiveStatus),
+        objective,
+        resultType,
+        results,
         budget,
         daily_budget: dailyBudget,
         lifetime_budget: lifetimeBudget,

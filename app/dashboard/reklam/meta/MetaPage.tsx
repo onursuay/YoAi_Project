@@ -31,6 +31,9 @@ interface Campaign {
   name: string
   status: string
   effective_status?: string
+  objective?: string
+  resultType?: string
+  results?: number
   budget: number | null
   daily_budget?: number | null
   lifetime_budget?: number | null
@@ -51,6 +54,9 @@ interface AdSet {
   status: string
   effective_status?: string
   campaignId: string
+  optimizationGoal?: string
+  resultType?: string
+  results?: number
   budget: number
   daily_budget?: number
   lifetime_budget?: number
@@ -70,6 +76,8 @@ interface Ad {
   effective_status?: string
   adsetId: string
   campaignId: string
+  resultType?: string
+  results?: number
   spent: number
   impressions: number
   clicks: number
@@ -2497,6 +2505,7 @@ export default function MetaPage() {
       return [
         ...baseCols,
         { key: 'campaign', label: t('table.campaign') },
+        { key: 'results', label: t('table.results') },
         { key: 'budget', label: t('table.budget') },
         { key: 'spent', label: t('table.spent') },
         { key: 'impressions', label: t('table.impressions') },
@@ -2508,6 +2517,7 @@ export default function MetaPage() {
       return [
         ...baseCols,
         { key: 'adset', label: t('table.adset') },
+        { key: 'results', label: t('table.results') },
         { key: 'budget', label: t('table.budget') },
         { key: 'spent', label: t('table.spent') },
         { key: 'impressions', label: t('table.impressions') },
@@ -2519,6 +2529,7 @@ export default function MetaPage() {
       return [
         ...baseCols,
         { key: 'ad', label: t('table.ad') },
+        { key: 'results', label: t('table.results') },
         { key: 'spent', label: t('table.spent') },
         { key: 'impressions', label: t('table.impressions') },
         { key: 'clicks', label: t('table.clicks') },

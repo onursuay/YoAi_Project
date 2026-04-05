@@ -10,6 +10,7 @@ import {
   isRateLimitError,
   extractFbTraceId,
 } from '@/lib/meta/listFetch'
+import { extractResultsFallback } from '@/lib/meta/resultExtraction'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 // No cache - always fresh data
@@ -146,6 +147,8 @@ export async function GET(request: Request) {
         if (purchaseValue) roas = parseFloat(purchaseValue.value || '0') / spend
       }
 
+      const { resultType, results } = extractResultsFallback(insight)
+
       return {
         id: ad.id,
         name: ad.name || 'Unnamed Ad',
@@ -155,6 +158,8 @@ export async function GET(request: Request) {
         statusColor: getStatusColor(effectiveStatus),
         adsetId: ad.adset_id || '',
         campaignId: ad.campaign_id || '',
+        resultType,
+        results,
         spent: spend,
         impressions,
         clicks,

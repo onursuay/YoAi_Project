@@ -14,7 +14,7 @@ export default function MetaTableSkeleton({ columns }: MetaTableSkeletonProps) {
               <th
                 key={col.key}
                 className={`px-4 py-4 text-ui font-medium text-gray-500 uppercase whitespace-nowrap ${
-                  ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc'].includes(col.key)
+                  ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc', 'results'].includes(col.key)
                     ? 'text-right'
                     : 'text-left'
                 }`}

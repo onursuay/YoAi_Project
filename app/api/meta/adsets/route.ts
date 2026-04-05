@@ -10,6 +10,7 @@ import {
   isRateLimitError,
   extractFbTraceId,
 } from '@/lib/meta/listFetch'
+import { getResultTypeFromOptimizationGoal, extractResultsCount } from '@/lib/meta/resultExtraction'
 
 // No cache - always fresh data
 export const dynamic = 'force-dynamic'
@@ -164,7 +165,7 @@ export async function GET(request: Request) {
     console.log('[Meta AdSets] dateFilter:', { datePreset, since: safeSince, until: safeUntil, omittedDateParams: !datePreset && !safeSince && !safeUntil })
 
     const adsetParams: Record<string, string> = {
-      fields: `id,name,status,effective_status,daily_budget,lifetime_budget,campaign_id,${insightsModifier}`,
+      fields: `id,name,status,effective_status,optimization_goal,daily_budget,lifetime_budget,campaign_id,${insightsModifier}`,
       limit: '50',
       effective_status: '["ACTIVE","PAUSED","PENDING_REVIEW","IN_PROCESS","PREAPPROVED","WITH_ISSUES","CAMPAIGN_PAUSED","ADSET_PAUSED"]',
     }
@@ -312,6 +313,10 @@ export async function GET(request: Request) {
           }
         }
 
+        const optimizationGoal = adset?.optimization_goal || ''
+        const resultType = getResultTypeFromOptimizationGoal(optimizationGoal)
+        const results = extractResultsCount(resultType, insight)
+
         return {
           id: adset?.id || '',
           name: adset?.name || 'Unnamed Ad Set',
@@ -320,6 +325,9 @@ export async function GET(request: Request) {
           statusLabel: getStatusLabel(effectiveStatus),
           statusColor: getStatusColor(effectiveStatus),
           campaignId: adset?.campaign_id || '',
+          optimizationGoal,
+          resultType,
+          results,
           budget,
           daily_budget: dailyBudget,
           lifetime_budget: lifetimeBudget,

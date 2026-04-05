@@ -76,7 +76,24 @@ export default function MetaTableReal({
   onDeselectAll,
   onRowSelect,
 }: MetaTableRealProps) {
-  const rightAlignKeys = ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc']
+  const rightAlignKeys = ['budget', 'spent', 'impressions', 'clicks', 'ctr', 'cpc', 'results']
+
+  const getResultTypeLabel = (resultType: string | undefined, t: (key: string) => string): string => {
+    switch (resultType) {
+      case 'lead': return t('table.resultTypeLead')
+      case 'purchase': return t('table.resultTypePurchase')
+      case 'link_click': return t('table.resultTypeLinkClick')
+      case 'landing_page_view': return t('table.resultTypeLandingPage')
+      case 'post_engagement': return t('table.resultTypeEngagement')
+      case 'page_like': return t('table.resultTypePageLike')
+      case 'mobile_app_install': return t('table.resultTypeAppInstall')
+      case 'messaging_conversation_started': return t('table.resultTypeMessaging')
+      case 'video_view': return t('table.resultTypeVideoView')
+      case 'reach': return t('table.resultTypeReach')
+      case 'impressions': return t('table.resultTypeImpressions')
+      default: return '—'
+    }
+  }
 
   // ── Column resize state ──────────────────────────────────────
   const [colWidths, setColWidths] = useState<Record<string, number>>({})
@@ -390,6 +407,24 @@ export default function MetaTableReal({
                     }
                     if (col.key === 'cpc') {
                       return <td key={col.key} className="px-4 py-4 text-sm text-right text-gray-900">{fmtFixed(item.cpc, 2)} TRY</td>
+                    }
+
+                    // ── Sonuçlar (Results) ───────────────────────────────────
+                    if (col.key === 'results') {
+                      const resultCount = item.results ?? 0
+                      const resultLabel = getResultTypeLabel(item.resultType, t)
+                      return (
+                        <td key={col.key} className="px-4 py-4 text-sm text-right">
+                          {resultCount > 0 ? (
+                            <div className="flex flex-col items-end gap-0.5">
+                              <span className="font-medium text-gray-900">{fmtInt(resultCount)}</span>
+                              <span className="text-[10px] text-gray-400 leading-tight">{resultLabel}</span>
+                            </div>
+                          ) : (
+                            <span className="text-gray-400">—</span>
+                          )}
+                        </td>
+                      )
                     }
 
                     return <td key={col.key} className="px-4 py-4 text-sm"></td>
