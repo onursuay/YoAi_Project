@@ -58,7 +58,22 @@ export default function GoogleAccountModal({
           {(accountStep === 'managers' ? managersLoading : childrenLoading) && (
             <p className="text-gray-600 text-center py-4">{tEnt('selecting')}</p>
           )}
-          {accountsError && <p className="text-red-600 text-sm py-2">{accountsError}</p>}
+          {accountsError && (
+            <div className="flex flex-col items-center gap-4 rounded-xl border border-red-200 bg-red-50 px-6 py-6 text-center">
+              {/* Vektörel uyarı ikonu */}
+              <svg width="64" height="64" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                {/* Dış daire - soluk */}
+                <circle cx="32" cy="32" r="30" fill="#FEE2E2" stroke="#FECACA" strokeWidth="2"/>
+                {/* İç daire */}
+                <circle cx="32" cy="32" r="22" fill="#FCA5A5" opacity="0.3"/>
+                {/* Ünlem gövdesi */}
+                <rect x="29.5" y="18" width="5" height="19" rx="2.5" fill="#DC2626"/>
+                {/* Ünlem noktası */}
+                <circle cx="32" cy="43" r="3" fill="#DC2626"/>
+              </svg>
+              <span className="text-sm font-medium text-red-700 leading-relaxed">{accountsError}</span>
+            </div>
+          )}
           {accountStep === 'managers' && !managersLoading && managers.length > 0 && (
             <ul className="space-y-2">
               {managers.map((m) => (

@@ -92,7 +92,11 @@ export function useGoogleAdsConnection({ addToast, onAccountSelected, onInitRead
       .then(async (res) => {
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          setAccountsError(data?.message || data?.error || 'Failed to load accounts')
+          if (data?.error === 'not_ads_user') {
+            setAccountsError('Hesabınız bulunamadı. Lütfen Google Ads hesabınız olan bir Gmail ile giriş yapın.')
+          } else {
+            setAccountsError(data?.message || data?.error || 'Failed to load accounts')
+          }
           return
         }
         setManagers(data.customers || [])

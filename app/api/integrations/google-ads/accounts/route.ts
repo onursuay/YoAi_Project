@@ -50,6 +50,12 @@ export async function GET() {
 
   if (!listRes.ok) {
     const err = await listRes.text()
+    if (err.includes('NOT_ADS_USER')) {
+      return NextResponse.json(
+        { error: 'not_ads_user' },
+        { status: 400 }
+      )
+    }
     return NextResponse.json(
       { error: 'list_accessible_failed', message: err || listRes.statusText },
       { status: listRes.status >= 500 ? 502 : 400 }
