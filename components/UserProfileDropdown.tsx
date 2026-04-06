@@ -7,7 +7,6 @@ import Link from 'next/link'
 import { User, FileText, CreditCard, HelpCircle, Globe, LogOut, ChevronRight, Check } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
-import { getStoredProfile } from '@/lib/subscription/storage'
 
 interface Props {
   collapsed: boolean
@@ -21,11 +20,11 @@ export default function UserProfileDropdown({ collapsed }: Props) {
   const [open, setOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
   const ref = useRef<HTMLDivElement>(null)
-  const [profile, setProfile] = useState({ firstName: 'Onur', lastName: 'Şuay' })
+  const [fullName, setFullName] = useState('')
 
   useEffect(() => {
-    const stored = getStoredProfile()
-    setProfile({ firstName: stored.firstName, lastName: stored.lastName })
+    const name = document.cookie.match(/(?:^|;\s*)user_name=([^;]*)/)?.[1]
+    setFullName(name ? decodeURIComponent(name) : '')
   }, [])
 
   // Close on outside click
@@ -40,8 +39,9 @@ export default function UserProfileDropdown({ collapsed }: Props) {
     return () => document.removeEventListener('mousedown', handleClick)
   }, [open])
 
-  const initials = `${profile.firstName.charAt(0)}${profile.lastName.charAt(0)}`.toUpperCase()
-  const fullName = `${profile.firstName} ${profile.lastName}`
+  const initials = fullName
+    ? fullName.split(' ').filter(Boolean).map(w => w[0]).slice(0, 2).join('').toUpperCase()
+    : '?'
 
   const statusLabel = trial
     ? (locale === 'tr' ? 'Deneme Sürümü' : `Trial (${trialDaysRemaining} days)`)

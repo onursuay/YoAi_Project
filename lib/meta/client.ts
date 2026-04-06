@@ -241,28 +241,12 @@ export class MetaGraphClient {
 }
 
 /**
- * Create a Meta client instance from cookies
+ * Create a Meta client instance — session-first, DB-backed.
+ * Delegates to resolveMetaContext() so every caller is user-isolated.
  */
 export async function createMetaClient(): Promise<{ client: MetaGraphClient; accountId: string } | null> {
-  const { cookies } = await import('next/headers')
-  const cookieStore = await cookies()
-
-  const accessToken = cookieStore.get('meta_access_token')?.value
-  const selectedAdAccountId = cookieStore.get('meta_selected_ad_account_id')?.value
-
-  if (!accessToken) {
-    return null
-  }
-
-  if (!selectedAdAccountId) {
-    return null
-  }
-
-  // Normalize account ID
-  const accountId = selectedAdAccountId.startsWith('act_')
-    ? selectedAdAccountId
-    : `act_${selectedAdAccountId.replace('act_', '')}`
-
-  const client = new MetaGraphClient({ accessToken })
-  return { client, accountId }
+  const { resolveMetaContext } = await import('@/lib/meta/context')
+  const ctx = await resolveMetaContext()
+  if (!ctx) return null
+  return { client: ctx.client, accountId: ctx.accountId }
 }

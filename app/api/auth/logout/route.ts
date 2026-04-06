@@ -7,6 +7,7 @@ export async function POST() {
   // Clear session cookies
   cookieStore.delete('session_id')
   cookieStore.delete('user_email')
+  cookieStore.delete('user_name')
 
   return NextResponse.json({ ok: true })
 }

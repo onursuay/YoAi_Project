@@ -37,17 +37,10 @@ export async function resolveMetaContext(): Promise<MetaContext | null> {
     }
   }
 
-  // ── Tier 2: Cookie fallback (backward compatible) ──
-  const accessToken = cookieStore.get('meta_access_token')?.value
-  const rawAccountId = cookieStore.get('meta_selected_ad_account_id')?.value
-
-  if (!accessToken || !rawAccountId) return null
-
-  const accountId = normalizeAccountId(rawAccountId)
-  const fingerprintLast4 = accessToken.length >= 4 ? accessToken.slice(-4) : '****'
-  const client = new MetaGraphClient({ accessToken })
-
-  return { client, accountId, fingerprintLast4, userAccessToken: accessToken, source: 'cookie' }
+  // Cookie fallback kaldırıldı: farklı bir kullanıcı oturum açtığında
+  // önceki kullanıcının cookie'leri hâlâ tarayıcıda kalabilir.
+  // Bağlantı yalnızca session_id → DB üzerinden çözümlenir.
+  return null
 }
 
 function normalizeAccountId(id: string): string {
