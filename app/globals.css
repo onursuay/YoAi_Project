@@ -484,6 +484,27 @@ table tbody tr {
   100% { transform: translateX(250%) skewX(-20deg); opacity: 0; }
 }
 
+/* ═══════════════════════════════════════════════════════════════════════
+   Daily Briefing — Digital Dissolution Effect
+   ═══════════════════════════════════════════════════════════════════════ */
+@keyframes briefing-micro-shift {
+  0%, 100% { transform: translate(0, 0); }
+  20% { transform: translate(-0.6px, 0.4px); }
+  40% { transform: translate(0.8px, -0.3px); }
+  60% { transform: translate(-0.4px, 0.6px); }
+  80% { transform: translate(0.5px, -0.5px); }
+}
+
+@keyframes briefing-scanline-drift {
+  0% { background-position: 0 0; }
+  100% { background-position: 0 4px; }
+}
+
+@keyframes briefing-light-filter {
+  0%, 100% { opacity: 0; }
+  50% { opacity: 1; }
+}
+
 .yoai-icon-glow::after {
   content: '';
   position: absolute;
