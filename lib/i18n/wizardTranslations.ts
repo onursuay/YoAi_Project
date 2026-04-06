@@ -94,6 +94,7 @@ const translations = {
     WATCH_MORE: 'Şimdi İzle',
     APPLY_NOW: 'Başvur',
     SEND_WHATSAPP_MESSAGE: 'WhatsApp Mesajı Gönder',
+    WHATSAPP_MESSAGE: 'WhatsApp Mesajı Gönder',
     GET_DIRECTIONS: 'Yol Tarifi Al',
     NO_BUTTON: 'CTA Yok',
 
@@ -650,6 +651,7 @@ const translations = {
     WATCH_MORE: 'Watch More',
     APPLY_NOW: 'Apply Now',
     SEND_WHATSAPP_MESSAGE: 'Send WhatsApp Message',
+    WHATSAPP_MESSAGE: 'Send WhatsApp Message',
     GET_DIRECTIONS: 'Get Directions',
     NO_BUTTON: 'No CTA',
 
