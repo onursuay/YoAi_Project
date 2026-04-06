@@ -6,9 +6,9 @@ export async function POST() {
   const cookieStore = await cookies()
 
   // Revoke DB connection (fire-and-forget, before cookie cleanup)
-  const sessionId = cookieStore.get('session_id')?.value
-  if (sessionId) {
-    revokeMetaConnection(sessionId).catch(() => {})
+  const userId = cookieStore.get('user_id')?.value
+  if (userId) {
+    revokeMetaConnection(userId).catch(() => {})
   }
 
   // Clear all Meta cookies

@@ -105,9 +105,9 @@ export async function POST(request: Request) {
 
     // Persist selected account to DB (fire-and-forget)
     const cookieStore = await cookies()
-    const sessionId = cookieStore.get('session_id')?.value
-    if (sessionId) {
-      updateSelectedMetaAdAccount(sessionId, normalizedAdAccountId).catch((err) => {
+    const userId = cookieStore.get('user_id')?.value
+    if (userId) {
+      updateSelectedMetaAdAccount(userId, normalizedAdAccountId).catch((err) => {
         if (DEBUG) console.warn('[Meta SelectAdAccount] DB_PERSIST_FAIL:', err instanceof Error ? err.message : 'unknown')
       })
     }

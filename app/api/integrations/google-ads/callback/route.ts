@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { randomUUID } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { GOOGLE_TOKEN_URL, COOKIE } from '@/lib/google-ads/constants'
 import { upsertConnection } from '@/lib/googleAdsConnectionStore'
@@ -103,19 +102,8 @@ export async function GET(request: Request) {
   })
 
   // Persist to DB for production-safe use (admin refresh, cron, server-to-server)
-  let userId = getGoogleAdsUserId(cookieStore)
-  console.log('GOOGLE_ADS_CALLBACK_SESSION_ID_PRESENT', !!userId)
-  if (!userId && tokenJson.refresh_token) {
-    userId = randomUUID()
-    response.cookies.set('session_id', userId, {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    })
-    console.log('GOOGLE_ADS_CALLBACK_FALLBACK_SESSION_CREATED')
-  }
+  const userId = getGoogleAdsUserId(cookieStore)
+  console.log('GOOGLE_ADS_CALLBACK_USER_ID_PRESENT', !!userId)
   if (userId && tokenJson.refresh_token) {
     console.log('GOOGLE_ADS_CALLBACK_DB_UPSERT_ATTEMPT')
     const scope = typeof tokenJson.scope === 'string' ? tokenJson.scope : undefined

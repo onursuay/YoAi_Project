@@ -55,7 +55,17 @@ export async function POST(request: Request) {
       path: '/',
     })
 
-    // Store user email and name in cookies for display purposes
+    // Permanent user id — used as the stable key for all DB connections (Meta, Google Ads).
+    // httpOnly so JS cannot read it; used server-side only for DB lookups.
+    response.cookies.set('user_id', user.id, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV === 'production',
+      sameSite: 'lax',
+      maxAge: 60 * 60 * 24 * 30,
+      path: '/',
+    })
+
+    // Display-only cookies (not sensitive)
     response.cookies.set('user_email', cleanEmail, {
       httpOnly: false,
       secure: process.env.NODE_ENV === 'production',

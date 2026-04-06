@@ -191,10 +191,10 @@ export async function GET(request: Request) {
   // Awaited to prevent dropped writes in serverless runtime.
   // Cookie persistence above is the primary store; DB is supplementary.
   // ============================================
-  const sessionId = cookieStore.get('session_id')?.value
-  if (sessionId) {
+  const userId = cookieStore.get('user_id')?.value
+  if (userId) {
     try {
-      await upsertMetaConnection(sessionId, {
+      await upsertMetaConnection(userId, {
         accessToken: finalAccessToken,
         expiresAt: expiresAt,
         tokenType: isLongLived ? 'long_lived' : 'short_lived',
@@ -206,7 +206,7 @@ export async function GET(request: Request) {
       console.warn(`[Meta Callback][${requestId}] DB_PERSIST_FAIL:`, err instanceof Error ? err.message : 'unknown')
     }
   } else {
-    if (DEBUG) console.log(`[Meta Callback][${requestId}] No session_id cookie, skipping DB persist`)
+    if (DEBUG) console.log(`[Meta Callback][${requestId}] No user_id cookie, skipping DB persist`)
   }
 
   console.log(`[Meta Callback][${requestId}] META_CONNECT_CALLBACK_SUCCESS: token_type=${isLongLived ? 'long_lived' : 'short_lived'} expires_in=${Math.round(tokenExpiresIn/86400)}d redirect=/connect/finalize`)

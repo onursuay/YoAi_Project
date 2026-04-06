@@ -21,8 +21,8 @@ export async function resolveMetaContext(): Promise<MetaContext | null> {
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
 
-  // ── Tier 1: DB-first ──
-  const sessionId = cookieStore.get('session_id')?.value
+  // ── Tier 1: DB-first (permanent user_id — persists across login/logout) ──
+  const sessionId = cookieStore.get('user_id')?.value
   if (sessionId) {
     try {
       const dbConn = await getMetaConnection(sessionId)
