@@ -670,6 +670,7 @@ export async function POST(request: Request) {
       const metaError = creativeResult.error || {}
       const code = metaError.code
       const subcode = metaError.error_subcode ?? metaError.subcode
+      console.error('[Ad Create] CREATIVE_FAIL:', JSON.stringify({ code, subcode, message: metaError.message, error_user_msg: metaError.error_user_msg, type: metaError.type, fbtrace_id: metaError.fbtrace_id }))
 
       // Subcode 2875003 = unsupported CTA for Instagram Direct placement
       const isUnsupportedCta =
