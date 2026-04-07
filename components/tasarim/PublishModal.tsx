@@ -816,7 +816,6 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   {derivedPreviewFormat === 'ig_feed' && t('previewIgFeed')}
                   {derivedPreviewFormat === 'ig_stories' && t('previewIgStories')}
                   {derivedPreviewFormat === 'ig_reels' && t('previewIgReels')}
-                  {' · 1080×'}{derivedPreviewFormat === 'fb_feed' || derivedPreviewFormat === 'ig_feed' ? '1350px' : '1920px'}
                 </p>
 
                 {/* Preview card */}
