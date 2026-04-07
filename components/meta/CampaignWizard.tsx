@@ -1348,15 +1348,6 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (needsUrl && !isLeadsOnAd && !state.ad.websiteUrl.trim()) {
       err.websiteUrl = t.websiteUrlRequired
     }
-    // Leads ON_AD: sayfa websitesi veya form privacy_policy_url yoksa kullanıcıdan URL al
-    const leadsOnAdPageWebsite = inventory?.pages?.find((p) => p.page_id === state.adset.pageId)?.website
-    const leadsOnAdFormPrivacyUrl = inventory?.lead_forms?.[state.adset.pageId ?? '']?.find(
-      (f) => f.form_id === (state.ad.leadFormId ?? state.adset.destinationDetails?.leads?.leadFormId)
-    )?.privacy_policy_url
-    if (isLeadsOnAd && !state.ad.websiteUrl?.trim() && !leadsOnAdPageWebsite && !leadsOnAdFormPrivacyUrl) {
-      err['creative.websiteUrl'] = 'Web sitesi veya gizlilik politikası URL\'si zorunludur.'
-    }
-
     // Leads + ON_AD: Potansiyel müşteri formu zorunlu (Step 2 destinationDetails veya Step 3 ad.leadFormId)
     if (state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'ON_AD') {
       if (!state.ad.leadFormId?.trim() && !state.adset.destinationDetails?.leads?.leadFormId?.trim()) {

@@ -286,17 +286,8 @@ export async function POST(request: Request) {
         tenantPrivacyPolicyUrl: tenantPrivacyPolicyUrl?.trim() || undefined,
         formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
       })
-      if (!leadResolvedLink) {
-        return NextResponse.json(
-          {
-            ok: false,
-            error: 'LEAD_CREATIVE_LINK_MISSING',
-            code: 'LEAD_CREATIVE_LINK_MISSING',
-            message: 'Lead Ads için geçerli bir HTTPS link bulunamadı.',
-          },
-          { status: 400 }
-        )
-      }
+      // URL bulunamazsa link olmadan gönder — Meta kabul ederse tamam, etmezse kendi hatasını döndürür
+      if (DEBUG) console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none — sending without link)')
     }
     if (objective === 'OUTCOME_SALES' && conversionLocation === 'CATALOG') {
       return NextResponse.json(
