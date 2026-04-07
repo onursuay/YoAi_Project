@@ -303,7 +303,6 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                       >
                         <Film className="w-3 h-3" />
                         Reels
-                        {!canReels && <span className="text-[10px] text-gray-400">{t('fbReelsVideoOnly')}</span>}
                       </button>
                     </div>
                   )}
@@ -376,7 +375,6 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     >
                       <Film className="w-4 h-4" />
                       Reels
-                      {!canReels && <span className="text-[10px] text-gray-400">{t('igReelsVideoOnly')}</span>}
                     </button>
 
                     {/* Stories */}
