@@ -9,7 +9,7 @@ export default function YoAiLayout({
 }) {
   const cookieStore = cookies()
   const sidebarCookie = cookieStore.get('sidebar_collapsed')
-  const defaultCollapsed = sidebarCookie ? JSON.parse(sidebarCookie.value) : true
+  const defaultCollapsed = sidebarCookie ? JSON.parse(sidebarCookie.value) : false
 
   return (
     <div className="flex h-screen bg-gray-50">

@@ -25,13 +25,6 @@ export default function SidebarNav({ defaultCollapsed = true }: { defaultCollaps
     requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
   }, [])
 
-  // Persist collapsed state to cookie (server-readable) and localStorage
-  useEffect(() => {
-    if (!ready) return
-    const value = JSON.stringify(collapsed)
-    localStorage.setItem('sidebar_collapsed', value)
-    document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000; SameSite=Lax`
-  }, [collapsed, ready])
 
   // Collapsed hint animation: logo 5s → button 1s → loop
   const [showHintButton, setShowHintButton] = useState(false)
@@ -50,7 +43,13 @@ export default function SidebarNav({ defaultCollapsed = true }: { defaultCollaps
   }, [collapsed, ready])
 
   const toggleCollapse = () => {
-    setCollapsed((prev) => !prev)
+    setCollapsed((prev) => {
+      const next = !prev
+      const value = JSON.stringify(next)
+      localStorage.setItem('sidebar_collapsed', value)
+      document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000; SameSite=Lax`
+      return next
+    })
   }
 
   const toggleGroup = (id: string) => {
