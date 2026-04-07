@@ -415,7 +415,7 @@ export default function MetaConnectWizard() {
                     disabled={!selectedAccount || isLoading}
                     className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? 'Seçiliyor...' : t('continue')}
+                    {isLoading ? t('selecting') : t('continue')}
                   </button>
                 </>
               )}
