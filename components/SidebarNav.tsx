@@ -11,16 +11,20 @@ import SidebarInfoCards from '@/components/SidebarInfoCards'
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
 import Image from 'next/image'
 
-export default function SidebarNav({ defaultCollapsed = true }: { defaultCollapsed?: boolean }) {
+export default function SidebarNav() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
-  const [collapsed, setCollapsed] = useState<boolean>(defaultCollapsed)
+  const [collapsed, setCollapsed] = useState<boolean>(false)
   const [ready, setReady] = useState(false)
   const [animate, setAnimate] = useState(false)
 
-  // Enable transitions after first render (no localStorage read needed — server provides correct state)
+  // Read saved state before paint, then enable transitions
   useLayoutEffect(() => {
+    try {
+      const saved = localStorage.getItem('sidebar_collapsed')
+      if (saved !== null) setCollapsed(JSON.parse(saved))
+    } catch { /* ignore */ }
     setReady(true)
     requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
   }, [])
@@ -45,9 +49,7 @@ export default function SidebarNav({ defaultCollapsed = true }: { defaultCollaps
   const toggleCollapse = () => {
     setCollapsed((prev) => {
       const next = !prev
-      const value = JSON.stringify(next)
-      localStorage.setItem('sidebar_collapsed', value)
-      document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000; SameSite=Lax`
+      localStorage.setItem('sidebar_collapsed', JSON.stringify(next))
       return next
     })
   }
@@ -93,7 +95,7 @@ export default function SidebarNav({ defaultCollapsed = true }: { defaultCollaps
   }, [t, locale])
 
   if (!ready) {
-    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: collapsed ? '72px' : '260px' }} />
+    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: '260px' }} />
   }
 
   return (
