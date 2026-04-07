@@ -907,10 +907,14 @@ export default function MetaPage() {
             budgetFailsafeTimeoutsRef.current = {}
             setCampaigns(prevCampaigns => {
               const loadingIds = new Set(Object.keys(loadingCampaignBudget))
+              const loadingStatusIds = new Set(Object.keys(loadingCampaignStatus).filter(k => loadingCampaignStatus[k]))
               const merged = (resultData as Campaign[]).map(r => {
                 const old = prevCampaigns.find(c => c.id === r.id)
                 if (loadingIds.has(r.id) && old) {
                   return { ...old, ...r, budget: r.budget ?? old.budget, daily_budget: r.daily_budget ?? old.daily_budget, lifetime_budget: r.lifetime_budget ?? old.lifetime_budget } as Campaign
+                }
+                if (loadingStatusIds.has(r.id) && old) {
+                  return { ...old, ...r, status: old.status, effective_status: old.effective_status } as Campaign
                 }
                 return { ...old, ...r } as Campaign
               })
@@ -926,8 +930,12 @@ export default function MetaPage() {
           } else {
             setAdsets(prev => {
               if (resultData.length === 0) return prev
+              const loadingAdSetStatusIds = new Set(Object.keys(loadingAdSetStatus).filter(k => loadingAdSetStatus[k]))
               const merged = (resultData as AdSet[]).map(r => {
                 const old = prev.find(a => a.id === r.id)
+                if (loadingAdSetStatusIds.has(r.id) && old) {
+                  return { ...old, ...r, status: old.status, effective_status: old.effective_status } as AdSet
+                }
                 return { ...old, ...r } as AdSet
               })
               lastGoodAdsetsRef.current = merged
@@ -941,8 +949,12 @@ export default function MetaPage() {
           } else {
             setAds(prev => {
               if (resultData.length === 0) return prev
+              const loadingAdStatusIds = new Set(Object.keys(loadingAdStatus).filter(k => loadingAdStatus[k]))
               const merged = (resultData as Ad[]).map(r => {
                 const old = prev.find(a => a.id === r.id)
+                if (loadingAdStatusIds.has(r.id) && old) {
+                  return { ...old, ...r, status: old.status, effective_status: old.effective_status } as Ad
+                }
                 return { ...old, ...r } as Ad
               })
               lastGoodAdsRef.current = merged
