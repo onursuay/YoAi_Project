@@ -1339,7 +1339,6 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     if (!state.ad.primaryText.trim()) err.primaryText = t.primaryTextRequired
 
     // websiteUrl sadece destination gerektiriyorsa zorunlu
-    // Leads ON_AD: backend resolveLeadCreativeLink ile fallback chain kullanır — frontend zorunlu tutma
     const needsUrl = requiresWebsiteUrl(
       state.campaign.objective,
       state.adset.conversionLocation,
@@ -1348,6 +1347,14 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
     const isLeadsOnAd = state.campaign.objective === 'OUTCOME_LEADS' && state.adset.conversionLocation === 'ON_AD'
     if (needsUrl && !isLeadsOnAd && !state.ad.websiteUrl.trim()) {
       err.websiteUrl = t.websiteUrlRequired
+    }
+    // Leads ON_AD: sayfa websitesi veya form privacy_policy_url yoksa kullanıcıdan URL al
+    const leadsOnAdPageWebsite = inventory?.pages?.find((p) => p.page_id === state.adset.pageId)?.website
+    const leadsOnAdFormPrivacyUrl = inventory?.lead_forms?.[state.adset.pageId ?? '']?.find(
+      (f) => f.form_id === (state.ad.leadFormId ?? state.adset.destinationDetails?.leads?.leadFormId)
+    )?.privacy_policy_url
+    if (isLeadsOnAd && !state.ad.websiteUrl?.trim() && !leadsOnAdPageWebsite && !leadsOnAdFormPrivacyUrl) {
+      err['creative.websiteUrl'] = 'Web sitesi veya gizlilik politikası URL\'si zorunludur.'
     }
 
     // Leads + ON_AD: Potansiyel müşteri formu zorunlu (Step 2 destinationDetails veya Step 3 ad.leadFormId)
