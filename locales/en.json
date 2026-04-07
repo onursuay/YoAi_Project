@@ -2188,7 +2188,18 @@
         "connectMeta": "Connect Meta Account",
         "noPages": "No Facebook pages found for publishing.",
         "reconnectHint": "You can reconnect your Meta account to grant page permissions.",
-        "connectionError": "Connection error"
+        "connectionError": "Connection error",
+        "feed": "Feed",
+        "reels": "Reels",
+        "stories": "Stories",
+        "justNow": "Just now",
+        "like": "Like",
+        "comment": "Comment",
+        "share": "Share",
+        "previewFbFeed": "Facebook Feed",
+        "previewIgFeed": "Instagram Feed",
+        "previewIgStories": "Instagram Stories",
+        "previewIgReels": "Instagram Reels"
       }
     },
     "raporlar": {

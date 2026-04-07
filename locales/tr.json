@@ -2188,7 +2188,18 @@
         "connectMeta": "Meta Hesabını Bağla",
         "noPages": "Yayınlanabilecek Facebook sayfası bulunamadı.",
         "reconnectHint": "Sayfa izinlerini vermek için Meta hesabınızı yeniden bağlayabilirsiniz.",
-        "connectionError": "Bağlantı hatası"
+        "connectionError": "Bağlantı hatası",
+        "feed": "Akış",
+        "reels": "Reels",
+        "stories": "Hikayeler",
+        "justNow": "Az önce",
+        "like": "Beğen",
+        "comment": "Yorum Yap",
+        "share": "Paylaş",
+        "previewFbFeed": "Facebook Akışı",
+        "previewIgFeed": "Instagram Akışı",
+        "previewIgStories": "Instagram Hikayeler",
+        "previewIgReels": "Instagram Reels"
       }
     },
     "raporlar": {

@@ -348,7 +348,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                               }`}
                             >
                               <LayoutGrid className="w-3 h-3" />
-                              Feed
+                              {t('feed')}
                             </button>
                             <button
                               type="button"
@@ -363,7 +363,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                               }`}
                             >
                               <Film className="w-3 h-3" />
-                              Reels
+                              {t('reels')}
                             </button>
                           </div>
                         )}
@@ -405,7 +405,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                   }`}
                                 >
                                   <LayoutGrid className="w-3 h-3" />
-                                  Feed
+                                  {t('feed')}
                                 </button>
                                 <button
                                   type="button"
@@ -420,7 +420,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                   }`}
                                 >
                                   <Film className="w-3 h-3" />
-                                  Reels
+                                  {t('reels')}
                                 </button>
                                 <button
                                   type="button"
@@ -432,7 +432,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                   }`}
                                 >
                                   <BookImage className="w-3 h-3" />
-                                  Stories
+                                  {t('stories')}
                                 </button>
                               </div>
                             )}
@@ -624,10 +624,10 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     onChange={(e) => setPreviewFormat(e.target.value as PreviewFormat)}
                     className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#2BB673]/30"
                   >
-                    <option value="fb_feed">Facebook Feed</option>
-                    <option value="ig_feed">Instagram Feed</option>
-                    <option value="ig_stories">Instagram Stories</option>
-                    {isVideo && <option value="ig_reels">Instagram Reels</option>}
+                    <option value="fb_feed">{t('previewFbFeed')}</option>
+                    <option value="ig_feed">{t('previewIgFeed')}</option>
+                    <option value="ig_stories">{t('previewIgStories')}</option>
+                    {isVideo && <option value="ig_reels">{t('previewIgReels')}</option>}
                   </select>
 
                   {/* Device toggle (for FB feed) */}
@@ -674,7 +674,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                             : firstSelectedTarget?.instagram?.username || 'username'}
                         </p>
                         {previewFormat === 'fb_feed' && (
-                          <p className="text-[10px] text-gray-400">Just now</p>
+                          <p className="text-[10px] text-gray-400">{t('justNow')}</p>
                         )}
                       </div>
                     </div>
@@ -743,20 +743,20 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
                         </svg>
-                        Like
+                        {t('like')}
                       </button>
                       <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
-                        Comment
+                        {t('comment')}
                       </button>
                       <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                           <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
                         </svg>
-                        Share
+                        {t('share')}
                       </button>
                     </div>
                   )}
