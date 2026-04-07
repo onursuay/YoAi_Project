@@ -11,8 +11,8 @@ interface FeatureCard {
   icon: React.ElementType
   iconBg: string
   iconColor: string
-  title: string
-  summary: string
+  tr: { title: string; summary: string }
+  en: { title: string; summary: string }
   accentColor: string
   bgGradient: string
   miniVisual: 'bar' | 'line' | 'dots' | 'ring'
@@ -24,8 +24,8 @@ const featureCards: FeatureCard[] = [
     icon: MousePointerClick,
     iconBg: 'bg-blue-100',
     iconColor: 'text-blue-600',
-    title: 'Meta Reklamları',
-    summary: 'Facebook ve Instagram reklamlarınızı tek panelden oluşturun, yönetin ve performansını anlık takip edin.',
+    tr: { title: 'Meta Reklamları', summary: 'Facebook ve Instagram reklamlarınızı tek panelden oluşturun, yönetin ve performansını anlık takip edin.' },
+    en: { title: 'Meta Ads', summary: 'Create, manage and track your Facebook and Instagram ads in real time from a single dashboard.' },
     accentColor: 'border-blue-400',
     bgGradient: 'from-blue-50 to-white',
     miniVisual: 'bar',
@@ -35,8 +35,8 @@ const featureCards: FeatureCard[] = [
     icon: BarChart3,
     iconBg: 'bg-amber-100',
     iconColor: 'text-amber-600',
-    title: 'Google Reklamları',
-    summary: 'Arama, görüntülü ve video kampanyalarınızı oluşturun. Anahtar kelime analizi ile doğru kitleye ulaşın.',
+    tr: { title: 'Google Reklamları', summary: 'Arama, görüntülü ve video kampanyalarınızı oluşturun. Anahtar kelime analizi ile doğru kitleye ulaşın.' },
+    en: { title: 'Google Ads', summary: 'Create search, display and video campaigns. Reach the right audience with keyword analysis.' },
     accentColor: 'border-amber-400',
     bgGradient: 'from-amber-50 to-white',
     miniVisual: 'line',
@@ -46,8 +46,8 @@ const featureCards: FeatureCard[] = [
     icon: Zap,
     iconBg: 'bg-pink-100',
     iconColor: 'text-pink-600',
-    title: 'TikTok Reklamları',
-    summary: 'TikTok kampanyalarınızı başlatın, genç kitleye ulaşın. Video bazlı reklamlarla etkileşimi artırın.',
+    tr: { title: 'TikTok Reklamları', summary: 'TikTok kampanyalarınızı başlatın, genç kitleye ulaşın. Video bazlı reklamlarla etkileşimi artırın.' },
+    en: { title: 'TikTok Ads', summary: 'Launch TikTok campaigns and reach younger audiences. Boost engagement with video-based ads.' },
     accentColor: 'border-pink-400',
     bgGradient: 'from-pink-50 to-white',
     miniVisual: 'dots',
@@ -57,8 +57,8 @@ const featureCards: FeatureCard[] = [
     icon: Target,
     iconBg: 'bg-violet-100',
     iconColor: 'text-violet-600',
-    title: 'AI Strateji',
-    summary: 'Yapay zeka, reklam verilerinizi analiz eder ve size özel kampanya stratejileri önerir. Tek tıkla uygulayın.',
+    tr: { title: 'AI Strateji', summary: 'Yapay zeka, reklam verilerinizi analiz eder ve size özel kampanya stratejileri önerir. Tek tıkla uygulayın.' },
+    en: { title: 'AI Strategy', summary: 'AI analyzes your ad data and suggests tailored campaign strategies. Apply them with a single click.' },
     accentColor: 'border-violet-400',
     bgGradient: 'from-violet-50 to-white',
     miniVisual: 'ring',
@@ -68,8 +68,8 @@ const featureCards: FeatureCard[] = [
     icon: TrendingUp,
     iconBg: 'bg-emerald-100',
     iconColor: 'text-emerald-600',
-    title: 'Optimizasyon',
-    summary: 'Bütçe dağılımı, hedefleme ve teklif stratejilerinizi AI ile optimize edin. Daha az harcayıp daha çok dönüşüm alın.',
+    tr: { title: 'Optimizasyon', summary: 'Bütçe dağılımı, hedefleme ve teklif stratejilerinizi AI ile optimize edin. Daha az harcayıp daha çok dönüşüm alın.' },
+    en: { title: 'Optimization', summary: 'Optimize budget allocation, targeting and bid strategies with AI. Spend less, convert more.' },
     accentColor: 'border-emerald-400',
     bgGradient: 'from-emerald-50 to-white',
     miniVisual: 'line',
@@ -79,8 +79,8 @@ const featureCards: FeatureCard[] = [
     icon: Sparkles,
     iconBg: 'bg-indigo-100',
     iconColor: 'text-indigo-600',
-    title: 'YoAi Asistan',
-    summary: 'Reklam performansınız hakkında soru sorun, anında yanıt alın. AI asistanınız 7/24 yanınızda.',
+    tr: { title: 'YoAi Asistan', summary: 'Reklam performansınız hakkında soru sorun, anında yanıt alın. AI asistanınız 7/24 yanınızda.' },
+    en: { title: 'YoAi Assistant', summary: 'Ask questions about your ad performance and get instant answers. Your AI assistant is available 24/7.' },
     accentColor: 'border-indigo-400',
     bgGradient: 'from-indigo-50 to-white',
     miniVisual: 'dots',
@@ -90,8 +90,8 @@ const featureCards: FeatureCard[] = [
     icon: Users,
     iconBg: 'bg-cyan-100',
     iconColor: 'text-cyan-600',
-    title: 'Hedef Kitle',
-    summary: 'AI destekli kitle analizi ile en yüksek dönüşüm potansiyeline sahip segmentleri keşfedin ve hedefleyin.',
+    tr: { title: 'Hedef Kitle', summary: 'AI destekli kitle analizi ile en yüksek dönüşüm potansiyeline sahip segmentleri keşfedin ve hedefleyin.' },
+    en: { title: 'Target Audience', summary: 'Discover and target the highest-converting segments with AI-powered audience analysis.' },
     accentColor: 'border-cyan-400',
     bgGradient: 'from-cyan-50 to-white',
     miniVisual: 'bar',
@@ -101,8 +101,8 @@ const featureCards: FeatureCard[] = [
     icon: ImageIcon,
     iconBg: 'bg-rose-100',
     iconColor: 'text-rose-600',
-    title: 'Tasarım',
-    summary: 'Reklam görsellerinizi AI ile saniyeler içinde oluşturun. Platformlara uygun boyutlarda otomatik dışa aktarın.',
+    tr: { title: 'Tasarım', summary: 'Reklam görsellerinizi AI ile saniyeler içinde oluşturun. Platformlara uygun boyutlarda otomatik dışa aktarın.' },
+    en: { title: 'Design', summary: 'Generate ad visuals with AI in seconds. Auto-export in platform-ready sizes.' },
     accentColor: 'border-rose-400',
     bgGradient: 'from-rose-50 to-white',
     miniVisual: 'ring',
@@ -112,8 +112,8 @@ const featureCards: FeatureCard[] = [
     icon: FileText,
     iconBg: 'bg-teal-100',
     iconColor: 'text-teal-600',
-    title: 'Raporlar',
-    summary: 'Tüm platformlardan gelen verilerinizi tek bir raporda birleştirin. Haftalık ve aylık performans özetleri alın.',
+    tr: { title: 'Raporlar', summary: 'Tüm platformlardan gelen verilerinizi tek bir raporda birleştirin. Haftalık ve aylık performans özetleri alın.' },
+    en: { title: 'Reports', summary: 'Consolidate data from all platforms into one report. Get weekly and monthly performance summaries.' },
     accentColor: 'border-teal-400',
     bgGradient: 'from-teal-50 to-white',
     miniVisual: 'bar',
@@ -123,8 +123,8 @@ const featureCards: FeatureCard[] = [
     icon: Search,
     iconBg: 'bg-orange-100',
     iconColor: 'text-orange-600',
-    title: 'SEO',
-    summary: 'Anahtar kelime sıralamanızı takip edin, teknik SEO sorunlarını tespit edin ve organik trafiğinizi artırın.',
+    tr: { title: 'SEO', summary: 'Anahtar kelime sıralamanızı takip edin, teknik SEO sorunlarını tespit edin ve organik trafiğinizi artırın.' },
+    en: { title: 'SEO', summary: 'Track keyword rankings, detect technical SEO issues and grow your organic traffic.' },
     accentColor: 'border-orange-400',
     bgGradient: 'from-orange-50 to-white',
     miniVisual: 'line',
@@ -134,8 +134,8 @@ const featureCards: FeatureCard[] = [
     icon: Puzzle,
     iconBg: 'bg-gray-100',
     iconColor: 'text-gray-600',
-    title: 'Entegrasyon',
-    summary: 'Meta, Google ve TikTok hesaplarınızı bağlayın. Tüm reklam verileriniz tek panelde, anlık senkronize.',
+    tr: { title: 'Entegrasyon', summary: 'Meta, Google ve TikTok hesaplarınızı bağlayın. Tüm reklam verileriniz tek panelde, anlık senkronize.' },
+    en: { title: 'Integration', summary: 'Connect your Meta, Google and TikTok accounts. All your ad data in one panel, synced in real time.' },
     accentColor: 'border-gray-400',
     bgGradient: 'from-gray-50 to-white',
     miniVisual: 'dots',
@@ -241,6 +241,10 @@ function getMiniVisual(type: string, iconColor: string) {
 
 export default function SidebarInfoCards({ collapsed }: { collapsed: boolean }) {
   const [currentIndex, setCurrentIndex] = useState(0)
+  const locale = typeof document !== 'undefined'
+    ? (document.cookie.match(/NEXT_LOCALE=(\w+)/)?.[1] || 'tr')
+    : 'tr'
+  const lang: 'tr' | 'en' = locale === 'en' ? 'en' : 'tr'
   const [dismissed, setDismissed] = useState(false)
   const [animState, setAnimState] = useState<'enter' | 'visible' | 'exit'>('enter')
   const [isPaused, setIsPaused] = useState(false)
@@ -306,13 +310,13 @@ export default function SidebarInfoCards({ collapsed }: { collapsed: boolean }) 
               <Icon className={`w-3.5 h-3.5 ${card.iconColor}`} />
             </div>
             <h4 className="text-[11px] font-bold text-gray-800 leading-tight pr-4">
-              {card.title}
+              {card[lang].title}
             </h4>
           </div>
 
           {/* Description */}
           <p className="text-[10px] text-gray-600 leading-relaxed line-clamp-3 mb-2">
-            {card.summary}
+            {card[lang].summary}
           </p>
 
           {/* Visual + pagination */}
