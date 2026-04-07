@@ -11,27 +11,26 @@ import SidebarInfoCards from '@/components/SidebarInfoCards'
 import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
 import Image from 'next/image'
 
-export default function SidebarNav() {
+export default function SidebarNav({ defaultCollapsed = true }: { defaultCollapsed?: boolean }) {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
-  const [collapsed, setCollapsed] = useState<boolean>(true)
+  const [collapsed, setCollapsed] = useState<boolean>(defaultCollapsed)
   const [ready, setReady] = useState(false)
   const [animate, setAnimate] = useState(false)
 
-  // Read saved state before paint to prevent flicker, then enable transitions
+  // Enable transitions after first render (no localStorage read needed — server provides correct state)
   useLayoutEffect(() => {
-    try {
-      const saved = localStorage.getItem('sidebar_collapsed')
-      if (saved !== null) setCollapsed(JSON.parse(saved))
-    } catch { /* ignore */ }
     setReady(true)
     requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
   }, [])
 
-  // Persist collapsed state (only after first render)
+  // Persist collapsed state to cookie (server-readable) and localStorage
   useEffect(() => {
-    if (ready) localStorage.setItem('sidebar_collapsed', JSON.stringify(collapsed))
+    if (!ready) return
+    const value = JSON.stringify(collapsed)
+    localStorage.setItem('sidebar_collapsed', value)
+    document.cookie = `sidebar_collapsed=${value}; path=/; max-age=31536000; SameSite=Lax`
   }, [collapsed, ready])
 
   // Collapsed hint animation: logo 5s → button 1s → loop
@@ -95,7 +94,7 @@ export default function SidebarNav() {
   }, [t, locale])
 
   if (!ready) {
-    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: '72px' }} />
+    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: collapsed ? '72px' : '260px' }} />
   }
 
   return (

@@ -1,21 +1,20 @@
-'use client'
-
 import SidebarNav from '@/components/SidebarNav'
+import MainContent from '@/components/MainContent'
+import { cookies } from 'next/headers'
 
 export default function YoAiLayout({
   children,
 }: {
   children: React.ReactNode
 }) {
+  const cookieStore = cookies()
+  const sidebarCookie = cookieStore.get('sidebar_collapsed')
+  const defaultCollapsed = sidebarCookie ? JSON.parse(sidebarCookie.value) : true
+
   return (
     <div className="flex h-screen bg-gray-50">
-      <SidebarNav />
-      <div
-        className="flex-1 flex flex-col overflow-hidden"
-        onClick={() => window.dispatchEvent(new Event('sidebar:close-groups'))}
-      >
-        {children}
-      </div>
+      <SidebarNav defaultCollapsed={defaultCollapsed} />
+      <MainContent>{children}</MainContent>
     </div>
   )
 }
