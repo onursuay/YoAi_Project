@@ -753,37 +753,7 @@ export default function MetaPage() {
         return
       }
 
-      // Hydrate from localStorage for instant display on refresh (before fetch)
-      if (!hasExistingData && typeof localStorage !== 'undefined') {
-        try {
-          const cacheKey = `metaRows:${accountId}:${tab}`
-          let cached = localStorage.getItem(cacheKey)
-          if (!cached) cached = localStorage.getItem(`meta:list:${accountId}:${tab}`) // legacy
-          if (cached) {
-            const parsed = JSON.parse(cached)
-            const arr = Array.isArray(parsed) ? parsed : parsed?.rows ?? parsed?.data
-            const optScore = !Array.isArray(parsed) && parsed?.opportunityScore != null ? parsed.opportunityScore : null
-            if (Array.isArray(arr) && arr.length > 0) {
-              if (tab === 'kampanyalar') {
-                setCampaigns(arr)
-                lastGoodCampaignsRef.current = arr
-              } else if (tab === 'reklam-setleri') {
-                setAdsets(arr)
-                lastGoodAdsetsRef.current = arr
-              } else {
-                setAds(arr)
-                lastGoodAdsRef.current = arr
-              }
-              if (optScore != null && typeof optScore === 'number') {
-                lastGoodOpportunityScoreRef.current = optScore
-                setOpportunityScore(optScore)
-              }
-            }
-          }
-        } catch {
-          // Ignore cache parse errors
-        }
-      }
+      // localStorage hydration removed — always show fresh data from Meta API
 
       // Step 2: Set account state if not already set
       if (!selectedAdAccountId) {
@@ -960,18 +930,6 @@ export default function MetaPage() {
               lastGoodAdsRef.current = merged
               return merged
             })
-          }
-        }
-        // Persist to localStorage for instant display on next refresh (incl. optScore)
-        if (typeof localStorage !== 'undefined' && resultData.length > 0) {
-          try {
-            const optScore = opportunityScore ?? lastGoodOpportunityScoreRef.current
-            const toStore = optScore != null
-              ? { rows: resultData, opportunityScore: optScore }
-              : resultData
-            localStorage.setItem(`metaRows:${accountId}:${tab}`, JSON.stringify(toStore))
-          } catch {
-            // Ignore quota errors
           }
         }
       } else {
