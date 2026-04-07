@@ -12,18 +12,20 @@ export async function GET(request: Request) {
   const origin = url.origin
 
   const cookieStore = await cookies()
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+  const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
+  const dashboardUrl = isEn ? '/en/dashboard' : '/dashboard'
+  const integrationUrl = (q: string) => isEn ? `/en/integration?${q}` : `/entegrasyon?${q}`
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?ga=error&reason=${encodeURIComponent(error)}`, origin),
+      new URL(integrationUrl(`ga=error&reason=${encodeURIComponent(error)}`), origin),
       { status: 302 }
     )
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?ga=error&reason=missing_code_or_state`, origin),
+      new URL(integrationUrl('ga=error&reason=missing_code_or_state'), origin),
       { status: 302 }
     )
   }
@@ -33,7 +35,7 @@ export async function GET(request: Request) {
 
   if (!expectedState || expectedState !== stateValue) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?ga=error&reason=invalid_state`, origin),
+      new URL(integrationUrl('ga=error&reason=invalid_state'), origin),
       { status: 302 }
     )
   }
@@ -43,10 +45,7 @@ export async function GET(request: Request) {
   try {
     const tokens = await exchangeCodeForTokens(code, redirectUri)
 
-    const response = NextResponse.redirect(
-      new URL(`/${locale}/dashboard`, origin),
-      { status: 302 }
-    )
+    const response = NextResponse.redirect(new URL(dashboardUrl, origin), { status: 302 })
 
     response.cookies.set('ga_oauth_state', '', { maxAge: 0, path: '/' })
 
@@ -74,7 +73,7 @@ export async function GET(request: Request) {
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'token_exchange_failed'
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?ga=error&reason=${encodeURIComponent(reason)}`, origin),
+      new URL(integrationUrl(`ga=error&reason=${encodeURIComponent(reason)}`), origin),
       { status: 302 }
     )
   }

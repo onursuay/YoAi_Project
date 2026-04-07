@@ -17,21 +17,20 @@ export async function GET(request: Request) {
   const origin = url.origin
 
   const cookieStore = await cookies()
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+  const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
+  const dashboardUrl = isEn ? '/en/dashboard' : '/dashboard'
+  const integrationUrl = (q: string) => isEn ? `/en/integration?${q}` : `/entegrasyon?${q}`
 
   if (error) {
     return NextResponse.redirect(
-      new URL(
-        `/${locale}/entegrasyon?google=error&reason=${encodeURIComponent(errorDescription || error)}`,
-        origin
-      ),
+      new URL(integrationUrl(`google=error&reason=${encodeURIComponent(errorDescription || error)}`), origin),
       { status: 302 }
     )
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?google=error&reason=missing_code_or_state`, origin),
+      new URL(integrationUrl('google=error&reason=missing_code_or_state'), origin),
       { status: 302 }
     )
   }
@@ -40,7 +39,7 @@ export async function GET(request: Request) {
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?google=error&reason=invalid_state`, origin),
+      new URL(integrationUrl('google=error&reason=invalid_state'), origin),
       { status: 302 }
     )
   }
@@ -53,7 +52,7 @@ export async function GET(request: Request) {
 
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?google=error&reason=missing_app_config`, origin),
+      new URL(integrationUrl('google=error&reason=missing_app_config'), origin),
       { status: 302 }
     )
   }
@@ -77,10 +76,7 @@ export async function GET(request: Request) {
   if (!tokenRes.ok || !tokenJson?.refresh_token) {
     const reason = tokenJson?.error_description || tokenJson?.error || 'token_exchange_failed'
     return NextResponse.redirect(
-      new URL(
-        `/${locale}/entegrasyon?google=error&reason=${encodeURIComponent(String(reason))}`,
-        origin
-      ),
+      new URL(integrationUrl(`google=error&reason=${encodeURIComponent(String(reason))}`), origin),
       { status: 302 }
     )
   }
@@ -88,7 +84,7 @@ export async function GET(request: Request) {
   console.log('GOOGLE_ADS_CALLBACK_HIT')
 
   const response = NextResponse.redirect(
-    new URL(`/${locale}/dashboard`, origin),
+    new URL(dashboardUrl, origin),
     { status: 302 }
   )
 

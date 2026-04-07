@@ -3,10 +3,6 @@ import { cookies } from 'next/headers'
 import { TIKTOK_TOKEN_URL } from '@/lib/tiktok-ads/constants'
 import { upsertConnection } from '@/lib/tiktokAdsConnectionStore'
 
-/**
- * TikTok Ads OAuth callback. Validates state, exchanges auth_code for access token,
- * stores in httpOnly cookie and persists to DB.
- */
 export async function GET(request: Request) {
   const url = new URL(request.url)
   const authCode = url.searchParams.get('auth_code')
@@ -15,18 +11,20 @@ export async function GET(request: Request) {
   const origin = url.origin
 
   const cookieStore = await cookies()
-  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+  const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
+  const dashboardUrl = isEn ? '/en/dashboard' : '/dashboard'
+  const integrationUrl = (q: string) => isEn ? `/en/integration?${q}` : `/entegrasyon?${q}`
 
   if (error) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?tiktok=error&reason=${encodeURIComponent(error)}`, origin),
+      new URL(integrationUrl(`tiktok=error&reason=${encodeURIComponent(error)}`), origin),
       { status: 302 }
     )
   }
 
   if (!authCode || !state) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?tiktok=error&reason=missing_code_or_state`, origin),
+      new URL(integrationUrl('tiktok=error&reason=missing_code_or_state'), origin),
       { status: 302 }
     )
   }
@@ -35,7 +33,7 @@ export async function GET(request: Request) {
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?tiktok=error&reason=invalid_state`, origin),
+      new URL(integrationUrl('tiktok=error&reason=invalid_state'), origin),
       { status: 302 }
     )
   }
@@ -45,22 +43,17 @@ export async function GET(request: Request) {
 
   if (!appId || !appSecret) {
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?tiktok=error&reason=missing_app_config`, origin),
+      new URL(integrationUrl('tiktok=error&reason=missing_app_config'), origin),
       { status: 302 }
     )
   }
 
-  // Exchange auth_code for access token
   let tokenData: { access_token?: string; advertiser_ids?: string[] }
   try {
     const tokenRes = await fetch(TIKTOK_TOKEN_URL, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        app_id: appId,
-        secret: appSecret,
-        auth_code: authCode,
-      }),
+      body: JSON.stringify({ app_id: appId, secret: appSecret, auth_code: authCode }),
       signal: AbortSignal.timeout(15000),
     })
     const tokenJson = await tokenRes.json()
@@ -69,7 +62,7 @@ export async function GET(request: Request) {
       const reason = tokenJson.message || 'token_exchange_failed'
       console.error('[TikTok Callback] Token exchange failed:', reason)
       return NextResponse.redirect(
-        new URL(`/${locale}/entegrasyon?tiktok=error&reason=${encodeURIComponent(reason)}`, origin),
+        new URL(integrationUrl(`tiktok=error&reason=${encodeURIComponent(reason)}`), origin),
         { status: 302 }
       )
     }
@@ -77,7 +70,7 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error('[TikTok Callback] Token exchange network error:', err)
     return NextResponse.redirect(
-      new URL(`/${locale}/entegrasyon?tiktok=error&reason=network_error`, origin),
+      new URL(integrationUrl('tiktok=error&reason=network_error'), origin),
       { status: 302 }
     )
   }
@@ -86,19 +79,11 @@ export async function GET(request: Request) {
 
   const accessToken = tokenData.access_token!
   const advertiserIds = tokenData.advertiser_ids || []
+  const cookieMaxAge = 60 * 60 * 24 * 365
 
-  // TikTok access tokens are long-lived (typically valid for ~24 hours, auto-refreshed)
-  const cookieMaxAge = 60 * 60 * 24 * 365 // 1 year
+  const response = NextResponse.redirect(new URL(dashboardUrl, origin), { status: 302 })
 
-  const response = NextResponse.redirect(
-    new URL(`/${locale}/dashboard`, origin),
-    { status: 302 }
-  )
-
-  // Clear state cookie
   response.cookies.set('tiktok_ads_oauth_state', '', { maxAge: 0, path: '/' })
-
-  // Store access token as httpOnly cookie
   response.cookies.set('tiktok_access_token', accessToken, {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
@@ -107,7 +92,6 @@ export async function GET(request: Request) {
     maxAge: cookieMaxAge,
   })
 
-  // Store advertiser IDs for account selection
   if (advertiserIds.length > 0) {
     response.cookies.set('tiktok_advertiser_ids', JSON.stringify(advertiserIds), {
       httpOnly: true,
@@ -118,20 +102,15 @@ export async function GET(request: Request) {
     })
   }
 
-  // Persist to DB
   const sessionId = cookieStore.get('session_id')?.value
   if (sessionId) {
     try {
-      await upsertConnection(sessionId, {
-        accessToken,
-        status: 'active',
-      })
+      await upsertConnection(sessionId, { accessToken, status: 'active' })
     } catch (err) {
       console.warn('[TikTok Callback] DB_PERSIST_FAIL:', err instanceof Error ? err.message : 'unknown')
     }
   }
 
   console.log(`TIKTOK_ADS_CALLBACK_SUCCESS: advertiser_count=${advertiserIds.length}`)
-
   return response
 }
