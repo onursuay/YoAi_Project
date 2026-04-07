@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import {
   X, Send, Loader2, Facebook, Instagram, AlertCircle, Link2,
   Film, BookImage, LayoutGrid, Monitor, Smartphone, Clock, Calendar,
+  ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import type { ToastType } from '@/components/Toast'
 import ToggleSwitch from '@/components/ToggleSwitch'
@@ -69,6 +70,10 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
   const [scheduleMode, setScheduleMode] = useState<'now' | 'schedule'>('now')
   const [scheduleDate, setScheduleDate] = useState('')
   const [scheduleTime, setScheduleTime] = useState('')
+  const [calendarMonth, setCalendarMonth] = useState(() => {
+    const now = new Date()
+    return { year: now.getFullYear(), month: now.getMonth() }
+  })
 
   // Preview
   const [previewFormat, setPreviewFormat] = useState<PreviewFormat>('fb_feed')
@@ -605,13 +610,15 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   <label className="block text-sm font-semibold text-gray-800 mb-2">
                     {t('scheduling')}
                   </label>
-                  <div className="flex gap-2">
+
+                  {/* Mode toggle */}
+                  <div className="flex gap-2 mb-3">
                     <button
                       type="button"
                       onClick={() => setScheduleMode('now')}
                       className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
                         scheduleMode === 'now'
-                          ? 'bg-[#2BB673]/10 text-[#2BB673] font-medium border border-[#2BB673]/30'
+                          ? 'bg-green-50 text-green-700 font-medium border border-green-200'
                           : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -623,7 +630,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                       onClick={() => setScheduleMode('schedule')}
                       className={`flex items-center gap-1.5 px-3 py-2 rounded-xl text-sm transition-colors ${
                         scheduleMode === 'schedule'
-                          ? 'bg-[#2BB673]/10 text-[#2BB673] font-medium border border-[#2BB673]/30'
+                          ? 'bg-green-50 text-green-700 font-medium border border-green-200'
                           : 'border border-gray-200 text-gray-600 hover:bg-gray-50'
                       }`}
                     >
@@ -632,22 +639,107 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     </button>
                   </div>
 
-                  {scheduleMode === 'schedule' && (
-                    <div className="flex gap-2 mt-3">
-                      <input
-                        type="date"
-                        value={scheduleDate}
-                        onChange={(e) => setScheduleDate(e.target.value)}
-                        className="flex-1 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2BB673]/30 focus:border-[#2BB673]"
-                      />
-                      <input
-                        type="time"
-                        value={scheduleTime}
-                        onChange={(e) => setScheduleTime(e.target.value)}
-                        className="w-28 px-3 py-2 border border-gray-200 rounded-xl text-sm focus:outline-none focus:ring-2 focus:ring-[#2BB673]/30 focus:border-[#2BB673]"
-                      />
-                    </div>
-                  )}
+                  {/* Calendar picker */}
+                  {scheduleMode === 'schedule' && (() => {
+                    const { year, month } = calendarMonth
+                    const today = new Date()
+                    today.setHours(0, 0, 0, 0)
+                    const firstDay = new Date(year, month, 1).getDay()
+                    const startOffset = firstDay === 0 ? 6 : firstDay - 1
+                    const daysInMonth = new Date(year, month + 1, 0).getDate()
+                    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
+                    const dayNames = ['Mo','Tu','We','Th','Fr','Sa','Su']
+
+                    return (
+                      <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">
+                        {/* Calendar header */}
+                        <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100">
+                          <button
+                            type="button"
+                            onClick={() => setCalendarMonth((prev) => {
+                              const d = new Date(prev.year, prev.month - 1)
+                              return { year: d.getFullYear(), month: d.getMonth() }
+                            })}
+                            className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                          >
+                            <ChevronLeft className="w-4 h-4" />
+                          </button>
+                          <span className="text-sm font-semibold text-gray-700">
+                            {monthNames[month]} {year}
+                          </span>
+                          <button
+                            type="button"
+                            onClick={() => setCalendarMonth((prev) => {
+                              const d = new Date(prev.year, prev.month + 1)
+                              return { year: d.getFullYear(), month: d.getMonth() }
+                            })}
+                            className="p-1 rounded-lg hover:bg-gray-100 text-gray-500 transition-colors"
+                          >
+                            <ChevronRight className="w-4 h-4" />
+                          </button>
+                        </div>
+
+                        <div className="p-3">
+                          {/* Day labels */}
+                          <div className="grid grid-cols-7 mb-1">
+                            {dayNames.map((d) => (
+                              <div key={d} className="text-center text-[11px] font-medium text-gray-400 py-1">{d}</div>
+                            ))}
+                          </div>
+
+                          {/* Day cells */}
+                          <div className="grid grid-cols-7 gap-y-0.5">
+                            {Array.from({ length: startOffset }).map((_, i) => (
+                              <div key={`empty-${i}`} />
+                            ))}
+                            {Array.from({ length: daysInMonth }).map((_, i) => {
+                              const day = i + 1
+                              const cellDate = new Date(year, month, day)
+                              cellDate.setHours(0, 0, 0, 0)
+                              const isPast = cellDate < today
+                              const dateStr = `${year}-${String(month + 1).padStart(2, '0')}-${String(day).padStart(2, '0')}`
+                              const isSelected = scheduleDate === dateStr
+                              const isToday = cellDate.getTime() === today.getTime()
+
+                              return (
+                                <button
+                                  key={day}
+                                  type="button"
+                                  disabled={isPast}
+                                  onClick={() => setScheduleDate(dateStr)}
+                                  className={`
+                                    relative flex items-center justify-center h-8 w-full rounded-lg text-sm transition-colors
+                                    ${isSelected ? 'bg-green-500 text-white font-semibold' : ''}
+                                    ${!isSelected && isToday ? 'ring-1 ring-green-400 text-green-600 font-semibold' : ''}
+                                    ${!isSelected && !isToday && !isPast ? 'text-gray-700 hover:bg-gray-100' : ''}
+                                    ${isPast ? 'text-gray-300 cursor-not-allowed' : 'cursor-pointer'}
+                                  `}
+                                >
+                                  {day}
+                                </button>
+                              )
+                            })}
+                          </div>
+                        </div>
+
+                        {/* Time picker */}
+                        <div className="flex items-center gap-2 px-4 py-3 border-t border-gray-100 bg-gray-50/50">
+                          <Clock className="w-4 h-4 text-gray-400 flex-shrink-0" />
+                          <input
+                            type="time"
+                            value={scheduleTime}
+                            onChange={(e) => setScheduleTime(e.target.value)}
+                            className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-1 focus:ring-green-400 focus:border-green-400"
+                          />
+                          {scheduleDate && (
+                            <span className="text-xs text-gray-500 whitespace-nowrap">
+                              {scheduleDate}{scheduleTime ? ` ${scheduleTime}` : ''}
+                            </span>
+                          )}
+                        </div>
+                      </div>
+                    )
+                  })()}
                 </div>
 
                 {/* Error */}
