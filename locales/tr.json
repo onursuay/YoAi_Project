@@ -2189,6 +2189,7 @@
         "noPages": "Yayınlanabilecek Facebook sayfası bulunamadı.",
         "reconnectHint": "Sayfa izinlerini vermek için Meta hesabınızı yeniden bağlayabilirsiniz.",
         "connectionError": "Bağlantı hatası",
+        "noInstagram": "Instagram bağlı değil",
         "feed": "Akış",
         "reels": "Reels",
         "stories": "Hikayeler",

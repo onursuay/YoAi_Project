@@ -2189,6 +2189,7 @@
         "noPages": "No Facebook pages found for publishing.",
         "reconnectHint": "You can reconnect your Meta account to grant page permissions.",
         "connectionError": "Connection error",
+        "noInstagram": "No Instagram linked",
         "feed": "Feed",
         "reels": "Reels",
         "stories": "Stories",

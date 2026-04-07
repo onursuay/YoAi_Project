@@ -313,131 +313,166 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   </label>
                   <div className="space-y-3">
                     {targets.map((tgt) => (
-                      <div key={tgt.pageId} className="border border-gray-200 rounded-xl overflow-hidden">
-                        {/* Facebook page row */}
-                        <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
-                          <input
-                            type="checkbox"
-                            checked={!!selectedPages[tgt.pageId]}
-                            onChange={(e) =>
-                              setSelectedPages((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
+                      <div key={tgt.pageId} className="space-y-2">
+                        {/* FB + IG side by side */}
+                        <div className="grid grid-cols-2 gap-2">
+
+                          {/* Facebook card */}
+                          <div
+                            className={`rounded-xl border-2 transition-colors cursor-pointer ${
+                              selectedPages[tgt.pageId]
+                                ? 'border-[#1877F2] bg-[#1877F2]/5'
+                                : 'border-gray-200 hover:border-gray-300 bg-white'
+                            }`}
+                            onClick={() =>
+                              setSelectedPages((prev) => ({ ...prev, [tgt.pageId]: !prev[tgt.pageId] }))
                             }
-                            className="w-[18px] h-[18px] rounded border-gray-300 text-[#1877F2] focus:ring-[#1877F2]/30"
-                          />
-                          {tgt.pageImageUrl ? (
-                            <img src={tgt.pageImageUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
-                          ) : (
-                            <div className="w-9 h-9 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
-                              <Facebook className="w-4 h-4 text-[#1877F2]" />
-                            </div>
-                          )}
-                          <span className="text-[15px] text-gray-800 font-medium flex-1">{tgt.pageName}</span>
-                          <Facebook className="w-5 h-5 text-[#1877F2]" />
-                        </label>
-
-                        {/* FB type selector (inline) */}
-                        {selectedPages[tgt.pageId] && (
-                          <div className="flex gap-2 px-4 pb-3 ml-11">
-                            <button
-                              type="button"
-                              onClick={() => setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                                (fbPublishTypes[tgt.pageId] || 'feed') === 'feed'
-                                  ? 'bg-[#1877F2]/10 text-[#1877F2] font-medium'
-                                  : 'text-gray-500 hover:bg-gray-100'
-                              }`}
-                            >
-                              <LayoutGrid className="w-4 h-4" />
-                              {t('feed')}
-                            </button>
-                            <button
-                              type="button"
-                              onClick={() => canReels && setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
-                              disabled={!canReels}
-                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                                fbPublishTypes[tgt.pageId] === 'reels'
-                                  ? 'bg-[#1877F2]/10 text-[#1877F2] font-medium'
-                                  : !canReels
-                                    ? 'text-gray-300 cursor-not-allowed'
-                                    : 'text-gray-500 hover:bg-gray-100'
-                              }`}
-                            >
-                              <Film className="w-4 h-4" />
-                              {t('reels')}
-                            </button>
-                          </div>
-                        )}
-
-                        {/* Instagram row (linked to page) */}
-                        {tgt.instagram && (
-                          <>
-                            <div className="border-t border-gray-100" />
-                            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
+                          >
+                            <div className="flex items-center gap-2.5 px-3 py-3">
                               <input
                                 type="checkbox"
-                                checked={!!selectedIgs[tgt.pageId]}
-                                onChange={(e) =>
-                                  setSelectedIgs((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
-                                }
-                                className="w-[18px] h-[18px] rounded border-gray-300 text-[#E4405F] focus:ring-[#E4405F]/30"
+                                checked={!!selectedPages[tgt.pageId]}
+                                onChange={(e) => {
+                                  e.stopPropagation()
+                                  setSelectedPages((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
+                                }}
+                                className="w-[18px] h-[18px] rounded border-gray-300 text-[#1877F2] focus:ring-[#1877F2]/30 flex-shrink-0"
+                                onClick={(e) => e.stopPropagation()}
                               />
-                              {tgt.instagram.profilePictureUrl ? (
-                                <img src={tgt.instagram.profilePictureUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
+                              {tgt.pageImageUrl ? (
+                                <img src={tgt.pageImageUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
                               ) : (
-                                <div className="w-9 h-9 rounded-full bg-[#E4405F]/10 flex items-center justify-center">
-                                  <Instagram className="w-4 h-4 text-[#E4405F]" />
+                                <div className="w-8 h-8 rounded-full bg-[#1877F2]/10 flex items-center justify-center flex-shrink-0">
+                                  <Facebook className="w-4 h-4 text-[#1877F2]" />
                                 </div>
                               )}
-                              <span className="text-[15px] text-gray-700 flex-1">@{tgt.instagram.username}</span>
-                              <Instagram className="w-5 h-5 text-[#E4405F]" />
-                            </label>
+                              <div className="min-w-0 flex-1">
+                                <p className="text-sm font-semibold text-gray-800 truncate">{tgt.pageName}</p>
+                                <p className="text-xs text-[#1877F2]">Facebook</p>
+                              </div>
+                            </div>
 
-                            {/* IG type selector (inline) */}
-                            {selectedIgs[tgt.pageId] && (
-                              <div className="flex gap-2 px-4 pb-3 ml-11">
+                            {/* FB type selector */}
+                            {selectedPages[tgt.pageId] && (
+                              <div className="flex gap-1.5 px-3 pb-3" onClick={(e) => e.stopPropagation()}>
                                 <button
                                   type="button"
-                                  onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                                    (igPublishTypes[tgt.pageId] || 'feed') === 'feed'
-                                      ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
-                                      : 'text-gray-500 hover:bg-gray-100'
+                                  onClick={() => setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
+                                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    (fbPublishTypes[tgt.pageId] || 'feed') === 'feed'
+                                      ? 'bg-[#1877F2] text-white'
+                                      : 'bg-white border border-gray-200 text-gray-600 hover:border-[#1877F2]/40'
                                   }`}
                                 >
-                                  <LayoutGrid className="w-4 h-4" />
+                                  <LayoutGrid className="w-3.5 h-3.5" />
                                   {t('feed')}
                                 </button>
                                 <button
                                   type="button"
-                                  onClick={() => canReels && setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
+                                  onClick={() => canReels && setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
                                   disabled={!canReels}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                                    igPublishTypes[tgt.pageId] === 'reels'
-                                      ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
+                                  className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                    fbPublishTypes[tgt.pageId] === 'reels'
+                                      ? 'bg-[#1877F2] text-white'
                                       : !canReels
                                         ? 'text-gray-300 cursor-not-allowed'
-                                        : 'text-gray-500 hover:bg-gray-100'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-[#1877F2]/40'
                                   }`}
                                 >
-                                  <Film className="w-4 h-4" />
+                                  <Film className="w-3.5 h-3.5" />
                                   {t('reels')}
-                                </button>
-                                <button
-                                  type="button"
-                                  onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'stories' }))}
-                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
-                                    igPublishTypes[tgt.pageId] === 'stories'
-                                      ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
-                                      : 'text-gray-500 hover:bg-gray-100'
-                                  }`}
-                                >
-                                  <BookImage className="w-4 h-4" />
-                                  {t('stories')}
                                 </button>
                               </div>
                             )}
-                          </>
-                        )}
+                          </div>
+
+                          {/* Instagram card */}
+                          {tgt.instagram ? (
+                            <div
+                              className={`rounded-xl border-2 transition-colors cursor-pointer ${
+                                selectedIgs[tgt.pageId]
+                                  ? 'border-[#E4405F] bg-[#E4405F]/5'
+                                  : 'border-gray-200 hover:border-gray-300 bg-white'
+                              }`}
+                              onClick={() =>
+                                setSelectedIgs((prev) => ({ ...prev, [tgt.pageId]: !prev[tgt.pageId] }))
+                              }
+                            >
+                              <div className="flex items-center gap-2.5 px-3 py-3">
+                                <input
+                                  type="checkbox"
+                                  checked={!!selectedIgs[tgt.pageId]}
+                                  onChange={(e) => {
+                                    e.stopPropagation()
+                                    setSelectedIgs((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
+                                  }}
+                                  className="w-[18px] h-[18px] rounded border-gray-300 text-[#E4405F] focus:ring-[#E4405F]/30 flex-shrink-0"
+                                  onClick={(e) => e.stopPropagation()}
+                                />
+                                {tgt.instagram.profilePictureUrl ? (
+                                  <img src={tgt.instagram.profilePictureUrl} alt="" className="w-8 h-8 rounded-full object-cover flex-shrink-0" />
+                                ) : (
+                                  <div className="w-8 h-8 rounded-full bg-[#E4405F]/10 flex items-center justify-center flex-shrink-0">
+                                    <Instagram className="w-4 h-4 text-[#E4405F]" />
+                                  </div>
+                                )}
+                                <div className="min-w-0 flex-1">
+                                  <p className="text-sm font-semibold text-gray-800 truncate">@{tgt.instagram.username}</p>
+                                  <p className="text-xs text-[#E4405F]">Instagram</p>
+                                </div>
+                              </div>
+
+                              {/* IG type selector */}
+                              {selectedIgs[tgt.pageId] && (
+                                <div className="flex flex-wrap gap-1.5 px-3 pb-3" onClick={(e) => e.stopPropagation()}>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                      (igPublishTypes[tgt.pageId] || 'feed') === 'feed'
+                                        ? 'bg-[#E4405F] text-white'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-[#E4405F]/40'
+                                    }`}
+                                  >
+                                    <LayoutGrid className="w-3.5 h-3.5" />
+                                    {t('feed')}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => canReels && setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
+                                    disabled={!canReels}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                      igPublishTypes[tgt.pageId] === 'reels'
+                                        ? 'bg-[#E4405F] text-white'
+                                        : !canReels
+                                          ? 'text-gray-300 cursor-not-allowed'
+                                          : 'bg-white border border-gray-200 text-gray-600 hover:border-[#E4405F]/40'
+                                    }`}
+                                  >
+                                    <Film className="w-3.5 h-3.5" />
+                                    {t('reels')}
+                                  </button>
+                                  <button
+                                    type="button"
+                                    onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'stories' }))}
+                                    className={`flex items-center gap-1 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                                      igPublishTypes[tgt.pageId] === 'stories'
+                                        ? 'bg-[#E4405F] text-white'
+                                        : 'bg-white border border-gray-200 text-gray-600 hover:border-[#E4405F]/40'
+                                    }`}
+                                  >
+                                    <BookImage className="w-3.5 h-3.5" />
+                                    {t('stories')}
+                                  </button>
+                                </div>
+                              )}
+                            </div>
+                          ) : (
+                            <div className="rounded-xl border-2 border-dashed border-gray-200 bg-gray-50 flex items-center justify-center px-3 py-3 min-h-[64px]">
+                              <p className="text-xs text-gray-400 text-center">{t('noInstagram')}</p>
+                            </div>
+                          )}
+                        </div>
                       </div>
                     ))}
                   </div>
