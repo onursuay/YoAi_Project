@@ -11,27 +11,29 @@ export async function GET(request: Request) {
   const error = url.searchParams.get('error')
   const origin = url.origin
 
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+
   if (error) {
     return NextResponse.redirect(
-      new URL(`/entegrasyon?ga=error&reason=${encodeURIComponent(error)}`, origin),
+      new URL(`/${locale}/entegrasyon?ga=error&reason=${encodeURIComponent(error)}`, origin),
       { status: 302 }
     )
   }
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?ga=error&reason=missing_code_or_state', origin),
+      new URL(`/${locale}/entegrasyon?ga=error&reason=missing_code_or_state`, origin),
       { status: 302 }
     )
   }
 
-  const cookieStore = await cookies()
   const expectedState = cookieStore.get('ga_oauth_state')?.value
   const stateValue = state.startsWith('ga_') ? state.slice(3) : state
 
   if (!expectedState || expectedState !== stateValue) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?ga=error&reason=invalid_state', origin),
+      new URL(`/${locale}/entegrasyon?ga=error&reason=invalid_state`, origin),
       { status: 302 }
     )
   }
@@ -42,7 +44,7 @@ export async function GET(request: Request) {
     const tokens = await exchangeCodeForTokens(code, redirectUri)
 
     const response = NextResponse.redirect(
-      new URL('/entegrasyon?ga=connected', origin),
+      new URL(`/${locale}/dashboard`, origin),
       { status: 302 }
     )
 
@@ -72,7 +74,7 @@ export async function GET(request: Request) {
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'token_exchange_failed'
     return NextResponse.redirect(
-      new URL(`/entegrasyon?ga=error&reason=${encodeURIComponent(reason)}`, origin),
+      new URL(`/${locale}/entegrasyon?ga=error&reason=${encodeURIComponent(reason)}`, origin),
       { status: 302 }
     )
   }

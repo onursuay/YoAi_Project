@@ -14,26 +14,28 @@ export async function GET(request: Request) {
   const error = url.searchParams.get('error')
   const origin = url.origin
 
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+
   if (error) {
     return NextResponse.redirect(
-      new URL(`/entegrasyon?tiktok=error&reason=${encodeURIComponent(error)}`, origin),
+      new URL(`/${locale}/entegrasyon?tiktok=error&reason=${encodeURIComponent(error)}`, origin),
       { status: 302 }
     )
   }
 
   if (!authCode || !state) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?tiktok=error&reason=missing_code_or_state', origin),
+      new URL(`/${locale}/entegrasyon?tiktok=error&reason=missing_code_or_state`, origin),
       { status: 302 }
     )
   }
 
-  const cookieStore = await cookies()
   const expectedState = cookieStore.get('tiktok_ads_oauth_state')?.value
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?tiktok=error&reason=invalid_state', origin),
+      new URL(`/${locale}/entegrasyon?tiktok=error&reason=invalid_state`, origin),
       { status: 302 }
     )
   }
@@ -43,7 +45,7 @@ export async function GET(request: Request) {
 
   if (!appId || !appSecret) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?tiktok=error&reason=missing_app_config', origin),
+      new URL(`/${locale}/entegrasyon?tiktok=error&reason=missing_app_config`, origin),
       { status: 302 }
     )
   }
@@ -67,7 +69,7 @@ export async function GET(request: Request) {
       const reason = tokenJson.message || 'token_exchange_failed'
       console.error('[TikTok Callback] Token exchange failed:', reason)
       return NextResponse.redirect(
-        new URL(`/entegrasyon?tiktok=error&reason=${encodeURIComponent(reason)}`, origin),
+        new URL(`/${locale}/entegrasyon?tiktok=error&reason=${encodeURIComponent(reason)}`, origin),
         { status: 302 }
       )
     }
@@ -75,7 +77,7 @@ export async function GET(request: Request) {
   } catch (err) {
     console.error('[TikTok Callback] Token exchange network error:', err)
     return NextResponse.redirect(
-      new URL('/entegrasyon?tiktok=error&reason=network_error', origin),
+      new URL(`/${locale}/entegrasyon?tiktok=error&reason=network_error`, origin),
       { status: 302 }
     )
   }
@@ -89,7 +91,7 @@ export async function GET(request: Request) {
   const cookieMaxAge = 60 * 60 * 24 * 365 // 1 year
 
   const response = NextResponse.redirect(
-    new URL('/entegrasyon?tiktok=connected', origin),
+    new URL(`/${locale}/dashboard`, origin),
     { status: 302 }
   )
 

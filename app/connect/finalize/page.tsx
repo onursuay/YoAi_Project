@@ -29,7 +29,7 @@ export default function MetaFinalizePage() {
 
         if (status.connected && status.adAccountId) {
           console.log('[FINALIZE] DASHBOARD_LOAD: already has adAccountId=' + status.adAccountId)
-          router.replace('/meta-ads')
+          router.replace(`/${locale}/dashboard`)
           return
         }
 
@@ -42,7 +42,7 @@ export default function MetaFinalizePage() {
           console.log('[FINALIZE] META_SESSION_RETRY:', JSON.stringify({ connected: retryStatus.connected }))
 
           if (!retryStatus.connected) {
-            router.replace('/entegrasyon?meta=error&reason=finalize_failed')
+            router.replace(`/${locale}/entegrasyon?meta=error&reason=finalize_failed`)
             return
           }
           // If retry succeeded, continue with account fetch
@@ -58,14 +58,14 @@ export default function MetaFinalizePage() {
         if (accounts.length === 0) {
           // No ad accounts – send to wizard to show the empty state
           console.log('[FINALIZE] STEP3_FETCH_EMPTY: redirecting to /connect/meta')
-          router.replace('/connect/meta')
+          router.replace(`/${locale}/connect/meta`)
           return
         }
 
         if (accounts.length > 1) {
           // Multiple accounts – wizard handles manual selection
           console.log('[FINALIZE] MULTIPLE_ACCOUNTS: count=' + accounts.length + ' → /connect/meta')
-          router.replace('/connect/meta')
+          router.replace(`/${locale}/connect/meta`)
           return
         }
 
@@ -80,7 +80,7 @@ export default function MetaFinalizePage() {
 
         if (!selectRes.ok) {
           console.error('[FINALIZE] select-adaccount failed:', selectData)
-          router.replace('/connect/meta')
+          router.replace(`/${locale}/connect/meta`)
           return
         }
 
@@ -97,10 +97,10 @@ export default function MetaFinalizePage() {
           }),
         }).catch(() => {})
 
-        router.replace('/meta-ads')
+        router.replace(`/${locale}/dashboard`)
       } catch (err) {
         console.error('[FINALIZE] Unexpected error:', err)
-        router.replace('/connect/meta')
+        router.replace(`/${locale}/connect/meta`)
       }
     }
 

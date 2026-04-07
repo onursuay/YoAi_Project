@@ -16,10 +16,13 @@ export async function GET(request: Request) {
   const errorDescription = url.searchParams.get('error_description')
   const origin = url.origin
 
+  const cookieStore = await cookies()
+  const locale = cookieStore.get('NEXT_LOCALE')?.value || 'tr'
+
   if (error) {
     return NextResponse.redirect(
       new URL(
-        `/entegrasyon?google=error&reason=${encodeURIComponent(errorDescription || error)}`,
+        `/${locale}/entegrasyon?google=error&reason=${encodeURIComponent(errorDescription || error)}`,
         origin
       ),
       { status: 302 }
@@ -28,17 +31,16 @@ export async function GET(request: Request) {
 
   if (!code || !state) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?google=error&reason=missing_code_or_state', origin),
+      new URL(`/${locale}/entegrasyon?google=error&reason=missing_code_or_state`, origin),
       { status: 302 }
     )
   }
 
-  const cookieStore = await cookies()
   const expectedState = cookieStore.get('google_ads_oauth_state')?.value
 
   if (!expectedState || expectedState !== state) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?google=error&reason=invalid_state', origin),
+      new URL(`/${locale}/entegrasyon?google=error&reason=invalid_state`, origin),
       { status: 302 }
     )
   }
@@ -51,7 +53,7 @@ export async function GET(request: Request) {
 
   if (!clientId || !clientSecret) {
     return NextResponse.redirect(
-      new URL('/entegrasyon?google=error&reason=missing_app_config', origin),
+      new URL(`/${locale}/entegrasyon?google=error&reason=missing_app_config`, origin),
       { status: 302 }
     )
   }
@@ -76,7 +78,7 @@ export async function GET(request: Request) {
     const reason = tokenJson?.error_description || tokenJson?.error || 'token_exchange_failed'
     return NextResponse.redirect(
       new URL(
-        `/entegrasyon?google=error&reason=${encodeURIComponent(String(reason))}`,
+        `/${locale}/entegrasyon?google=error&reason=${encodeURIComponent(String(reason))}`,
         origin
       ),
       { status: 302 }
@@ -86,7 +88,7 @@ export async function GET(request: Request) {
   console.log('GOOGLE_ADS_CALLBACK_HIT')
 
   const response = NextResponse.redirect(
-    new URL('/entegrasyon?google=connected', origin),
+    new URL(`/${locale}/dashboard`, origin),
     { status: 302 }
   )
 
