@@ -328,7 +328,7 @@ export default function MetaTableReal({
                           {canDrillDown ? (
                             <button
                               onClick={handleNameClick}
-                              className="text-ui text-gray-900 hover:text-blue-600 hover:underline transition-colors text-left"
+                              className="text-ui text-gray-900 text-left cursor-pointer"
                             >
                               {item.name}
                             </button>
