@@ -7,6 +7,7 @@ import {
   Film, BookImage, LayoutGrid, Monitor, Smartphone, Clock, Calendar,
 } from 'lucide-react'
 import type { ToastType } from '@/components/Toast'
+import ToggleSwitch from '@/components/ToggleSwitch'
 
 interface GeneratedItem {
   id: string
@@ -501,20 +502,10 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     {/* Customize toggle — only when both FB and IG selected */}
                     {hasAnyFb && hasAnyIg && (
                       <div className="flex items-center gap-2.5 mb-3">
-                        <button
-                          type="button"
-                          onClick={() => setCustomizeCaption(!customizeCaption)}
-                          className={`relative w-8 h-4.5 rounded-full transition-colors flex-shrink-0 ${
-                            customizeCaption ? 'bg-[#2BB673]' : 'bg-gray-300'
-                          }`}
-                          style={{ width: '34px', height: '20px' }}
-                        >
-                          <span
-                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                              customizeCaption ? 'translate-x-3.5' : 'translate-x-0'
-                            }`}
-                          />
-                        </button>
+                        <ToggleSwitch
+                          enabled={customizeCaption}
+                          onChange={() => setCustomizeCaption(!customizeCaption)}
+                        />
                         <span className="text-sm text-gray-600">{t('customizeCaption')}</span>
                       </div>
                     )}
