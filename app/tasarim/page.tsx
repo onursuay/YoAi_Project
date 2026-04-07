@@ -87,6 +87,9 @@ export default function TasarimPage() {
   // Library video playback
   const [playingVideoId, setPlayingVideoId] = useState<string | null>(null)
 
+  // Delete confirmation
+  const [deleteConfirmId, setDeleteConfirmId] = useState<string | null>(null)
+
   // Toast notifications
   const [toasts, setToasts] = useState<Toast[]>([])
   const addToast = (message: string, type: ToastType = 'info') => {
@@ -880,7 +883,7 @@ export default function TasarimPage() {
                                           <Share2 className="w-3.5 h-3.5 text-blue-600" />
                                         </button>
                                         <button
-                                          onClick={e => { e.stopPropagation(); removeFromLibrary(item.id) }}
+                                          onClick={e => { e.stopPropagation(); setDeleteConfirmId(item.id) }}
                                           className="p-1.5 bg-white/90 rounded-lg shadow hover:bg-red-50 transition-colors"
                                           title={t('delete')}
                                         >
@@ -911,7 +914,7 @@ export default function TasarimPage() {
                                       <Share2 className="w-4 h-4 text-blue-600" />
                                     </button>
                                     <button
-                                      onClick={() => removeFromLibrary(item.id)}
+                                      onClick={() => setDeleteConfirmId(item.id)}
                                       className="p-2 bg-white rounded-lg shadow hover:bg-red-50 transition-colors"
                                       title={t('delete')}
                                     >
@@ -963,6 +966,37 @@ export default function TasarimPage() {
         item={publishItem}
         onToast={(message, type) => addToast(message, type)}
       />
+
+      {/* Delete Confirmation Dialog */}
+      {deleteConfirmId && (
+        <div className="fixed inset-0 z-[9999] flex items-center justify-center bg-black/40 backdrop-blur-sm" onClick={() => setDeleteConfirmId(null)}>
+          <div className="bg-white rounded-2xl shadow-2xl p-6 w-full max-w-sm mx-4" onClick={e => e.stopPropagation()}>
+            <div className="flex items-center gap-3 mb-3">
+              <div className="w-10 h-10 rounded-full bg-red-100 flex items-center justify-center shrink-0">
+                <Trash2 className="w-5 h-5 text-red-500" />
+              </div>
+              <div>
+                <p className="font-semibold text-gray-900">{t('deleteConfirmTitle')}</p>
+                <p className="text-sm text-gray-500">{t('deleteConfirmDesc')}</p>
+              </div>
+            </div>
+            <div className="flex gap-2 mt-5">
+              <button
+                onClick={() => setDeleteConfirmId(null)}
+                className="flex-1 px-4 py-2 rounded-xl border border-gray-200 text-sm font-medium text-gray-700 hover:bg-gray-50 transition-colors"
+              >
+                {t('cancel')}
+              </button>
+              <button
+                onClick={() => { removeFromLibrary(deleteConfirmId); setDeleteConfirmId(null) }}
+                className="flex-1 px-4 py-2 rounded-xl bg-red-500 text-sm font-medium text-white hover:bg-red-600 transition-colors"
+              >
+                {t('delete')}
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
 
       {/* Toast Notifications */}
       <ToastContainer toasts={toasts} onClose={removeToast} />
