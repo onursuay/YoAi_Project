@@ -30,6 +30,12 @@ body {
     'Helvetica Neue', sans-serif;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  animation: body-ready 0s 0.05s both;
+  opacity: 0;
+}
+
+@keyframes body-ready {
+  to { opacity: 1; }
 }
 
 @keyframes light-sweep {
