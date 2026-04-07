@@ -8,7 +8,7 @@ import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
 import SidebarInfoCards from '@/components/SidebarInfoCards'
-import { useState, useMemo, useEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
 import Image from 'next/image'
 
 export default function SidebarNav() {
@@ -19,8 +19,8 @@ export default function SidebarNav() {
   const [ready, setReady] = useState(false)
   const [animate, setAnimate] = useState(false)
 
-  // Read saved state, mark ready, then enable transitions
-  useEffect(() => {
+  // Read saved state before paint to prevent flicker, then enable transitions
+  useLayoutEffect(() => {
     try {
       const saved = localStorage.getItem('sidebar_collapsed')
       if (saved !== null) setCollapsed(JSON.parse(saved))
