@@ -50,6 +50,7 @@ export default function SidebarNav() {
     setCollapsed((prev) => {
       const next = !prev
       localStorage.setItem('sidebar_collapsed', JSON.stringify(next))
+      document.documentElement.style.setProperty('--sidebar-width', next ? '72px' : '260px')
       return next
     })
   }
@@ -95,7 +96,7 @@ export default function SidebarNav() {
   }, [t, locale])
 
   if (!ready) {
-    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: '260px' }} />
+    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: 'var(--sidebar-width, 260px)' }} />
   }
 
   return (

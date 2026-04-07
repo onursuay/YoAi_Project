@@ -30,6 +30,7 @@ export default async function RootLayout({
   return (
     <html lang={locale}>
       <body className={`${inter.variable} ${inter.className} text-body`}>
+        <script dangerouslySetInnerHTML={{ __html: `try{var s=localStorage.getItem('sidebar_collapsed');var w=s==='true'?'72px':'260px';document.documentElement.style.setProperty('--sidebar-width',w)}catch(e){}` }} />
         <NextIntlClientProvider locale={locale} messages={messages}>
           <SubscriptionProvider>
             <CreditProvider>
