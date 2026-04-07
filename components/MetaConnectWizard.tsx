@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { ROUTES } from '@/lib/routes'
 
 interface AdAccount {
@@ -18,6 +18,7 @@ const RETRY_DELAYS = [300, 800, 1500] // ms — max 3 retries
 
 export default function MetaConnectWizard() {
   const t = useTranslations('wizard')
+  const locale = useLocale()
   const router = useRouter()
   const [step, setStep] = useState(1)
   const [isConnected, setIsConnected] = useState(false)
@@ -415,7 +416,7 @@ export default function MetaConnectWizard() {
                     disabled={!selectedAccount || isLoading}
                     className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? t('selecting') : t('continue')}
+                    {isLoading ? (locale === 'en' ? 'Selecting...' : 'Seçiliyor...') : t('continue')}
                   </button>
                 </>
               )}
