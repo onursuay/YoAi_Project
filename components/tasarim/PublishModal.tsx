@@ -366,7 +366,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                               )}
                               <div className="min-w-0 flex-1">
                                 <p className="text-sm font-medium text-gray-700 truncate">{tgt.pageName}</p>
-                                <p className="text-xs text-[#1877F2]">Facebook</p>
+                                <p className="text-xs text-gray-500">Facebook</p>
                               </div>
                             </div>
 
@@ -436,7 +436,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                 )}
                                 <div className="min-w-0 flex-1">
                                   <p className="text-sm font-medium text-gray-700 truncate">@{tgt.instagram.username}</p>
-                                  <p className="text-xs text-[#E4405F]">Instagram</p>
+                                  <p className="text-xs text-gray-500">Instagram</p>
                                 </div>
                               </div>
 
