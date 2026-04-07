@@ -8,7 +8,7 @@ import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
 import SidebarInfoCards from '@/components/SidebarInfoCards'
-import { useState, useMemo, useEffect, useLayoutEffect, useCallback } from 'react'
+import { useState, useMemo, useEffect, useLayoutEffect } from 'react'
 import Image from 'next/image'
 
 export default function SidebarNav() {
@@ -16,7 +16,6 @@ export default function SidebarNav() {
   const pathname = usePathname()
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
   const [collapsed, setCollapsed] = useState<boolean>(false)
-  const [ready, setReady] = useState(false)
   const [animate, setAnimate] = useState(false)
 
   // Read saved state before paint, then enable transitions
@@ -25,7 +24,6 @@ export default function SidebarNav() {
       const saved = localStorage.getItem('sidebar_collapsed')
       if (saved !== null) setCollapsed(JSON.parse(saved))
     } catch { /* ignore */ }
-    setReady(true)
     requestAnimationFrame(() => requestAnimationFrame(() => setAnimate(true)))
   }, [])
 
@@ -34,7 +32,7 @@ export default function SidebarNav() {
   const [showHintButton, setShowHintButton] = useState(false)
 
   useEffect(() => {
-    if (!collapsed || !ready) return
+    if (!collapsed) return
     setShowHintButton(false)
     const loop = () => {
       const t1 = setTimeout(() => setShowHintButton(true), 5000)
@@ -44,7 +42,7 @@ export default function SidebarNav() {
     }
     let timers = loop()
     return () => timers.forEach(clearTimeout)
-  }, [collapsed, ready])
+  }, [collapsed])
 
   const toggleCollapse = () => {
     setCollapsed((prev) => {
@@ -94,10 +92,6 @@ export default function SidebarNav() {
       }))
     }))
   }, [t, locale])
-
-  if (!ready) {
-    return <div className="bg-white border-r border-gray-200 h-screen shrink-0" style={{ width: 'var(--sidebar-width, 260px)' }} />
-  }
 
   return (
     <div
