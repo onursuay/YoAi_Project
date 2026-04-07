@@ -253,7 +253,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
       {/* Modal — two column */}
       <div
-        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[960px] mx-4 overflow-hidden flex flex-col max-h-[90vh]"
+        className="relative bg-white rounded-2xl shadow-2xl w-full max-w-[1080px] mx-4 overflow-hidden flex flex-col max-h-[90vh]"
         onClick={(e) => e.stopPropagation()}
       >
         {/* Header */}
@@ -304,57 +304,57 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
           <>
             <div className="flex flex-1 overflow-hidden">
               {/* Left: Form */}
-              <div className="flex-1 overflow-y-auto px-6 py-5 space-y-5 border-r border-gray-100">
+              <div className="flex-1 overflow-y-auto px-6 py-6 space-y-6 border-r border-gray-100">
 
                 {/* Post to — account selection */}
                 <div>
-                  <label className="block text-sm font-semibold text-gray-800 mb-2">
+                  <label className="block text-base font-semibold text-gray-800 mb-3">
                     {t('postTo')}
                   </label>
-                  <div className="space-y-2">
+                  <div className="space-y-3">
                     {targets.map((tgt) => (
                       <div key={tgt.pageId} className="border border-gray-200 rounded-xl overflow-hidden">
                         {/* Facebook page row */}
-                        <label className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                        <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
                           <input
                             type="checkbox"
                             checked={!!selectedPages[tgt.pageId]}
                             onChange={(e) =>
                               setSelectedPages((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
                             }
-                            className="w-4 h-4 rounded border-gray-300 text-[#1877F2] focus:ring-[#1877F2]/30"
+                            className="w-[18px] h-[18px] rounded border-gray-300 text-[#1877F2] focus:ring-[#1877F2]/30"
                           />
                           {tgt.pageImageUrl ? (
-                            <img src={tgt.pageImageUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+                            <img src={tgt.pageImageUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
                           ) : (
-                            <div className="w-7 h-7 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
-                              <Facebook className="w-3.5 h-3.5 text-[#1877F2]" />
+                            <div className="w-9 h-9 rounded-full bg-[#1877F2]/10 flex items-center justify-center">
+                              <Facebook className="w-4 h-4 text-[#1877F2]" />
                             </div>
                           )}
-                          <span className="text-sm text-gray-800 font-medium flex-1">{tgt.pageName}</span>
-                          <Facebook className="w-4 h-4 text-[#1877F2]" />
+                          <span className="text-[15px] text-gray-800 font-medium flex-1">{tgt.pageName}</span>
+                          <Facebook className="w-5 h-5 text-[#1877F2]" />
                         </label>
 
                         {/* FB type selector (inline) */}
                         {selectedPages[tgt.pageId] && (
-                          <div className="flex gap-1.5 px-3 pb-2.5 ml-10">
+                          <div className="flex gap-2 px-4 pb-3 ml-11">
                             <button
                               type="button"
                               onClick={() => setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
-                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                                 (fbPublishTypes[tgt.pageId] || 'feed') === 'feed'
                                   ? 'bg-[#1877F2]/10 text-[#1877F2] font-medium'
                                   : 'text-gray-500 hover:bg-gray-100'
                               }`}
                             >
-                              <LayoutGrid className="w-3 h-3" />
+                              <LayoutGrid className="w-4 h-4" />
                               {t('feed')}
                             </button>
                             <button
                               type="button"
                               onClick={() => canReels && setFbPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
                               disabled={!canReels}
-                              className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                              className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                                 fbPublishTypes[tgt.pageId] === 'reels'
                                   ? 'bg-[#1877F2]/10 text-[#1877F2] font-medium'
                                   : !canReels
@@ -362,7 +362,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                     : 'text-gray-500 hover:bg-gray-100'
                               }`}
                             >
-                              <Film className="w-3 h-3" />
+                              <Film className="w-4 h-4" />
                               {t('reels')}
                             </button>
                           </div>
@@ -372,46 +372,46 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                         {tgt.instagram && (
                           <>
                             <div className="border-t border-gray-100" />
-                            <label className="flex items-center gap-3 px-3 py-2.5 cursor-pointer hover:bg-gray-50 transition-colors">
+                            <label className="flex items-center gap-3 px-4 py-3 cursor-pointer hover:bg-gray-50 transition-colors">
                               <input
                                 type="checkbox"
                                 checked={!!selectedIgs[tgt.pageId]}
                                 onChange={(e) =>
                                   setSelectedIgs((prev) => ({ ...prev, [tgt.pageId]: e.target.checked }))
                                 }
-                                className="w-4 h-4 rounded border-gray-300 text-[#E4405F] focus:ring-[#E4405F]/30"
+                                className="w-[18px] h-[18px] rounded border-gray-300 text-[#E4405F] focus:ring-[#E4405F]/30"
                               />
                               {tgt.instagram.profilePictureUrl ? (
-                                <img src={tgt.instagram.profilePictureUrl} alt="" className="w-7 h-7 rounded-full object-cover" />
+                                <img src={tgt.instagram.profilePictureUrl} alt="" className="w-9 h-9 rounded-full object-cover" />
                               ) : (
-                                <div className="w-7 h-7 rounded-full bg-[#E4405F]/10 flex items-center justify-center">
-                                  <Instagram className="w-3.5 h-3.5 text-[#E4405F]" />
+                                <div className="w-9 h-9 rounded-full bg-[#E4405F]/10 flex items-center justify-center">
+                                  <Instagram className="w-4 h-4 text-[#E4405F]" />
                                 </div>
                               )}
-                              <span className="text-sm text-gray-700 flex-1">@{tgt.instagram.username}</span>
-                              <Instagram className="w-4 h-4 text-[#E4405F]" />
+                              <span className="text-[15px] text-gray-700 flex-1">@{tgt.instagram.username}</span>
+                              <Instagram className="w-5 h-5 text-[#E4405F]" />
                             </label>
 
                             {/* IG type selector (inline) */}
                             {selectedIgs[tgt.pageId] && (
-                              <div className="flex gap-1.5 px-3 pb-2.5 ml-10">
+                              <div className="flex gap-2 px-4 pb-3 ml-11">
                                 <button
                                   type="button"
                                   onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'feed' }))}
-                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                                     (igPublishTypes[tgt.pageId] || 'feed') === 'feed'
                                       ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
                                       : 'text-gray-500 hover:bg-gray-100'
                                   }`}
                                 >
-                                  <LayoutGrid className="w-3 h-3" />
+                                  <LayoutGrid className="w-4 h-4" />
                                   {t('feed')}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => canReels && setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'reels' }))}
                                   disabled={!canReels}
-                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                                     igPublishTypes[tgt.pageId] === 'reels'
                                       ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
                                       : !canReels
@@ -419,19 +419,19 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                         : 'text-gray-500 hover:bg-gray-100'
                                   }`}
                                 >
-                                  <Film className="w-3 h-3" />
+                                  <Film className="w-4 h-4" />
                                   {t('reels')}
                                 </button>
                                 <button
                                   type="button"
                                   onClick={() => setIgPublishTypes((p) => ({ ...p, [tgt.pageId]: 'stories' }))}
-                                  className={`flex items-center gap-1 px-2.5 py-1 rounded-lg text-xs transition-colors ${
+                                  className={`flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm transition-colors ${
                                     igPublishTypes[tgt.pageId] === 'stories'
                                       ? 'bg-[#E4405F]/10 text-[#E4405F] font-medium'
                                       : 'text-gray-500 hover:bg-gray-100'
                                   }`}
                                 >
-                                  <BookImage className="w-3 h-3" />
+                                  <BookImage className="w-4 h-4" />
                                   {t('stories')}
                                 </button>
                               </div>
@@ -448,21 +448,21 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   <div>
                     {/* Customize toggle — only when both FB and IG selected */}
                     {hasAnyFb && hasAnyIg && (
-                      <div className="flex items-center gap-3 mb-3">
+                      <div className="flex items-center gap-3 mb-4">
                         <button
                           type="button"
                           onClick={() => setCustomizeCaption(!customizeCaption)}
-                          className={`relative w-9 h-5 rounded-full transition-colors ${
+                          className={`relative w-11 h-6 rounded-full transition-colors ${
                             customizeCaption ? 'bg-[#2BB673]' : 'bg-gray-300'
                           }`}
                         >
                           <span
-                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                              customizeCaption ? 'translate-x-4' : 'translate-x-0'
+                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+                              customizeCaption ? 'translate-x-5' : 'translate-x-0'
                             }`}
                           />
                         </button>
-                        <span className="text-sm text-gray-700">{t('customizeCaption')}</span>
+                        <span className="text-[15px] text-gray-700">{t('customizeCaption')}</span>
                       </div>
                     )}
 
@@ -491,29 +491,29 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     {/* Separate captions: FB tab / IG tab */}
                     {customizeCaption && (
                       <div>
-                        <div className="flex gap-1 mb-3 bg-gray-100 p-1 rounded-lg">
+                        <div className="flex gap-1 mb-4 bg-gray-100 p-1 rounded-xl">
                           <button
                             type="button"
                             onClick={() => setCaptionTab('facebook')}
-                            className={`flex items-center gap-1.5 flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            className={`flex items-center gap-2 flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                               captionTab === 'facebook'
                                 ? 'bg-white text-[#1877F2] shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
-                            <Facebook className="w-3.5 h-3.5" />
+                            <Facebook className="w-4 h-4" />
                             Facebook
                           </button>
                           <button
                             type="button"
                             onClick={() => setCaptionTab('instagram')}
-                            className={`flex items-center gap-1.5 flex-1 px-3 py-1.5 rounded-md text-xs font-medium transition-colors ${
+                            className={`flex items-center gap-2 flex-1 px-4 py-2 rounded-lg text-sm font-medium transition-colors ${
                               captionTab === 'instagram'
                                 ? 'bg-white text-[#E4405F] shadow-sm'
                                 : 'text-gray-500 hover:text-gray-700'
                             }`}
                           >
-                            <Instagram className="w-3.5 h-3.5" />
+                            <Instagram className="w-4 h-4" />
                             Instagram
                           </button>
                         </div>
@@ -616,13 +616,13 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
               </div>
 
               {/* Right: Preview */}
-              <div className="w-[340px] flex-shrink-0 overflow-y-auto px-5 py-5 bg-gray-50/50">
+              <div className="w-[380px] flex-shrink-0 overflow-y-auto px-5 py-6 bg-gray-50/50">
                 {/* Format selector */}
                 <div className="flex items-center gap-2 mb-4">
                   <select
                     value={previewFormat}
                     onChange={(e) => setPreviewFormat(e.target.value as PreviewFormat)}
-                    className="flex-1 text-xs px-2.5 py-1.5 border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-[#2BB673]/30"
+                    className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#2BB673]/30"
                   >
                     <option value="fb_feed">{t('previewFbFeed')}</option>
                     <option value="ig_feed">{t('previewIgFeed')}</option>
@@ -632,20 +632,20 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
                   {/* Device toggle (for FB feed) */}
                   {previewFormat === 'fb_feed' && (
-                    <div className="flex gap-0.5 bg-white border border-gray-200 rounded-lg p-0.5">
+                    <div className="flex gap-0.5 bg-white border border-gray-200 rounded-xl p-0.5">
                       <button
                         type="button"
                         onClick={() => setPreviewDevice('desktop')}
-                        className={`p-1 rounded ${previewDevice === 'desktop' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
+                        className={`p-1.5 rounded-lg ${previewDevice === 'desktop' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
                       >
-                        <Monitor className="w-3.5 h-3.5" />
+                        <Monitor className="w-4 h-4" />
                       </button>
                       <button
                         type="button"
                         onClick={() => setPreviewDevice('mobile')}
-                        className={`p-1 rounded ${previewDevice === 'mobile' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
+                        className={`p-1.5 rounded-lg ${previewDevice === 'mobile' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
                       >
-                        <Smartphone className="w-3.5 h-3.5" />
+                        <Smartphone className="w-4 h-4" />
                       </button>
                     </div>
                   )}
@@ -655,26 +655,26 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   {/* Preview header */}
                   {(previewFormat === 'fb_feed' || previewFormat === 'ig_feed') && (
-                    <div className="flex items-center gap-2.5 px-3 py-2.5">
+                    <div className="flex items-center gap-3 px-4 py-3">
                       {firstSelectedTarget?.pageImageUrl ? (
-                        <img src={firstSelectedTarget.pageImageUrl} alt="" className="w-8 h-8 rounded-full object-cover" />
+                        <img src={firstSelectedTarget.pageImageUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
-                        <div className="w-8 h-8 rounded-full bg-gray-200 flex items-center justify-center">
+                        <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
                           {previewFormat === 'fb_feed' ? (
-                            <Facebook className="w-4 h-4 text-[#1877F2]" />
+                            <Facebook className="w-5 h-5 text-[#1877F2]" />
                           ) : (
-                            <Instagram className="w-4 h-4 text-[#E4405F]" />
+                            <Instagram className="w-5 h-5 text-[#E4405F]" />
                           )}
                         </div>
                       )}
                       <div>
-                        <p className="text-xs font-semibold text-gray-900">
+                        <p className="text-sm font-semibold text-gray-900">
                           {previewFormat === 'fb_feed'
                             ? firstSelectedTarget?.pageName || 'Page'
                             : firstSelectedTarget?.instagram?.username || 'username'}
                         </p>
                         {previewFormat === 'fb_feed' && (
-                          <p className="text-[10px] text-gray-400">{t('justNow')}</p>
+                          <p className="text-xs text-gray-400">{t('justNow')}</p>
                         )}
                       </div>
                     </div>
@@ -739,19 +739,19 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
                   {previewFormat === 'fb_feed' && (
                     <div className="flex border-t border-gray-100">
-                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-gray-500">
+                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M14 9V5a3 3 0 0 0-3-3l-4 9v11h11.28a2 2 0 0 0 2-1.7l1.38-9a2 2 0 0 0-2-2.3H14z" />
                         </svg>
                         {t('like')}
                       </button>
-                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-gray-500">
+                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z" />
                         </svg>
                         {t('comment')}
                       </button>
-                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2 text-xs text-gray-500">
+                      <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
                           <circle cx="18" cy="5" r="3" /><circle cx="6" cy="12" r="3" /><circle cx="18" cy="19" r="3" />
                           <line x1="8.59" y1="13.51" x2="15.42" y2="17.49" /><line x1="15.41" y1="6.51" x2="8.59" y2="10.49" />
@@ -765,7 +765,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 {/* Caption preview */}
                 {!onlyIgStories && (captionCommon || captionFb || captionIg) && (
                   <div className="mt-3 px-1">
-                    <p className="text-xs text-gray-600 line-clamp-3">
+                    <p className="text-sm text-gray-600 line-clamp-3">
                       {previewFormat.startsWith('fb')
                         ? (customizeCaption ? captionFb : captionCommon)
                         : (customizeCaption ? captionIg : captionCommon)}
