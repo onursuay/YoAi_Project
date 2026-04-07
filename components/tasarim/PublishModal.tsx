@@ -4,7 +4,7 @@ import { useState, useEffect, useMemo } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   X, Send, Loader2, Facebook, Instagram, AlertCircle, Link2,
-  Film, BookImage, LayoutGrid, Monitor, Smartphone, Clock, Calendar,
+  Film, BookImage, LayoutGrid, Clock, Calendar,
   ChevronLeft, ChevronRight,
 } from 'lucide-react'
 import type { ToastType } from '@/components/Toast'
@@ -42,7 +42,6 @@ const IG_CAPTION_MAX = 2200
 type IgPublishType = 'feed' | 'reels' | 'stories'
 type FbPublishType = 'feed' | 'reels'
 type PreviewFormat = 'fb_feed' | 'ig_feed' | 'ig_stories' | 'ig_reels'
-type DeviceType = 'desktop' | 'mobile'
 
 export default function PublishModal({ isOpen, onClose, item, onToast }: Props) {
   const t = useTranslations('dashboard.tasarim.publishModal')
@@ -77,7 +76,6 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
   // Preview
   const [previewFormat, setPreviewFormat] = useState<PreviewFormat>('fb_feed')
-  const [previewDevice, setPreviewDevice] = useState<DeviceType>('mobile')
 
   const [isPublishing, setIsPublishing] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -101,7 +99,6 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
     setScheduleDate('')
     setScheduleTime('')
     setPreviewFormat('fb_feed')
-    setPreviewDevice('mobile')
 
     fetch('/api/meta/publish/targets')
       .then((res) => res.json())
@@ -789,34 +786,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     </div>
                   )}
 
-                  {/* Device toggle — only for feed */}
-                  {derivedPreviewFormat === 'fb_feed' && (
-                    <div className="flex gap-0.5 bg-white border border-gray-200 rounded-xl p-0.5">
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDevice('desktop')}
-                        className={`p-1.5 rounded-lg ${previewDevice === 'desktop' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
-                      >
-                        <Monitor className="w-4 h-4" />
-                      </button>
-                      <button
-                        type="button"
-                        onClick={() => setPreviewDevice('mobile')}
-                        className={`p-1.5 rounded-lg ${previewDevice === 'mobile' ? 'bg-gray-100 text-gray-800' : 'text-gray-400'}`}
-                      >
-                        <Smartphone className="w-4 h-4" />
-                      </button>
-                    </div>
-                  )}
                 </div>
-
-                {/* Surface label — auto derived */}
-                <p className="text-xs text-gray-400 mb-3">
-                  {derivedPreviewFormat === 'fb_feed' && t('previewFbFeed')}
-                  {derivedPreviewFormat === 'ig_feed' && t('previewIgFeed')}
-                  {derivedPreviewFormat === 'ig_stories' && t('previewIgStories')}
-                  {derivedPreviewFormat === 'ig_reels' && t('previewIgReels')}
-                </p>
 
                 {/* Preview card */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
