@@ -817,10 +817,16 @@ export default function TasarimPage() {
                           </span>
                         </div>
                       </div>
-                      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4">
-                        {library.map(item => (
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                        {library.map(item => {
+                          const aspectClass =
+                            item.ratio === '9:16' ? 'aspect-[9/16]' :
+                            item.ratio === '16:9' ? 'aspect-[16/9]' :
+                            item.ratio === '4:3'  ? 'aspect-[4/3]'  :
+                            'aspect-square'
+                          return (
                           <div key={item.id} className="group relative bg-white rounded-xl overflow-hidden shadow-sm border border-gray-200 hover:shadow-md transition-shadow">
-                            <div className="aspect-square relative">
+                            <div className={`${aspectClass} relative`}>
                               {item.type === 'video' ? (
                                 <>
                                   <video
@@ -938,7 +944,8 @@ export default function TasarimPage() {
                               </div>
                             </div>
                           </div>
-                        ))}
+                        )
+                        })}
                       </div>
                     </>
                   )}
