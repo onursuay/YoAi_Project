@@ -347,7 +347,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                 </div>
                               )}
                               <div className="min-w-0 flex-1">
-                                <p className="text-sm font-semibold text-gray-800 truncate">{tgt.pageName}</p>
+                                <p className="text-sm font-medium text-gray-700 truncate">{tgt.pageName}</p>
                                 <p className="text-xs text-[#1877F2]">Facebook</p>
                               </div>
                             </div>
@@ -417,7 +417,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                                   </div>
                                 )}
                                 <div className="min-w-0 flex-1">
-                                  <p className="text-sm font-semibold text-gray-800 truncate">@{tgt.instagram.username}</p>
+                                  <p className="text-sm font-medium text-gray-700 truncate">@{tgt.instagram.username}</p>
                                   <p className="text-xs text-[#E4405F]">Instagram</p>
                                 </div>
                               </div>
@@ -483,21 +483,22 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   <div>
                     {/* Customize toggle — only when both FB and IG selected */}
                     {hasAnyFb && hasAnyIg && (
-                      <div className="flex items-center gap-3 mb-4">
+                      <div className="flex items-center gap-2.5 mb-3">
                         <button
                           type="button"
                           onClick={() => setCustomizeCaption(!customizeCaption)}
-                          className={`relative w-11 h-6 rounded-full transition-colors ${
+                          className={`relative w-8 h-4.5 rounded-full transition-colors flex-shrink-0 ${
                             customizeCaption ? 'bg-[#2BB673]' : 'bg-gray-300'
                           }`}
+                          style={{ width: '34px', height: '20px' }}
                         >
                           <span
-                            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-                              customizeCaption ? 'translate-x-5' : 'translate-x-0'
+                            className={`absolute top-0.5 left-0.5 w-4 h-4 bg-white rounded-full shadow transition-transform ${
+                              customizeCaption ? 'translate-x-3.5' : 'translate-x-0'
                             }`}
                           />
                         </button>
-                        <span className="text-[15px] text-gray-700">{t('customizeCaption')}</span>
+                        <span className="text-sm text-gray-600">{t('customizeCaption')}</span>
                       </div>
                     )}
 
