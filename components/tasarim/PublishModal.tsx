@@ -151,6 +151,22 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
     return targets.find((tgt) => selectedPages[tgt.pageId] || selectedIgs[tgt.pageId])
   }, [targets, selectedPages, selectedIgs])
 
+  // Auto-derive preview format from left panel selection
+  // previewPlatform: which platform to show in preview (fb or ig)
+  const derivedPreviewFormat = useMemo((): PreviewFormat => {
+    const platform = previewFormat.startsWith('ig') ? 'ig' : 'fb'
+    if (platform === 'ig') {
+      const igType = firstSelectedTarget ? (igPublishTypes[firstSelectedTarget.pageId] || 'feed') : 'feed'
+      if (igType === 'reels') return 'ig_reels'
+      if (igType === 'stories') return 'ig_stories'
+      return 'ig_feed'
+    } else {
+      const fbType = firstSelectedTarget ? (fbPublishTypes[firstSelectedTarget.pageId] || 'feed') : 'feed'
+      if (fbType === 'reels') return 'ig_reels' // reels preview same 9:16
+      return 'fb_feed'
+    }
+  }, [previewFormat, firstSelectedTarget, igPublishTypes, fbPublishTypes])
+
   if (!isOpen || !item) return null
 
   const handlePublish = async () => {
@@ -232,17 +248,18 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
     setIsPublishing(false)
   }
 
-  // Preview aspect ratio based on format
+  // Preview aspect ratio based on derived format
+  // Feed: 4:5 (1080x1350 — Meta's recommended portrait feed ratio)
+  // Stories/Reels: 9:16 (1080x1920 — full screen vertical)
   const getPreviewStyle = (): { width: string; aspectRatio: string } => {
-    switch (previewFormat) {
+    switch (derivedPreviewFormat) {
       case 'ig_stories':
       case 'ig_reels':
         return { width: '100%', aspectRatio: '9/16' }
       case 'ig_feed':
-        return { width: '100%', aspectRatio: '1/1' }
       case 'fb_feed':
       default:
-        return { width: '100%', aspectRatio: '16/9' }
+        return { width: '100%', aspectRatio: '4/5' }
     }
   }
 
@@ -653,21 +670,44 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
 
               {/* Right: Preview */}
               <div className="w-[380px] flex-shrink-0 overflow-y-auto px-5 py-6 bg-gray-50/50">
-                {/* Format selector */}
+                {/* Platform toggle + device toggle */}
                 <div className="flex items-center gap-2 mb-4">
-                  <select
-                    value={previewFormat}
-                    onChange={(e) => setPreviewFormat(e.target.value as PreviewFormat)}
-                    className="flex-1 text-sm px-3 py-2 border border-gray-200 rounded-xl bg-white focus:outline-none focus:ring-1 focus:ring-[#2BB673]/30"
-                  >
-                    <option value="fb_feed">{t('previewFbFeed')}</option>
-                    <option value="ig_feed">{t('previewIgFeed')}</option>
-                    <option value="ig_stories">{t('previewIgStories')}</option>
-                    {isVideo && <option value="ig_reels">{t('previewIgReels')}</option>}
-                  </select>
+                  {/* Platform toggle — only shown when both FB and IG selected */}
+                  {hasAnyFb && hasAnyIg ? (
+                    <div className="flex gap-1 bg-white border border-gray-200 rounded-xl p-1 flex-1">
+                      <button
+                        type="button"
+                        onClick={() => setPreviewFormat('fb_feed')}
+                        className={`flex items-center gap-1.5 flex-1 justify-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          !previewFormat.startsWith('ig') ? 'bg-[#1877F2] text-white' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <Facebook className="w-3.5 h-3.5" />
+                        Facebook
+                      </button>
+                      <button
+                        type="button"
+                        onClick={() => setPreviewFormat('ig_feed')}
+                        className={`flex items-center gap-1.5 flex-1 justify-center px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
+                          previewFormat.startsWith('ig') ? 'bg-[#E4405F] text-white' : 'text-gray-500 hover:text-gray-700'
+                        }`}
+                      >
+                        <Instagram className="w-3.5 h-3.5" />
+                        Instagram
+                      </button>
+                    </div>
+                  ) : (
+                    <div className="flex-1 flex items-center gap-2 px-3 py-2 bg-white border border-gray-200 rounded-xl">
+                      {hasAnyFb ? (
+                        <><Facebook className="w-4 h-4 text-[#1877F2]" /><span className="text-sm text-gray-700">Facebook</span></>
+                      ) : (
+                        <><Instagram className="w-4 h-4 text-[#E4405F]" /><span className="text-sm text-gray-700">Instagram</span></>
+                      )}
+                    </div>
+                  )}
 
-                  {/* Device toggle (for FB feed) */}
-                  {previewFormat === 'fb_feed' && (
+                  {/* Device toggle — only for feed */}
+                  {derivedPreviewFormat === 'fb_feed' && (
                     <div className="flex gap-0.5 bg-white border border-gray-200 rounded-xl p-0.5">
                       <button
                         type="button"
@@ -687,16 +727,25 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   )}
                 </div>
 
+                {/* Surface label — auto derived */}
+                <p className="text-xs text-gray-400 mb-3">
+                  {derivedPreviewFormat === 'fb_feed' && t('previewFbFeed')}
+                  {derivedPreviewFormat === 'ig_feed' && t('previewIgFeed')}
+                  {derivedPreviewFormat === 'ig_stories' && t('previewIgStories')}
+                  {derivedPreviewFormat === 'ig_reels' && t('previewIgReels')}
+                  {' · 1080×'}{derivedPreviewFormat === 'fb_feed' || derivedPreviewFormat === 'ig_feed' ? '1350px' : '1920px'}
+                </p>
+
                 {/* Preview card */}
                 <div className="bg-white rounded-xl border border-gray-200 overflow-hidden shadow-sm">
                   {/* Preview header */}
-                  {(previewFormat === 'fb_feed' || previewFormat === 'ig_feed') && (
+                  {(derivedPreviewFormat === 'fb_feed' || derivedPreviewFormat === 'ig_feed') && (
                     <div className="flex items-center gap-3 px-4 py-3">
                       {firstSelectedTarget?.pageImageUrl ? (
                         <img src={firstSelectedTarget.pageImageUrl} alt="" className="w-10 h-10 rounded-full object-cover" />
                       ) : (
                         <div className="w-10 h-10 rounded-full bg-gray-200 flex items-center justify-center">
-                          {previewFormat === 'fb_feed' ? (
+                          {derivedPreviewFormat === 'fb_feed' ? (
                             <Facebook className="w-5 h-5 text-[#1877F2]" />
                           ) : (
                             <Instagram className="w-5 h-5 text-[#E4405F]" />
@@ -705,11 +754,11 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                       )}
                       <div>
                         <p className="text-sm font-semibold text-gray-900">
-                          {previewFormat === 'fb_feed'
+                          {derivedPreviewFormat === 'fb_feed'
                             ? firstSelectedTarget?.pageName || 'Page'
                             : firstSelectedTarget?.instagram?.username || 'username'}
                         </p>
-                        {previewFormat === 'fb_feed' && (
+                        {derivedPreviewFormat === 'fb_feed' && (
                           <p className="text-xs text-gray-400">{t('justNow')}</p>
                         )}
                       </div>
@@ -739,7 +788,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     )}
 
                     {/* Stories/Reels overlay */}
-                    {(previewFormat === 'ig_stories' || previewFormat === 'ig_reels') && firstSelectedTarget?.instagram && (
+                    {(derivedPreviewFormat === 'ig_stories' || derivedPreviewFormat === 'ig_reels') && firstSelectedTarget?.instagram && (
                       <div className="absolute top-3 left-3 flex items-center gap-2">
                         <div className="w-7 h-7 rounded-full border-2 border-white overflow-hidden">
                           {firstSelectedTarget.instagram.profilePictureUrl ? (
@@ -758,7 +807,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                   </div>
 
                   {/* Feed engagement bar */}
-                  {previewFormat === 'ig_feed' && (
+                  {derivedPreviewFormat === 'ig_feed' && (
                     <div className="flex items-center gap-4 px-3 py-2">
                       <svg viewBox="0 0 24 24" className="w-5 h-5 text-gray-800" fill="none" stroke="currentColor" strokeWidth="2">
                         <path d="M20.84 4.61a5.5 5.5 0 0 0-7.78 0L12 5.67l-1.06-1.06a5.5 5.5 0 0 0-7.78 7.78l1.06 1.06L12 21.23l7.78-7.78 1.06-1.06a5.5 5.5 0 0 0 0-7.78z" />
@@ -773,7 +822,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     </div>
                   )}
 
-                  {previewFormat === 'fb_feed' && (
+                  {derivedPreviewFormat === 'fb_feed' && (
                     <div className="flex border-t border-gray-100">
                       <button type="button" className="flex-1 flex items-center justify-center gap-1.5 py-2.5 text-sm text-gray-500">
                         <svg viewBox="0 0 24 24" className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth="2">
@@ -802,7 +851,7 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                 {!onlyIgStories && (captionCommon || captionFb || captionIg) && (
                   <div className="mt-3 px-1">
                     <p className="text-sm text-gray-600 line-clamp-3">
-                      {previewFormat.startsWith('fb')
+                      {derivedPreviewFormat.startsWith('fb')
                         ? (customizeCaption ? captionFb : captionCommon)
                         : (customizeCaption ? captionIg : captionCommon)}
                     </p>
