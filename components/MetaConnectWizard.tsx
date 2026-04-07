@@ -200,7 +200,7 @@ export default function MetaConnectWizard() {
 
         setStep(4)
         setTimeout(() => {
-          router.push(ROUTES.META_ADS)
+          router.push(locale === 'en' ? '/en/dashboard' : ROUTES.DASHBOARD)
         }, 2000)
       }
     } catch (error) {
