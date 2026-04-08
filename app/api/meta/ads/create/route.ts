@@ -464,11 +464,8 @@ export async function POST(request: Request) {
     if (isLeadsOnAd && leadResolvedLink) {
       linkUrl = leadResolvedLink
     }
-    // Leads ON_AD: link zorunlu (subcode 2061015) — fallback olarak FB sayfa URL'si kullan
-    if (isLeadsOnAd && !linkUrl && pageId) {
-      linkUrl = `https://www.facebook.com/${pageId}`
-      console.log('[Ad Create] LEADS_ON_AD_LINK_FALLBACK: using FB page URL as link fallback', linkUrl)
-    }
+    // Leads ON_AD: link opsiyonel (destination_type=ON_AD adset'te gönderiliyor)
+    // facebook.com linki Meta tarafından reddediliyor (subcode 1815316)
     if (!linkUrl && conversionLocation === 'ON_PAGE' && pageId) {
       linkUrl = `https://www.facebook.com/${pageId}`
     }
