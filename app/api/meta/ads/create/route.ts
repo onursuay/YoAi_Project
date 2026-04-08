@@ -792,6 +792,11 @@ export async function POST(request: Request) {
     adFormData.append('adset_id', adsetId)
     adFormData.append('creative', JSON.stringify({ creative_id: creativeId }))
     adFormData.append('status', status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED')
+    // Leads ON_AD: lead_gen_form_id ad seviyesinde zorunlu (subcode 1892040)
+    if (isLeadsOnAd && leadFormId) {
+      adFormData.append('lead_gen_form_id', leadFormId)
+      console.log('[Ad Create] LEADS_ON_AD: lead_gen_form_id attached to ad payload:', leadFormId)
+    }
     // tracking_specs: SALES ve LEADS dışında pixel varsa ad seviyesinde takip
     if (adPixelId && objective !== 'OUTCOME_SALES' && objective !== 'OUTCOME_LEADS') {
       adFormData.append('tracking_specs', JSON.stringify([{ 'action.type': ['offsite_conversion'], 'fb_pixel': [adPixelId] }]))
