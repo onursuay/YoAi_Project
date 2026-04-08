@@ -532,10 +532,11 @@ export async function POST(request: Request) {
       }
       ctaValue = { link: igLink }
     } else if (isLeadsOnAd && leadFormId) {
-      // Leads ON_AD: CTA value'da sadece lead_gen_form_id; link facebook.com olamaz (subcode 1815316)
-      // linkUrl varsa ve harici HTTPS ise ekle, yoksa sadece form ID
-      ctaValue = linkUrl && !linkUrl.includes('facebook.com') && !linkUrl.includes('fb.me')
-        ? { link: linkUrl, lead_gen_form_id: leadFormId }
+      // Leads ON_AD: CTA value — harici HTTPS link varsa ekle, yoksa sadece form ID
+      // Boş string veya facebook.com/fb.me linki gönderilmemeli (subcode 2061015 / 1815316)
+      const leadsCtaLink = linkUrl && !linkUrl.includes('facebook.com') && !linkUrl.includes('fb.me') ? linkUrl : undefined
+      ctaValue = leadsCtaLink
+        ? { link: leadsCtaLink, lead_gen_form_id: leadFormId }
         : { lead_gen_form_id: leadFormId }
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
