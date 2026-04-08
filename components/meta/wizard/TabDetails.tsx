@@ -534,6 +534,14 @@ export default function TabDetails({
         const selectedId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
         const selectedPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
 
+        if (invLoading) {
+          return (
+            <p className="text-sm text-gray-400 bg-gray-50 rounded-lg px-3 py-2">
+              WhatsApp numarası yükleniyor...
+            </p>
+          )
+        }
+
         if (pageLinked.length > 1) {
           return (
             <div>
