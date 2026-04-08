@@ -587,7 +587,6 @@ export async function POST(request: Request) {
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
-        ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
       }
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.link_data = linkData
@@ -604,7 +603,6 @@ export async function POST(request: Request) {
         title: videoTitleIsUrl ? '' : safeVideoTitle,
         link_description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
-        ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
       }
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.video_data = videoData
