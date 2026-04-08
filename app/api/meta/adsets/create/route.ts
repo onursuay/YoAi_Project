@@ -132,13 +132,7 @@ function resolveDestinationConfig(
       break
     case 'WHATSAPP':
       if (pageId) {
-        // Meta requires digits-only format (no +, no spaces): "+90 538 234 32 00" → "905382343200"
-        const waPhoneDigits = whatsappDisplayPhone
-          ? whatsappDisplayPhone.replace(/\D/g, '')
-          : undefined
-        promotedObject = waPhoneDigits
-          ? { page_id: pageId, whatsapp_phone_number: waPhoneDigits }
-          : { page_id: pageId }
+        promotedObject = { page_id: pageId }
       }
       break
     case 'INSTAGRAM_DIRECT':
