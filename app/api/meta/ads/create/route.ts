@@ -279,15 +279,25 @@ export async function POST(request: Request) {
     if (objective === 'OUTCOME_LEADS' && conversionLocation === 'ON_AD') {
       const tenantDefaultLeadUrl = (body.tenantDefaultLeadUrl ?? body.tenant_default_lead_url) as string | undefined
       const tenantPrivacyPolicyUrl = (body.tenantPrivacyPolicyUrl ?? body.tenant_privacy_policy_url) as string | undefined
+
+      // pageWebsite body'de boş geldiyse Meta Graph API'den çek
+      let resolvedPageWebsite = pageWebsite || undefined
+      if (!resolvedPageWebsite && pageId) {
+        try {
+          const pageRes = await ctx.client.get<{ website?: string }>(`/${pageId}`, { fields: 'website' })
+          resolvedPageWebsite = pageRes.data?.website?.trim() || undefined
+          if (resolvedPageWebsite) console.log('[Ad Create] LEADS_ON_AD: page website fetched from Meta:', resolvedPageWebsite)
+        } catch { /* ignore — fallback chain devam eder */ }
+      }
+
       leadResolvedLink = resolveLeadCreativeLink({
         manualWebsiteUrl: creative?.websiteUrl?.trim() || undefined,
-        pageWebsite: pageWebsite || undefined,
+        pageWebsite: resolvedPageWebsite,
         tenantDefaultLeadUrl: tenantDefaultLeadUrl?.trim() || undefined,
         tenantPrivacyPolicyUrl: tenantPrivacyPolicyUrl?.trim() || undefined,
         formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
       })
-      // URL bulunamazsa link olmadan gönder — Meta kabul ederse tamam, etmezse kendi hatasını döndürür
-      if (DEBUG) console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none — sending without link)')
+      console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none)')
     }
     if (objective === 'OUTCOME_SALES' && conversionLocation === 'CATALOG') {
       return NextResponse.json(
