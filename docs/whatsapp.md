@@ -218,6 +218,8 @@ Meta Ads Manager’da “Otomatik hedef” seçeneği Messenger + Instagram Dire
 - Mevcut çalışan Messenger ve WhatsApp akışlarını etkileyebilir
 - Ayrı, kapsamlı bir çalışma ve test süreci gerektirir
 
+**KESİN KURAL:** `promoted_object`'e `whatsapp_phone_number` **EKLENMEMELİ** — Meta subcode 1487246 hatası verir, adset oluşmuyor. Sadece `{ page_id }` gönderilmeli.
+
 **Yapılacaklar (review onayı sonrası):**
 1. `adsets/create/route.ts` — `destination_type = MESSAGING_MULTI_CHANNEL` desteği
 2. `promoted_object` — Messenger + Instagram + WhatsApp birleşik yapısı
