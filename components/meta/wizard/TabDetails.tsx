@@ -577,10 +577,11 @@ export default function TabDetails({
           )
         }
 
-        if (pageLinked.length === 1 && selectedPhone) {
+        if (pageLinked.length === 1) {
+          const displayNum = selectedPhone ?? pageLinked[0].displayPhone
           return (
             <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
-              WhatsApp: <span className="font-medium">{selectedPhone}</span>
+              WhatsApp: <span className="font-medium">{displayNum}</span>
               {pageLinked[0].verifiedName ? ` — ${pageLinked[0].verifiedName}` : ''}
             </p>
           )
