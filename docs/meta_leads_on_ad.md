@@ -92,6 +92,46 @@ linkData.lead_gen_form_id = leadFormId  // ← subcode 1443050 hatası
 
 ---
 
+---
+
+## WhatsApp Reklamlarında Chat Greeting Gösterilmemeli
+
+**Etkilenen dosyalar:**
+- `components/meta/wizard/StepAd.tsx`
+- `components/meta/CampaignWizard.tsx`
+- `lib/meta/spec/preflightValidator.ts`
+- `app/api/meta/ads/create/route.ts`
+
+Meta `page_welcome_message` alanını **sadece Messenger** için destekliyor. WhatsApp reklamlarında bu alan gönderilse bile dikkate alınmıyor — ve UI'da gösterilmesi kullanıcıyı yanıltıyor.
+
+**Belirtiler:**
+- Dönüşüm konumu WhatsApp seçilince "Chat Greeting" alanı çıkıyor
+- Alan zorunlu tutulduğu için Next / Publish butonu aktif olmuyor
+
+**Çözüm:**
+
+1. `StepAd.tsx` — `isEngagementMessaging`, `isLeadsMessaging`, `isSalesMessaging` değişkenleri WHATSAPP'ı dışarıda bırakacak şekilde sadece `MESSENGER` kontrol edecek:
+```ts
+const isEngagementMessaging = campaignObjective === 'OUTCOME_ENGAGEMENT' && conversionLocation === 'MESSENGER'
+const isLeadsMessaging = isLeads && conversionLocation === 'MESSENGER'
+const isSalesMessaging = campaignObjective === 'OUTCOME_SALES' && conversionLocation === 'MESSENGER'
+```
+
+2. `CampaignWizard.tsx` — `canGoNext` koşullarında WHATSAPP için chatGreeting zorunluluğu kaldırıldı.
+
+3. `preflightValidator.ts` — Leads/Sales/Engagement + WHATSAPP kombinasyonunda chatGreeting zorunlu tutulmaz.
+
+4. `ads/create/route.ts` — `needsWelcomeMsg` koşulu `!isWhatsApp` ile sınırlandırıldı:
+```ts
+const needsWelcomeMsg = !!(chatGreeting && !isWhatsApp && (
+  isEngagementMessaging || isLeadsMessaging || isSalesMessaging
+))
+```
+
+**Kural:** Hangi objective olursa olsun, `conversionLocation === 'WHATSAPP'` ise Chat Greeting gösterilmez, gönderilmez, zorunlu tutulmaz.
+
+---
+
 ## İlgili Meta Hata Kodları
 
 | Subcode | Açıklama | Çözüm |
