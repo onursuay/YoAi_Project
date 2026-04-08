@@ -161,11 +161,14 @@ function resolveDestinationConfig(
   if (objective === 'OUTCOME_AWARENESS') {
     needsDestinationType = false
   }
-  // ON_AD, ON_PAGE, CALL: Meta API'de geçerli destination_type enum değerleri DEĞİL.
-  // Bu destination'larda destination_type gönderilmemeli (subcode 1815715).
-  // Meta geçerli enum: MESSENGER, WHATSAPP, INSTAGRAM_DIRECT, WEBSITE, APP, UNDEFINED.
+  // ON_AD, ON_PAGE, CALL: çoğu objective için geçerli destination_type enum değerleri DEĞİL (subcode 1815715).
+  // ANCAK: OUTCOME_LEADS + ON_AD → Meta lead form adset'i destination_type=ON_AD ile tanıyor (subcode 1892040 fix).
   if (['ON_AD', 'ON_PAGE', 'CALL', 'PHONE_CALL'].includes(destinationType)) {
-    needsDestinationType = false
+    if (objective === 'OUTCOME_LEADS' && destinationType === 'ON_AD') {
+      needsDestinationType = true
+    } else {
+      needsDestinationType = false
+    }
   }
   // ENGAGEMENT + WEBSITE: destination_type göndermemeli. Meta "WEBSITE" destination_type'ı
   // conversion tracking (pixel) gerektiriyor olarak yorumluyor → subcode 2490408.
