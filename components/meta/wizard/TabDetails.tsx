@@ -538,6 +538,7 @@ export default function TabDetails({
       {/* WHATSAPP: Bağlı numara gösterimi / seçimi */}
       {state.conversionLocation === 'WHATSAPP' && (() => {
         const pageLinked = accountInventory?.whatsapp_phone_numbers ?? []
+        console.log('[TabDetails] WHATSAPP_RENDER', { pageLinked_length: pageLinked.length, pageLinked, accountInventory_keys: accountInventory ? Object.keys(accountInventory) : null })
         const pageNum = accountInventory?.page_whatsapp_number
         const selectedId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
         const selectedPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
