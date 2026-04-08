@@ -44,14 +44,14 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
   const isLeads = campaignObjective === 'OUTCOME_LEADS'
   const isLeadsOnAd = isLeads && conversionLocation === 'ON_AD'
   const isLeadsMessaging =
-    isLeads && (conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP')
+    isLeads && conversionLocation === 'MESSENGER'
   const isLeadsCall = isLeads && conversionLocation === 'CALL'
   const isEngagementMessaging =
     campaignObjective === 'OUTCOME_ENGAGEMENT' &&
-    (conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP')
+    conversionLocation === 'MESSENGER'
   const isSalesMessaging =
     campaignObjective === 'OUTCOME_SALES' &&
-    (conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP')
+    conversionLocation === 'MESSENGER'
   const isEngagementCall = campaignObjective === 'OUTCOME_ENGAGEMENT' && conversionLocation === 'CALL'
   const isMessaging = conversionLocation === 'MESSENGER' || conversionLocation === 'WHATSAPP' || conversionLocation === 'INSTAGRAM_DIRECT'
   const isCall = conversionLocation === 'CALL'
