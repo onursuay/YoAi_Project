@@ -801,9 +801,10 @@ export async function POST(request: Request) {
     if (!adResult.ok) {
       const metaError = adResult.error || {}
       const code = metaError.code
+      const adSubcode = metaError.error_subcode ?? metaError.subcode
+      console.error('[Ad Create] AD_FAIL:', JSON.stringify({ code, subcode: adSubcode, message: metaError.message, error_user_msg: metaError.error_user_msg, type: metaError.type, fbtrace_id: metaError.fbtrace_id }))
 
       // Subcode 2534013 = Page-IG professional account link required (ads level)
-      const adSubcode = metaError.error_subcode ?? metaError.subcode
       const isAdIgProfessionalError =
         Number(adSubcode) === 2534013 ||
         (typeof metaError.error_user_msg === 'string' && (
