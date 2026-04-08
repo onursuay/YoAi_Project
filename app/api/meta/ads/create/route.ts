@@ -298,6 +298,18 @@ export async function POST(request: Request) {
         formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
       })
       console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none)')
+
+      if (!leadResolvedLink) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'LEAD_CREATIVE_LINK_MISSING',
+            code: 'LEAD_CREATIVE_LINK_MISSING',
+            message: 'Potansiyel müşteri reklamı için harici bir web sitesi URL\'si gerekiyor. Lütfen şunlardan birini yapın: (1) Facebook sayfanıza Meta Business Suite\'ten bir web sitesi ekleyin, veya (2) lead formunuza bir gizlilik politikası URL\'si ekleyin.',
+          },
+          { status: 400 }
+        )
+      }
     }
     if (objective === 'OUTCOME_SALES' && conversionLocation === 'CATALOG') {
       return NextResponse.json(
