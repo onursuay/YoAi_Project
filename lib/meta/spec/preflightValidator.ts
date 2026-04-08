@@ -339,15 +339,15 @@ export function preflight(
       missing.push({ step: 3, field: 'lead_form', message: 'Potansiyel müşteri formu seçilmeli' })
     }
   }
-  // Leads + MESSENGER/WHATSAPP: karşılama mesajı zorunlu
-  if (objective === 'OUTCOME_LEADS' && (destination === 'MESSENGER' || destination === 'WHATSAPP')) {
+  // Leads + MESSENGER: karşılama mesajı zorunlu (WhatsApp'ta page_welcome_message desteklenmiyor)
+  if (objective === 'OUTCOME_LEADS' && destination === 'MESSENGER') {
     if (!form.ad.chatGreeting?.trim()) {
       missing.push({ step: 3, field: 'chat_greeting', message: 'Karşılama mesajı girilmeli' })
     }
   }
 
-  // Sales + MESSENGER/WHATSAPP: karşılama mesajı zorunlu
-  if (objective === 'OUTCOME_SALES' && (destination === 'MESSENGER' || destination === 'WHATSAPP')) {
+  // Sales + MESSENGER: karşılama mesajı zorunlu (WhatsApp'ta page_welcome_message desteklenmiyor)
+  if (objective === 'OUTCOME_SALES' && destination === 'MESSENGER') {
     if (!form.ad.chatGreeting?.trim()) {
       missing.push({ step: 3, field: 'chat_greeting', message: 'Karşılama mesajı girilmeli' })
     }
@@ -377,8 +377,8 @@ export function preflight(
   if (needsUrl && !form.ad.websiteUrl.trim()) {
     missing.push({ step: 3, field: 'websiteUrl', message: 'Web sitesi URL\'si zorunludur.' })
   }
-  // Engagement + MESSENGER/WHATSAPP: karşılama mesajı zorunlu
-  if (objective === 'OUTCOME_ENGAGEMENT' && (destination === 'MESSENGER' || destination === 'WHATSAPP')) {
+  // Engagement + MESSENGER: karşılama mesajı zorunlu (WhatsApp'ta page_welcome_message desteklenmiyor)
+  if (objective === 'OUTCOME_ENGAGEMENT' && destination === 'MESSENGER') {
     if (!form.ad.chatGreeting?.trim()) {
       missing.push({ step: 3, field: 'chat_greeting', message: 'Karşılama mesajı girilmeli' })
     }
