@@ -535,6 +535,68 @@ export default function TabDetails({
       )}
 
 
+      {/* WHATSAPP: Bağlı numara gösterimi / seçimi */}
+      {state.conversionLocation === 'WHATSAPP' && (() => {
+        const pageLinked = accountInventory?.whatsapp_phone_numbers ?? []
+        const pageNum = accountInventory?.page_whatsapp_number
+        const selectedId = state.destinationDetails?.messaging?.whatsappPhoneNumberId
+        const selectedPhone = state.destinationDetails?.messaging?.whatsappDisplayPhone
+
+        if (pageLinked.length > 1) {
+          return (
+            <div>
+              <label className="block text-sm font-semibold text-gray-700 mb-1">
+                WhatsApp Numarası <span className="text-red-500">*</span>
+              </label>
+              <select
+                value={selectedId ?? ''}
+                onChange={(e) => {
+                  const num = pageLinked.find((n) => n.phoneNumberId === e.target.value)
+                  onChange({
+                    destinationDetails: {
+                      ...state.destinationDetails,
+                      messaging: {
+                        ...state.destinationDetails?.messaging,
+                        whatsappPhoneNumberId: num?.phoneNumberId,
+                        whatsappDisplayPhone: num?.displayPhone ?? undefined,
+                        whatsappSourceLayer: 'page_linked',
+                      },
+                    },
+                  })
+                }}
+                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              >
+                <option value="">Seçiniz</option>
+                {pageLinked.map((n) => (
+                  <option key={n.phoneNumberId} value={n.phoneNumberId}>
+                    {n.displayPhone ?? n.phoneNumberId}{n.verifiedName ? ` — ${n.verifiedName}` : ''}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )
+        }
+
+        if (pageLinked.length === 1 && selectedPhone) {
+          return (
+            <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+              WhatsApp: <span className="font-medium">{selectedPhone}</span>
+              {pageLinked[0].verifiedName ? ` — ${pageLinked[0].verifiedName}` : ''}
+            </p>
+          )
+        }
+
+        if (pageNum) {
+          return (
+            <p className="text-sm text-gray-600 bg-gray-50 rounded-lg px-3 py-2">
+              WhatsApp: <span className="font-medium">{pageNum}</span> (sayfa ayarından alındı)
+            </p>
+          )
+        }
+
+        return null
+      })()}
+
       {/* Traffic + APP: Uygulama ID ve Mağaza linki (adset) + platform + destinationDetails.app */}
       {(isTrafficApp || (isEngagement && state.conversionLocation === 'APP') || (isSales && state.conversionLocation === 'APP')) && (
         <>

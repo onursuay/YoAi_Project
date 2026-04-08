@@ -132,7 +132,9 @@ function resolveDestinationConfig(
       break
     case 'WHATSAPP':
       if (pageId) {
-        promotedObject = { page_id: pageId }
+        promotedObject = whatsappDisplayPhone
+          ? { page_id: pageId, whatsapp_phone_number: whatsappDisplayPhone }
+          : { page_id: pageId }
       }
       break
     case 'INSTAGRAM_DIRECT':

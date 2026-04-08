@@ -203,3 +203,24 @@ Response örneği, page-linked kanıtı, fallback zinciri ve Ads Manager vs YoAi
 
 - `app/api/meta/inventory/route.ts`: Zaten `page_id` ile çağrıldığında sadece page-linked numaraları döndürüyor; değişiklik yok.
 - CampaignWizard’daki refetch ve “stale selection clear” (seçili numara yeni sayfa listesinde yoksa temizleme) davranışı aynen kullanılıyor.
+
+---
+
+## Gelecek Plan — Otomatik Hedef (MESSAGING_MULTI_CHANNEL)
+
+**Durum:** Meta app review ekibinden onay alındıktan sonra uygulanacak.
+
+Meta Ads Manager’da “Otomatik hedef” seçeneği Messenger + Instagram Direct + WhatsApp’ı tek seferde hedefliyor. Bu özellik şu an YoAi’de desteklenmiyor.
+
+**Neden şimdi yapılmıyor:**
+- **Risk: Yüksek** — adset `destination_type`, `promoted_object` ve ad creative formatı tamamen farklı bir yapıya geçiyor
+- Meta’da `destination_type = MESSAGING_MULTI_CHANNEL` ile çalışıyor (ayrı bir enum değeri)
+- Mevcut çalışan Messenger ve WhatsApp akışlarını etkileyebilir
+- Ayrı, kapsamlı bir çalışma ve test süreci gerektirir
+
+**Yapılacaklar (review onayı sonrası):**
+1. `adsets/create/route.ts` — `destination_type = MESSAGING_MULTI_CHANNEL` desteği
+2. `promoted_object` — Messenger + Instagram + WhatsApp birleşik yapısı
+3. Ad creative — multi-channel format gereksinimleri araştırılacak
+4. UI — Dönüşüm konumu seçiminde “Otomatik (Messenger + Instagram + WhatsApp)” seçeneği
+5. Mevcut Messenger ve WhatsApp akışlarının regresyon testleri
