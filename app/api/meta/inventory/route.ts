@@ -907,10 +907,7 @@ export async function GET(request: Request) {
     const url = new URL(request.url)
     const pageId = url.searchParams.get('page_id') || undefined
 
-    console.log(`[Inventory][${requestId}] INVENTORY_REQUEST_INCOMING:`, JSON.stringify({
-      pageId: pageId ?? '(none)',
-      queryParams: Object.fromEntries(url.searchParams.entries()),
-    }))
+
 
     const ctx = await resolveMetaContext()
     if (!ctx) {
@@ -1122,7 +1119,6 @@ export async function GET(request: Request) {
         whatsapp_diagnostics: whatsappResult.diagnostics,
         whatsapp_error: whatsappResult.error?.reason ?? null,
       }
-      console.log(`[Inventory][${requestId}] INVENTORY_RESPONSE_SAMPLE (page-linked):`, JSON.stringify(responseSample))
     }
 
     const responseBody: { ok: boolean; data: AccountInventory; debug_whatsapp?: Record<string, unknown> } = {

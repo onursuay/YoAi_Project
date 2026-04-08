@@ -234,14 +234,6 @@ export default function TabDetails({
       }
     }
 
-    console.log('CONVERSION_LOCATION_OPTIONS_FINAL', {
-      selectedPageId,
-      inventoryStatus,
-      whatsappPhoneCount,
-      whatsappLocked,
-      whatsappReason,
-      source: 'page_linked_rule',
-    })
 
     return options
   }, [campaignObjective, capabilities, selectedPageId, accountInventory, accountInventoryPageId, accountInventoryStatus])

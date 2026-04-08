@@ -91,9 +91,6 @@ export async function POST(request: Request) {
       ? JSON.parse(body.destinationDetails)
       : (body.destinationDetails ?? body.destination_details ?? null)
 
-    console.log('[Ad Create] RAW_DD:', JSON.stringify(body.destinationDetails ?? null))
-    console.log('[Ad Create] RAW_BODY_KEYS:', Object.keys(body))
-
     // Fallback: doğrudan body'den oku
     const whatsappPhoneNumberIdResolved =
       body.whatsappPhoneNumberId ||
@@ -253,14 +250,6 @@ export async function POST(request: Request) {
     }
 
     if (conversionLocation === 'WHATSAPP') {
-      console.log(`[Ad Create] WHATSAPP_AD_VALIDATION:`, JSON.stringify({
-        adsetId,
-        pageId,
-        whatsappPhoneNumberId: whatsappPhoneNumberIdResolved ?? '(none)',
-        whatsappDisplayPhone: whatsappDisplayPhoneResolved ?? '(none)',
-        sourceLayer: dd?.messaging?.whatsappSourceLayer ?? '(unknown)',
-      }))
-      console.log('[Ad Create] WHATSAPP_DD_FULL:', JSON.stringify(dd ?? null))
     }
     if (((objective === 'OUTCOME_LEADS' || objective === 'OUTCOME_ENGAGEMENT') && conversionLocation === 'CALL') && !phoneNumber) {
       return NextResponse.json(
@@ -298,7 +287,7 @@ export async function POST(request: Request) {
         formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
         yoaiPrivacyPolicyUrl: 'https://yoai.yodijital.com/en/privacy-policy',
       })
-      console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none)')
+
 
       if (!leadResolvedLink) {
         return NextResponse.json(
@@ -523,17 +512,6 @@ export async function POST(request: Request) {
 
     // ── BRANCH DECISION AUDIT LOG (always emitted for debuggability) ──
     const finalCreativeBranch = isWhatsApp ? 'WHATSAPP' : isIgDirect ? 'INSTAGRAM_DIRECT' : 'STANDARD'
-    console.log('[Ad Create] BRANCH_DECISION:', JSON.stringify({
-      conversionLocation,
-      objective,
-      optimizationGoal,
-      isWhatsApp,
-      isIgDirect,
-      isEngagementMessaging: isEngagement && (conversionLocation === 'MESSENGER' || isWhatsApp),
-      isLeadsMessaging: isLeads && (conversionLocation === 'MESSENGER' || isWhatsApp),
-      isSalesMessaging: isSales && (conversionLocation === 'MESSENGER' || isWhatsApp),
-      finalCreativeBranch,
-    }))
 
     // INSTAGRAM_DIRECT RULE: always force INSTAGRAM_MESSAGE.
     // SEND_MESSAGE = Messenger; INSTAGRAM_MESSAGE = Instagram Direct.
@@ -668,34 +646,6 @@ export async function POST(request: Request) {
     }
 
     creativeFormData.append('object_story_spec', JSON.stringify(objectStorySpec))
-    if (isLeadsOnAd) {
-      console.log('[Ad Create] LEADS_ON_AD_CREATIVE_SPEC:', JSON.stringify({
-        leadFormId,
-        linkUrl,
-        link_data_has_lead_gen_form_id: !!(objectStorySpec as any).link_data?.lead_gen_form_id,
-        video_data_has_lead_gen_form_id: !!(objectStorySpec as any).video_data?.lead_gen_form_id,
-        ctaType,
-        ctaValue,
-      }))
-    }
-
-    if (conversionLocation === 'WHATSAPP') {
-      const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
-      const finalCtaValue = spec.link_data?.call_to_action?.value ?? spec.video_data?.call_to_action?.value
-      console.log('[Ad Create] WHATSAPP_CREATIVE_SPEC:', JSON.stringify({
-        page_id: spec.page_id,
-        has_instagram_user_id: !!spec.instagram_user_id,
-        has_link_data: !!spec.link_data,
-        link_data_link: spec.link_data?.link ?? '(none)',
-        link_data_has_message: !!spec.link_data?.message,
-        cta_type: spec.link_data?.call_to_action?.type ?? spec.video_data?.call_to_action?.type ?? '(none)',
-        cta_value: finalCtaValue ?? '(none — correct)',
-        cta_value_link: finalCtaValue?.link ?? '(none — correct)',
-        has_page_welcome_message: !!spec.link_data?.page_welcome_message || !!spec.video_data?.page_welcome_message,
-      }))
-      console.log('[Ad Create] FINAL_CTA_PAYLOAD:', JSON.stringify({ ctaType, ctaValue }))
-      console.log('[Ad Create] FINAL_OBJECT_STORY_SPEC:', JSON.stringify(objectStorySpec))
-    }
 
     if (process.env.META_DEBUG === 'true') {
       const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
@@ -721,7 +671,6 @@ export async function POST(request: Request) {
       const metaError = creativeResult.error || {}
       const code = metaError.code
       const subcode = metaError.error_subcode ?? metaError.subcode
-      console.error('[Ad Create] CREATIVE_FAIL:', JSON.stringify({ code, subcode, message: metaError.message, error_user_msg: metaError.error_user_msg, type: metaError.type, fbtrace_id: metaError.fbtrace_id }))
 
       // Subcode 2875003 = unsupported CTA for Instagram Direct placement
       const isUnsupportedCta =
@@ -856,7 +805,6 @@ export async function POST(request: Request) {
       const metaError = adResult.error || {}
       const code = metaError.code
       const adSubcode = metaError.error_subcode ?? metaError.subcode
-      console.error('[Ad Create] AD_FAIL:', JSON.stringify({ code, subcode: adSubcode, message: metaError.message, error_user_msg: metaError.error_user_msg, type: metaError.type, fbtrace_id: metaError.fbtrace_id }))
 
       // Subcode 2534013 = Page-IG professional account link required (ads level)
       const isAdIgProfessionalError =

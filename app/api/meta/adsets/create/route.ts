@@ -689,17 +689,6 @@ export async function POST(request: Request) {
 
     if (destConfig.promotedObject != null) {
       formData.append('promoted_object', JSON.stringify(destConfig.promotedObject))
-      // ── DEBUG LOG: ADSET_PROMOTED_OBJECT_RESOLVED ──
-      if (destinationType === 'WHATSAPP') {
-        console.log(`[AdSet Create][${requestId}] ADSET_PROMOTED_OBJECT_RESOLVED:`, JSON.stringify({
-          campaignId,
-          pageId,
-          wabaId: whatsappPhoneNumberId ?? '(none)',
-          whatsappPhoneNumber: destConfig.promotedObject.whatsapp_phone_number ?? '(not in payload — Meta resolves)',
-          sourceLayer: whatsappSourceLayer,
-          payloadSnapshot: destConfig.promotedObject,
-        }))
-      }
     }
 
     // instagram_actor_id is no longer sent at adset level.
