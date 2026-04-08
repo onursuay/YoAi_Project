@@ -296,6 +296,7 @@ export async function POST(request: Request) {
         tenantDefaultLeadUrl: tenantDefaultLeadUrl?.trim() || undefined,
         tenantPrivacyPolicyUrl: tenantPrivacyPolicyUrl?.trim() || undefined,
         formPrivacyPolicyUrl: formPrivacyPolicyUrl || undefined,
+        yoaiPrivacyPolicyUrl: 'https://yoai.yodijital.com/en/privacy-policy',
       })
       console.log('[Ad Create] leadResolvedLink:', leadResolvedLink || '(none)')
 
