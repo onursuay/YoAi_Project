@@ -532,8 +532,11 @@ export async function POST(request: Request) {
       }
       ctaValue = { link: igLink }
     } else if (isLeadsOnAd && leadFormId) {
-      // Leads ON_AD: link + lead_gen_form_id in CTA value; link same as creative link (resolved via fallback chain)
-      ctaValue = { link: linkUrl, lead_gen_form_id: leadFormId }
+      // Leads ON_AD: CTA value'da sadece lead_gen_form_id; link facebook.com olamaz (subcode 1815316)
+      // linkUrl varsa ve harici HTTPS ise ekle, yoksa sadece form ID
+      ctaValue = linkUrl && !linkUrl.includes('facebook.com') && !linkUrl.includes('fb.me')
+        ? { link: linkUrl, lead_gen_form_id: leadFormId }
+        : { lead_gen_form_id: leadFormId }
     } else if ((isEngagementCall || isLeadsCall) && phoneNumber) {
       const rawNumber = phoneNumber.replace(/^tel:\s*/i, '').replace(/\s/g, '')
       const digitsOnly = rawNumber.replace(/\D/g, '').replace(/^0/, '')
@@ -579,7 +582,12 @@ export async function POST(request: Request) {
       const headlineIsUrl = safeHeadline.startsWith('http://') || safeHeadline.startsWith('https://')
       const linkData: Record<string, unknown> = {
         image_hash: creative.imageHash,
-        ...(!isLeadsOnAd && resolvedLink ? { link: resolvedLink } : isLeadsOnAd && linkUrl ? { link: linkUrl } : {}),
+        // Leads ON_AD: facebook.com linki reddediliyor (subcode 1815316) — sadece harici HTTPS kabul
+        ...(!isLeadsOnAd && resolvedLink
+          ? { link: resolvedLink }
+          : isLeadsOnAd && linkUrl && !linkUrl.includes('facebook.com') && !linkUrl.includes('fb.me')
+            ? { link: linkUrl }
+            : {}),
         message: creative.primaryText,
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
@@ -595,7 +603,9 @@ export async function POST(request: Request) {
       const videoTitleIsUrl = safeVideoTitle.startsWith('http://') || safeVideoTitle.startsWith('https://')
       const videoData: Record<string, unknown> = {
         video_id: creative.videoId,
-        ...(isLeadsOnAd ? (linkUrl ? { link: linkUrl } : {}) : (resolvedVideoLink ? { link: resolvedVideoLink } : {})),
+        ...(isLeadsOnAd
+          ? (linkUrl && !linkUrl.includes('facebook.com') && !linkUrl.includes('fb.me') ? { link: linkUrl } : {})
+          : (resolvedVideoLink ? { link: resolvedVideoLink } : {})),
         message: creative.primaryText,
         title: videoTitleIsUrl ? '' : safeVideoTitle,
         link_description: creative.description,
