@@ -2132,7 +2132,7 @@ const messagingOk = true
           !!state.ad.leadFormId?.trim() ||
           !!state.adset.destinationDetails?.leads?.leadFormId?.trim()) &&
         (state.campaign.objective !== 'OUTCOME_LEADS' ||
-          (state.adset.conversionLocation !== 'MESSENGER' && state.adset.conversionLocation !== 'WHATSAPP') ||
+          state.adset.conversionLocation !== 'MESSENGER' ||
           !!state.ad.chatGreeting?.trim() ||
           !!state.adset.destinationDetails?.messaging?.messageTemplate?.trim()) &&
         (state.campaign.objective !== 'OUTCOME_LEADS' ||
@@ -2140,11 +2140,11 @@ const messagingOk = true
           !!state.ad.phoneNumber?.trim() ||
           !!state.adset.destinationDetails?.calls?.phoneNumber?.trim()) &&
         (state.campaign.objective !== 'OUTCOME_SALES' ||
-          (state.adset.conversionLocation !== 'MESSENGER' && state.adset.conversionLocation !== 'WHATSAPP') ||
+          state.adset.conversionLocation !== 'MESSENGER' ||
           !!state.ad.chatGreeting?.trim() ||
           !!state.adset.destinationDetails?.messaging?.messageTemplate?.trim()) &&
         ((state.campaign.objective !== 'OUTCOME_ENGAGEMENT' ||
-          (state.adset.conversionLocation !== 'MESSENGER' && state.adset.conversionLocation !== 'WHATSAPP') ||
+          state.adset.conversionLocation !== 'MESSENGER' ||
           !!state.ad.chatGreeting?.trim() ||
           !!state.adset.destinationDetails?.messaging?.messageTemplate?.trim())) &&
         (state.campaign.objective !== 'OUTCOME_ENGAGEMENT' ||
