@@ -587,6 +587,7 @@ export async function POST(request: Request) {
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
+        ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
       }
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) linkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.link_data = linkData
@@ -603,6 +604,7 @@ export async function POST(request: Request) {
         title: videoTitleIsUrl ? '' : safeVideoTitle,
         link_description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
+        ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
       }
       if ((isEngagementMessaging || isLeadsMessaging || isSalesMessaging) && chatGreeting) videoData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.video_data = videoData
@@ -632,6 +634,16 @@ export async function POST(request: Request) {
     }
 
     creativeFormData.append('object_story_spec', JSON.stringify(objectStorySpec))
+    if (isLeadsOnAd) {
+      console.log('[Ad Create] LEADS_ON_AD_CREATIVE_SPEC:', JSON.stringify({
+        leadFormId,
+        linkUrl,
+        link_data_has_lead_gen_form_id: !!(objectStorySpec as any).link_data?.lead_gen_form_id,
+        video_data_has_lead_gen_form_id: !!(objectStorySpec as any).video_data?.lead_gen_form_id,
+        ctaType,
+        ctaValue,
+      }))
+    }
 
     if (conversionLocation === 'WHATSAPP') {
       const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
@@ -790,7 +802,10 @@ export async function POST(request: Request) {
     const adFormData = new URLSearchParams()
     adFormData.append('name', name.trim())
     adFormData.append('adset_id', adsetId)
-    adFormData.append('creative', JSON.stringify({ creative_id: creativeId }))
+    adFormData.append('creative', JSON.stringify({
+      creative_id: creativeId,
+      ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
+    }))
     adFormData.append('status', status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED')
     // Leads ON_AD: lead_gen_form_id ad seviyesinde zorunlu (subcode 1892040)
     if (isLeadsOnAd && leadFormId) {
