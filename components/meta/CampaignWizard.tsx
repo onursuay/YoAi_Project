@@ -2164,29 +2164,39 @@ const messagingOk = true
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
 
       {/* ── Header ── */}
-      <div className="h-24 flex items-center px-6 border-b border-gray-100 flex-shrink-0 gap-4 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
-        <div className="flex items-center gap-3 w-48 flex-shrink-0">
-          <img src="/meta-logo.png" alt="Meta" width={28} height={28} className="shrink-0" />
-          <h2 className="text-sm font-semibold text-gray-900 truncate">{t.createMetaCampaign}</h2>
-        </div>
-        <div className="flex-1 flex justify-center min-w-0">
-          <div className="w-full max-w-xl">
-            <WizardProgress
-              currentStep={state.currentStep}
-              compact
-              onStepClick={(step) => setState(prev => ({ ...prev, currentStep: step }))}
-            />
+      <div className="border-b border-gray-100 flex-shrink-0 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
+        <div className="max-w-7xl mx-auto px-8 h-20 flex items-center gap-6">
+          {/* Logo + Başlık */}
+          <div className="flex items-center gap-3 flex-shrink-0">
+            <img src="/meta-logo.png" alt="Meta" width={26} height={26} className="shrink-0" />
+            <div>
+              <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wider leading-none mb-0.5">Meta Ads</p>
+              <h2 className="text-sm font-bold text-gray-900 whitespace-nowrap">{t.createMetaCampaign}</h2>
+            </div>
           </div>
-        </div>
-        <div className="w-48 flex justify-end flex-shrink-0">
-          <button
-            type="button"
-            onClick={handleClose}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label="Kapat"
-          >
-            <X className="w-5 h-5" />
-          </button>
+
+          {/* Progress — ortalanmış */}
+          <div className="flex-1 flex justify-center min-w-0">
+            <div className="w-full max-w-lg">
+              <WizardProgress
+                currentStep={state.currentStep}
+                compact
+                onStepClick={(step) => setState(prev => ({ ...prev, currentStep: step }))}
+              />
+            </div>
+          </div>
+
+          {/* Kapat */}
+          <div className="flex-shrink-0">
+            <button
+              type="button"
+              onClick={handleClose}
+              className="p-2 text-gray-400 hover:text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
+              aria-label="Kapat"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
         </div>
       </div>
 
