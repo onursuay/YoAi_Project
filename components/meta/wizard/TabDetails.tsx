@@ -34,23 +34,24 @@ function SearchableSelect({ value, onChange, options, placeholder, className }: 
   return (
     <div ref={ref} className={`relative ${className ?? ''}`}>
       <button type="button" onClick={() => { setOpen(v => !v); setSearch('') }}
-        className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm text-left flex items-center justify-between bg-white focus:ring-2 focus:ring-primary focus:border-transparent">
-        <span className={selected ? 'text-gray-900' : 'text-gray-400'}>{selected?.label ?? placeholder ?? t.selectPlaceholder}</span>
-        <svg className="w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
+        className={`w-full px-3.5 py-2.5 border rounded-xl text-sm text-left flex items-center justify-between bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] transition-all ${open ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200 hover:border-gray-300'}`}>
+        <span className={selected ? 'text-gray-800 font-medium' : 'text-gray-400'}>{selected?.label ?? placeholder ?? t.selectPlaceholder}</span>
+        <svg className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${open ? 'rotate-180' : ''}`} fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 9l-7 7-7-7" /></svg>
       </button>
       {open && (
-        <div className="absolute z-50 mt-1 w-full bg-white border border-gray-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
-          <div className="p-2 sticky top-0 bg-white border-b">
+        <div className="absolute z-50 mt-1.5 w-full bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] max-h-60 overflow-y-auto">
+          <div className="p-2 sticky top-0 bg-white border-b border-gray-100">
             <input autoFocus type="text" value={search} onChange={e => setSearch(e.target.value)}
-              placeholder={t.searchPlaceholder} className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary" />
+              placeholder={t.searchPlaceholder} className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary" />
           </div>
           {filtered.map(opt => (
             <div key={opt.value} onClick={() => { onChange(opt.value); setOpen(false) }}
-              className={`px-3 py-2 text-sm cursor-pointer hover:bg-gray-50 ${opt.value === value ? 'bg-primary/10 text-primary font-medium' : ''}`}>
-              {opt.label}
+              className={`px-4 py-2.5 text-sm cursor-pointer transition-colors flex items-center justify-between ${opt.value === value ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}`}>
+              <span>{opt.label}</span>
+              {opt.value === value && <svg className="w-4 h-4 text-primary flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" /></svg>}
             </div>
           ))}
-          {filtered.length === 0 && <div className="px-3 py-2 text-sm text-gray-400">{t.noResults}</div>}
+          {filtered.length === 0 && <div className="px-4 py-2.5 text-sm text-gray-400">{t.noResults}</div>}
         </div>
       )}
     </div>
@@ -424,7 +425,7 @@ export default function TabDetails({
           value={state.name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder={t.adsetNamePlaceholder}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
         />
         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
       </div>
@@ -455,7 +456,7 @@ export default function TabDetails({
         <select
           value={state.instagramAccountId ?? ''}
           onChange={(e) => onChange({ instagramAccountId: e.target.value || undefined })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
         >
           <option value="">{t.selectOption}</option>
           {instagramAccounts.map((a) => (
@@ -479,7 +480,7 @@ export default function TabDetails({
             if (opt?.locked) return
             onChange({ conversionLocation: v })
           }}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           title={conversionLocationOptions.find((o) => o.value === state.conversionLocation)?.locked ? t[mapReasonToKey(conversionLocationOptions.find((o) => o.value === state.conversionLocation)?.reason)] : undefined}
         >
           {conversionLocationOptions.map((loc) => (
@@ -557,7 +558,7 @@ export default function TabDetails({
                     },
                   })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
               >
                 <option value="">Seçiniz</option>
                 {pageLinked.map((n) => (
@@ -615,7 +616,7 @@ export default function TabDetails({
                     },
                   })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
               >
                 <option value="">{t.appManual}</option>
                 {(inventory?.apps ?? []).map((a) => (
@@ -649,7 +650,7 @@ export default function TabDetails({
                 })
               }}
               placeholder="Facebook App ID (örn. 123456789)"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.app_id && <p className="mt-1 text-sm text-red-600">{errors.app_id}</p>}
           </div>
@@ -670,7 +671,7 @@ export default function TabDetails({
                   },
                 })
               }
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             >
               <option value="ANDROID">Android</option>
               <option value="IOS">iOS</option>
@@ -699,7 +700,7 @@ export default function TabDetails({
                 })
               }}
               placeholder="https://play.google.com/store/apps/details?id=com.example.app"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.app_store_url && <p className="mt-1 text-sm text-red-600">{errors.app_store_url}</p>}
           </div>
@@ -738,7 +739,7 @@ export default function TabDetails({
             <select
               value={state.attributionModel ?? 'STANDARD'}
               onChange={(e) => onChange({ attributionModel: e.target.value })}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             >
               <option value="STANDARD">Standart</option>
               <option value="INCREMENTAL">Artımlı</option>
@@ -867,7 +868,7 @@ export default function TabDetails({
                 })
               }}
               disabled={!state.catalogId}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm disabled:bg-gray-100"
             >
               <option value="">{t.productSetAll}</option>
               {(() => {

@@ -163,7 +163,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
                   onChange({ budget: Number.isNaN(v) ? undefined : v })
                 }}
                 placeholder="0"
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {/* Kur bilgisi — sadece yabancı para birimlerinde */}
             {accountCurrency && accountCurrency !== 'TRY' && fxState?.status === 'ready' && fxState.rate && (
@@ -243,7 +243,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
             {state.startType === 'schedule' && (
               <input
                 type="datetime-local"
-                className="mt-2 w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
+                className="mt-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
                 onChange={(e) => onChange({ startTime: e.target.value })}
               />
             )}
@@ -275,7 +275,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
             {state.endType === 'schedule' && (
               <input
                 type="datetime-local"
-                className="mt-2 w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary text-sm"
+                className="mt-2 w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
                 onChange={(e) => onChange({ endTime: e.target.value })}
               />
             )}
@@ -288,7 +288,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
         <select
           value={state.optimizationGoal}
           onChange={(e) => onChange({ optimizationGoal: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
         >
           {goals.map((g) => (
             <option key={g.value} value={g.value}>
@@ -327,7 +327,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
               onChange({ bidStrategy: next as WizardState['adset']['bidStrategy'] })
             }
           }}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
         >
           {strategyOptions.map((o) => (
             <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
@@ -348,7 +348,7 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
             value={state.bidAmount ?? ''}
             onChange={(e) => onChange({ bidAmount: parseFloat(e.target.value) || 0 })}
             placeholder={t.bidCapPlaceholder}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
           <p className="mt-1 text-caption text-gray-500">{t.bidCapHelp}</p>
           {(errors.bidAmount || (bidRequirementMode && (state.bidAmount == null || state.bidAmount <= 0))) && (

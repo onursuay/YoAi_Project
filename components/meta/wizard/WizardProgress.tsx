@@ -23,16 +23,6 @@ export default function WizardProgress({ currentStep, onStepClick, compact = fal
   return (
     <div className={compact ? '' : 'mb-8'}>
       <div className="relative flex justify-between items-center mb-3">
-        {/* Connector track behind circles */}
-        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex items-center px-5 pointer-events-none" style={{ zIndex: 0 }}>
-          <div className="flex-1 h-[2px] bg-gray-200 rounded-full overflow-hidden">
-            <div
-              className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
-              style={{ width: `${Math.max(0, ((currentStep - 1) / 3) * 100)}%` }}
-            />
-          </div>
-        </div>
-
         {steps.map(({ step, label }) => {
           const isDone = step < currentStep
           const isActive = step === currentStep
@@ -41,7 +31,6 @@ export default function WizardProgress({ currentStep, onStepClick, compact = fal
               key={step}
               onClick={() => onStepClick?.(step as 1 | 2 | 3 | 4)}
               className={`relative flex flex-col items-center flex-1 min-w-0 ${onStepClick ? 'cursor-pointer' : ''}`}
-              style={{ zIndex: 1 }}
             >
               <div
                 className={`

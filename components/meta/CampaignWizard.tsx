@@ -2164,7 +2164,7 @@ const messagingOk = true
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
 
       {/* ── Header ── */}
-      <div className="h-24 flex items-center px-6 border-b border-gray-200 flex-shrink-0 gap-4">
+      <div className="h-24 flex items-center px-6 border-b border-gray-100 flex-shrink-0 gap-4 bg-white shadow-[0_1px_6px_rgba(0,0,0,0.06)]">
         <div className="flex items-center gap-3 w-48 flex-shrink-0">
           <img src="/meta-logo.png" alt="Meta" width={28} height={28} className="shrink-0" />
           <h2 className="text-sm font-semibold text-gray-900 truncate">{t.createMetaCampaign}</h2>
@@ -2191,7 +2191,7 @@ const messagingOk = true
       </div>
 
       {/* ── Body ── */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto" style={{ background: 'linear-gradient(135deg, #f0fdf9 0%, #f8fafc 40%, #f0f9ff 100%)' }}>
         <div className="max-w-7xl mx-auto px-8 py-8">
           <div className="grid grid-cols-3 gap-8">
 

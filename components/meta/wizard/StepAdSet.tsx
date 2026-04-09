@@ -69,21 +69,22 @@ export default function StepAdSet({
   ]
 
   return (
-    <div className="space-y-4">
-      <div className="light-sweep-wrapper rounded-md w-fit">
-        <h3 className="text-lg font-semibold text-gray-900">{t.adSetTitle}</h3>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 tracking-tight">{t.adSetTitle}</h3>
+        <div className="mt-1 h-0.5 w-10 rounded-full bg-primary/60" />
       </div>
 
-      <div className="flex gap-2 border-b border-gray-200">
+      <div className="flex gap-1 p-1 bg-gray-100/80 rounded-xl border border-gray-200/60 w-fit">
         {TABS.map((tab) => (
           <button
             key={tab.id}
             type="button"
             onClick={() => setActiveTab(tab.id)}
-            className={`px-4 py-2 text-sm font-medium rounded-t-lg transition-colors ${
+            className={`px-4 py-1.5 text-sm font-medium rounded-lg transition-all duration-200 ${
               activeTab === tab.id
-                ? 'bg-primary/10 text-primary/90 border border-b-0 border-gray-200 -mb-px'
-                : 'text-gray-600 hover:text-gray-900'
+                ? 'bg-white text-primary shadow-[0_1px_4px_rgba(0,0,0,0.10)] border border-gray-200/80'
+                : 'text-gray-500 hover:text-gray-700 hover:bg-white/50'
             }`}
           >
             {tab.label}

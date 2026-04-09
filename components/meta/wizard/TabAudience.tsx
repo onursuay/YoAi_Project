@@ -357,7 +357,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
                   value={savedAudienceSearch}
                   onChange={(e) => setSavedAudienceSearch(e.target.value)}
                   placeholder={t.audienceCustomSearchPlaceholder}
-                  className="w-full pl-9 pr-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+                  className="w-full pl-9 pr-4 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 />
               </div>
               <div className="max-h-[320px] overflow-y-auto space-y-1">
@@ -573,7 +573,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
         )}
 
         {/* Arama satırı: include/exclude toggle + input + Göz At */}
-        <div className="flex items-stretch gap-0 border border-gray-300 rounded-lg focus-within:ring-2 focus-within:ring-primary/20 focus-within:border-primary">
+        <div className="flex items-stretch gap-0 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus-within:ring-2 focus-within:ring-primary/30 focus-within:border-primary transition-all">
           {/* Include/Exclude dropdown */}
           <div className="relative shrink-0">
             <select
@@ -749,7 +749,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
                   const v = Number(e.target.value)
                   onChange({ targeting: { ...targeting, ageMin: v, ...(v > targeting.ageMax ? { ageMax: v } : {}) } })
                 }}
-                className="w-full appearance-none px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-7"
+                className="w-full appearance-none px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all pr-7"
               >
                 {Array.from({ length: 48 }, (_, i) => 18 + i).map(age => (
                   <option key={age} value={age}>{age}</option>
@@ -765,7 +765,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
                   const v = Number(e.target.value)
                   onChange({ targeting: { ...targeting, ageMax: v, ...(v < targeting.ageMin ? { ageMin: v } : {}) } })
                 }}
-                className="w-full appearance-none px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-7"
+                className="w-full appearance-none px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all pr-7"
               >
                 {Array.from({ length: 48 }, (_, i) => 18 + i).map(age => (
                   <option key={age} value={age}>{age === 65 ? '65+' : age}</option>
@@ -787,7 +787,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
                 const v = e.target.value
                 onChange({ targeting: { ...targeting, genders: v === 'all' ? [] : v === 'male' ? [1] : [2] } })
               }}
-              className="w-full appearance-none px-3 py-2.5 border border-gray-300 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary pr-7"
+              className="w-full appearance-none px-3.5 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all pr-7"
             >
               <option value="all">{t.audienceGenderAll}</option>
               <option value="male">{t.audienceGenderMale}</option>
@@ -976,7 +976,7 @@ export default function TabAudience({ state, onChange }: TabAudienceProps) {
             value={saveAudienceName}
             onChange={e => setSaveAudienceName(e.target.value)}
             placeholder={t.audienceSaveNamePlaceholder}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+            className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
           />
           {saveAudienceMsg && (
             <p className={`text-xs ${saveAudienceMsg.includes('!') ? 'text-green-600' : 'text-red-600'}`}>{saveAudienceMsg}</p>
@@ -1058,7 +1058,7 @@ function AudienceSearchInput({
           onChange={(e) => { onChange(e.target.value); setOpen(true) }}
           onFocus={() => { if (value.length > 0) setOpen(true) }}
           placeholder={placeholder}
-          className="w-full pl-9 pr-8 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
+          className="w-full pl-9 pr-8 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
         />
         {loading && (
           <span className="absolute right-3 top-1/2 -translate-y-1/2 flex items-center justify-center w-4 h-4">
