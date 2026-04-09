@@ -2,6 +2,7 @@
 
 import { useState } from 'react'
 import type { WizardState } from './types'
+import WizardSelect from './WizardSelect'
 import MediaUploader from './MediaUploader'
 import CarouselEditor, { type CarouselCard } from './CarouselEditor'
 import AdTextFields from './AdTextFields'
@@ -119,7 +120,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
             value={state.name}
             onChange={(e) => onChange({ name: e.target.value })}
             placeholder={t.adNamePlaceholder}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
           {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
         </div>
@@ -128,55 +129,37 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
         <div className="grid grid-cols-2 gap-4">
           {/* Left Column: Reklam Kurulumu */}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.adCreationMode}</label>
-            <select
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.adCreationMode}</label>
+            <WizardSelect
               value={state.adCreationMode}
-              onChange={(e) => {
-                const mode = e.target.value as 'create' | 'existing'
-                onChange({ adCreationMode: mode, existingPostId: mode === 'create' ? undefined : state.existingPostId })
-              }}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-            >
-              <option value="create">{t.createNewAd}</option>
-              <option value="existing">{t.useExistingPost}</option>
-            </select>
+              onChange={(v) => onChange({ adCreationMode: v as 'create' | 'existing', existingPostId: v === 'create' ? undefined : state.existingPostId })}
+              options={[{ value: 'create', label: t.createNewAd }, { value: 'existing', label: t.useExistingPost }]}
+            />
           </div>
 
           {/* Right Column: Conditional (Format or Platform) */}
           {state.adCreationMode === 'create' ? (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">{t.adFormat}</label>
-              <select
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.adFormat}</label>
+              <WizardSelect
                 value={state.format}
-                onChange={(e) => {
-                  const format = e.target.value as 'single_image' | 'single_video' | 'carousel'
-                  onChange({
-                    format,
-                    media: format === 'carousel' ? state.media : { file: null, preview: '' },
-                    carouselCards: format === 'carousel' ? (state.carouselCards.length >= 2 ? state.carouselCards : defaultCarouselCards) : [],
-                  })
+                onChange={(v) => {
+                  const format = v as 'single_image' | 'single_video' | 'carousel'
+                  onChange({ format, media: format === 'carousel' ? state.media : { file: null, preview: '' }, carouselCards: format === 'carousel' ? (state.carouselCards.length >= 2 ? state.carouselCards : defaultCarouselCards) : [] })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              >
-                <option value="single_image">{t.singleImage}</option>
-                <option value="single_video">{t.singleVideo}</option>
-                <option value="carousel">{t.carousel}</option>
-              </select>
+                options={[{ value: 'single_image', label: t.singleImage }, { value: 'single_video', label: t.singleVideo }, { value: 'carousel', label: t.carousel }]}
+              />
             </div>
           ) : (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 {locale === 'tr' ? 'Platform Seçin' : 'Select Platform'}
               </label>
-              <select
+              <WizardSelect
                 value={selectedPlatform}
-                onChange={(e) => setSelectedPlatform(e.target.value as 'both' | 'facebook' | 'instagram')}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              >
-                <option value="both">{locale === 'tr' ? 'Tümü' : 'All'}</option>
-                <option value="instagram">Instagram</option>
-                <option value="facebook">Facebook</option>
-              </select>
+                onChange={(v) => setSelectedPlatform(v as 'both' | 'facebook' | 'instagram')}
+                options={[{ value: 'both', label: locale === 'tr' ? 'Tümü' : 'All' }, { value: 'instagram', label: 'Instagram' }, { value: 'facebook', label: 'Facebook' }]}
+              />
             </div>
           )}
         </div>
@@ -205,26 +188,26 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
 
             {/* CTA Button for Existing Post */}
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
                 {t.ctaButton}
               </label>
-              <select
+              <WizardSelect
                 value={state.callToAction}
-                onChange={(e) => onChange({ callToAction: e.target.value, websiteUrl: e.target.value ? state.websiteUrl : '' })}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-              >
-                <option value="">{locale === 'tr' ? 'Seçim Yapılmadı' : 'No Selection'}</option>
-                <option value="LEARN_MORE">{locale === 'tr' ? 'Daha Fazla Bilgi' : 'Learn More'}</option>
-                <option value="SHOP_NOW">{locale === 'tr' ? 'Hemen Alışveriş Yap' : 'Shop Now'}</option>
-                <option value="SIGN_UP">{locale === 'tr' ? 'Kaydol' : 'Sign Up'}</option>
-                <option value="DOWNLOAD">{locale === 'tr' ? 'İndir' : 'Download'}</option>
-                <option value="WATCH_MORE">{locale === 'tr' ? 'Daha Fazla İzle' : 'Watch More'}</option>
-                <option value="CONTACT_US">{locale === 'tr' ? 'Bize Ulaşın' : 'Contact Us'}</option>
-                <option value="APPLY_NOW">{locale === 'tr' ? 'Hemen Başvur' : 'Apply Now'}</option>
-                <option value="BOOK_NOW">{locale === 'tr' ? 'Rezervasyon Yap' : 'Book Now'}</option>
-                <option value="GET_QUOTE">{locale === 'tr' ? 'Teklif Al' : 'Get Quote'}</option>
-                <option value="SUBSCRIBE">{locale === 'tr' ? 'Abone Ol' : 'Subscribe'}</option>
-              </select>
+                onChange={(v) => onChange({ callToAction: v, websiteUrl: v ? state.websiteUrl : '' })}
+                options={[
+                  { value: '', label: locale === 'tr' ? 'Seçim Yapılmadı' : 'No Selection' },
+                  { value: 'LEARN_MORE', label: locale === 'tr' ? 'Daha Fazla Bilgi' : 'Learn More' },
+                  { value: 'SHOP_NOW', label: locale === 'tr' ? 'Hemen Alışveriş Yap' : 'Shop Now' },
+                  { value: 'SIGN_UP', label: locale === 'tr' ? 'Kaydol' : 'Sign Up' },
+                  { value: 'DOWNLOAD', label: locale === 'tr' ? 'İndir' : 'Download' },
+                  { value: 'WATCH_MORE', label: locale === 'tr' ? 'Daha Fazla İzle' : 'Watch More' },
+                  { value: 'CONTACT_US', label: locale === 'tr' ? 'Bize Ulaşın' : 'Contact Us' },
+                  { value: 'APPLY_NOW', label: locale === 'tr' ? 'Hemen Başvur' : 'Apply Now' },
+                  { value: 'BOOK_NOW', label: locale === 'tr' ? 'Rezervasyon Yap' : 'Book Now' },
+                  { value: 'GET_QUOTE', label: locale === 'tr' ? 'Teklif Al' : 'Get Quote' },
+                  { value: 'SUBSCRIBE', label: locale === 'tr' ? 'Abone Ol' : 'Subscribe' },
+                ]}
+              />
             </div>
 
             {/* Website URL - Only shown when CTA is selected */}
@@ -238,7 +221,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
                   value={state.websiteUrl}
                   onChange={(e) => onChange({ websiteUrl: e.target.value })}
                   placeholder="https://..."
-                  className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+                  className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
                 />
                 {errors.websiteUrl && <p className="mt-1 text-sm text-red-600">{errors.websiteUrl}</p>}
               </div>
@@ -257,7 +240,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               onChange={(e) => onChange({ chatGreeting: e.target.value || undefined })}
               placeholder={t.chatGreetingPlaceholder}
               rows={3}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.chat_greeting && <p className="mt-1 text-sm text-red-600">{errors.chat_greeting}</p>}
           </div>
@@ -274,7 +257,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               value={state.phoneNumber ?? ''}
               onChange={(e) => onChange({ phoneNumber: e.target.value || undefined })}
               placeholder={t.phoneNumberPlaceholder}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
           </div>
@@ -341,7 +324,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               value={state.deepLinkUrl ?? ''}
               onChange={(e) => onChange({ deepLinkUrl: e.target.value || undefined })}
               placeholder="myapp://screen/product"
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
           </div>
         )}
@@ -357,7 +340,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               onChange={(e) => onChange({ chatGreeting: e.target.value || undefined })}
               placeholder={t.chatGreetingPlaceholder}
               rows={3}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.chat_greeting && <p className="mt-1 text-sm text-red-600">{errors.chat_greeting}</p>}
           </div>
@@ -374,7 +357,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               onChange={(e) => onChange({ chatGreeting: e.target.value || undefined })}
               placeholder={t.chatGreetingPlaceholder}
               rows={3}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.chat_greeting && <p className="mt-1 text-sm text-red-600">{errors.chat_greeting}</p>}
           </div>
@@ -391,7 +374,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
               value={state.phoneNumber ?? ''}
               onChange={(e) => onChange({ phoneNumber: e.target.value || undefined })}
               placeholder={t.phoneNumberPlaceholder}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
             />
             {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
           </div>
@@ -418,17 +401,11 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
                 <span className="text-sm font-medium text-gray-900">{t.websiteEvents}</span>
                 {state.pixelId ? (
                   <div className="mt-1">
-                    <select
-                      value={state.pixelId}
-                      onChange={(e) => onChange({ pixelId: e.target.value || undefined })}
-                      className="w-full px-2 py-1.5 text-sm border border-gray-300 rounded-md focus:ring-2 focus:ring-primary"
-                    >
-                      {pixels.map((p) => (
-                        <option key={p.pixel_id} value={p.pixel_id}>
-                          {p.name || p.pixel_id}
-                        </option>
-                      ))}
-                    </select>
+                    <WizardSelect
+                      value={state.pixelId ?? ''}
+                      onChange={(v) => onChange({ pixelId: v || undefined })}
+                      options={pixels.map((p) => ({ value: p.pixel_id, label: p.name || p.pixel_id }))}
+                    />
                     <p className="mt-0.5 text-caption text-gray-400">Pixel ID: {state.pixelId}</p>
                   </div>
                 ) : (
@@ -515,7 +492,7 @@ export default function StepAd({ state, campaignObjective = 'OUTCOME_TRAFFIC', c
                             onChange={(e) => setDraftParams(p => ({ ...p, [key]: e.target.value }))}
                             onFocus={() => setActiveDropdown(key)}
                             placeholder={t.dynamicParamPlaceholder}
-                            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary focus:border-transparent"
+                            className="w-full px-3 py-2 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                           />
                           {activeDropdown === key && (
                             <>

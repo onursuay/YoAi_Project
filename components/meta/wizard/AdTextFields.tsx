@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from 'react'
 import type { WizardState } from './types'
+import WizardSelect from './WizardSelect'
 import { getAllowedCTAs, getDefaultCTA, requiresWebsiteUrl } from '@/lib/meta/spec/objectiveSpec'
 import { getWizardTranslations, getLocaleFromCookie } from '@/lib/i18n/wizardTranslations'
 import { CTA_LABEL_TR } from '@/lib/meta/ctaLabels'
@@ -62,7 +63,7 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
           placeholder={isCatalog ? '{{product.name}} - {{product.description}}' : t.primaryTextPlaceholder}
           rows={4}
           maxLength={3000}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
         />
         <p className="mt-1 text-caption text-gray-500">{state.primaryText.length} / 3000 ({t.primaryTextHint})</p>
         {isCatalog && (
@@ -80,7 +81,7 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             onChange={(e) => onChange({ headline: e.target.value })}
             placeholder={t.headlinePlaceholder}
             maxLength={40}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
           <p className="mt-1 text-caption text-gray-500">{state.headline.length} / 40</p>
         </div>
@@ -95,7 +96,7 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             onChange={(e) => onChange({ description: e.target.value })}
             placeholder={t.descriptionPlaceholder}
             maxLength={30}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
           <p className="mt-1 text-caption text-gray-500">{state.description.length} / 30</p>
         </div>
@@ -112,7 +113,7 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             value={state.websiteUrl}
             onChange={(e) => onChange({ websiteUrl: e.target.value })}
             placeholder="https://..."
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
           {errors.websiteUrl && <p className="mt-1 text-sm text-red-600">{errors.websiteUrl}</p>}
         </div>
@@ -127,7 +128,7 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             value={state.displayUrl}
             onChange={(e) => onChange({ displayUrl: e.target.value })}
             placeholder={t.displayUrlPlaceholder}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
           />
         </div>
       )}
@@ -139,27 +140,21 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
             {t.leadFormLabel} <span className="text-red-500">*</span>
           </label>
           {activeLeadForms.length > 0 ? (
-            <select
+            <WizardSelect
               value={state.leadFormId ?? ''}
-              onChange={(e) => {
-              const selectedFormId = e.target.value || undefined
-              const selectedForm = activeLeadForms.find(f => f.form_id === selectedFormId)
-              onChange({
-                leadFormId: selectedFormId,
-                ...(selectedForm?.privacy_policy_url && !state.websiteUrl
-                  ? { websiteUrl: selectedForm.privacy_policy_url }
-                  : {}),
-              })
-            }}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-            >
-              <option value="">{t.selectForm}</option>
-              {activeLeadForms.map((f) => (
-                <option key={f.form_id} value={f.form_id}>
-                  {f.name}
-                </option>
-              ))}
-            </select>
+              onChange={(selectedFormId) => {
+                const selectedForm = activeLeadForms.find(f => f.form_id === selectedFormId)
+                onChange({
+                  leadFormId: selectedFormId || undefined,
+                  ...(selectedForm?.privacy_policy_url && !state.websiteUrl ? { websiteUrl: selectedForm.privacy_policy_url } : {}),
+                })
+              }}
+              placeholder={t.selectForm}
+              options={[
+                { value: '', label: t.selectForm },
+                ...activeLeadForms.map((f) => ({ value: f.form_id, label: f.name })),
+              ]}
+            />
           ) : (
             <p className="text-sm text-amber-600">
               {t.leadFormNotFound}
@@ -194,20 +189,11 @@ export default function AdTextFields({ state, campaignObjective = 'OUTCOME_TRAFF
           </div>
         ) : (
           <>
-            <select
+            <WizardSelect
               value={state.callToAction}
-              onChange={(e) => {
-                onChange({ callToAction: e.target.value })
-                setCtaAutoUpdated(false)
-              }}
-              className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-            >
-              {ctaOptions.map((o) => (
-                <option key={o.value} value={o.value}>
-                  {o.label}
-                </option>
-              ))}
-            </select>
+              onChange={(v) => { onChange({ callToAction: v }); setCtaAutoUpdated(false) }}
+              options={ctaOptions}
+            />
             {ctaAutoUpdated && (
               <p className="mt-1 text-caption text-amber-600">{t.ctaAutoUpdated}</p>
             )}
