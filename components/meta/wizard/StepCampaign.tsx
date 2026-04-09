@@ -1,10 +1,11 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useRef, useEffect } from 'react'
 import type { WizardState } from './types'
 import { getWizardTranslations, getLocaleFromCookie, getObjectiveInfoTranslations } from '@/lib/i18n/wizardTranslations'
 import { getAllowedBuyingTypes } from '@/lib/meta/spec/objectiveSpec'
 import BudgetOptimizationCard from '../BudgetOptimizationCard'
+import { ChevronDown, Check } from 'lucide-react'
 
 interface StepCampaignProps {
   state: WizardState['campaign']
@@ -19,6 +20,18 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
   const t = getWizardTranslations(locale)
   const oi = getObjectiveInfoTranslations(locale)
   const [buyingTypeOpen, setBuyingTypeOpen] = useState(false)
+  const [objectiveOpen, setObjectiveOpen] = useState(false)
+  const objectiveRef = useRef<HTMLDivElement>(null)
+
+  useEffect(() => {
+    function handleClickOutside(e: MouseEvent) {
+      if (objectiveRef.current && !objectiveRef.current.contains(e.target as Node)) {
+        setObjectiveOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handleClickOutside)
+    return () => document.removeEventListener('mousedown', handleClickOutside)
+  }, [])
 
   const OBJECTIVES = [
     { value: 'OUTCOME_AWARENESS', label: t.OUTCOME_AWARENESS },
@@ -44,42 +57,50 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
   }
 
   return (
-    <div className="space-y-4">
-      <div className="light-sweep-wrapper rounded-md w-fit">
-        <h3 className="text-lg font-semibold text-gray-900">{t.campaignInfo}</h3>
+    <div className="space-y-5">
+      <div>
+        <h3 className="text-xl font-bold text-gray-900 tracking-tight">{t.campaignInfo}</h3>
+        <div className="mt-1 h-0.5 w-10 rounded-full bg-primary/60" />
       </div>
 
       {getAllowedBuyingTypes(state.objective).length > 1 && (
         <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-2">
+          <label className="block text-sm font-semibold text-gray-700 mb-2.5">
             {t.buyingTypeLabel}
           </label>
-          <div className="space-y-2">
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="buyingType"
-                value="AUCTION"
-                checked={(state.buyingType ?? 'AUCTION') === 'AUCTION'}
-                onChange={() => onChange({ buyingType: 'AUCTION' })}
-                className="text-primary focus:ring-primary"
-              />
-              <span className="text-sm">{t.buyingTypeAuction}</span>
-            </label>
-            <label className="flex items-center gap-2 cursor-pointer">
-              <input
-                type="radio"
-                name="buyingType"
-                value="REACH_AND_FREQUENCY"
-                checked={state.buyingType === 'REACH_AND_FREQUENCY'}
-                onChange={() => onChange({ buyingType: 'REACH_AND_FREQUENCY' })}
-                className="text-primary focus:ring-primary"
-              />
-              <span className="text-sm">{t.buyingTypeRF}</span>
-            </label>
+          <div className="flex gap-3">
+            {[
+              { value: 'AUCTION', label: t.buyingTypeAuction },
+              { value: 'REACH_AND_FREQUENCY', label: t.buyingTypeRF },
+            ].map((opt) => {
+              const isSelected = (state.buyingType ?? 'AUCTION') === opt.value
+              return (
+                <label
+                  key={opt.value}
+                  className={`flex-1 flex items-center gap-2.5 px-4 py-3 border rounded-xl cursor-pointer transition-all text-sm font-medium shadow-sm ${
+                    isSelected
+                      ? 'border-primary/50 bg-primary/8 text-primary shadow-[0_0_0_2px_rgba(var(--color-primary-rgb),0.12)]'
+                      : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                  }`}
+                >
+                  <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'border-primary' : 'border-gray-300'}`}>
+                    {isSelected && <span className="w-2 h-2 rounded-full bg-primary" />}
+                  </span>
+                  <input
+                    type="radio"
+                    name="buyingType"
+                    value={opt.value}
+                    checked={isSelected}
+                    onChange={() => onChange({ buyingType: opt.value as 'AUCTION' | 'REACH_AND_FREQUENCY' })}
+                    className="sr-only"
+                  />
+                  {opt.label}
+                </label>
+              )
+            })}
           </div>
           {state.buyingType === 'REACH_AND_FREQUENCY' && (
-            <div className="mt-2 rounded-lg bg-blue-50 border border-blue-200 p-3 text-sm text-blue-800">
+            <div className="mt-2 rounded-xl bg-blue-50 border border-blue-200/80 p-3 text-sm text-blue-800 shadow-sm">
               {t.buyingTypeRFNote}
             </div>
           )}
@@ -87,7 +108,7 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
       )}
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           {t.campaignName} <span className="text-red-500">*</span>
         </label>
         <input
@@ -95,27 +116,53 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
           value={state.name}
           onChange={(e) => onChange({ name: e.target.value })}
           placeholder={t.campaignNamePlaceholder}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
+          className="w-full px-3.5 py-2.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-primary/30 focus:border-primary bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm transition-all placeholder:text-gray-400"
           maxLength={256}
         />
         {errors.name && <p className="mt-1 text-sm text-red-600">{errors.name}</p>}
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           {t.campaignObjective} <span className="text-red-500">*</span>
         </label>
-        <select
-          value={state.objective}
-          onChange={(e) => onChange({ objective: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm"
-        >
-          {OBJECTIVES.map((o) => (
-            <option key={o.value} value={o.value}>
-              {o.label}
-            </option>
-          ))}
-        </select>
+        <div ref={objectiveRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setObjectiveOpen(v => !v)}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 border rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] text-sm transition-all text-left ${
+              objectiveOpen ? 'border-primary ring-2 ring-primary/30' : 'border-gray-200 hover:border-gray-300'
+            }`}
+          >
+            <span className="text-gray-800 font-medium">
+              {OBJECTIVES.find(o => o.value === state.objective)?.label ?? state.objective}
+            </span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 transition-transform duration-200 ${objectiveOpen ? 'rotate-180' : ''}`} />
+          </button>
+
+          {objectiveOpen && (
+            <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+              {OBJECTIVES.map((o) => {
+                const isSelected = state.objective === o.value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    onClick={() => { onChange({ objective: o.value }); setObjectiveOpen(false) }}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${
+                      isSelected
+                        ? 'bg-primary/8 text-primary font-semibold'
+                        : 'text-gray-700 hover:bg-gray-50'
+                    }`}
+                  >
+                    <span>{o.label}</span>
+                    {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
 
@@ -182,50 +229,69 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
           {t.specialAdCategory}
         </label>
         <div className="flex flex-wrap gap-2">
-          {SPECIAL_CATEGORIES.map((c) => (
-            <label
-              key={c.value}
-              className="inline-flex items-center gap-2 px-3 py-2 border border-gray-300 rounded-lg cursor-pointer hover:bg-gray-50 has-[:checked]:border-primary has-[:checked]:bg-primary/10"
-            >
-              <input
-                type="checkbox"
-                checked={state.specialAdCategories.includes(c.value)}
-                onChange={() => toggleSpecialCategory(c.value)}
-                className="rounded border-gray-300 text-primary focus:ring-primary"
-              />
-              <span className="text-sm">{c.label}</span>
-            </label>
-          ))}
+          {SPECIAL_CATEGORIES.map((c) => {
+            const isChecked = state.specialAdCategories.includes(c.value)
+            return (
+              <label
+                key={c.value}
+                className={`inline-flex items-center gap-2 px-3.5 py-2 border rounded-xl cursor-pointer transition-all duration-150 text-sm font-medium shadow-sm ${
+                  isChecked
+                    ? 'border-primary/50 bg-primary/8 text-primary shadow-[0_0_0_2px_rgba(var(--color-primary-rgb),0.12)]'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300 hover:bg-gray-50'
+                }`}
+              >
+                <input
+                  type="checkbox"
+                  checked={isChecked}
+                  onChange={() => toggleSpecialCategory(c.value)}
+                  className="rounded border-gray-300 text-primary focus:ring-primary sr-only"
+                />
+                {isChecked && (
+                  <Check className="w-3.5 h-3.5 text-primary flex-shrink-0" />
+                )}
+                <span>{c.label}</span>
+              </label>
+            )
+          })}
         </div>
       </div>
 
 
       {state.objective !== 'OUTCOME_APP_PROMOTION' && (
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-2">
+        <label className="block text-sm font-semibold text-gray-700 mb-2.5">
           {t.budgetOptimizationLabel}
         </label>
-        <div className="space-y-2">
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="budgetOptimization"
-              checked={state.budgetOptimization === 'adset'}
-              onChange={() => onChange({ budgetOptimization: 'adset' })}
-              className="text-primary focus:ring-primary"
-            />
-            <span className="text-sm">{t.adsetBudget}</span>
-          </label>
-          <label className="flex items-center gap-2 cursor-pointer">
-            <input
-              type="radio"
-              name="budgetOptimization"
-              checked={state.budgetOptimization === 'campaign'}
-              onChange={() => onChange({ budgetOptimization: 'campaign' })}
-              className="text-primary focus:ring-primary"
-            />
-            <span className="text-sm">{t.advantageCampaignBudget}</span>
-          </label>
+        <div className="flex gap-3">
+          {[
+            { value: 'adset', label: t.adsetBudget },
+            { value: 'campaign', label: t.advantageCampaignBudget },
+          ].map((opt) => {
+            const isSelected = state.budgetOptimization === opt.value
+            return (
+              <label
+                key={opt.value}
+                className={`flex-1 flex items-center gap-2.5 px-4 py-3 border rounded-xl cursor-pointer transition-all text-sm font-medium shadow-sm ${
+                  isSelected
+                    ? 'border-primary/50 bg-primary/8 text-primary shadow-[0_0_0_2px_rgba(var(--color-primary-rgb),0.12)]'
+                    : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                }`}
+              >
+                <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'border-primary' : 'border-gray-300'}`}>
+                  {isSelected && <span className="w-2 h-2 rounded-full bg-primary" />}
+                </span>
+                <input
+                  type="radio"
+                  name="budgetOptimization"
+                  value={opt.value}
+                  checked={isSelected}
+                  onChange={() => onChange({ budgetOptimization: opt.value as 'adset' | 'campaign' })}
+                  className="sr-only"
+                />
+                {opt.label}
+              </label>
+            )
+          })}
         </div>
 
         {state.budgetOptimization === 'campaign' && (

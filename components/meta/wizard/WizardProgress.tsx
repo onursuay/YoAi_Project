@@ -22,32 +22,61 @@ export default function WizardProgress({ currentStep, onStepClick, compact = fal
 
   return (
     <div className={compact ? '' : 'mb-8'}>
-      <div className="flex justify-between items-center mb-2">
-        {steps.map(({ step, label, percent }) => (
-          <div
-            key={step}
-            onClick={() => onStepClick?.(step as 1 | 2 | 3 | 4)}
-            className={`flex flex-col items-center flex-1 min-w-0 ${step <= currentStep ? 'text-primary' : 'text-gray-400'} ${onStepClick ? 'cursor-pointer' : ''}`}
-          >
+      <div className="relative flex justify-between items-center mb-3">
+        {/* Connector track behind circles */}
+        <div className="absolute left-0 right-0 top-1/2 -translate-y-1/2 flex items-center px-5 pointer-events-none" style={{ zIndex: 0 }}>
+          <div className="flex-1 h-[2px] bg-gray-200 rounded-full overflow-hidden">
             <div
-              className={`${compact ? 'w-8 h-8' : 'w-10 h-10'} rounded-full flex items-center justify-center text-sm font-semibold border-2 ${
-                step < currentStep
-                  ? 'bg-primary border-primary text-white'
-                  : step === currentStep
-                  ? 'border-2 border-primary bg-primary/10 text-primary ring-2 ring-primary/20'
-                  : 'border-gray-300 bg-white text-gray-400'
-              }`}
-            >
-              {step < currentStep ? '✓' : step}
-            </div>
-            <span className="mt-1 text-[10px] font-medium text-center whitespace-nowrap">{label}</span>
+              className="h-full bg-primary transition-all duration-500 ease-out rounded-full"
+              style={{ width: `${Math.max(0, ((currentStep - 1) / 3) * 100)}%` }}
+            />
           </div>
-        ))}
+        </div>
+
+        {steps.map(({ step, label }) => {
+          const isDone = step < currentStep
+          const isActive = step === currentStep
+          return (
+            <div
+              key={step}
+              onClick={() => onStepClick?.(step as 1 | 2 | 3 | 4)}
+              className={`relative flex flex-col items-center flex-1 min-w-0 ${onStepClick ? 'cursor-pointer' : ''}`}
+              style={{ zIndex: 1 }}
+            >
+              <div
+                className={`
+                  ${compact ? 'w-8 h-8 text-xs' : 'w-10 h-10 text-sm'}
+                  rounded-full flex items-center justify-center font-bold transition-all duration-300
+                  ${isDone
+                    ? 'bg-primary shadow-[0_0_0_3px_rgba(var(--color-primary-rgb),0.18)] text-white'
+                    : isActive
+                    ? 'bg-white border-2 border-primary text-primary shadow-[0_0_0_4px_rgba(var(--color-primary-rgb),0.12),0_2px_8px_rgba(0,0,0,0.10)]'
+                    : 'bg-white border-2 border-gray-200 text-gray-400 shadow-sm'
+                  }
+                `}
+              >
+                {isDone ? (
+                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2.5} d="M5 13l4 4L19 7" />
+                  </svg>
+                ) : step}
+              </div>
+              <span
+                className={`mt-1.5 text-[12px] font-medium text-center whitespace-nowrap transition-colors duration-200 ${
+                  isActive ? 'text-primary' : isDone ? 'text-primary/70' : 'text-gray-400'
+                }`}
+              >
+                {label}
+              </span>
+            </div>
+          )
+        })}
       </div>
+
       {!compact && (
-        <div className="h-2 bg-gray-200 rounded-full overflow-hidden">
+        <div className="h-1.5 bg-gray-100 rounded-full overflow-hidden border border-gray-200/60">
           <div
-            className="h-full bg-primary transition-all duration-300 ease-out"
+            className="h-full bg-gradient-to-r from-primary/80 to-primary transition-all duration-500 ease-out rounded-full"
             style={{ width: `${currentPercent}%` }}
           />
         </div>

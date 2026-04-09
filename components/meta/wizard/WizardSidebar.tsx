@@ -138,9 +138,9 @@ export default function WizardSidebar({ state, currentStep }: WizardSidebarProps
         <Row label={locale === 'tr' ? 'Yaş' : 'Age'} value={`${targeting.ageMin}–${targeting.ageMax}+`} muted={!hasAgeChange} />
         <Row label={locale === 'tr' ? 'Cinsiyet' : 'Gender'} value={genderLabel} muted={!hasGenderFilter} />
         {hasCustomAudiences && <Row label={locale === 'tr' ? 'Özel Kitle' : 'Custom Audiences'} value={`${targeting.custom_audiences.length}`} />}
-        <div className="flex justify-between items-center text-xs mt-1">
-          <span className="text-gray-500">{locale === 'tr' ? 'Yerleşimler' : 'Placements'}</span>
-          <span className="inline-flex items-center gap-1 text-gray-900 font-medium">
+        <div className="flex justify-between items-center mt-1 gap-2 py-0.5">
+          <span className="text-[12px] text-gray-500 shrink-0">{locale === 'tr' ? 'Yerleşimler' : 'Placements'}</span>
+          <span className="inline-flex items-center gap-1 text-[12px] text-gray-800 font-medium">
             {a.placements === 'advantage' && <Sparkles className="w-3 h-3 text-primary" />}
             <span className="truncate">{placementsDisplay}</span>
           </span>
@@ -171,9 +171,9 @@ export default function WizardSidebar({ state, currentStep }: WizardSidebarProps
           <div className="mt-2 pt-2 border-t border-gray-100">
             <div className="flex items-center gap-1.5">
               {allReady ? (
-                <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span className="text-[11px] font-medium text-emerald-700">{locale === 'tr' ? 'Yayınlamaya hazır' : 'Ready to publish'}</span></>
+                <><CheckCircle2 className="w-3.5 h-3.5 text-emerald-600" /><span className="text-[12px] font-semibold text-emerald-700">{locale === 'tr' ? 'Yayınlamaya hazır' : 'Ready to publish'}</span></>
               ) : (
-                <><XCircle className="w-3.5 h-3.5 text-red-500" /><span className="text-[11px] font-medium text-red-600">{locale === 'tr' ? 'Eksik alanlar var' : 'Missing required fields'}</span></>
+                <><XCircle className="w-3.5 h-3.5 text-red-500" /><span className="text-[12px] font-semibold text-red-600">{locale === 'tr' ? 'Eksik alanlar var' : 'Missing required fields'}</span></>
               )}
             </div>
           </div>
@@ -187,12 +187,24 @@ function SidebarCard({ icon, title, active, complete, children }: {
   icon: React.ReactNode; title: string; active: boolean; complete?: boolean; children: React.ReactNode
 }) {
   return (
-    <div className={`rounded-xl border p-4 transition-all ${active ? 'border-primary/30 bg-primary/[0.03] shadow-sm' : 'border-gray-200 bg-white'}`}>
+    <div
+      className={`rounded-xl border p-4 transition-all duration-200 ${
+        active
+          ? 'border-primary/40 bg-gradient-to-br from-primary/[0.04] to-primary/[0.01] shadow-[0_2px_12px_rgba(0,0,0,0.08),inset_0_1px_0_rgba(255,255,255,0.9)]'
+          : 'border-gray-200/80 bg-white shadow-[0_1px_4px_rgba(0,0,0,0.06),inset_0_1px_0_rgba(255,255,255,1)]'
+      }`}
+    >
       <div className="flex items-center gap-2 mb-3">
-        <span className={active ? 'text-primary' : 'text-gray-400'}>{icon}</span>
-        <h4 className="text-xs font-semibold text-gray-700 uppercase tracking-wide flex-1">{title}</h4>
+        <span
+          className={`p-1 rounded-md ${
+            active ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-400'
+          }`}
+        >
+          {icon}
+        </span>
+        <h4 className="text-[12px] font-semibold text-gray-700 uppercase tracking-wider flex-1">{title}</h4>
         {complete && !active && (
-          <span className="w-4 h-4 rounded-full bg-primary/10 flex items-center justify-center">
+          <span className="w-5 h-5 rounded-full bg-primary/10 flex items-center justify-center border border-primary/20">
             <Check className="w-3 h-3 text-primary" />
           </span>
         )}
@@ -204,9 +216,9 @@ function SidebarCard({ icon, title, active, complete, children }: {
 
 function Row({ label, value, muted }: { label: string; value: string; muted?: boolean }) {
   return (
-    <div className="flex justify-between text-xs gap-2">
-      <span className="text-gray-500 shrink-0">{label}</span>
-      <span className={`font-medium text-right truncate ${muted ? 'text-gray-400 italic' : 'text-gray-900'}`}>{value}</span>
+    <div className="flex justify-between gap-2 py-0.5">
+      <span className="text-[12px] text-gray-500 shrink-0">{label}</span>
+      <span className={`text-[12px] font-medium text-right truncate ${muted ? 'text-gray-300 italic' : 'text-gray-800'}`}>{value}</span>
     </div>
   )
 }
