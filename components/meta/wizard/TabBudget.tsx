@@ -1,6 +1,7 @@
 'use client'
 
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
+import { ChevronDown, Check } from 'lucide-react'
 import type { WizardState } from './types'
 import { BID_STRATEGY_OPTIONS, AUTOMATIC_LOWEST_COST } from './constants'
 import { getAllowedOptimizationGoals } from '@/lib/meta/spec/objectiveSpec'
@@ -44,6 +45,19 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
   const minTRY = minDailyBudgetTry?.status === 'ready' && minDailyBudgetTry.value != null ? minDailyBudgetTry.value : undefined
   const minTryCeil = minTRY != null ? Math.ceil(minTRY) : undefined
   const showBudgetWarning = minTryCeil != null && budget > 0 && budget < minTryCeil
+
+  const [goalOpen, setGoalOpen] = useState(false)
+  const [strategyOpen, setStrategyOpen] = useState(false)
+  const goalRef = useRef<HTMLDivElement>(null)
+  const strategyRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    const h = (e: MouseEvent) => {
+      if (goalRef.current && !goalRef.current.contains(e.target as Node)) setGoalOpen(false)
+      if (strategyRef.current && !strategyRef.current.contains(e.target as Node)) setStrategyOpen(false)
+    }
+    document.addEventListener('mousedown', h)
+    return () => document.removeEventListener('mousedown', h)
+  }, [])
 
   const internalRef = useRef<HTMLInputElement | null>(null)
   const inputRef = budgetInputRef ?? internalRef
@@ -120,28 +134,23 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
       {!hideBudgetFields && (
         <>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-2">{t.budgetType}</label>
-            <div className="flex gap-4">
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="budgetType"
-                  checked={state.budgetType === 'daily'}
-                  onChange={() => onChange({ budgetType: 'daily' })}
-                  className="text-primary focus:ring-primary"
-                />
-                <span className="text-sm">{t.dailyBudget}</span>
-              </label>
-              <label className="flex items-center gap-2 cursor-pointer">
-                <input
-                  type="radio"
-                  name="budgetType"
-                  checked={state.budgetType === 'lifetime'}
-                  onChange={() => onChange({ budgetType: 'lifetime' })}
-                  className="text-primary focus:ring-primary"
-                />
-                <span className="text-sm">{t.lifetimeBudget}</span>
-              </label>
+            <label className="block text-sm font-semibold text-gray-700 mb-2.5">{t.budgetType}</label>
+            <div className="flex gap-3">
+              {[
+                { value: 'daily', label: t.dailyBudget },
+                { value: 'lifetime', label: t.lifetimeBudget },
+              ].map((opt) => {
+                const isSelected = state.budgetType === opt.value
+                return (
+                  <label key={opt.value} className={`flex-1 flex items-center gap-2.5 px-4 py-3 border rounded-xl cursor-pointer transition-all text-sm font-medium shadow-sm ${isSelected ? 'border-primary/50 bg-primary/8 text-primary shadow-[0_0_0_2px_rgba(var(--color-primary-rgb),0.12)]' : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'}`}>
+                    <span className={`w-4 h-4 rounded-full border-2 flex-shrink-0 flex items-center justify-center transition-all ${isSelected ? 'border-primary' : 'border-gray-300'}`}>
+                      {isSelected && <span className="w-2 h-2 rounded-full bg-primary" />}
+                    </span>
+                    <input type="radio" name="budgetType" value={opt.value} checked={isSelected} onChange={() => onChange({ budgetType: opt.value as 'daily' | 'lifetime' })} className="sr-only" />
+                    {opt.label}
+                  </label>
+                )
+              })}
             </div>
           </div>
 
@@ -283,56 +292,88 @@ export default function TabBudget({ state, campaignObjective, onChange, errors =
         </div>
       </div>
 
+      {/* Optimizasyon Hedefi - custom dropdown */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">{t.optimizationGoal}</label>
-        <select
-          value={state.optimizationGoal}
-          onChange={(e) => onChange({ optimizationGoal: e.target.value })}
-          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-        >
-          {goals.map((g) => (
-            <option key={g.value} value={g.value}>
-              {g.label}
-            </option>
-          ))}
-        </select>
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.optimizationGoal}</label>
+        <div ref={goalRef} className="relative">
+          <button
+            type="button"
+            onClick={() => setGoalOpen(v => !v)}
+            className={`w-full flex items-center justify-between px-3.5 py-2.5 border rounded-xl bg-white text-sm font-medium text-left shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] transition-all ${goalOpen ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200 hover:border-gray-300'}`}
+          >
+            <span className="text-gray-800">{goals.find(g => g.value === state.optimizationGoal)?.label ?? state.optimizationGoal}</span>
+            <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 mr-0.5 ${goalOpen ? 'rotate-180' : ''}`} />
+          </button>
+          {goalOpen && (
+            <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+              {goals.map((g) => {
+                const isSel = g.value === state.optimizationGoal
+                return (
+                  <button key={g.value} type="button"
+                    onClick={() => { onChange({ optimizationGoal: g.value }); setGoalOpen(false) }}
+                    className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${isSel ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}`}
+                  >
+                    <span>{g.label}</span>
+                    {isSel && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                  </button>
+                )
+              })}
+            </div>
+          )}
+        </div>
       </div>
 
+      {/* Teklif Stratejisi - custom dropdown */}
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           {t.bidStrategy}
           {bidRequirementMode && <span className="text-red-500 ml-0.5">*</span>}
         </label>
         {state.conversionLocation === 'WHATSAPP' ? (
           <>
-            <select
-              value={AUTOMATIC_LOWEST_COST}
-              disabled
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-lg text-sm bg-gray-100 text-gray-500 cursor-not-allowed"
-            >
-              <option value={AUTOMATIC_LOWEST_COST}>{t.bidStrategyAuto ?? 'Otomatik (En Düşük Maliyet)'}</option>
-            </select>
-            <p className="mt-1 text-xs text-gray-400">
+            <div className="flex items-center justify-between px-3.5 py-2.5 border border-gray-200 rounded-xl bg-gray-50 text-sm text-gray-400 cursor-not-allowed shadow-sm">
+              <span>{t.bidStrategyAuto ?? 'Otomatik (En Düşük Maliyet)'}</span>
+              <ChevronDown className="w-4 h-4 text-gray-300 mr-0.5" />
+            </div>
+            <p className="mt-1 text-[12px] text-gray-400">
               WhatsApp reklamlarında teklif stratejisi otomatik olarak En Düşük Maliyet (LOWEST_COST_WITHOUT_CAP) kullanılır.
             </p>
           </>
         ) : (
-        <select
-          value={effectiveSelectValue}
-          onChange={(e) => {
-            const next = e.target.value
-            if (next === AUTOMATIC_LOWEST_COST || !next) {
-              onChange({ bidStrategy: undefined, bidAmount: undefined })
-            } else {
-              onChange({ bidStrategy: next as WizardState['adset']['bidStrategy'] })
-            }
-          }}
-          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-        >
-          {strategyOptions.map((o) => (
-            <option key={o.value} value={o.value} disabled={o.disabled}>{o.label}</option>
-          ))}
-        </select>
+          <div ref={strategyRef} className="relative">
+            <button
+              type="button"
+              onClick={() => setStrategyOpen(v => !v)}
+              className={`w-full flex items-center justify-between px-3.5 py-2.5 border rounded-xl bg-white text-sm font-medium text-left shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] transition-all ${strategyOpen ? 'border-primary ring-2 ring-primary/20' : 'border-gray-200 hover:border-gray-300'}`}
+            >
+              <span className="text-gray-800">{strategyOptions.find(o => o.value === effectiveSelectValue)?.label ?? effectiveSelectValue}</span>
+              <ChevronDown className={`w-4 h-4 text-gray-400 flex-shrink-0 transition-transform duration-200 mr-0.5 ${strategyOpen ? 'rotate-180' : ''}`} />
+            </button>
+            {strategyOpen && (
+              <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+                {strategyOptions.map((o) => {
+                  const isSel = o.value === effectiveSelectValue
+                  return (
+                    <button key={o.value} type="button" disabled={o.disabled}
+                      onClick={() => {
+                        if (o.disabled) return
+                        if (o.value === AUTOMATIC_LOWEST_COST || !o.value) {
+                          onChange({ bidStrategy: undefined, bidAmount: undefined })
+                        } else {
+                          onChange({ bidStrategy: o.value as WizardState['adset']['bidStrategy'] })
+                        }
+                        setStrategyOpen(false)
+                      }}
+                      className={`w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors ${o.disabled ? 'opacity-40 cursor-not-allowed' : ''} ${isSel ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}`}
+                    >
+                      <span>{o.label}</span>
+                      {isSel && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                    </button>
+                  )
+                })}
+              </div>
+            )}
+          </div>
         )}
       </div>
 

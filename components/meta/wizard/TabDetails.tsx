@@ -6,6 +6,7 @@ import { getAllowedOptimizationGoals, getAllowedDestinations, hasConversionLocat
 import { getLocaleFromCookie, getWizardTranslations } from '@/lib/i18n/wizardTranslations'
 import { explainLockedOption } from '@/lib/meta/capabilityRules'
 import type { MetaCapabilities } from '@/lib/meta/capabilityRules'
+import WizardSelect from './WizardSelect'
 
 function mapReasonToKey(reason: string | undefined): 'metaNotConnected' | 'metaPermissionRequired' | 'metaUnknown' {
   if (!reason) return 'metaUnknown'
@@ -450,50 +451,34 @@ export default function TabDetails({
       </div>
 
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           {t.instagramAccount}
         </label>
-        <select
+        <WizardSelect
           value={state.instagramAccountId ?? ''}
-          onChange={(e) => onChange({ instagramAccountId: e.target.value || undefined })}
-          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-        >
-          <option value="">{t.selectOption}</option>
-          {instagramAccounts.map((a) => (
-            <option key={a.id} value={a.id}>
-              @{a.username}
-            </option>
-          ))}
-        </select>
+          onChange={(v) => onChange({ instagramAccountId: v || undefined })}
+          placeholder={t.selectOption}
+          options={[
+            { value: '', label: t.selectOption },
+            ...instagramAccounts.map((a) => ({ value: a.id, label: `@${a.username}` })),
+          ]}
+        />
       </div>
 
       {hasConversionLocation(campaignObjective) && (
       <div>
-        <label className="block text-sm font-semibold text-gray-700 mb-1">
+        <label className="block text-sm font-semibold text-gray-700 mb-1.5">
           {t.conversionLocation}
         </label>
-        <select
+        <WizardSelect
           value={state.conversionLocation}
-          onChange={(e) => {
-            const v = e.target.value
+          onChange={(v) => {
             const opt = conversionLocationOptions.find((o) => o.value === v)
             if (opt?.locked) return
             onChange({ conversionLocation: v })
           }}
-          className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-          title={conversionLocationOptions.find((o) => o.value === state.conversionLocation)?.locked ? t[mapReasonToKey(conversionLocationOptions.find((o) => o.value === state.conversionLocation)?.reason)] : undefined}
-        >
-          {conversionLocationOptions.map((loc) => (
-            <option
-              key={loc.value}
-              value={loc.value}
-              disabled={loc.locked}
-              title={loc.locked ? t[mapReasonToKey(loc.reason)] : undefined}
-            >
-              {loc.label}
-            </option>
-          ))}
-        </select>
+          options={conversionLocationOptions.map((loc) => ({ value: loc.value, label: loc.label, disabled: loc.locked }))}
+        />
         {conversionLocationOptions.some((o) => o.value === state.conversionLocation && o.locked) && (
           <p className="mt-1 text-sm text-amber-600">
             {t[mapReasonToKey(conversionLocationOptions.find((o) => o.value === state.conversionLocation)?.reason)]}
@@ -521,7 +506,7 @@ export default function TabDetails({
               })
             }
             placeholder={t.phoneNumberPlaceholder}
-            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary text-sm ${errors.phone_number ? 'border-red-500' : 'border-gray-300'}`}
+            className={`w-full px-3.5 py-2.5 border rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all ${errors.phone_number ? 'border-red-400' : 'border-gray-200'}`}
           />
           {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
         </div>
@@ -542,10 +527,10 @@ export default function TabDetails({
               <label className="block text-sm font-semibold text-gray-700 mb-1">
                 WhatsApp Numarası <span className="text-red-500">*</span>
               </label>
-              <select
+              <WizardSelect
                 value={selectedId ?? ''}
-                onChange={(e) => {
-                  const num = pageLinked.find((n) => n.phoneNumberId === e.target.value)
+                onChange={(v) => {
+                  const num = pageLinked.find((n) => n.phoneNumberId === v)
                   onChange({
                     destinationDetails: {
                       ...state.destinationDetails,
@@ -558,15 +543,12 @@ export default function TabDetails({
                     },
                   })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-              >
-                <option value="">Seçiniz</option>
-                {pageLinked.map((n) => (
-                  <option key={n.phoneNumberId} value={n.phoneNumberId}>
-                    {n.displayPhone ?? n.phoneNumberId}{n.verifiedName ? ` — ${n.verifiedName}` : ''}
-                  </option>
-                ))}
-              </select>
+                placeholder="Seçiniz"
+                options={[
+                  { value: '', label: 'Seçiniz' },
+                  ...pageLinked.map((n) => ({ value: n.phoneNumberId, label: `${n.displayPhone ?? n.phoneNumberId}${n.verifiedName ? ` — ${n.verifiedName}` : ''}` })),
+                ]}
+              />
             </div>
           )
         }
@@ -597,34 +579,18 @@ export default function TabDetails({
         <>
           {(inventory?.apps?.length ?? 0) > 0 && (
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1">{t.appSelect}</label>
-              <select
+              <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.appSelect}</label>
+              <WizardSelect
                 value={state.appId ?? ''}
-                onChange={(e) => {
-                  const appId = e.target.value || undefined
-                  const app = inventory?.apps?.find((a) => a.app_id === appId)
-                  onChange({
-                    appId,
-                    destinationDetails: {
-                      ...state.destinationDetails,
-                      app: {
-                        ...state.destinationDetails?.app,
-                        appId,
-                        storeUrl: state.appStoreUrl,
-                        platform: state.destinationDetails?.app?.platform,
-                      },
-                    },
-                  })
-                }}
-                className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-              >
-                <option value="">{t.appManual}</option>
-                {(inventory?.apps ?? []).map((a) => (
-                  <option key={a.app_id} value={a.app_id}>
-                    {a.name || a.app_id}
-                  </option>
-                ))}
-              </select>
+                onChange={(appId) => onChange({
+                  appId: appId || undefined,
+                  destinationDetails: { ...state.destinationDetails, app: { ...state.destinationDetails?.app, appId: appId || undefined, storeUrl: state.appStoreUrl, platform: state.destinationDetails?.app?.platform } },
+                })}
+                options={[
+                  { value: '', label: t.appManual },
+                  ...(inventory?.apps ?? []).map((a) => ({ value: a.app_id, label: a.name || a.app_id })),
+                ]}
+              />
             </div>
           )}
           <div>
@@ -655,27 +621,12 @@ export default function TabDetails({
             {errors.app_id && <p className="mt-1 text-sm text-red-600">{errors.app_id}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.platform}</label>
-            <select
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.platform}</label>
+            <WizardSelect
               value={state.destinationDetails?.app?.platform ?? 'ANDROID'}
-              onChange={(e) =>
-                onChange({
-                  destinationDetails: {
-                    ...state.destinationDetails,
-                    app: {
-                      ...state.destinationDetails?.app,
-                      appId: state.appId,
-                      storeUrl: state.appStoreUrl,
-                      platform: e.target.value as 'IOS' | 'ANDROID',
-                    },
-                  },
-                })
-              }
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-            >
-              <option value="ANDROID">Android</option>
-              <option value="IOS">iOS</option>
-            </select>
+              onChange={(v) => onChange({ destinationDetails: { ...state.destinationDetails, app: { ...state.destinationDetails?.app, appId: state.appId, storeUrl: state.appStoreUrl, platform: v as 'IOS' | 'ANDROID' } } })}
+              options={[{ value: 'ANDROID', label: 'Android' }, { value: 'IOS', label: 'iOS' }]}
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">
@@ -713,37 +664,29 @@ export default function TabDetails({
             <p className="text-sm text-red-600">{errors.app_store_url}</p>
           )}
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.storeLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.appStore ?? 'GOOGLE_PLAY'}
-              onChange={(e) => onChange({ appStore: e.target.value })}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm ${errors.app_store ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              {[
+              onChange={(v) => onChange({ appStore: v })}
+              error={!!errors.app_store}
+              options={[
                 { value: 'GOOGLE_PLAY', label: 'Google Play' },
                 { value: 'APPLE_APP_STORE', label: 'Apple App Store' },
                 { value: 'AMAZON_APPSTORE', label: 'Amazon Appstore' },
                 { value: 'META_QUEST', label: 'Meta Quest Store' },
-              ].map((s) => (
-                <option key={s.value} value={s.value}>
-                  {s.label}
-                </option>
-              ))}
-            </select>
+              ]}
+            />
             {errors.app_store && <p className="mt-1 text-sm text-red-600">{errors.app_store}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">{t.attributionModel}</label>
-            <select
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">{t.attributionModel}</label>
+            <WizardSelect
               value={state.attributionModel ?? 'STANDARD'}
-              onChange={(e) => onChange({ attributionModel: e.target.value })}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm"
-            >
-              <option value="STANDARD">Standart</option>
-              <option value="INCREMENTAL">Artımlı</option>
-            </select>
+              onChange={(v) => onChange({ attributionModel: v })}
+              options={[{ value: 'STANDARD', label: 'Standart' }, { value: 'INCREMENTAL', label: 'Artımlı' }]}
+            />
           </div>
           <div>
             <label className="block text-sm font-semibold text-gray-700 mb-1">{t.conversionLocationLabel}</label>
@@ -764,41 +707,30 @@ export default function TabDetails({
       {isSales && state.conversionLocation === 'WEBSITE' && (
         <>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.pixelLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.pixelId ?? ''}
-              onChange={(e) => onChange({ pixelId: e.target.value || undefined, customEventType: e.target.value ? (state.customEventType || 'PURCHASE') : undefined })}
+              onChange={(v) => onChange({ pixelId: v || undefined, customEventType: v ? (state.customEventType || 'PURCHASE') : undefined })}
               disabled={pixels.length === 0}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.pixel_id ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              <option value="">{pixels.length === 0 ? t.pixelNone : t.selectOption}</option>
-              {pixels.map((p) => (
-                <option key={p.pixel_id} value={p.pixel_id}>
-                  {p.name || p.pixel_id}
-                </option>
-              ))}
-            </select>
+              error={!!errors.pixel_id}
+              options={[{ value: '', label: pixels.length === 0 ? t.pixelNone : t.selectOption }, ...pixels.map((p) => ({ value: p.pixel_id, label: p.name || p.pixel_id }))]}
+            />
             {pixels.length === 0 && <p className="mt-1 text-sm text-amber-600">{t.pixelRequiredSales}</p>}
             {errors.pixel_id && <p className="mt-1 text-sm text-red-600">{errors.pixel_id}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.conversionEventLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.customEventType ?? 'PURCHASE'}
-              onChange={(e) => onChange({ customEventType: e.target.value })}
+              onChange={(v) => onChange({ customEventType: v })}
               disabled={!state.pixelId}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.conversion_event ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              {CONVERSION_EVENTS.filter((e) => pixelEvents.includes(e.value)).map((ev) => (
-                <option key={ev.value} value={ev.value}>
-                  {ev.label}
-                </option>
-              ))}
-            </select>
+              error={!!errors.conversion_event}
+              options={CONVERSION_EVENTS.filter((e) => pixelEvents.includes(e.value)).map((ev) => ({ value: ev.value, label: ev.label }))}
+            />
             {errors.conversion_event && <p className="mt-1 text-sm text-red-600">{errors.conversion_event}</p>}
           </div>
         </>
@@ -820,67 +752,34 @@ export default function TabDetails({
       {isSales && state.conversionLocation === 'CATALOG' && (
         <>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.catalogLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.catalogId ?? ''}
-              onChange={(e) => {
-                const catalogId = e.target.value || undefined
-                onChange({
-                  catalogId,
-                  productSetId: undefined,
-                  destinationDetails: {
-                    ...state.destinationDetails,
-                    catalog: { catalogId, productSetId: undefined },
-                  },
-                })
-              }}
+              onChange={(catalogId) => onChange({ catalogId: catalogId || undefined, productSetId: undefined, destinationDetails: { ...state.destinationDetails, catalog: { catalogId: catalogId || undefined, productSetId: undefined } } })}
               disabled={(inventory?.catalogs?.length ?? 0) === 0}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.catalog_id ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              <option value="">{(inventory?.catalogs?.length ?? 0) === 0 ? t.catalogNone : t.selectOption}</option>
-              {(inventory?.catalogs ?? []).map((c) => (
-                <option key={c.catalog_id} value={c.catalog_id}>
-                  {c.name || c.catalog_id}
-                </option>
-              ))}
-            </select>
+              error={!!errors.catalog_id}
+              options={[
+                { value: '', label: (inventory?.catalogs?.length ?? 0) === 0 ? t.catalogNone : t.selectOption },
+                ...(inventory?.catalogs ?? []).map((c) => ({ value: c.catalog_id, label: c.name || c.catalog_id })),
+              ]}
+            />
             {errors.catalog_id && <p className="mt-1 text-sm text-red-600">{errors.catalog_id}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.productSetLabel}
             </label>
-            <select
+            <WizardSelect
               value={state.productSetId ?? ''}
-              onChange={(e) => {
-                const productSetId = e.target.value || undefined
-                onChange({
-                  productSetId,
-                  destinationDetails: {
-                    ...state.destinationDetails,
-                    catalog: {
-                      catalogId: state.catalogId,
-                      productSetId,
-                    },
-                  },
-                })
-              }}
+              onChange={(productSetId) => onChange({ productSetId: productSetId || undefined, destinationDetails: { ...state.destinationDetails, catalog: { catalogId: state.catalogId, productSetId: productSetId || undefined } } })}
               disabled={!state.catalogId}
-              className="w-full px-3 py-2.5 border border-gray-200 rounded-xl shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all text-sm disabled:bg-gray-100"
-            >
-              <option value="">{t.productSetAll}</option>
-              {(() => {
-                const sets = state.catalogId ? inventory?.product_sets?.[state.catalogId] : undefined
-                const list = Array.isArray(sets) ? sets : []
-                return list.map((ps) => (
-                  <option key={ps.product_set_id} value={ps.product_set_id}>
-                    {ps.name || ps.product_set_id}
-                  </option>
-                ))
-              })()}
-            </select>
+              options={[
+                { value: '', label: t.productSetAll },
+                ...(() => { const sets = state.catalogId ? inventory?.product_sets?.[state.catalogId] : undefined; return Array.isArray(sets) ? sets.map((ps) => ({ value: ps.product_set_id, label: ps.name || ps.product_set_id })) : [] })(),
+              ]}
+            />
           </div>
         </>
       )}
@@ -889,41 +788,30 @@ export default function TabDetails({
       {isLeads && state.conversionLocation === 'WEBSITE' && (
         <>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.pixelLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.pixelId ?? ''}
-              onChange={(e) => onChange({ pixelId: e.target.value || undefined, customEventType: e.target.value ? (state.customEventType || 'LEAD') : undefined })}
+              onChange={(v) => onChange({ pixelId: v || undefined, customEventType: v ? (state.customEventType || 'LEAD') : undefined })}
               disabled={pixels.length === 0}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.pixel_id ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              <option value="">{pixels.length === 0 ? t.pixelNone : t.selectOption}</option>
-              {pixels.map((p) => (
-                <option key={p.pixel_id} value={p.pixel_id}>
-                  {p.name || p.pixel_id}
-                </option>
-              ))}
-            </select>
+              error={!!errors.pixel_id}
+              options={[{ value: '', label: pixels.length === 0 ? t.pixelNone : t.selectOption }, ...pixels.map((p) => ({ value: p.pixel_id, label: p.name || p.pixel_id }))]}
+            />
             {pixels.length === 0 && <p className="mt-1 text-sm text-amber-600">{t.pixelRequiredLeads}</p>}
             {errors.pixel_id && <p className="mt-1 text-sm text-red-600">{errors.pixel_id}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.conversionEventLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.customEventType ?? 'LEAD'}
-              onChange={(e) => onChange({ customEventType: e.target.value })}
+              onChange={(v) => onChange({ customEventType: v })}
               disabled={!state.pixelId}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.conversion_event ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              {CONVERSION_EVENTS.filter((e) => e.value === 'LEAD' || pixelEvents.includes(e.value)).map((ev) => (
-                <option key={ev.value} value={ev.value}>
-                  {ev.label}
-                </option>
-              ))}
-            </select>
+              error={!!errors.conversion_event}
+              options={CONVERSION_EVENTS.filter((e) => e.value === 'LEAD' || pixelEvents.includes(e.value)).map((ev) => ({ value: ev.value, label: ev.label }))}
+            />
             {errors.conversion_event && <p className="mt-1 text-sm text-red-600">{errors.conversion_event}</p>}
           </div>
         </>
@@ -933,41 +821,30 @@ export default function TabDetails({
       {isEngagement && state.conversionLocation === 'WEBSITE' && (
         <>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.pixelLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.pixelId ?? ''}
-              onChange={(e) => onChange({ pixelId: e.target.value || undefined, customEventType: e.target.value ? (state.customEventType || 'PURCHASE') : undefined })}
+              onChange={(v) => onChange({ pixelId: v || undefined, customEventType: v ? (state.customEventType || 'PURCHASE') : undefined })}
               disabled={pixels.length === 0}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.pixel_id ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              <option value="">{pixels.length === 0 ? t.pixelNone : t.selectOption}</option>
-              {pixels.map((p) => (
-                <option key={p.pixel_id} value={p.pixel_id}>
-                  {p.name || p.pixel_id}
-                </option>
-              ))}
-            </select>
+              error={!!errors.pixel_id}
+              options={[{ value: '', label: pixels.length === 0 ? t.pixelNone : t.selectOption }, ...pixels.map((p) => ({ value: p.pixel_id, label: p.name || p.pixel_id }))]}
+            />
             {pixels.length === 0 && <p className="mt-1 text-sm text-amber-600">{t.pixelRequiredEngagement}</p>}
             {errors.pixel_id && <p className="mt-1 text-sm text-red-600">{errors.pixel_id}</p>}
           </div>
           <div>
-            <label className="block text-sm font-semibold text-gray-700 mb-1">
+            <label className="block text-sm font-semibold text-gray-700 mb-1.5">
               {t.conversionEventLabel} <span className="text-red-500">*</span>
             </label>
-            <select
+            <WizardSelect
               value={state.customEventType ?? 'PURCHASE'}
-              onChange={(e) => onChange({ customEventType: e.target.value })}
+              onChange={(v) => onChange({ customEventType: v })}
               disabled={!state.pixelId}
-              className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm disabled:bg-gray-100 ${errors.conversion_event ? 'border-red-500' : 'border-gray-300'}`}
-            >
-              {CONVERSION_EVENTS.filter((e) => pixelEvents.includes(e.value)).map((ev) => (
-                <option key={ev.value} value={ev.value}>
-                  {ev.label}
-                </option>
-              ))}
-            </select>
+              error={!!errors.conversion_event}
+              options={CONVERSION_EVENTS.filter((e) => pixelEvents.includes(e.value)).map((ev) => ({ value: ev.value, label: ev.label }))}
+            />
             {errors.conversion_event && <p className="mt-1 text-sm text-red-600">{errors.conversion_event}</p>}
           </div>
         </>
@@ -984,18 +861,15 @@ export default function TabDetails({
               <span className="text-red-500"> *</span>
             )}
           </label>
-          <select
-            value={state.optimizationGoal}
-            onChange={(e) => onChange({ optimizationGoal: e.target.value })}
-            className={`w-full px-3 py-2.5 border rounded-lg focus:ring-2 focus:ring-primary focus:border-transparent text-sm ${errors.performance_goal ? 'border-red-500' : 'border-gray-300'}`}
-          >
-            {!state.optimizationGoal && <option value="">Seçin...</option>}
-            {optimizationGoalOptions.map((g) => (
-              <option key={g.value} value={g.value}>
-                {g.label}
-              </option>
-            ))}
-          </select>
+          <WizardSelect
+            value={state.optimizationGoal ?? ''}
+            onChange={(v) => onChange({ optimizationGoal: v })}
+            error={!!errors.performance_goal}
+            options={[
+              ...(!state.optimizationGoal ? [{ value: '', label: 'Seçin...' }] : []),
+              ...optimizationGoalOptions,
+            ]}
+          />
           {errors.performance_goal && <p className="mt-1 text-sm text-red-600">{errors.performance_goal}</p>}
         </div>
       )}
