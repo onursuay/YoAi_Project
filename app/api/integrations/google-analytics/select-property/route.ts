@@ -4,7 +4,7 @@ import { upsertGAConnection } from '@/lib/google-analytics/connectionStore'
 
 export async function POST(request: Request) {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('session_id')?.value
+  const userId = cookieStore.get('user_id')?.value
 
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })

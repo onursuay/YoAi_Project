@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { randomBytes, randomUUID } from 'node:crypto'
+import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { GOOGLE_AUTH_URL, GOOGLE_ANALYTICS_SCOPES } from '@/lib/integrations/constants'
 
@@ -38,16 +38,6 @@ export async function GET(request: Request) {
     maxAge: 60 * 10,
     path: '/',
   })
-
-  if (!cookieStore.get('session_id')?.value) {
-    response.cookies.set('session_id', randomUUID(), {
-      httpOnly: true,
-      secure: process.env.NODE_ENV === 'production',
-      sameSite: 'lax',
-      path: '/',
-      maxAge: 60 * 60 * 24 * 30,
-    })
-  }
 
   return response
 }

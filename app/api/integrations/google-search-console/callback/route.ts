@@ -1,5 +1,4 @@
 import { NextResponse } from 'next/server'
-import { randomUUID } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { exchangeCodeForTokens } from '@/lib/integrations/googleOAuthHelpers'
 import { upsertGSCConnection } from '@/lib/google-search-console/connectionStore'
@@ -49,17 +48,7 @@ export async function GET(request: Request) {
 
     response.cookies.set('gsc_oauth_state', '', { maxAge: 0, path: '/' })
 
-    let userId = cookieStore.get('session_id')?.value
-    if (!userId) {
-      userId = randomUUID()
-      response.cookies.set('session_id', userId, {
-        httpOnly: true,
-        secure: process.env.NODE_ENV === 'production',
-        sameSite: 'lax',
-        path: '/',
-        maxAge: 60 * 60 * 24 * 30,
-      })
-    }
+    const userId = cookieStore.get('user_id')?.value
 
     if (userId && tokens.refresh_token) {
       await upsertGSCConnection(userId, {
