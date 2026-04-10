@@ -1,9 +1,10 @@
 'use client'
 
 import { useState, useRef, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
+import { mapPathToLocale } from '@/lib/routes'
 import { User, FileText, CreditCard, HelpCircle, Globe, LogOut, ChevronRight, Check } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
@@ -16,6 +17,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
   const t = useTranslations('sidebar')
   const locale = useLocale()
   const router = useRouter()
+  const pathname = usePathname()
   const { subscription, isTrialActive: trial, trialDaysRemaining } = useSubscription()
   const [open, setOpen] = useState(false)
   const [langOpen, setLangOpen] = useState(false)
@@ -49,9 +51,10 @@ export default function UserProfileDropdown({ collapsed }: Props) {
     ? subscription.planId.charAt(0).toUpperCase() + subscription.planId.slice(1)
     : 'Free'
 
-  const handleLanguageChange = (locale: string) => {
-    document.cookie = `NEXT_LOCALE=${locale};path=/;max-age=${365 * 24 * 60 * 60}`
-    window.location.reload()
+  const handleLanguageChange = (targetLocale: string) => {
+    document.cookie = `NEXT_LOCALE=${targetLocale}; path=/; max-age=31536000`
+    const newPath = mapPathToLocale(pathname, targetLocale)
+    window.location.assign(newPath)
   }
 
   const handleLogout = async () => {
