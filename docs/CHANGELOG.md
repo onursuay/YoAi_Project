@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-10 — Dropdown kullanıcı bilgi bloğu kaldırıldı
+- **Sorun:** Sol alt profil dropdown açıldığında en üstte "Onur Şuay" ve "Deneme Sürümü" bilgi satırı görünüyordu
+- **Çözüm:** `UserProfileDropdown.tsx` içindeki "User header" div bloğu (px-4 py-3 border-b) tamamen silindi; dropdown artık doğrudan "Hesabım" menü maddesiyle başlıyor
+- **Dosyalar:** components/UserProfileDropdown.tsx
+
+---
+
 ## 2026-04-09 — Google Analytics & Search Console bağlantı kalıcılığı
 
 - **Sorun:** GA ve GSC bağlantıları logout/login sonrasında kopuyordu
