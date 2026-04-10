@@ -100,7 +100,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
       {/* Dropdown */}
       {open && (
         <div
-          className={`absolute z-50 bg-white border border-gray-200 rounded-xl shadow-lg py-1 w-56 ${
+          className={`absolute z-50 bg-gradient-to-b from-white to-primary/5 border border-primary/15 rounded-xl shadow-lg py-1 w-56 ${
             collapsed ? 'left-full ml-2 bottom-0' : 'bottom-full mb-2 left-0'
           }`}
         >
