@@ -103,7 +103,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
       {/* Dropdown */}
       {open && (
         <div
-          className={`absolute z-50 bg-emerald-50/90 backdrop-blur-sm border border-emerald-100 rounded-xl shadow-xl py-1 w-56 ${
+          className={`absolute z-50 bg-gradient-to-b from-gray-900 to-gray-800 border border-gray-700 rounded-xl shadow-2xl py-1 w-56 ${
             collapsed ? 'left-full ml-2 bottom-0' : 'bottom-full mb-2 left-0'
           }`}
         >
@@ -114,22 +114,22 @@ export default function UserProfileDropdown({ collapsed }: Props) {
                 key={item.href}
                 href={item.href}
                 onClick={() => setOpen(false)}
-                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-100/60 transition-colors"
+                className="flex items-center gap-3 px-4 py-2.5 text-sm text-gray-200 hover:bg-white/10 transition-colors"
               >
-                <item.icon className="w-4 h-4 text-gray-500" />
+                <item.icon className="w-4 h-4 text-gray-400" />
                 <span>{item.label}</span>
               </Link>
             ))}
           </div>
 
           {/* Language */}
-          <div className="border-t border-emerald-100 py-1">
+          <div className="border-t border-white/10 py-1">
             <button
               onClick={() => setLangOpen(!langOpen)}
-              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-700 hover:bg-emerald-100/60 transition-colors"
+              className="w-full flex items-center justify-between px-4 py-2.5 text-sm text-gray-200 hover:bg-white/10 transition-colors"
             >
               <div className="flex items-center gap-3">
-                <Globe className="w-4 h-4 text-gray-500" />
+                <Globe className="w-4 h-4 text-gray-400" />
                 <span>{t('dil')}</span>
               </div>
               <ChevronRight className={`w-4 h-4 text-gray-400 transition-transform ${langOpen ? 'rotate-90' : ''}`} />
@@ -138,14 +138,14 @@ export default function UserProfileDropdown({ collapsed }: Props) {
               <div className="ml-7 py-1">
                 <button
                   onClick={() => handleLanguageChange('tr')}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-emerald-100/60"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/10"
                 >
                   {currentLocale === 'tr' && <Check className="w-3 h-3 text-primary" />}
                   <span className={currentLocale === 'tr' ? 'text-primary font-medium' : ''}>Türkçe</span>
                 </button>
                 <button
                   onClick={() => handleLanguageChange('en')}
-                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-600 hover:bg-emerald-100/60"
+                  className="w-full flex items-center gap-2 px-4 py-2 text-sm text-gray-300 hover:bg-white/10"
                 >
                   {currentLocale === 'en' && <Check className="w-3 h-3 text-primary" />}
                   <span className={currentLocale === 'en' ? 'text-primary font-medium' : ''}>English</span>
@@ -155,10 +155,10 @@ export default function UserProfileDropdown({ collapsed }: Props) {
           </div>
 
           {/* Logout */}
-          <div className="border-t border-emerald-100 py-1">
+          <div className="border-t border-white/10 py-1">
             <button
               onClick={handleLogout}
-              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-600 hover:bg-red-50 transition-colors"
+              className="w-full flex items-center gap-3 px-4 py-2.5 text-sm text-red-400 hover:bg-red-500/20 transition-colors"
             >
               <LogOut className="w-4 h-4" />
               <span>{t('cikisYap')}</span>
