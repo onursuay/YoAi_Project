@@ -1,0 +1,1234 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>YoAi - Sunum</title>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        body {
+            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+            background: #fafbfc;
+            color: #1a1a2e;
+            line-height: 1.6;
+            -webkit-font-smoothing: antialiased;
+        }
+
+        /* Header */
+        .header {
+            background: #fff;
+            border-bottom: 1px solid #f1f5f9;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+        .header-inner {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 0 32px;
+            height: 56px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .header-left {
+            display: flex;
+            align-items: center;
+            gap: 16px;
+        }
+        .header-logo {
+            font-size: 18px;
+            font-weight: 800;
+            color: #4f46e5;
+        }
+        .header-sep {
+            width: 1px;
+            height: 20px;
+            background: #e2e8f0;
+        }
+        .header-title {
+            font-size: 13px;
+            font-weight: 500;
+            letter-spacing: -0.2px;
+            color: #1a1a2e;
+        }
+        .header-right {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header-badge {
+            font-size: 11px;
+            color: #94a3b8;
+            letter-spacing: 0.5px;
+            text-transform: uppercase;
+        }
+        .header-dot {
+            width: 6px;
+            height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.4; }
+        }
+        @keyframes spin {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+
+        /* Container */
+        .container {
+            max-width: 1024px;
+            margin: 0 auto;
+            padding: 40px 32px;
+        }
+        .container > section + section { margin-top: 48px; }
+
+        /* Hero */
+        .hero {
+            position: relative;
+            overflow: hidden;
+            border-radius: 24px;
+            background: linear-gradient(135deg, #1a1a2e 0%, #16213e 50%, #0f3460 100%);
+            padding: 32px 40px;
+            margin-bottom: 48px;
+        }
+        .hero-bg {
+            position: absolute;
+            inset: 0;
+            overflow: hidden;
+            pointer-events: none;
+        }
+        .hero-bg .blob1 { position: absolute; top: -80px; right: -80px; width: 288px; height: 288px; border-radius: 50%; background: rgba(99,102,241,0.1); filter: blur(48px); }
+        .hero-bg .blob2 { position: absolute; bottom: -64px; left: -64px; width: 224px; height: 224px; border-radius: 50%; background: rgba(168,85,247,0.1); filter: blur(48px); }
+        .hero-bg .blob3 { position: absolute; top: 50%; left: 50%; transform: translate(-50%,-50%); width: 384px; height: 384px; border-radius: 50%; background: rgba(59,130,246,0.05); filter: blur(48px); }
+        .hero-bg .grid-pattern {
+            position: absolute;
+            inset: 0;
+            opacity: 0.03;
+            background-image: linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px);
+            background-size: 40px 40px;
+        }
+        .hero-bg .dot {
+            position: absolute;
+            border-radius: 50%;
+            animation: pulse 3s infinite;
+        }
+        .hero-content {
+            position: relative;
+            z-index: 1;
+            display: flex;
+            align-items: center;
+            gap: 32px;
+        }
+        .hero-text { flex: 1; }
+        .hero-pill {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            border-radius: 9999px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(8px);
+            border: 1px solid rgba(255,255,255,0.1);
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 16px;
+        }
+        .hero-pill .dot-green {
+            width: 6px; height: 6px;
+            border-radius: 50%;
+            background: #22c55e;
+            animation: pulse 2s infinite;
+        }
+        .hero h1 {
+            font-size: 28px;
+            font-weight: 800;
+            color: #fff;
+            letter-spacing: -0.5px;
+            line-height: 1.2;
+            margin-bottom: 12px;
+        }
+        .hero-desc {
+            font-size: 14px;
+            color: rgba(255,255,255,0.6);
+            line-height: 1.6;
+            max-width: 420px;
+        }
+        .hero-stats {
+            display: flex;
+            gap: 16px;
+            margin-top: 20px;
+        }
+        .hero-stat { text-align: center; }
+        .hero-stat-val { font-size: 20px; font-weight: 800; color: #fff; }
+        .hero-stat-label { font-size: 10px; color: rgba(255,255,255,0.4); margin-top: 2px; }
+
+        /* Rings */
+        .hero-rings {
+            flex-shrink: 0;
+            position: relative;
+            width: 192px;
+            height: 192px;
+        }
+        .ring {
+            position: absolute;
+            border-radius: 50%;
+            border: 1px solid rgba(255,255,255,0.05);
+        }
+        .ring-1 { inset: 0; animation: spin 20s linear infinite; }
+        .ring-2 { inset: 16px; border-color: rgba(255,255,255,0.1); animation: spin 15s linear infinite reverse; }
+        .ring-3 { inset: 32px; border-color: rgba(255,255,255,0.1); animation: spin 25s linear infinite; }
+        .ring-icon {
+            position: absolute;
+            width: 28px; height: 28px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 9px;
+            font-weight: 700;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.2);
+        }
+        .ring-center {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+        .ring-center-box {
+            width: 64px; height: 64px;
+            border-radius: 16px;
+            background: rgba(255,255,255,0.1);
+            backdrop-filter: blur(12px);
+            border: 1px solid rgba(255,255,255,0.2);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            font-weight: 800;
+            color: rgba(255,255,255,0.8);
+        }
+
+        /* Section Header */
+        .section-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 20px;
+        }
+        .section-num {
+            width: 28px; height: 28px;
+            border-radius: 8px;
+            background: #4f46e5;
+            color: #fff;
+            font-size: 12px;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            flex-shrink: 0;
+        }
+        .section-title {
+            font-size: 18px;
+            font-weight: 700;
+            letter-spacing: -0.3px;
+            color: #1a1a2e;
+        }
+
+        /* Purpose Banner */
+        .purpose-banner {
+            border-radius: 16px;
+            background: linear-gradient(135deg, #4f46e5, #6366f1);
+            padding: 24px;
+            margin-bottom: 24px;
+            color: #fff;
+        }
+        .purpose-banner .label {
+            font-size: 14px;
+            font-weight: 600;
+            color: rgba(255,255,255,0.8);
+            margin-bottom: 4px;
+        }
+        .purpose-banner p {
+            font-size: 15px;
+            line-height: 1.6;
+        }
+
+        /* Problem-Solution Cards */
+        .ps-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 8px;
+            margin-bottom: 24px;
+        }
+        .ps-card {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            padding: 10px 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .ps-icon {
+            width: 20px; height: 20px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 10px;
+            flex-shrink: 0;
+        }
+        .ps-x { background: #fef2f2; color: #f87171; }
+        .ps-ok { background: #f0fdf4; color: #22c55e; }
+        .ps-text { font-size: 14px; color: #6b7280; flex: 1; }
+        .ps-arrow { color: #d1d5db; font-size: 14px; }
+        .ps-solution { font-size: 14px; font-weight: 600; color: #047857; }
+
+        /* Bar Chart (CSS) */
+        .bar-chart {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .bar-chart .bar-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+        .bar-row {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 12px;
+        }
+        .bar-label {
+            font-size: 12px;
+            font-weight: 500;
+            width: 128px;
+            flex-shrink: 0;
+        }
+        .bar-track {
+            flex: 1;
+            height: 12px;
+            background: #f1f5f9;
+            border-radius: 9999px;
+            overflow: hidden;
+        }
+        .bar-fill {
+            height: 100%;
+            border-radius: 9999px;
+            transition: width 0.7s;
+        }
+        .bar-value {
+            font-size: 12px;
+            font-weight: 700;
+            width: 40px;
+            text-align: right;
+        }
+
+        /* Tags */
+        .tags {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 8px;
+        }
+        .tag {
+            display: inline-flex;
+            align-items: center;
+            border-radius: 9999px;
+            background: #fff;
+            border: 1px solid #e2e8f0;
+            padding: 4px 12px;
+            font-size: 11px;
+            font-weight: 500;
+            box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+        }
+
+        /* Module Cards */
+        .module-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+        }
+        .module-card {
+            display: flex;
+            align-items: flex-start;
+            gap: 12px;
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            transition: box-shadow 0.15s;
+        }
+        .module-card:hover { box-shadow: 0 4px 12px rgba(0,0,0,0.08); }
+        .module-icon {
+            width: 36px; height: 36px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: #fff;
+            font-size: 14px;
+            flex-shrink: 0;
+        }
+        .module-name { font-size: 14px; font-weight: 700; color: #1a1a2e; }
+        .module-desc { font-size: 12px; color: #6b7280; margin-top: 2px; line-height: 1.5; }
+
+        /* Cost Cards */
+        .cost-grid {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+        .cost-card {
+            background: #fff;
+            border-radius: 12px;
+            border: 1px solid #f1f5f9;
+            padding: 16px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+        }
+        .cost-header {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            margin-bottom: 8px;
+        }
+        .cost-header-left {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        .cost-icon {
+            width: 32px; height: 32px;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            font-weight: 700;
+        }
+        .cost-name { font-size: 14px; font-weight: 700; }
+        .cost-price {
+            font-size: 14px;
+            font-weight: 700;
+            padding: 2px 10px;
+            border-radius: 9999px;
+        }
+        .cost-detail {
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 1.6;
+        }
+
+        /* Plans */
+        .plan-grid {
+            display: grid;
+            grid-template-columns: repeat(4, 1fr);
+            gap: 16px;
+            margin-bottom: 32px;
+        }
+        .plan-card {
+            border-radius: 16px;
+            border: 2px solid #e2e8f0;
+            padding: 20px;
+            background: #fff;
+            transition: box-shadow 0.2s;
+        }
+        .plan-card:hover { box-shadow: 0 4px 16px rgba(0,0,0,0.08); }
+        .plan-card.popular {
+            border-color: #6366f1;
+            background: rgba(99,102,241,0.03);
+            box-shadow: 0 4px 16px rgba(99,102,241,0.12);
+        }
+        .plan-badge {
+            display: inline-block;
+            background: #4f46e5;
+            color: #fff;
+            font-size: 10px;
+            font-weight: 700;
+            padding: 2px 8px;
+            border-radius: 9999px;
+            margin-bottom: 8px;
+        }
+        .plan-name { font-size: 16px; font-weight: 700; }
+        .plan-price { margin-top: 8px; }
+        .plan-price-val { font-size: 24px; font-weight: 800; }
+        .plan-price-per { font-size: 14px; color: #6b7280; }
+        .plan-yearly {
+            font-size: 11px;
+            color: #6b7280;
+            margin-top: 4px;
+        }
+        .plan-yearly .discount { font-weight: 600; color: #047857; }
+        .plan-features {
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid #e2e8f0;
+            font-size: 11px;
+            color: #6b7280;
+            line-height: 2;
+        }
+
+        /* Summary Table */
+        .summary-table {
+            width: 100%;
+            font-size: 12px;
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            overflow: hidden;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 16px;
+        }
+        .summary-table thead tr {
+            background: #f8fafc;
+            border-bottom: 1px solid #f1f5f9;
+        }
+        .summary-table th {
+            text-align: left;
+            padding: 10px 16px;
+            font-weight: 600;
+            color: #1a1a2e;
+        }
+        .summary-table th:not(:first-child) { text-align: right; }
+        .summary-table td {
+            padding: 10px 16px;
+            border-bottom: 1px solid #f8fafc;
+            color: #1a1a2e;
+        }
+        .summary-table td:not(:first-child) { text-align: right; }
+        .summary-table td.muted { color: #94a3b8; }
+        .summary-table td.positive { color: #047857; font-weight: 700; }
+        .summary-table td.negative { color: #ef4444; font-weight: 700; }
+        .summary-table tr:hover { background: rgba(248,250,252,0.5); }
+
+        /* Visual Bar Chart */
+        .visual-chart {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 16px;
+        }
+        .visual-chart-title {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 16px;
+        }
+        .visual-bars {
+            display: flex;
+            align-items: flex-end;
+            gap: 24px;
+            height: 176px;
+            padding: 0 16px;
+        }
+        .visual-bar-group {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        .visual-bar-cols {
+            width: 100%;
+            display: flex;
+            align-items: flex-end;
+            justify-content: center;
+            gap: 6px;
+            height: 144px;
+        }
+        .visual-bar-col {
+            width: 28px;
+            border-radius: 6px 6px 0 0;
+            transition: height 0.7s;
+        }
+        .visual-bar-col.gelir { background: #c7d2fe; }
+        .visual-bar-col.kar { background: #34d399; }
+        .visual-bar-label {
+            font-size: 10px;
+            text-align: center;
+            font-weight: 500;
+            color: #6b7280;
+            white-space: pre-line;
+            line-height: 1.3;
+        }
+        .visual-legend {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 24px;
+            margin-top: 16px;
+            font-size: 11px;
+            color: #6b7280;
+        }
+        .visual-legend span {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .visual-legend .swatch {
+            width: 10px; height: 10px;
+            border-radius: 2px;
+        }
+
+        /* Break-even */
+        .breakeven {
+            border-radius: 16px;
+            background: linear-gradient(135deg, #4f46e5, #7c3aed);
+            padding: 20px;
+            text-align: center;
+            color: #fff;
+        }
+        .breakeven .label {
+            font-size: 12px;
+            color: rgba(255,255,255,0.7);
+            margin-bottom: 4px;
+        }
+        .breakeven .value {
+            font-size: 24px;
+            font-weight: 800;
+        }
+        .breakeven .sep {
+            color: rgba(255,255,255,0.5);
+            font-weight: 400;
+            margin: 0 8px;
+        }
+
+        /* Total Cost Box */
+        .total-box {
+            background: #fff;
+            border-radius: 16px;
+            border: 1px solid #f1f5f9;
+            padding: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+            margin-bottom: 24px;
+        }
+        .total-divider {
+            margin-top: 16px;
+            padding-top: 12px;
+            border-top: 2px solid #f1f5f9;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+        .total-label { font-size: 14px; font-weight: 700; }
+        .total-val { font-size: 20px; font-weight: 800; }
+        .total-note { font-size: 14px; color: #6b7280; margin-left: 8px; }
+
+        /* Small note */
+        .note {
+            font-size: 10px;
+            color: #94a3b8;
+            margin-top: 8px;
+        }
+        .sub-label {
+            font-size: 14px;
+            font-weight: 600;
+            margin-bottom: 12px;
+            color: #1a1a2e;
+        }
+
+        /* Footer */
+        .footer {
+            text-align: center;
+            font-size: 11px;
+            color: #94a3b8;
+            padding-top: 24px;
+            border-top: 1px solid #f1f5f9;
+            margin-top: 8px;
+        }
+
+        @media (max-width: 640px) {
+            .ps-grid, .module-grid, .cost-grid { grid-template-columns: 1fr; }
+            .plan-grid { grid-template-columns: 1fr 1fr; }
+            .hero-rings { display: none; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- Header -->
+<div class="header">
+    <div class="header-inner">
+        <div class="header-left">
+            <img src="../public/logos/yoai-logo.png" alt="YoAi" style="height:28px">
+            <div class="header-sep"></div>
+            <span class="header-title">Dijital Reklam Y&#246;netim Platformu</span>
+        </div>
+        <div class="header-right">
+            <span class="header-badge">&#220;r&#252;n Sunumu</span>
+            <span class="header-dot"></span>
+        </div>
+    </div>
+</div>
+
+<div class="container">
+
+    <!-- Hero -->
+    <div class="hero">
+        <div class="hero-bg">
+            <div class="blob1"></div>
+            <div class="blob2"></div>
+            <div class="blob3"></div>
+            <div class="grid-pattern"></div>
+            <div class="dot" style="top:24px;right:48px;width:8px;height:8px;background:rgba(99,102,241,0.4);animation-duration:3s"></div>
+            <div class="dot" style="top:64px;right:128px;width:6px;height:6px;background:rgba(168,85,247,0.3);animation-duration:4s;animation-delay:1s"></div>
+            <div class="dot" style="bottom:32px;left:80px;width:8px;height:8px;background:rgba(59,130,246,0.3);animation-duration:3.5s;animation-delay:0.5s"></div>
+            <div class="dot" style="bottom:64px;right:80px;width:4px;height:4px;background:rgba(99,102,241,0.4);animation-duration:2.5s;animation-delay:1.5s"></div>
+        </div>
+        <div class="hero-content">
+            <div class="hero-text">
+                <div class="hero-pill">
+                    <span class="dot-green"></span>
+                    SaaS &#220;r&#252;n Sunumu
+                </div>
+                <h1>Dijital Reklam<br>Y&#246;netim Platformu</h1>
+                <p class="hero-desc">Meta, Google ve TikTok reklamlar&#305;n&#305; tek merkezde y&#246;netin, AI ile optimize edin, rakiplerinizi analiz edin.</p>
+                <div class="hero-stats">
+                    <div class="hero-stat"><div class="hero-stat-val">12</div><div class="hero-stat-label">Mod&#252;l</div></div>
+                    <div class="hero-stat"><div class="hero-stat-val">3</div><div class="hero-stat-label">Platform</div></div>
+                    <div class="hero-stat"><div class="hero-stat-val">AI</div><div class="hero-stat-label">Destekli</div></div>
+                    <div class="hero-stat"><div class="hero-stat-val">&#8734;</div><div class="hero-stat-label">Reklam</div></div>
+                </div>
+            </div>
+            <div class="hero-rings" id="heroRings">
+                <div class="ring ring-1"></div>
+                <div class="ring ring-2"></div>
+                <div class="ring ring-3"></div>
+                <div class="ring-center">
+                    <div class="ring-center-box"><img src="../public/logos/yoai-logo.png" alt="YoAi" style="height:36px"></div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Section 1 -->
+    <section>
+        <div class="section-header">
+            <span class="section-num">1</span>
+            <h2 class="section-title">Ama&#231; ve Avantajlar</h2>
+        </div>
+
+        <div class="purpose-banner">
+            <div class="label">Ne yapar?</div>
+            <p>&#304;&#351;letmelerin Meta (Facebook/Instagram), Google Ads ve TikTok reklamlar&#305;n&#305; tek bir platformdan y&#246;netmelerini sa&#287;layan, AI destekli dijital reklam y&#246;netim platformudur.</p>
+        </div>
+
+        <p class="sub-label">Hangi sorunu &#231;&#246;zer?</p>
+        <div class="ps-grid">
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Her platform i&#231;in ayr&#305; panel</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">Tek panel</span>
+            </div>
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Manuel optimizasyon</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">AI Magic Scan</span>
+            </div>
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Strateji belirsizli&#287;i</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">AI strateji &#252;retimi</span>
+            </div>
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Rakipler g&#246;r&#252;nm&#252;yor</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">Rakip analizi</span>
+            </div>
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Reklam olu&#351;turma zor</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">Tek t&#305;kla AI reklam</span>
+            </div>
+            <div class="ps-card">
+                <span class="ps-icon ps-x">&#10007;</span>
+                <span class="ps-text">Tasar&#305;m i&#231;in d&#305;&#351; ara&#231;</span>
+                <span class="ps-arrow">&#8594;</span>
+                <span class="ps-icon ps-ok">&#10003;</span>
+                <span class="ps-solution">AI tasar&#305;m &#252;retimi</span>
+            </div>
+        </div>
+
+        <p class="sub-label">Platform Da&#287;&#305;l&#305;m&#305;</p>
+        <div class="bar-chart">
+            <div class="bar-row">
+                <span class="bar-label">Meta Ads</span>
+                <div class="bar-track"><div class="bar-fill" style="width:45%;background:#1877F2"></div></div>
+                <span class="bar-value">%45</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">Google Ads</span>
+                <div class="bar-track"><div class="bar-fill" style="width:35%;background:#34a853"></div></div>
+                <span class="bar-value">%35</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">TikTok Ads</span>
+                <div class="bar-track"><div class="bar-fill" style="width:15%;background:#000"></div></div>
+                <span class="bar-value">%15</span>
+            </div>
+            <div class="bar-row">
+                <span class="bar-label">SEO / Di&#287;er</span>
+                <div class="bar-track"><div class="bar-fill" style="width:5%;background:#9ca3af"></div></div>
+                <span class="bar-value">%5</span>
+            </div>
+        </div>
+
+        <div class="tags">
+            <span class="tag">&#199;ok platformlu y&#246;netim</span>
+            <span class="tag">AI strateji</span>
+            <span class="tag">Magic Scan</span>
+            <span class="tag">Rakip analizi</span>
+            <span class="tag">Tek t&#305;kla reklam</span>
+            <span class="tag">AI tasar&#305;m</span>
+            <span class="tag">Birle&#351;ik raporlama</span>
+            <span class="tag">Hedef kitle</span>
+            <span class="tag">SEO takibi</span>
+            <span class="tag">7/24 AI asistan</span>
+        </div>
+    </section>
+
+    <!-- Section 2 -->
+    <section>
+        <div class="section-header">
+            <span class="section-num">2</span>
+            <h2 class="section-title">Mod&#252;ller (Sidebar)</h2>
+        </div>
+
+        <div class="module-grid">
+            <div class="module-card">
+                <div class="module-icon" style="background:#1877F2">M</div>
+                <div><div class="module-name">Reklam &gt; Meta</div><div class="module-desc">Facebook ve Instagram reklam kampanyalar&#305;n&#305; olu&#351;turma, y&#246;netme ve performans takibi</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#34a853">G</div>
+                <div><div class="module-name">Reklam &gt; Google</div><div class="module-desc">Google Search, Display ve Video kampanyalar&#305;n&#305; olu&#351;turma ve y&#246;netme</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#000">T</div>
+                <div><div class="module-name">Reklam &gt; TikTok</div><div class="module-desc">TikTok reklam kampanyalar&#305;n&#305; ba&#351;latma ve y&#246;netme</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#6366f1">&#9733;</div>
+                <div><div class="module-name">Strateji</div><div class="module-desc">AI destekli pazarlama stratejisi olu&#351;turma. Hedef kitle, b&#252;t&#231;e da&#287;&#305;t&#305;m&#305;, kampanya plan&#305;</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#8b5cf6">&#9889;</div>
+                <div><div class="module-name">Optimizasyon</div><div class="module-desc">Magic Scan ile kampanyalar&#305; derinlemesine analiz, b&#252;t&#231;e ve teklif stratejisi &#246;nerileri</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#4f46e5">AI</div>
+                <div><div class="module-name">YoAi (Algoritma Merkezi)</div><div class="module-desc">Derin analiz, rakip k&#305;yaslama, tek t&#305;kla aksiyonlar, otomatik reklam olu&#351;turma</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#ec4899">&#9775;</div>
+                <div><div class="module-name">Hedef Kitle</div><div class="module-desc">AI tabanl&#305; kitle olu&#351;turma, Lookalike, retargeting y&#246;netimi</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#f59e0b">&#9998;</div>
+                <div><div class="module-name">Tasar&#305;m</div><div class="module-desc">AI ile g&#246;rsel ve video &#252;retimi. Metin ekleme, farkl&#305; en-boy oranlar&#305;</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#3b82f6">&#9776;</div>
+                <div><div class="module-name">Raporlar</div><div class="module-desc">Meta, Google Ads, Analytics ve Search Console verilerini birle&#351;tiren raporlar</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#22c55e">&#8679;</div>
+                <div><div class="module-name">SEO</div><div class="module-desc">Anahtar kelime s&#305;ralama takibi, teknik SEO sorunlar&#305; tespiti</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#0ea5e9">&#9741;</div>
+                <div><div class="module-name">Entegrasyon</div><div class="module-desc">Meta, Google Ads, Analytics, Search Console ve TikTok hesaplar&#305;n&#305; ba&#287;lama</div></div>
+            </div>
+            <div class="module-card">
+                <div class="module-icon" style="background:#6b7280">&#9881;</div>
+                <div><div class="module-name">Kurumsal</div><div class="module-desc">Gizlilik Politikas&#305;, &#199;erez Politikas&#305;, Kullan&#305;m Ko&#351;ullar&#305;, Veri Silme</div></div>
+            </div>
+        </div>
+    </section>
+
+    <!-- Section 3 -->
+    <section>
+        <div class="section-header">
+            <span class="section-num">3</span>
+            <h2 class="section-title">Maliyet ve Kazan&#231;</h2>
+        </div>
+
+        <!-- OpenAI API -->
+        <p class="sub-label">Ayl&#305;k Altyap&#305; Maliyetleri</p>
+
+        <div class="cost-card" style="margin-bottom:12px">
+            <div class="cost-header">
+                <div class="cost-header-left">
+                    <div class="cost-icon" style="background:#f0fdf4;color:#16a34a">O</div>
+                    <div>
+                        <span class="cost-name">OpenAI API</span>
+                        <span style="font-size:11px;color:#6b7280;margin-left:8px">Aktif model: <strong>gpt-4o-mini</strong></span>
+                    </div>
+                </div>
+                <span class="cost-price" style="background:#f0fdf4;color:#047857">~$51/ay</span>
+            </div>
+            <table class="summary-table" style="margin-top:12px;margin-bottom:0;font-size:11px">
+                <thead><tr>
+                    <th style="font-size:10px">Model</th>
+                    <th style="font-size:10px">Input (1M token)</th>
+                    <th style="font-size:10px">Output (1M token)</th>
+                    <th style="font-size:10px">Durum</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4"><td><strong>gpt-4o-mini</strong></td><td>$0.15</td><td>$0.60</td><td style="color:#047857;font-weight:600">&#10003; Aktif kullan&#305;lan</td></tr>
+                    <tr><td>gpt-4.1-mini</td><td>$0.40</td><td>$1.60</td><td style="color:#6b7280">Alternatif (2.7x)</td></tr>
+                    <tr><td>gpt-4.1</td><td>$2.00</td><td>$8.00</td><td style="color:#6b7280">Derin analiz i&#231;in</td></tr>
+                    <tr><td>o4-mini</td><td>$1.10</td><td>$4.40</td><td style="color:#ef4444">&#9888; Reasoning token ek maliyet</td></tr>
+                </tbody>
+            </table>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+                <div style="background:#f8fafc;border-radius:10px;padding:10px">
+                    <p style="font-size:11px;font-weight:600;margin-bottom:6px">Kullan&#305;m Alanlar&#305; (8 entegrasyon)</p>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.8">
+                        &#8226; &#304;&#231;erik &#252;retimi (SEO, reklam, sosyal medya)<br>
+                        &#8226; Strateji blueprint olu&#351;turma<br>
+                        &#8226; Kampanya analizi &amp; &#246;zetleme<br>
+                        &#8226; Reklam olu&#351;turma &#246;nerileri<br>
+                        &#8226; Prompt geli&#351;tirme (tasar&#305;m)<br>
+                        &#8226; Niyet alg&#305;lama &amp; kitle &#231;evirisi
+                    </div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:10px">
+                    <p style="font-size:11px;font-weight:600;margin-bottom:6px">100 M&#252;&#351;teri Maliyet K&#305;r&#305;l&#305;m&#305;</p>
+                    <div style="font-size:11px;color:#6b7280;line-height:1.8">
+                        &#8226; &#304;&#231;erik &#252;retimi (~3.000 istek): <strong>~$21/ay</strong><br>
+                        &#8226; Strateji (~600 istek): <strong>~$6/ay</strong><br>
+                        &#8226; Kampanya analizi (~1.500): <strong>~$24/ay</strong><br>
+                        &#8226; Toplam ~430K token/g&#252;n: <strong>~$51/ay</strong>
+                    </div>
+                </div>
+            </div>
+            <p style="font-size:10px;color:#94a3b8;margin-top:8px">&#9888; o4-mini kullansayd&#305;k: gizli reasoning token&#8217;lar y&#252;z&#252;nden ayn&#305; i&#351; 10-50x daha pahal&#305; olurdu (~$500-2.500/ay). gpt-4o-mini en do&#287;ru tercih.</p>
+        </div>
+
+        <!-- FAL.AI -->
+        <div class="cost-card" style="margin-bottom:12px">
+            <div class="cost-header">
+                <div class="cost-header-left">
+                    <div class="cost-icon" style="background:#fef3c7;color:#d97706">F</div>
+                    <div>
+                        <span class="cost-name">FAL.AI</span>
+                        <span style="font-size:11px;color:#6b7280;margin-left:8px">Abonelik yok, sadece kullan&#305;m ba&#351;&#305;na &#246;deme</span>
+                    </div>
+                </div>
+                <span class="cost-price" style="background:#fef3c7;color:#92400e">~$62/ay</span>
+            </div>
+            <table class="summary-table" style="margin-top:12px;margin-bottom:0;font-size:11px">
+                <thead><tr>
+                    <th style="font-size:10px">Kullan&#305;lan Model</th>
+                    <th style="font-size:10px">Birim Fiyat</th>
+                    <th style="font-size:10px">Kullan&#305;m</th>
+                    <th style="font-size:10px">Durum</th>
+                </tr></thead>
+                <tbody>
+                    <tr style="background:#f0fdf4"><td><strong>Flux Pro Kontext</strong></td><td>$0.04/g&#246;rsel</td><td>Referans g&#246;rselden &#252;retim</td><td style="color:#047857;font-weight:600">&#10003; Aktif</td></tr>
+                    <tr style="background:#f0fdf4"><td><strong>Seedream v4</strong></td><td>$0.03/g&#246;rsel</td><td>S&#305;f&#305;rdan g&#246;rsel &#252;retimi</td><td style="color:#047857;font-weight:600">&#10003; Aktif</td></tr>
+                    <tr style="background:#f0fdf4"><td><strong>Kling v2.5 Turbo Pro</strong></td><td>$0.07/saniye</td><td>Video &#252;retimi (5-10sn)</td><td style="color:#047857;font-weight:600">&#10003; Aktif</td></tr>
+                </tbody>
+            </table>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px;margin-top:12px">
+                <div style="background:#f8fafc;border-radius:10px;padding:10px">
+                    <p style="font-size:11px;font-weight:600;margin-bottom:6px">Birim Maliyet &#214;zeti</p>
+                    <div style="font-size:11px;color:#6b7280;line-height:2">
+                        &#8226; 1 g&#246;rsel (referansl&#305;): <strong>$0.04</strong><br>
+                        &#8226; 1 g&#246;rsel (s&#305;f&#305;rdan): <strong>$0.03</strong><br>
+                        &#8226; 1 video (5 saniye): <strong>$0.35</strong><br>
+                        &#8226; 1 video (10 saniye): <strong>$0.70</strong>
+                    </div>
+                </div>
+                <div style="background:#f8fafc;border-radius:10px;padding:10px">
+                    <p style="font-size:11px;font-weight:600;margin-bottom:6px">100 M&#252;&#351;teri Senaryo</p>
+                    <div style="font-size:11px;color:#6b7280;line-height:2">
+                        &#8226; 1.000 g&#246;rsel/ay (ort $0.035): <strong>~$35/ay</strong><br>
+                        &#8226; 100 video/ay (5sn, $0.35): <strong>~$35/ay</strong><br>
+                        &#8226; Kredi: 20 kredi = 1 g&#246;rsel<br>
+                        &#8226; Toplam tahmini: <strong>~$62/ay</strong> (min $10)
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Supabase & Vercel -->
+        <div class="cost-grid">
+            <div class="cost-card">
+                <div class="cost-header">
+                    <div class="cost-header-left">
+                        <div class="cost-icon" style="background:#eff6ff;color:#2563eb">S</div>
+                        <span class="cost-name">Supabase Pro</span>
+                    </div>
+                    <span class="cost-price" style="background:#eff6ff;color:#1d4ed8">$25/ay</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;color:#6b7280;margin-top:8px">
+                    <p>&#8226; 8GB veritaban&#305;</p>
+                    <p>&#8226; 250GB bandwidth</p>
+                    <p>&#8226; 100GB storage</p>
+                    <p>&#8226; 100K auth user</p>
+                    <p>&#8226; 7 g&#252;n g&#252;nl&#252;k backup</p>
+                    <p>&#8226; 2M edge function</p>
+                </div>
+                <p style="font-size:10px;color:#94a3b8;margin-top:6px">100 m&#252;&#351;teri i&#231;in yeterli. A&#351;&#305;m: DB $0.125/GB, Egress $0.09/GB</p>
+            </div>
+            <div class="cost-card">
+                <div class="cost-header">
+                    <div class="cost-header-left">
+                        <div class="cost-icon" style="background:#f5f5f5;color:#18181b">&#9650;</div>
+                        <span class="cost-name">Vercel Pro</span>
+                    </div>
+                    <span class="cost-price" style="background:#f5f5f5;color:#18181b">$20/ay</span>
+                </div>
+                <div style="display:grid;grid-template-columns:1fr 1fr;gap:4px 12px;font-size:11px;color:#6b7280;margin-top:8px">
+                    <p>&#8226; 1TB data transfer</p>
+                    <p>&#8226; 10M edge request</p>
+                    <p>&#8226; Custom domain</p>
+                    <p>&#8226; Analytics</p>
+                    <p>&#8226; SSL dahil</p>
+                    <p>&#8226; S&#305;n&#305;rs&#305;z deploy</p>
+                </div>
+                <p style="font-size:10px;color:#94a3b8;margin-top:6px">Kullan&#305;c&#305; ba&#351;&#305;na de&#287;il, proje ba&#351;&#305;na fiyat. A&#351;&#305;m: $0.15/GB</p>
+            </div>
+        </div>
+
+        <!-- Toplam Maliyet -->
+        <div class="total-box">
+            <p class="sub-label" style="margin-bottom:12px">Toplam Ayl&#305;k Maliyet (100 M&#252;&#351;teri Senaryosu)</p>
+            <div class="bar-row"><span class="bar-label">OpenAI (gpt-4o-mini)</span><div class="bar-track"><div class="bar-fill" style="width:32%;background:#22c55e"></div></div><span class="bar-value">$51</span></div>
+            <div class="bar-row"><span class="bar-label">FAL.AI (kullan&#305;m)</span><div class="bar-track"><div class="bar-fill" style="width:39%;background:#f59e0b"></div></div><span class="bar-value">$62</span></div>
+            <div class="bar-row"><span class="bar-label">Supabase Pro</span><div class="bar-track"><div class="bar-fill" style="width:16%;background:#3b82f6"></div></div><span class="bar-value">$25</span></div>
+            <div class="bar-row"><span class="bar-label">Vercel Pro</span><div class="bar-track"><div class="bar-fill" style="width:13%;background:#000"></div></div><span class="bar-value">$20</span></div>
+            <div class="total-divider">
+                <span class="total-label">TOPLAM</span>
+                <div><span class="total-val">~$158/ay</span><span class="total-note">(sabit $45 + de&#287;i&#351;ken ~$113)</span></div>
+            </div>
+            <p class="note">Sabit maliyet (Supabase + Vercel): $45/ay. De&#287;i&#351;ken maliyet (OpenAI + FAL.AI) kullan&#305;c&#305; say&#305;s&#305;na g&#246;re artar. 10 m&#252;&#351;teride ~$60/ay, 100 m&#252;&#351;teride ~$158/ay.</p>
+        </div>
+
+        <!-- SaaS Plans -->
+        <p class="sub-label">SaaS Abonelik Fiyatland&#305;rmas&#305;</p>
+        <div class="plan-grid">
+            <div class="plan-card">
+                <div class="plan-name">Basic</div>
+                <div class="plan-price"><span class="plan-price-val">$49</span><span class="plan-price-per">/ay</span></div>
+                <p class="plan-yearly">Y&#305;ll&#305;k: $34.30/ay <span class="discount">%30 indirim</span></p>
+                <div class="plan-features">
+                    &#10003; 2 reklam hesab&#305;<br>
+                    &#10003; 1 strateji/ay<br>
+                    &#10003; 3 AI tarama/g&#252;n<br>
+                    &#10003; 20 tasar&#305;m kredisi<br>
+                    &#10007; Optimizasyon yok
+                </div>
+            </div>
+            <div class="plan-card">
+                <div class="plan-name">Starter</div>
+                <div class="plan-price"><span class="plan-price-val">$99</span><span class="plan-price-per">/ay</span></div>
+                <p class="plan-yearly">Y&#305;ll&#305;k: $69.30/ay <span class="discount">%30 indirim</span></p>
+                <div class="plan-features">
+                    &#10003; 2 reklam hesab&#305;<br>
+                    &#10003; 3 strateji/ay<br>
+                    &#10003; 3 AI tarama/g&#252;n<br>
+                    &#10003; 60 tasar&#305;m kredisi<br>
+                    &#10003; Optimizasyon
+                </div>
+            </div>
+            <div class="plan-card popular">
+                <span class="plan-badge">Pop&#252;ler</span>
+                <div class="plan-name">Premium</div>
+                <div class="plan-price"><span class="plan-price-val">$199</span><span class="plan-price-per">/ay</span></div>
+                <p class="plan-yearly">Y&#305;ll&#305;k: $139.30/ay <span class="discount">%30 indirim</span></p>
+                <div class="plan-features">
+                    &#10003; 2 reklam hesab&#305;<br>
+                    &#10003; 10 strateji/ay<br>
+                    &#10003; 10 AI tarama/g&#252;n<br>
+                    &#10003; 100 tasar&#305;m kredisi<br>
+                    &#10003; 14 g&#252;n deneme
+                </div>
+            </div>
+            <div class="plan-card">
+                <div class="plan-name">Enterprise</div>
+                <div class="plan-price"><span class="plan-price-val">&#214;zel</span><span class="plan-price-per"> fiyat</span></div>
+                <p class="plan-yearly">&#304;htiyaca g&#246;re fiyatland&#305;rma</p>
+                <div class="plan-features">
+                    &#10003; 6+ reklam hesab&#305;<br>
+                    &#10003; S&#305;n&#305;rs&#305;z strateji<br>
+                    &#10003; S&#305;n&#305;rs&#305;z AI tarama<br>
+                    &#10003; S&#305;n&#305;rs&#305;z tasar&#305;m<br>
+                    &#10003; 14 g&#252;n deneme
+                </div>
+            </div>
+        </div>
+
+        <!-- Credit Packages -->
+        <p class="sub-label">Credit Packages (Additional Revenue)</p>
+        <div class="cost-grid" style="grid-template-columns:repeat(3,1fr);margin-bottom:32px">
+            <div class="cost-card" style="text-align:center">
+                <div class="cost-name" style="margin-bottom:4px">Standard</div>
+                <div style="font-size:20px;font-weight:800;color:#4f46e5">$9.99</div>
+                <div class="cost-detail" style="margin-top:4px">100 credits</div>
+            </div>
+            <div class="cost-card" style="text-align:center;border-color:#6366f1;background:rgba(99,102,241,0.03)">
+                <span class="plan-badge" style="margin-bottom:4px">Popular</span>
+                <div class="cost-name" style="margin-bottom:4px">Large</div>
+                <div style="font-size:20px;font-weight:800;color:#4f46e5">$39.99</div>
+                <div class="cost-detail" style="margin-top:4px">500 credits</div>
+            </div>
+            <div class="cost-card" style="text-align:center">
+                <div class="cost-name" style="margin-bottom:4px">Value</div>
+                <div style="font-size:20px;font-weight:800;color:#4f46e5">$69.99</div>
+                <div class="cost-detail" style="margin-top:4px">1,000 credits</div>
+            </div>
+        </div>
+        <p class="note" style="margin-top:-24px;margin-bottom:32px">Design generation: 20 credits/each &#8226; Extra strategy: 10 credits/each</p>
+
+        <!-- Gelir-Gider -->
+        <p class="sub-label">Gelir-Gider Projeksiyonu</p>
+        <p class="note" style="margin-bottom:16px;margin-top:0">100 m&#252;&#351;teri da&#287;&#305;l&#305;m&#305;: 40 Basic + 35 Starter + 20 Premium + 5 Enterprise ($500)</p>
+
+        <!-- Visual Chart -->
+        <div class="visual-chart">
+            <div class="visual-bars">
+                <div class="visual-bar-group">
+                    <div class="visual-bar-cols">
+                        <div class="visual-bar-col gelir" style="height:4%"></div>
+                        <div class="visual-bar-col kar" style="height:3.6%"></div>
+                    </div>
+                    <div class="visual-bar-label">10 m&#252;&#351;teri<br>$430 k&#226;r</div>
+                </div>
+                <div class="visual-bar-group">
+                    <div class="visual-bar-cols">
+                        <div class="visual-bar-col gelir" style="height:17%"></div>
+                        <div class="visual-bar-col kar" style="height:16.5%"></div>
+                    </div>
+                    <div class="visual-bar-label">20 m&#252;&#351;teri<br>$1,960 k&#226;r</div>
+                </div>
+                <div class="visual-bar-group">
+                    <div class="visual-bar-cols">
+                        <div class="visual-bar-col gelir" style="height:50%"></div>
+                        <div class="visual-bar-col kar" style="height:49%"></div>
+                    </div>
+                    <div class="visual-bar-label">50 m&#252;&#351;teri<br>$5,840 k&#226;r</div>
+                </div>
+                <div class="visual-bar-group">
+                    <div class="visual-bar-cols">
+                        <div class="visual-bar-col gelir" style="height:100%"></div>
+                        <div class="visual-bar-col kar" style="height:98.7%"></div>
+                    </div>
+                    <div class="visual-bar-label">100 m&#252;&#351;teri<br>(mix)</div>
+                </div>
+            </div>
+            <div class="visual-legend">
+                <span><span class="swatch" style="background:#c7d2fe"></span> Gelir</span>
+                <span><span class="swatch" style="background:#34d399"></span> Net K&#226;r</span>
+            </div>
+        </div>
+
+        <!-- Gelir Tablosu -->
+        <table class="summary-table">
+            <thead>
+                <tr>
+                    <th>Senaryo</th>
+                    <th>Ayl&#305;k Gelir</th>
+                    <th>Maliyet</th>
+                    <th>Net K&#226;r</th>
+                </tr>
+            </thead>
+            <tbody>
+                <tr>
+                    <td>10 m&#252;&#351;teri (Basic)</td>
+                    <td>$490</td>
+                    <td class="muted">$60</td>
+                    <td class="positive">+$430</td>
+                </tr>
+                <tr>
+                    <td>20 m&#252;&#351;teri (mix)</td>
+                    <td>$2,040</td>
+                    <td class="muted">$80</td>
+                    <td class="positive">+$1,960</td>
+                </tr>
+                <tr>
+                    <td>50 m&#252;&#351;teri (mix)</td>
+                    <td>$5,950</td>
+                    <td class="muted">$110</td>
+                    <td class="positive">+$5,840</td>
+                </tr>
+                <tr>
+                    <td>100 m&#252;&#351;teri (mix)</td>
+                    <td>$11,905</td>
+                    <td class="muted">$158</td>
+                    <td class="positive">+$11,747</td>
+                </tr>
+                <tr>
+                    <td>100 m&#252;&#351;teri (y&#305;ll&#305;k, %30 ind.)</td>
+                    <td>$8,333/ay</td>
+                    <td class="muted">$158</td>
+                    <td class="positive">+$8,175</td>
+                </tr>
+            </tbody>
+        </table>
+        <p class="note" style="margin-bottom:24px">Ek kredi sat&#305;&#351;lar&#305; (tahmini 30 m&#252;&#351;teri x 199 &#8378;/ay) ~$136/ay ek gelir dahil de&#287;ildir.</p>
+
+        <!-- Break-even -->
+        <div class="breakeven">
+            <div class="label">K&#226;r Marj&#305; (100 m&#252;&#351;teri)</div>
+            <div class="value">%98.7<span class="sep">|</span>Maliyet sadece $158/ay</div>
+        </div>
+    </section>
+
+    <p class="footer">&#169; 2024-2026 YO Dijital. T&#252;m haklar&#305; sakl&#305;d&#305;r.</p>
+</div>
+
+<script>
+// Rings platform icons
+const rings = document.getElementById('heroRings');
+const platforms = [
+    { label: 'Meta', angle: 0, color: '#1877F2' },
+    { label: 'Ggl', angle: 72, color: '#34a853' },
+    { label: 'TikT', angle: 144, color: '#000' },
+    { label: 'SEO', angle: 216, color: '#f59e0b' },
+    { label: 'AI', angle: 288, color: '#6366f1' },
+];
+platforms.forEach(p => {
+    const r = 76;
+    const rad = (p.angle - 90) * (Math.PI / 180);
+    const x = 96 + r * Math.cos(rad) - 14;
+    const y = 96 + r * Math.sin(rad) - 14;
+    const el = document.createElement('div');
+    el.className = 'ring-icon';
+    el.style.cssText = `left:${x}px;top:${y}px;background:${p.color}`;
+    el.textContent = p.label;
+    rings.appendChild(el);
+});
+</script>
+
+</body>
+</html>
