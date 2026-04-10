@@ -82,7 +82,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
       {/* Trigger */}
       <button
         onClick={() => { setOpen(!open); setLangOpen(false) }}
-        className={`w-full flex items-center ${collapsed ? 'justify-center' : 'justify-between'} p-2 rounded-xl bg-gray-50 border border-gray-200 hover:bg-gray-100 hover:border-gray-300 transition-colors shadow-sm`}
+        className={`w-full flex items-center ${collapsed ? 'justify-center' : 'justify-between'} p-2 rounded-xl bg-primary/10 border border-primary/20 hover:bg-primary/20 hover:border-primary/30 transition-colors shadow-sm`}
       >
         <div className="flex items-center gap-3">
           <div className="w-8 h-8 bg-primary rounded-full flex items-center justify-center text-white font-semibold text-sm shrink-0">
