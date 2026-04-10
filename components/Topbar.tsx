@@ -4,7 +4,6 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, type LucideIcon } from 'lucide-react'
-import LanguageSwitcher from './LanguageSwitcher'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle,
@@ -379,8 +378,6 @@ export default function Topbar({
             </button>
           )}
 
-          {/* 4. LANGUAGE SWITCHER */}
-          <LanguageSwitcher />
         </div>
       </div>
     </div>
