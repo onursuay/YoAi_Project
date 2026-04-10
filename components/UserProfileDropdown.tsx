@@ -104,12 +104,6 @@ export default function UserProfileDropdown({ collapsed }: Props) {
             collapsed ? 'left-full ml-2 bottom-0' : 'bottom-full mb-2 left-0'
           }`}
         >
-          {/* User header */}
-          <div className="px-4 py-3 border-b border-gray-100">
-            <p className="text-sm font-medium text-gray-900">{fullName}</p>
-            <p className="text-xs text-primary">{statusLabel}</p>
-          </div>
-
           {/* Menu items */}
           <div className="py-1">
             {menuItems.map(item => (
