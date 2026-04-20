@@ -72,7 +72,7 @@ export default function KpiDashboard({ kpis }: Props) {
                 </div>
                 <span className="text-[13px] text-gray-500 font-medium">{m.label}</span>
               </div>
-              <p className="text-xl font-bold text-gray-900">{m.value}</p>
+              <p className="text-base font-bold text-gray-900">{m.value}</p>
             </div>
           )
         })}

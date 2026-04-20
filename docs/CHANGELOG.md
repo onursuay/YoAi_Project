@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAi sayfa genişlik + KPI font küçültme
+- **Sorun:** İçerik alanı dar (`max-w-6xl`) görünüyordu; KPI rakamları (₺0, %0,00 vb.) `text-xl` ile gereksiz büyüktü.
+- **Çözüm:** Page container `max-w-6xl` → `max-w-[1440px]`. KpiDashboard rakamları `text-xl` → `text-base`.
+- **Dosyalar:** app/yoai/page.tsx, components/yoai/KpiDashboard.tsx
+
+---
+
 ## 2026-04-20 — AI Reklam Önerileri header + summary bar kaldırıldı
 - **Sorun:** "AI Reklam Önerileri" başlığı, açıklaması, "Yeniden Oluştur" / "Yeni Oluştur" butonları ve özet bar (kampanya sayısı, fırsat, AI öneri sayısı) gereksiz ve tekrarlı görünüyordu.
 - **Çözüm:** `AiAdSuggestions.tsx` içinden header bloğu, summary bar ve regenerate butonu kaldırıldı. Sadece Meta/Google öneri kartları ve teşhis mini-kartları + Tek Tıkla Onayla butonu kalıyor.
