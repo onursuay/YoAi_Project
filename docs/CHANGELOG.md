@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Öneri kartı default görseli değiştirildi
+- **Sorun:** AdPreviewCard'daki default görsel `/ai-birf.jpg` yerine yeni görsel istendi.
+- **Çözüm:** `public/digital-ads.jpg` eklendi; AdPreviewCard src güncellendi.
+- **Dosyalar:** components/yoai/AdPreviewCard.tsx, public/digital-ads.jpg
+
+---
+
 ## 2026-04-20 — YoAlgoritma: Kampanya İzleme (InsightStream) kaldırıldı
 - **Sorun:** "Kampanya İzleme · AI Kampanya Analizi · 0 aktif kampanya izleniyor" bölümü kullanıcıya operasyonel gürültü getiriyordu; izleme algoritmanın arka plan görevi olmalı.
 - **Çözüm:** `app/yoai/page.tsx` içinden InsightStream render'ı, import'u ve `insightsForStream` derivation'ı kaldırıldı. Component dosyası korundu. İzleme artık sadece cron + daily-run içinden arka planda yapılıyor; UI'da görünmüyor.

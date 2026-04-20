@@ -83,7 +83,7 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
               </div>
               <div className="px-3 py-2"><p className="text-[12px] text-gray-900 leading-relaxed line-clamp-3">{proposal.primaryText}</p></div>
               <div className="h-28 bg-gradient-to-br from-blue-50 to-indigo-50">
-                <img src="/ai-birf.jpg" alt="" className="w-full h-full object-cover" />
+                <img src="/digital-ads.jpg" alt="" className="w-full h-full object-cover" />
               </div>
               <div className="flex items-center justify-between px-3 py-2 bg-gray-50">
                 <div className="min-w-0">
