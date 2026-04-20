@@ -12,7 +12,6 @@ export async function GET(request: Request) {
 
   const cookieStore = await cookies()
   const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
-  const dashboardUrl = isEn ? '/en/dashboard' : '/dashboard'
   const integrationUrl = (q: string) => isEn ? `/en/integration?${q}` : `/entegrasyon?${q}`
 
   if (error) {
@@ -43,21 +42,43 @@ export async function GET(request: Request) {
 
   try {
     const tokens = await exchangeCodeForTokens(code, redirectUri)
-
-    const response = NextResponse.redirect(new URL(dashboardUrl, origin), { status: 302 })
-
-    response.cookies.set('ga_oauth_state', '', { maxAge: 0, path: '/' })
-
     const userId = cookieStore.get('user_id')?.value
 
-    if (userId && tokens.refresh_token) {
-      await upsertGAConnection(userId, {
-        refreshToken: tokens.refresh_token,
-        tokenScope: tokens.scope,
-        status: 'active',
-      })
+    console.log('[GA_CALLBACK]', {
+      hasUserId: !!userId,
+      hasRefreshToken: !!tokens.refresh_token,
+      scope: tokens.scope,
+    })
+
+    if (!userId) {
+      const response = NextResponse.redirect(
+        new URL(integrationUrl('ga=error&reason=no_user_session'), origin),
+        { status: 302 }
+      )
+      response.cookies.set('ga_oauth_state', '', { maxAge: 0, path: '/' })
+      return response
     }
 
+    if (!tokens.refresh_token) {
+      const response = NextResponse.redirect(
+        new URL(integrationUrl('ga=error&reason=no_refresh_token'), origin),
+        { status: 302 }
+      )
+      response.cookies.set('ga_oauth_state', '', { maxAge: 0, path: '/' })
+      return response
+    }
+
+    const saved = await upsertGAConnection(userId, {
+      refreshToken: tokens.refresh_token,
+      tokenScope: tokens.scope,
+      status: 'active',
+    })
+
+    const response = NextResponse.redirect(
+      new URL(integrationUrl(saved ? 'ga=connected' : 'ga=error&reason=db_save_failed'), origin),
+      { status: 302 }
+    )
+    response.cookies.set('ga_oauth_state', '', { maxAge: 0, path: '/' })
     return response
   } catch (err) {
     const reason = err instanceof Error ? err.message : 'token_exchange_failed'
