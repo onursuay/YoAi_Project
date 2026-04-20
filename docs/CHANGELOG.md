@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — AI Reklam Önerileri header + summary bar kaldırıldı
+- **Sorun:** "AI Reklam Önerileri" başlığı, açıklaması, "Yeniden Oluştur" / "Yeni Oluştur" butonları ve özet bar (kampanya sayısı, fırsat, AI öneri sayısı) gereksiz ve tekrarlı görünüyordu.
+- **Çözüm:** `AiAdSuggestions.tsx` içinden header bloğu, summary bar ve regenerate butonu kaldırıldı. Sadece Meta/Google öneri kartları ve teşhis mini-kartları + Tek Tıkla Onayla butonu kalıyor.
+- **Dosyalar:** components/yoai/AiAdSuggestions.tsx
+
+---
+
 ## 2026-04-20 — Rakip Analizi v2: gerçek creative body + LLM tema + dürüst format
 - **Sorun:** (1) Kendi reklam analizi sadece ad NAME üzerinde çalışıyordu (creative body'yi okumuyordu) — tema tespiti yanıltıcıydı. (2) Theme keyword listeleri 4 kategori × 6-8 kelime olarak sınırlıydı. (3) CTA liste çok dardı ve Meta'nın asıl CTA button type'ını hiç okumuyordu. (4) `competitorFormats` alanı aslında `ad.platforms` (facebook/instagram) değerlerini tutuyordu — bug. (5) `competitorInsight` metni rakip verisi 0 olsa bile AI tarafından üretiliyordu (hallucination riski).
 - **Çözüm:**

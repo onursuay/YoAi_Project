@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Inbox, BarChart3, RefreshCw, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Inbox, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import OneClickApproveDialog from './OneClickApproveDialog'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
@@ -54,7 +54,6 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
   const [summary, setSummary] = useState<Summary>(cached?.summary || { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 })
   // Cache varsa loading=false — hiç skeleton gösterme
   const [loading, setLoading] = useState(!cached)
-  const [regenerating, setRegenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [persisted, setPersisted] = useState(!!cached?.persisted)
   const [diagnoses, setDiagnoses] = useState<DiagnosisResult[]>(cached?.diagnoses || [])
@@ -129,12 +128,6 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
     fetchProposals().finally(() => setLoading(false))
   }, [connectedPlatforms])
 
-  const handleRegenerate = async () => {
-    setRegenerating(true)
-    setError(null)
-    await fetchProposals(true)
-    setRegenerating(false)
-  }
 
   // Loading skeleton kaldırıldı — cache/boş durumda direkt son state render edilir,
   // fetch biter bitmez data sessizce yerleşir.
@@ -161,43 +154,6 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
 
   return (
     <div>
-      {/* Header */}
-      <div className="flex items-center justify-between mb-5">
-        <div>
-          <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2"><Sparkles className="w-5 h-5 text-primary" />AI Reklam Önerileri</h2>
-          <p className="text-sm text-gray-500 mt-1">Kampanya amacı bazlı derin analiz ve AI kampanya önerileri</p>
-        </div>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={handleRegenerate}
-            disabled={regenerating}
-            className="inline-flex items-center gap-1.5 px-4 py-2 border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
-          >
-            <RefreshCw className={`w-3.5 h-3.5 ${regenerating ? 'animate-spin' : ''}`} />
-            {regenerating ? 'Yenileniyor...' : 'Yeniden Oluştur'}
-          </button>
-          <button onClick={() => onOpenWizard()} className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
-            <Sparkles className="w-3.5 h-3.5" />
-            Yeni Oluştur
-          </button>
-        </div>
-      </div>
-
-      {/* Summary bar */}
-      <div className="flex items-center gap-3 mb-4 bg-white rounded-xl border border-gray-100 px-4 py-3">
-        <BarChart3 className="w-4 h-4 text-primary shrink-0" />
-        <div className="flex items-center gap-4 text-xs text-gray-600 flex-wrap">
-          <span><strong className="text-gray-900">{summary.totalCampaignsAnalyzed}</strong> kampanya analiz edildi</span>
-          {summary.criticalIssues > 0 && <span><strong className="text-red-600">{summary.criticalIssues}</strong> kritik sorun</span>}
-          {summary.opportunities > 0 && <span><strong className="text-gray-600">{summary.opportunities}</strong> fırsat</span>}
-          <span><strong className="text-primary">{proposals.length}</strong> AI öneri</span>
-          <span className="text-gray-300">|</span>
-          <span className="text-[#1877F2] font-medium">Meta: {summary.metaCount}</span>
-          <span className="text-gray-700 font-medium">Google: {summary.googleCount}</span>
-          {persisted && <span className="text-[9px] text-gray-300 ml-auto">kayıtlı veri</span>}
-        </div>
-      </div>
-
       {/* Meta proposals */}
       {metaProposals.length > 0 && (
         <div className="mb-6">
