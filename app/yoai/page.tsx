@@ -293,7 +293,7 @@ export default function YoAiPage() {
 
             {/* No daily run yet — auto-bootstrap banner */}
             {!ccLoading && !ccData && !ccError && (
-              <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5">
                 {bootstrapping ? (
                   <Loader2 className="w-4 h-4 text-primary shrink-0 animate-spin" />
                 ) : (

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Bilgi bandı arkaplanı hafif yeşile alındı
+- **Sorun:** "Henüz günlük analiz yok" bandı gri-nötr duruyordu; kullanıcı hafif yeşil tint istedi (marka tonuyla uyumlu).
+- **Çözüm:** `bg-gray-50 border-gray-200` → `bg-primary/5 border-primary/20`. CLAUDE.md'deki "important" palette'i zaten bu kombinasyonu öneriyordu.
+- **Dosyalar:** app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — Amber / sarı renk tonları projeden kaldırıldı (CLAUDE.md kuralı)
 - **Sorun:** Kullanıcı amber/sarı/hardal/bej uyarı renklerini istemiyor; kalıcı kural olarak eklenmesini istedi.
 - **Çözüm:** `CLAUDE.md`'ye **UI Renk Kuralı (YASAK)** bölümü eklendi — `bg-amber-*`, `text-amber-*`, `border-amber-*`, `bg-yellow-*`, `text-yellow-*`, `border-yellow-*` class'ları artık projede kullanılmayacak. Onayları gösteren renk paleti tanımlandı (info=gray, important=primary, critical=red, success=emerald). Mevcut tüm `components/yoai/*` ve `app/yoai/*` dosyalarındaki amber/yellow class'ları toplu olarak gray tonlarına çevrildi.
