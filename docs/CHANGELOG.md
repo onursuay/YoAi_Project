@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Günlük cron 15:52'ye alındı (Istanbul)
+- **Sorun:** Günlük otomatik analizin 15:52 İstanbul saatinde başlaması istendi.
+- **Çözüm:** `vercel.json` cron schedule `0 7 * * *` (10:00 Istanbul) → `52 12 * * *` (15:52 Istanbul, UTC 12:52). UI'daki "10:00" metinleri "15:52" olarak güncellendi.
+- **Dosyalar:** vercel.json, app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — Öneri kartı default görseli değiştirildi
 - **Sorun:** AdPreviewCard'daki default görsel `/ai-birf.jpg` yerine yeni görsel istendi.
 - **Çözüm:** `public/digital-ads.jpg` eklendi; AdPreviewCard src güncellendi.
