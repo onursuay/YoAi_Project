@@ -81,44 +81,50 @@ export async function POST(request: Request) {
       return { proposals, fitAnalyses, debugInfo }
     }
 
-    // 1. Try persisted data ONLY if complete (both platforms have proposals)
+    // 1. Persisted veri varsa her zaman dön (kısmi bile olsa).
+    //    Sayfa yenilendiğinde yeniden tarama tetiklenmemesi için kritik.
+    //    Kullanıcı tam yeniden üretim isterse forceGenerate=true gönderir.
     if (!forceGenerate && userId) {
       const run = await getBestAvailableRun(userId)
 
       if (run?.ad_proposals_data?.proposals) {
         const persistedProposals = run.ad_proposals_data.proposals as any[]
-
         if (persistedProposals.length > 0) {
-          const persistedPlatforms = new Set(persistedProposals.map((p: any) => p.platform as Platform))
-
-          // ONLY return persisted data if BOTH platforms are represented.
-          // If incomplete → fall through to full live generation.
-          // Auto-complete was unreliable — just regenerate everything.
-          if (persistedPlatforms.has('Meta') && persistedPlatforms.has('Google')) {
-            const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
-            const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
-            const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-            console.log(`[GenerateAd] Persisted data complete (Meta: ${metaCount}, Google: ${googleCount}). Returning.`)
-            return NextResponse.json({
-              ok: true,
-              data: {
-                proposals: persistedProposals,
-                fitAnalyses: persistedFitAnalyses,
-                summary: { ...(run.ad_proposals_data.summary || {}), metaCount, googleCount, proposalsGenerated: persistedProposals.length },
-                diagnoses: run.ad_proposals_data.diagnoses || [],
-                decisions: run.ad_proposals_data.decisions || [],
+          const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
+          const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
+          const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
+          console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
+          return NextResponse.json({
+            ok: true,
+            data: {
+              proposals: persistedProposals,
+              fitAnalyses: persistedFitAnalyses,
+              summary: {
+                ...(run.ad_proposals_data.summary || {}),
+                metaCount,
+                googleCount,
+                proposalsGenerated: persistedProposals.length,
               },
-              persisted: true,
-              run_date: run.run_date,
-            })
-          }
-          // Incomplete persisted data → fall through to live generation
-          console.log(`[GenerateAd] Persisted data incomplete (platforms: ${[...persistedPlatforms].join(', ')}). Generating live.`)
+              diagnoses: run.ad_proposals_data.diagnoses || [],
+              decisions: run.ad_proposals_data.decisions || [],
+            },
+            persisted: true,
+            run_date: run.run_date,
+          })
         }
       }
+
+      // Persisted yok — boş veri dön. Live üretimi sadece forceGenerate ile çalıştır.
+      console.log('[GenerateAd] No persisted data; returning empty (forceGenerate=false).')
+      return NextResponse.json({
+        ok: true,
+        data: { proposals: [], fitAnalyses: [], summary: { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }, diagnoses: [], decisions: [] },
+        persisted: false,
+        empty: true,
+      })
     }
 
-    // 2. Full live generation (no persisted data at all, or forceGenerate)
+    // 2. Full live generation — ONLY when forceGenerate=true
     const [metaResult, googleResult] = await fetchBothPlatforms()
     console.log(`[GenerateAd] Live: Meta: ${metaResult.campaigns.length} campaigns, Google: ${googleResult.campaigns.length} campaigns`)
     const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]

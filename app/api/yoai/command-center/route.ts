@@ -1,16 +1,16 @@
 import { NextResponse } from 'next/server'
 import { getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
-import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120
+export const maxDuration = 10
 
 /* ────────────────────────────────────────────────────────────
    GET /api/yoai/command-center
-   Reads persisted daily run results.
-   If no persisted run exists (DB not ready / first use),
-   runs live analysis as one-time bootstrap.
-   Once daily-run cron is active, this only reads.
+   Sadece persisted daily run verisini döner.
+   Live analiz burada TETİKLENMEZ — sayfa yenilendiğinde
+   kullanıcıya yeniden tarama göstermemek için kritiktir.
+   Live analiz sadece kullanıcı "İlk Analizi Başlat" dediğinde
+   veya cron ile tetiklenir.
    ──────────────────────────────────────────────────────────── */
 export async function GET() {
   try {
@@ -22,24 +22,24 @@ export async function GET() {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
     }
 
-    // 1. Try persisted run
     const run = await getBestAvailableRun(userId)
 
     if (run && run.command_center_data) {
-      return NextResponse.json({
-        ok: true,
-        data: run.command_center_data,
-        persisted: true,
-        run_date: run.run_date,
-        run_status: run.status,
-      }, { headers: { 'Cache-Control': 'no-store' } })
+      return NextResponse.json(
+        {
+          ok: true,
+          data: run.command_center_data,
+          persisted: true,
+          run_date: run.run_date,
+          run_status: run.status,
+        },
+        { headers: { 'Cache-Control': 'no-store' } },
+      )
     }
 
-    // 2. No persisted run — live analysis (bootstrap until cron creates first run)
-    const result = await runDeepAnalysis()
-
+    // Persisted yok — boş state döndür, UI "İlk Analizi Başlat" butonu gösterir.
     return NextResponse.json(
-      { ok: true, data: result, persisted: false, run_date: null },
+      { ok: true, data: null, persisted: false, run_date: null },
       { headers: { 'Cache-Control': 'no-store' } },
     )
   } catch (error) {

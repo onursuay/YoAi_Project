@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma: sayfa yenileme artık tarama tetiklemiyor
+- **Sorun:** Sayfa her yenilendiğinde "Taranıyor…" gösterilip baştan analiz çalışıyordu. Kullanıcı sessiz arka plan davranışı beklerken her refresh'te boş ekran + uzun bekleme görüyordu.
+- **Çözüm:** `/api/yoai/command-center` artık sadece persisted veri döner; persisted yoksa `data: null` ile anında yanıtlar (UI "İlk Analizi Başlat" boş state gösterir). Önceki live `runDeepAnalysis()` fallback'i kaldırıldı. `/api/yoai/generate-ad` da aynı mantıkla: `forceGenerate=false` (normal yükleme) → persisted varsa hemen döner, yoksa boş döner — live üretim yalnızca kullanıcı "Yeniden Oluştur" butonuna bastığında (`forceGenerate=true`) çalışır. Taramalar sadece günlük cron (`GET /api/yoai/daily-run`) ve kullanıcının manuel tetiklediği "İlk Analizi Başlat" / "Yeniden Oluştur" yollarıyla yapılır.
+- **Dosyalar:** app/api/yoai/command-center/route.ts, app/api/yoai/generate-ad/route.ts
+
+---
+
 ## 2026-04-20 — YoAlgoritma sayfasında eski kartlar kaldırıldı
 - **Sorun:** Günlük Brifing, Hesap Durumu (HealthScore), Bütçe Dağılımı, Haftalık Özet kartları artık kullanılmıyor.
 - **Çözüm:** `app/yoai/page.tsx` içinden DailyBriefing, HealthScore, SmartBudgetPanel, WeeklyReport render'ları ve import'ları kaldırıldı. Component dosyaları korundu (başka bir yerde ihtiyaç olursa).
