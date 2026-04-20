@@ -1,19 +1,17 @@
 import {
-  type CreditState,
-  type SubscriptionState,
   type UserProfile,
   type InvoiceInfo,
   type InvoiceRecord,
   type AiScanUsage,
   type StrategyUsage,
-  CREDIT_DEFAULTS,
-  SUBSCRIPTION_DEFAULTS,
   USER_DEFAULTS,
 } from './types'
 
+// NOTE: `yoai-credits` and `yoai-subscription` were removed — those are now
+// server-side only (see /api/billing/current and the Supabase subscriptions /
+// credit_balances tables). The remaining keys are either display prefs
+// (profile, invoice-info) or usage counters that reset automatically.
 const KEYS = {
-  credits: 'yoai-credits',
-  subscription: 'yoai-subscription',
   profile: 'yoai-profile',
   invoiceInfo: 'yoai-invoice-info',
   invoiceHistory: 'yoai-invoice-history',
@@ -36,24 +34,6 @@ function set<T>(key: string, value: T): void {
   try {
     localStorage.setItem(key, JSON.stringify(value))
   } catch { /* quota exceeded */ }
-}
-
-// ── Credits ────────────────────────────────────────────────────
-export function getStoredCredits(): CreditState {
-  return get(KEYS.credits, CREDIT_DEFAULTS)
-}
-
-export function setStoredCredits(state: CreditState): void {
-  set(KEYS.credits, state)
-}
-
-// ── Subscription ───────────────────────────────────────────────
-export function getStoredSubscription(): SubscriptionState {
-  return get(KEYS.subscription, SUBSCRIPTION_DEFAULTS)
-}
-
-export function setStoredSubscription(state: SubscriptionState): void {
-  set(KEYS.subscription, state)
 }
 
 // ── Profile ────────────────────────────────────────────────────

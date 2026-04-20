@@ -2,12 +2,13 @@
 
 import { createContext, useContext, useState, useEffect, useCallback, type ReactNode } from 'react'
 import { type SubscriptionState, SUBSCRIPTION_DEFAULTS } from '@/lib/subscription/types'
-import { getStoredSubscription, setStoredSubscription, getAiScanUsage, incrementAiScanUsage, getStrategyUsage, incrementStrategyUsage } from '@/lib/subscription/storage'
+import { getAiScanUsage, incrementAiScanUsage, getStrategyUsage, incrementStrategyUsage } from '@/lib/subscription/storage'
 import { isPaidSubscription, isTrialActive, getTrialDaysRemaining, canUseOptimization, getAiScanDailyLimit, getStrategyMonthlyLimit, hasActiveSubscription } from '@/lib/subscription/helpers'
 
 interface SubscriptionContextValue {
   subscription: SubscriptionState
-  updateSubscription: (partial: Partial<SubscriptionState>) => void
+  loading: boolean
+  refresh: () => Promise<void>
   isPaid: boolean
   isTrialActive: boolean
   trialDaysRemaining: number
@@ -19,33 +20,55 @@ interface SubscriptionContextValue {
   recordAiScan: () => boolean
   strategyUsedThisMonth: number
   strategyMonthlyLimit: number
-  canUseStrategy: boolean       // Plan limiti dahilinde mi?
-  needsCreditsForStrategy: boolean // Limit aşıldı, kredi gerekiyor mu?
+  canUseStrategy: boolean
+  needsCreditsForStrategy: boolean
   recordStrategyUsage: () => boolean
 }
 
 const SubscriptionContext = createContext<SubscriptionContextValue | null>(null)
 
+const FREE_DEFAULT: SubscriptionState = {
+  planId: 'free',
+  status: 'expired',
+  billingCycle: 'monthly',
+  startDate: new Date().toISOString(),
+  trialEndDate: null,
+  currentPeriodEnd: new Date().toISOString(),
+}
+
 export function SubscriptionProvider({ children }: { children: ReactNode }) {
   const [sub, setSub] = useState<SubscriptionState>(SUBSCRIPTION_DEFAULTS)
-  const [loaded, setLoaded] = useState(false)
+  const [loading, setLoading] = useState(true)
   const [aiScanUsedToday, setAiScanUsedToday] = useState(0)
   const [strategyUsedThisMonth, setStrategyUsedThisMonth] = useState(0)
 
+  const refresh = useCallback(async () => {
+    try {
+      const res = await fetch('/api/billing/current', { cache: 'no-store' })
+      if (!res.ok) { setSub(FREE_DEFAULT); return }
+      const data = await res.json()
+      if (data?.ok && data.subscription) {
+        setSub({
+          planId: data.subscription.planId,
+          status: data.subscription.status,
+          billingCycle: data.subscription.billingCycle,
+          startDate: data.subscription.startDate,
+          trialEndDate: data.subscription.trialEndDate,
+          currentPeriodEnd: data.subscription.currentPeriodEnd,
+        })
+      } else {
+        setSub(FREE_DEFAULT)
+      }
+    } finally {
+      setLoading(false)
+    }
+  }, [])
+
   useEffect(() => {
-    setSub(getStoredSubscription())
+    refresh()
     setAiScanUsedToday(getAiScanUsage().count)
     setStrategyUsedThisMonth(getStrategyUsage().count)
-    setLoaded(true)
-  }, [])
-
-  useEffect(() => {
-    if (loaded) setStoredSubscription(sub)
-  }, [sub, loaded])
-
-  const updateSubscription = useCallback((partial: Partial<SubscriptionState>) => {
-    setSub(prev => ({ ...prev, ...partial }))
-  }, [])
+  }, [refresh])
 
   const paid = isPaidSubscription(sub)
   const trial = isTrialActive(sub)
@@ -75,7 +98,8 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
   return (
     <SubscriptionContext.Provider value={{
       subscription: sub,
-      updateSubscription,
+      loading,
+      refresh,
       isPaid: paid,
       isTrialActive: trial,
       trialDaysRemaining: trialDays,

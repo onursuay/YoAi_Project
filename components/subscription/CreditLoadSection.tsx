@@ -8,28 +8,40 @@ import { CREDIT_PACKAGES } from '@/lib/subscription/plans'
 
 export default function CreditLoadSection() {
   const t = useTranslations('subscription.credits')
-  const { credits, addCredits } = useCredits()
+  const { credits } = useCredits()
   const [selectedId, setSelectedId] = useState<string | null>(null)
-  const [purchased, setPurchased] = useState(false)
+  const [starting, setStarting] = useState(false)
 
   const selectedPkg = CREDIT_PACKAGES.find(p => p.id === selectedId)
 
-  const handlePurchase = () => {
-    if (!selectedPkg) return
-    // TODO: Payment integration — for now just add credits
-    addCredits(selectedPkg.credits)
-    setPurchased(true)
-    setTimeout(() => {
-      setPurchased(false)
-      setSelectedId(null)
-    }, 2000)
+  const handlePurchase = async () => {
+    if (!selectedPkg || starting) return
+    setStarting(true)
+    try {
+      const res = await fetch('/api/billing/iyzico/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'credit_pack', packageId: selectedPkg.id }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok || !data.paymentPageUrl) {
+        alert(data?.error === 'iyzico_not_configured'
+          ? 'Ödeme sistemi henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.'
+          : 'Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+        return
+      }
+      window.location.href = data.paymentPageUrl
+    } catch {
+      alert('Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+    } finally {
+      setStarting(false)
+    }
   }
 
   return (
     <div id="krediler" className="bg-white rounded-2xl border border-gray-200 p-6">
       <h3 className="text-base font-bold text-gray-900 mb-4">{t('title')}</h3>
 
-      {/* Current balance */}
       <div className="flex items-center gap-3 mb-6 p-4 bg-amber-50 border border-amber-200 rounded-xl">
         <Coins className="w-6 h-6 text-amber-500" />
         <div>
@@ -38,7 +50,6 @@ export default function CreditLoadSection() {
         </div>
       </div>
 
-      {/* Credit packages — select one */}
       <div className="space-y-3 mb-4">
         {CREDIT_PACKAGES.map(pkg => {
           const isSelected = selectedId === pkg.id
@@ -84,24 +95,22 @@ export default function CreditLoadSection() {
         })}
       </div>
 
-      {/* Purchase button */}
       <button
         onClick={handlePurchase}
-        disabled={!selectedPkg || purchased}
+        disabled={!selectedPkg || starting}
         className={`w-full py-3 text-sm font-medium rounded-xl transition-colors ${
-          selectedPkg && !purchased
+          selectedPkg && !starting
             ? 'bg-primary text-white hover:bg-primary/90'
             : 'bg-gray-200 text-gray-400 cursor-not-allowed'
         }`}
       >
-        {purchased
-          ? t('purchased') ?? 'Kredi Yüklendi!'
+        {starting
+          ? 'Ödeme sayfasına yönlendiriliyor...'
           : selectedPkg
             ? `₺${selectedPkg.price} — ${t('buy') ?? 'Satın Al'}`
             : t('selectPackage') ?? 'Paket Seçin'}
       </button>
 
-      {/* Info */}
       <div className="space-y-1.5 text-sm text-gray-500 mt-4">
         <p>{t('perGeneration')}</p>
         <p className="text-primary font-medium">{t('freeCredits')}</p>

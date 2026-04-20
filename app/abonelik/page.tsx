@@ -6,22 +6,26 @@ import Topbar from '@/components/Topbar'
 import PlanCard from '@/components/subscription/PlanCard'
 import CreditLoadSection from '@/components/subscription/CreditLoadSection'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
+import { useCredits } from '@/components/providers/CreditProvider'
 import { SUBSCRIPTION_PLANS } from '@/lib/subscription/plans'
-import type { BillingCycle, PlanId } from '@/lib/subscription/types'
+import type { BillingCycle } from '@/lib/subscription/types'
 import { Calendar, CreditCard, Shield } from 'lucide-react'
 
 export default function AbonelikPage() {
   const t = useTranslations('subscription')
   const {
     subscription,
-    updateSubscription,
+    refresh: refreshSubscription,
     isTrialActive: trial,
     trialDaysRemaining,
     isPaid,
   } = useSubscription()
+  const { refresh: refreshCredits } = useCredits()
 
   const [billingCycle, setBillingCycle] = useState<BillingCycle>('monthly')
   const [adAccountCount, setAdAccountCount] = useState(2)
+  const [paymentBanner, setPaymentBanner] = useState<'success' | 'failed' | null>(null)
+  const [starting, setStarting] = useState(false)
 
   // Scroll to #krediler if hash present
   useEffect(() => {
@@ -32,21 +36,47 @@ export default function AbonelikPage() {
     }
   }, [])
 
-  const handleSelectPlan = (planId: string) => {
-    if (planId === 'enterprise') {
-      // TODO: Contact form
-      return
+  // Purely visual: the real activation happens server-side in the callback.
+  // We refetch current state and show a toast — never trust the query param.
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const p = params.get('payment')
+    if (p === 'success' || p === 'failed') {
+      setPaymentBanner(p)
+      refreshSubscription()
+      refreshCredits()
+      const url = new URL(window.location.href)
+      url.searchParams.delete('payment')
+      url.searchParams.delete('reason')
+      window.history.replaceState({}, '', url.toString())
+      const t = setTimeout(() => setPaymentBanner(null), 6000)
+      return () => clearTimeout(t)
     }
-    updateSubscription({
-      planId: planId as PlanId,
-      status: 'active',
-      billingCycle,
-      startDate: new Date().toISOString(),
-      trialEndDate: null,
-      currentPeriodEnd: new Date(
-        Date.now() + (billingCycle === 'monthly' ? 30 : 365) * 24 * 60 * 60 * 1000
-      ).toISOString(),
-    })
+  }, [refreshSubscription, refreshCredits])
+
+  const handleSelectPlan = async (planId: string) => {
+    if (planId === 'enterprise') return
+    if (starting) return
+    setStarting(true)
+    try {
+      const res = await fetch('/api/billing/iyzico/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ type: 'subscription', planId, billingCycle, adAccounts: adAccountCount }),
+      })
+      const data = await res.json()
+      if (!res.ok || !data?.ok || !data.paymentPageUrl) {
+        alert(data?.error === 'iyzico_not_configured'
+          ? 'Ödeme sistemi henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.'
+          : 'Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+        return
+      }
+      window.location.href = data.paymentPageUrl
+    } catch {
+      alert('Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+    } finally {
+      setStarting(false)
+    }
   }
 
   const currentPlan = SUBSCRIPTION_PLANS.find(p => p.id === subscription.planId)
@@ -60,6 +90,16 @@ export default function AbonelikPage() {
     <>
       <Topbar title={t('title')} description={t('description')} />
       <div className="flex-1 overflow-y-auto">
+        {paymentBanner === 'success' && (
+          <div className="mx-8 mt-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
+            Ödemeniz alındı. Aboneliğiniz güncelleniyor.
+          </div>
+        )}
+        {paymentBanner === 'failed' && (
+          <div className="mx-8 mt-4 px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
+            Ödeme tamamlanamadı. Lütfen tekrar deneyin.
+          </div>
+        )}
 
         {/* ── Plans Section — full width, dark background ──────────── */}
         <div className="bg-gray-900 px-8 py-10">
