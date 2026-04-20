@@ -4,6 +4,7 @@ import { useState } from 'react'
 import { X, Loader2, Sparkles, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import MetaPreflightPanel, { type PreflightConfirmPayload } from './MetaPreflightPanel'
+import MetaCreativePanel, { type MetaCreativePayload } from './MetaCreativePanel'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 
@@ -13,7 +14,7 @@ interface Props {
   initialProposal?: FullAdProposal | null
 }
 
-type Step = 'platform' | 'generating' | 'preview' | 'preflight' | 'publishing' | 'done'
+type Step = 'platform' | 'generating' | 'preview' | 'preflight' | 'creative' | 'publishing' | 'done'
 
 export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal }: Props) {
   // If opened with a specific proposal, skip directly to preview
@@ -24,6 +25,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
   const [error, setError] = useState<string | null>(null)
   const [competitorInfo, setCompetitorInfo] = useState<{ competitorCount: number; summary: string } | null>(null)
   const [publishResult, setPublishResult] = useState<{ ok: boolean; message: string } | null>(null)
+  const [preflightPayload, setPreflightPayload] = useState<PreflightConfirmPayload | null>(null)
 
   const handleSelectPlatform = async (p: Platform) => {
     setPlatform(p)
@@ -58,11 +60,26 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
     if (selected.platform === 'Meta') {
       setStep('preflight')
     } else {
-      handlePublish(null)
+      handlePublish(null, null)
     }
   }
 
-  const handlePublish = async (preflightPayload: PreflightConfirmPayload | null) => {
+  const handlePreflightConfirm = (payload: PreflightConfirmPayload) => {
+    setPreflightPayload(payload)
+    const selected = proposals[selectedIndex]
+    if (!selected) return
+    // Meta + tüm blocking asset'ler hazırsa → creative step; aksi halde legacy
+    if (selected.platform === 'Meta' && payload.allBlockingResolved) {
+      setStep('creative')
+    } else {
+      handlePublish(payload, null)
+    }
+  }
+
+  const handlePublish = async (
+    pfPayload: PreflightConfirmPayload | null,
+    creative: MetaCreativePayload | null,
+  ) => {
     const selected = proposals[selectedIndex]
     if (!selected) return
     setStep('publishing')
@@ -70,19 +87,21 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
     console.log('[AdCreationWizard] Publishing proposal:', JSON.stringify({
       platform: selected.platform,
       campaignName: selected.campaignName,
-      hasPreflight: !!preflightPayload,
+      hasPreflight: !!pfPayload,
+      hasCreative: !!creative,
     }))
 
     try {
       const body: Record<string, unknown> = { proposal: selected }
-      if (preflightPayload) {
-        body.explicitPageId = preflightPayload.explicitPageId
-        body.pixelId = preflightPayload.pixelId
-        body.conversionEvent = preflightPayload.conversionEvent
-        body.websiteUrl = preflightPayload.websiteUrl
-        body.leadFormId = preflightPayload.leadFormId
-        // creative pipeline (Faz 3) henüz yok — creative göndermiyoruz,
-        // backend legacy path'e düşer (campaign+adset, ad Ads Manager'dan)
+      if (pfPayload) {
+        body.explicitPageId = pfPayload.explicitPageId
+        body.pixelId = pfPayload.pixelId
+        body.conversionEvent = pfPayload.conversionEvent
+        body.websiteUrl = pfPayload.websiteUrl
+        body.leadFormId = pfPayload.leadFormId
+      }
+      if (creative) {
+        body.creative = creative
       }
 
       const res = await fetch('/api/yoai/create-ad', {
@@ -197,9 +216,30 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                 objective={proposals[selectedIndex].campaignObjective || 'OUTCOME_TRAFFIC'}
                 destination={proposals[selectedIndex].destinationType || 'WEBSITE'}
                 initialWebsiteUrl={proposals[selectedIndex].finalUrl || null}
-                creativeAvailable={false}
+                creativeAvailable={true}
                 onBack={() => setStep('preview')}
-                onConfirm={(payload) => handlePublish(payload)}
+                onConfirm={handlePreflightConfirm}
+              />
+            </div>
+          )}
+
+          {step === 'creative' && proposals[selectedIndex]?.platform === 'Meta' && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                Kreatif Hazırlama — Görsel + Metin
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                AI görsel üretilir, Meta'ya yüklenir ve reklam taslağına otomatik bağlanır.
+              </p>
+              <MetaCreativePanel
+                primaryText={proposals[selectedIndex].primaryText || proposals[selectedIndex].headline || ''}
+                headline={proposals[selectedIndex].headline}
+                description={proposals[selectedIndex].description}
+                callToAction={proposals[selectedIndex].callToAction}
+                websiteUrl={preflightPayload?.websiteUrl || proposals[selectedIndex].finalUrl || null}
+                imagePrompt={`${proposals[selectedIndex].headline || ''} ${proposals[selectedIndex].description || ''}`.trim() || proposals[selectedIndex].campaignName}
+                onBack={() => setStep('preflight')}
+                onConfirm={(creative) => handlePublish(preflightPayload, creative)}
               />
             </div>
           )}
