@@ -6,7 +6,6 @@ import YoAlgoritmaHeader from '@/components/yoai/YoAlgoritmaHeader'
 import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 // HealthOverviewCards removed — stats moved into CommandCenterHeader
-import InsightStream from '@/components/yoai/InsightStream'
 import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
@@ -220,18 +219,6 @@ export default function YoAiPage() {
     }
   })() : null
 
-  // Map campaigns + AI summaries for InsightStream
-  const insightsForStream = ccData ? ccData.campaigns.map(c => {
-    const aiSummary = ccData.aiSummaries.find(s => s.campaignId === c.id)
-    return {
-      ...c,
-      summary: aiSummary?.summary || '',
-      recommendation: aiSummary?.recommendation || '',
-      confidence: aiSummary?.confidence ?? c.score,
-      insightStatus: aiSummary?.insightStatus || (c.riskLevel === 'low' ? 'monitoring' as const : 'review_needed' as const),
-    }
-  }) : []
-
   return (
     <>
       {/* Custom header — no language selector, with recommendations ticker */}
@@ -309,8 +296,6 @@ export default function YoAiPage() {
                 onOpenWizard={(proposal) => { setWizardProposal(proposal || null); setShowAdWizard(true) }}
               />
             )}
-
-            <InsightStream insights={insightsForStream} loading={ccLoading} />
 
             <AnalysisCapabilities />
 
