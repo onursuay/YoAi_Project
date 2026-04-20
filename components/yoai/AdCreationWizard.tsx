@@ -3,6 +3,7 @@
 import { useState } from 'react'
 import { X, Loader2, Sparkles, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
+import MetaPreflightPanel, { type PreflightConfirmPayload } from './MetaPreflightPanel'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 
@@ -12,7 +13,7 @@ interface Props {
   initialProposal?: FullAdProposal | null
 }
 
-type Step = 'platform' | 'generating' | 'preview' | 'publishing' | 'done'
+type Step = 'platform' | 'generating' | 'preview' | 'preflight' | 'publishing' | 'done'
 
 export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal }: Props) {
   // If opened with a specific proposal, skip directly to preview
@@ -50,7 +51,18 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
     }
   }
 
-  const handlePublish = async () => {
+  const handleContinueFromPreview = () => {
+    const selected = proposals[selectedIndex]
+    if (!selected) return
+    // Meta → preflight step; Google → direct publish (eski akış)
+    if (selected.platform === 'Meta') {
+      setStep('preflight')
+    } else {
+      handlePublish(null)
+    }
+  }
+
+  const handlePublish = async (preflightPayload: PreflightConfirmPayload | null) => {
     const selected = proposals[selectedIndex]
     if (!selected) return
     setStep('publishing')
@@ -58,19 +70,25 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
     console.log('[AdCreationWizard] Publishing proposal:', JSON.stringify({
       platform: selected.platform,
       campaignName: selected.campaignName,
-      hasHeadlines: !!selected.headlines?.length,
-      hasDescriptions: !!selected.descriptions?.length,
-      hasPrimaryText: !!selected.primaryText,
-      dailyBudget: selected.dailyBudget,
-      biddingStrategy: selected.biddingStrategy,
-      finalUrl: selected.finalUrl,
+      hasPreflight: !!preflightPayload,
     }))
 
     try {
+      const body: Record<string, unknown> = { proposal: selected }
+      if (preflightPayload) {
+        body.explicitPageId = preflightPayload.explicitPageId
+        body.pixelId = preflightPayload.pixelId
+        body.conversionEvent = preflightPayload.conversionEvent
+        body.websiteUrl = preflightPayload.websiteUrl
+        body.leadFormId = preflightPayload.leadFormId
+        // creative pipeline (Faz 3) henüz yok — creative göndermiyoruz,
+        // backend legacy path'e düşer (campaign+adset, ad Ads Manager'dan)
+      }
+
       const res = await fetch('/api/yoai/create-ad', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ proposal: selected }),
+        body: JSON.stringify(body),
       })
       const text = await res.text()
       console.log(`[AdCreationWizard] Response status: ${res.status}, body: ${text.slice(0, 500)}`)
@@ -159,10 +177,30 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                 <button onClick={() => { setStep('platform'); setProposals([]); setError(null) }} className="inline-flex items-center gap-1.5 px-4 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-lg transition-colors">
                   <ChevronLeft className="w-4 h-4" />Geri
                 </button>
-                <button onClick={handlePublish} className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
-                  Kampanyayı Oluştur (PAUSED)<ChevronRight className="w-4 h-4" />
+                <button onClick={handleContinueFromPreview} className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
+                  Devam Et<ChevronRight className="w-4 h-4" />
                 </button>
               </div>
+            </div>
+          )}
+
+          {step === 'preflight' && proposals[selectedIndex]?.platform === 'Meta' && (
+            <div>
+              <h3 className="text-sm font-semibold text-gray-900 mb-4">
+                Ön Kontrol — Meta Taslağı Hazırlanıyor
+              </h3>
+              <p className="text-xs text-gray-500 mb-4">
+                Kampanya oluşturulmadan önce gerekli varlıklar doğrulanır. Eksik olan varlıklar
+                ya da birden fazla Facebook sayfası varsa burada netleştirilir.
+              </p>
+              <MetaPreflightPanel
+                objective={proposals[selectedIndex].campaignObjective || 'OUTCOME_TRAFFIC'}
+                destination={proposals[selectedIndex].destinationType || 'WEBSITE'}
+                initialWebsiteUrl={proposals[selectedIndex].finalUrl || null}
+                creativeAvailable={false}
+                onBack={() => setStep('preview')}
+                onConfirm={(payload) => handlePublish(payload)}
+              />
             </div>
           )}
 
