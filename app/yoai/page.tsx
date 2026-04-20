@@ -242,7 +242,7 @@ export default function YoAiPage() {
                 <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-4" />
                 <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz günlük analiz oluşturulmadı</h3>
                 <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-                  YoAlgoritma Merkezi her gün saat 15:52'de otomatik olarak tüm reklamlarınızı analiz eder ve AI kampanya önerileri oluşturur.
+                  YoAlgoritma Merkezi her gün saat 16:00'de otomatik olarak tüm reklamlarınızı analiz eder ve AI kampanya önerileri oluşturur.
                 </p>
                 <button
                   onClick={async () => {
@@ -301,7 +301,7 @@ export default function YoAiPage() {
 
             {!ccLoading && ccRunDate && (
               <p className="text-center text-[10px] text-gray-400 pb-4">
-                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 15:52'de otomatik güncellenir
+                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 16:00'de otomatik güncellenir
               </p>
             )}
           </div>

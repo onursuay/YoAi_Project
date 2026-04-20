@@ -2,7 +2,7 @@
   "crons": [
     {
       "path": "/api/yoai/daily-run",
-      "schedule": "52 12 * * *"
+      "schedule": "0 13 * * *"
     }
   ]
 }

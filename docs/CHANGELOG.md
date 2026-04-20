@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Günlük cron 16:00'a alındı (Istanbul)
+- **Sorun:** Günlük otomatik analizin 16:00 İstanbul saatinde başlaması istendi.
+- **Çözüm:** `vercel.json` cron `0 13 * * *` (16:00 Istanbul, 13:00 UTC). UI metinleri "16:00" olarak güncellendi.
+- **Dosyalar:** vercel.json, app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — Günlük cron 15:52'ye alındı (Istanbul)
 - **Sorun:** Günlük otomatik analizin 15:52 İstanbul saatinde başlaması istendi.
 - **Çözüm:** `vercel.json` cron schedule `0 7 * * *` (10:00 Istanbul) → `52 12 * * *` (15:52 Istanbul, UTC 12:52). UI'daki "10:00" metinleri "15:52" olarak güncellendi.
