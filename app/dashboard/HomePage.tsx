@@ -100,9 +100,9 @@ export default function HomePage() {
 
   // Formatters
   const fmtCurrency = useCallback((v: number) => {
-    return v.toLocaleString(localeString, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
+    return (Number(v) || 0).toLocaleString(localeString, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
   }, [localeString])
-  const fmtInt = useCallback((v: number) => v.toLocaleString(localeString), [localeString])
+  const fmtInt = useCallback((v: number) => (Number(v) || 0).toLocaleString(localeString), [localeString])
   const fmtDelta = (pct: number) => `${pct >= 0 ? '↑' : '↓'} %${Math.abs(pct).toFixed(1)}`
 
   // Fetch all data
@@ -163,7 +163,7 @@ export default function HomePage() {
         metaFetch(`/api/meta/insights?since=${dateRange.from}&until=${dateRange.to}`, { cache: 'no-store' })
           .then(r => r.json())
           .then(data => {
-            if (data && data.ok !== false) {
+            if (data && data.ok !== false && (data.impressions !== undefined || data.clicks !== undefined)) {
               const spend = typeof data.spendTRY === 'string' ? parseFloat(data.spendTRY) : Number(data.spendTRY) || 0
               setMetaInsights({ ...data, spendTRY: spend })
             }

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Dashboard açılış crash fix (Meta 401 → toLocaleString undefined)
+- **Sorun:** Meta API 401 döndüğünde hata objesi `metaInsights` state'e set ediliyordu; `clicks`/`impressions` undefined gelince `fmtInt(undefined).toLocaleString` crash yapıp sayfayı tamamen kırıyordu
+- **Çözüm:** `fmtCurrency`/`fmtInt` null-safe yapıldı (`Number(v) || 0`); Meta data check'ine `impressions !== undefined || clicks !== undefined` guard eklendi
+- **Dosyalar:** app/dashboard/HomePage.tsx
+
+---
+
 ## 2026-04-10 — Dropdown kullanıcı bilgi bloğu kaldırıldı
 - **Sorun:** Sol alt profil dropdown açıldığında en üstte "Onur Şuay" ve "Deneme Sürümü" bilgi satırı görünüyordu
 - **Çözüm:** `UserProfileDropdown.tsx` içindeki "User header" div bloğu (px-4 py-3 border-b) tamamen silindi; dropdown artık doğrudan "Hesabım" menü maddesiyle başlıyor
