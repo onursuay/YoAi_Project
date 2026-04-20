@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma sayfası: hafif yeşil arkaplan + daha okunaklı typography
+- **Sorun:** YoAi sayfa arkaplanı beyaz/gri boş duruyordu ve yazılar küçüktü; Meta Ads wizard'ının kullandığı yumuşak yeşil gradient + daha büyük font hiyerarşisi referans alınarak benzer aesthetic istendi.
+- **Çözüm:** (1) `app/yoai/page.tsx` arkaplan `bg-gray-50` → `bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20`. (2) Banner metni `text-xs` → `text-sm`. (3) `KpiDashboard` etiket `text-[11px]`→`text-[13px]`, değer `text-lg`→`text-xl`, ikon alanı 7×7→8×8, padding 4→5. (4) `CommandCenterHeader` başlık `text-xl`→`text-2xl`, açıklama `text-xs`→`text-sm`, stats kutuları ikon 7→9, etiket `text-[9px]`→`text-[11px]`, değer `text-sm`→`text-base`; durum pill'leri ve "AI Reklam Oluştur" butonu daha büyük. (5) `AiAdSuggestions` başlık `text-lg`→`text-xl`, alt metin `text-xs`→`text-sm`, butonlar daha büyük. (6) `AnalysisCapabilities` başlık + kart fontları büyütüldü, kart padding 4→5.
+- **Dosyalar:** app/yoai/page.tsx, components/yoai/KpiDashboard.tsx, components/yoai/CommandCenterHeader.tsx, components/yoai/AiAdSuggestions.tsx, components/yoai/AnalysisCapabilities.tsx
+
+---
+
 ## 2026-04-20 — Bilgi bandı arkaplanı hafif yeşile alındı
 - **Sorun:** "Henüz günlük analiz yok" bandı gri-nötr duruyordu; kullanıcı hafif yeşil tint istedi (marka tonuyla uyumlu).
 - **Çözüm:** `bg-gray-50 border-gray-200` → `bg-primary/5 border-primary/20`. CLAUDE.md'deki "important" palette'i zaten bu kombinasyonu öneriyordu.

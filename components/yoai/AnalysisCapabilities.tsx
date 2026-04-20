@@ -66,26 +66,26 @@ const CAPABILITIES: Capability[] = [
 export default function AnalysisCapabilities() {
   return (
     <div>
-      <div className="mb-4">
-        <h2 className="text-lg font-semibold text-gray-900 flex items-center gap-1.5"><Cpu className="w-4 h-4 text-primary" />AI Analiz Yetenekleri</h2>
-        <p className="text-xs text-gray-400 mt-0.5">
+      <div className="mb-5">
+        <h2 className="text-xl font-semibold text-gray-900 flex items-center gap-2"><Cpu className="w-5 h-5 text-primary" />AI Analiz Yetenekleri</h2>
+        <p className="text-sm text-gray-500 mt-1">
           YoAi&apos;nin kampanyalarınızı değerlendirmek için kullandığı analiz katmanları
         </p>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
         {CAPABILITIES.map((cap) => {
           const Icon = cap.icon
           return (
             <div
               key={cap.title}
-              className="group bg-white rounded-xl border border-gray-100 p-4 hover:shadow-md hover:border-gray-200 transition-all duration-200"
+              className="group bg-white rounded-xl border border-gray-100 p-5 hover:shadow-md hover:border-gray-200 transition-all duration-200"
             >
-              <div className={`w-9 h-9 ${cap.bg} rounded-lg flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
-                <Icon className={`w-4.5 h-4.5 ${cap.color}`} />
+              <div className={`w-10 h-10 ${cap.bg} rounded-lg flex items-center justify-center mb-3 group-hover:scale-105 transition-transform`}>
+                <Icon className={`w-5 h-5 ${cap.color}`} />
               </div>
-              <h3 className="text-sm font-semibold text-gray-900 mb-1">{cap.title}</h3>
-              <p className="text-xs text-gray-500 leading-relaxed">{cap.description}</p>
+              <h3 className="text-base font-semibold text-gray-900 mb-1">{cap.title}</h3>
+              <p className="text-sm text-gray-500 leading-relaxed">{cap.description}</p>
             </div>
           )
         })}

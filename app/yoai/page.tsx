@@ -278,7 +278,7 @@ export default function YoAiPage() {
     <>
       {/* Custom header — no language selector, with recommendations ticker */}
       <YoAlgoritmaHeader actions={ccData?.actions} />
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gray-50">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20">
         {isIdleWithNoMessages ? (
           <div className="max-w-6xl mx-auto px-6 py-6 space-y-8 pb-12">
             {ccError && !ccLoading && (
@@ -299,7 +299,7 @@ export default function YoAiPage() {
                 ) : (
                   <Sparkles className="w-4 h-4 text-primary shrink-0" />
                 )}
-                <p className="text-xs text-gray-700 flex-1">
+                <p className="text-sm text-gray-700 flex-1">
                   {bootstrapping
                     ? 'İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.'
                     : 'Henüz günlük analiz yok. Her gün 16:15\'da otomatik çalışır; şimdi başlatmak için:'}

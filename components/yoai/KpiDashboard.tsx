@@ -65,14 +65,14 @@ export default function KpiDashboard({ kpis }: Props) {
         {metrics.map(m => {
           const Icon = m.icon
           return (
-            <div key={m.label} className="bg-white rounded-2xl border border-gray-100 p-4 hover:shadow-md transition-all">
+            <div key={m.label} className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all">
               <div className="flex items-center gap-2 mb-2">
-                <div className={`w-7 h-7 ${m.iconBg} rounded-lg flex items-center justify-center`}>
-                  <Icon className={`w-3.5 h-3.5 ${m.iconColor}`} />
+                <div className={`w-8 h-8 ${m.iconBg} rounded-lg flex items-center justify-center`}>
+                  <Icon className={`w-4 h-4 ${m.iconColor}`} />
                 </div>
-                <span className="text-[11px] text-gray-400 font-medium">{m.label}</span>
+                <span className="text-[13px] text-gray-500 font-medium">{m.label}</span>
               </div>
-              <p className="text-lg font-bold text-gray-900">{m.value}</p>
+              <p className="text-xl font-bold text-gray-900">{m.value}</p>
             </div>
           )
         })}
