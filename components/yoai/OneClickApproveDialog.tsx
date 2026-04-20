@@ -131,7 +131,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
                   {proposal.objectiveLabel} · Günlük bütçe: {proposal.dailyBudget} TL
                 </p>
               </div>
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-700">
                 Onay verdiğinde kampanya + reklam seti + reklam (görsel dahil) tümü{' '}
                 <strong>PAUSED</strong> olarak oluşturulur. Hiçbir şey otomatik yayınlanmaz.
               </div>
@@ -156,7 +156,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
 
           {phase === 'needs_input' && (
             <div className="space-y-4">
-              <div className="bg-amber-50 border border-amber-200 rounded-xl px-4 py-3 text-xs text-amber-800">
+              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-700">
                 {message}
               </div>
 
@@ -282,7 +282,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
 
           {phase === 'error' && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
-              <AlertTriangle className="w-14 h-14 text-amber-500 mb-4" />
+              <AlertTriangle className="w-14 h-14 text-gray-500 mb-4" />
               <h3 className="text-lg font-semibold text-gray-900 mb-2">Hata</h3>
               <p className="text-sm text-gray-600 max-w-sm">{message}</p>
               <div className="flex gap-2 mt-4">

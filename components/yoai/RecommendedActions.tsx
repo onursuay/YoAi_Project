@@ -6,7 +6,7 @@ import type { ExecutableAction, ActionType } from '@/lib/yoai/actionTypes'
 
 const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }> = {
   high: { label: 'Yüksek', color: 'text-red-700', bg: 'bg-red-50' },
-  medium: { label: 'Orta', color: 'text-amber-700', bg: 'bg-amber-50' },
+  medium: { label: 'Orta', color: 'text-gray-700', bg: 'bg-gray-50' },
   low: { label: 'Düşük', color: 'text-gray-600', bg: 'bg-gray-100' },
 }
 

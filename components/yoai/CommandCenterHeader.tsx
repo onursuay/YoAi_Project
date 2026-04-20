@@ -21,7 +21,7 @@ export default function CommandCenterHeader({ health, lastAnalysis, loading, aiG
     { label: 'Bağlı Platformlar', value: health?.connectedAccounts.platforms.join(', ') || '—', icon: Monitor, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
     { label: 'Aktif Kampanya', value: health ? `${health.activeCampaigns} kampanya` : '—', icon: Megaphone, color: 'text-violet-400', bgColor: 'bg-violet-500/10' },
     { label: 'Kritik Uyarılar', value: health ? health.criticalAlerts : '—', icon: AlertOctagon, color: (health?.criticalAlerts ?? 0) > 0 ? 'text-red-400' : 'text-gray-500', bgColor: (health?.criticalAlerts ?? 0) > 0 ? 'bg-red-500/10' : 'bg-gray-500/10' },
-    { label: 'İyileştirme Fırsatları', value: health ? health.opportunities : '—', icon: Lightbulb, color: 'text-amber-400', bgColor: 'bg-amber-500/10' },
+    { label: 'İyileştirme Fırsatları', value: health ? health.opportunities : '—', icon: Lightbulb, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
     { label: 'Bekleyen Onaylar', value: health ? health.pendingApprovals : '—', icon: ClipboardCheck, color: 'text-primary', bgColor: 'bg-primary/10' },
     { label: 'Önerilen Aksiyonlar', value: health ? health.draftActions : '—', icon: Layers, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
   ]

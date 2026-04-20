@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Amber / sarı renk tonları projeden kaldırıldı (CLAUDE.md kuralı)
+- **Sorun:** Kullanıcı amber/sarı/hardal/bej uyarı renklerini istemiyor; kalıcı kural olarak eklenmesini istedi.
+- **Çözüm:** `CLAUDE.md`'ye **UI Renk Kuralı (YASAK)** bölümü eklendi — `bg-amber-*`, `text-amber-*`, `border-amber-*`, `bg-yellow-*`, `text-yellow-*`, `border-yellow-*` class'ları artık projede kullanılmayacak. Onayları gösteren renk paleti tanımlandı (info=gray, important=primary, critical=red, success=emerald). Mevcut tüm `components/yoai/*` ve `app/yoai/*` dosyalarındaki amber/yellow class'ları toplu olarak gray tonlarına çevrildi.
+- **Dosyalar:** CLAUDE.md, app/yoai/page.tsx, components/yoai/* (20+ dosya)
+
+---
+
 ## 2026-04-20 — YoAlgoritma otomatik bootstrap + cron 16:15'e alındı
 - **Sorun:** Kullanıcı YoAi sayfasını açtığında hiç veri yoksa "İlk Analizi Başlat" butonuna basmak zorunda kalıyordu. Talep edilen davranış: sayfa açılır, kullanıcı hiçbir şey yapmadan arka planda analiz başlar ve hazır olunca görünür.
 - **Çözüm:** (1) `app/yoai/page.tsx` — sayfa mount edildiğinde eğer backend'de de cache'te de veri yoksa otomatik olarak `/api/yoai/daily-run` POST tetiklenir (arka planda), bu sırada banner'da loader + "İlk analiz arka planda hazırlanıyor…" mesajı gösterilir; bitince otomatik fetch ile veri yerleşir. (2) Vercel cron `0 13 * * *` → `15 13 * * *` (16:15 Istanbul). UI metinleri "16:15" olarak güncellendi.

@@ -68,7 +68,7 @@ function rootCauseColor(id: RootCauseId): string {
   if (id === 'pixel_misfire' || id === 'budget_starvation') {
     return 'bg-red-50 border-red-200 text-red-700'
   }
-  return 'bg-amber-50 border-amber-200 text-amber-800'
+  return 'bg-gray-50 border-gray-200 text-gray-700'
 }
 
 export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
@@ -140,7 +140,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
         <div className="text-xs text-gray-600">
           <strong className="text-gray-900">{total}</strong> kampanya teşhis edildi —{' '}
           <span className="text-emerald-700">{healthy} sağlıklı</span>,{' '}
-          <span className="text-amber-700">{issueCount} sorunlu</span>.
+          <span className="text-gray-700">{issueCount} sorunlu</span>.
         </div>
       </div>
 
@@ -162,7 +162,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                   {d.primary.id === 'healthy' ? (
                     <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0" />
                   ) : (
-                    <AlertTriangle className="w-4 h-4 text-amber-600 shrink-0" />
+                    <AlertTriangle className="w-4 h-4 text-gray-600 shrink-0" />
                   )}
                   <div>
                     <p className="text-sm font-medium text-gray-900">{d.campaignName}</p>

@@ -14,7 +14,7 @@ export default function YoAlgoritmaHeader({ actions }: Props) {
   // Build ticker items from actions
   const tickerItems = (actions || []).slice(0, 8).map(a => {
     const icon = a.priority === 'high' ? AlertTriangle : a.priority === 'medium' ? TrendingUp : Zap
-    const color = a.priority === 'high' ? 'text-red-600' : a.priority === 'medium' ? 'text-amber-600' : 'text-primary'
+    const color = a.priority === 'high' ? 'text-red-600' : a.priority === 'medium' ? 'text-gray-600' : 'text-primary'
     const platformBadge = a.platform === 'Meta' ? 'text-[#1877F2]' : 'text-gray-600'
     return { icon, color, platformBadge, platform: a.platform, text: `${a.title} — ${a.reason}` }
   })

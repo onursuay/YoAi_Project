@@ -71,14 +71,14 @@ export default function HealthScore({ campaigns, kpis, loading }: Props) {
   const { totalScore, breakdown, tips, level, pointsToNext } = computeHealthScore(campaigns, kpis)
   if (breakdown.length === 0) return null
 
-  const scoreColor = totalScore >= 70 ? 'text-emerald-600' : totalScore >= 50 ? 'text-amber-600' : 'text-red-600'
-  const ringColor = totalScore >= 70 ? 'stroke-emerald-500' : totalScore >= 50 ? 'stroke-amber-500' : 'stroke-red-500'
+  const scoreColor = totalScore >= 70 ? 'text-emerald-600' : totalScore >= 50 ? 'text-gray-600' : 'text-red-600'
+  const ringColor = totalScore >= 70 ? 'stroke-emerald-500' : totalScore >= 50 ? 'stroke-gray-500' : 'stroke-red-500'
   const circumference = 2 * Math.PI * 40
   const dashOffset = circumference - (totalScore / 100) * circumference
 
   const levelStyle: Record<string, string> = {
     Platin: 'bg-violet-50 text-violet-700',
-    Altın: 'bg-amber-50 text-amber-700',
+    Altın: 'bg-gray-50 text-gray-700',
     Gümüş: 'bg-gray-100 text-gray-600',
     Bronz: 'bg-orange-50 text-orange-700',
     Başlangıç: 'bg-gray-50 text-gray-500',
@@ -162,9 +162,9 @@ export default function HealthScore({ campaigns, kpis, loading }: Props) {
       <div className="space-y-3 mb-4">
         {breakdown.map(b => {
           const pct = (b.score / b.maxScore) * 100
-          const barColor = pct >= 72 ? 'bg-emerald-500' : pct >= 48 ? 'bg-amber-500' : 'bg-red-500'
+          const barColor = pct >= 72 ? 'bg-emerald-500' : pct >= 48 ? 'bg-gray-500' : 'bg-red-500'
           const statusLabel = pct >= 72 ? 'İyi' : pct >= 48 ? 'Orta' : 'Zayıf'
-          const statusText = pct >= 72 ? 'text-emerald-600' : pct >= 48 ? 'text-amber-600' : 'text-red-600'
+          const statusText = pct >= 72 ? 'text-emerald-600' : pct >= 48 ? 'text-gray-600' : 'text-red-600'
           return (
             <div key={b.category}>
               <div className="flex items-center justify-between mb-1">

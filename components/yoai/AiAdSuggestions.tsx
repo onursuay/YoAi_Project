@@ -189,7 +189,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         <div className="flex items-center gap-4 text-[11px] text-gray-500 flex-wrap">
           <span><strong className="text-gray-900">{summary.totalCampaignsAnalyzed}</strong> kampanya analiz edildi</span>
           {summary.criticalIssues > 0 && <span><strong className="text-red-600">{summary.criticalIssues}</strong> kritik sorun</span>}
-          {summary.opportunities > 0 && <span><strong className="text-amber-600">{summary.opportunities}</strong> fırsat</span>}
+          {summary.opportunities > 0 && <span><strong className="text-gray-600">{summary.opportunities}</strong> fırsat</span>}
           <span><strong className="text-primary">{proposals.length}</strong> AI öneri</span>
           <span className="text-gray-300">|</span>
           <span className="text-[#1877F2] font-medium">Meta: {summary.metaCount}</span>
@@ -217,7 +217,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
                 <div key={p.id || `meta_${i}`} className="space-y-2">
                   <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
                   {diag && diag.primary.id !== 'healthy' && (
-                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-[11px] text-amber-900 flex items-start gap-2">
+                    <div className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-2 text-[11px] text-gray-800 flex items-start gap-2">
                       <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
                       <div className="flex-1">
                         <p className="font-semibold">
@@ -225,7 +225,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
                         </p>
                         <p className="mt-0.5 opacity-80">{diag.primary.summary}</p>
                         {dec && dec.actions[0] && (
-                          <p className="mt-1 text-[10px] text-amber-800">
+                          <p className="mt-1 text-[10px] text-gray-700">
                             → Önerilen: <strong>{dec.actions[0].title}</strong>
                           </p>
                         )}

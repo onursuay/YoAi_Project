@@ -47,7 +47,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
   const scoreRanges = [
     { label: '80-100', color: 'bg-emerald-500', count: activeCampaigns.filter(c => c.score >= 80).length },
     { label: '60-79', color: 'bg-lime-400', count: activeCampaigns.filter(c => c.score >= 60 && c.score < 80).length },
-    { label: '40-59', color: 'bg-amber-400', count: activeCampaigns.filter(c => c.score >= 40 && c.score < 60).length },
+    { label: '40-59', color: 'bg-gray-400', count: activeCampaigns.filter(c => c.score >= 40 && c.score < 60).length },
     { label: '0-39', color: 'bg-red-400', count: activeCampaigns.filter(c => c.score < 40).length },
   ]
   const maxScoreCount = Math.max(...scoreRanges.map(r => r.count), 1)
@@ -225,13 +225,13 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
             {top3.map((c, i) => (
               <div key={c.id} className="flex items-center gap-2 rounded-lg px-3 py-2 bg-gray-50/60">
                 <span className={`text-[10px] font-bold w-5 h-5 rounded-full flex items-center justify-center shrink-0 ${
-                  i === 0 ? 'bg-amber-100 text-amber-700' : i === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600'
+                  i === 0 ? 'bg-gray-100 text-gray-700' : i === 1 ? 'bg-gray-200 text-gray-600' : 'bg-orange-100 text-orange-600'
                 }`}>{i + 1}</span>
                 <div className="flex-1 min-w-0">
                   <p className="text-[11px] text-gray-800 font-medium truncate">{c.campaignName}</p>
                   <p className="text-[9px] text-gray-400">{c.platform} · ₺{fmtCompact(c.metrics.spend)}</p>
                 </div>
-                <span className={`text-[11px] font-bold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>{c.score}</span>
+                <span className={`text-[11px] font-bold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-gray-600' : 'text-red-600'}`}>{c.score}</span>
               </div>
             ))}
           </div>

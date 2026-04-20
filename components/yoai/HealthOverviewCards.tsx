@@ -23,7 +23,7 @@ export default function HealthOverviewCards({ health, loading }: Props) {
     { label: 'Bağlı Platformlar', value: health.connectedAccounts.count, subtitle: health.connectedAccounts.platforms.join(', ') || 'Bağlı platform yok', icon: Monitor, iconColor: 'text-blue-600', iconBg: 'bg-blue-50' },
     { label: 'Aktif Kampanyalar', value: health.activeCampaigns, subtitle: `${health.totalAdsets} adset · ${health.totalAds} reklam`, icon: Megaphone, iconColor: 'text-violet-600', iconBg: 'bg-violet-50' },
     { label: 'Kritik Uyarılar', value: health.criticalAlerts, subtitle: health.criticalAlerts > 0 ? 'Müdahale önerilir' : 'Kritik sorun yok', icon: AlertOctagon, iconColor: 'text-red-600', iconBg: 'bg-red-50', highlight: health.criticalAlerts > 0 },
-    { label: 'İyileştirme Fırsatları', value: health.opportunities, subtitle: 'Yüksek öncelikli aksiyonlar', icon: Lightbulb, iconColor: 'text-amber-600', iconBg: 'bg-amber-50' },
+    { label: 'İyileştirme Fırsatları', value: health.opportunities, subtitle: 'Yüksek öncelikli aksiyonlar', icon: Lightbulb, iconColor: 'text-gray-600', iconBg: 'bg-gray-50' },
     { label: 'Bekleyen Onaylar', value: health.pendingApprovals, subtitle: health.pendingApprovals > 0 ? 'AI taslakları hazır' : 'Bekleyen yok', icon: ClipboardCheck, iconColor: 'text-primary', iconBg: 'bg-emerald-50' },
     { label: 'Önerilen Aksiyonlar', value: health.draftActions, subtitle: 'AI tarafından önerildi', icon: Layers, iconColor: 'text-indigo-600', iconBg: 'bg-indigo-50' },
   ]

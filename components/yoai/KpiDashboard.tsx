@@ -40,8 +40,8 @@ export default function KpiDashboard({ kpis }: Props) {
       label: 'Ort. CTR',
       value: kpis ? `%${fmt(kpis.weightedCtr, 2)}` : '—',
       icon: TrendingUp,
-      iconColor: 'text-amber-600',
-      iconBg: 'bg-amber-50',
+      iconColor: 'text-gray-600',
+      iconBg: 'bg-gray-50',
     },
     {
       label: 'Ort. CPC',

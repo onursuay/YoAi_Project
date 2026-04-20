@@ -293,13 +293,13 @@ export default function YoAiPage() {
 
             {/* No daily run yet — auto-bootstrap banner */}
             {!ccLoading && !ccData && !ccError && (
-              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+              <div className="flex items-center gap-3 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
                 {bootstrapping ? (
-                  <Loader2 className="w-4 h-4 text-amber-600 shrink-0 animate-spin" />
+                  <Loader2 className="w-4 h-4 text-primary shrink-0 animate-spin" />
                 ) : (
-                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                  <Sparkles className="w-4 h-4 text-primary shrink-0" />
                 )}
-                <p className="text-xs text-amber-900 flex-1">
+                <p className="text-xs text-gray-700 flex-1">
                   {bootstrapping
                     ? 'İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.'
                     : 'Henüz günlük analiz yok. Her gün 16:15\'da otomatik çalışır; şimdi başlatmak için:'}
@@ -307,7 +307,7 @@ export default function YoAiPage() {
                 {!bootstrapping && (
                   <button
                     onClick={triggerBackgroundBootstrap}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors shrink-0"
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
                   >
                     Şimdi Başlat
                   </button>
@@ -318,8 +318,8 @@ export default function YoAiPage() {
             {ccData?.errors && ccData.errors.length > 0 && (
               <div className="space-y-2">
                 {ccData.errors.map((err, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-                    <span className="text-xs text-amber-700">{err}</span>
+                  <div key={i} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
+                    <span className="text-xs text-gray-700">{err}</span>
                   </div>
                 ))}
               </div>

@@ -108,18 +108,18 @@ export default function CompetitorDashboard() {
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
               {gaps.map(gap => (
                 <div key={gap.id} className={`rounded-xl p-4 border ${
-                  gap.type === 'messaging' ? 'bg-amber-50 border-amber-100' :
+                  gap.type === 'messaging' ? 'bg-gray-50 border-gray-100' :
                   gap.type === 'positioning' && gap.priority === 'low' ? 'bg-emerald-50 border-emerald-100' :
                   'bg-blue-50 border-blue-100'
                 }`}>
                   <div className="flex items-start gap-3">
-                    {gap.type === 'messaging' ? <AlertTriangle className="w-4 h-4 text-amber-500 mt-0.5 shrink-0" /> :
+                    {gap.type === 'messaging' ? <AlertTriangle className="w-4 h-4 text-gray-500 mt-0.5 shrink-0" /> :
                      gap.priority === 'low' ? <TrendingUp className="w-4 h-4 text-emerald-500 mt-0.5 shrink-0" /> :
                      <Info className="w-4 h-4 text-blue-500 mt-0.5 shrink-0" />}
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-sm font-medium text-gray-900">{gap.title}</p>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${gap.priority === 'high' ? 'bg-red-100 text-red-700' : gap.priority === 'medium' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'}`}>{gap.priority === 'high' ? 'Yüksek' : gap.priority === 'medium' ? 'Orta' : 'Avantaj'}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${gap.priority === 'high' ? 'bg-red-100 text-red-700' : gap.priority === 'medium' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-600'}`}>{gap.priority === 'high' ? 'Yüksek' : gap.priority === 'medium' ? 'Orta' : 'Avantaj'}</span>
                       </div>
                       <p className="text-xs text-gray-600 mb-1">{gap.description}</p>
                       <p className="text-xs text-primary font-medium">{gap.recommendation}</p>
@@ -208,7 +208,7 @@ export default function CompetitorDashboard() {
               {userProfile.optimizationGoals.length > 0 && (
                 <div>
                   <p className="text-[10px] text-gray-400 mb-1">Optimizasyon Hedefleri</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.optimizationGoals.map(g => <span key={g} className="text-[9px] bg-amber-50 text-amber-700 px-1.5 py-0.5 rounded">{g}</span>)}</div>
+                  <div className="flex flex-wrap gap-1">{userProfile.optimizationGoals.map(g => <span key={g} className="text-[9px] bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded">{g}</span>)}</div>
                 </div>
               )}
               {userProfile.biddingStrategies.length > 0 && (

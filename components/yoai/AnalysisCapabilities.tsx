@@ -44,8 +44,8 @@ const CAPABILITIES: Capability[] = [
     title: 'Kreatif Yorgunluk Tespiti',
     description: 'Frequency artışı, CTR düşüşü ve kreatif yorgunluk sinyallerini izler.',
     icon: Palette,
-    color: 'text-amber-600',
-    bg: 'bg-amber-50',
+    color: 'text-gray-600',
+    bg: 'bg-gray-50',
   },
   {
     title: 'Bütçe Verimlilik Kontrolü',

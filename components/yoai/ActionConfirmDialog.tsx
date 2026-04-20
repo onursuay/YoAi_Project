@@ -75,7 +75,7 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
           <>
             {/* Confirm state */}
             <div className="flex items-center gap-3 mb-4">
-              {isRisky && <AlertTriangle className="w-6 h-6 text-amber-500 shrink-0" />}
+              {isRisky && <AlertTriangle className="w-6 h-6 text-gray-500 shrink-0" />}
               <h3 className="text-lg font-semibold text-gray-900">{label}</h3>
             </div>
 
@@ -109,7 +109,7 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
             </div>
 
             {isRisky && (
-              <p className="text-xs text-amber-600 bg-amber-50 rounded-lg px-3 py-2 mb-4">
+              <p className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mb-4">
                 Bu aksiyon kampanya performansını etkileyebilir. Devam etmek istediğinizden emin misiniz?
               </p>
             )}

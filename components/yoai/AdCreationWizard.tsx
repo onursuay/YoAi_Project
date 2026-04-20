@@ -262,7 +262,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                 </>
               ) : (
                 <>
-                  <AlertTriangle className="w-14 h-14 text-amber-500 mb-4" />
+                  <AlertTriangle className="w-14 h-14 text-gray-500 mb-4" />
                   <h3 className="text-lg font-semibold text-gray-900 mb-2">Oluşturulamadı</h3>
                   <p className="text-sm text-gray-600 text-center max-w-sm">{publishResult.message}</p>
                 </>

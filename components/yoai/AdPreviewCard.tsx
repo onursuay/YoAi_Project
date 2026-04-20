@@ -12,7 +12,7 @@ interface Props {
 const IMPACT_STYLE: Record<string, { label: string; color: string }> = {
   critical: { label: 'Kritik', color: 'text-red-600 bg-red-50' },
   high: { label: 'Yüksek', color: 'text-orange-600 bg-orange-50' },
-  medium: { label: 'Orta', color: 'text-amber-600 bg-amber-50' },
+  medium: { label: 'Orta', color: 'text-gray-600 bg-gray-50' },
   low: { label: 'Düşük', color: 'text-gray-500 bg-gray-50' },
 }
 
@@ -98,8 +98,8 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
 
         {/* Competitor insight */}
         {proposal.competitorInsight && (
-          <div className="mx-4 mb-3 bg-amber-50/50 rounded-lg px-3 py-2">
-            <p className="text-[9px] text-amber-700 font-medium mb-0.5">Rakip Karşılaştırma</p>
+          <div className="mx-4 mb-3 bg-gray-50/50 rounded-lg px-3 py-2">
+            <p className="text-[9px] text-gray-700 font-medium mb-0.5">Rakip Karşılaştırma</p>
             <p className="text-[10px] text-gray-700 line-clamp-2">{proposal.competitorInsight}</p>
           </div>
         )}

@@ -9,7 +9,7 @@ const TYPE_COLORS: Record<string, string> = {
   budget: 'bg-emerald-50 text-emerald-700',
   creative: 'bg-violet-50 text-violet-700',
   targeting: 'bg-blue-50 text-blue-700',
-  bid: 'bg-amber-50 text-amber-700',
+  bid: 'bg-gray-50 text-gray-700',
   status: 'bg-gray-100 text-gray-700',
 }
 

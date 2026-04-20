@@ -19,13 +19,13 @@ const STATUS_LABEL: Record<InsightStatus, string> = {
 
 const STATUS_COLOR: Record<InsightStatus, string> = {
   monitoring: 'text-blue-700 bg-blue-50 border-blue-200',
-  review_needed: 'text-amber-700 bg-amber-50 border-amber-200',
+  review_needed: 'text-gray-700 bg-gray-50 border-gray-200',
   ready_for_approval: 'text-emerald-700 bg-emerald-50 border-emerald-200',
 }
 
 const RISK_DOT: Record<RiskLevel, string> = {
   low: 'bg-emerald-500',
-  medium: 'bg-amber-500',
+  medium: 'bg-gray-500',
   high: 'bg-orange-500',
   critical: 'bg-red-500',
 }
@@ -86,7 +86,7 @@ export default function InsightStream({ insights, loading }: Props) {
             const activeAdsets = c.adsets.filter(as => as.status === 'ACTIVE' || as.status === 'ENABLED')
             const activeAds = activeAdsets.reduce((s, as) => s + as.ads.filter(ad => ad.status === 'ACTIVE' || ad.status === 'ENABLED').length, 0)
 
-            const riskBorder = c.riskLevel === 'critical' ? 'border-l-red-500' : c.riskLevel === 'high' ? 'border-l-orange-400' : c.riskLevel === 'medium' ? 'border-l-amber-400' : 'border-l-emerald-400'
+            const riskBorder = c.riskLevel === 'critical' ? 'border-l-red-500' : c.riskLevel === 'high' ? 'border-l-orange-400' : c.riskLevel === 'medium' ? 'border-l-gray-400' : 'border-l-emerald-400'
             const riskBg = c.riskLevel === 'critical' ? 'bg-red-50/40' : c.riskLevel === 'high' ? 'bg-orange-50/30' : ''
 
             return (
@@ -116,7 +116,7 @@ export default function InsightStream({ insights, loading }: Props) {
                     <div className="flex items-center gap-3 mb-2">
                       <span className="text-[10px] text-gray-400">{OBJECTIVE_TR[c.objective] || c.objective}</span>
                       <span className="text-[10px] text-gray-300">·</span>
-                      <span className={`text-[10px] font-semibold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-amber-600' : 'text-red-600'}`}>
+                      <span className={`text-[10px] font-semibold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-gray-600' : 'text-red-600'}`}>
                         {c.score}/100
                       </span>
                       <span className="text-[10px] text-gray-300">·</span>
@@ -136,7 +136,7 @@ export default function InsightStream({ insights, loading }: Props) {
                       <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">{c.metrics.clicks} tık</span>
                       <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">%{(c.metrics.ctr * 100).toFixed(1)} TO</span>
                       {c.metrics.roas != null && (
-                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${c.metrics.roas >= 2 ? 'bg-emerald-50 text-emerald-700' : c.metrics.roas >= 1 ? 'bg-amber-50 text-amber-700' : 'bg-red-50 text-red-600'}`}>
+                        <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${c.metrics.roas >= 2 ? 'bg-emerald-50 text-emerald-700' : c.metrics.roas >= 1 ? 'bg-gray-50 text-gray-700' : 'bg-red-50 text-red-600'}`}>
                           {c.metrics.roas.toFixed(1)}x ROAS
                         </span>
                       )}

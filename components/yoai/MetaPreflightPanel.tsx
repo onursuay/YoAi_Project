@@ -179,7 +179,7 @@ export default function MetaPreflightPanel({
       ? 'bg-emerald-50 border-emerald-200 text-emerald-800'
       : resp.status === 'unsupported'
         ? 'bg-red-50 border-red-200 text-red-700'
-        : 'bg-amber-50 border-amber-200 text-amber-800'
+        : 'bg-gray-50 border-gray-200 text-gray-700'
   const StatusIcon =
     resp.status === 'ok' ? CheckCircle2 : resp.status === 'unsupported' ? XCircle : AlertTriangle
 
@@ -362,13 +362,13 @@ export default function MetaPreflightPanel({
           )}
 
           {requiresCreative && !creativeAvailable && (
-            <div className="border border-amber-200 bg-amber-50 rounded-xl p-4">
-              <p className="text-sm font-semibold text-amber-900 mb-1">Kreatif Hazır Değil</p>
-              <p className="text-xs text-amber-800 mb-3">
+            <div className="border border-gray-200 bg-gray-50 rounded-xl p-4">
+              <p className="text-sm font-semibold text-gray-800 mb-1">Kreatif Hazır Değil</p>
+              <p className="text-xs text-gray-700 mb-3">
                 Reklam görseli/videosu bu sürümde wizard'da üretilmiyor. Kampanya ve reklam seti
                 oluşturulur, reklam kreatifini Meta Ads Manager'dan eklemeniz gerekir.
               </p>
-              <label className="flex items-center gap-2 text-sm text-amber-900">
+              <label className="flex items-center gap-2 text-sm text-gray-800">
                 <input
                   type="checkbox"
                   checked={ackCreativeLater}
@@ -390,7 +390,7 @@ export default function MetaPreflightPanel({
                   <li key={m.asset} className="text-xs text-gray-600 flex items-start gap-2">
                     <span
                       className={`shrink-0 mt-1 w-1.5 h-1.5 rounded-full ${
-                        missingNames.has(m.asset) ? 'bg-amber-500' : 'bg-gray-300'
+                        missingNames.has(m.asset) ? 'bg-gray-500' : 'bg-gray-300'
                       }`}
                     />
                     <span>

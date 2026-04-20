@@ -99,18 +99,18 @@ export default function DailyBriefing({ data, loading }: Props) {
 
   const typeStyles = {
     critical: 'border-l-red-500 bg-red-50/50',
-    warning: 'border-l-amber-500 bg-amber-50/50',
+    warning: 'border-l-gray-500 bg-gray-50/50',
     success: 'border-l-emerald-500 bg-emerald-50/50',
     info: 'border-l-blue-500 bg-blue-50/50',
   }
   const iconStyles = {
     critical: 'text-red-600',
-    warning: 'text-amber-600',
+    warning: 'text-gray-600',
     success: 'text-emerald-600',
     info: 'text-blue-600',
   }
 
-  const priorityColors = { high: 'text-red-600 bg-red-50', medium: 'text-amber-600 bg-amber-50', low: 'text-gray-500 bg-gray-50' }
+  const priorityColors = { high: 'text-red-600 bg-red-50', medium: 'text-gray-600 bg-gray-50', low: 'text-gray-500 bg-gray-50' }
 
   return (
     <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden h-full flex flex-col">
@@ -215,13 +215,13 @@ export default function DailyBriefing({ data, loading }: Props) {
             <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
               {riskCounts.critical > 0 && <div className="bg-red-500 transition-all" style={{ width: `${(riskCounts.critical / totalRiskCampaigns) * 100}%` }} />}
               {riskCounts.high > 0 && <div className="bg-orange-400 transition-all" style={{ width: `${(riskCounts.high / totalRiskCampaigns) * 100}%` }} />}
-              {riskCounts.medium > 0 && <div className="bg-amber-300 transition-all" style={{ width: `${(riskCounts.medium / totalRiskCampaigns) * 100}%` }} />}
+              {riskCounts.medium > 0 && <div className="bg-gray-300 transition-all" style={{ width: `${(riskCounts.medium / totalRiskCampaigns) * 100}%` }} />}
               {riskCounts.low > 0 && <div className="bg-emerald-400 transition-all" style={{ width: `${(riskCounts.low / totalRiskCampaigns) * 100}%` }} />}
             </div>
             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
               {riskCounts.critical > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />Kritik: {riskCounts.critical}</span>}
               {riskCounts.high > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-orange-400" />Yüksek: {riskCounts.high}</span>}
-              {riskCounts.medium > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-amber-300" />Orta: {riskCounts.medium}</span>}
+              {riskCounts.medium > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" />Orta: {riskCounts.medium}</span>}
               {riskCounts.low > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Düşük: {riskCounts.low}</span>}
             </div>
           </div>
@@ -256,8 +256,8 @@ export default function DailyBriefing({ data, loading }: Props) {
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5">Yapısal Sorunlar</p>
             <div className="space-y-1.5">
               {structuralIssues.slice(0, 3).map((issue) => (
-                <div key={issue.id} className={`flex items-start gap-2 rounded-lg px-3 py-2 ${issue.severity === 'critical' ? 'bg-red-50/50 border border-red-100/50' : 'bg-amber-50/50 border border-amber-100/50'}`}>
-                  <AlertTriangle className={`w-3 h-3 mt-0.5 shrink-0 ${issue.severity === 'critical' ? 'text-red-500' : 'text-amber-500'}`} />
+                <div key={issue.id} className={`flex items-start gap-2 rounded-lg px-3 py-2 ${issue.severity === 'critical' ? 'bg-red-50/50 border border-red-100/50' : 'bg-gray-50/50 border border-gray-100/50'}`}>
+                  <AlertTriangle className={`w-3 h-3 mt-0.5 shrink-0 ${issue.severity === 'critical' ? 'text-red-500' : 'text-gray-500'}`} />
                   <div className="min-w-0">
                     <p className="text-[11px] text-gray-800 font-medium">{issue.title}</p>
                     <p className="text-[9px] text-gray-500 mt-0.5 line-clamp-1">{issue.description}</p>
