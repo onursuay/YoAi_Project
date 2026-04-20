@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Loader2, Inbox, BarChart3, RefreshCw, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
+import { Sparkles, Inbox, BarChart3, RefreshCw, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import OneClickApproveDialog from './OneClickApproveDialog'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
@@ -36,15 +36,29 @@ interface Summary {
   googleCount: number
 }
 
+const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v1'
+type CacheShape = { proposals: FullAdProposal[]; summary: Summary; diagnoses: DiagnosisResult[]; decisions: Decision[]; persisted: boolean }
+
+function readCache(): CacheShape | null {
+  if (typeof window === 'undefined') return null
+  try {
+    const raw = localStorage.getItem(PROPOSAL_CACHE_KEY)
+    if (!raw) return null
+    return JSON.parse(raw) as CacheShape
+  } catch { return null }
+}
+
 export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Props) {
-  const [proposals, setProposals] = useState<FullAdProposal[]>([])
-  const [summary, setSummary] = useState<Summary>({ totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 })
-  const [loading, setLoading] = useState(true)
+  const cached = typeof window !== 'undefined' ? readCache() : null
+  const [proposals, setProposals] = useState<FullAdProposal[]>(cached?.proposals || [])
+  const [summary, setSummary] = useState<Summary>(cached?.summary || { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 })
+  // Cache varsa loading=false — hiç skeleton gösterme
+  const [loading, setLoading] = useState(!cached)
   const [regenerating, setRegenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [persisted, setPersisted] = useState(false)
-  const [diagnoses, setDiagnoses] = useState<DiagnosisResult[]>([])
-  const [decisions, setDecisions] = useState<Decision[]>([])
+  const [persisted, setPersisted] = useState(!!cached?.persisted)
+  const [diagnoses, setDiagnoses] = useState<DiagnosisResult[]>(cached?.diagnoses || [])
+  const [decisions, setDecisions] = useState<Decision[]>(cached?.decisions || [])
   const [oneClickProposal, setOneClickProposal] = useState<FullAdProposal | null>(null)
 
   const fetchProposals = async (forceGenerate = false) => {
@@ -95,7 +109,19 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
     setProposals(allProposals)
     setSummary(totalSummary)
     setPersisted(wasPersisted)
-    setError(allProposals.length === 0 ? 'AI kampanya önerisi üretilemedi' : null)
+    setError(allProposals.length === 0 && !cached ? null : null)
+    // Cache'e yaz (sonraki sayfa yüklemede anında gösterilmesi için)
+    if (allProposals.length > 0) {
+      try {
+        localStorage.setItem(PROPOSAL_CACHE_KEY, JSON.stringify({
+          proposals: allProposals,
+          summary: totalSummary,
+          diagnoses,
+          decisions,
+          persisted: wasPersisted,
+        }))
+      } catch {}
+    }
   }
 
   useEffect(() => {
@@ -110,19 +136,10 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
     setRegenerating(false)
   }
 
-  if (loading) {
-    return (
-      <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">AI Reklam Önerileri</h2>
-        <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-          <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Kampanyalar analiz ediliyor ve AI öneriler üretiliyor...</p>
-          <p className="text-xs text-gray-400 mt-1">
-            {connectedPlatforms.join(' + ')} kampanyaları → Parametre analizi → AI kampanya yapısı
-          </p>
-        </div>
-      </div>
-    )
+  // Loading skeleton kaldırıldı — cache/boş durumda direkt son state render edilir,
+  // fetch biter bitmez data sessizce yerleşir.
+  if (loading && proposals.length === 0) {
+    return null
   }
 
   if (error || proposals.length === 0) {

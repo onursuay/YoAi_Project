@@ -12,58 +12,47 @@ function fmt(n: number, decimals = 0): string {
   return n.toLocaleString('tr-TR', { minimumFractionDigits: decimals, maximumFractionDigits: decimals })
 }
 
-export default function KpiDashboard({ kpis, loading }: Props) {
-  if (loading) {
-    return (
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-3">
-        {[1, 2, 3, 4, 5, 6].map(i => (
-          <div key={i} className="h-[90px] bg-white rounded-2xl border border-gray-100 animate-pulse" />
-        ))}
-      </div>
-    )
-  }
-
-  if (!kpis) return null
-
+export default function KpiDashboard({ kpis }: Props) {
+  // Loading skeleton kaldırıldı — veri yoksa "—" placeholder göster
   const metrics = [
     {
       label: 'Toplam Harcama',
-      value: `₺${fmt(kpis.totalSpend)}`,
+      value: kpis ? `₺${fmt(kpis.totalSpend)}` : '—',
       icon: DollarSign,
       iconColor: 'text-emerald-600',
       iconBg: 'bg-emerald-50',
     },
     {
       label: 'Gösterim',
-      value: fmt(kpis.totalImpressions),
+      value: kpis ? fmt(kpis.totalImpressions) : '—',
       icon: Eye,
       iconColor: 'text-blue-600',
       iconBg: 'bg-blue-50',
     },
     {
       label: 'Tıklama',
-      value: fmt(kpis.totalClicks),
+      value: kpis ? fmt(kpis.totalClicks) : '—',
       icon: MousePointer,
       iconColor: 'text-violet-600',
       iconBg: 'bg-violet-50',
     },
     {
       label: 'Ort. CTR',
-      value: `%${fmt(kpis.weightedCtr, 2)}`,
+      value: kpis ? `%${fmt(kpis.weightedCtr, 2)}` : '—',
       icon: TrendingUp,
       iconColor: 'text-amber-600',
       iconBg: 'bg-amber-50',
     },
     {
       label: 'Ort. CPC',
-      value: `₺${fmt(kpis.weightedCpc, 2)}`,
+      value: kpis ? `₺${fmt(kpis.weightedCpc, 2)}` : '—',
       icon: BarChart3,
       iconColor: 'text-red-600',
       iconBg: 'bg-red-50',
     },
     {
       label: 'Dönüşüm',
-      value: fmt(kpis.totalConversions),
+      value: kpis ? fmt(kpis.totalConversions) : '—',
       icon: Target,
       iconColor: 'text-primary',
       iconBg: 'bg-emerald-50',
