@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — "Henüz günlük analiz" empty state kompakt uyarı bandına dönüştürüldü
+- **Sorun:** Büyük kart (p-12, geniş yükseklik) alanı gereksiz doldurup dikkat dağıtıyordu.
+- **Çözüm:** Tek satır sarı uyarı bandı (bg-amber-50) — Sparkles ikon + tek cümle metin + küçük "İlk Analizi Başlat" butonu yan yana.
+- **Dosyalar:** app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — YoAlgoritma: "Taranıyor" ve tüm loading flash'ları kaldırıldı
 - **Sorun:** Önceki cache fix'e rağmen SSR/hydration sırasında CommandCenterHeader "Taranıyor…" ve skeleton kutular hâlâ flash ediyordu. Kullanıcı her refresh'te bunları görüp tarama zannediyordu.
 - **Çözüm:** (1) CommandCenterHeader: loading UI tamamen kaldırıldı — her durumda statü pill'i "AI Analiz / Kural Motoru / Hazır" olarak gösterilir, health yoksa stats kutularında "—" placeholder; skeleton animate-pulse silindi. (2) KpiDashboard: loading skeleton kaldırıldı, kpis yoksa "—" gösterir. (3) AiAdSuggestions: proposals + diagnoses + decisions için localStorage cache (`yoai_proposals_cache_v1`); cache varsa loading=false başlar; cache+proposal yoksa hiçbir skeleton render edilmez, component null döner.

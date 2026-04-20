@@ -264,13 +264,12 @@ export default function YoAiPage() {
               </div>
             )}
 
-            {/* No daily run yet — empty state with manual trigger */}
+            {/* No daily run yet — compact inline notice */}
             {!ccLoading && !ccData && !ccError && (
-              <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
-                <Sparkles className="w-10 h-10 text-gray-300 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Henüz günlük analiz oluşturulmadı</h3>
-                <p className="text-sm text-gray-500 max-w-md mx-auto mb-6">
-                  YoAlgoritma Merkezi her gün saat 16:00'de otomatik olarak tüm reklamlarınızı analiz eder ve AI kampanya önerileri oluşturur.
+              <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
+                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                <p className="text-xs text-amber-900 flex-1">
+                  Henüz günlük analiz yok. Her gün 16:00'da otomatik çalışır; hemen başlatmak için:
                 </p>
                 <button
                   onClick={async () => {
@@ -279,7 +278,6 @@ export default function YoAiPage() {
                       const res = await fetch('/api/yoai/daily-run', { method: 'POST' })
                       const json = await res.json()
                       if (json.ok) {
-                        // Re-read persisted data
                         await fetchCommandCenter()
                       } else {
                         setCcError(json.error || 'Analiz başlatılamadı')
@@ -290,9 +288,8 @@ export default function YoAiPage() {
                       setCcLoading(false)
                     }
                   }}
-                  className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors shrink-0"
                 >
-                  <Sparkles className="w-4 h-4" />
                   İlk Analizi Başlat
                 </button>
               </div>
