@@ -12,6 +12,8 @@ import {
   getTurkeyDate,
   type DailyRun,
 } from '@/lib/yoai/dailyRunStore'
+import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
+import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // allow up to 2 minutes for full analysis
@@ -100,7 +102,14 @@ export async function GET(request: Request) {
                 totalSummary.metaCount += r.summary.metaCount; totalSummary.googleCount += r.summary.googleCount
               } catch {}
             }
-            adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary }
+            // Diagnosis + decision attach (sadece Meta, mevcut akışı bozmaz)
+            let diagnoses: any[] = []
+            let decisions: any[] = []
+            try {
+              diagnoses = diagnoseCampaigns(allCampaigns)
+              decisions = decideForDiagnoses(diagnoses)
+            } catch {}
+            adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions }
           }
         } catch {}
 
@@ -210,7 +219,14 @@ export async function POST(request: Request) {
           }
         }
 
-        adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary }
+        // Diagnosis + decision attach (sadece Meta, mevcut akışı bozmaz)
+        let diagnoses: any[] = []
+        let decisions: any[] = []
+        try {
+          diagnoses = diagnoseCampaigns(allCampaigns)
+          decisions = decideForDiagnoses(diagnoses)
+        } catch {}
+        adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions }
       }
     } catch (e) {
       console.error('[DailyRun] Ad proposals error:', e)

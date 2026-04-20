@@ -6,6 +6,8 @@ import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
 import { getBestAvailableRun, upsertDailyRun, getTurkeyDate } from '@/lib/yoai/dailyRunStore'
 import type { Platform } from '@/lib/yoai/analysisTypes'
+import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
+import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -103,6 +105,8 @@ export async function POST(request: Request) {
                 proposals: persistedProposals,
                 fitAnalyses: persistedFitAnalyses,
                 summary: { ...(run.ad_proposals_data.summary || {}), metaCount, googleCount, proposalsGenerated: persistedProposals.length },
+                diagnoses: run.ad_proposals_data.diagnoses || [],
+                decisions: run.ad_proposals_data.decisions || [],
               },
               persisted: true,
               run_date: run.run_date,
@@ -143,6 +147,17 @@ export async function POST(request: Request) {
       googleCount,
     }
 
+    // ── Diagnosis + Decision (sadece Meta için, mevcut akışı bozmaz) ──
+    let diagnoses: any[] = []
+    let decisions: any[] = []
+    try {
+      diagnoses = diagnoseCampaigns(allCampaigns)
+      decisions = decideForDiagnoses(diagnoses)
+      console.log(`[GenerateAd] Diagnosed ${diagnoses.length} Meta campaigns`)
+    } catch (e) {
+      console.warn('[GenerateAd] Diagnosis failed (non-fatal):', e)
+    }
+
     console.log(`[GenerateAd] Total: ${allProposals.length} proposals (Meta: ${metaCount}, Google: ${googleCount})`)
 
     // Persist live-generated results so they survive page refresh
@@ -153,7 +168,7 @@ export async function POST(request: Request) {
           run_date: getTurkeyDate(),
           status: 'completed',
           command_center_data: null,
-          ad_proposals_data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary },
+          ad_proposals_data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions },
         })
         console.log(`[GenerateAd] Persisted ${allProposals.length} proposals to daily run store`)
       } catch (e) {
@@ -163,7 +178,7 @@ export async function POST(request: Request) {
 
     return NextResponse.json({
       ok: true,
-      data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary },
+      data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions },
       persisted: false,
       _debug: {
         metaCampaigns: metaResult.campaigns.length,

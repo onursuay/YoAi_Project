@@ -1,14 +1,30 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Loader2, Inbox, BarChart3, RefreshCw } from 'lucide-react'
+import { Sparkles, Loader2, Inbox, BarChart3, RefreshCw, Zap, AlertTriangle, CheckCircle2 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
+import OneClickApproveDialog from './OneClickApproveDialog'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import type { Platform } from '@/lib/yoai/analysisTypes'
+import type { DiagnosisResult, RootCauseId } from '@/lib/yoai/meta/diagnosis'
+import type { Decision } from '@/lib/yoai/meta/decision'
 
 interface Props {
   connectedPlatforms: Platform[]
   onOpenWizard: (proposal?: FullAdProposal) => void
+}
+
+const ROOT_CAUSE_LABEL: Record<RootCauseId, string> = {
+  hook_problem: 'Hook Sorunu',
+  landing_page_problem: 'Landing Page Sorunu',
+  creative_fatigue: 'Kreatif Yorgunluğu',
+  audience_mismatch: 'Hedefleme Uyumsuzluğu',
+  event_quality_problem: 'Event Kalitesi',
+  insufficient_data: 'Veri Yetersiz',
+  budget_starvation: 'Bütçe Kısıtı',
+  wrong_optimization_goal: 'Yanlış Optimizasyon Hedefi',
+  pixel_misfire: 'Pixel / Tracking Sorunu',
+  healthy: 'Sağlıklı',
 }
 
 interface Summary {
@@ -27,6 +43,9 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
   const [regenerating, setRegenerating] = useState(false)
   const [error, setError] = useState<string | null>(null)
   const [persisted, setPersisted] = useState(false)
+  const [diagnoses, setDiagnoses] = useState<DiagnosisResult[]>([])
+  const [decisions, setDecisions] = useState<Decision[]>([])
+  const [oneClickProposal, setOneClickProposal] = useState<FullAdProposal | null>(null)
 
   const fetchProposals = async (forceGenerate = false) => {
     let allProposals: FullAdProposal[] = []
@@ -55,6 +74,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
         allProposals = json.data.proposals as FullAdProposal[]
         totalSummary = json.data.summary || totalSummary
         wasPersisted = !!json.persisted
+        if (Array.isArray(json.data.diagnoses)) setDiagnoses(json.data.diagnoses)
+        if (Array.isArray(json.data.decisions)) setDecisions(json.data.decisions)
       }
     } catch (e) {
       console.error('[AiAdSuggestions] fetch error:', e)
@@ -168,11 +189,60 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard }: Pr
             <span className="text-[12px] text-gray-500">{metaProposals.length} öneri{newMetaCount > 0 ? ` (${newMetaCount} yeni amaç)` : ''}</span>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {metaProposals.map((p, i) => (
-              <AdPreviewCard key={p.id || `meta_${i}`} proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
-            ))}
+            {metaProposals.map((p, i) => {
+              const diag = p.sourceCampaignId
+                ? diagnoses.find((d) => d.campaignId === p.sourceCampaignId)
+                : undefined
+              const dec = p.sourceCampaignId
+                ? decisions.find((d) => d.campaignId === p.sourceCampaignId)
+                : undefined
+              return (
+                <div key={p.id || `meta_${i}`} className="space-y-2">
+                  <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
+                  {diag && diag.primary.id !== 'healthy' && (
+                    <div className="bg-amber-50 border border-amber-200 rounded-xl px-3 py-2 text-[11px] text-amber-900 flex items-start gap-2">
+                      <AlertTriangle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-semibold">
+                          {ROOT_CAUSE_LABEL[diag.primary.id]} · {diag.primary.confidence}
+                        </p>
+                        <p className="mt-0.5 opacity-80">{diag.primary.summary}</p>
+                        {dec && dec.actions[0] && (
+                          <p className="mt-1 text-[10px] text-amber-800">
+                            → Önerilen: <strong>{dec.actions[0].title}</strong>
+                          </p>
+                        )}
+                      </div>
+                    </div>
+                  )}
+                  {diag && diag.primary.id === 'healthy' && (
+                    <div className="bg-emerald-50 border border-emerald-200 rounded-xl px-3 py-2 text-[11px] text-emerald-900 flex items-start gap-2">
+                      <CheckCircle2 className="w-3.5 h-3.5 shrink-0 mt-0.5" />
+                      <div className="flex-1">
+                        <p className="font-semibold">Teşhis: sağlıklı</p>
+                        <p className="mt-0.5 opacity-80">Aşağıdaki öneri mevcut yapıyı güçlendirme amaçlı.</p>
+                      </div>
+                    </div>
+                  )}
+                  <button
+                    onClick={() => setOneClickProposal(p)}
+                    className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-2 bg-primary/10 hover:bg-primary/20 text-primary rounded-lg text-[12px] font-medium transition-colors"
+                  >
+                    <Zap className="w-3.5 h-3.5" /> Tek Tıkla Onayla (PAUSED)
+                  </button>
+                </div>
+              )
+            })}
           </div>
         </div>
+      )}
+
+      {/* One-click approve dialog */}
+      {oneClickProposal && (
+        <OneClickApproveDialog
+          proposal={oneClickProposal}
+          onClose={() => setOneClickProposal(null)}
+        />
       )}
 
       {/* Google proposals */}
