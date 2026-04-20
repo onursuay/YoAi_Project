@@ -76,14 +76,38 @@ export default function YoAiPage() {
   const [ccLoading, setCcLoading] = useState(!initialCache.data)
   const [ccError, setCcError] = useState<string | null>(null)
   const [ccRunDate, setCcRunDate] = useState<string | null>(initialCache.runDate)
+  // Arka planda otomatik bootstrap çalışıyor mu
+  const [bootstrapping, setBootstrapping] = useState(false)
 
   useEffect(() => {
-    fetchCommandCenter()
+    ;(async () => {
+      const result = await fetchCommandCenter()
+      // İlk kurulum: hiç veri yoksa (cache de yok, backend'de de yok) arka planda
+      // otomatik analiz tetikle — kullanıcı butona basmak zorunda kalmasın.
+      if (result === 'empty' && !initialCache.data) {
+        triggerBackgroundBootstrap()
+      }
+    })()
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchCommandCenter = useCallback(async () => {
-    // Cache varsa loading flag'ini hiç açma — kullanıcı tarama UI'ı görmemeli
+  const triggerBackgroundBootstrap = useCallback(async () => {
+    setBootstrapping(true)
+    try {
+      const res = await fetch('/api/yoai/daily-run', { method: 'POST' })
+      const json = await res.json()
+      if (json.ok) {
+        await fetchCommandCenter()
+      }
+    } catch (e) {
+      console.warn('[YoAi] Bootstrap failed:', e)
+    } finally {
+      setBootstrapping(false)
+    }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
+
+  const fetchCommandCenter = useCallback(async (): Promise<'ok' | 'empty' | 'error'> => {
     const hasCache = !!ccData
     if (!hasCache) setCcLoading(true)
     setCcError(null)
@@ -100,18 +124,21 @@ export default function YoAiPage() {
             JSON.stringify({ data: json.data, runDate: json.run_date || null }),
           )
         } catch {}
+        return 'ok'
       } else if (json.ok && !json.data) {
         if (!hasCache) {
           setCcData(null)
           setCcRunDate(null)
         }
-        // Cache varsa eski veriyi koru — kullanıcı boş ekran görmesin
+        return 'empty'
       } else {
         if (!hasCache) setCcError('Veri alınamadı')
+        return 'error'
       }
     } catch (err) {
       console.error('[YoAi] Command center fetch error:', err)
       if (!hasCache) setCcError('Bağlantı hatası')
+      return 'error'
     } finally {
       if (!hasCache) setCcLoading(false)
     }
@@ -264,34 +291,27 @@ export default function YoAiPage() {
               </div>
             )}
 
-            {/* No daily run yet — compact inline notice */}
+            {/* No daily run yet — auto-bootstrap banner */}
             {!ccLoading && !ccData && !ccError && (
               <div className="flex items-center gap-3 bg-amber-50 border border-amber-200 rounded-xl px-4 py-2.5">
-                <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                {bootstrapping ? (
+                  <Loader2 className="w-4 h-4 text-amber-600 shrink-0 animate-spin" />
+                ) : (
+                  <Sparkles className="w-4 h-4 text-amber-600 shrink-0" />
+                )}
                 <p className="text-xs text-amber-900 flex-1">
-                  Henüz günlük analiz yok. Her gün 16:00'da otomatik çalışır; hemen başlatmak için:
+                  {bootstrapping
+                    ? 'İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.'
+                    : 'Henüz günlük analiz yok. Her gün 16:15\'da otomatik çalışır; şimdi başlatmak için:'}
                 </p>
-                <button
-                  onClick={async () => {
-                    setCcLoading(true)
-                    try {
-                      const res = await fetch('/api/yoai/daily-run', { method: 'POST' })
-                      const json = await res.json()
-                      if (json.ok) {
-                        await fetchCommandCenter()
-                      } else {
-                        setCcError(json.error || 'Analiz başlatılamadı')
-                        setCcLoading(false)
-                      }
-                    } catch {
-                      setCcError('Bağlantı hatası')
-                      setCcLoading(false)
-                    }
-                  }}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors shrink-0"
-                >
-                  İlk Analizi Başlat
-                </button>
+                {!bootstrapping && (
+                  <button
+                    onClick={triggerBackgroundBootstrap}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-amber-600 text-white rounded-lg text-xs font-medium hover:bg-amber-700 transition-colors shrink-0"
+                  >
+                    Şimdi Başlat
+                  </button>
+                )}
               </div>
             )}
 
@@ -326,7 +346,7 @@ export default function YoAiPage() {
 
             {!ccLoading && ccRunDate && (
               <p className="text-center text-[10px] text-gray-400 pb-4">
-                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 16:00'de otomatik güncellenir
+                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 16:15'de otomatik güncellenir
               </p>
             )}
           </div>

@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma otomatik bootstrap + cron 16:15'e alındı
+- **Sorun:** Kullanıcı YoAi sayfasını açtığında hiç veri yoksa "İlk Analizi Başlat" butonuna basmak zorunda kalıyordu. Talep edilen davranış: sayfa açılır, kullanıcı hiçbir şey yapmadan arka planda analiz başlar ve hazır olunca görünür.
+- **Çözüm:** (1) `app/yoai/page.tsx` — sayfa mount edildiğinde eğer backend'de de cache'te de veri yoksa otomatik olarak `/api/yoai/daily-run` POST tetiklenir (arka planda), bu sırada banner'da loader + "İlk analiz arka planda hazırlanıyor…" mesajı gösterilir; bitince otomatik fetch ile veri yerleşir. (2) Vercel cron `0 13 * * *` → `15 13 * * *` (16:15 Istanbul). UI metinleri "16:15" olarak güncellendi.
+- **Dosyalar:** app/yoai/page.tsx, vercel.json
+
+---
+
 ## 2026-04-20 — "Henüz günlük analiz" empty state kompakt uyarı bandına dönüştürüldü
 - **Sorun:** Büyük kart (p-12, geniş yükseklik) alanı gereksiz doldurup dikkat dağıtıyordu.
 - **Çözüm:** Tek satır sarı uyarı bandı (bg-amber-50) — Sparkles ikon + tek cümle metin + küçük "İlk Analizi Başlat" butonu yan yana.
