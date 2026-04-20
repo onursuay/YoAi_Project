@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-04-20 — Rakip Analizi v2: gerçek creative body + LLM tema + dürüst format
+- **Sorun:** (1) Kendi reklam analizi sadece ad NAME üzerinde çalışıyordu (creative body'yi okumuyordu) — tema tespiti yanıltıcıydı. (2) Theme keyword listeleri 4 kategori × 6-8 kelime olarak sınırlıydı. (3) CTA liste çok dardı ve Meta'nın asıl CTA button type'ını hiç okumuyordu. (4) `competitorFormats` alanı aslında `ad.platforms` (facebook/instagram) değerlerini tutuyordu — bug. (5) `competitorInsight` metni rakip verisi 0 olsa bile AI tarafından üretiliyordu (hallucination riski).
+- **Çözüm:**
+  - `lib/yoai/metaDeepFetcher.ts`: ad fetch field'larına `creative{body,title,link_url,call_to_action_type,object_story_spec}` eklendi. Artık her ad için gerçek `creativeBody`, `creativeTitle`, `callToActionType`, `linkUrl` DB'ye geliyor.
+  - `lib/yoai/analysisTypes.ts`: `AdInsight` tipine yukarıdaki 4 alan opsiyonel olarak eklendi.
+  - `lib/yoai/competitorAnalyzer.ts`: `THEME_LEXICON` (6 kategori, kategoriye 15-20 kelime) + `CTA_PHRASES` (28 ifade) + `CTA_BUTTON_LABEL` (20 Meta enum → TR). `analyzeUserAds` artık creative body + title + name birleşimi üzerinde tema çıkarıyor; ayrıca `ad.callToActionType` (Meta enum) `ctaTypes`'a ekleniyor.
+  - Yeni `enhanceThemesWithLLM` adımı: `runFullCompetitorAnalysis` sonunda OpenAI'ye batch olarak user + competitor ad bodies yollanır, 12 kategorilik (risk_azaltma, statu, topluluk, kisisellestirme, otorite, merak_uyandirma eklendi) nüanslı tema etiketleri alınır ve mevcut keyword-bazlı setle union'lanır. Başarısızsa sessizce fallback çalışır.
+  - `compareWithCompetitors`: tüm 6 tema kategorisi taranır, genişletilmiş CTA_PHRASES ile body+title+description scan'lenir. `competitorPlatforms` (facebook/instagram) dürüst isimle ayrıldı; `competitorFormats` her zaman `[]` (Meta Ad Library güvenilir media_type dönmüyor — deprecated).
+  - `lib/yoai/adCreator.ts`: AI response post-processing'de **hard guard** — `competitorAds.length === 0` ise `competitorInsight` zorla şu metne overridelenir: "Meta Ad Library'den rakip reklam bulunamadı (anahtar kelime eşleşmesi yok). Karşılaştırma yapılmadı." AI artık rakip yokken uydurma karşılaştırma üretemez.
+- **Dosyalar:** lib/yoai/analysisTypes.ts, lib/yoai/metaDeepFetcher.ts, lib/yoai/competitorAnalyzer.ts, lib/yoai/adCreator.ts
+
+---
+
 ## 2026-04-20 — Öneri kartlarında Meta API kodları Türkçe etikete çevrildi
 - **Sorun:** Öneri kartlarında `optimizationGoal` ve `destinationType` alanları Meta API ham değerleriyle gösteriliyordu (POST_ENGAGEMENT, ON_AD, LANDING_PAGE_VIEWS, WEBSITE gibi) — kullanıcı dostu değildi.
 - **Çözüm:** `AdPreviewCard.tsx` içinde `OPTIMIZATION_GOAL_LABEL` + `DESTINATION_LABEL` mapping'leri eklendi. Örnek: POST_ENGAGEMENT → "Gönderi Etkileşimi", ON_AD → "Reklam İçi Form", LANDING_PAGE_VIEWS → "Landing Page Görüntüleme", WEBSITE → "Web Sitesi". Ham değer `title` attribute'u olarak kalıyor (hover'da teknik karşılık görünür).

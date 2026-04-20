@@ -548,6 +548,13 @@ export async function generateFullAutoProposals(
               else if (fs < 70 || wc >= 1) impactLevel = 'medium'
               else impactLevel = 'low'
             }
+            // HARD GUARD: rakip verisi yoksa competitorInsight'ı AI'nın yazdığı metinden al,
+            // sessizce hallucination yapmasın. Gerçek veri yoksa açıkça söyle.
+            const hasCompetitorData = competitorAds.length > 0
+            const competitorInsight = hasCompetitorData
+              ? (p.competitorInsight || 'Rakip verisi değerlendirildi.')
+              : 'Meta Ad Library\'den rakip reklam bulunamadı (anahtar kelime eşleşmesi yok). Karşılaştırma yapılmadı.'
+
             return {
               ...p,
               id: p.id || `proposal_${platform.toLowerCase()}_${batchStart + i + 1}`,
@@ -557,6 +564,7 @@ export async function generateFullAutoProposals(
               isNewObjective: p.isNewObjective || false,
               analyzedParameters: p.analyzedParameters || [],
               suggestedChanges: p.suggestedChanges || [],
+              competitorInsight,
             }
           })
         proposals.push(...batchProposals)

@@ -48,6 +48,9 @@ export interface CompetitorComparison {
   // What competitors do that user doesn't
   competitorThemes: string[]
   competitorCTAs: string[]
+  /** Rakiplerin yayınlama platformları (facebook/instagram). Format DEĞİL. Opsiyonel — eski fallback objelerle uyum. */
+  competitorPlatforms?: string[]
+  /** DEPRECATED: Meta Ad Library reliable media_type dönmüyor; boş kalır. */
   competitorFormats: string[]
   // Gaps and opportunities
   gaps: CompetitorGap[]
@@ -71,6 +74,83 @@ export interface FullCompetitorAnalysis {
   errors: string[]
 }
 
+/* ──────────────────────────────────────────────────────────
+   Theme Lexicon (v2) — genişletilmiş
+   Creative body'de geçen anlamlı sinyalleri yakalar.
+   ────────────────────────────────────────────────────────── */
+export const THEME_LEXICON = {
+  THEME_KEYWORDS: {
+    aciliyet: [
+      'şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat', 'bugün', 'acele',
+      'hızlı', 'anında', 'bu hafta', 'son gün', 'son fırsat', 'kaçırmayın',
+      'geçmeden', 'tükenmeden', 'stoklar', 'rezervasyon', 'rezerve et',
+    ],
+    fiyat_avantaji: [
+      'indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', 'uygun', 'hesaplı',
+      'taksit', 'peşinat', '%', 'tl\'ye', 'den başlayan', 'kadar', 'avantaj',
+      'fırsat fiyat', 'özel fiyat', 'iade', 'ödeme', 'kupon', 'promosyon',
+    ],
+    kalite: [
+      'kaliteli', 'profesyonel', 'uzman', 'garanti', 'güvenilir', 'premium',
+      'sertifikalı', 'orijinal', 'özgün', 'üstün', 'en iyi', 'lider', 'öncü',
+      'deneyimli', 'yılların', 'tecrübeli', 'ödüllü', 'a kalite',
+    ],
+    sosyal_kanit: [
+      'binlerce', 'müşteri', 'yıldız', 'puan', 'değerlendirme', 'tercih',
+      'memnun', 'referans', 'yorum', 'değerlendirdi', 'tercih etti', 'seçti',
+      'topluluk', '5 yıldız', 'mutlu müşteri', 'kullandı', 'güvendi',
+    ],
+    sorun_cozum: [
+      'sorun', 'problem', 'çözüm', 'çözer', 'kurtar', 'dert', 'zorluk',
+      'artık', 'bitir', 'son ver', 'ortadan kaldır', 'çare', 'yardımcı',
+    ],
+    emosyonel: [
+      'hayalinizdeki', 'hayaliniz', 'mutluluk', 'keyif', 'huzur', 'rahatlık',
+      'özgürlük', 'sevdikleriniz', 'aile', 'çocuklarınız', 'siz ve', 'özel',
+    ],
+  } as Record<string, string[]>,
+  CTA_PHRASES: [
+    'hemen al', 'şimdi al', 'şimdi başla', 'ücretsiz dene', 'teklif al',
+    'iletişime geç', 'iletişime geçin', 'incele', 'incelemek için', 'keşfet',
+    'sipariş', 'satın al', 'randevu', 'whatsapp', 'arayın', 'bizi arayın',
+    'formu doldur', 'kayıt ol', 'üye ol', 'abone ol', 'indir', 'ücretsiz indir',
+    'başvur', 'başvuru', 'ziyaret et', 'tıkla', 'daha fazla bilgi',
+  ],
+  /** Meta CTA button kodlarını Türkçe etikete çevir */
+  CTA_BUTTON_LABEL: {
+    SHOP_NOW: 'Hemen Al',
+    LEARN_MORE: 'Daha Fazla Bilgi',
+    SIGN_UP: 'Kayıt Ol',
+    SUBSCRIBE: 'Abone Ol',
+    CONTACT_US: 'İletişime Geç',
+    BOOK_TRAVEL: 'Rezervasyon Yap',
+    GET_OFFER: 'Teklif Al',
+    APPLY_NOW: 'Başvur',
+    DOWNLOAD: 'İndir',
+    INSTALL_MOBILE_APP: 'Uygulamayı Yükle',
+    WHATSAPP_MESSAGE: 'WhatsApp Mesajı',
+    SEND_MESSAGE: 'Mesaj Gönder',
+    CALL_NOW: 'Hemen Ara',
+    GET_DIRECTIONS: 'Yol Tarifi',
+    SEE_MENU: 'Menüyü Gör',
+    WATCH_MORE: 'İzlemeye Devam Et',
+    PLAY_GAME: 'Oyna',
+    DONATE_NOW: 'Bağış Yap',
+    REQUEST_TIME: 'Randevu Al',
+  } as Record<string, string>,
+}
+
+/** Bir metinde hangi temaları bulduğunu döndürür (çoklu etiket) */
+export function detectThemesInText(text: string): string[] {
+  if (!text) return []
+  const lower = text.toLowerCase()
+  const hits: string[] = []
+  for (const [theme, words] of Object.entries(THEME_LEXICON.THEME_KEYWORDS)) {
+    if (words.some((w) => lower.includes(w))) hits.push(theme)
+  }
+  return hits
+}
+
 /* ── Step 1: Analyze user's own ads ── */
 export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile {
   const keywords: string[] = []
@@ -85,10 +165,12 @@ export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile 
   const channelTypes = new Set<string>()
   const allAds: { name: string; ctr: number; platform: Platform; spend: number }[] = []
 
-  const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat', 'bugün', 'acele']
-  const priceWords = ['indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', 'uygun', 'hesaplı']
-  const qualityWords = ['kaliteli', 'profesyonel', 'uzman', 'garanti', 'güvenilir', 'premium']
-  const socialProofWords = ['binlerce', 'müşteri', 'yıldız', 'puan', 'değerlendirme', 'tercih']
+  // Genişletilmiş tema kelime listeleri (v2 — creative body üzerinde daha doğru çalışır)
+  const { THEME_KEYWORDS, CTA_PHRASES } = THEME_LEXICON
+  const urgencyWords = THEME_KEYWORDS.aciliyet
+  const priceWords = THEME_KEYWORDS.fiyat_avantaji
+  const qualityWords = THEME_KEYWORDS.kalite
+  const socialProofWords = THEME_KEYWORDS.sosyal_kanit
 
   // Stop words for keyword extraction
   const stopWords = new Set([
@@ -133,14 +215,22 @@ export function analyzeUserAds(campaigns: DeepCampaignInsight[]): UserAdProfile 
 
         if (ad.format) formats.add(ad.format)
 
-        // Analyze ad name for themes
-        const lower = ad.name.toLowerCase()
-        if (urgencyWords.some(w => lower.includes(w))) themes.add('aciliyet')
-        if (priceWords.some(w => lower.includes(w))) themes.add('fiyat_avantaji')
-        if (qualityWords.some(w => lower.includes(w))) themes.add('kalite')
-        if (socialProofWords.some(w => lower.includes(w))) themes.add('sosyal_kanit')
+        // CTA button (gerçek Meta call_to_action_type — SHOP_NOW, LEARN_MORE vs.)
+        if (ad.callToActionType) ctaTypes.add(ad.callToActionType)
 
-        extractWords(ad.name, stopWords).forEach(w => keywords.push(w))
+        // Analyze REAL ad content: creative body + title + name fallback
+        const content = [ad.creativeBody, ad.creativeTitle, ad.name].filter(Boolean).join(' ').toLowerCase()
+        if (content) {
+          if (urgencyWords.some(w => content.includes(w))) themes.add('aciliyet')
+          if (priceWords.some(w => content.includes(w))) themes.add('fiyat_avantaji')
+          if (qualityWords.some(w => content.includes(w))) themes.add('kalite')
+          if (socialProofWords.some(w => content.includes(w))) themes.add('sosyal_kanit')
+          if (THEME_LEXICON.THEME_KEYWORDS.sorun_cozum.some(w => content.includes(w))) themes.add('sorun_cozum')
+          if (THEME_LEXICON.THEME_KEYWORDS.emosyonel.some(w => content.includes(w))) themes.add('emosyonel')
+        }
+
+        // Keyword extraction from creative body + name (daha zengin kaynak)
+        extractWords(ad.creativeBody || ad.name, stopWords).forEach(w => keywords.push(w))
       }
     }
   }
@@ -239,24 +329,24 @@ export function compareWithCompetitors(
   const gaps: CompetitorGap[] = []
   const competitorThemes = new Set<string>()
   const competitorCTAs = new Set<string>()
+  const competitorPlatforms = new Set<string>()
+  // Meta Ad Library media_type güvenilir dönmüyor → format boş kalır
   const competitorFormats = new Set<string>()
 
-  const urgencyWords = ['şimdi', 'hemen', 'sınırlı', 'son', 'kaçırma', 'fırsat']
-  const priceWords = ['indirim', 'kampanya', 'fiyat', 'ücretsiz', 'bedava', 'uygun']
-  const qualityWords = ['kaliteli', 'profesyonel', 'uzman', 'garanti', 'güvenilir']
-  const socialProofWords = ['binlerce', 'müşteri', 'yıldız', 'puan', 'tercih']
-  const ctaWords = ['hemen al', 'şimdi başla', 'ücretsiz dene', 'teklif al', 'iletişime geç', 'incele']
+  const { THEME_KEYWORDS, CTA_PHRASES } = THEME_LEXICON
 
   for (const ad of competitorAds) {
     const text = `${ad.body} ${ad.title} ${ad.description}`.toLowerCase()
-    if (urgencyWords.some(w => text.includes(w))) competitorThemes.add('aciliyet')
-    if (priceWords.some(w => text.includes(w))) competitorThemes.add('fiyat_avantaji')
-    if (qualityWords.some(w => text.includes(w))) competitorThemes.add('kalite')
-    if (socialProofWords.some(w => text.includes(w))) competitorThemes.add('sosyal_kanit')
-    for (const cta of ctaWords) {
+    // Tema tespiti — tüm 6 kategori (detectThemesInText ile aynı mantık, inline)
+    for (const [theme, words] of Object.entries(THEME_KEYWORDS)) {
+      if (words.some((w) => text.includes(w))) competitorThemes.add(theme)
+    }
+    // CTA tespiti — body + title + description üzerinde genişletilmiş liste
+    for (const cta of CTA_PHRASES) {
       if (text.includes(cta)) competitorCTAs.add(cta)
     }
-    for (const p of ad.platforms) competitorFormats.add(p)
+    // PLATFORMS (facebook/instagram) — format DEĞİL, dürüst isim
+    for (const p of ad.platforms) competitorPlatforms.add(p)
   }
 
   // Find gaps: competitor themes that user doesn't use
@@ -319,9 +409,79 @@ export function compareWithCompetitors(
   return {
     competitorThemes: Array.from(competitorThemes),
     competitorCTAs: Array.from(competitorCTAs),
-    competitorFormats: Array.from(competitorFormats),
+    competitorPlatforms: Array.from(competitorPlatforms),
+    competitorFormats: Array.from(competitorFormats), // her zaman [] (Ad Library güvenilir media_type dönmüyor)
     gaps,
     competitorSummary,
+  }
+}
+
+/* ── LLM Theme Enhancer ──
+   Keyword matching 6 kategoriyle sınırlı. OpenAI'den nüanslı etiketler de al.
+   Batch çağrı — bir defa reklam metinleri yollanır, yapısal JSON döner.
+   Başarısız olursa sessizce yutulur (fallback keyword-based sonuç yeterli).
+*/
+async function enhanceThemesWithLLM(
+  userBodies: string[],
+  competitorBodies: string[],
+): Promise<{ userThemes: string[]; competitorThemes: string[] } | null> {
+  const openaiKey = process.env.OPENAI_API_KEY
+  if (!openaiKey) return null
+  if (userBodies.length === 0 && competitorBodies.length === 0) return null
+
+  const trim = (s: string) => (s || '').slice(0, 200)
+  const user = {
+    user_ads: userBodies.slice(0, 15).map(trim),
+    competitor_ads: competitorBodies.slice(0, 20).map(trim),
+  }
+
+  const system = `Sen bir reklam analisti. Verilen Türkçe reklam metinlerinde kullanılan mesaj TEMALARINI etiketle. Sadece aşağıdaki etiket setinden seç:
+- aciliyet
+- fiyat_avantaji
+- kalite
+- sosyal_kanit
+- sorun_cozum
+- emosyonel
+- risk_azaltma (iade garantisi, denemelik)
+- statu (prestij, lüks, sınıfsal)
+- topluluk (aidiyet, beraber)
+- kisisellestirme (sana özel, kişisel)
+- otorite (uzman görüşü, veri, araştırma)
+- merak_uyandirma (soru cümlesi, gizem)
+
+JSON döndür:
+{"user_themes": ["etiket1", ...], "competitor_themes": ["etiket1", ...]}`
+
+  try {
+    const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
+    const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
+    const res = await fetch(`${baseUrl}/chat/completions`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${openaiKey}` },
+      body: JSON.stringify({
+        model,
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: JSON.stringify(user) },
+        ],
+        temperature: 0.2,
+        max_tokens: 400,
+        response_format: { type: 'json_object' },
+      }),
+      signal: AbortSignal.timeout(30000),
+    })
+    if (!res.ok) return null
+    const data = await res.json()
+    const content = data.choices?.[0]?.message?.content
+    if (!content) return null
+    const parsed = JSON.parse(content)
+    return {
+      userThemes: Array.isArray(parsed.user_themes) ? parsed.user_themes : [],
+      competitorThemes: Array.isArray(parsed.competitor_themes) ? parsed.competitor_themes : [],
+    }
+  } catch (e) {
+    console.warn('[CompetitorAnalyzer] LLM theme enhance failed (non-fatal):', e)
+    return null
   }
 }
 
@@ -333,7 +493,7 @@ export async function runFullCompetitorAnalysis(
 ): Promise<FullCompetitorAnalysis> {
   const errors: string[] = []
 
-  // Step 1: Analyze user ads
+  // Step 1: Analyze user ads (keyword-based baseline)
   const userProfile = analyzeUserAds(campaigns)
 
   // Step 2: Search competitors
@@ -344,8 +504,35 @@ export async function runFullCompetitorAnalysis(
   )
   errors.push(...searchErrors)
 
-  // Step 3: Compare
+  // Step 3: Compare (keyword-based)
   const comparison = compareWithCompetitors(userProfile, competitorAds)
+
+  // Step 3.5: LLM enhance — keyword'le yakalanamayan nüanslı temalar
+  try {
+    const userBodies: string[] = []
+    for (const c of campaigns) {
+      for (const as of c.adsets) {
+        for (const ad of as.ads) {
+          const body = (ad.creativeBody || ad.creativeTitle || ad.name || '').trim()
+          if (body) userBodies.push(body)
+        }
+      }
+    }
+    const competitorBodies = competitorAds
+      .map((a) => `${a.body || ''} ${a.title || ''}`.trim())
+      .filter(Boolean)
+
+    const llm = await enhanceThemesWithLLM(userBodies, competitorBodies)
+    if (llm) {
+      // Union: mevcut keyword-bazlı + LLM temalarını birleştir
+      const userSet = new Set([...userProfile.themes, ...llm.userThemes])
+      const compSet = new Set([...comparison.competitorThemes, ...llm.competitorThemes])
+      userProfile.themes = Array.from(userSet)
+      comparison.competitorThemes = Array.from(compSet)
+    }
+  } catch (e) {
+    console.warn('[CompetitorAnalyzer] enhance step failed (non-fatal):', e)
+  }
 
   return { userProfile, competitorAds, comparison, errors }
 }

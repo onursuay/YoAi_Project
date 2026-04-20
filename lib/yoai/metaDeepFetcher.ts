@@ -88,7 +88,8 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
   try {
     // 1. Fetch campaigns with inline adset + ad insights (nested expansion)
     const insightsFields = 'spend,impressions,clicks,ctr,cpc,reach,frequency,cpm,actions,action_values,cost_per_action_type,purchase_roas,quality_ranking,engagement_rate_ranking,conversion_rate_ranking'
-    const adFields = `id,name,status,effective_status,insights.date_preset(last_7d){${insightsFields}}`
+    // creative{body,title,link_url,call_to_action_type,object_story_spec} — gerçek metin + CTA
+    const adFields = `id,name,status,effective_status,creative{body,title,link_url,call_to_action_type,object_story_spec},insights.date_preset(last_7d){${insightsFields}}`
     const adsetFields = `id,name,status,optimization_goal,destination_type,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},ads.limit(20){${adFields}}`
     const campaignFields = `id,name,status,effective_status,objective,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},adsets.limit(30){${adsetFields}}`
 
@@ -163,6 +164,14 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
         const adInsights: AdInsight[] = rawAds.map((ad: any) => {
           const adInsightRaw = ad.insights?.data?.[0]
           const adNorm = normalizeInsights(adInsightRaw)
+          // Creative: body, title, CTA (gerçek reklam metni ve buton tipi)
+          const creative = ad.creative || {}
+          const oss = creative.object_story_spec || {}
+          // object_story_spec daha nested creative body verebilir
+          const ossBody = oss.link_data?.message || oss.video_data?.message || oss.photo_data?.message || oss.template_data?.message || ''
+          const ossTitle = oss.link_data?.name || oss.video_data?.title || oss.template_data?.name || ''
+          const ossCTA = oss.link_data?.call_to_action?.type || oss.video_data?.call_to_action?.type || ''
+          const ossLink = oss.link_data?.link || oss.template_data?.link || ''
           return {
             id: ad.id,
             name: ad.name || 'Unnamed Ad',
@@ -172,6 +181,10 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
             qualityRanking: adNorm.qualityRanking || undefined,
             engagementRateRanking: adNorm.engagementRateRanking || undefined,
             conversionRateRanking: adNorm.conversionRateRanking || undefined,
+            creativeBody: (creative.body || ossBody || '').trim() || undefined,
+            creativeTitle: (creative.title || ossTitle || '').trim() || undefined,
+            callToActionType: (creative.call_to_action_type || ossCTA || '').trim() || undefined,
+            linkUrl: (creative.link_url || ossLink || '').trim() || undefined,
           }
         })
 

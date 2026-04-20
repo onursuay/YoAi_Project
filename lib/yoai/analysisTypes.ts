@@ -48,6 +48,11 @@ export interface AdInsight {
   qualityRanking?: string
   engagementRateRanking?: string
   conversionRateRanking?: string
+  // Creative fields (Meta only) — fetch edildiyse dolu, yoksa undefined
+  creativeBody?: string
+  creativeTitle?: string
+  callToActionType?: string  // SHOP_NOW, LEARN_MORE, SIGN_UP, etc.
+  linkUrl?: string
 }
 
 /* ── Adset / Ad Group Level Insight ── */
