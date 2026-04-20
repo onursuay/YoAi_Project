@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Öneri kartlarında Meta API kodları Türkçe etikete çevrildi
+- **Sorun:** Öneri kartlarında `optimizationGoal` ve `destinationType` alanları Meta API ham değerleriyle gösteriliyordu (POST_ENGAGEMENT, ON_AD, LANDING_PAGE_VIEWS, WEBSITE gibi) — kullanıcı dostu değildi.
+- **Çözüm:** `AdPreviewCard.tsx` içinde `OPTIMIZATION_GOAL_LABEL` + `DESTINATION_LABEL` mapping'leri eklendi. Örnek: POST_ENGAGEMENT → "Gönderi Etkileşimi", ON_AD → "Reklam İçi Form", LANDING_PAGE_VIEWS → "Landing Page Görüntüleme", WEBSITE → "Web Sitesi". Ham değer `title` attribute'u olarak kalıyor (hover'da teknik karşılık görünür).
+- **Dosyalar:** components/yoai/AdPreviewCard.tsx
+
+---
+
 ## 2026-04-20 — YoAlgoritma hata banner'ları: "Yeniden Bağla" CTA'sı ile aksiyona çevrildi
 - **Sorun:** "Meta bağlantısı bulunamadı" / "Google fetch hatası" gibi errors dizisi kullanıcıya pasif text olarak gösteriliyordu; ne yapması gerektiği belli değildi.
 - **Çözüm:** Error banner'ı artık platform sezerek (meta/google keyword eşleştirmesi) ilgili `/entegrasyon?tab=...` sayfasına yönlendiren "Yeniden Bağla" butonu gösterir. Stil bg-primary/5 + primary border (CLAUDE.md rule'a uyumlu). Metin `text-sm` ile daha okunaklı.

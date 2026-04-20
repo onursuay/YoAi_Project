@@ -16,6 +16,48 @@ const IMPACT_STYLE: Record<string, { label: string; color: string }> = {
   low: { label: 'Düşük', color: 'text-gray-500 bg-gray-50' },
 }
 
+// Meta API değerlerini kullanıcı dostu Türkçe etiketlere çevir
+const OPTIMIZATION_GOAL_LABEL: Record<string, string> = {
+  LINK_CLICKS: 'Bağlantı Tıklamaları',
+  LANDING_PAGE_VIEWS: 'Landing Page Görüntüleme',
+  REACH: 'Erişim',
+  IMPRESSIONS: 'Gösterim',
+  POST_ENGAGEMENT: 'Gönderi Etkileşimi',
+  PAGE_LIKES: 'Sayfa Beğenileri',
+  LEAD_GENERATION: 'Potansiyel Müşteri (Form)',
+  OFFSITE_CONVERSIONS: 'Web Sitesi Dönüşümleri',
+  VALUE: 'Dönüşüm Değeri',
+  THRUPLAY: 'Video İzleme (ThruPlay)',
+  REPLIES: 'Mesaj Yanıtı',
+  CONVERSATIONS: 'Sohbet Başlatma',
+  QUALITY_CALL: 'Kaliteli Arama',
+  MAXIMIZE_CONVERSIONS: 'Dönüşüm Maksimizasyonu',
+  MAXIMIZE_CLICKS: 'Tıklama Maksimizasyonu',
+  TARGET_SPEND: 'Hedef Harcama',
+  TARGET_CPA: 'Hedef CPA',
+  TARGET_ROAS: 'Hedef ROAS',
+}
+
+const DESTINATION_LABEL: Record<string, string> = {
+  WEBSITE: 'Web Sitesi',
+  APP: 'Uygulama',
+  ON_AD: 'Reklam İçi Form',
+  ON_PAGE: 'Sayfa / Gönderi',
+  MESSENGER: 'Messenger',
+  INSTAGRAM_DIRECT: 'Instagram Direct',
+  WHATSAPP: 'WhatsApp',
+  CALL: 'Telefon Araması',
+}
+
+function fmtOptGoal(v?: string): string {
+  if (!v) return '—'
+  return OPTIMIZATION_GOAL_LABEL[v] || v
+}
+function fmtDest(v?: string): string {
+  if (!v) return '—'
+  return DESTINATION_LABEL[v] || v
+}
+
 export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
   const isGoogle = proposal.platform === 'Google'
   const impact = IMPACT_STYLE[proposal.impactLevel] || IMPACT_STYLE.medium
@@ -51,9 +93,9 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
           <div className="flex justify-between"><span className="text-gray-400">{isGoogle ? 'Reklam Grubu' : 'Reklam Seti'}</span><span className="text-gray-800 font-medium truncate max-w-[60%] text-right">{proposal.adsetName}</span></div>
           <div className="flex justify-between"><span className="text-gray-400">Bütçe</span><span className="text-gray-800 font-medium">₺{proposal.dailyBudget}/gün</span></div>
           {proposal.targetingDescription && <div className="flex justify-between"><span className="text-gray-400">Hedefleme</span><span className="text-gray-700 truncate max-w-[60%] text-right">{proposal.targetingDescription}</span></div>}
-          {proposal.optimizationGoal && <div className="flex justify-between"><span className="text-gray-400">Opt. Hedef</span><span className="text-gray-700">{proposal.optimizationGoal}</span></div>}
+          {proposal.optimizationGoal && <div className="flex justify-between"><span className="text-gray-400">Opt. Hedef</span><span className="text-gray-700 truncate max-w-[60%] text-right" title={proposal.optimizationGoal}>{fmtOptGoal(proposal.optimizationGoal)}</span></div>}
           {proposal.biddingStrategy && <div className="flex justify-between"><span className="text-gray-400">Teklif</span><span className="text-gray-700">{proposal.biddingStrategy}</span></div>}
-          {proposal.destinationType && <div className="flex justify-between"><span className="text-gray-400">Dönüşüm</span><span className="text-gray-700">{proposal.destinationType}</span></div>}
+          {proposal.destinationType && <div className="flex justify-between"><span className="text-gray-400">Dönüşüm</span><span className="text-gray-700 truncate max-w-[60%] text-right" title={proposal.destinationType}>{fmtDest(proposal.destinationType)}</span></div>}
         </div>
 
         {/* Ad preview */}
