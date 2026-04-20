@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma sayfa yenilemede "Taranıyor" görünmez (localStorage cache)
+- **Sorun:** Backend persisted veriyi hızlı dönse de, sayfa yenilemede DB read'in 300-500ms sürdüğü süre boyunca CommandCenterHeader "Taranıyor…" ve skeleton kutuları gösteriyordu. Kullanıcı bu flash'ı hâlâ tarama zannediyordu.
+- **Çözüm:** `yoai_cc_cache_v1` localStorage anahtarıyla command-center verisi önbelleğe alındı. Sayfa açıldığında cache'ten anında yüklenir (loading=false başlar), backend arka planda sessizce yenilenir ve state güncellenir — kullanıcı hiçbir loading UI görmez. Cache yoksa sadece ilk kurulum için normal loading akışı çalışır.
+- **Dosyalar:** app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — Günlük cron 16:00'a alındı (Istanbul)
 - **Sorun:** Günlük otomatik analizin 16:00 İstanbul saatinde başlaması istendi.
 - **Çözüm:** `vercel.json` cron `0 13 * * *` (16:00 Istanbul, 13:00 UTC). UI metinleri "16:00" olarak güncellendi.

@@ -54,11 +54,28 @@ export default function YoAiPage() {
     setPendingAction(null)
   }, [])
 
-  // ── Command Center Data (reads persisted daily run — no re-analysis on refresh) ──
-  const [ccData, setCcData] = useState<DeepAnalysisResult | null>(null)
-  const [ccLoading, setCcLoading] = useState(true)
+  // ── Command Center Data ──
+  // localStorage önbelleğinden anında yükle — sayfa yenilemede "Taranıyor" gösterme.
+  // Backend'den sessizce arka planda yenile, state'i güncelle.
+  const CC_CACHE_KEY = 'yoai_cc_cache_v1'
+  const readCachedCc = (): { data: DeepAnalysisResult | null; runDate: string | null } => {
+    if (typeof window === 'undefined') return { data: null, runDate: null }
+    try {
+      const raw = localStorage.getItem(CC_CACHE_KEY)
+      if (!raw) return { data: null, runDate: null }
+      const parsed = JSON.parse(raw)
+      return { data: parsed.data || null, runDate: parsed.runDate || null }
+    } catch {
+      return { data: null, runDate: null }
+    }
+  }
+  const initialCache = typeof window !== 'undefined' ? readCachedCc() : { data: null, runDate: null }
+
+  const [ccData, setCcData] = useState<DeepAnalysisResult | null>(initialCache.data)
+  // Cache varsa loading=false (hiç spinner gösterme); yoksa true (ilk yükleme)
+  const [ccLoading, setCcLoading] = useState(!initialCache.data)
   const [ccError, setCcError] = useState<string | null>(null)
-  const [ccRunDate, setCcRunDate] = useState<string | null>(null)
+  const [ccRunDate, setCcRunDate] = useState<string | null>(initialCache.runDate)
 
   useEffect(() => {
     fetchCommandCenter()
@@ -66,7 +83,9 @@ export default function YoAiPage() {
   }, [])
 
   const fetchCommandCenter = useCallback(async () => {
-    setCcLoading(true)
+    // Cache varsa loading flag'ini hiç açma — kullanıcı tarama UI'ı görmemeli
+    const hasCache = !!ccData
+    if (!hasCache) setCcLoading(true)
     setCcError(null)
     try {
       const res = await fetch('/api/yoai/command-center')
@@ -75,19 +94,28 @@ export default function YoAiPage() {
       if (json.ok && json.data) {
         setCcData(json.data)
         setCcRunDate(json.run_date || null)
+        try {
+          localStorage.setItem(
+            CC_CACHE_KEY,
+            JSON.stringify({ data: json.data, runDate: json.run_date || null }),
+          )
+        } catch {}
       } else if (json.ok && !json.data) {
-        // No persisted run yet — show empty state (don't generate)
-        setCcData(null)
-        setCcRunDate(null)
+        if (!hasCache) {
+          setCcData(null)
+          setCcRunDate(null)
+        }
+        // Cache varsa eski veriyi koru — kullanıcı boş ekran görmesin
       } else {
-        setCcError('Veri alınamadı')
+        if (!hasCache) setCcError('Veri alınamadı')
       }
     } catch (err) {
       console.error('[YoAi] Command center fetch error:', err)
-      setCcError('Bağlantı hatası')
+      if (!hasCache) setCcError('Bağlantı hatası')
     } finally {
-      setCcLoading(false)
+      if (!hasCache) setCcLoading(false)
     }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
   // Auto-scroll — only during active chat
