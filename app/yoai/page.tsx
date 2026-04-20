@@ -317,11 +317,30 @@ export default function YoAiPage() {
 
             {ccData?.errors && ccData.errors.length > 0 && (
               <div className="space-y-2">
-                {ccData.errors.map((err, i) => (
-                  <div key={i} className="flex items-center gap-2 bg-gray-50 border border-gray-200 rounded-xl px-4 py-2.5">
-                    <span className="text-xs text-gray-700">{err}</span>
-                  </div>
-                ))}
+                {ccData.errors.map((err, i) => {
+                  const errLower = String(err).toLowerCase()
+                  const isMetaIssue = errLower.includes('meta')
+                  const isGoogleIssue = errLower.includes('google')
+                  const hintedIntegration = isMetaIssue
+                    ? '/entegrasyon?tab=meta'
+                    : isGoogleIssue
+                      ? '/entegrasyon?tab=google'
+                      : '/entegrasyon'
+                  const needsReconnect = isMetaIssue || isGoogleIssue
+                  return (
+                    <div key={i} className="flex items-center gap-3 bg-primary/5 border border-primary/20 rounded-xl px-4 py-2.5">
+                      <span className="text-sm text-gray-800 flex-1">{err}</span>
+                      {needsReconnect && (
+                        <a
+                          href={hintedIntegration}
+                          className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
+                        >
+                          Yeniden Bağla
+                        </a>
+                      )}
+                    </div>
+                  )
+                })}
               </div>
             )}
 
