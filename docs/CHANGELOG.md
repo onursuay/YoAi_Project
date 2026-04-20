@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — Günlük tarama saati 08:00'e alındı
+- **Sorun:** Cron schedule 16:15 Istanbul'daydı, kullanıcı her sabah 08:00 istedi.
+- **Çözüm:** vercel.json schedule `15 13 * * *` → `0 5 * * *` (08:00 Istanbul = 05:00 UTC). Vercel sunucu tabanlı çalıştığından PC kapalı olsa da tetiklenir.
+- **Dosyalar:** vercel.json
+
+---
+
 ## 2026-04-20 — YoAi sayfa genişlik + KPI font küçültme
 - **Sorun:** İçerik alanı dar (`max-w-6xl`) görünüyordu; KPI rakamları (₺0, %0,00 vb.) `text-xl` ile gereksiz büyüktü.
 - **Çözüm:** Page container `max-w-6xl` → `max-w-[1440px]`. KpiDashboard rakamları `text-xl` → `text-base`.
