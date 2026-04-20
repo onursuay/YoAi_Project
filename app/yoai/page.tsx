@@ -11,10 +11,6 @@ import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import KpiDashboard from '@/components/yoai/KpiDashboard'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
 import AiAdSuggestions from '@/components/yoai/AiAdSuggestions'
-import DailyBriefing from '@/components/yoai/DailyBriefing'
-import HealthScore from '@/components/yoai/HealthScore'
-import SmartBudgetPanel from '@/components/yoai/SmartBudgetPanel'
-import WeeklyReport from '@/components/yoai/WeeklyReport'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { CATEGORIES } from '@/lib/yoai/categories'
 import { OFF_TOPIC_MESSAGE } from '@/lib/yoai/prompts'
@@ -306,18 +302,6 @@ export default function YoAiPage() {
             />
 
             <KpiDashboard kpis={ccData?.kpis ?? null} loading={ccLoading} />
-
-            {/* Günlük Brifing + Sağlık Skoru — sabit yükseklik */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: '480px' }}>
-              <DailyBriefing data={ccData} loading={ccLoading} />
-              <HealthScore campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
-            </div>
-
-            {/* Bütçe Dağılımı + Haftalık Özet — sabit yükseklik */}
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4" style={{ height: '480px' }}>
-              <SmartBudgetPanel campaigns={ccData?.campaigns ?? []} loading={ccLoading} />
-              <WeeklyReport campaigns={ccData?.campaigns ?? []} kpis={ccData?.kpis ?? null} loading={ccLoading} />
-            </div>
 
             {!ccLoading && ccData && (
               <AiAdSuggestions
