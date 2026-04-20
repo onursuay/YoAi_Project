@@ -98,9 +98,31 @@ function EntegrasyonContent() {
       window.history.replaceState({}, '', '/entegrasyon')
     }
     if (gaParam === 'connected' || gaParam === 'error' || gaParam === 'config_missing') {
+      if (gaParam === 'error') {
+        const reason = searchParams.get('reason') || 'unknown'
+        const msg = reason === 'no_user_session'
+          ? 'Google Analytics bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.'
+          : reason === 'no_refresh_token'
+          ? 'Google, refresh token göndermedi. https://myaccount.google.com/permissions sayfasından YoAi iznini kaldırıp tekrar deneyin.'
+          : reason === 'db_save_failed'
+          ? 'Bağlantı veritabanına kaydedilemedi. Lütfen tekrar deneyin.'
+          : `Google Analytics bağlantı hatası: ${reason}`
+        alert(msg)
+      }
       window.history.replaceState({}, '', '/entegrasyon')
     }
     if (gscParam === 'connected' || gscParam === 'error' || gscParam === 'config_missing') {
+      if (gscParam === 'error') {
+        const reason = searchParams.get('reason') || 'unknown'
+        const msg = reason === 'no_user_session'
+          ? 'Search Console bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.'
+          : reason === 'no_refresh_token'
+          ? 'Google, refresh token göndermedi. https://myaccount.google.com/permissions sayfasından YoAi iznini kaldırıp tekrar deneyin.'
+          : reason === 'db_save_failed'
+          ? 'Bağlantı veritabanına kaydedilemedi. Lütfen tekrar deneyin.'
+          : `Search Console bağlantı hatası: ${reason}`
+        alert(msg)
+      }
       window.history.replaceState({}, '', '/entegrasyon')
     }
     const tiktokParam = searchParams.get('tiktok')
