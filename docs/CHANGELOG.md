@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-04-23 — Display Resimler alanı: 5-tab picker (Öneriler + Öğe Kitaplığı + Web Sitesi + Yükle + Ücretsiz Stok)
+- **Sorun:** Resimler için 3 ayrı inline uploader (landscape / square / portrait) + üstte "Stok resim ekle" butonu vardı. Gerçek Google Ads'te tek "Resim ekle" butonu → 5 tab'lı modal açılır.
+- **Çözüm:**
+  1. **Yeni DisplayImagePicker component'i** — 5 tab'lı tam modal:
+     - **Öneriler:** Reklamın Nihai URL'sini otomatik tarayıp (scrape endpoint'i) aday görselleri listeler.
+     - **Öğe Kitaplığı:** GAQL ile kullanıcının Google Ads hesabındaki IMAGE asset'leri (yalnızca 1.91:1 / 1:1 / 4:5 uyumluları). Seçilen asset tekrar upload olmadan direkt kullanılır.
+     - **Web Sitesi veya Sosyal Medya:** Kullanıcı URL girer, scraper çalışır.
+     - **Yükle:** Drag-drop + click-to-pick (cloud Drive/Dropbox credentials geldiğinde eklenecek).
+     - **Ücretsiz Stok Resimler:** Pexels entegrasyonu (arama + sayfalama + fotoğrafçı atıfı).
+  2. **Seç → Kategorize → Ekle akışı:** Herhangi bir tab'tan görsel seçildiğinde pending state'e geçer; aspect ratio'ya göre Yatay/Kare/Dikey otomatik işaretlenir, uyumsuz kategoriler greyed out. Kullanıcı "Ekle"ye basınca backend'e iletilir.
+  3. **DisplayStepAds refactor:** 3 inline ImageUploader ve stock butonu kaldırıldı. Yerine tek "Resim ekle" butonu + birleşik thumbnail grid (her thumb üstünde oran etiketi 1.91:1 / 1:1 / 4:5).
+  4. `DisplayStockImagePicker` component'i silindi — işlevi yeni ImagePicker'ın Stok tab'ına taşındı.
+- **Dosyalar:** components/google/wizard/display/steps/DisplayImagePicker.tsx (yeni), components/google/wizard/display/steps/DisplayStepAds.tsx (refactor), components/google/wizard/display/steps/DisplayStockImagePicker.tsx (silindi), locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-23 — Display Videolar alanı: 2-tab picker (Öğe Kitaplığı + YouTube'da Ara)
 - **Sorun:** Video alanı basit bir "YouTube URL'si yapıştır" input'uydu. Gerçek Google Ads'te 3 tab var (Öğe Kitaplığı / YouTube'da Ara / Seslendirme ekleyin).
 - **Çözüm:**
