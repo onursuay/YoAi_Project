@@ -27,17 +27,26 @@ function mapDisplayToBidding(
 }
 
 export default function DisplayStepBudgetBidding({ state, update, t }: StepProps) {
-  const { biddingStrategy, biddingFocus } = mapDisplayToBidding(
-    state.displayBiddingFocus,
-    state.displayConversionsSub,
-    state.displayValueSub
-  )
-
   const applyFocus = (partial: Partial<typeof state>) => {
     const next = { ...state, ...partial }
     const mapped = mapDisplayToBidding(next.displayBiddingFocus, next.displayConversionsSub, next.displayValueSub)
     update({ ...partial, biddingStrategy: mapped.biddingStrategy, biddingFocus: mapped.biddingFocus })
   }
+
+  const friendlyStrategyLabel = (() => {
+    if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') return t('display.focusViewableImpressions')
+    if (state.displayBiddingFocus === 'CONVERSIONS') {
+      return state.displayConversionsSub === 'TARGET_CPA'
+        ? t('display.manualCpa')
+        : t('display.maximizeConversions')
+    }
+    if (state.displayBiddingFocus === 'CONVERSION_VALUE') {
+      return state.displayValueSub === 'TARGET_ROAS'
+        ? t('display.targetRoas')
+        : t('display.maximizeConversionValue')
+    }
+    return ''
+  })()
 
   const infoText = (() => {
     if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') {
@@ -198,12 +207,7 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
 
       <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 text-[13px] text-emerald-900">
         <p className="font-medium text-emerald-900 mb-1">{t('display.activeStrategyTitle')}</p>
-        <p className="text-emerald-800">
-          {t('display.activeStrategyTechnical', {
-            strategy: biddingStrategy,
-            focus: biddingFocus ?? '—',
-          })}
-        </p>
+        <p className="text-emerald-800">{friendlyStrategyLabel}</p>
         <p className="mt-2 text-emerald-800">{infoText}</p>
       </div>
       </section>

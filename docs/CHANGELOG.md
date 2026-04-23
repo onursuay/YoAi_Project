@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-23 — Display teklif özetinde teknik enum yerine kullanıcı dostu etiket
+- **Sorun:** "Aktif teklif yapısı" kutusu ve Özet ekranı `Strateji: MAXIMIZE_CLICKS · Odak: CLICKS` gibi ham enum gösteriyordu.
+- **Çözüm:** displayBiddingFocus + alt seçeneğe göre kullanıcı dostu etiket üretildi (örn. "Dönüşümleri otomatik olarak en üst düzeye çıkar", "Görüntülenebilir gösterimler"). Özet'teki raw `biddingStrategy` de aynı etiketle değiştirildi.
+- **Dosyalar:** components/google/wizard/display/steps/DisplayStepBudgetBidding.tsx, components/google/wizard/display/steps/DisplayStepSummary.tsx
+
+---
+
 ## 2026-04-23 — Google Ads Display wizard gerçek akışa hizalandı
 - **Sorun:** Display wizard'ında Konumlar ALL/TURKEY/CUSTOM'a sıkışmıştı, proximity ve presence/interest modu yoktu; Bütçe+Teklif tek blok halindeydi; Hedefleme'de optimize targeting yoktu; reklamlarda amber placeholder CLAUDE.md rengine aykırıydı; özet Ad Group'ı göstermiyordu.
 - **Çözüm:** Display Kampanya Ayarları'ndaki Konumlar bloğu Search'ün `StepLocationLanguage` component'i ile birebir hizalandı (scope + proximity + presence/interest + LocationAdvancedModal). Diller + AB Siyasi Reklamları zaten aligned — dokunulmadı. `DisplayStepTargeting` wrapper'ı Search'ün `StepAudience` component'ini bozmadan üzerine "Optimize edilmiş hedefleme" toggle'ı ekledi. Bütçe/Teklif iki alt başlığa bölündü. `WizardHelpers.buildCreatePayload` içine `optimizedTargeting` yalnızca `advertisingChannelType === 'DISPLAY'` koşuluyla eklendi — Search payload'ı değişmedi. Reklam adımındaki amber bilgi kutusu CLAUDE.md kuralı gereği gray/gray-700'e çevrildi. Özet ekranı Ad Group adını ve optimize targeting durumunu gösteriyor.

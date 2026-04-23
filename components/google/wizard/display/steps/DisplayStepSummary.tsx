@@ -30,6 +30,21 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
 
   const adGroupName = state.adGroupName.trim() || `${state.campaignName.trim() || ''} - ${t('adgroup.defaultNameFallback')}`.trim()
 
+  const friendlyBidLabel = (() => {
+    if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') return t('display.focusViewableImpressions')
+    if (state.displayBiddingFocus === 'CONVERSIONS') {
+      return state.displayConversionsSub === 'TARGET_CPA'
+        ? t('display.manualCpa')
+        : t('display.maximizeConversions')
+    }
+    if (state.displayBiddingFocus === 'CONVERSION_VALUE') {
+      return state.displayValueSub === 'TARGET_ROAS'
+        ? t('display.targetRoas')
+        : t('display.maximizeConversionValue')
+    }
+    return '—'
+  })()
+
   const euLabel =
     state.euPoliticalAdsDeclaration === 'POLITICAL'
       ? t('settings.euPoliticalPolitical')
@@ -87,7 +102,7 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
         </p>
         <p>
           <span className="text-gray-500">{t('display.summaryBidStrategy')}: </span>
-          {state.biddingStrategy}
+          {friendlyBidLabel}
           {state.displayBiddingFocus === 'CONVERSIONS' && state.displayConversionsSub === 'TARGET_CPA' && state.targetCpa
             ? ` — ${t('campaign.targetCpa')}: ${state.targetCpa}`
             : ''}
