@@ -303,6 +303,39 @@ export async function searchAllAudiences(ctx: Ctx, keyword: string): Promise<Aud
   return [...interests, ...userLists]
 }
 
+/** Yalnızca Google global taksonomisi (tüm hesaplar için aynı) */
+export async function browseGlobalAudiences(ctx: Ctx): Promise<{
+  affinity: AudienceSegment[]
+  inMarket: AudienceSegment[]
+  detailedDemographics: AudienceSegment[]
+  lifeEvents: AudienceSegment[]
+  userLists: []
+  customAudiences: []
+  combinedAudiences: []
+}> {
+  const [affinity, inMarket, detailedDemographics, lifeEvents] = await Promise.all([
+    listTopLevelInterests(ctx, 'AFFINITY'),
+    listTopLevelInterests(ctx, 'IN_MARKET'),
+    listDetailedDemographics(ctx),
+    listLifeEvents(ctx),
+  ])
+  return { affinity, inMarket, detailedDemographics, lifeEvents, userLists: [], customAudiences: [], combinedAudiences: [] }
+}
+
+/** Yalnızca çağıran kullanıcıya özel (per-customer) segmentler */
+export async function browseUserAudiences(ctx: Ctx): Promise<{
+  userLists: AudienceSegment[]
+  customAudiences: AudienceSegment[]
+  combinedAudiences: AudienceSegment[]
+}> {
+  const [userLists, customAudiences, combinedAudiences] = await Promise.all([
+    listUserLists(ctx),
+    listCustomAudiences(ctx),
+    listCombinedAudiences(ctx),
+  ])
+  return { userLists, customAudiences, combinedAudiences }
+}
+
 /** Browse: fetch all categories for the browse tab */
 export async function browseAllAudiences(ctx: Ctx): Promise<{
   affinity: AudienceSegment[]

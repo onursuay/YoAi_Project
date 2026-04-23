@@ -2,6 +2,23 @@
 
 ---
 
+## 2026-04-23 — Kitle hedefleme: SaaS per-user mimari (oto-iyileşme + canlı per-customer)
+- **Sorun:** `/api/integrations/google-ads/tools/audience-segments` tek global `audience_cache` satırını okuyordu. Satırı doldurmak için yalnızca admin `x-admin-secret` header'lı `/api/admin/google-audiences/refresh` endpoint'ini tetikleyebiliyordu. Sonuçta her yeni abone kullanıcı wizard'da "Kitle verileri henüz hazır değil" görüyordu. Ayrıca `user_list` / `custom_audience` / `combined_audience` kullanıcıya özel olmasına rağmen global cache'e konuyordu — hatalı mimari.
+- **Çözüm:**
+  1. **Global vs per-customer ayrımı:**
+     - `affinity` / `inMarket` / `detailedDemographics` / `lifeEvents` → Google global taksonomisi, tek ortak cache.
+     - `userLists` / `customAudiences` / `combinedAudiences` → çağıran kullanıcıya özel, her request'te canlı.
+  2. **Oto-iyileşen cache:** Endpoint cache'te global dataset yoksa çağıran kullanıcının Google Ads credentials'ıyla global kategorileri çeker (`browseGlobalAudiences`), `audience_cache`'e yazar, response'u döndürür. İlk abone wizard'ı açtığında kendini iyileştirir, sonraki herkes hazır veriyi görür.
+  3. **Per-customer canlı çekim:** Her request'te `browseUserAudiences(ctx)` ile çağıranın user_list / custom / combined audience'ları çekilir. Cache'e yazılmaz. 60 sn private cache header.
+  4. **`browseGlobalAudiences` ve `browseUserAudiences` helper'ları** `lib/google-ads/audience-segments.ts`'e eklendi (additive; mevcut `browseAllAudiences` silinmedi). Read-only GAQL; entegrasyon mutation path'ine dokunulmadı.
+  5. **`buildPerCustomerAddenda` helper'ı** `buildAudienceDataset.ts`'e eklendi — per-customer segment'leri browse node + search item'a çevirir, merge için kullanılır.
+  6. **Admin refresh endpoint'i korundu** — artık opsiyonel force-refresh aracı.
+  7. **Graceful degradation:** Kullanıcı Google Ads'e bağlı değilse ve cache boşsa "data_not_ready" doğru mesajıyla döner.
+- **Etki:** Search ve PMax wizard'ları da aynı endpoint'i kullandığı için onlarda da "Kitle verileri yok" problemi çözüldü. Mevcut fonksiyon imzaları değişmedi.
+- **Dosyalar:** app/api/integrations/google-ads/tools/audience-segments/route.ts, lib/google-ads/audience-segments.ts, lib/audience/buildAudienceDataset.ts
+
+---
+
 ## 2026-04-23 — Display Resimler alanı: 5-tab picker (Öneriler + Öğe Kitaplığı + Web Sitesi + Yükle + Ücretsiz Stok)
 - **Sorun:** Resimler için 3 ayrı inline uploader (landscape / square / portrait) + üstte "Stok resim ekle" butonu vardı. Gerçek Google Ads'te tek "Resim ekle" butonu → 5 tab'lı modal açılır.
 - **Çözüm:**

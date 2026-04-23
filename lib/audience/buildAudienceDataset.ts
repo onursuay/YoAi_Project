@@ -127,3 +127,30 @@ export function buildAudienceDataset(raw: RawBrowseData, locale: 'tr' = 'tr'): A
     stats: { totalNodes, totalSearchTerms },
   }
 }
+
+/**
+ * Per-customer segment'leri (user_list / custom_audience / combined_audience)
+ * browse node + search item formatına çevirir.
+ * Cache'e yazılmaz; her request'te çağıran kullanıcının verisinden canlı üretilir.
+ */
+export function buildPerCustomerAddenda(
+  segments: { userLists: AudienceSegment[]; customAudiences: AudienceSegment[]; combinedAudiences: AudienceSegment[] },
+  locale: 'tr' = 'tr'
+): {
+  userListsNodes: AudienceBrowseNode[]
+  customAudiencesNodes: AudienceBrowseNode[]
+  combinedAudiencesNodes: AudienceBrowseNode[]
+  searchItems: AudienceSearchItem[]
+} {
+  const userListsNodes = segments.userLists.map(s => toBrowseNode(s, locale))
+  const customAudiencesNodes = segments.customAudiences.map(s => toBrowseNode(s, locale))
+  const combinedAudiencesNodes = segments.combinedAudiences.map(s => toBrowseNode(s, locale))
+
+  const searchItems: AudienceSearchItem[] = []
+  for (const seg of [...segments.userLists, ...segments.customAudiences, ...segments.combinedAudiences]) {
+    const nameTr = locale === 'tr' ? translateAudienceName(seg.name, locale) : seg.name
+    searchItems.push(toSearchItem(seg, nameTr, [nameTr], true))
+  }
+
+  return { userListsNodes, customAudiencesNodes, combinedAudiencesNodes, searchItems }
+}
