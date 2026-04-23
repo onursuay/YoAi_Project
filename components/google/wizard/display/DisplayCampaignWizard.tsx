@@ -11,7 +11,7 @@ import StepGoalType from '../steps/StepGoalType'
 import StepConversionAndName from '../steps/StepConversionAndName'
 import DisplayStepCampaignSettings from './steps/DisplayStepCampaignSettings'
 import DisplayStepBudgetBidding from './steps/DisplayStepBudgetBidding'
-import StepAudience from '../steps/StepAudience'
+import DisplayStepTargeting from './steps/DisplayStepTargeting'
 import DisplayStepAds from './steps/DisplayStepAds'
 import DisplayStepSummary from './steps/DisplayStepSummary'
 
@@ -269,7 +269,7 @@ export default function DisplayCampaignWizard({
               {step === 1 && <StepConversionAndName {...stepProps} />}
               {step === 2 && <DisplayStepCampaignSettings {...stepProps} />}
               {step === 3 && <DisplayStepBudgetBidding {...stepProps} />}
-              {step === 4 && <StepAudience {...stepProps} />}
+              {step === 4 && <DisplayStepTargeting {...stepProps} />}
               {step === 5 && <DisplayStepAds {...stepProps} />}
               {step === 6 && <DisplayStepSummary {...stepProps} />}
             </>

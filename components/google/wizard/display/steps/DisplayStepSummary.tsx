@@ -18,12 +18,17 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
     .map(id => LANGUAGE_OPTIONS.find(l => l.id === id)?.name ?? id)
     .join(', ')
 
-  const locSummary =
-    state.displayLocationMode === 'ALL'
-      ? t('display.locationAll')
-      : state.displayLocationMode === 'TURKEY'
-        ? t('display.locationTurkey')
-        : state.locations.map(l => `${l.name}${l.isNegative ? ` (${t('location.excludedParens')})` : ''}`).join(', ') || '—'
+  const locParts: string[] = [
+    ...state.locations.map(l => `${l.name}${l.isNegative ? ` (${t('location.excludedParens')})` : ''}`),
+    ...state.proximityTargets.map(p => p.label ?? `${p.lat.toFixed(4)}, ${p.lng.toFixed(4)} (${p.radiusMeters / 1000} km)`),
+  ]
+  const locSummary = locParts.length > 0
+    ? locParts.join(', ')
+    : state.geoSearchCountry === 'TR'
+      ? t('display.locationTurkey')
+      : t('display.locationAnywhere')
+
+  const adGroupName = state.adGroupName.trim() || `${state.campaignName.trim() || ''} - ${t('adgroup.defaultNameFallback')}`.trim()
 
   const euLabel =
     state.euPoliticalAdsDeclaration === 'POLITICAL'
@@ -96,9 +101,17 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
         <p>
           {t('display.summaryAudienceCount', { count: audienceCount })}
         </p>
+        <p>
+          <span className="text-gray-500">{t('display.summaryOptimizedTargeting')}: </span>
+          {state.optimizedTargeting ? '✓' : '—'}
+        </p>
       </Card>
 
       <Card title={t('display.summaryAd')}>
+        <p>
+          <span className="text-gray-500">{t('display.summaryAdGroup')}: </span>
+          {adGroupName || '—'}
+        </p>
         <p>
           <span className="text-gray-500">{t('display.businessName')}: </span>
           {state.displayBusinessName.trim() || '—'}

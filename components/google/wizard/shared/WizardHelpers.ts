@@ -67,6 +67,8 @@ export function buildCreatePayload(state: WizardState, defaultAdGroupName: strin
       }
     })()),
     audienceMode: state.audienceMode,
+    // DISPLAY kampanyaları için optimize edilmiş hedefleme toggle'ı — Search payload'ı değişmez
+    ...(state.campaignType === 'DISPLAY' && { optimizedTargeting: state.optimizedTargeting }),
     adSchedule: state.adSchedule.length > 0 ? state.adSchedule : undefined,
     // Conversion goals — real resource names; applied post-create via CustomConversionGoal
     ...(state.selectedConversionGoalIds.length > 0 && {

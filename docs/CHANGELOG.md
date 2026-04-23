@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-23 — Google Ads Display wizard gerçek akışa hizalandı
+- **Sorun:** Display wizard'ında Konumlar ALL/TURKEY/CUSTOM'a sıkışmıştı, proximity ve presence/interest modu yoktu; Bütçe+Teklif tek blok halindeydi; Hedefleme'de optimize targeting yoktu; reklamlarda amber placeholder CLAUDE.md rengine aykırıydı; özet Ad Group'ı göstermiyordu.
+- **Çözüm:** Display Kampanya Ayarları'ndaki Konumlar bloğu Search'ün `StepLocationLanguage` component'i ile birebir hizalandı (scope + proximity + presence/interest + LocationAdvancedModal). Diller + AB Siyasi Reklamları zaten aligned — dokunulmadı. `DisplayStepTargeting` wrapper'ı Search'ün `StepAudience` component'ini bozmadan üzerine "Optimize edilmiş hedefleme" toggle'ı ekledi. Bütçe/Teklif iki alt başlığa bölündü. `WizardHelpers.buildCreatePayload` içine `optimizedTargeting` yalnızca `advertisingChannelType === 'DISPLAY'` koşuluyla eklendi — Search payload'ı değişmedi. Reklam adımındaki amber bilgi kutusu CLAUDE.md kuralı gereği gray/gray-700'e çevrildi. Özet ekranı Ad Group adını ve optimize targeting durumunu gösteriyor.
+- **Dosyalar:** components/google/wizard/display/DisplayCampaignWizard.tsx, components/google/wizard/display/steps/DisplayStepCampaignSettings.tsx, components/google/wizard/display/steps/DisplayStepTargeting.tsx (yeni), components/google/wizard/display/steps/DisplayStepBudgetBidding.tsx, components/google/wizard/display/steps/DisplayStepAds.tsx, components/google/wizard/display/steps/DisplayStepSummary.tsx, components/google/wizard/display/displayWizardValidation.ts, components/google/wizard/shared/WizardHelpers.ts, locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-20 — YoAlgoritma persisted stale error için hot-heal
 - **Sorun:** metaDeepFetcher'a cookie fallback eklendi ama command-center yalnızca Supabase'deki persisted daily-run sonucunu döndüğü için eski tarama sonucundaki "Meta bağlantısı bulunamadı" hatası sayfada kalmaya devam ediyordu.
 - **Çözüm:** app/yoai/page.tsx içine hot-heal useEffect: ccData.errors içinde "Meta bağlantısı" içeren bir hata varsa, localStorage cache temizlenir ve `triggerBackgroundBootstrap()` tetiklenerek yeni bir daily-run (fix uygulanmış) çalıştırılır. Tek seferlik guard (`healedRef`).

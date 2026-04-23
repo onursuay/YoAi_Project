@@ -57,24 +57,31 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
   })()
 
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {t('campaign.dailyBudget')} <span className="text-red-500">*</span>
-        </label>
-        <input
-          type="number"
-          min={1}
-          step={1}
-          className={inputCls}
-          value={state.dailyBudget}
-          onChange={e => update({ dailyBudget: e.target.value })}
-          placeholder={t('campaign.dailyBudgetPlaceholder')}
-        />
-      </div>
+    <div className="space-y-8">
+      {/* Bütçe */}
+      <section className="space-y-3">
+        <h4 className="text-[15px] font-semibold text-gray-900">{t('display.budgetSectionTitle')}</h4>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">
+            {t('campaign.dailyBudget')} <span className="text-red-500">*</span>
+          </label>
+          <input
+            type="number"
+            min={1}
+            step={1}
+            className={inputCls}
+            value={state.dailyBudget}
+            onChange={e => update({ dailyBudget: e.target.value })}
+            placeholder={t('campaign.dailyBudgetPlaceholder')}
+          />
+        </div>
+      </section>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('display.biddingFocusLabel')}</label>
+      {/* Teklif verme */}
+      <section className="space-y-4">
+        <h4 className="text-[15px] font-semibold text-gray-900">{t('display.biddingSectionTitle')}</h4>
+        <div>
+          <label className="block text-sm font-medium text-gray-700 mb-1">{t('display.biddingFocusLabel')}</label>
         <select
           className={inputCls}
           value={state.displayBiddingFocus}
@@ -199,6 +206,7 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
         </p>
         <p className="mt-2 text-emerald-800">{infoText}</p>
       </div>
+      </section>
     </div>
   )
 }

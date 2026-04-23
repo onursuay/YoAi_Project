@@ -109,8 +109,8 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-amber-200 bg-amber-50/80 px-4 py-3 text-sm text-amber-900">
-        {t('display.assetsPlaceholder')}
+      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+        {t('display.adsInfoNote')}
       </div>
     </div>
   )

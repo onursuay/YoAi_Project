@@ -29,12 +29,9 @@ export function validateDisplayStep(
       return null
     }
 
-    // Step 2: Kampanya Ayarları — language required; custom location must have at least one entry
+    // Step 2: Kampanya Ayarları — language required. Locations: boş ise "tüm ülkeler" kabul edilir (Search ile aynı davranış).
     case 2: {
       if (state.languageIds.length === 0) return t('validation.languageRequired')
-      if (state.displayLocationMode === 'CUSTOM' && state.locations.length === 0) {
-        return t('display.validation.locationsCustomRequired')
-      }
       return null
     }
 
