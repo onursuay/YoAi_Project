@@ -91,6 +91,22 @@ export default function YoAiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
+  // Hot-heal: persisted data'da "Meta bağlantısı bulunamadı" hatası varsa ve cookie
+  // valid ise (yeni fix bu durumu düzeltiyor), eski persisted sonucu yerine yeniden tara.
+  const healedRef = useRef(false)
+  useEffect(() => {
+    if (healedRef.current) return
+    if (!ccData?.errors || ccData.errors.length === 0) return
+    const hasMetaConnError = ccData.errors.some(e =>
+      typeof e === 'string' ? e.includes('Meta bağlantısı') : false
+    )
+    if (!hasMetaConnError) return
+    healedRef.current = true
+    try { localStorage.removeItem(CC_CACHE_KEY) } catch {}
+    triggerBackgroundBootstrap()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [ccData])
+
   const triggerBackgroundBootstrap = useCallback(async () => {
     setBootstrapping(true)
     try {

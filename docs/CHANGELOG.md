@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma persisted stale error için hot-heal
+- **Sorun:** metaDeepFetcher'a cookie fallback eklendi ama command-center yalnızca Supabase'deki persisted daily-run sonucunu döndüğü için eski tarama sonucundaki "Meta bağlantısı bulunamadı" hatası sayfada kalmaya devam ediyordu.
+- **Çözüm:** app/yoai/page.tsx içine hot-heal useEffect: ccData.errors içinde "Meta bağlantısı" içeren bir hata varsa, localStorage cache temizlenir ve `triggerBackgroundBootstrap()` tetiklenerek yeni bir daily-run (fix uygulanmış) çalıştırılır. Tek seferlik guard (`healedRef`).
+- **Dosyalar:** app/yoai/page.tsx
+
+---
+
 ## 2026-04-20 — YoAlgoritma "Meta bağlantısı yok" yanılgısı düzeltildi
 - **Sorun:** Entegrasyon sayfası Meta'yı "Bağlı" gösterirken YoAlgoritma "Meta bağlantısı bulunamadı" uyarısı veriyordu. İki sayfa farklı kaynak okuyor: Entegrasyon cookie (süre dolmuşsa bile token varsa "bağlı"), YoAlgoritma ise `meta_connections` DB tablosundaki `status='active'` + expiry kontrolü.
 - **Çözüm:** `metaDeepFetcher.ts` içine 3. tier cookie fallback eklendi. DB lookup başarısız olursa, cookie'deki `meta_access_token` + `meta_selected_ad_account_id` + expiry kontrolü yapılır. Geçerliyse YoAlgoritma da bağlantıyı Entegrasyon ile aynı kaynaktan çözer. Integration kodu değiştirilmedi.
