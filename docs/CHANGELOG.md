@@ -2,6 +2,31 @@
 
 ---
 
+## 2026-04-23 — Display Videolar alanı: 2-tab picker (Öğe Kitaplığı + YouTube'da Ara)
+- **Sorun:** Video alanı basit bir "YouTube URL'si yapıştır" input'uydu. Gerçek Google Ads'te 3 tab var (Öğe Kitaplığı / YouTube'da Ara / Seslendirme ekleyin).
+- **Çözüm:**
+  1. **Öğe Kitaplığı genişletildi:** `app/api/integrations/google-ads/assets/library` artık `?type=YOUTUBE_VIDEO` kabul ediyor; GAQL ile `asset.youtube_video_asset.youtube_video_id` çekiyor. Kullanıcının Google Ads hesabındaki kayıtlı video asset'leri listelenir, seçilen direkt kullanılır (tekrar upload yok).
+  2. **YouTube'da Ara endpoint'i** (`app/api/integrations/google-ads/assets/youtube`): `GET ?q=...&pageToken=...` YouTube Data API v3 search (TR/EN locale, sayfalama). `GET ?lookup=<url|id>` oEmbed ile URL/ID çözümleme — API key gerekmez, yapıştırma özelliği her zaman çalışır. `POST { videoId, name }` AssetService.MutateAssets ile YOUTUBE_VIDEO asset oluşturur.
+  3. **DisplayVideoPicker modal:** 2 tab, grid + thumbnail + kanal adı, pagination (next/prev page tokens).
+  4. **Seslendirme Ekleyin tab'ı KASITLI OLARAK eklenmedi.** Gerçek Google Ads'in yeni AI özelliği TTS + FFmpeg + YouTube upload zinciri gerektiriyor (Google Cloud TTS credential, video pipeline, youtube.upload OAuth scope, telif kontrolü). Kullanıcı açıkça "başarılı şekilde çalışır veremeyeceksen ekleme" dedi — o yüzden atlandı.
+  5. **DisplayStepAds revizyonu:** Eski inline `YoutubeUploader` component'i ve `extractYoutubeId` helper'ı temizlendi. Yerine "Video ekle" butonu — 5 sınırlı grid, her thumb üstünde YouTube ikonu + silme.
+  6. Yeni env var: `YOUTUBE_API_KEY` (Google Cloud Console → YouTube Data API v3). Yoksa arama 503 + açık mesaj, URL yapıştırma çalışır.
+- **Dosyalar:** app/api/integrations/google-ads/assets/library/route.ts, app/api/integrations/google-ads/assets/youtube/route.ts (yeni), components/google/wizard/display/steps/DisplayVideoPicker.tsx (yeni), components/google/wizard/display/steps/DisplayStepAds.tsx, locales/tr.json, locales/en.json
+
+---
+
+## 2026-04-23 — Display Logolar alanı: 3-tab picker (Öğe Kitaplığı + Web Scraper + Upload)
+- **Sorun:** Logolar alanı tek bir basit file input idi. Gerçek Google Ads'te 3 tab var (Öğe Kitaplığı / Web Sitesi veya Sosyal Medya / Yükle) — bu parite eksikti.
+- **Çözüm:**
+  1. **Öğe Kitaplığı endpoint'i** (`app/api/integrations/google-ads/assets/library/route.ts`): GAQL sorgusu ile kullanıcının Google Ads hesabındaki tüm IMAGE asset'lerini listeler. Read-only, campaign create akışına dokunmaz.
+  2. **Web Scraper endpoint'i** (`app/api/integrations/google-ads/assets/scrape/route.ts`): `GET ?url=` URL'yi tarayıp og:image, twitter:image, favicon/apple-touch-icon, `<img>`, srcset aday görsellerini döner. SSRF koruması: localhost/RFC1918/metadata IP'leri engellenir. `POST { imageUrl, kind }` aday görseli indirip Google Ads Asset'a upload eder.
+  3. **DisplayLogoPicker modal:** 3 tab'lı picker. Library tab GAQL'dan çeker ve sadece logo-uygun oran (4:1 veya 1:1) olanları gösterir. Web tab siteyi scrape edip sonuçları grid'de gösterir; default URL kampanyanın finalUrl'sidir. Upload tab drag-drop + click-to-pick + client-side boyut/oran validasyonu.
+  4. **DisplayStepAds revizyonu:** Eski iki ayrı LOGO/SQUARE_LOGO inline uploader'ı tek "Logo ekle" butonu ile değiştirildi. Logolar artık 5 adet sınırlı ortak grid'de gösteriliyor, her thumb üstünde oran etiketi (4:1 / 1:1).
+  5. Boyut seçim mantığı: yüklenen/seçilen görselin genişlik/yükseklik oranına göre LOGO (landscape 4:1) veya SQUARE_LOGO (1:1) otomatik kategorize edilir. Uyumsuzsa açık hata.
+- **Dosyalar:** app/api/integrations/google-ads/assets/library/route.ts (yeni), app/api/integrations/google-ads/assets/scrape/route.ts (yeni), components/google/wizard/display/steps/DisplayLogoPicker.tsx (yeni), components/google/wizard/display/steps/DisplayStepAds.tsx, locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-23 — Display reklam adımına Pexels ücretsiz stok resim entegrasyonu + Google Ads boyut/oran validasyonu
 - **Sorun:** Reklam adımında stok resim kaynağı yoktu. Ayrıca kullanıcı yüklediği görsel boyut/oran Google Ads Responsive Display Ad şartlarını karşılamıyorsa hata Google'dan çok geç dönüyordu.
 - **Çözüm:**

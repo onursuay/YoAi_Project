@@ -1,10 +1,12 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Upload, X, Loader2, Youtube, Image as ImageIcon, Sparkles } from 'lucide-react'
+import { Upload, X, Loader2, Youtube, Image as ImageIcon, Sparkles, Shapes, Film } from 'lucide-react'
 import type { StepProps, DisplayAsset, DisplayAssetKind } from '../../shared/WizardTypes'
 import { inputCls } from '../../shared/WizardTypes'
 import DisplayStockImagePicker from './DisplayStockImagePicker'
+import DisplayLogoPicker from './DisplayLogoPicker'
+import DisplayVideoPicker from './DisplayVideoPicker'
 import { IMAGE_SPECS, validateImageForKind, readImageDimensions, MAX_IMAGE_BYTES } from './displayImageSpecs'
 
 function updateHeadline(state: StepProps['state'], index: number, value: string) {
@@ -28,14 +30,6 @@ async function fileToBase64(file: File): Promise<string> {
     binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
   }
   return btoa(binary)
-}
-
-function extractYoutubeId(input: string): string | null {
-  const trimmed = input.trim()
-  if (!trimmed) return null
-  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed
-  const urlMatch = trimmed.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/)
-  return urlMatch?.[1] ?? null
 }
 
 const KIND_CONFIG: Record<Exclude<DisplayAssetKind, 'YOUTUBE_VIDEO'>, { labelKey: string; hintKey: string; required?: boolean }> = {
@@ -166,105 +160,25 @@ function ImageUploader({ kind, state, update, t }: { kind: Exclude<DisplayAssetK
   )
 }
 
-function YoutubeUploader({ state, update, t }: StepProps) {
-  const [input, setInput] = useState('')
-  const [uploading, setUploading] = useState(false)
-  const [err, setErr] = useState<string | null>(null)
-  const videos = state.displayAssets.filter(a => a.kind === 'YOUTUBE_VIDEO')
-
-  const onAdd = async () => {
-    setErr(null)
-    const id = extractYoutubeId(input)
-    if (!id) {
-      setErr(t('display.youtubeInvalid'))
-      return
-    }
-    if (videos.some(v => v.previewUrl.includes(id))) {
-      setErr(t('display.youtubeDuplicate'))
-      return
-    }
-    setUploading(true)
-    try {
-      const res = await fetch('/api/integrations/google-ads/assets/upload', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ kind: 'YOUTUBE_VIDEO', name: `YouTube ${id}`, youtubeVideoId: id }),
-      })
-      const json = await res.json()
-      if (!res.ok) {
-        setErr(json.error ?? t('display.uploadErrorGeneric'))
-        return
-      }
-      const newAsset: DisplayAsset = {
-        resourceName: json.resourceName,
-        kind: 'YOUTUBE_VIDEO',
-        previewUrl: `https://img.youtube.com/vi/${id}/mqdefault.jpg`,
-        name: id,
-      }
-      update({ displayAssets: [...state.displayAssets, newAsset] })
-      setInput('')
-    } catch {
-      setErr(t('display.uploadErrorGeneric'))
-    } finally {
-      setUploading(false)
-    }
-  }
-
-  const onRemove = (resourceName: string) => {
-    update({ displayAssets: state.displayAssets.filter(a => a.resourceName !== resourceName) })
-  }
-
-  return (
-    <div className="space-y-2">
-      <label className="text-sm font-medium text-gray-700">{t('display.youtubeVideos')}</label>
-      <div className="flex gap-2">
-        <input
-          className={inputCls}
-          value={input}
-          onChange={e => setInput(e.target.value)}
-          placeholder={t('display.youtubePlaceholder')}
-        />
-        <button
-          type="button"
-          onClick={onAdd}
-          disabled={uploading || !input.trim()}
-          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
-        >
-          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('display.addVideo')}
-        </button>
-      </div>
-      {videos.length > 0 && (
-        <div className="flex flex-wrap gap-2 mt-2">
-          {videos.map(v => (
-            <div key={v.resourceName} className="relative w-32 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50">
-              {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
-              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                <Youtube className="w-6 h-6 text-white" />
-              </div>
-              <button
-                type="button"
-                onClick={() => onRemove(v.resourceName)}
-                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
-                aria-label={t('display.removeAsset')}
-              >
-                <X className="w-3 h-3" />
-              </button>
-            </div>
-          ))}
-        </div>
-      )}
-      {err && <p className="text-xs text-red-500">{err}</p>}
-    </div>
-  )
-}
-
 export default function DisplayStepAds({ state, update, t }: StepProps) {
   const [stockOpen, setStockOpen] = useState(false)
+  const [logoOpen, setLogoOpen] = useState(false)
+  const [videoOpen, setVideoOpen] = useState(false)
 
   const addFromStock = (asset: DisplayAsset) => {
     update({ displayAssets: [...state.displayAssets, asset] })
   }
+
+  const addLogo = (asset: DisplayAsset) => {
+    update({ displayAssets: [...state.displayAssets, asset] })
+  }
+
+  const removeAsset = (resourceName: string) => {
+    update({ displayAssets: state.displayAssets.filter(a => a.resourceName !== resourceName) })
+  }
+
+  const logoAssets = state.displayAssets.filter(a => a.kind === 'LOGO' || a.kind === 'SQUARE_LOGO')
+  const videoAssets = state.displayAssets.filter(a => a.kind === 'YOUTUBE_VIDEO')
 
   return (
     <div className="space-y-6">
@@ -299,9 +213,80 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         <ImageUploader kind="MARKETING_IMAGE" state={state} update={update} t={t} />
         <ImageUploader kind="SQUARE_MARKETING_IMAGE" state={state} update={update} t={t} />
         <ImageUploader kind="PORTRAIT_MARKETING_IMAGE" state={state} update={update} t={t} />
-        <ImageUploader kind="LOGO" state={state} update={update} t={t} />
-        <ImageUploader kind="SQUARE_LOGO" state={state} update={update} t={t} />
-        <YoutubeUploader state={state} update={update} t={t} />
+
+        {/* Logolar — tek buton, 3-tab picker ile eklenir */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <label className="text-sm font-medium text-gray-700">{t('display.logoSectionLabel')}</label>
+            <span className="text-xs text-gray-500">{t('display.logoSectionHint')}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {logoAssets.map(a => (
+              <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={a.previewUrl} alt={a.name} className="w-full h-full object-contain" />
+                <button
+                  type="button"
+                  onClick={() => removeAsset(a.resourceName)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                  aria-label={t('display.removeAsset')}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+                <span className="absolute bottom-0 inset-x-0 text-[9px] text-center bg-black/50 text-white py-0.5">
+                  {a.kind === 'LOGO' ? '4:1' : '1:1'}
+                </span>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setLogoOpen(true)}
+              disabled={logoAssets.length >= 5}
+              className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={t('display.logoAddButton')}
+            >
+              <Shapes className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5">{t('display.logoAddButton')}</span>
+            </button>
+          </div>
+        </div>
+
+        {/* Videolar — 2-tab picker (Öğe Kitaplığı + YouTube'da Ara) */}
+        <div className="space-y-2">
+          <div className="flex items-baseline justify-between">
+            <label className="text-sm font-medium text-gray-700">{t('display.videoSectionLabel')}</label>
+            <span className="text-xs text-gray-500">{t('display.videoSectionHint')}</span>
+          </div>
+          <div className="flex flex-wrap gap-2">
+            {videoAssets.map(v => (
+              <div key={v.resourceName} className="relative w-32 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
+                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                  <Youtube className="w-5 h-5 text-white" />
+                </div>
+                <button
+                  type="button"
+                  onClick={() => removeAsset(v.resourceName)}
+                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                  aria-label={t('display.removeAsset')}
+                >
+                  <X className="w-3 h-3" />
+                </button>
+              </div>
+            ))}
+            <button
+              type="button"
+              onClick={() => setVideoOpen(true)}
+              disabled={videoAssets.length >= 5}
+              className="w-32 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+              title={t('display.videoAddButton')}
+            >
+              <Film className="w-5 h-5" />
+              <span className="text-[10px] mt-0.5">{t('display.videoAddButton')}</span>
+            </button>
+          </div>
+        </div>
       </section>
 
       <div>
@@ -408,6 +393,23 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         onClose={() => setStockOpen(false)}
         existing={state.displayAssets}
         onAdd={addFromStock}
+        t={t}
+      />
+
+      <DisplayLogoPicker
+        isOpen={logoOpen}
+        onClose={() => setLogoOpen(false)}
+        existing={state.displayAssets}
+        onAdd={addLogo}
+        defaultWebUrl={state.finalUrl && state.finalUrl !== 'https://' ? state.finalUrl : ''}
+        t={t}
+      />
+
+      <DisplayVideoPicker
+        isOpen={videoOpen}
+        onClose={() => setVideoOpen(false)}
+        existing={state.displayAssets}
+        onAdd={addLogo}
         t={t}
       />
     </div>
