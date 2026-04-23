@@ -81,6 +81,31 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
     }
   }
 
+  // 3) DB lookups failed — cookie fallback (Entegrasyon sayfası bununla çalışıyor,
+  //    DB ile cookie ayrışabildiği için YoAlgoritma tarafı da aynı kaynağa bakıyor)
+  if (!ctx) {
+    try {
+      const { cookies } = await import('next/headers')
+      const cookieStore = await cookies()
+      const cookieToken = cookieStore.get('meta_access_token')?.value
+      const cookieExpiresAt = cookieStore.get('meta_access_expires_at')?.value
+      const cookieAdAccountId = cookieStore.get('meta_selected_ad_account_id')?.value
+      const stillValid = cookieToken && (!cookieExpiresAt || Date.now() < parseInt(cookieExpiresAt, 10))
+      if (stillValid && cookieAdAccountId) {
+        const accountId = cookieAdAccountId.startsWith('act_') ? cookieAdAccountId : `act_${cookieAdAccountId}`
+        ctx = {
+          client: null as any,
+          accountId,
+          fingerprintLast4: cookieToken!.slice(-4),
+          userAccessToken: cookieToken!,
+          source: 'cookie' as any,
+        }
+      }
+    } catch (e) {
+      console.error('[MetaDeepFetcher] Cookie fallback error:', e)
+    }
+  }
+
   if (!ctx) {
     return { campaigns, errors: ['Meta bağlantısı bulunamadı'], connected: false }
   }

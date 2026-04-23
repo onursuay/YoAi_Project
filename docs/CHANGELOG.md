@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-20 — YoAlgoritma "Meta bağlantısı yok" yanılgısı düzeltildi
+- **Sorun:** Entegrasyon sayfası Meta'yı "Bağlı" gösterirken YoAlgoritma "Meta bağlantısı bulunamadı" uyarısı veriyordu. İki sayfa farklı kaynak okuyor: Entegrasyon cookie (süre dolmuşsa bile token varsa "bağlı"), YoAlgoritma ise `meta_connections` DB tablosundaki `status='active'` + expiry kontrolü.
+- **Çözüm:** `metaDeepFetcher.ts` içine 3. tier cookie fallback eklendi. DB lookup başarısız olursa, cookie'deki `meta_access_token` + `meta_selected_ad_account_id` + expiry kontrolü yapılır. Geçerliyse YoAlgoritma da bağlantıyı Entegrasyon ile aynı kaynaktan çözer. Integration kodu değiştirilmedi.
+- **Dosyalar:** lib/yoai/metaDeepFetcher.ts
+
+---
+
 ## 2026-04-20 — Günlük tarama saati 08:00'e alındı
 - **Sorun:** Cron schedule 16:15 Istanbul'daydı, kullanıcı her sabah 08:00 istedi.
 - **Çözüm:** vercel.json schedule `15 13 * * *` → `0 5 * * *` (08:00 Istanbul = 05:00 UTC). Vercel sunucu tabanlı çalıştığından PC kapalı olsa da tetiklenir.
