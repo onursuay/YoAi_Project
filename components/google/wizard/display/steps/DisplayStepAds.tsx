@@ -66,120 +66,122 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         />
       </div>
 
-      <section className="space-y-6 border border-gray-200 rounded-lg bg-white p-4">
+      <section className="border border-gray-200 rounded-lg bg-white p-4 space-y-4">
         <div className="flex items-center gap-2">
           <ImageIcon className="w-4 h-4 text-gray-600" />
           <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
         </div>
 
-        {/* Resimler */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <label className="text-sm font-medium text-gray-700">{t('display.imageSectionLabel')}</label>
-            <span className="text-xs text-gray-500">{t('display.imageSectionHint', { landscape: landscapeCount, square: squareCount })}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {imageAssets.map(a => (
-              <div key={a.resourceName} className="relative w-24 h-24 rounded border border-gray-200 overflow-hidden bg-gray-50 group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.previewUrl} alt={a.name} className="w-full h-full object-cover" />
-                <button
-                  type="button"
-                  onClick={() => removeAsset(a.resourceName)}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
-                  aria-label={t('display.removeAsset')}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-                <span className="absolute bottom-0 inset-x-0 text-[9px] text-center bg-black/50 text-white py-0.5">
-                  {IMAGE_KIND_RATIO_LABEL[a.kind]}
-                </span>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setImageOpen(true)}
-              disabled={imageAssets.length >= 15}
-              className="w-24 h-24 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title={t('display.imageAddButton')}
-            >
-              <Plus className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5">{t('display.imageAddButton')}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Logolar — 3-tab picker */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <label className="text-sm font-medium text-gray-700">{t('display.logoSectionLabel')}</label>
-            <span className="text-xs text-gray-500">{t('display.logoSectionHint')}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {logoAssets.map(a => (
-              <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={a.previewUrl} alt={a.name} className="w-full h-full object-contain" />
-                <button
-                  type="button"
-                  onClick={() => removeAsset(a.resourceName)}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
-                  aria-label={t('display.removeAsset')}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-                <span className="absolute bottom-0 inset-x-0 text-[9px] text-center bg-black/50 text-white py-0.5">
-                  {a.kind === 'LOGO' ? '4:1' : '1:1'}
-                </span>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setLogoOpen(true)}
-              disabled={logoAssets.length >= 5}
-              className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title={t('display.logoAddButton')}
-            >
-              <Shapes className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5">{t('display.logoAddButton')}</span>
-            </button>
-          </div>
-        </div>
-
-        {/* Videolar — 2-tab picker */}
-        <div className="space-y-2">
-          <div className="flex items-baseline justify-between">
-            <label className="text-sm font-medium text-gray-700">{t('display.videoSectionLabel')}</label>
-            <span className="text-xs text-gray-500">{t('display.videoSectionHint')}</span>
-          </div>
-          <div className="flex flex-wrap gap-2">
-            {videoAssets.map(v => (
-              <div key={v.resourceName} className="relative w-32 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
-                {/* eslint-disable-next-line @next/next/no-img-element */}
-                <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
-                <div className="absolute inset-0 flex items-center justify-center bg-black/30">
-                  <Youtube className="w-5 h-5 text-white" />
+        <div className="grid grid-cols-3 gap-4">
+          {/* Resimler */}
+          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+            <div className="flex items-baseline justify-between">
+              <label className="text-sm font-medium text-gray-700">{t('display.imageSectionLabel')}</label>
+              <span className="text-[10px] text-gray-500">{t('display.imageSectionHint', { landscape: landscapeCount, square: squareCount })}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {imageAssets.map(a => (
+                <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.previewUrl} alt={a.name} className="w-full h-full object-cover" />
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(a.resourceName)}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                    aria-label={t('display.removeAsset')}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <span className="absolute bottom-0 inset-x-0 text-[9px] text-center bg-black/50 text-white py-0.5">
+                    {IMAGE_KIND_RATIO_LABEL[a.kind]}
+                  </span>
                 </div>
-                <button
-                  type="button"
-                  onClick={() => removeAsset(v.resourceName)}
-                  className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
-                  aria-label={t('display.removeAsset')}
-                >
-                  <X className="w-3 h-3" />
-                </button>
-              </div>
-            ))}
-            <button
-              type="button"
-              onClick={() => setVideoOpen(true)}
-              disabled={videoAssets.length >= 5}
-              className="w-32 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-              title={t('display.videoAddButton')}
-            >
-              <Film className="w-5 h-5" />
-              <span className="text-[10px] mt-0.5">{t('display.videoAddButton')}</span>
-            </button>
+              ))}
+              <button
+                type="button"
+                onClick={() => setImageOpen(true)}
+                disabled={imageAssets.length >= 15}
+                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title={t('display.imageAddButton')}
+              >
+                <Plus className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">{t('display.imageAddButton')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Logolar — 3-tab picker */}
+          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+            <div className="flex items-baseline justify-between">
+              <label className="text-sm font-medium text-gray-700">{t('display.logoSectionLabel')}</label>
+              <span className="text-[10px] text-gray-500">{t('display.logoSectionHint')}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {logoAssets.map(a => (
+                <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={a.previewUrl} alt={a.name} className="w-full h-full object-contain" />
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(a.resourceName)}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                    aria-label={t('display.removeAsset')}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                  <span className="absolute bottom-0 inset-x-0 text-[9px] text-center bg-black/50 text-white py-0.5">
+                    {a.kind === 'LOGO' ? '4:1' : '1:1'}
+                  </span>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setLogoOpen(true)}
+                disabled={logoAssets.length >= 5}
+                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title={t('display.logoAddButton')}
+              >
+                <Shapes className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">{t('display.logoAddButton')}</span>
+              </button>
+            </div>
+          </div>
+
+          {/* Videolar — 2-tab picker */}
+          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
+            <div className="flex items-baseline justify-between">
+              <label className="text-sm font-medium text-gray-700">{t('display.videoSectionLabel')}</label>
+              <span className="text-[10px] text-gray-500">{t('display.videoSectionHint')}</span>
+            </div>
+            <div className="flex flex-wrap gap-2">
+              {videoAssets.map(v => (
+                <div key={v.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                  {/* eslint-disable-next-line @next/next/no-img-element */}
+                  <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
+                  <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                    <Youtube className="w-5 h-5 text-white" />
+                  </div>
+                  <button
+                    type="button"
+                    onClick={() => removeAsset(v.resourceName)}
+                    className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                    aria-label={t('display.removeAsset')}
+                  >
+                    <X className="w-3 h-3" />
+                  </button>
+                </div>
+              ))}
+              <button
+                type="button"
+                onClick={() => setVideoOpen(true)}
+                disabled={videoAssets.length >= 5}
+                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+                title={t('display.videoAddButton')}
+              >
+                <Film className="w-5 h-5" />
+                <span className="text-[10px] mt-0.5">{t('display.videoAddButton')}</span>
+              </button>
+            </div>
           </div>
         </div>
       </section>

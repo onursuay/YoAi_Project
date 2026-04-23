@@ -2,6 +2,29 @@
 
 ---
 
+## 2026-04-23 — Display Reklam: Resimler/Logolar/Videolar yan yana grid düzeni
+- **Sorun:** "Görsel ve video varlıkları" bölümündeki Resimler, Logolar ve Videolar kutuları dikey sıralıydı; aynı hizada ve aynı boyutta değildi.
+- **Çözüm:** Üç bölümü `grid grid-cols-3 gap-4` yapısına taşıdı. Her bölüm eşit genişlikte, aynı hizalı ve aynı yükseklikte (`flex flex-col`) birer kart olarak gösteriliyor.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayStepAds.tsx`
+
+---
+
+## 2026-04-23 — Display Yükle tab'ına Google Drive entegrasyonu
+- **Sorun:** DisplayImagePicker ve DisplayLogoPicker'ın "Yükle" tab'ında yalnızca local upload vardı. Gerçek Google Ads'teki gibi cloud entegrasyonu yoktu.
+- **Çözüm:**
+  1. **Yeni endpoint** `/api/integrations/google-ads/assets/picker-config`: Server-side env var'lardan (GOOGLE_PICKER_API_KEY, GOOGLE_PICKER_CLIENT_ID, GOOGLE_PICKER_APP_ID) client'a sadece gerekli değerleri döner. Yapılandırılmamışsa `{ configured: false }`.
+  2. **`googleDrivePicker.ts` helper'ı:** Google Picker API ve Google Identity Services script'lerini dinamik yükler. Flow: GIS token → Picker → Drive API `files.get?alt=media` → Blob → File. Kullanıcı sadece Picker'da seçtiği dosyaya `drive.file` scope'u ile izin verir (tüm Drive'a erişim yok).
+  3. **UI: Yükle tab'ında "Google Drive" butonu** hem ImagePicker hem LogoPicker'da. Seçilen görsel File nesnesine dönüşüp mevcut `onFilePick` handler'ına iletilir → aynı boyut/oran validasyonu + kategori seçimi akışı.
+  4. Drive API Key scope'u: yalnızca Picker API + Drive API (restrict edildi).
+- **Env vars (.env.local, gitignored):**
+  - `GOOGLE_PICKER_API_KEY` (yeni API key)
+  - `GOOGLE_PICKER_CLIENT_ID` (mevcut `GOOGLE_CLIENT_ID` reuse edildi)
+  - `GOOGLE_PICKER_APP_ID` (project number, 12 haneli)
+  - OAuth consent screen'e `drive.file` scope'u eklendi (non-sensitive, verification gerekmez).
+- **Dosyalar:** app/api/integrations/google-ads/assets/picker-config/route.ts (yeni), components/google/wizard/display/steps/googleDrivePicker.ts (yeni), components/google/wizard/display/steps/DisplayImagePicker.tsx, components/google/wizard/display/steps/DisplayLogoPicker.tsx, locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-23 — Kitle hedefleme: SaaS per-user mimari (oto-iyileşme + canlı per-customer)
 - **Sorun:** `/api/integrations/google-ads/tools/audience-segments` tek global `audience_cache` satırını okuyordu. Satırı doldurmak için yalnızca admin `x-admin-secret` header'lı `/api/admin/google-audiences/refresh` endpoint'ini tetikleyebiliyordu. Sonuçta her yeni abone kullanıcı wizard'da "Kitle verileri henüz hazır değil" görüyordu. Ayrıca `user_list` / `custom_audience` / `combined_audience` kullanıcıya özel olmasına rağmen global cache'e konuyordu — hatalı mimari.
 - **Çözüm:**
