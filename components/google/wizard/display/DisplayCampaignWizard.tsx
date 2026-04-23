@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle, Target, DollarSign, Users, Image as ImageIcon, ClipboardList, Flag, Settings2 } from 'lucide-react'
 import { defaultState } from '../shared/WizardTypes'
 import type { WizardState, CampaignGoal } from '../shared/WizardTypes'
 import { validateDisplayStep } from './displayWizardValidation'
@@ -27,6 +27,10 @@ function buildDisplayInitialState(campaignGoal: CampaignGoal): WizardState {
     displayBiddingFocus: 'CONVERSIONS',
     displayConversionsSub: 'MAXIMIZE_CONVERSIONS',
     displayValueSub: 'MAXIMIZE_CONVERSION_VALUE',
+    displayClicksSub: 'MAXIMIZE_CLICKS',
+    displayViewableCpm: '',
+    displayAssets: [],
+    displayCallToAction: '',
     biddingStrategy: 'MAXIMIZE_CONVERSIONS',
     biddingFocus: 'CONVERSION_COUNT',
     networkSettings: { targetGoogleSearch: false, targetSearchNetwork: false, targetContentNetwork: true },
@@ -36,6 +40,7 @@ function buildDisplayInitialState(campaignGoal: CampaignGoal): WizardState {
     selectedAudienceSegments: [],
     selectedAudienceIds: [],
     dailyBudget: '',
+    cpcBid: '',
     targetCpa: '',
     targetRoas: '',
     startDate: '',
@@ -45,6 +50,7 @@ function buildDisplayInitialState(campaignGoal: CampaignGoal): WizardState {
     displayHeadlines: ['', '', '', '', ''],
     displayLongHeadline: '',
     displayDescriptions: ['', '', '', '', ''],
+    optimizedTargeting: true,
     keywordsRaw: '',
     headlines: ['', '', '', '', ''],
     descriptions: ['', '', ''],
@@ -63,14 +69,14 @@ interface Props {
   initialCampaignGoal?: CampaignGoal
 }
 
-// Step indices
-// 0: Hedef & Tür        (StepGoalType)
-// 1: Dönüşüm & İsim     (StepConversionAndName)
-// 2: Kampanya Ayarları  (DisplayStepCampaignSettings)
-// 3: Bütçe & Teklif     (DisplayStepBudgetBidding)
-// 4: Hedefleme          (StepAudience)
-// 5: Reklamlar          (DisplayStepAds)
-// 6: Özet               (DisplayStepSummary)
+// Step indices — sol sidebar düzeninde gerçek Google Ads Display akışı:
+// 0: Hedef & Tür
+// 1: Dönüşüm & İsim
+// 2: Kampanya Ayarları
+// 3: Bütçe ve Teklif
+// 4: Hedefleme
+// 5: Reklamlar
+// 6: İncele / Özet
 const TOTAL_STEPS = 7
 
 function normalizeError(err: unknown): string {
@@ -94,14 +100,14 @@ export default function DisplayCampaignWizard({
 
   const t = useTranslations('dashboard.google.wizard')
 
-  const STEPS = [
-    t('goal.selectTitle'),
-    t('conversion.title'),
-    t('display.steps.campaignSettings'),
-    t('display.steps.budgetBidding'),
-    t('steps.audience'),
-    t('display.steps.ads'),
-    t('display.steps.summary'),
+  const STEPS: Array<{ label: string; icon: React.ReactNode }> = [
+    { label: t('goal.selectTitle'), icon: <Target className="w-4 h-4" /> },
+    { label: t('conversion.title'), icon: <Flag className="w-4 h-4" /> },
+    { label: t('display.steps.campaignSettings'), icon: <Settings2 className="w-4 h-4" /> },
+    { label: t('display.steps.budgetBidding'), icon: <DollarSign className="w-4 h-4" /> },
+    { label: t('steps.audience'), icon: <Users className="w-4 h-4" /> },
+    { label: t('display.steps.ads'), icon: <ImageIcon className="w-4 h-4" /> },
+    { label: t('display.steps.summary'), icon: <ClipboardList className="w-4 h-4" /> },
   ]
 
   useEffect(() => {
@@ -133,8 +139,24 @@ export default function DisplayCampaignWizard({
     setStep(s => s - 1)
   }
 
+  const goToStep = (target: number) => {
+    if (target === step) return
+    // İleri gitmek için aradaki adımların validasyonunu kontrol et
+    if (target > step) {
+      for (let i = step; i < target; i++) {
+        const err = validateDisplayStep(i, state, t)
+        if (err) {
+          setError(err)
+          setStep(i)
+          return
+        }
+      }
+    }
+    setError(null)
+    setStep(target)
+  }
+
   const submit = async () => {
-    // Validate Ads step (step 5) before submitting
     const err = validateDisplayStep(5, state, t)
     if (err) {
       setError(err)
@@ -151,14 +173,12 @@ export default function DisplayCampaignWizard({
         body: JSON.stringify(payload),
       })
       const data = await res.json()
-
       if (!res.ok) {
         setSubmitResult('fail')
         setError(data.error ?? t('toast.error'))
         onToast?.(data.error ?? t('toast.error'), 'error')
         return
       }
-
       const isPartial = Boolean(data.conversionGoalsWarning)
       setSubmitResult(isPartial ? 'partial' : 'full')
       onToast?.(isPartial ? t('toast.partialSuccess') : t('toast.success'), 'success')
@@ -190,14 +210,14 @@ export default function DisplayCampaignWizard({
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
       <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col"
+        className="bg-white rounded-2xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col"
         onClick={e => e.stopPropagation()}
       >
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <div>
             <h2 className="text-lg font-semibold text-gray-900">{t('display.wizardTitle')}</h2>
             <p className="text-sm text-gray-500">
-              {step + 1} / {TOTAL_STEPS} — {STEPS[step]}
+              {step + 1} / {TOTAL_STEPS} — {STEPS[step]?.label}
             </p>
           </div>
           <button
@@ -209,71 +229,99 @@ export default function DisplayCampaignWizard({
           </button>
         </div>
 
-        <div className="px-6 pt-4">
-          <div className="flex items-center gap-1">
-            {STEPS.map((_, i) => (
-              <div key={i} className="flex items-center gap-1 flex-1">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
-                    i < step ? 'bg-green-500 text-white' : i === step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-                  }`}
-                  title={STEPS[i]}
+        <div className="flex-1 flex min-h-0">
+          {/* Sol sidebar — Display-özel adım menüsü */}
+          <aside className="w-60 shrink-0 border-r border-gray-200 bg-gray-50/60 overflow-y-auto py-4">
+            <nav>
+              <ul className="space-y-0.5 px-3">
+                {STEPS.map((s, i) => {
+                  const done = i < step
+                  const active = i === step
+                  const disabled = submitResult === 'full' || submitResult === 'partial'
+                  return (
+                    <li key={i}>
+                      <button
+                        type="button"
+                        disabled={disabled}
+                        onClick={() => goToStep(i)}
+                        className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-left text-sm transition-colors ${
+                          active
+                            ? 'bg-blue-600 text-white font-medium'
+                            : done
+                              ? 'text-emerald-700 hover:bg-emerald-50'
+                              : 'text-gray-600 hover:bg-gray-100'
+                        }`}
+                      >
+                        <span
+                          className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
+                            active
+                              ? 'bg-white/20 text-white'
+                              : done
+                                ? 'bg-emerald-500 text-white'
+                                : 'bg-gray-200 text-gray-500'
+                          }`}
+                        >
+                          {done ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                        </span>
+                        <span className="flex-1 truncate">{s.label}</span>
+                        {active && <span className="shrink-0">{s.icon}</span>}
+                      </button>
+                    </li>
+                  )
+                })}
+              </ul>
+            </nav>
+          </aside>
+
+          {/* Ana içerik */}
+          <div className="flex-1 overflow-y-auto px-6 py-5 space-y-4">
+            {submitResult === 'full' && (
+              <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
+                <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
+                <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
+                <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
+                <button
+                  type="button"
+                  onClick={acknowledgeResult}
+                  className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
                 >
-                  {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                </div>
-                {i < TOTAL_STEPS - 1 && <div className={`flex-1 h-0.5 ${i < step ? 'bg-green-400' : 'bg-gray-200'}`} />}
+                  {t('result.acknowledge')}
+                </button>
               </div>
-            ))}
+            )}
+            {submitResult === 'partial' && (
+              <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-gray-50 border border-gray-200">
+                <AlertTriangle className="w-12 h-12 text-gray-600 mb-3" />
+                <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('result.partialTitle')}</h3>
+                <p className="text-sm text-gray-700 text-center mb-4">{t('result.partialMessage')}</p>
+                <button
+                  type="button"
+                  onClick={acknowledgeResult}
+                  className="px-4 py-2 text-sm font-medium bg-gray-700 text-white rounded-lg hover:bg-gray-800"
+                >
+                  {t('result.acknowledge')}
+                </button>
+              </div>
+            )}
+            {error && submitResult !== 'full' && submitResult !== 'partial' && (
+              <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
+                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                <span>{error}</span>
+              </div>
+            )}
+
+            {submitResult !== 'full' && submitResult !== 'partial' && (
+              <>
+                {step === 0 && <StepGoalType {...stepProps} />}
+                {step === 1 && <StepConversionAndName {...stepProps} />}
+                {step === 2 && <DisplayStepCampaignSettings {...stepProps} />}
+                {step === 3 && <DisplayStepBudgetBidding {...stepProps} />}
+                {step === 4 && <DisplayStepTargeting {...stepProps} />}
+                {step === 5 && <DisplayStepAds {...stepProps} />}
+                {step === 6 && <DisplayStepSummary {...stepProps} />}
+              </>
+            )}
           </div>
-        </div>
-
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {submitResult === 'full' && (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
-              <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
-              <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
-              <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
-              <button
-                type="button"
-                onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                {t('result.acknowledge')}
-              </button>
-            </div>
-          )}
-          {submitResult === 'partial' && (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-amber-50 border border-amber-200">
-              <AlertTriangle className="w-12 h-12 text-amber-600 mb-3" />
-              <h3 className="text-lg font-semibold text-amber-800 mb-1">{t('result.partialTitle')}</h3>
-              <p className="text-sm text-amber-700 text-center mb-4">{t('result.partialMessage')}</p>
-              <button
-                type="button"
-                onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-              >
-                {t('result.acknowledge')}
-              </button>
-            </div>
-          )}
-          {error && submitResult !== 'full' && submitResult !== 'partial' && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {submitResult !== 'full' && submitResult !== 'partial' && (
-            <>
-              {step === 0 && <StepGoalType {...stepProps} />}
-              {step === 1 && <StepConversionAndName {...stepProps} />}
-              {step === 2 && <DisplayStepCampaignSettings {...stepProps} />}
-              {step === 3 && <DisplayStepBudgetBidding {...stepProps} />}
-              {step === 4 && <DisplayStepTargeting {...stepProps} />}
-              {step === 5 && <DisplayStepAds {...stepProps} />}
-              {step === 6 && <DisplayStepSummary {...stepProps} />}
-            </>
-          )}
         </div>
 
         {submitResult !== 'full' && submitResult !== 'partial' && (

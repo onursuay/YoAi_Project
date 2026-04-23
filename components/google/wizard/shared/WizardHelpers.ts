@@ -67,8 +67,22 @@ export function buildCreatePayload(state: WizardState, defaultAdGroupName: strin
       }
     })()),
     audienceMode: state.audienceMode,
-    // DISPLAY kampanyaları için optimize edilmiş hedefleme toggle'ı — Search payload'ı değişmez
-    ...(state.campaignType === 'DISPLAY' && { optimizedTargeting: state.optimizedTargeting }),
+    // DISPLAY kampanyaları için ayrı payload branch'i — Search alanları değişmeden kalır
+    ...(state.campaignType === 'DISPLAY' && {
+      optimizedTargeting: state.optimizedTargeting,
+      displayBusinessName: state.displayBusinessName.trim(),
+      displayHeadlines: state.displayHeadlines.map(h => h.trim()).filter(Boolean),
+      displayLongHeadline: state.displayLongHeadline.trim(),
+      displayDescriptions: state.displayDescriptions.map(d => d.trim()).filter(Boolean),
+      displayCallToAction: state.displayCallToAction || undefined,
+      displayAssets: state.displayAssets.map(a => ({ resourceName: a.resourceName, kind: a.kind })),
+      // MANUAL_CPC için campaign-level cpcBid
+      ...(state.displayBiddingFocus === 'CLICKS' && state.displayClicksSub === 'MANUAL_CPC' && state.cpcBid
+        && { cpcBidMicros: Math.round(parseFloat(state.cpcBid) * 1_000_000) }),
+      // Viewable CPM bid
+      ...(state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS' && state.displayViewableCpm
+        && { viewableCpmBidMicros: Math.round(parseFloat(state.displayViewableCpm) * 1_000_000) }),
+    }),
     adSchedule: state.adSchedule.length > 0 ? state.adSchedule : undefined,
     // Conversion goals — real resource names; applied post-create via CustomConversionGoal
     ...(state.selectedConversionGoalIds.length > 0 && {

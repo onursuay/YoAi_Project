@@ -31,6 +31,7 @@ const BIDDING_LABELS: Record<BiddingStrategy, string> = {
   TARGET_CPA: 'Hedef EBM (CPA)',
   TARGET_ROAS: 'Hedef ROAS',
   MANUAL_CPC: 'Manuel TBM (CPC)',
+  MANUAL_CPM: 'Manuel BGBM (CPM)',
   TARGET_IMPRESSION_SHARE: 'Hedef Gösterim Payı',
 }
 

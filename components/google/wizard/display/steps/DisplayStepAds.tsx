@@ -1,7 +1,11 @@
 'use client'
 
-import type { StepProps } from '../../shared/WizardTypes'
+import { useRef, useState } from 'react'
+import { Upload, X, Loader2, Youtube, Image as ImageIcon } from 'lucide-react'
+import type { StepProps, DisplayAsset, DisplayAssetKind } from '../../shared/WizardTypes'
 import { inputCls } from '../../shared/WizardTypes'
+
+const MAX_BYTES = 5 * 1024 * 1024
 
 function updateHeadline(state: StepProps['state'], index: number, value: string) {
   const next = [...state.displayHeadlines]
@@ -15,9 +19,226 @@ function updateDescription(state: StepProps['state'], index: number, value: stri
   return { displayDescriptions: next }
 }
 
+async function fileToBase64(file: File): Promise<string> {
+  const buf = await file.arrayBuffer()
+  const bytes = new Uint8Array(buf)
+  let binary = ''
+  const chunk = 0x8000
+  for (let i = 0; i < bytes.length; i += chunk) {
+    binary += String.fromCharCode(...bytes.subarray(i, i + chunk))
+  }
+  return btoa(binary)
+}
+
+function extractYoutubeId(input: string): string | null {
+  const trimmed = input.trim()
+  if (!trimmed) return null
+  if (/^[A-Za-z0-9_-]{11}$/.test(trimmed)) return trimmed
+  const urlMatch = trimmed.match(/(?:youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/)
+  return urlMatch?.[1] ?? null
+}
+
+const KIND_CONFIG: Record<Exclude<DisplayAssetKind, 'YOUTUBE_VIDEO'>, { labelKey: string; hintKey: string; required?: boolean }> = {
+  MARKETING_IMAGE: { labelKey: 'display.imageLandscape', hintKey: 'display.imageLandscapeHint', required: true },
+  SQUARE_MARKETING_IMAGE: { labelKey: 'display.imageSquare', hintKey: 'display.imageSquareHint', required: true },
+  PORTRAIT_MARKETING_IMAGE: { labelKey: 'display.imagePortrait', hintKey: 'display.imagePortraitHint' },
+  LOGO: { labelKey: 'display.logoLandscape', hintKey: 'display.logoLandscapeHint' },
+  SQUARE_LOGO: { labelKey: 'display.logoSquare', hintKey: 'display.logoSquareHint' },
+}
+
+function ImageUploader({ kind, state, update, t }: { kind: Exclude<DisplayAssetKind, 'YOUTUBE_VIDEO'> } & StepProps) {
+  const inputRef = useRef<HTMLInputElement>(null)
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const assetsOfKind = state.displayAssets.filter(a => a.kind === kind)
+  const cfg = KIND_CONFIG[kind]
+
+  const onPick = async (file: File) => {
+    setErr(null)
+    if (!file.type.startsWith('image/')) {
+      setErr(t('display.uploadErrorType'))
+      return
+    }
+    if (file.size > MAX_BYTES) {
+      setErr(t('display.uploadErrorSize'))
+      return
+    }
+    setUploading(true)
+    try {
+      const data = await fileToBase64(file)
+      const res = await fetch('/api/integrations/google-ads/assets/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind, name: file.name, data }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setErr(json.error ?? t('display.uploadErrorGeneric'))
+        return
+      }
+      const previewUrl = URL.createObjectURL(file)
+      const newAsset: DisplayAsset = {
+        resourceName: json.resourceName,
+        kind,
+        previewUrl,
+        name: file.name,
+      }
+      update({ displayAssets: [...state.displayAssets, newAsset] })
+    } catch {
+      setErr(t('display.uploadErrorGeneric'))
+    } finally {
+      setUploading(false)
+      if (inputRef.current) inputRef.current.value = ''
+    }
+  }
+
+  const onRemove = (resourceName: string) => {
+    update({ displayAssets: state.displayAssets.filter(a => a.resourceName !== resourceName) })
+  }
+
+  return (
+    <div className="space-y-2">
+      <div className="flex items-baseline justify-between">
+        <label className="text-sm font-medium text-gray-700">
+          {t(cfg.labelKey)} {cfg.required && <span className="text-red-500">*</span>}
+        </label>
+        <span className="text-xs text-gray-500">{t(cfg.hintKey)}</span>
+      </div>
+      <div className="flex flex-wrap gap-2">
+        {assetsOfKind.map(a => (
+          <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 group">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src={a.previewUrl} alt={a.name} className="w-full h-full object-cover" />
+            <button
+              type="button"
+              onClick={() => onRemove(a.resourceName)}
+              className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+              aria-label={t('display.removeAsset')}
+            >
+              <X className="w-3 h-3" />
+            </button>
+          </div>
+        ))}
+        <button
+          type="button"
+          onClick={() => inputRef.current?.click()}
+          disabled={uploading}
+          className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex items-center justify-center text-gray-400 hover:text-blue-500 transition-colors"
+        >
+          {uploading ? <Loader2 className="w-5 h-5 animate-spin" /> : <Upload className="w-5 h-5" />}
+        </button>
+        <input
+          ref={inputRef}
+          type="file"
+          accept="image/jpeg,image/png,image/gif"
+          className="hidden"
+          onChange={e => {
+            const f = e.target.files?.[0]
+            if (f) void onPick(f)
+          }}
+        />
+      </div>
+      {err && <p className="text-xs text-red-500">{err}</p>}
+    </div>
+  )
+}
+
+function YoutubeUploader({ state, update, t }: StepProps) {
+  const [input, setInput] = useState('')
+  const [uploading, setUploading] = useState(false)
+  const [err, setErr] = useState<string | null>(null)
+  const videos = state.displayAssets.filter(a => a.kind === 'YOUTUBE_VIDEO')
+
+  const onAdd = async () => {
+    setErr(null)
+    const id = extractYoutubeId(input)
+    if (!id) {
+      setErr(t('display.youtubeInvalid'))
+      return
+    }
+    if (videos.some(v => v.previewUrl.includes(id))) {
+      setErr(t('display.youtubeDuplicate'))
+      return
+    }
+    setUploading(true)
+    try {
+      const res = await fetch('/api/integrations/google-ads/assets/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ kind: 'YOUTUBE_VIDEO', name: `YouTube ${id}`, youtubeVideoId: id }),
+      })
+      const json = await res.json()
+      if (!res.ok) {
+        setErr(json.error ?? t('display.uploadErrorGeneric'))
+        return
+      }
+      const newAsset: DisplayAsset = {
+        resourceName: json.resourceName,
+        kind: 'YOUTUBE_VIDEO',
+        previewUrl: `https://img.youtube.com/vi/${id}/mqdefault.jpg`,
+        name: id,
+      }
+      update({ displayAssets: [...state.displayAssets, newAsset] })
+      setInput('')
+    } catch {
+      setErr(t('display.uploadErrorGeneric'))
+    } finally {
+      setUploading(false)
+    }
+  }
+
+  const onRemove = (resourceName: string) => {
+    update({ displayAssets: state.displayAssets.filter(a => a.resourceName !== resourceName) })
+  }
+
+  return (
+    <div className="space-y-2">
+      <label className="text-sm font-medium text-gray-700">{t('display.youtubeVideos')}</label>
+      <div className="flex gap-2">
+        <input
+          className={inputCls}
+          value={input}
+          onChange={e => setInput(e.target.value)}
+          placeholder={t('display.youtubePlaceholder')}
+        />
+        <button
+          type="button"
+          onClick={onAdd}
+          disabled={uploading || !input.trim()}
+          className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50 shrink-0"
+        >
+          {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : t('display.addVideo')}
+        </button>
+      </div>
+      {videos.length > 0 && (
+        <div className="flex flex-wrap gap-2 mt-2">
+          {videos.map(v => (
+            <div key={v.resourceName} className="relative w-32 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50">
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
+              <div className="absolute inset-0 flex items-center justify-center bg-black/30">
+                <Youtube className="w-6 h-6 text-white" />
+              </div>
+              <button
+                type="button"
+                onClick={() => onRemove(v.resourceName)}
+                className="absolute top-0.5 right-0.5 w-5 h-5 bg-black/60 text-white rounded-full flex items-center justify-center hover:bg-black/80"
+                aria-label={t('display.removeAsset')}
+              >
+                <X className="w-3 h-3" />
+              </button>
+            </div>
+          ))}
+        </div>
+      )}
+      {err && <p className="text-xs text-red-500">{err}</p>}
+    </div>
+  )
+}
+
 export default function DisplayStepAds({ state, update, t }: StepProps) {
   return (
-    <div className="space-y-5">
+    <div className="space-y-6">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">
           {t('display.finalUrl')} <span className="text-red-500">*</span>
@@ -30,6 +251,19 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
           placeholder="https://example.com"
         />
       </div>
+
+      <section className="space-y-4 border border-gray-200 rounded-lg bg-white p-4">
+        <div className="flex items-center gap-2">
+          <ImageIcon className="w-4 h-4 text-gray-600" />
+          <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
+        </div>
+        <ImageUploader kind="MARKETING_IMAGE" state={state} update={update} t={t} />
+        <ImageUploader kind="SQUARE_MARKETING_IMAGE" state={state} update={update} t={t} />
+        <ImageUploader kind="PORTRAIT_MARKETING_IMAGE" state={state} update={update} t={t} />
+        <ImageUploader kind="LOGO" state={state} update={update} t={t} />
+        <ImageUploader kind="SQUARE_LOGO" state={state} update={update} t={t} />
+        <YoutubeUploader state={state} update={update} t={t} />
+      </section>
 
       <div>
         <div className="flex justify-between items-center mb-1">
@@ -109,8 +343,25 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         </div>
       </div>
 
-      <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
-        {t('display.adsInfoNote')}
+      <div>
+        <label className="block text-sm font-medium text-gray-700 mb-1">{t('display.callToActionLabel')}</label>
+        <select
+          className={inputCls}
+          value={state.displayCallToAction}
+          onChange={e => update({ displayCallToAction: e.target.value })}
+        >
+          <option value="">{t('display.ctaAuto')}</option>
+          <option value="APPLY_NOW">{t('display.ctaApplyNow')}</option>
+          <option value="BOOK_NOW">{t('display.ctaBookNow')}</option>
+          <option value="CONTACT_US">{t('display.ctaContactUs')}</option>
+          <option value="DOWNLOAD">{t('display.ctaDownload')}</option>
+          <option value="LEARN_MORE">{t('display.ctaLearnMore')}</option>
+          <option value="SHOP_NOW">{t('display.ctaShopNow')}</option>
+          <option value="SIGN_UP">{t('display.ctaSignUp')}</option>
+          <option value="SUBSCRIBE">{t('display.ctaSubscribe')}</option>
+          <option value="GET_QUOTE">{t('display.ctaGetQuote')}</option>
+          <option value="VISIT_SITE">{t('display.ctaVisitSite')}</option>
+        </select>
       </div>
     </div>
   )

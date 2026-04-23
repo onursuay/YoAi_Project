@@ -22,6 +22,11 @@ const API_ERRORS = {
     UNAUTHENTICATED: 'Google Ads hesabına erişim doğrulanamadı. Lütfen tekrar bağlanın.',
     PERMISSION_DENIED: 'Bu işlem için yetkiniz yok.',
     INVALID_URL: 'Geçerli bir URL girin (örn. https://example.com).',
+    displayAssetRequired: 'Görüntülü Reklam için en az 1 yatay (landscape 1.91:1) ve 1 kare (square 1:1) görsel gerekli.',
+    displayHeadlinesRequired: 'Görüntülü Reklam için en az 1 kısa başlık gerekli.',
+    displayLongHeadlineRequired: 'Görüntülü Reklam için uzun başlık gerekli.',
+    displayDescriptionsRequired: 'Görüntülü Reklam için en az 1 açıklama gerekli.',
+    displayBusinessNameRequired: 'Görüntülü Reklam için işletme adı gerekli.',
     generic: 'İşlem başarısız oldu. Lütfen bilgilerinizi kontrol edip tekrar deneyin.',
   },
   en: {
@@ -41,6 +46,11 @@ const API_ERRORS = {
     UNAUTHENTICATED: 'Could not verify access to Google Ads account. Please reconnect.',
     PERMISSION_DENIED: 'You do not have permission for this operation.',
     INVALID_URL: 'Enter a valid URL (e.g. https://example.com).',
+    displayAssetRequired: 'Display campaigns need at least 1 landscape (1.91:1) and 1 square (1:1) image.',
+    displayHeadlinesRequired: 'Display campaigns need at least 1 short headline.',
+    displayLongHeadlineRequired: 'Display campaigns need a long headline.',
+    displayDescriptionsRequired: 'Display campaigns need at least 1 description.',
+    displayBusinessNameRequired: 'Display campaigns need a business name.',
     generic: 'Operation failed. Please check your information and try again.',
   },
 } as const
@@ -64,11 +74,32 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: msg.urlRequired }, { status: 400 })
     }
     const isSearch = !params.advertisingChannelType || params.advertisingChannelType === 'SEARCH'
+    const isDisplay = params.advertisingChannelType === 'DISPLAY'
     if (isSearch && (!params.headlines || params.headlines.length < 3)) {
       return NextResponse.json({ error: msg.minHeadlines }, { status: 400 })
     }
     if (isSearch && (!params.descriptions || params.descriptions.length < 2)) {
       return NextResponse.json({ error: msg.minDescriptions }, { status: 400 })
+    }
+    if (isDisplay) {
+      const assets: Array<{ kind: string }> = params.displayAssets ?? []
+      const hasLandscape = assets.some(a => a.kind === 'MARKETING_IMAGE')
+      const hasSquare = assets.some(a => a.kind === 'SQUARE_MARKETING_IMAGE')
+      if (!hasLandscape || !hasSquare) {
+        return NextResponse.json({ error: msg.displayAssetRequired }, { status: 400 })
+      }
+      if (!params.displayHeadlines?.length) {
+        return NextResponse.json({ error: msg.displayHeadlinesRequired }, { status: 400 })
+      }
+      if (!params.displayLongHeadline) {
+        return NextResponse.json({ error: msg.displayLongHeadlineRequired }, { status: 400 })
+      }
+      if (!params.displayDescriptions?.length) {
+        return NextResponse.json({ error: msg.displayDescriptionsRequired }, { status: 400 })
+      }
+      if (!params.displayBusinessName) {
+        return NextResponse.json({ error: msg.displayBusinessNameRequired }, { status: 400 })
+      }
     }
 
     const result = await createFullCampaign(ctx, params)

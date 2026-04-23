@@ -44,6 +44,12 @@ export function validateDisplayStep(
       if (state.displayBiddingFocus === 'CONVERSION_VALUE' && state.displayValueSub === 'TARGET_ROAS') {
         if (!state.targetRoas || parseFloat(state.targetRoas) <= 0) return t('validation.targetRoasRequired')
       }
+      if (state.displayBiddingFocus === 'CLICKS' && state.displayClicksSub === 'MANUAL_CPC') {
+        if (!state.cpcBid || parseFloat(state.cpcBid) <= 0) return t('display.validation.cpcBidRequired')
+      }
+      if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') {
+        if (!state.displayViewableCpm || parseFloat(state.displayViewableCpm) <= 0) return t('display.validation.vcpmBidRequired')
+      }
       return null
     }
 
@@ -54,6 +60,10 @@ export function validateDisplayStep(
     // Step 5: Reklamlar (Ads)
     case 5: {
       if (!isValidDisplayUrl(state.finalUrl)) return t('validation.urlRequired')
+      const hasLandscape = state.displayAssets.some(a => a.kind === 'MARKETING_IMAGE')
+      const hasSquare = state.displayAssets.some(a => a.kind === 'SQUARE_MARKETING_IMAGE')
+      if (!hasLandscape) return t('display.validation.landscapeRequired')
+      if (!hasSquare) return t('display.validation.squareRequired')
       const name = state.displayBusinessName.trim()
       if (!name) return t('display.validation.businessNameRequired')
       if (name.length > 25) return t('display.validation.businessNameMax')

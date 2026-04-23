@@ -1,5 +1,5 @@
 export type MatchType = 'BROAD' | 'PHRASE' | 'EXACT'
-export type BiddingStrategy = 'MAXIMIZE_CLICKS' | 'MAXIMIZE_CONVERSIONS' | 'TARGET_CPA' | 'TARGET_ROAS' | 'MANUAL_CPC' | 'TARGET_IMPRESSION_SHARE'
+export type BiddingStrategy = 'MAXIMIZE_CLICKS' | 'MAXIMIZE_CONVERSIONS' | 'TARGET_CPA' | 'TARGET_ROAS' | 'MANUAL_CPC' | 'MANUAL_CPM' | 'TARGET_IMPRESSION_SHARE'
 export type AudienceMode = 'OBSERVATION' | 'TARGETING'
 export type DayOfWeek = 'MONDAY' | 'TUESDAY' | 'WEDNESDAY' | 'THURSDAY' | 'FRIDAY' | 'SATURDAY' | 'SUNDAY'
 export type Minute = 'ZERO' | 'FIFTEEN' | 'THIRTY' | 'FORTY_FIVE'
@@ -87,6 +87,7 @@ export const BIDDING_FOCUS_BY_STRATEGY: Record<BiddingStrategy, { value: Bidding
   TARGET_CPA: [{ value: 'CONVERSION_COUNT', labelKey: 'CONVERSION_COUNT_CPA' }],
   TARGET_ROAS: [{ value: 'CONVERSION_VALUE', labelKey: 'CONVERSION_VALUE_ROAS' }],
   MANUAL_CPC: [{ value: 'CLICKS', labelKey: 'CLICKS' }],
+  MANUAL_CPM: [],
   TARGET_IMPRESSION_SHARE: [
     { value: 'TOP_OF_PAGE', labelKey: 'TOP_OF_PAGE' },
     { value: 'ABSOLUTE_TOP_OF_PAGE', labelKey: 'ABSOLUTE_TOP_OF_PAGE' },
@@ -142,11 +143,35 @@ export type LocationTargetingMode = 'PRESENCE_OR_INTEREST' | 'PRESENCE_ONLY'
 export type DisplayLocationMode = 'ALL' | 'TURKEY' | 'CUSTOM'
 
 /** Display wizard — teklif odağı (UI); maps to biddingStrategy + biddingFocus */
-export type DisplayBiddingFocus = 'CONVERSIONS' | 'CONVERSION_VALUE' | 'VIEWABLE_IMPRESSIONS'
+export type DisplayBiddingFocus =
+  | 'CONVERSIONS'
+  | 'CONVERSION_VALUE'
+  | 'CLICKS'
+  | 'VIEWABLE_IMPRESSIONS'
 
 /** Alt seçenekler — DisplayStepBudgetBidding */
 export type DisplayConversionsSub = 'MAXIMIZE_CONVERSIONS' | 'TARGET_CPA'
 export type DisplayValueSub = 'MAXIMIZE_CONVERSION_VALUE' | 'TARGET_ROAS'
+export type DisplayClicksSub = 'MAXIMIZE_CLICKS' | 'MANUAL_CPC'
+
+/** Display Responsive Display Ad asset — Google Ads API asset resource */
+export type DisplayAssetKind =
+  | 'MARKETING_IMAGE'        // landscape 1.91:1 (min 1 zorunlu)
+  | 'SQUARE_MARKETING_IMAGE' // square 1:1 (min 1 zorunlu)
+  | 'PORTRAIT_MARKETING_IMAGE' // portrait 4:5 (opsiyonel)
+  | 'LOGO'                   // landscape 4:1 (opsiyonel)
+  | 'SQUARE_LOGO'            // square 1:1 logo (opsiyonel)
+  | 'YOUTUBE_VIDEO'          // opsiyonel
+
+export interface DisplayAsset {
+  /** Google Ads resource_name: customers/{id}/assets/{id} */
+  resourceName: string
+  kind: DisplayAssetKind
+  /** preview için — image için blob URL veya data URL, video için https://img.youtube.com/... */
+  previewUrl: string
+  /** asset adı (UI gösterim) */
+  name: string
+}
 
 // EU political ads declaration (compliance)
 export type EuPoliticalAdsDeclaration = 'NOT_POLITICAL' | 'POLITICAL'
@@ -233,6 +258,13 @@ export interface WizardState {
   displayBiddingFocus: DisplayBiddingFocus
   displayConversionsSub: DisplayConversionsSub
   displayValueSub: DisplayValueSub
+  displayClicksSub: DisplayClicksSub
+  /** Viewable CPM bid (TRY) */
+  displayViewableCpm: string
+  /** Display Responsive Display Ad asset koleksiyonu */
+  displayAssets: DisplayAsset[]
+  /** Call-to-action seçimi (opsiyonel, Display ad) */
+  displayCallToAction: string
 }
 
 export interface GeoSuggestion {
@@ -363,6 +395,10 @@ export const defaultState: WizardState = {
   displayBiddingFocus: 'CONVERSIONS',
   displayConversionsSub: 'MAXIMIZE_CONVERSIONS',
   displayValueSub: 'MAXIMIZE_CONVERSION_VALUE',
+  displayClicksSub: 'MAXIMIZE_CLICKS',
+  displayViewableCpm: '',
+  displayAssets: [],
+  displayCallToAction: '',
 }
 
 export const inputCls = 'w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent'

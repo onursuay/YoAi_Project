@@ -6,9 +6,16 @@ import { inputCls } from '../../shared/WizardTypes'
 function mapDisplayToBidding(
   focus: WizardState['displayBiddingFocus'],
   convSub: WizardState['displayConversionsSub'],
-  valSub: WizardState['displayValueSub']
+  valSub: WizardState['displayValueSub'],
+  clicksSub: WizardState['displayClicksSub']
 ): { biddingStrategy: WizardState['biddingStrategy']; biddingFocus: BiddingFocus | null } {
   if (focus === 'VIEWABLE_IMPRESSIONS') {
+    return { biddingStrategy: 'MANUAL_CPM', biddingFocus: null }
+  }
+  if (focus === 'CLICKS') {
+    if (clicksSub === 'MANUAL_CPC') {
+      return { biddingStrategy: 'MANUAL_CPC', biddingFocus: 'CLICKS' }
+    }
     return { biddingStrategy: 'MAXIMIZE_CLICKS', biddingFocus: 'CLICKS' }
   }
   if (focus === 'CONVERSIONS') {
@@ -29,12 +36,15 @@ function mapDisplayToBidding(
 export default function DisplayStepBudgetBidding({ state, update, t }: StepProps) {
   const applyFocus = (partial: Partial<typeof state>) => {
     const next = { ...state, ...partial }
-    const mapped = mapDisplayToBidding(next.displayBiddingFocus, next.displayConversionsSub, next.displayValueSub)
+    const mapped = mapDisplayToBidding(next.displayBiddingFocus, next.displayConversionsSub, next.displayValueSub, next.displayClicksSub)
     update({ ...partial, biddingStrategy: mapped.biddingStrategy, biddingFocus: mapped.biddingFocus })
   }
 
   const friendlyStrategyLabel = (() => {
     if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') return t('display.focusViewableImpressions')
+    if (state.displayBiddingFocus === 'CLICKS') {
+      return state.displayClicksSub === 'MANUAL_CPC' ? t('display.manualCpc') : t('display.maximizeClicks')
+    }
     if (state.displayBiddingFocus === 'CONVERSIONS') {
       return state.displayConversionsSub === 'TARGET_CPA'
         ? t('display.manualCpa')
@@ -51,6 +61,11 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
   const infoText = (() => {
     if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') {
       return t('display.biddingInfoVcpm')
+    }
+    if (state.displayBiddingFocus === 'CLICKS') {
+      return state.displayClicksSub === 'MANUAL_CPC'
+        ? t('display.biddingInfoManualCpc')
+        : t('display.biddingInfoMaxClicks')
     }
     if (state.displayBiddingFocus === 'CONVERSIONS') {
       return state.displayConversionsSub === 'TARGET_CPA'
@@ -101,6 +116,7 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
         >
           <option value="CONVERSIONS">{t('display.focusConversions')}</option>
           <option value="CONVERSION_VALUE">{t('display.focusConversionValue')}</option>
+          <option value="CLICKS">{t('display.focusClicks')}</option>
           <option value="VIEWABLE_IMPRESSIONS">{t('display.focusViewableImpressions')}</option>
         </select>
       </div>
@@ -201,8 +217,70 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
         </div>
       )}
 
+      {state.displayBiddingFocus === 'CLICKS' && (
+        <div className="space-y-3">
+          <p className="text-sm font-medium text-gray-800">{t('display.subStrategyTitle')}</p>
+          <label
+            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
+              state.displayClicksSub === 'MAXIMIZE_CLICKS' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
+            }`}
+          >
+            <input
+              type="radio"
+              name="displayClicksSub"
+              checked={state.displayClicksSub === 'MAXIMIZE_CLICKS'}
+              onChange={() => applyFocus({ displayClicksSub: 'MAXIMIZE_CLICKS' })}
+              className="text-blue-600"
+            />
+            <span className="text-[13px] font-medium text-gray-900">{t('display.maximizeClicks')}</span>
+          </label>
+          <label
+            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
+              state.displayClicksSub === 'MANUAL_CPC' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
+            }`}
+          >
+            <input
+              type="radio"
+              name="displayClicksSub"
+              checked={state.displayClicksSub === 'MANUAL_CPC'}
+              onChange={() => applyFocus({ displayClicksSub: 'MANUAL_CPC' })}
+              className="text-blue-600"
+            />
+            <span className="text-[13px] font-medium text-gray-900">{t('display.manualCpc')}</span>
+          </label>
+          {state.displayClicksSub === 'MANUAL_CPC' && (
+            <div>
+              <label className="block text-sm text-gray-600 mb-1">{t('display.cpcBidLabel')}</label>
+              <input
+                type="number"
+                min={0.01}
+                step={0.01}
+                className={inputCls}
+                value={state.cpcBid}
+                onChange={e => update({ cpcBid: e.target.value })}
+                placeholder={t('display.cpcBidPlaceholder')}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       {state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS' && (
-        <p className="text-[13px] text-gray-600 leading-relaxed">{t('display.vcpmDescription')}</p>
+        <div className="space-y-3">
+          <p className="text-[13px] text-gray-600 leading-relaxed">{t('display.vcpmDescription')}</p>
+          <div>
+            <label className="block text-sm text-gray-600 mb-1">{t('display.vcpmBidLabel')}</label>
+            <input
+              type="number"
+              min={0.01}
+              step={0.01}
+              className={inputCls}
+              value={state.displayViewableCpm}
+              onChange={e => update({ displayViewableCpm: e.target.value })}
+              placeholder={t('display.vcpmBidPlaceholder')}
+            />
+          </div>
+        </div>
       )}
 
       <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 text-[13px] text-emerald-900">

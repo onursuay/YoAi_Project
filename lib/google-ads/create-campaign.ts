@@ -7,6 +7,7 @@ export type BiddingStrategy =
   | 'TARGET_CPA'
   | 'TARGET_ROAS'
   | 'MANUAL_CPC'
+  | 'MANUAL_CPM'
   | 'TARGET_IMPRESSION_SHARE'
 
 export type AdvertisingChannelType =
@@ -80,6 +81,22 @@ export interface CreateCampaignParams {
   selectedConversionGoalIds?: string[]
   /** Birincil dönüşüm — tek action optimize edilir. primaryConversionGoalId varsa sadece o kullanılır. */
   primaryConversionGoalId?: string | null
+  /** DISPLAY-only: Ad group seviyesinde optimize edilmiş hedefleme */
+  optimizedTargeting?: boolean
+  /** DISPLAY-only: Responsive Display Ad — işletme adı (max 25) */
+  displayBusinessName?: string
+  /** DISPLAY-only: Responsive Display Ad — kısa başlıklar (1-5, her biri max 30) */
+  displayHeadlines?: string[]
+  /** DISPLAY-only: Responsive Display Ad — uzun başlık (max 90) */
+  displayLongHeadline?: string
+  /** DISPLAY-only: Responsive Display Ad — açıklamalar (1-5, her biri max 90) */
+  displayDescriptions?: string[]
+  /** DISPLAY-only: Call-to-action seçimi */
+  displayCallToAction?: string
+  /** DISPLAY-only: Yüklenmiş asset resource_name + kind. AssetService.MutateAssets üzerinden upload edildi. */
+  displayAssets?: Array<{ resourceName: string; kind: 'MARKETING_IMAGE' | 'SQUARE_MARKETING_IMAGE' | 'PORTRAIT_MARKETING_IMAGE' | 'LOGO' | 'SQUARE_LOGO' | 'YOUTUBE_VIDEO' }>
+  /** DISPLAY-only: Viewable CPM manuel teklif (MANUAL_CPM için) */
+  viewableCpmBidMicros?: number
 }
 
 export async function postMutate<T = any>(ctx: Ctx, resource: string, operations: unknown[]): Promise<T> {
@@ -158,6 +175,8 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
     biddingField.targetCpa = { targetCpaMicros: params.targetCpaMicros ?? 0 }
   } else if (params.biddingStrategy === 'TARGET_ROAS') {
     biddingField.targetRoas = { targetRoas: params.targetRoas ?? 1 }
+  } else if (params.biddingStrategy === 'MANUAL_CPM') {
+    biddingField.manualCpm = {}
   } else if (params.biddingStrategy === 'TARGET_IMPRESSION_SHARE') {
     const impressionLocation =
       params.biddingFocus === 'ABSOLUTE_TOP_OF_PAGE' ? 'ABSOLUTE_TOP_OF_PAGE' : 'TOP_OF_PAGE'
@@ -238,6 +257,12 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
       status: 'ENABLED',
       type: adGroupType,
       ...(params.cpcBidMicros && { cpcBidMicros: params.cpcBidMicros }),
+      // MANUAL_CPM için ad group-level CPM bid
+      ...(channelType === 'DISPLAY' && params.biddingStrategy === 'MANUAL_CPM' && params.viewableCpmBidMicros
+        && { cpmBidMicros: String(params.viewableCpmBidMicros) }),
+      // DISPLAY-only: Optimize edilmiş hedefleme — Google Ads sinyalleri genişletir
+      ...(channelType === 'DISPLAY' && typeof params.optimizedTargeting === 'boolean'
+        && { optimizedTargeting: { optimizedTargetingEnabled: params.optimizedTargeting } }),
     },
   }])
   const adGroupResourceName: string = adGroupData.results[0].resourceName
@@ -278,6 +303,51 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
             descriptions: params.descriptions.slice(0, 4).map(text => ({ text })),
             ...(params.path1 && { path1: params.path1 }),
             ...(params.path2 && { path2: params.path2 }),
+          },
+        },
+      },
+    }])
+  }
+
+  // 7b. Responsive Display Ad (for DISPLAY campaigns)
+  if (channelType === 'DISPLAY') {
+    const assets = params.displayAssets ?? []
+    const marketingImages = assets.filter(a => a.kind === 'MARKETING_IMAGE').map(a => ({ asset: a.resourceName }))
+    const squareMarketingImages = assets.filter(a => a.kind === 'SQUARE_MARKETING_IMAGE').map(a => ({ asset: a.resourceName }))
+    const portraitMarketingImages = assets.filter(a => a.kind === 'PORTRAIT_MARKETING_IMAGE').map(a => ({ asset: a.resourceName }))
+    const logoImages = assets.filter(a => a.kind === 'LOGO').map(a => ({ asset: a.resourceName }))
+    const squareLogoImages = assets.filter(a => a.kind === 'SQUARE_LOGO').map(a => ({ asset: a.resourceName }))
+    const youtubeVideos = assets.filter(a => a.kind === 'YOUTUBE_VIDEO').map(a => ({ asset: a.resourceName }))
+
+    const displayHeadlines = (params.displayHeadlines ?? []).slice(0, 5).map(text => ({ text }))
+    const displayDescriptions = (params.displayDescriptions ?? []).slice(0, 5).map(text => ({ text }))
+
+    if (marketingImages.length === 0 || squareMarketingImages.length === 0) {
+      throw new Error('DISPLAY_ASSET_REQUIRED: En az 1 yatay (landscape) ve 1 kare (square) görsel gereklidir.')
+    }
+    if (displayHeadlines.length === 0) throw new Error('DISPLAY_HEADLINES_REQUIRED')
+    if (!params.displayLongHeadline) throw new Error('DISPLAY_LONG_HEADLINE_REQUIRED')
+    if (displayDescriptions.length === 0) throw new Error('DISPLAY_DESCRIPTIONS_REQUIRED')
+    if (!params.displayBusinessName) throw new Error('DISPLAY_BUSINESS_NAME_REQUIRED')
+
+    await postMutate(ctx, 'adGroupAds', [{
+      create: {
+        adGroup: adGroupResourceName,
+        status: 'ENABLED',
+        ad: {
+          finalUrls: [params.finalUrl],
+          responsiveDisplayAd: {
+            marketingImages,
+            squareMarketingImages,
+            ...(portraitMarketingImages.length && { portraitMarketingImages }),
+            ...(logoImages.length && { logoImages }),
+            ...(squareLogoImages.length && { squareLogoImages }),
+            ...(youtubeVideos.length && { youtubeVideos }),
+            headlines: displayHeadlines,
+            longHeadline: { text: params.displayLongHeadline },
+            descriptions: displayDescriptions,
+            businessName: params.displayBusinessName,
+            ...(params.displayCallToAction && { callToActionText: params.displayCallToAction }),
           },
         },
       },

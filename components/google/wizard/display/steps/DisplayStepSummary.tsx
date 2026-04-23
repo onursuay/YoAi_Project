@@ -55,6 +55,12 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
 
   const audienceCount = state.selectedAudienceSegments.length
 
+  const landscapeCount = state.displayAssets.filter(a => a.kind === 'MARKETING_IMAGE').length
+  const squareCount = state.displayAssets.filter(a => a.kind === 'SQUARE_MARKETING_IMAGE').length
+  const portraitCount = state.displayAssets.filter(a => a.kind === 'PORTRAIT_MARKETING_IMAGE').length
+  const logoCount = state.displayAssets.filter(a => a.kind === 'LOGO' || a.kind === 'SQUARE_LOGO').length
+  const videoCount = state.displayAssets.filter(a => a.kind === 'YOUTUBE_VIDEO').length
+
   return (
     <div className="space-y-4">
       <Card title={t('display.summaryCampaign')}>
@@ -139,6 +145,22 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
           <span className="text-gray-500">{t('display.summaryDescriptionCount')}: </span>
           {descCount}
         </p>
+        <p>
+          <span className="text-gray-500">{t('display.summaryAssets')}: </span>
+          {t('display.summaryAssetsDetail', {
+            landscape: landscapeCount,
+            square: squareCount,
+            portrait: portraitCount,
+            logo: logoCount,
+            video: videoCount,
+          })}
+        </p>
+        {state.displayCallToAction && (
+          <p>
+            <span className="text-gray-500">{t('display.callToActionLabel')}: </span>
+            {state.displayCallToAction}
+          </p>
+        )}
       </Card>
     </div>
   )

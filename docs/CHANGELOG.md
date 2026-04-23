@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-04-23 — Google Ads Display wizard gerçek parity — backend ad creation + asset upload
+- **Sorun:** Mevcut Display wizard backend'e yanlış bağlıydı. `create-campaign.ts` yalnızca SEARCH için reklam yaratıyordu, Display submit edildiğinde Google Ads'te reklamı olmayan boş kampanya oluşuyordu. `buildCreatePayload` Display metin alanlarını (`displayHeadlines`, `displayLongHeadline`, `displayDescriptions`, `displayBusinessName`) taşımıyordu. Görsel/logo/video asset desteği hiç yoktu. `optimizedTargeting` toggle'ı backend'e uygulanmıyordu.
+- **Çözüm:**
+  1. **Yeni asset upload endpoint** (`app/api/integrations/google-ads/assets/upload/route.ts`): AssetService.MutateAssets ile gerçek görsel/logo/YouTube video upload. Base64 image data + youtubeVideoId desteği, 5 MB sınırı.
+  2. **Backend Display ad creation branch** (`lib/google-ads/create-campaign.ts`): SEARCH branch'i korunarak `if (channelType === 'DISPLAY')` bloğunda `responsiveDisplayAd` operasyonu. `marketingImages`, `squareMarketingImages`, `portraitMarketingImages`, `logoImages`, `squareLogoImages`, `youtubeVideos`, `headlines`, `longHeadline`, `descriptions`, `businessName`, `callToActionText` tam parity.
+  3. **MANUAL_CPM bidding** backend + frontend (Görüntülenebilir BGBM) — ad group-level `cpmBidMicros`.
+  4. **MANUAL_CPC & MAXIMIZE_CLICKS alt stratejileri** Display bidding'de.
+  5. **optimizedTargeting** gerçekten ad group seviyesinde `optimizedTargeting.optimizedTargetingEnabled` olarak backend'e gidiyor (DISPLAY branch).
+  6. **Display validasyonu** create route: en az 1 landscape + 1 square görsel, başlık, uzun başlık, açıklama, işletme adı kontrolleri.
+  7. **buildCreatePayload Display branch**: `campaignType === 'DISPLAY'` için ayrı branch — Search payload byte-identical korundu.
+  8. **DisplayStepAds**: gerçek file upload UI (5 görsel türü ayrı ayrı: landscape/square/portrait/logo yatay/logo kare) + YouTube URL/ID input + preview gallery + remove + size/type validasyonu.
+  9. **Sol sidebar layout**: DisplayCampaignWizard üst stepper'dan dikey sol adım menüsüne geçti (Display-only; max-w-5xl modal, geri-ileri navigation tıklanabilir). Search/PMax wizard'lar etkilenmedi.
+  10. **Call-to-action seçici** (11 resmi Google Ads CTA) Display ad'de.
+  11. `WizardTypes.ts`: `BiddingStrategy` union'a `MANUAL_CPM` eklendi; yeni `DisplayAsset`, `DisplayClicksSub`, `DisplayAssetKind` tipleri; `WizardState`'e Display asset/CPM/CTA optional alanları.
+- **Dosyalar:** components/google/wizard/shared/WizardTypes.ts, components/google/wizard/shared/WizardHelpers.ts, components/google/wizard/steps/StepCampaignSettings.tsx (tek satır MANUAL_CPM label), components/google/wizard/display/DisplayCampaignWizard.tsx, components/google/wizard/display/displayWizardValidation.ts, components/google/wizard/display/steps/DisplayStepBudgetBidding.tsx, components/google/wizard/display/steps/DisplayStepAds.tsx, components/google/wizard/display/steps/DisplayStepSummary.tsx, lib/google-ads/create-campaign.ts, app/api/integrations/google-ads/campaigns/create/route.ts, app/api/integrations/google-ads/assets/upload/route.ts (yeni), locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-23 — Display teklif özetinde teknik enum yerine kullanıcı dostu etiket
 - **Sorun:** "Aktif teklif yapısı" kutusu ve Özet ekranı `Strateji: MAXIMIZE_CLICKS · Odak: CLICKS` gibi ham enum gösteriyordu.
 - **Çözüm:** displayBiddingFocus + alt seçeneğe göre kullanıcı dostu etiket üretildi (örn. "Dönüşümleri otomatik olarak en üst düzeye çıkar", "Görüntülenebilir gösterimler"). Özet'teki raw `biddingStrategy` de aynı etiketle değiştirildi.
