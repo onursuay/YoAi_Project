@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-23 — Display dönüşüm hedefleri adımında "İstenen sonuçlar" validasyonu
+- **Sorun:** Display wizard step 2'de "Web sitesi ziyaretleri" veya "Telefon Aramaları" kutucukları işaretlenip alan boş bırakıldığında İleri butonu engellenmiyordu (sadece inline kırmızı yazı çıkıyordu).
+- **Çözüm:** `displayWizardValidation.ts` step 1'e eklendi: desiredOutcomeWebsite aktifse geçerli URL zorunlu (websiteUrlRequired / websiteUrlInvalid), desiredOutcomePhone aktifse ülke + geçerli numara zorunlu (`isValidPhoneForCountry` shared helper ile). Search tarafı etkilenmedi.
+- **Dosyalar:** components/google/wizard/display/displayWizardValidation.ts
+
+---
+
 ## 2026-04-23 — Google Ads Display wizard gerçek parity — backend ad creation + asset upload
 - **Sorun:** Mevcut Display wizard backend'e yanlış bağlıydı. `create-campaign.ts` yalnızca SEARCH için reklam yaratıyordu, Display submit edildiğinde Google Ads'te reklamı olmayan boş kampanya oluşuyordu. `buildCreatePayload` Display metin alanlarını (`displayHeadlines`, `displayLongHeadline`, `displayDescriptions`, `displayBusinessName`) taşımıyordu. Görsel/logo/video asset desteği hiç yoktu. `optimizedTargeting` toggle'ı backend'e uygulanmıyordu.
 - **Çözüm:**

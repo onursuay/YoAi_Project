@@ -1,4 +1,5 @@
 import type { WizardState } from '../shared/WizardTypes'
+import { isValidPhoneForCountry } from '../shared/WizardValidation'
 
 function isValidDisplayUrl(val: string): boolean {
   if (!val || !val.trim()) return false
@@ -6,7 +7,9 @@ function isValidDisplayUrl(val: string): boolean {
   if (!s.startsWith('http://') && !s.startsWith('https://')) return false
   try {
     const u = new URL(s)
-    return u.protocol === 'http:' || u.protocol === 'https:'
+    if (u.protocol !== 'http:' && u.protocol !== 'https:') return false
+    // host en az bir nokta içermeli (örn. example.com) — sadece "https://" kabul edilmez
+    return /.+\..+/.test(u.hostname)
   } catch {
     return false
   }
@@ -26,6 +29,26 @@ export function validateDisplayStep(
     // Step 1: Dönüşüm Hedefleri & Kampanya Adı
     case 1: {
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
+      // Web sitesi ziyaretleri işaretli ise URL geçerli olmalı
+      if (state.desiredOutcomeWebsite) {
+        if (!state.finalUrl.trim() || state.finalUrl.trim() === 'https://') {
+          return t('conversion.websiteUrlRequired')
+        }
+        if (!isValidDisplayUrl(state.finalUrl)) {
+          return t('conversion.websiteUrlInvalid')
+        }
+      }
+      // Telefon aramaları işaretli ise ülke kodu + numara geçerli olmalı
+      if (state.desiredOutcomePhone) {
+        if (!state.desiredOutcomePhoneCountryCode?.trim()) {
+          return t('conversion.phoneCountryRequired')
+        }
+        const phone = state.desiredOutcomePhoneNumber.trim().replace(/\D/g, '')
+        if (!phone) return t('conversion.phoneNumberRequired')
+        if (!isValidPhoneForCountry(phone, state.desiredOutcomePhoneCountryCode)) {
+          return t('conversion.phoneNumberInvalidForCountry')
+        }
+      }
       return null
     }
 
