@@ -1,11 +1,11 @@
 'use client'
 
 import { useRef, useState } from 'react'
-import { Upload, X, Loader2, Youtube, Image as ImageIcon } from 'lucide-react'
+import { Upload, X, Loader2, Youtube, Image as ImageIcon, Sparkles } from 'lucide-react'
 import type { StepProps, DisplayAsset, DisplayAssetKind } from '../../shared/WizardTypes'
 import { inputCls } from '../../shared/WizardTypes'
-
-const MAX_BYTES = 5 * 1024 * 1024
+import DisplayStockImagePicker from './DisplayStockImagePicker'
+import { IMAGE_SPECS, validateImageForKind, readImageDimensions, MAX_IMAGE_BYTES } from './displayImageSpecs'
 
 function updateHeadline(state: StepProps['state'], index: number, value: string) {
   const next = [...state.displayHeadlines]
@@ -55,12 +55,35 @@ function ImageUploader({ kind, state, update, t }: { kind: Exclude<DisplayAssetK
 
   const onPick = async (file: File) => {
     setErr(null)
-    if (!file.type.startsWith('image/')) {
+    if (!/^image\/(jpeg|png|gif)$/i.test(file.type)) {
       setErr(t('display.uploadErrorType'))
       return
     }
-    if (file.size > MAX_BYTES) {
+    if (file.size > MAX_IMAGE_BYTES) {
       setErr(t('display.uploadErrorSize'))
+      return
+    }
+    // Boyut/oran kontrolü (Google Ads RDA şartları)
+    let dims: { width: number; height: number }
+    try {
+      dims = await readImageDimensions(file)
+    } catch {
+      setErr(t('display.uploadErrorType'))
+      return
+    }
+    const validation = validateImageForKind(dims.width, dims.height, file.size, kind)
+    if (!validation.ok) {
+      const spec = IMAGE_SPECS[kind]
+      if (validation.code === 'wrongRatio') {
+        const ratioLabel = spec.ratio === 1 ? '1:1' : spec.ratio === 1.91 ? '1.91:1' : spec.ratio === 4 ? '4:1' : '4:5'
+        setErr(t('display.validation.wrongRatio', { expected: ratioLabel, actual: `${dims.width}×${dims.height}` }))
+      } else if (validation.code === 'tooSmall') {
+        setErr(t('display.validation.tooSmall', { min: `${spec.minWidth}×${spec.minHeight}` }))
+      } else if (validation.code === 'tooBig') {
+        setErr(t('display.validation.tooBig', { max: `${spec.maxWidth}×${spec.maxHeight}` }))
+      } else {
+        setErr(t('display.uploadErrorSize'))
+      }
       return
     }
     setUploading(true)
@@ -237,6 +260,12 @@ function YoutubeUploader({ state, update, t }: StepProps) {
 }
 
 export default function DisplayStepAds({ state, update, t }: StepProps) {
+  const [stockOpen, setStockOpen] = useState(false)
+
+  const addFromStock = (asset: DisplayAsset) => {
+    update({ displayAssets: [...state.displayAssets, asset] })
+  }
+
   return (
     <div className="space-y-6">
       <div>
@@ -253,9 +282,19 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
       </div>
 
       <section className="space-y-4 border border-gray-200 rounded-lg bg-white p-4">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-gray-600" />
-          <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
+        <div className="flex items-center justify-between gap-2">
+          <div className="flex items-center gap-2">
+            <ImageIcon className="w-4 h-4 text-gray-600" />
+            <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
+          </div>
+          <button
+            type="button"
+            onClick={() => setStockOpen(true)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-[13px] font-medium border border-gray-200 hover:border-blue-400 hover:text-blue-600 rounded-lg text-gray-700 transition-colors"
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            {t('display.addFromStock')}
+          </button>
         </div>
         <ImageUploader kind="MARKETING_IMAGE" state={state} update={update} t={t} />
         <ImageUploader kind="SQUARE_MARKETING_IMAGE" state={state} update={update} t={t} />
@@ -363,6 +402,14 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
           <option value="VISIT_SITE">{t('display.ctaVisitSite')}</option>
         </select>
       </div>
+
+      <DisplayStockImagePicker
+        isOpen={stockOpen}
+        onClose={() => setStockOpen(false)}
+        existing={state.displayAssets}
+        onAdd={addFromStock}
+        t={t}
+      />
     </div>
   )
 }

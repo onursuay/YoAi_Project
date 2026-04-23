@@ -571,6 +571,28 @@
           "uploadErrorType": "Yalnızca JPG/PNG/GIF görsel yüklenebilir",
           "uploadErrorSize": "Görsel 5 MB sınırını aşıyor",
           "uploadErrorGeneric": "Yükleme başarısız oldu. Tekrar deneyin.",
+          "addFromStock": "Stok resim ekle",
+          "stockTabTitle": "Ücretsiz stok resimler",
+          "stockPoweredBy": "Pexels tarafından sağlanmaktadır",
+          "stockSearchPlaceholder": "Anahtar kelime arayın (İngilizce önerilir)",
+          "stockSearch": "Ara",
+          "stockNoResults": "Sonuç bulunamadı",
+          "stockNoApiKey": "Stok resim özelliği henüz yapılandırılmadı. Yönetici Pexels API anahtarını eklemelidir.",
+          "stockError": "Stok resim servisi yanıt vermedi. Tekrar deneyin.",
+          "stockStartHint": "Aramak istediğiniz konuyu yazın (örn. \"office\", \"coffee\", \"nature\").",
+          "stockPhotoBy": "Fotoğraf: {name}",
+          "stockPage": "Sayfa {page}",
+          "stockSelectKind": "Bu görseli hangi kategoriye eklemek istiyorsunuz?",
+          "stockBack": "Geri",
+          "stockAdd": "Ekle",
+          "stockImporting": "Ekleniyor...",
+          "kind": {
+            "MARKETING_IMAGE": "Yatay görsel",
+            "SQUARE_MARKETING_IMAGE": "Kare görsel",
+            "PORTRAIT_MARKETING_IMAGE": "Dikey görsel",
+            "LOGO": "Yatay logo",
+            "SQUARE_LOGO": "Kare logo"
+          },
           "callToActionLabel": "Eylem çağrısı",
           "ctaAuto": "Otomatik",
           "ctaApplyNow": "Başvur",
@@ -618,7 +640,10 @@
             "landscapeRequired": "En az 1 yatay (1.91:1) görsel yükleyin.",
             "squareRequired": "En az 1 kare (1:1) görsel yükleyin.",
             "cpcBidRequired": "Manuel TBM için maksimum teklif girin.",
-            "vcpmBidRequired": "Görüntülenebilir BGBM için teklif girin."
+            "vcpmBidRequired": "Görüntülenebilir BGBM için teklif girin.",
+            "wrongRatio": "Görsel en-boy oranı uygun değil. Beklenen {expected}, yüklenen {actual}.",
+            "tooSmall": "Görsel çok küçük. Minimum boyut {min} piksel olmalı.",
+            "tooBig": "Görsel çok büyük. Maksimum boyut {max} piksel olabilir."
           }
         },
         "goal": {

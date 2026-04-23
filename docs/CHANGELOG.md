@@ -2,6 +2,18 @@
 
 ---
 
+## 2026-04-23 — Display reklam adımına Pexels ücretsiz stok resim entegrasyonu + Google Ads boyut/oran validasyonu
+- **Sorun:** Reklam adımında stok resim kaynağı yoktu. Ayrıca kullanıcı yüklediği görsel boyut/oran Google Ads Responsive Display Ad şartlarını karşılamıyorsa hata Google'dan çok geç dönüyordu.
+- **Çözüm:**
+  1. **Pexels API entegrasyonu:** Yeni `app/api/integrations/google-ads/assets/stock/route.ts` — `GET` Pexels search proxy (sayfalama + TR locale), `POST` seçilen Pexels URL'sini indir + Google Ads `AssetService.MutateAssets`'e base64 upload. Sadece images.pexels.com host'u kabul (SSRF korunması). `PEXELS_API_KEY` env var gerekli; yoksa 503 + açık hata.
+  2. **DisplayStockImagePicker:** Arama + grid + sayfalama + seçim sonrası kategori (Yatay/Kare/Dikey/Logo/Square Logo) radio'ları. Auto-detect aspect ratio ile önceden işaretli. Uyumsuz kategoriler greyed out. Fotoğrafçı atıfı her kartta.
+  3. **displayImageSpecs.ts:** Google Ads RDA resmi spec'leri (min/önerilen/max + ratio tolerance) — MARKETING_IMAGE 1.91:1, SQUARE 1:1, PORTRAIT 4:5, LOGO 4:1, SQUARE_LOGO 1:1. `validateImageForKind`, `detectBestKind`, `readImageDimensions` helper'ları.
+  4. **Upload client-side validation:** DisplayStepAds'teki her uploader artık dosyayı okuyup width/height/size'ı alıp Google'ın spec'lerine karşı kontrol ediyor. Hata mesajları beklenen oran ve minimum boyutla birlikte.
+  5. Format kısıtlaması: `image/(jpeg|png|gif)` regex.
+- **Dosyalar:** app/api/integrations/google-ads/assets/stock/route.ts (yeni), components/google/wizard/display/steps/DisplayStockImagePicker.tsx (yeni), components/google/wizard/display/steps/displayImageSpecs.ts (yeni), components/google/wizard/display/steps/DisplayStepAds.tsx, locales/tr.json, locales/en.json
+
+---
+
 ## 2026-04-23 — Display dönüşüm hedefleri adımında "İstenen sonuçlar" validasyonu
 - **Sorun:** Display wizard step 2'de "Web sitesi ziyaretleri" veya "Telefon Aramaları" kutucukları işaretlenip alan boş bırakıldığında İleri butonu engellenmiyordu (sadece inline kırmızı yazı çıkıyordu).
 - **Çözüm:** `displayWizardValidation.ts` step 1'e eklendi: desiredOutcomeWebsite aktifse geçerli URL zorunlu (websiteUrlRequired / websiteUrlInvalid), desiredOutcomePhone aktifse ülke + geçerli numara zorunlu (`isValidPhoneForCountry` shared helper ile). Search tarafı etkilenmedi.

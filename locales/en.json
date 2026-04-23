@@ -571,6 +571,28 @@
           "uploadErrorType": "Only JPG/PNG/GIF images are allowed",
           "uploadErrorSize": "Image exceeds 5 MB limit",
           "uploadErrorGeneric": "Upload failed. Please try again.",
+          "addFromStock": "Add stock image",
+          "stockTabTitle": "Free stock images",
+          "stockPoweredBy": "Powered by Pexels",
+          "stockSearchPlaceholder": "Search keywords (English works best)",
+          "stockSearch": "Search",
+          "stockNoResults": "No results found",
+          "stockNoApiKey": "Stock image feature is not configured. Admin must add the Pexels API key.",
+          "stockError": "Stock image service did not respond. Please try again.",
+          "stockStartHint": "Type a topic you want to search (e.g. \"office\", \"coffee\", \"nature\").",
+          "stockPhotoBy": "Photo: {name}",
+          "stockPage": "Page {page}",
+          "stockSelectKind": "Which category should this image be added as?",
+          "stockBack": "Back",
+          "stockAdd": "Add",
+          "stockImporting": "Adding...",
+          "kind": {
+            "MARKETING_IMAGE": "Landscape image",
+            "SQUARE_MARKETING_IMAGE": "Square image",
+            "PORTRAIT_MARKETING_IMAGE": "Portrait image",
+            "LOGO": "Landscape logo",
+            "SQUARE_LOGO": "Square logo"
+          },
           "callToActionLabel": "Call to action",
           "ctaAuto": "Automatic",
           "ctaApplyNow": "Apply now",
@@ -618,7 +640,10 @@
             "landscapeRequired": "Upload at least 1 landscape (1.91:1) image.",
             "squareRequired": "Upload at least 1 square (1:1) image.",
             "cpcBidRequired": "Enter a max CPC bid for Manual CPC.",
-            "vcpmBidRequired": "Enter a vCPM bid for Viewable CPM."
+            "vcpmBidRequired": "Enter a vCPM bid for Viewable CPM.",
+            "wrongRatio": "Image aspect ratio doesn't match. Expected {expected}, got {actual}.",
+            "tooSmall": "Image too small. Minimum {min} pixels required.",
+            "tooBig": "Image too large. Maximum {max} pixels allowed."
           }
         },
         "goal": {
