@@ -134,6 +134,13 @@
 
 ---
 
+## 2026-04-20 — Display wizard Resimler/Logolar/Videolar kart düzeni yeniden tasarlandı
+- **Sorun:** Başlık ve açıklama aynı satırda sıkışıktı; kartlar arasında simetri yoktu.
+- **Çözüm:** Her kart 3 bölüme ayrıldı: başlık (üst, border-b), upload alanı (flex-1 orta), açıklama (alt, border-t). `items-stretch` ile eşit yükseklik. Simetri kuralı memory'e kaydedildi.
+- **Dosyalar:** components/google/wizard/display/steps/DisplayStepAds.tsx
+
+---
+
 ## 2026-04-20 — Google Display wizard adım 0 duplikasyonu düzeltildi
 - **Sorun:** "Görüntülü Reklam" seçilince DisplayCampaignWizard açılıyor; fakat adım 0'ında yine aynı `StepGoalType` (Hedef & Tür seçimi) render ediliyordu — Search wizard ile birebir aynı ekran iki kez görünüyordu.
 - **Çözüm:** `DisplayCampaignWizard`'dan `StepGoalType` adımı (eski step 0) tamamen kaldırıldı. Tüm adımlar 1 aşağı kaydırıldı (6 adımlı akış). `displayWizardValidation.ts` case numaraları da güncellendi. `GoogleCampaignWizard`'daki yasak amber renkleri primary/gray ile değiştirildi.

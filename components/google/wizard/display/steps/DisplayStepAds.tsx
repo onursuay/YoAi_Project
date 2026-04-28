@@ -72,16 +72,17 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
           <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
         </div>
 
-        <div className="grid grid-cols-3 gap-4">
+        <div className="grid grid-cols-3 gap-4 items-stretch">
           {/* Resimler */}
-          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
-            <div className="flex items-baseline justify-between">
-              <label className="text-sm font-medium text-gray-700">{t('display.imageSectionLabel')}</label>
-              <span className="text-[10px] text-gray-500">{t('display.imageSectionHint', { landscape: landscapeCount, square: squareCount })}</span>
+          <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
+            {/* Başlık */}
+            <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-800">{t('display.imageSectionLabel')}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            {/* Upload alanı */}
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
               {imageAssets.map(a => (
-                <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-gray-50 group">
+                <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.previewUrl} alt={a.name} className="w-full h-full object-cover" />
                   <button
@@ -101,24 +102,28 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setImageOpen(true)}
                 disabled={imageAssets.length >= 15}
-                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                title={t('display.imageAddButton')}
+                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <Plus className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">{t('display.imageAddButton')}</span>
+                <span className="text-[9px] mt-0.5">{t('display.imageAddButton')}</span>
               </button>
+            </div>
+            {/* Açıklama */}
+            <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
+              <p className="text-[11px] text-gray-400">{t('display.imageSectionHint', { landscape: landscapeCount, square: squareCount })}</p>
             </div>
           </div>
 
-          {/* Logolar — 3-tab picker */}
-          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
-            <div className="flex items-baseline justify-between">
-              <label className="text-sm font-medium text-gray-700">{t('display.logoSectionLabel')}</label>
-              <span className="text-[10px] text-gray-500">{t('display.logoSectionHint')}</span>
+          {/* Logolar */}
+          <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
+            {/* Başlık */}
+            <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-800">{t('display.logoSectionLabel')}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            {/* Upload alanı */}
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
               {logoAssets.map(a => (
-                <div key={a.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={a.previewUrl} alt={a.name} className="w-full h-full object-contain" />
                   <button
@@ -138,24 +143,28 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setLogoOpen(true)}
                 disabled={logoAssets.length >= 5}
-                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                title={t('display.logoAddButton')}
+                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <Shapes className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">{t('display.logoAddButton')}</span>
+                <span className="text-[9px] mt-0.5">{t('display.logoAddButton')}</span>
               </button>
+            </div>
+            {/* Açıklama */}
+            <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
+              <p className="text-[11px] text-gray-400">{t('display.logoSectionHint')}</p>
             </div>
           </div>
 
-          {/* Videolar — 2-tab picker */}
-          <div className="flex flex-col gap-2 border border-gray-100 rounded-lg p-3 bg-gray-50/50">
-            <div className="flex items-baseline justify-between">
-              <label className="text-sm font-medium text-gray-700">{t('display.videoSectionLabel')}</label>
-              <span className="text-[10px] text-gray-500">{t('display.videoSectionHint')}</span>
+          {/* Videolar */}
+          <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
+            {/* Başlık */}
+            <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
+              <p className="text-sm font-semibold text-gray-800">{t('display.videoSectionLabel')}</p>
             </div>
-            <div className="flex flex-wrap gap-2">
+            {/* Upload alanı */}
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
               {videoAssets.map(v => (
-                <div key={v.resourceName} className="relative w-20 h-20 rounded border border-gray-200 overflow-hidden bg-white group">
+                <div key={v.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
                   <img src={v.previewUrl} alt={v.name} className="w-full h-full object-cover" />
                   <div className="absolute inset-0 flex items-center justify-center bg-black/30">
@@ -175,12 +184,15 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setVideoOpen(true)}
                 disabled={videoAssets.length >= 5}
-                className="w-20 h-20 rounded border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
-                title={t('display.videoAddButton')}
+                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
               >
                 <Film className="w-5 h-5" />
-                <span className="text-[10px] mt-0.5">{t('display.videoAddButton')}</span>
+                <span className="text-[9px] mt-0.5">{t('display.videoAddButton')}</span>
               </button>
+            </div>
+            {/* Açıklama */}
+            <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
+              <p className="text-[11px] text-gray-400">{t('display.videoSectionHint')}</p>
             </div>
           </div>
         </div>
