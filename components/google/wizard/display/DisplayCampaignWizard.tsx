@@ -250,8 +250,8 @@ export default function DisplayCampaignWizard({
 
       {/* ── Body: 2-column layout ── */}
       <div className="flex-1 overflow-y-auto bg-white relative">
-        {/* Google-renkli sonsuz ışık kümesi (soldan sağa) */}
-        <div className="google-light-cluster" aria-hidden="true" />
+        {/* Google-renkli yılan gibi kenarda dönen ışık */}
+        <div className="google-snake-border" aria-hidden="true" />
         <div className="relative z-10 max-w-6xl mx-auto px-8 py-8">
           <div className="grid grid-cols-3 gap-8">
             {/* Left column — Step content */}

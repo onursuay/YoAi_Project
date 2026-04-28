@@ -531,30 +531,60 @@ table tbody tr {
   z-index: 0;
 }
 
-/* Google Display Wizard — soldan sağa sonsuz hareket eden çok renkli ışık kümesi */
-@keyframes google-light-cluster {
-  0%   { transform: translateX(-40%); }
-  100% { transform: translateX(140%); }
+/* Google Display Wizard — kenarlarda yılan gibi sonsuz dönen Google renkli ışık */
+@property --google-snake-angle {
+  syntax: '<angle>';
+  initial-value: 0deg;
+  inherits: false;
 }
-.google-light-cluster {
+@keyframes google-snake-rotate {
+  to { --google-snake-angle: 360deg; }
+}
+.google-snake-border {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  overflow: hidden;
   z-index: 0;
+  padding: 3px;
+  background: conic-gradient(
+    from var(--google-snake-angle),
+    transparent 0deg,
+    transparent 240deg,
+    rgba(66, 133, 244, 0.85) 270deg,
+    rgba(234, 67, 53, 0.85) 295deg,
+    rgba(251, 188, 4, 0.85) 320deg,
+    rgba(52, 168, 83, 0.85) 345deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  animation: google-snake-rotate 5s linear infinite;
+  filter: blur(1px);
 }
-.google-light-cluster::before {
+.google-snake-border::after {
+  /* yumuşak ikinci katman — neon glow */
   content: '';
   position: absolute;
-  top: -10%;
-  left: 0;
-  width: 50%;
-  height: 120%;
-  background:
-    radial-gradient(circle at 20% 50%, rgba(66, 133, 244, 0.28) 0%, transparent 35%),
-    radial-gradient(circle at 42% 45%, rgba(234, 67, 53, 0.26) 0%, transparent 35%),
-    radial-gradient(circle at 60% 55%, rgba(251, 188, 4, 0.26) 0%, transparent 35%),
-    radial-gradient(circle at 82% 50%, rgba(52, 168, 83, 0.28) 0%, transparent 35%);
-  filter: blur(50px);
-  animation: google-light-cluster 12s linear infinite;
+  inset: -2px;
+  background: conic-gradient(
+    from var(--google-snake-angle),
+    transparent 0deg,
+    transparent 240deg,
+    rgba(66, 133, 244, 0.5) 270deg,
+    rgba(234, 67, 53, 0.5) 295deg,
+    rgba(251, 188, 4, 0.5) 320deg,
+    rgba(52, 168, 83, 0.5) 345deg,
+    transparent 360deg
+  );
+  -webkit-mask:
+    linear-gradient(#000 0 0) content-box,
+    linear-gradient(#000 0 0);
+  -webkit-mask-composite: xor;
+          mask-composite: exclude;
+  padding: 6px;
+  filter: blur(8px);
+  pointer-events: none;
 }
