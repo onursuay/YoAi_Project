@@ -101,6 +101,20 @@ export default function DisplayCampaignWizard({
     { label: t('display.steps.summary') },
   ]
 
+  // Sol sidebar başlığı — kampanya türüne göre dinamik
+  const campaignTypeLabel = (() => {
+    switch (state.campaignType) {
+      case 'DISPLAY': return t('display.campaignTypeDisplay')
+      case 'SEARCH': return t('display.campaignTypeSearch')
+      case 'PERFORMANCE_MAX': return t('display.campaignTypePerformanceMax')
+      case 'VIDEO': return t('display.campaignTypeVideo')
+      case 'SHOPPING': return t('display.campaignTypeShopping')
+      case 'DEMAND_GEN': return t('display.campaignTypeDemandGen')
+      case 'MULTI_CHANNEL': return t('display.campaignTypeApp')
+      default: return t('display.campaignTypeDisplay')
+    }
+  })()
+
   useEffect(() => {
     if (!isOpen) return
     setStep(0)
@@ -219,13 +233,25 @@ export default function DisplayCampaignWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      {/* ── Header (sade) ── */}
-      <div className="h-14 flex items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
+      {/* ── Header (Meta tarzı: logo + eyebrow + title) ── */}
+      <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
         <div className="flex items-center gap-3">
-          <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
-            <span className="text-xs font-bold text-primary">G</span>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/integration-icons/google-ads.svg"
+            alt="Google Ads"
+            width={32}
+            height={32}
+            className="shrink-0"
+          />
+          <div className="flex flex-col leading-tight">
+            <span className="text-[11px] font-semibold tracking-[0.12em] text-gray-500">
+              {t('display.wizardHeaderEyebrow')}
+            </span>
+            <h2 className="text-base font-semibold text-gray-900">
+              {t('display.wizardHeaderTitle')}
+            </h2>
           </div>
-          <h2 className="text-base font-semibold text-gray-900">{t('display.wizardTitle')}</h2>
         </div>
 
         <button
@@ -247,7 +273,7 @@ export default function DisplayCampaignWizard({
             <aside className="w-56 shrink-0">
               <nav className="sticky top-0 space-y-1">
                 <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-                  {t('display.wizardTitle')}
+                  {campaignTypeLabel}
                 </p>
                 {PROGRESS_STEPS.map((s, i) => {
                   const isCompleted = i < step
