@@ -13,7 +13,6 @@ import DisplayStepBudgetBidding from './steps/DisplayStepBudgetBidding'
 import DisplayStepTargeting from './steps/DisplayStepTargeting'
 import DisplayStepAds from './steps/DisplayStepAds'
 import DisplayStepSummary from './steps/DisplayStepSummary'
-import { DisplayProgress } from './DisplayWizardUI'
 import DisplaySidebar from './DisplaySidebar'
 
 export type DisplaySubmitResult = null | 'full' | 'partial' | 'fail'
@@ -220,41 +219,74 @@ export default function DisplayCampaignWizard({
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      {/* ── Header ── */}
+      {/* ── Header (sade) ── */}
       <div className="h-14 flex items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center gap-3 min-w-[200px]">
+        <div className="flex items-center gap-3">
           <div className="w-7 h-7 rounded-md bg-primary/10 flex items-center justify-center">
             <span className="text-xs font-bold text-primary">G</span>
           </div>
           <h2 className="text-base font-semibold text-gray-900">{t('display.wizardTitle')}</h2>
         </div>
 
-        <div className="flex-1 flex justify-center">
-          <DisplayProgress
-            steps={PROGRESS_STEPS}
-            currentStep={step}
-            onStepClick={isResultShown ? undefined : goToStep}
-          />
-        </div>
-
-        <div className="min-w-[200px] flex justify-end">
-          <button
-            onClick={isResultShown ? acknowledgeResult : handleClose}
-            className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-            aria-label={t('nav.cancel')}
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
+        <button
+          onClick={isResultShown ? acknowledgeResult : handleClose}
+          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
+          aria-label={t('nav.cancel')}
+        >
+          <X className="w-5 h-5" />
+        </button>
       </div>
 
-      {/* ── Body: 2-column layout ── */}
+      {/* ── Body: 3-column layout (sol step menüsü + içerik + sağ özet) ── */}
       <div className="flex-1 relative overflow-hidden bg-white">
         {/* Google-renkli yılan ışık — viewport frame'inde, kartların altında */}
         <div className="google-snake-border" aria-hidden="true" />
         <div className="absolute inset-0 overflow-y-auto z-10">
-          <div className="max-w-6xl mx-auto px-8 py-8">
-            <div className="grid grid-cols-3 gap-8">
+          <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
+            {/* ─── Sol: dikey step menüsü ─── */}
+            <aside className="w-56 shrink-0">
+              <nav className="sticky top-0 space-y-1">
+                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
+                  {t('display.wizardTitle')}
+                </p>
+                {PROGRESS_STEPS.map((s, i) => {
+                  const isCompleted = i < step
+                  const isCurrent = i === step
+                  const isClickable = isCompleted && !isResultShown
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      disabled={!isClickable}
+                      onClick={() => isClickable && goToStep(i)}
+                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
+                        isCurrent
+                          ? 'bg-primary/10 text-primary font-semibold'
+                          : isCompleted
+                            ? 'text-gray-700 hover:bg-gray-50 cursor-pointer'
+                            : 'text-gray-400 cursor-default'
+                      }`}
+                    >
+                      <span
+                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 border-2 ${
+                          isCompleted
+                            ? 'bg-primary border-primary text-white'
+                            : isCurrent
+                              ? 'border-primary bg-white text-primary'
+                              : 'border-gray-300 bg-white text-gray-400'
+                        }`}
+                      >
+                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : i + 1}
+                      </span>
+                      <span className="flex-1 text-left truncate">{s.label}</span>
+                    </button>
+                  )
+                })}
+              </nav>
+            </aside>
+
+            {/* ─── Orta + Sağ: içerik gridi ─── */}
+            <div className="flex-1 grid grid-cols-3 gap-8 min-w-0">
             {/* Left column — Step content */}
             <div className="col-span-2 space-y-4">
               {submitResult === 'full' && (
