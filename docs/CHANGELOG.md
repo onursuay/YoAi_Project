@@ -32,6 +32,13 @@
 
 ---
 
+## 2026-04-28 — Öneriler boş-durum: çeviri key'leri görünüyordu, metinler hardcode edildi
+- **Sorun:** Boş-durum ekranında "dashboard.google.wizard.display.imagePicker.recEmptyTitle" gibi çeviri anahtarları ham olarak görünüyordu. `t() || 'fallback'` deseni çalışmıyor çünkü çeviri yoksa `t()` key string'in kendisini döner (truthy).
+- **Çözüm:** Tüm boş-durum metinleri Google'ın birebir Türkçesine sabitlendi: "Henüz önerilen öğe yok" + "Önerilen öğeler nihai URL'nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın." Ayrıca illüstrasyon Google'ın saksı + bitki + kum saati + buharlı çay fincanı kompozisyonuna yaklaştırıldı.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayImagePicker.tsx`
+
+---
+
 ## 2026-04-28 — Öneriler tab'ı: URL inputu kaldırıldı, Google'ın boş-durum ekranı eklendi
 - **Sorun:** "Reklamınızda kullanılacak resimleri seçin → Öneriler" tab'ında ayrı bir URL inputu vardı. Google Ads'te bu alan otomatik olarak Nihai URL'den beslenir; URL girilmemişse illüstrasyonlu bir boş-durum gösterilir.
 - **Çözüm:** RecPane'in URL inputu ve "Tara" butonu kaldırıldı. Tab açıldığında 5. adımdaki Nihai URL (`defaultWebUrl`) ile otomatik scrape yapılır. Nihai URL boşsa Google'ın "Henüz önerilen öğe yok" başlığı + saksı/kum saati illüstrasyonu + "Önerilen öğeler nihai URL'nizi ve hedeflemenizi temel alır…" açıklamasıyla aynı boş-durum gösteriliyor. URL değiştiğinde önbellek (`recLoadedFor`) sıfırlanıp yeniden taranıyor.

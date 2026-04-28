@@ -482,29 +482,48 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
 
   if (!hasUrl) {
     return (
-      <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
-        <svg className="w-32 h-32 mb-5" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
-          {/* Saksı + bitki */}
-          <path d="M50 130 L60 145 L92 145 L102 130 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
-          <path d="M76 130 C 76 110, 64 100, 56 96" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M76 130 C 76 110, 88 100, 96 96" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinecap="round" />
-          <path d="M56 96 C 50 92, 50 84, 56 80 C 62 84, 62 92, 56 96 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
-          <path d="M96 96 C 102 92, 102 84, 96 80 C 90 84, 90 92, 96 96 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
-          <path d="M76 130 L 76 105" stroke="#9ca3af" strokeWidth="2" />
-          <path d="M76 105 C 76 95, 76 85, 76 75" stroke="#9ca3af" strokeWidth="2" />
-          <path d="M76 75 C 70 70, 64 70, 60 75" stroke="#9ca3af" strokeWidth="2" fill="none" />
-          <path d="M76 80 C 82 75, 88 75, 92 80" stroke="#9ca3af" strokeWidth="2" fill="none" />
-          {/* Kum saati */}
-          <rect x="118" y="80" width="40" height="6" stroke="#9ca3af" strokeWidth="2" fill="none" />
-          <rect x="118" y="124" width="40" height="6" stroke="#9ca3af" strokeWidth="2" fill="none" />
-          <path d="M122 86 L 154 86 L 142 105 L 154 124 L 122 124 L 134 105 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
-          <path d="M134 105 C 134 100, 142 100, 142 105" stroke="#9ca3af" strokeWidth="2" fill="none" />
+      <div className="flex flex-col items-center justify-center py-16 px-6 text-center">
+        <svg className="w-56 h-40 mb-6" viewBox="0 0 320 200" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          {/* Sol — Saksı + bitki (yapraklı) */}
+          {/* Saksı */}
+          <path d="M48 150 L58 178 L102 178 L112 150 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          <line x1="48" y1="150" x2="112" y2="150" stroke="#9aa0a6" strokeWidth="2" />
+          {/* Gövde */}
+          <path d="M80 150 C 80 120, 80 96, 80 78" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" />
+          {/* Sol yapraklar */}
+          <path d="M80 122 C 64 118, 52 102, 50 86 C 64 88, 76 104, 80 122 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          <path d="M80 100 C 66 96, 56 84, 56 70 C 68 74, 78 86, 80 100 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          {/* Sağ yapraklar */}
+          <path d="M80 110 C 96 106, 108 92, 110 78 C 96 80, 84 94, 80 110 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          <path d="M80 86 C 92 82, 102 70, 102 56 C 90 60, 82 72, 80 86 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+
+          {/* Orta — Kum saati */}
+          <line x1="138" y1="78" x2="186" y2="78" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" />
+          <line x1="138" y1="178" x2="186" y2="178" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" />
+          <path d="M144 78 L 180 78 L 162 128 L 180 178 L 144 178 L 162 128 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          {/* Üst kum */}
+          <path d="M150 84 L 174 84 L 162 116 Z" fill="#dadce0" />
+          {/* Düşen tane */}
+          <line x1="162" y1="120" x2="162" y2="136" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" />
+          {/* Alt birikim */}
+          <path d="M152 174 C 152 162, 172 162, 172 174 Z" fill="#dadce0" />
+
+          {/* Sağ — Çay fincanı + buhar */}
+          {/* Buhar */}
+          <path d="M236 64 C 232 56, 240 50, 236 42" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" fill="none" />
+          <path d="M252 64 C 248 56, 256 50, 252 42" stroke="#9aa0a6" strokeWidth="2" strokeLinecap="round" fill="none" />
+          {/* Fincan */}
+          <path d="M214 90 L 270 90 L 264 150 C 264 162, 252 170, 242 170 C 232 170, 220 162, 220 150 Z" stroke="#9aa0a6" strokeWidth="2" strokeLinejoin="round" fill="none" />
+          {/* Kulp */}
+          <path d="M270 100 C 286 100, 286 130, 268 132" stroke="#9aa0a6" strokeWidth="2" fill="none" />
+          {/* Tabak */}
+          <ellipse cx="242" cy="178" rx="44" ry="6" stroke="#9aa0a6" strokeWidth="2" fill="none" />
         </svg>
-        <h4 className="text-base font-semibold text-gray-900 mb-2">
-          {t('display.imagePicker.recEmptyTitle') || 'Henüz önerilen öğe yok'}
+        <h4 className="text-[15px] font-medium text-gray-900 mb-3">
+          Henüz önerilen öğe yok
         </h4>
-        <p className="text-sm text-gray-500 max-w-md">
-          {t('display.imagePicker.recEmptyHint') || 'Önerilen öğeler nihai URL\'nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın.'}
+        <p className="text-[13px] text-gray-600 leading-relaxed max-w-2xl">
+          Önerilen öğeler nihai URL&apos;nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın.
         </p>
       </div>
     )
@@ -514,7 +533,7 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <Loader2 className="w-6 h-6 animate-spin mb-3" />
-        <p className="text-sm">{t('display.imagePicker.recScanning') || 'Sayfa taranıyor…'}</p>
+        <p className="text-sm">Sayfa taranıyor…</p>
       </div>
     )
   }
@@ -531,11 +550,9 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
   if (images.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <h4 className="text-base font-semibold text-gray-900 mb-2">
-          {t('display.imagePicker.recEmptyTitle') || 'Henüz önerilen öğe yok'}
-        </h4>
-        <p className="text-sm text-gray-500 max-w-md">
-          {t('display.imagePicker.recNoImagesHint') || 'Bu URL\'de uygun görsel bulunamadı. Yükle veya Web sitesi sekmesinden ekleyebilirsiniz.'}
+        <h4 className="text-[15px] font-medium text-gray-900 mb-2">Henüz önerilen öğe yok</h4>
+        <p className="text-[13px] text-gray-600 leading-relaxed max-w-2xl">
+          Bu URL&apos;de uygun görsel bulunamadı. &quot;Yükle&quot; veya &quot;Web sitesi veya sosyal medya&quot; sekmesinden ekleyebilirsiniz.
         </p>
         <p className="text-xs text-gray-400 mt-2 break-all">{finalUrl}</p>
       </div>
@@ -544,7 +561,7 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">{t('display.imagePicker.recScannedFrom', { url: finalUrl }) || `Kaynak: ${finalUrl}`}</p>
+      <p className="text-xs text-gray-500">Kaynak: {finalUrl}</p>
       <ImageGrid images={images} onPick={onPick} />
     </div>
   )
