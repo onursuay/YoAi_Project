@@ -1,12 +1,12 @@
 'use client'
 
 import { useState } from 'react'
-import { X, Youtube, Image as ImageIcon, Shapes, Film, Plus } from 'lucide-react'
+import { X, Youtube, Image as ImageIcon, Shapes, Film, Plus, Link2, Building2, Type, AlignLeft, MousePointerClick } from 'lucide-react'
 import type { StepProps, DisplayAsset, DisplayAssetKind } from '../../shared/WizardTypes'
-import { inputCls } from '../../shared/WizardTypes'
 import DisplayImagePicker from './DisplayImagePicker'
 import DisplayLogoPicker from './DisplayLogoPicker'
 import DisplayVideoPicker from './DisplayVideoPicker'
+import { DisplaySection, displayInputCls, displaySelectCls } from '../DisplayWizardUI'
 
 function updateHeadline(state: StepProps['state'], index: number, value: string) {
   const next = [...state.displayHeadlines]
@@ -52,34 +52,32 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
   const squareCount = imageAssets.filter(a => a.kind === 'SQUARE_MARKETING_IMAGE').length
 
   return (
-    <div className="space-y-6">
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">
-          {t('display.finalUrl')} <span className="text-red-500">*</span>
-        </label>
+    <div className="space-y-8">
+      {/* Final URL */}
+      <DisplaySection
+        icon={<Link2 className="w-[18px] h-[18px]" />}
+        title={t('display.finalUrl')}
+      >
         <input
           type="url"
-          className={inputCls}
+          className={displayInputCls}
           value={state.finalUrl}
           onChange={e => update({ finalUrl: e.target.value })}
           placeholder="https://example.com"
         />
-      </div>
+      </DisplaySection>
 
-      <section className="border border-gray-200 rounded-lg bg-white p-4 space-y-4">
-        <div className="flex items-center gap-2">
-          <ImageIcon className="w-4 h-4 text-gray-600" />
-          <h4 className="text-[15px] font-semibold text-gray-900">{t('display.assetsSectionTitle')}</h4>
-        </div>
-
+      {/* Assets */}
+      <DisplaySection
+        icon={<ImageIcon className="w-[18px] h-[18px]" />}
+        title={t('display.assetsSectionTitle')}
+      >
         <div className="grid grid-cols-3 gap-4 items-stretch">
           {/* Resimler */}
           <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
-            {/* Başlık */}
             <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-800">{t('display.imageSectionLabel')}</p>
             </div>
-            {/* Upload alanı */}
             <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {imageAssets.map(a => (
                 <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 group shrink-0">
@@ -102,13 +100,12 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setImageOpen(true)}
                 disabled={imageAssets.length >= 15}
-                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${imageAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-primary flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${imageAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Plus className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.imageAddButton')}</span>
               </button>
             </div>
-            {/* Açıklama */}
             <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
               <p className="text-[11px] text-gray-400">{t('display.imageSectionHint', { landscape: landscapeCount, square: squareCount })}</p>
             </div>
@@ -116,11 +113,9 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
 
           {/* Logolar */}
           <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
-            {/* Başlık */}
             <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-800">{t('display.logoSectionLabel')}</p>
             </div>
-            {/* Upload alanı */}
             <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {logoAssets.map(a => (
                 <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
@@ -143,13 +138,12 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setLogoOpen(true)}
                 disabled={logoAssets.length >= 5}
-                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${logoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-primary flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${logoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Shapes className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.logoAddButton')}</span>
               </button>
             </div>
-            {/* Açıklama */}
             <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
               <p className="text-[11px] text-gray-400">{t('display.logoSectionHint')}</p>
             </div>
@@ -157,11 +151,9 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
 
           {/* Videolar */}
           <div className="flex flex-col border border-gray-200 rounded-xl bg-white overflow-hidden">
-            {/* Başlık */}
             <div className="px-4 pt-4 pb-2 text-center border-b border-gray-100">
               <p className="text-sm font-semibold text-gray-800">{t('display.videoSectionLabel')}</p>
             </div>
-            {/* Upload alanı */}
             <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {videoAssets.map(v => (
                 <div key={v.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
@@ -184,41 +176,47 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setVideoOpen(true)}
                 disabled={videoAssets.length >= 5}
-                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${videoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-primary flex flex-col items-center justify-center text-gray-400 hover:text-primary transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${videoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Film className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.videoAddButton')}</span>
               </button>
             </div>
-            {/* Açıklama */}
             <div className="px-4 pb-3 pt-1 border-t border-gray-100 text-center">
               <p className="text-[11px] text-gray-400">{t('display.videoSectionHint')}</p>
             </div>
           </div>
         </div>
-      </section>
+      </DisplaySection>
 
-      <div>
-        <div className="flex justify-between items-center mb-1">
-          <label className="text-sm font-medium text-gray-700">
-            {t('display.businessName')} <span className="text-red-500">*</span>
-          </label>
-          <span className="text-xs text-gray-400">{state.displayBusinessName.length}/25</span>
+      {/* İşletme adı */}
+      <DisplaySection
+        icon={<Building2 className="w-[18px] h-[18px]" />}
+        title={t('display.businessName')}
+      >
+        <div>
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-sm font-medium text-gray-800">
+              {t('display.businessName')} <span className="text-red-500">*</span>
+            </label>
+            <span className="text-xs text-gray-400">{state.displayBusinessName.length}/25</span>
+          </div>
+          <input
+            className={displayInputCls}
+            maxLength={25}
+            value={state.displayBusinessName}
+            onChange={e => update({ displayBusinessName: e.target.value.slice(0, 25) })}
+            placeholder={t('display.businessNamePlaceholder')}
+          />
         </div>
-        <input
-          className={inputCls}
-          maxLength={25}
-          value={state.displayBusinessName}
-          onChange={e => update({ displayBusinessName: e.target.value.slice(0, 25) })}
-          placeholder={t('display.businessNamePlaceholder')}
-        />
-      </div>
+      </DisplaySection>
 
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium text-gray-700">{t('display.headlines')}</label>
-          <span className="text-xs text-gray-500">{t('display.headlinesHint')}</span>
-        </div>
+      {/* Başlıklar */}
+      <DisplaySection
+        icon={<Type className="w-[18px] h-[18px]" />}
+        title={t('display.headlines')}
+        description={t('display.headlinesHint')}
+      >
         <div className="space-y-2">
           {state.displayHeadlines.map((h, i) => (
             <div key={i}>
@@ -226,7 +224,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 <span className="text-xs text-gray-400">{h.length}/30</span>
               </div>
               <input
-                className={inputCls}
+                className={displayInputCls}
                 maxLength={30}
                 value={h}
                 onChange={e => update(updateHeadline(state, i, e.target.value.slice(0, 30)))}
@@ -235,29 +233,30 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
             </div>
           ))}
         </div>
-      </div>
 
-      <div>
-        <div className="flex justify-between items-center mb-1">
-          <label className="text-sm font-medium text-gray-700">
-            {t('display.longHeadline')} <span className="text-red-500">*</span>
-          </label>
-          <span className="text-xs text-gray-400">{state.displayLongHeadline.length}/90</span>
+        <div className="mt-5">
+          <div className="flex justify-between items-center mb-1.5">
+            <label className="text-sm font-medium text-gray-800">
+              {t('display.longHeadline')} <span className="text-red-500">*</span>
+            </label>
+            <span className="text-xs text-gray-400">{state.displayLongHeadline.length}/90</span>
+          </div>
+          <input
+            className={displayInputCls}
+            maxLength={90}
+            value={state.displayLongHeadline}
+            onChange={e => update({ displayLongHeadline: e.target.value.slice(0, 90) })}
+            placeholder={t('display.longHeadlinePlaceholder')}
+          />
         </div>
-        <input
-          className={inputCls}
-          maxLength={90}
-          value={state.displayLongHeadline}
-          onChange={e => update({ displayLongHeadline: e.target.value.slice(0, 90) })}
-          placeholder={t('display.longHeadlinePlaceholder')}
-        />
-      </div>
+      </DisplaySection>
 
-      <div>
-        <div className="flex justify-between items-center mb-2">
-          <label className="text-sm font-medium text-gray-700">{t('display.descriptions')}</label>
-          <span className="text-xs text-gray-500">{t('display.descriptionsHint')}</span>
-        </div>
+      {/* Açıklamalar */}
+      <DisplaySection
+        icon={<AlignLeft className="w-[18px] h-[18px]" />}
+        title={t('display.descriptions')}
+        description={t('display.descriptionsHint')}
+      >
         <div className="space-y-2">
           {state.displayDescriptions.map((d, i) => (
             <div key={i}>
@@ -265,7 +264,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 <span className="text-xs text-gray-400">{d.length}/90</span>
               </div>
               <textarea
-                className={`${inputCls} min-h-[72px] resize-y`}
+                className={`${displayInputCls} min-h-[72px] resize-y`}
                 maxLength={90}
                 value={d}
                 onChange={e => update(updateDescription(state, i, e.target.value.slice(0, 90)))}
@@ -274,12 +273,15 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
             </div>
           ))}
         </div>
-      </div>
+      </DisplaySection>
 
-      <div>
-        <label className="block text-sm font-medium text-gray-700 mb-1">{t('display.callToActionLabel')}</label>
+      {/* Call to Action */}
+      <DisplaySection
+        icon={<MousePointerClick className="w-[18px] h-[18px]" />}
+        title={t('display.callToActionLabel')}
+      >
         <select
-          className={inputCls}
+          className={displaySelectCls}
           value={state.displayCallToAction}
           onChange={e => update({ displayCallToAction: e.target.value })}
         >
@@ -295,7 +297,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
           <option value="GET_QUOTE">{t('display.ctaGetQuote')}</option>
           <option value="VISIT_SITE">{t('display.ctaVisitSite')}</option>
         </select>
-      </div>
+      </DisplaySection>
 
       <DisplayImagePicker
         isOpen={imageOpen}

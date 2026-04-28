@@ -1,13 +1,15 @@
 'use client'
 
+import { Flag, Globe, DollarSign, Users, Image as ImageIcon } from 'lucide-react'
 import type { StepProps } from '../../shared/WizardTypes'
 import { LANGUAGE_OPTIONS } from '../../shared/WizardTypes'
+import { DisplaySection } from '../DisplayWizardUI'
 
-function Card({ title, children }: { title: string; children: React.ReactNode }) {
+function Row({ label, value }: { label: string; value: string }) {
   return (
-    <div className="rounded-lg border border-gray-200 bg-white p-4">
-      <h4 className="text-sm font-semibold text-gray-900 mb-2">{title}</h4>
-      <div className="text-[13px] text-gray-700 space-y-1">{children}</div>
+    <div className="flex justify-between items-start gap-3 text-sm">
+      <span className="text-gray-500 shrink-0">{label}</span>
+      <span className="font-medium text-right text-gray-900">{value}</span>
     </div>
   )
 }
@@ -62,106 +64,94 @@ export default function DisplayStepSummary({ state, update: _update, t }: StepPr
   const videoCount = state.displayAssets.filter(a => a.kind === 'YOUTUBE_VIDEO').length
 
   return (
-    <div className="space-y-4">
-      <Card title={t('display.summaryCampaign')}>
-        <p>
-          <span className="text-gray-500">{t('campaign.name')}: </span>
-          {state.campaignName.trim() || '—'}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryType')}: </span>
-          {t('display.campaignTypeDisplay')}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryGoal')}: </span>
-          {t(`goal.labels.${state.campaignGoal}`)}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('conversion.title')}: </span>
-          {state.selectedConversionGoalIds.length > 0
-            ? state.selectedConversionGoalIds.length === 1
-              ? (state.conversionActions.find(a => a.resourceName === state.selectedConversionGoalIds[0])?.name ?? '1')
-              : t('conversion.goalsSelected', { count: state.selectedConversionGoalIds.length })
-            : '—'}
-        </p>
-      </Card>
+    <div className="space-y-6">
+      <DisplaySection
+        icon={<Flag className="w-[18px] h-[18px]" />}
+        title={t('display.summaryCampaign')}
+      >
+        <div className="space-y-2.5">
+          <Row label={t('campaign.name')} value={state.campaignName.trim() || '—'} />
+          <Row label={t('display.summaryType')} value={t('display.campaignTypeDisplay')} />
+          <Row label={t('display.summaryGoal')} value={t(`goal.labels.${state.campaignGoal}`)} />
+          <Row
+            label={t('conversion.title')}
+            value={
+              state.selectedConversionGoalIds.length > 0
+                ? state.selectedConversionGoalIds.length === 1
+                  ? (state.conversionActions.find(a => a.resourceName === state.selectedConversionGoalIds[0])?.name ?? '1')
+                  : t('conversion.goalsSelected', { count: state.selectedConversionGoalIds.length })
+                : '—'
+            }
+          />
+        </div>
+      </DisplaySection>
 
-      <Card title={t('display.summaryGeoLangEu')}>
-        <p>
-          <span className="text-gray-500">{t('steps.location')}: </span>
-          {locSummary}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('location.languageTargetingTitle')}: </span>
-          {langNames || '—'}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('settings.euPoliticalTitle')}: </span>
-          {euLabel}
-        </p>
-      </Card>
+      <DisplaySection
+        icon={<Globe className="w-[18px] h-[18px]" />}
+        title={t('display.summaryGeoLangEu')}
+      >
+        <div className="space-y-2.5">
+          <Row label={t('steps.location')} value={locSummary} />
+          <Row label={t('location.languageTargetingTitle')} value={langNames || '—'} />
+          <Row label={t('settings.euPoliticalTitle')} value={euLabel} />
+        </div>
+      </DisplaySection>
 
-      <Card title={t('display.summaryBudgetBid')}>
-        <p>
-          <span className="text-gray-500">{t('campaign.dailyBudget')}: </span>
-          {state.dailyBudget ? `${state.dailyBudget} TRY` : '—'}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryBidStrategy')}: </span>
-          {friendlyBidLabel}
-          {state.displayBiddingFocus === 'CONVERSIONS' && state.displayConversionsSub === 'TARGET_CPA' && state.targetCpa
-            ? ` — ${t('campaign.targetCpa')}: ${state.targetCpa}`
-            : ''}
-          {state.displayBiddingFocus === 'CONVERSION_VALUE' && state.displayValueSub === 'TARGET_ROAS' && state.targetRoas
-            ? ` — ${t('campaign.targetRoas')}: ${state.targetRoas}`
-            : ''}
-        </p>
-      </Card>
+      <DisplaySection
+        icon={<DollarSign className="w-[18px] h-[18px]" />}
+        title={t('display.summaryBudgetBid')}
+      >
+        <div className="space-y-2.5">
+          <Row label={t('campaign.dailyBudget')} value={state.dailyBudget ? `${state.dailyBudget} TRY` : '—'} />
+          <Row
+            label={t('display.summaryBidStrategy')}
+            value={
+              friendlyBidLabel +
+              (state.displayBiddingFocus === 'CONVERSIONS' && state.displayConversionsSub === 'TARGET_CPA' && state.targetCpa
+                ? ` — ${t('campaign.targetCpa')}: ${state.targetCpa}`
+                : '') +
+              (state.displayBiddingFocus === 'CONVERSION_VALUE' && state.displayValueSub === 'TARGET_ROAS' && state.targetRoas
+                ? ` — ${t('campaign.targetRoas')}: ${state.targetRoas}`
+                : '')
+            }
+          />
+        </div>
+      </DisplaySection>
 
-      <Card title={t('steps.audience')}>
-        <p>
-          {t('display.summaryAudienceCount', { count: audienceCount })}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryOptimizedTargeting')}: </span>
-          {state.optimizedTargeting ? '✓' : '—'}
-        </p>
-      </Card>
+      <DisplaySection
+        icon={<Users className="w-[18px] h-[18px]" />}
+        title={t('steps.audience')}
+      >
+        <div className="space-y-2.5">
+          <Row label={t('display.summaryAudienceCount', { count: audienceCount })} value={String(audienceCount)} />
+          <Row label={t('display.summaryOptimizedTargeting')} value={state.optimizedTargeting ? '✓' : '—'} />
+        </div>
+      </DisplaySection>
 
-      <Card title={t('display.summaryAd')}>
-        <p>
-          <span className="text-gray-500">{t('display.summaryAdGroup')}: </span>
-          {adGroupName || '—'}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.businessName')}: </span>
-          {state.displayBusinessName.trim() || '—'}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryHeadlineCount')}: </span>
-          {headlineCount}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryDescriptionCount')}: </span>
-          {descCount}
-        </p>
-        <p>
-          <span className="text-gray-500">{t('display.summaryAssets')}: </span>
-          {t('display.summaryAssetsDetail', {
-            landscape: landscapeCount,
-            square: squareCount,
-            portrait: portraitCount,
-            logo: logoCount,
-            video: videoCount,
-          })}
-        </p>
-        {state.displayCallToAction && (
-          <p>
-            <span className="text-gray-500">{t('display.callToActionLabel')}: </span>
-            {state.displayCallToAction}
-          </p>
-        )}
-      </Card>
+      <DisplaySection
+        icon={<ImageIcon className="w-[18px] h-[18px]" />}
+        title={t('display.summaryAd')}
+      >
+        <div className="space-y-2.5">
+          <Row label={t('display.summaryAdGroup')} value={adGroupName || '—'} />
+          <Row label={t('display.businessName')} value={state.displayBusinessName.trim() || '—'} />
+          <Row label={t('display.summaryHeadlineCount')} value={String(headlineCount)} />
+          <Row label={t('display.summaryDescriptionCount')} value={String(descCount)} />
+          <Row
+            label={t('display.summaryAssets')}
+            value={t('display.summaryAssetsDetail', {
+              landscape: landscapeCount,
+              square: squareCount,
+              portrait: portraitCount,
+              logo: logoCount,
+              video: videoCount,
+            })}
+          />
+          {state.displayCallToAction && (
+            <Row label={t('display.callToActionLabel')} value={state.displayCallToAction} />
+          )}
+        </div>
+      </DisplaySection>
     </div>
   )
 }

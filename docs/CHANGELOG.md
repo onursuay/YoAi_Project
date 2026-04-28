@@ -2,6 +2,19 @@
 
 ---
 
+## 2026-04-28 — Display Wizard: Tasarım Meta Ads Trafik wizard'ına birebir hizalandı
+- **Sorun:** Google Görüntülü reklam wizard'ı kendine özgü blue-600 paletli, sol-sidebar+küçük modal düzeniyle Meta Ads Trafik wizard'ından görsel olarak ayrışıyordu. Kullanıcı tüm Display adımlarının Meta wizard'ı ile birebir aynı tipografi, renk, buton ve form bileşeni tasarımına sahip olmasını istedi.
+- **Çözüm:**
+  - **Container yeniden yazıldı (`DisplayCampaignWizard.tsx`):** Sol dikey adım menüsü kaldırıldı; Meta'daki gibi tam-ekran modal + üst yatay numaralı step pill progress + 2 kolonlu (içerik + sticky sağ özet sidebar) düzene geçildi. Footer `Geri / X / Y / İleri` Meta ile aynı.
+  - **Yeni paylaşılan UI modülü (`DisplayWizardUI.tsx`):** Meta'nın `Section`, `BudgetOptionCard` (RadioCard), `Progress`, `SidebarCard`, `SidebarRow` primitive'leri Display için klonlandı. Tüm renkler `primary` (#2BB673) — eski blue-600 yok.
+  - **Yeni sidebar (`DisplaySidebar.tsx`):** Meta TWSidebar formatında her adım için canlı özet kartı (aktif → primary border, tamamlanmış → check rozeti).
+  - **5 step component yeniden yazıldı:** `DisplayStepCampaignSettings`, `DisplayStepBudgetBidding`, `DisplayStepTargeting`, `DisplayStepAds`, `DisplayStepSummary` — her biri `<DisplaySection icon title description>` ile sarıldı, input'lar `displayInputCls` (px-4 py-3, primary focus ring) kullanıyor, radio seçimleri `<DisplayRadioCard>` (büyük 18px daire + primary fill).
+  - **Locale anahtarları eklendi:** `display.summarySidebarTitle`, `summaryReadyLabel`, `summaryMissingLabel`.
+- **Dokunulmadı:** `StepConversionAndName`, `StepAudience`, `StepLocationLanguage` — Search wizard ile paylaşılıyor; tasarım değişikliği Search'e sızmasın diye orijinal stilleri korundu (yalnız Display wizard içinde DisplaySection wrapper içinde render ediliyorlar).
+- **Dosyalar:** `components/google/wizard/display/DisplayCampaignWizard.tsx`, `DisplayWizardUI.tsx` (yeni), `DisplaySidebar.tsx` (yeni), `steps/DisplayStepCampaignSettings.tsx`, `steps/DisplayStepBudgetBidding.tsx`, `steps/DisplayStepTargeting.tsx`, `steps/DisplayStepAds.tsx`, `steps/DisplayStepSummary.tsx`, `locales/tr.json`, `locales/en.json`
+
+---
+
 ## 2026-04-28 — Display Reklam: Ekle butonları kart alanını dolduruyor + Kitle uyarı banner'ı kaldırıldı
 - **Sorun:** (1) Resim/Logo/Video ekle butonları boşken sadece 64×64px gösteriliyor, kart içindeki upload alanını doldurmuyordu. (2) Kitle Hedefleme adımında "Bu adım isteğe bağlı" banner'ı gereksizdi.
 - **Çözüm:** (1) Asset yokken buton `w-full flex-1 min-h-[88px]` ile tüm upload alanını kaplar; asset varsa `w-16 h-16` thumbnail boyutuna döner. (2) StepAudience'daki isteğe bağlı not div'i kaldırıldı.

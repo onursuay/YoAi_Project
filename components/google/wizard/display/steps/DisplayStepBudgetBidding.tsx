@@ -1,7 +1,8 @@
 'use client'
 
+import { Wallet, Target, CheckCircle2 } from 'lucide-react'
 import type { StepProps, WizardState, BiddingFocus } from '../../shared/WizardTypes'
-import { inputCls } from '../../shared/WizardTypes'
+import { DisplaySection, DisplayRadioCard, displayInputCls, displaySelectCls } from '../DisplayWizardUI'
 
 function mapDisplayToBidding(
   focus: WizardState['displayBiddingFocus'],
@@ -9,25 +10,17 @@ function mapDisplayToBidding(
   valSub: WizardState['displayValueSub'],
   clicksSub: WizardState['displayClicksSub']
 ): { biddingStrategy: WizardState['biddingStrategy']; biddingFocus: BiddingFocus | null } {
-  if (focus === 'VIEWABLE_IMPRESSIONS') {
-    return { biddingStrategy: 'MANUAL_CPM', biddingFocus: null }
-  }
+  if (focus === 'VIEWABLE_IMPRESSIONS') return { biddingStrategy: 'MANUAL_CPM', biddingFocus: null }
   if (focus === 'CLICKS') {
-    if (clicksSub === 'MANUAL_CPC') {
-      return { biddingStrategy: 'MANUAL_CPC', biddingFocus: 'CLICKS' }
-    }
+    if (clicksSub === 'MANUAL_CPC') return { biddingStrategy: 'MANUAL_CPC', biddingFocus: 'CLICKS' }
     return { biddingStrategy: 'MAXIMIZE_CLICKS', biddingFocus: 'CLICKS' }
   }
   if (focus === 'CONVERSIONS') {
-    if (convSub === 'TARGET_CPA') {
-      return { biddingStrategy: 'TARGET_CPA', biddingFocus: 'CONVERSION_COUNT' }
-    }
+    if (convSub === 'TARGET_CPA') return { biddingStrategy: 'TARGET_CPA', biddingFocus: 'CONVERSION_COUNT' }
     return { biddingStrategy: 'MAXIMIZE_CONVERSIONS', biddingFocus: 'CONVERSION_COUNT' }
   }
   if (focus === 'CONVERSION_VALUE') {
-    if (valSub === 'TARGET_ROAS') {
-      return { biddingStrategy: 'TARGET_ROAS', biddingFocus: 'CONVERSION_VALUE' }
-    }
+    if (valSub === 'TARGET_ROAS') return { biddingStrategy: 'TARGET_ROAS', biddingFocus: 'CONVERSION_VALUE' }
     return { biddingStrategy: 'MAXIMIZE_CONVERSIONS', biddingFocus: 'CONVERSION_VALUE' }
   }
   return { biddingStrategy: 'MAXIMIZE_CONVERSIONS', biddingFocus: 'CONVERSION_COUNT' }
@@ -36,7 +29,12 @@ function mapDisplayToBidding(
 export default function DisplayStepBudgetBidding({ state, update, t }: StepProps) {
   const applyFocus = (partial: Partial<typeof state>) => {
     const next = { ...state, ...partial }
-    const mapped = mapDisplayToBidding(next.displayBiddingFocus, next.displayConversionsSub, next.displayValueSub, next.displayClicksSub)
+    const mapped = mapDisplayToBidding(
+      next.displayBiddingFocus,
+      next.displayConversionsSub,
+      next.displayValueSub,
+      next.displayClicksSub
+    )
     update({ ...partial, biddingStrategy: mapped.biddingStrategy, biddingFocus: mapped.biddingFocus })
   }
 
@@ -59,9 +57,7 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
   })()
 
   const infoText = (() => {
-    if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') {
-      return t('display.biddingInfoVcpm')
-    }
+    if (state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS') return t('display.biddingInfoVcpm')
     if (state.displayBiddingFocus === 'CLICKS') {
       return state.displayClicksSub === 'MANUAL_CPC'
         ? t('display.biddingInfoManualCpc')
@@ -83,212 +79,189 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
   return (
     <div className="space-y-8">
       {/* Bütçe */}
-      <section className="space-y-3">
-        <h4 className="text-[15px] font-semibold text-gray-900">{t('display.budgetSectionTitle')}</h4>
+      <DisplaySection
+        icon={<Wallet className="w-[18px] h-[18px]" />}
+        title={t('display.budgetSectionTitle')}
+      >
         <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">
+          <label className="block text-sm font-medium text-gray-800 mb-1.5">
             {t('campaign.dailyBudget')} <span className="text-red-500">*</span>
           </label>
-          <input
-            type="number"
-            min={1}
-            step={1}
-            className={inputCls}
-            value={state.dailyBudget}
-            onChange={e => update({ dailyBudget: e.target.value })}
-            placeholder={t('campaign.dailyBudgetPlaceholder')}
-          />
-        </div>
-      </section>
-
-      {/* Teklif verme */}
-      <section className="space-y-4">
-        <h4 className="text-[15px] font-semibold text-gray-900">{t('display.biddingSectionTitle')}</h4>
-        <div>
-          <label className="block text-sm font-medium text-gray-700 mb-1">{t('display.biddingFocusLabel')}</label>
-        <select
-          className={inputCls}
-          value={state.displayBiddingFocus}
-          onChange={e => {
-            const v = e.target.value as typeof state.displayBiddingFocus
-            applyFocus({ displayBiddingFocus: v })
-          }}
-        >
-          <option value="CONVERSIONS">{t('display.focusConversions')}</option>
-          <option value="CONVERSION_VALUE">{t('display.focusConversionValue')}</option>
-          <option value="CLICKS">{t('display.focusClicks')}</option>
-          <option value="VIEWABLE_IMPRESSIONS">{t('display.focusViewableImpressions')}</option>
-        </select>
-      </div>
-
-      {state.displayBiddingFocus === 'CONVERSIONS' && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-800">{t('display.subStrategyTitle')}</p>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayConversionsSub === 'MAXIMIZE_CONVERSIONS' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayConvSub"
-              checked={state.displayConversionsSub === 'MAXIMIZE_CONVERSIONS'}
-              onChange={() => applyFocus({ displayConversionsSub: 'MAXIMIZE_CONVERSIONS' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.maximizeConversions')}</span>
-          </label>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayConversionsSub === 'TARGET_CPA' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayConvSub"
-              checked={state.displayConversionsSub === 'TARGET_CPA'}
-              onChange={() => applyFocus({ displayConversionsSub: 'TARGET_CPA' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.manualCpa')}</span>
-          </label>
-          {state.displayConversionsSub === 'TARGET_CPA' && (
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">{t('campaign.targetCpa')}</label>
-              <input
-                type="number"
-                min={0.01}
-                step={0.01}
-                className={inputCls}
-                value={state.targetCpa}
-                onChange={e => update({ targetCpa: e.target.value })}
-                placeholder={t('campaign.targetCpaPlaceholder')}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {state.displayBiddingFocus === 'CONVERSION_VALUE' && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-800">{t('display.subStrategyTitle')}</p>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayValueSub === 'MAXIMIZE_CONVERSION_VALUE' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayValSub"
-              checked={state.displayValueSub === 'MAXIMIZE_CONVERSION_VALUE'}
-              onChange={() => applyFocus({ displayValueSub: 'MAXIMIZE_CONVERSION_VALUE' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.maximizeConversionValue')}</span>
-          </label>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayValueSub === 'TARGET_ROAS' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayValSub"
-              checked={state.displayValueSub === 'TARGET_ROAS'}
-              onChange={() => applyFocus({ displayValueSub: 'TARGET_ROAS' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.targetRoas')}</span>
-          </label>
-          {state.displayValueSub === 'TARGET_ROAS' && (
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">{t('campaign.targetRoas')}</label>
-              <input
-                type="number"
-                min={0.01}
-                step={0.1}
-                className={inputCls}
-                value={state.targetRoas}
-                onChange={e => update({ targetRoas: e.target.value })}
-                placeholder={t('campaign.targetRoasPlaceholder')}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {state.displayBiddingFocus === 'CLICKS' && (
-        <div className="space-y-3">
-          <p className="text-sm font-medium text-gray-800">{t('display.subStrategyTitle')}</p>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayClicksSub === 'MAXIMIZE_CLICKS' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayClicksSub"
-              checked={state.displayClicksSub === 'MAXIMIZE_CLICKS'}
-              onChange={() => applyFocus({ displayClicksSub: 'MAXIMIZE_CLICKS' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.maximizeClicks')}</span>
-          </label>
-          <label
-            className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer ${
-              state.displayClicksSub === 'MANUAL_CPC' ? 'border-blue-300 bg-blue-50/50' : 'border-gray-100'
-            }`}
-          >
-            <input
-              type="radio"
-              name="displayClicksSub"
-              checked={state.displayClicksSub === 'MANUAL_CPC'}
-              onChange={() => applyFocus({ displayClicksSub: 'MANUAL_CPC' })}
-              className="text-blue-600"
-            />
-            <span className="text-[13px] font-medium text-gray-900">{t('display.manualCpc')}</span>
-          </label>
-          {state.displayClicksSub === 'MANUAL_CPC' && (
-            <div>
-              <label className="block text-sm text-gray-600 mb-1">{t('display.cpcBidLabel')}</label>
-              <input
-                type="number"
-                min={0.01}
-                step={0.01}
-                className={inputCls}
-                value={state.cpcBid}
-                onChange={e => update({ cpcBid: e.target.value })}
-                placeholder={t('display.cpcBidPlaceholder')}
-              />
-            </div>
-          )}
-        </div>
-      )}
-
-      {state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS' && (
-        <div className="space-y-3">
-          <p className="text-[13px] text-gray-600 leading-relaxed">{t('display.vcpmDescription')}</p>
-          <div>
-            <label className="block text-sm text-gray-600 mb-1">{t('display.vcpmBidLabel')}</label>
+          <div className="relative">
             <input
               type="number"
-              min={0.01}
-              step={0.01}
-              className={inputCls}
-              value={state.displayViewableCpm}
-              onChange={e => update({ displayViewableCpm: e.target.value })}
-              placeholder={t('display.vcpmBidPlaceholder')}
+              min={1}
+              step={1}
+              className={`${displayInputCls} pr-14`}
+              value={state.dailyBudget}
+              onChange={e => update({ dailyBudget: e.target.value })}
+              placeholder={t('campaign.dailyBudgetPlaceholder')}
             />
+            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs font-semibold text-gray-400">
+              TRY
+            </span>
           </div>
         </div>
-      )}
+      </DisplaySection>
 
-      <div className="rounded-lg border border-emerald-200 bg-emerald-50/60 p-4 text-[13px] text-emerald-900">
-        <p className="font-medium text-emerald-900 mb-1">{t('display.activeStrategyTitle')}</p>
-        <p className="text-emerald-800">{friendlyStrategyLabel}</p>
-        <p className="mt-2 text-emerald-800">{infoText}</p>
-      </div>
-      </section>
+      {/* Teklif verme */}
+      <DisplaySection
+        icon={<Target className="w-[18px] h-[18px]" />}
+        title={t('display.biddingSectionTitle')}
+      >
+        <div className="space-y-5">
+          <div>
+            <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+              {t('display.biddingFocusLabel')}
+            </label>
+            <select
+              className={displaySelectCls}
+              value={state.displayBiddingFocus}
+              onChange={e => {
+                const v = e.target.value as typeof state.displayBiddingFocus
+                applyFocus({ displayBiddingFocus: v })
+              }}
+            >
+              <option value="CONVERSIONS">{t('display.focusConversions')}</option>
+              <option value="CONVERSION_VALUE">{t('display.focusConversionValue')}</option>
+              <option value="CLICKS">{t('display.focusClicks')}</option>
+              <option value="VIEWABLE_IMPRESSIONS">{t('display.focusViewableImpressions')}</option>
+            </select>
+          </div>
+
+          {state.displayBiddingFocus === 'CONVERSIONS' && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                {t('display.subStrategyTitle')}
+              </p>
+              <DisplayRadioCard
+                selected={state.displayConversionsSub === 'MAXIMIZE_CONVERSIONS'}
+                onClick={() => applyFocus({ displayConversionsSub: 'MAXIMIZE_CONVERSIONS' })}
+                title={t('display.maximizeConversions')}
+              />
+              <DisplayRadioCard
+                selected={state.displayConversionsSub === 'TARGET_CPA'}
+                onClick={() => applyFocus({ displayConversionsSub: 'TARGET_CPA' })}
+                title={t('display.manualCpa')}
+              />
+              {state.displayConversionsSub === 'TARGET_CPA' && (
+                <div className="ml-1 mt-1 p-5 bg-gray-50/80 border border-gray-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                    {t('campaign.targetCpa')}
+                  </label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    className={displayInputCls}
+                    value={state.targetCpa}
+                    onChange={e => update({ targetCpa: e.target.value })}
+                    placeholder={t('campaign.targetCpaPlaceholder')}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {state.displayBiddingFocus === 'CONVERSION_VALUE' && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                {t('display.subStrategyTitle')}
+              </p>
+              <DisplayRadioCard
+                selected={state.displayValueSub === 'MAXIMIZE_CONVERSION_VALUE'}
+                onClick={() => applyFocus({ displayValueSub: 'MAXIMIZE_CONVERSION_VALUE' })}
+                title={t('display.maximizeConversionValue')}
+              />
+              <DisplayRadioCard
+                selected={state.displayValueSub === 'TARGET_ROAS'}
+                onClick={() => applyFocus({ displayValueSub: 'TARGET_ROAS' })}
+                title={t('display.targetRoas')}
+              />
+              {state.displayValueSub === 'TARGET_ROAS' && (
+                <div className="ml-1 mt-1 p-5 bg-gray-50/80 border border-gray-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                    {t('campaign.targetRoas')}
+                  </label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.1}
+                    className={displayInputCls}
+                    value={state.targetRoas}
+                    onChange={e => update({ targetRoas: e.target.value })}
+                    placeholder={t('campaign.targetRoasPlaceholder')}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {state.displayBiddingFocus === 'CLICKS' && (
+            <div className="space-y-2">
+              <p className="text-xs font-semibold text-gray-600 uppercase tracking-wide">
+                {t('display.subStrategyTitle')}
+              </p>
+              <DisplayRadioCard
+                selected={state.displayClicksSub === 'MAXIMIZE_CLICKS'}
+                onClick={() => applyFocus({ displayClicksSub: 'MAXIMIZE_CLICKS' })}
+                title={t('display.maximizeClicks')}
+              />
+              <DisplayRadioCard
+                selected={state.displayClicksSub === 'MANUAL_CPC'}
+                onClick={() => applyFocus({ displayClicksSub: 'MANUAL_CPC' })}
+                title={t('display.manualCpc')}
+              />
+              {state.displayClicksSub === 'MANUAL_CPC' && (
+                <div className="ml-1 mt-1 p-5 bg-gray-50/80 border border-gray-200 rounded-xl">
+                  <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                    {t('display.cpcBidLabel')}
+                  </label>
+                  <input
+                    type="number"
+                    min={0.01}
+                    step={0.01}
+                    className={displayInputCls}
+                    value={state.cpcBid}
+                    onChange={e => update({ cpcBid: e.target.value })}
+                    placeholder={t('display.cpcBidPlaceholder')}
+                  />
+                </div>
+              )}
+            </div>
+          )}
+
+          {state.displayBiddingFocus === 'VIEWABLE_IMPRESSIONS' && (
+            <div className="space-y-3">
+              <p className="text-[13px] text-gray-600 leading-relaxed">{t('display.vcpmDescription')}</p>
+              <div>
+                <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
+                  {t('display.vcpmBidLabel')}
+                </label>
+                <input
+                  type="number"
+                  min={0.01}
+                  step={0.01}
+                  className={displayInputCls}
+                  value={state.displayViewableCpm}
+                  onChange={e => update({ displayViewableCpm: e.target.value })}
+                  placeholder={t('display.vcpmBidPlaceholder')}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Active strategy summary */}
+          <div className="flex items-start gap-3 p-4 rounded-xl bg-emerald-50 border border-emerald-200">
+            <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />
+            <div className="flex-1 min-w-0">
+              <p className="text-xs font-semibold text-emerald-900">{t('display.activeStrategyTitle')}</p>
+              <p className="text-sm font-semibold text-emerald-900 mt-1">{friendlyStrategyLabel}</p>
+              <p className="text-[12px] text-emerald-800 mt-1.5 leading-relaxed">{infoText}</p>
+            </div>
+          </div>
+        </div>
+      </DisplaySection>
     </div>
   )
 }
