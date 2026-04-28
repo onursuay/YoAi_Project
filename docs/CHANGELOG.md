@@ -134,6 +134,13 @@
 
 ---
 
+## 2026-04-20 — DisplayImagePicker 4 sorun düzeltildi
+- **Sorun:** (1) Öneriler sekmesinde URL girişi yoktu. (2) Öğe kitaplığı hata mesajı generikti. (3) Yükle sekmesi uyumsuz oranlı görseli reddediyordu, kırpma sunmuyordu. (4) Stok API yapılandırılmamış hatası kullanıcıya belirsiz görünüyordu.
+- **Çözüm:** (1) RecPane içine URL input + Tara butonu eklendi. (2) Library hata mesajı "Yükle sekmesini kullanın" önerisi ile iyileştirildi. (3) Canvas tabanlı otomatik kırpma motoru eklendi — uyumsuz oran → 3 kırpma seçeneği gösterilir (Google Ads davranışı), kullanıcı birini seçer. Birden fazla dosya input'a eklendi. (4) Stok sekmesi PEXELS_API_KEY eksikse kullanıcıya net alternatif öneri verir.
+- **Dosyalar:** components/google/wizard/display/steps/DisplayImagePicker.tsx
+
+---
+
 ## 2026-04-20 — Display wizard Resimler/Logolar/Videolar kart düzeni yeniden tasarlandı
 - **Sorun:** Başlık ve açıklama aynı satırda sıkışıktı; kartlar arasında simetri yoktu.
 - **Çözüm:** Her kart 3 bölüme ayrıldı: başlık (üst, border-b), upload alanı (flex-1 orta), açıklama (alt, border-t). `items-stretch` ile eşit yükseklik. Simetri kuralı memory'e kaydedildi.
