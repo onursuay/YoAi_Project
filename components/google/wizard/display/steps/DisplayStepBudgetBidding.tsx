@@ -2,7 +2,8 @@
 
 import { Wallet, Target, CheckCircle2 } from 'lucide-react'
 import type { StepProps, WizardState, BiddingFocus } from '../../shared/WizardTypes'
-import { DisplaySection, DisplayRadioCard, displayInputCls, displaySelectCls } from '../DisplayWizardUI'
+import { DisplaySection, DisplayRadioCard, displayInputCls } from '../DisplayWizardUI'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 function mapDisplayToBidding(
   focus: WizardState['displayBiddingFocus'],
@@ -114,19 +115,16 @@ export default function DisplayStepBudgetBidding({ state, update, t }: StepProps
             <label className="block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5">
               {t('display.biddingFocusLabel')}
             </label>
-            <select
-              className={displaySelectCls}
+            <WizardSelect
               value={state.displayBiddingFocus}
-              onChange={e => {
-                const v = e.target.value as typeof state.displayBiddingFocus
-                applyFocus({ displayBiddingFocus: v })
-              }}
-            >
-              <option value="CONVERSIONS">{t('display.focusConversions')}</option>
-              <option value="CONVERSION_VALUE">{t('display.focusConversionValue')}</option>
-              <option value="CLICKS">{t('display.focusClicks')}</option>
-              <option value="VIEWABLE_IMPRESSIONS">{t('display.focusViewableImpressions')}</option>
-            </select>
+              onChange={(v) => applyFocus({ displayBiddingFocus: v as typeof state.displayBiddingFocus })}
+              options={[
+                { value: 'CONVERSIONS', label: t('display.focusConversions') },
+                { value: 'CONVERSION_VALUE', label: t('display.focusConversionValue') },
+                { value: 'CLICKS', label: t('display.focusClicks') },
+                { value: 'VIEWABLE_IMPRESSIONS', label: t('display.focusViewableImpressions') },
+              ]}
+            />
           </div>
 
           {state.displayBiddingFocus === 'CONVERSIONS' && (

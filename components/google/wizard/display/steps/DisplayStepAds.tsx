@@ -6,7 +6,8 @@ import type { StepProps, DisplayAsset, DisplayAssetKind } from '../../shared/Wiz
 import DisplayImagePicker from './DisplayImagePicker'
 import DisplayLogoPicker from './DisplayLogoPicker'
 import DisplayVideoPicker from './DisplayVideoPicker'
-import { DisplaySection, displayInputCls, displaySelectCls } from '../DisplayWizardUI'
+import { DisplaySection, displayInputCls } from '../DisplayWizardUI'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 function updateHeadline(state: StepProps['state'], index: number, value: string) {
   const next = [...state.displayHeadlines]
@@ -280,23 +281,24 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
         icon={<MousePointerClick className="w-[18px] h-[18px]" />}
         title={t('display.callToActionLabel')}
       >
-        <select
-          className={displaySelectCls}
+        <WizardSelect
           value={state.displayCallToAction}
-          onChange={e => update({ displayCallToAction: e.target.value })}
-        >
-          <option value="">{t('display.ctaAuto')}</option>
-          <option value="APPLY_NOW">{t('display.ctaApplyNow')}</option>
-          <option value="BOOK_NOW">{t('display.ctaBookNow')}</option>
-          <option value="CONTACT_US">{t('display.ctaContactUs')}</option>
-          <option value="DOWNLOAD">{t('display.ctaDownload')}</option>
-          <option value="LEARN_MORE">{t('display.ctaLearnMore')}</option>
-          <option value="SHOP_NOW">{t('display.ctaShopNow')}</option>
-          <option value="SIGN_UP">{t('display.ctaSignUp')}</option>
-          <option value="SUBSCRIBE">{t('display.ctaSubscribe')}</option>
-          <option value="GET_QUOTE">{t('display.ctaGetQuote')}</option>
-          <option value="VISIT_SITE">{t('display.ctaVisitSite')}</option>
-        </select>
+          onChange={(v) => update({ displayCallToAction: v })}
+          placeholder={t('display.ctaAuto')}
+          options={[
+            { value: '', label: t('display.ctaAuto') },
+            { value: 'APPLY_NOW', label: t('display.ctaApplyNow') },
+            { value: 'BOOK_NOW', label: t('display.ctaBookNow') },
+            { value: 'CONTACT_US', label: t('display.ctaContactUs') },
+            { value: 'DOWNLOAD', label: t('display.ctaDownload') },
+            { value: 'LEARN_MORE', label: t('display.ctaLearnMore') },
+            { value: 'SHOP_NOW', label: t('display.ctaShopNow') },
+            { value: 'SIGN_UP', label: t('display.ctaSignUp') },
+            { value: 'SUBSCRIBE', label: t('display.ctaSubscribe') },
+            { value: 'GET_QUOTE', label: t('display.ctaGetQuote') },
+            { value: 'VISIT_SITE', label: t('display.ctaVisitSite') },
+          ]}
+        />
       </DisplaySection>
 
       <DisplayImagePicker

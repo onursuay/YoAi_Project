@@ -11,14 +11,6 @@ import { Check } from 'lucide-react'
 export const displayInputCls =
   'w-full px-4 py-3 border border-gray-300 rounded-lg text-sm bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
 
-export const displaySelectCls =
-  'w-full px-4 py-3 border border-gray-300 rounded-lg text-sm bg-white transition-colors focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary'
-
-export const displayLabelCls = 'block text-sm font-medium text-gray-800 mb-1.5'
-
-export const displaySmallLabelCls =
-  'block text-xs font-semibold text-gray-600 uppercase tracking-wide mb-1.5'
-
 interface SectionProps {
   icon: React.ReactNode
   title: string

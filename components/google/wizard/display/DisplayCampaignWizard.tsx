@@ -249,7 +249,7 @@ export default function DisplayCampaignWizard({
       </div>
 
       {/* ── Body: 2-column layout ── */}
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-rose-50/40 via-gray-50 to-blue-50/30">
         <div className="max-w-6xl mx-auto px-8 py-8">
           <div className="grid grid-cols-3 gap-8">
             {/* Left column — Step content */}

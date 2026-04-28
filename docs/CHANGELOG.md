@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-04-28 — Display Wizard: Native select → Meta WizardSelect + arkaplan gradient
+- **Sorun:** Display wizard'ı Meta'ya hizalamış olsam da iki belirgin fark kalmıştı: (1) arka plan beyaz görünüyordu, (2) native HTML `<select>` elementinin açılan menüsü tarayıcı/OS tarafından çiziliyordu — yazı tipi/boyutu Meta'nın özel dropdown'undan farklıydı.
+- **Çözüm:**
+  - `displaySelectCls` kaldırıldı; tüm Display select'leri `@/components/meta/wizard/WizardSelect` (Meta'nın özel dropdown bileşeni) ile değiştirildi. Açılan menü artık birebir aynı: ChevronDown rotate animasyonu, primary ring, seçili öğede primary/8 bg + check icon, font/size tam kontrolde.
+  - Body bg `bg-gray-50` → `bg-gradient-to-br from-rose-50/40 via-gray-50 to-blue-50/30` (Meta wizard'ında algılanan sıcak ton hissi).
+- **Etkilenen select'ler:** `display.biddingFocus` (4 seçenek), `display.callToAction` (11 seçenek).
+- **Dosyalar:** `components/google/wizard/display/DisplayCampaignWizard.tsx`, `DisplayWizardUI.tsx`, `steps/DisplayStepBudgetBidding.tsx`, `steps/DisplayStepAds.tsx`
+
+---
+
 ## 2026-04-28 — Display Wizard: Tasarım Meta Ads Trafik wizard'ına birebir hizalandı
 - **Sorun:** Google Görüntülü reklam wizard'ı kendine özgü blue-600 paletli, sol-sidebar+küçük modal düzeniyle Meta Ads Trafik wizard'ından görsel olarak ayrışıyordu. Kullanıcı tüm Display adımlarının Meta wizard'ı ile birebir aynı tipografi, renk, buton ve form bileşeni tasarımına sahip olmasını istedi.
 - **Çözüm:**
