@@ -32,6 +32,20 @@
 
 ---
 
+## 2026-04-28 — Scraper modernize edildi: lazy-load + srcset + bg-image + UA bloklama
+- **Sorun:** "Öneriler" tab'ında çok sayıda görseli olan sitelerde (`uludagkebap.com.tr` gibi) "Henüz önerilen öğe yok" çıkıyordu. Sebepler: (1) `YoAiBot` user-agent'ı bot olarak algılanıp bloklanıyordu, (2) regex sadece `src=` ve `og:image` yakalıyordu — modern sitelerin `data-src`, `data-lazy-src`, `srcset`, `<picture><source>`, inline `background-image`, `<style>` blok'larındaki görseller atlanıyordu, (3) data: URL placeholder'ları gerçek görsel sanılıyordu.
+- **Çözüm:**
+  1. **Real Chrome UA + tam browser header seti** (Accept, Accept-Language, Sec-Fetch-*) → Cloudflare/WordPress güvenlik eklentileri artık bloklamıyor.
+  2. **Tag-bazlı tarama:** `<img>` ve `<source>` tag'leri tüm attribute'larıyla parse ediliyor; `data-src`, `data-lazy-src`, `data-original`, `data-srcset`, `data-image`, `data-bg`, `srcset` ve son çare olarak `src` deneniyor.
+  3. **srcset'ten en yüksek çözünürlük** (`pickBestFromSrcset` — `w` ve `x` descriptor'ı destekler).
+  4. **Inline `style="background-image: url(...)"` ve `<style>` blok'ları** taranıyor.
+  5. **data: URL placeholder'ları atlanıyor** (lazy-load shim'leri filtreleniyor).
+  6. **Tracking pixel filtresi:** facebook.com/tr, google-analytics, googletagmanager, doubleclick, hotjar vb. atlanıyor; görsel uzantısı olmayan + tracking query parametreli URL'ler de atlanıyor.
+  7. Aday limit 50 → 80; timeout 8s → 12s.
+- **Dosyalar:** `app/api/integrations/google-ads/assets/scrape/route.ts`
+
+---
+
 ## 2026-04-28 — Görsel modal: yanıltıcı "15 resim seçin" başlığı + counter + hard cap
 - **Sorun:** Google Ads "Reklamınızda kullanılacak 15 resim seçin" başlığı zorunluluk algısı yaratıyor (asıl: max 15, min 1). Ayrıca multi-upload limiti aşabiliyordu — kullanıcı 16+ görsel ekleyebilirdi.
 - **Çözüm (UX writer + altyapı):**

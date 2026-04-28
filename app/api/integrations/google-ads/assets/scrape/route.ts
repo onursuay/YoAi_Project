@@ -3,8 +3,10 @@ import { cookies } from 'next/headers'
 import { getGoogleAdsContext, buildGoogleAdsHeaders, GOOGLE_ADS_BASE } from '@/lib/googleAdsAuth'
 
 const MAX_BYTES = 5 * 1024 * 1024
-const USER_AGENT = 'Mozilla/5.0 (compatible; YoAiBot/1.0; +https://yodijital.com)'
-const FETCH_TIMEOUT_MS = 8000
+// Bazı siteler (Cloudflare, WordPress + güvenlik eklentileri) bot user-agent'ları bloklar.
+// Gerçek Chrome UA ile daha az engel alıyoruz.
+const USER_AGENT = 'Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/130.0.0.0 Safari/537.36'
+const FETCH_TIMEOUT_MS = 12000
 
 const SCRAPE_ERRORS = {
   tr: {
@@ -84,13 +86,44 @@ async function fetchWithTimeout(url: string, init: RequestInit = {}): Promise<Re
   }
 }
 
+/** srcset'ten en geniş URL'yi seç (lazy/responsive img patternlerine uygun) */
+function pickBestFromSrcset(srcset: string): string | null {
+  // "url1 320w, url2 640w, url3 1080w" veya "url1 1x, url2 2x"
+  const parts = srcset.split(',').map(s => s.trim()).filter(Boolean)
+  if (parts.length === 0) return null
+  let best: { url: string; weight: number } | null = null
+  for (const p of parts) {
+    const tokens = p.split(/\s+/)
+    const url = tokens[0]
+    if (!url) continue
+    const desc = tokens[1] ?? ''
+    const wMatch = /^(\d+)w$/.exec(desc)
+    const xMatch = /^([\d.]+)x$/.exec(desc)
+    const weight = wMatch ? parseInt(wMatch[1], 10) : xMatch ? parseFloat(xMatch[1]) * 1000 : 0
+    if (!best || weight > best.weight) best = { url, weight }
+  }
+  return best?.url ?? null
+}
+
+/** "background-image: url('...')" inline stilden URL çek */
+function extractBgUrls(style: string): string[] {
+  const out: string[] = []
+  const re = /url\(\s*(['"]?)([^)'"]+)\1\s*\)/gi
+  for (const m of style.matchAll(re)) out.push(m[2])
+  return out
+}
+
 function extractImageCandidates(html: string, baseUrl: string): string[] {
   const base = new URL(baseUrl)
   const out = new Set<string>()
   const toAbs = (src: string): string | null => {
     if (!src) return null
+    const trimmed = src.trim()
+    if (!trimmed) return null
+    // Lazy-load placeholder'larını (data: URI, transparent gif/svg) ele
+    if (/^data:/i.test(trimmed)) return null
     try {
-      const abs = new URL(src, base).toString()
+      const abs = new URL(trimmed, base).toString()
       if (!isHttpUrl(abs)) return null
       return abs
     } catch {
@@ -110,7 +143,7 @@ function extractImageCandidates(html: string, baseUrl: string): string[] {
     if (abs) out.add(abs)
   }
 
-  // link rel="icon" / "apple-touch-icon" / "shortcut icon"
+  // link rel="icon" / "apple-touch-icon"
   const linkRe = /<link\s+[^>]*rel\s*=\s*["']([^"']*(?:icon|apple-touch-icon)[^"']*)["'][^>]*href\s*=\s*["']([^"']+)["']/gi
   for (const m of html.matchAll(linkRe)) {
     const abs = toAbs(m[2])
@@ -122,24 +155,94 @@ function extractImageCandidates(html: string, baseUrl: string): string[] {
     if (abs) out.add(abs)
   }
 
-  // <img src="...">
-  const imgRe = /<img\s+[^>]*src\s*=\s*["']([^"']+)["']/gi
-  for (const m of html.matchAll(imgRe)) {
-    const abs = toAbs(m[1])
-    if (abs) out.add(abs)
-  }
-  // <img ... srcset="url1 1x, url2 2x">
-  const srcsetRe = /<img\s+[^>]*srcset\s*=\s*["']([^"']+)["']/gi
-  for (const m of html.matchAll(srcsetRe)) {
-    const first = m[1].split(',')[0]?.trim().split(/\s+/)[0]
-    if (first) {
-      const abs = toAbs(first)
+  // <img>, <source>, <picture> — tag'in TÜM attribute'larını yakalayıp lazy-load varyantlarını dene
+  const imgTagRe = /<(img|source)\s+([^>]*?)\/?>/gi
+  for (const m of html.matchAll(imgTagRe)) {
+    const attrs = m[2]
+    const attrRe = /([a-zA-Z_:][\w:.-]*)\s*=\s*(?:"([^"]*)"|'([^']*)')/g
+    const map: Record<string, string> = {}
+    for (const a of attrs.matchAll(attrRe)) {
+      map[a[1].toLowerCase()] = a[2] ?? a[3] ?? ''
+    }
+    // Lazy-load attributes (öncelik sırasına göre — gerçek görsel önce)
+    const lazyKeys = [
+      'data-src', 'data-lazy-src', 'data-original', 'data-original-src',
+      'data-image', 'data-large_image', 'data-full', 'data-orig-file',
+      'data-bg', 'data-background', 'data-srcset', 'data-lazy-srcset',
+    ]
+    for (const k of lazyKeys) {
+      if (!map[k]) continue
+      if (k.endsWith('srcset')) {
+        const best = pickBestFromSrcset(map[k])
+        const abs = best ? toAbs(best) : null
+        if (abs) out.add(abs)
+      } else {
+        const abs = toAbs(map[k])
+        if (abs) out.add(abs)
+      }
+    }
+    // srcset (öncelik: en geniş)
+    if (map.srcset) {
+      const best = pickBestFromSrcset(map.srcset)
+      const abs = best ? toAbs(best) : null
+      if (abs) out.add(abs)
+    }
+    // src (data: değilse)
+    if (map.src) {
+      const abs = toAbs(map.src)
       if (abs) out.add(abs)
     }
   }
 
-  // Filter: sadece image uzantılı veya şüphesiz image URL'leri — bazı CDN'ler uzantısız döner, onları da kabul edelim
-  return Array.from(out).slice(0, 50)
+  // Inline style="background-image: url(...)"
+  const styleRe = /\sstyle\s*=\s*"([^"]+)"/gi
+  for (const m of html.matchAll(styleRe)) {
+    if (!/background/i.test(m[1])) continue
+    for (const u of extractBgUrls(m[1])) {
+      const abs = toAbs(u)
+      if (abs) out.add(abs)
+    }
+  }
+  const styleReSingle = /\sstyle\s*=\s*'([^']+)'/gi
+  for (const m of html.matchAll(styleReSingle)) {
+    if (!/background/i.test(m[1])) continue
+    for (const u of extractBgUrls(m[1])) {
+      const abs = toAbs(u)
+      if (abs) out.add(abs)
+    }
+  }
+
+  // <style> block'larında background-image
+  const styleBlockRe = /<style[^>]*>([\s\S]*?)<\/style>/gi
+  for (const m of html.matchAll(styleBlockRe)) {
+    for (const u of extractBgUrls(m[1])) {
+      const abs = toAbs(u)
+      if (abs) out.add(abs)
+    }
+  }
+
+  // İkonları/sprite'ları/spacer'ları/tracking pixel'leri filtrele
+  const trackingHosts = [
+    'facebook.com/tr', 'connect.facebook.net',
+    'google-analytics.com', 'analytics.google.com',
+    'googletagmanager.com', 'doubleclick.net',
+    'googleadservices.com', 'googlesyndication.com',
+    'hotjar.com', 'mixpanel.com', 'segment.io',
+    'pixel.', 'beacon.', 'tracking.',
+  ]
+  const filtered = Array.from(out).filter(u => {
+    const lower = u.toLowerCase()
+    if (/\.(svg|ico)(\?|$)/i.test(lower)) return false
+    if (/(spacer|blank|placeholder|transparent|pixel|sprite|spinner|loader)\.(png|gif|jpg|jpeg|webp)(\?|$)/i.test(lower)) return false
+    if (/1x1\.(png|gif|jpe?g)/i.test(lower)) return false
+    // Analytics/tracking pixel'leri
+    if (trackingHosts.some(h => lower.includes(h))) return false
+    // Görsel uzantısı YOK ve query'de tracking parametreleri var → atla
+    if (!/\.(jpe?g|png|gif|webp|avif|bmp)(\?|$)/i.test(lower) && /[?&](id|ev|tid|uid|cid|fbp|gclid)=/i.test(lower)) return false
+    return true
+  })
+
+  return filtered.slice(0, 80)
 }
 
 /** GET ?url=<site> — siteyi tara, aday görsel URL'leri dön */
@@ -165,24 +268,36 @@ export async function GET(req: NextRequest) {
       method: 'GET',
       headers: {
         'User-Agent': USER_AGENT,
-        Accept: 'text/html,application/xhtml+xml',
+        Accept: 'text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8',
+        'Accept-Language': 'tr-TR,tr;q=0.9,en;q=0.8',
+        'Accept-Encoding': 'gzip, deflate, br',
+        'Cache-Control': 'no-cache',
+        Pragma: 'no-cache',
+        'Upgrade-Insecure-Requests': '1',
+        'Sec-Fetch-Dest': 'document',
+        'Sec-Fetch-Mode': 'navigate',
+        'Sec-Fetch-Site': 'none',
+        'Sec-Fetch-User': '?1',
       },
       redirect: 'follow',
     })
     if (!res.ok) {
-      return NextResponse.json({ error: msg.fetchFailed }, { status: 502 })
+      console.warn('[scrape] non-OK response', target, res.status)
+      return NextResponse.json({ error: msg.fetchFailed, status: res.status }, { status: 502 })
     }
     const contentType = res.headers.get('content-type') ?? ''
-    if (!/text\/html|application\/xhtml/.test(contentType)) {
-      return NextResponse.json({ error: msg.fetchFailed }, { status: 415 })
+    if (!/text\/html|application\/xhtml|text\/plain/.test(contentType)) {
+      return NextResponse.json({ error: msg.fetchFailed, contentType }, { status: 415 })
     }
     const html = await res.text()
     const candidates = extractImageCandidates(html, target)
     return NextResponse.json({
       url: target,
       images: candidates.map(u => ({ url: u, source: new URL(u).hostname })),
+      htmlLength: html.length,
     })
-  } catch {
+  } catch (e) {
+    console.warn('[scrape] fetch error', target, e instanceof Error ? e.message : String(e))
     return NextResponse.json({ error: msg.fetchFailed }, { status: 502 })
   }
 }
