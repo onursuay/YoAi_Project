@@ -611,7 +611,7 @@
             "tabYoutube": "Search on YouTube",
             "libraryError": "Asset library could not be loaded.",
             "libraryEmpty": "No YouTube video assets found in your account.",
-            "ytPlaceholder": "Paste a YouTube URL or search by keyword",
+            "ytPlaceholder": "Paste a video URL (youtube.com/watch?v=… or youtu.be/…) or enter the 11-char video ID",
             "ytSearch": "Search",
             "ytNoResults": "No results found",
             "ytNoApiKey": "YouTube search is not configured. Admin must set YOUTUBE_API_KEY. URL/ID paste still works.",

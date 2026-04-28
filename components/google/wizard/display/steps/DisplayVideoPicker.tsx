@@ -39,6 +39,18 @@ function isYoutubeUrlOrId(v: string): boolean {
   return /(youtu\.be\/|v=|\/embed\/|\/shorts\/)([A-Za-z0-9_-]{11})/.test(s)
 }
 
+/** Tipik video DEĞİL ama YouTube URL'si — kanal, playlist, kullanıcı sayfası vb. */
+function isYoutubeNonVideoUrl(v: string): boolean {
+  const s = v.trim().toLowerCase()
+  if (!s) return false
+  if (!/(youtube\.com|youtu\.be)/.test(s)) return false
+  // Channel: /@handle, /channel/UCxxx, /c/name, /user/name
+  if (/youtube\.com\/(@|channel\/|c\/|user\/)/.test(s)) return true
+  // Playlist
+  if (/[?&]list=/.test(s) && !/[?&]v=/.test(s)) return true
+  return false
+}
+
 export default function DisplayVideoPicker({ isOpen, onClose, existing, onAdd, t }: Props) {
   const [tab, setTab] = useState<TabId>('library')
 
@@ -84,9 +96,15 @@ export default function DisplayVideoPicker({ isOpen, onClose, existing, onAdd, t
   const runYoutube = async (pageToken?: string) => {
     const raw = ytQuery.trim()
     if (!raw) return
-    setYtLoading(true)
     setYtError(null)
     setYtNotConfigured(false)
+    // Kanal/playlist URL'sini erken yakala — search'e gönderme, kullanıcıyı yanıltma
+    if (isYoutubeNonVideoUrl(raw)) {
+      setYtError('Bu bir kanal/playlist URL\'si. Lütfen tek bir video URL\'si veya 11 karakterli video ID girin (örn. youtube.com/watch?v=… veya youtu.be/…).')
+      setYtVideos([])
+      return
+    }
+    setYtLoading(true)
     try {
       const params = new URLSearchParams()
       if (isYoutubeUrlOrId(raw)) {
@@ -252,7 +270,12 @@ export default function DisplayVideoPicker({ isOpen, onClose, existing, onAdd, t
                 </button>
               </div>
               {ytError && <p className="text-xs text-red-500">{ytError}</p>}
-              {ytNotConfigured && <p className="text-xs text-red-500">{t('display.videoPicker.ytNoApiKey')}</p>}
+              {ytNotConfigured && (
+                <div className="text-xs text-red-500 space-y-1">
+                  <p className="font-medium">YouTube anahtar kelime aramaları için YOUTUBE_API_KEY tanımlı değil.</p>
+                  <p className="text-gray-500">Çözüm: tek bir video URL&apos;si yapıştırın (örn. <span className="font-mono">https://www.youtube.com/watch?v=dQw4w9WgXcQ</span>) veya 11 karakterli video ID&apos;sini girin. Kanal URL&apos;si değil.</p>
+                </div>
+              )}
               {importErr && <p className="text-xs text-red-500">{importErr}</p>}
               {!ytLoading && ytVideos.length === 0 && ytQuery && !ytError && !ytNotConfigured && (
                 <p className="text-xs text-gray-500 italic">{t('display.videoPicker.ytNoResults')}</p>

@@ -611,7 +611,7 @@
             "tabYoutube": "YouTube'da Ara",
             "libraryError": "Öğe kitaplığı yüklenemedi.",
             "libraryEmpty": "Hesabınızda kayıtlı YouTube video asset'i bulunamadı.",
-            "ytPlaceholder": "YouTube URL'si girin veya anahtar kelimeye göre arayın",
+            "ytPlaceholder": "Video URL'si yapıştırın (youtube.com/watch?v=… veya youtu.be/…) ya da 11 karakterli video ID girin",
             "ytSearch": "Ara",
             "ytNoResults": "Sonuç bulunamadı",
             "ytNoApiKey": "YouTube arama özelliği yapılandırılmadı. Yönetici YOUTUBE_API_KEY eklemelidir. URL/ID yapıştırma yine çalışır.",
