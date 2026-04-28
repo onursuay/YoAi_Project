@@ -409,7 +409,18 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h3 className="text-lg font-semibold text-gray-900">Reklamınızda Kullanılacak 15 Görsel Seçin...</h3>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 shrink-0"><X className="w-5 h-5" /></button>
+          <div className="flex items-center gap-2 shrink-0">
+            {showCrop && (
+              <button
+                type="button"
+                onClick={() => setCropSource(null)}
+                className="inline-flex items-center gap-1 text-sm text-blue-600 hover:bg-blue-50 px-2 py-1 rounded-lg"
+              >
+                <ChevronLeft className="w-4 h-4" /> Geri
+              </button>
+            )}
+            <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></button>
+          </div>
         </div>
 
         {/* Tab bar — only when not in pending/crop mode */}
@@ -431,7 +442,6 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
             <CropSelectionPane
               options={cropSource.options}
               onSelect={selectCropOption}
-              onBack={() => setCropSource(null)}
               t={t}
             />
           )}
@@ -761,17 +771,14 @@ function UploadPane({ uploadRef, error, onPick, onPickMultiple, bulkBusy, bulkPr
   )
 }
 
-function CropSelectionPane({ options, onSelect, onBack, t }: {
-  options: CropOption[]; onSelect: (o: CropOption) => void; onBack: () => void
+function CropSelectionPane({ options, onSelect, t }: {
+  options: CropOption[]; onSelect: (o: CropOption) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (k: string, p?: any) => string
 }) {
   return (
     <div className="space-y-5">
       <div>
-        <button type="button" onClick={onBack} className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1 mb-3">
-          <ChevronLeft className="w-4 h-4" /> Geri
-        </button>
         <div className="flex items-center gap-2 mb-1">
           <Crop className="w-4 h-4 text-gray-600" />
           <p className="text-sm font-semibold text-gray-800">Kırpma oranını seçin</p>
@@ -872,9 +879,6 @@ function PendingPane({ pending, kind, setKind, existing, onBack, onImport, impor
   void existing
   return (
     <div className="space-y-4">
-      <button type="button" onClick={onBack} className="text-sm text-blue-600 hover:underline inline-flex items-center gap-1">
-        <ChevronLeft className="w-4 h-4" />{t('display.imagePicker.back')}
-      </button>
       <div className="flex items-start gap-4">
         {/* eslint-disable-next-line @next/next/no-img-element */}
         <img src={pending.previewUrl} alt="" className="w-60 h-60 object-contain rounded-lg border border-gray-200 bg-gray-50" />
@@ -900,7 +904,14 @@ function PendingPane({ pending, kind, setKind, existing, onBack, onImport, impor
             })}
           </div>
           {importErr && <p className="text-xs text-red-500 mt-2">{importErr}</p>}
-          <div className="mt-4 flex justify-end">
+          <div className="mt-4 flex justify-end items-center gap-2">
+            <button
+              type="button"
+              onClick={onBack}
+              className="inline-flex items-center gap-1 px-3 py-2 text-sm font-medium text-blue-600 hover:bg-blue-50 rounded-lg"
+            >
+              <ChevronLeft className="w-4 h-4" />{t('display.imagePicker.back')}
+            </button>
             <button type="button" onClick={onImport} disabled={!kind || importing} className="inline-flex items-center gap-1.5 px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
               {importing ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
               {importing ? t('display.stockImporting') : t('display.stockAdd')}
