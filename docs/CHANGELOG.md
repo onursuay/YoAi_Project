@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-04-28 — Display Reklam: Ekle butonları kart alanını dolduruyor + Kitle uyarı banner'ı kaldırıldı
+- **Sorun:** (1) Resim/Logo/Video ekle butonları boşken sadece 64×64px gösteriliyor, kart içindeki upload alanını doldurmuyordu. (2) Kitle Hedefleme adımında "Bu adım isteğe bağlı" banner'ı gereksizdi.
+- **Çözüm:** (1) Asset yokken buton `w-full flex-1 min-h-[88px]` ile tüm upload alanını kaplar; asset varsa `w-16 h-16` thumbnail boyutuna döner. (2) StepAudience'daki isteğe bağlı not div'i kaldırıldı.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayStepAds.tsx`, `components/google/wizard/steps/StepAudience.tsx`
+
+---
+
 ## 2026-04-23 — Display Reklam: Resimler/Logolar/Videolar yan yana grid düzeni
 - **Sorun:** "Görsel ve video varlıkları" bölümündeki Resimler, Logolar ve Videolar kutuları dikey sıralıydı; aynı hizada ve aynı boyutta değildi.
 - **Çözüm:** Üç bölümü `grid grid-cols-3 gap-4` yapısına taşıdı. Her bölüm eşit genişlikte, aynı hizalı ve aynı yükseklikte (`flex flex-col`) birer kart olarak gösteriliyor.

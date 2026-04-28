@@ -80,7 +80,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
               <p className="text-sm font-semibold text-gray-800">{t('display.imageSectionLabel')}</p>
             </div>
             {/* Upload alanı */}
-            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {imageAssets.map(a => (
                 <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-gray-50 group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -102,7 +102,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setImageOpen(true)}
                 disabled={imageAssets.length >= 15}
-                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${imageAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Plus className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.imageAddButton')}</span>
@@ -121,7 +121,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
               <p className="text-sm font-semibold text-gray-800">{t('display.logoSectionLabel')}</p>
             </div>
             {/* Upload alanı */}
-            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {logoAssets.map(a => (
                 <div key={a.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -143,7 +143,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setLogoOpen(true)}
                 disabled={logoAssets.length >= 5}
-                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${logoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Shapes className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.logoAddButton')}</span>
@@ -162,7 +162,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
               <p className="text-sm font-semibold text-gray-800">{t('display.videoSectionLabel')}</p>
             </div>
             {/* Upload alanı */}
-            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[96px]">
+            <div className="flex-1 flex flex-wrap gap-2 items-start p-4 min-h-[120px]">
               {videoAssets.map(v => (
                 <div key={v.resourceName} className="relative w-16 h-16 rounded-lg border border-gray-200 overflow-hidden bg-white group shrink-0">
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -184,7 +184,7 @@ export default function DisplayStepAds({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => setVideoOpen(true)}
                 disabled={videoAssets.length >= 5}
-                className="w-16 h-16 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0"
+                className={`rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 flex flex-col items-center justify-center text-gray-400 hover:text-blue-500 transition-colors disabled:opacity-40 disabled:cursor-not-allowed shrink-0 ${videoAssets.length === 0 ? 'w-full flex-1 min-h-[88px]' : 'w-16 h-16'}`}
               >
                 <Film className="w-5 h-5" />
                 <span className="text-[9px] mt-0.5">{t('display.videoAddButton')}</span>

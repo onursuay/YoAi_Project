@@ -411,9 +411,6 @@ export default function StepAudience({ state, update, t }: StepProps) {
         </div>
       )}
 
-      <div className="rounded-lg bg-gray-50 border border-gray-200 p-3 text-xs text-gray-500">
-        {t('audience.optionalNote')}
-      </div>
     </div>
   )
 }
