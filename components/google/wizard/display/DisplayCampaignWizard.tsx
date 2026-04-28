@@ -249,8 +249,10 @@ export default function DisplayCampaignWizard({
       </div>
 
       {/* ── Body: 2-column layout ── */}
-      <div className="flex-1 overflow-y-auto bg-gradient-to-br from-emerald-50/70 via-emerald-50/40 to-emerald-50/60">
-        <div className="max-w-6xl mx-auto px-8 py-8">
+      <div className="flex-1 overflow-y-auto bg-white relative">
+        {/* Google-renkli sonsuz ışık kümesi (soldan sağa) */}
+        <div className="google-light-cluster" aria-hidden="true" />
+        <div className="relative z-10 max-w-6xl mx-auto px-8 py-8">
           <div className="grid grid-cols-3 gap-8">
             {/* Left column — Step content */}
             <div className="col-span-2 space-y-4">

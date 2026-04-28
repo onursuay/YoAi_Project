@@ -530,3 +530,31 @@ table tbody tr {
   pointer-events: none;
   z-index: 0;
 }
+
+/* Google Display Wizard — soldan sağa sonsuz hareket eden çok renkli ışık kümesi */
+@keyframes google-light-cluster {
+  0%   { transform: translateX(-40%); }
+  100% { transform: translateX(140%); }
+}
+.google-light-cluster {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  overflow: hidden;
+  z-index: 0;
+}
+.google-light-cluster::before {
+  content: '';
+  position: absolute;
+  top: -10%;
+  left: 0;
+  width: 50%;
+  height: 120%;
+  background:
+    radial-gradient(circle at 20% 50%, rgba(66, 133, 244, 0.28) 0%, transparent 35%),
+    radial-gradient(circle at 42% 45%, rgba(234, 67, 53, 0.26) 0%, transparent 35%),
+    radial-gradient(circle at 60% 55%, rgba(251, 188, 4, 0.26) 0%, transparent 35%),
+    radial-gradient(circle at 82% 50%, rgba(52, 168, 83, 0.28) 0%, transparent 35%);
+  filter: blur(50px);
+  animation: google-light-cluster 12s linear infinite;
+}
