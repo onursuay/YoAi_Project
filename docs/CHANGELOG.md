@@ -32,6 +32,13 @@
 
 ---
 
+## 2026-04-28 — Display "Yükle" tab'ında çoklu görsel yükleme
+- **Sorun:** "Reklamınızda kullanılacak resimleri seçin → Yükle" tab'ında file input `multiple` olmasına rağmen sadece ilk dosya işleniyordu; aynı anda birden fazla görsel eklenemiyordu.
+- **Çözüm:** Çoklu seçim için bulk handler eklendi. 1 dosya seçildiğinde mevcut "kategori onayla / kırpma" akışı korunuyor; 2+ dosya seçildiğinde her dosya otomatik kategoriye atanıyor (uyumsuz oranlarda ilk kırpma seçeneği uygulanıyor) ve doğrudan Google Ads'e yükleniyor. İlerleme sayacı (X / N) ve dosya başına hata raporu eklendi.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayImagePicker.tsx`
+
+---
+
 ## 2026-04-28 — Öğe kitaplığı "page size is not supported" hatası giderildi
 - **Sorun:** Display reklam → "Reklamınızda kullanılacak resimleri seçin" → "Öğe kitaplığı" tab'ında Google Ads API hata döndürüyordu: `Setting the page size is not supported. Search Responses will have fixed page size of '10000' rows.`
 - **Çözüm:** `googleAds:search` REST endpoint'i artık body içindeki `page_size` parametresini kabul etmiyor (sabit 10000 satır döner). `assets/library` route'undaki IMAGE ve YOUTUBE_VIDEO sorgularında `searchGAds` çağrılarından `pageSize: 200` opsiyonu kaldırıldı; GAQL içindeki `LIMIT 200` korundu.

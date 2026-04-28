@@ -255,6 +255,55 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
     }
   }
 
+  const [bulkBusy, setBulkBusy] = useState(false)
+  const [bulkProgress, setBulkProgress] = useState<{ done: number; total: number } | null>(null)
+
+  const onMultiFilesPick = async (files: File[]) => {
+    setUploadErr(null); setCropSource(null); setPending(null); setPendingKind(null)
+    const errors: string[] = []
+    setBulkBusy(true); setBulkProgress({ done: 0, total: files.length })
+    for (let i = 0; i < files.length; i++) {
+      const file = files[i]
+      try {
+        if (!/^image\/(jpeg|png|gif)$/i.test(file.type)) { errors.push(`${file.name}: ${t('display.uploadErrorType')}`); continue }
+        if (file.size > MAX_IMAGE_BYTES) { errors.push(`${file.name}: ${t('display.uploadErrorSize')}`); continue }
+        let dims: { width: number; height: number }
+        try { dims = await readImageDimensions(file) } catch { errors.push(`${file.name}: ${t('display.uploadErrorType')}`); continue }
+        const suggested = detectBestKind(dims.width, dims.height)
+        let uploadFile: File = file
+        let kind: ImageKind
+        let previewUrl: string
+        if (suggested && IMAGE_KINDS.includes(suggested as ImageKind)) {
+          kind = suggested as ImageKind
+          previewUrl = URL.createObjectURL(file)
+        } else {
+          // Oran uyumsuz — ilk crop seçeneğini otomatik uygula
+          let options: CropOption[] = []
+          try { options = await buildCropOptions(file) } catch { errors.push(`${file.name}: ${t('display.uploadErrorType')}`); continue }
+          if (options.length === 0) { errors.push(`${file.name}: ${t('display.imagePicker.notImageCompatible')}`); continue }
+          const opt = options[0]
+          uploadFile = new File([opt.croppedBlob], file.name, { type: opt.croppedBlob.type || 'image/jpeg' })
+          kind = opt.kind
+          previewUrl = opt.previewUrl
+        }
+        const data = await fileToBase64(uploadFile)
+        const res = await fetch('/api/integrations/google-ads/assets/upload', {
+          method: 'POST', headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ kind, name: file.name, data }),
+        })
+        const json = await res.json()
+        if (!res.ok) { errors.push(`${file.name}: ${json.error ?? t('display.imagePicker.importError')}`); continue }
+        onAdd({ resourceName: json.resourceName, kind, previewUrl, name: file.name })
+      } catch {
+        errors.push(`${file.name}: ${t('display.imagePicker.importError')}`)
+      } finally {
+        setBulkProgress({ done: i + 1, total: files.length })
+      }
+    }
+    setBulkBusy(false); setBulkProgress(null)
+    if (errors.length > 0) setUploadErr(errors.join('\n'))
+  }
+
   const selectCropOption = (opt: CropOption) => {
     if (!cropSource) return
     const croppedFile = new File([opt.croppedBlob], cropSource.file.name, { type: opt.croppedBlob.type || 'image/jpeg' })
@@ -405,7 +454,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
                 <WebPane url={webUrl} setUrl={setWebUrl} loading={webLoading} error={webError} images={webImages} onScrape={doWebScrape} onPick={pickWeb} t={t} />
               )}
               {tab === 'upload' && (
-                <UploadPane uploadRef={uploadRef} error={uploadErr} onPick={onFilePick} setErr={setUploadErr} t={t} />
+                <UploadPane uploadRef={uploadRef} error={uploadErr} onPick={onFilePick} onPickMultiple={onMultiFilesPick} bulkBusy={bulkBusy} bulkProgress={bulkProgress} setErr={setUploadErr} t={t} />
               )}
               {tab === 'stock' && (
                 <StockPane
@@ -535,9 +584,14 @@ function ImageGrid({ images, onPick }: { images: WebImage[]; onPick: (i: WebImag
   )
 }
 
-function UploadPane({ uploadRef, error, onPick, setErr, t }: {
+function UploadPane({ uploadRef, error, onPick, onPickMultiple, bulkBusy, bulkProgress, setErr, t }: {
   uploadRef: React.MutableRefObject<HTMLInputElement | null>
-  error: string | null; onPick: (f: File) => void; setErr: (s: string | null) => void
+  error: string | null
+  onPick: (f: File) => void
+  onPickMultiple: (files: File[]) => void
+  bulkBusy: boolean
+  bulkProgress: { done: number; total: number } | null
+  setErr: (s: string | null) => void
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (k: string, p?: any) => string
 }) {
@@ -558,17 +612,40 @@ function UploadPane({ uploadRef, error, onPick, setErr, t }: {
     <div className="space-y-4">
       <p className="text-sm text-gray-600">JPG/PNG/GIF formatında resim yükleyin (min 300×300, max 5 MB). Farklı oranlı görseller için otomatik kırpma seçenekleri sunulur.</p>
       <div
-        className="border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-12 text-center transition-colors cursor-pointer"
-        onClick={() => uploadRef.current?.click()}
+        className={`border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-12 text-center transition-colors ${bulkBusy ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
+        onClick={() => { if (!bulkBusy) uploadRef.current?.click() }}
         onDragOver={e => e.preventDefault()}
-        onDrop={e => { e.preventDefault(); const files = e.dataTransfer.files; if (files?.[0]) onPick(files[0]) }}
+        onDrop={e => {
+          e.preventDefault()
+          if (bulkBusy) return
+          const files = Array.from(e.dataTransfer.files ?? [])
+          if (files.length === 0) return
+          if (files.length === 1) onPick(files[0])
+          else onPickMultiple(files)
+        }}
       >
-        <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
-        <p className="text-sm text-gray-700">{t('display.logoPicker.dropHere')}</p>
-        <p className="text-xs text-gray-400 mt-1">JPG / PNG / GIF · max 5 MB · birden fazla seçilebilir</p>
+        {bulkBusy ? (
+          <>
+            <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" />
+            <p className="text-sm text-gray-700">
+              {bulkProgress ? `${bulkProgress.done} / ${bulkProgress.total} yükleniyor…` : 'Yükleniyor…'}
+            </p>
+          </>
+        ) : (
+          <>
+            <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
+            <p className="text-sm text-gray-700">{t('display.logoPicker.dropHere')}</p>
+            <p className="text-xs text-gray-400 mt-1">JPG / PNG / GIF · max 5 MB · birden fazla seçilebilir</p>
+          </>
+        )}
         <input
           ref={uploadRef} type="file" accept="image/jpeg,image/png,image/gif" multiple className="hidden"
-          onChange={e => { const f = e.target.files?.[0]; if (f) onPick(f); e.target.value = '' }}
+          onChange={e => {
+            const files = Array.from(e.target.files ?? [])
+            if (files.length === 1) onPick(files[0])
+            else if (files.length > 1) onPickMultiple(files)
+            e.target.value = ''
+          }}
         />
       </div>
       {driveAvailable && (
@@ -590,7 +667,7 @@ function UploadPane({ uploadRef, error, onPick, setErr, t }: {
           </button>
         </div>
       )}
-      {error && <p className="text-xs text-red-500">{error}</p>}
+      {error && <p className="text-xs text-red-500 whitespace-pre-line">{error}</p>}
     </div>
   )
 }
