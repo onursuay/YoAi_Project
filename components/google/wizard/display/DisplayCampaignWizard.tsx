@@ -2,12 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle, Target, DollarSign, Users, Image as ImageIcon, ClipboardList, Flag, Settings2 } from 'lucide-react'
+import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle, DollarSign, Users, Image as ImageIcon, ClipboardList, Flag, Settings2 } from 'lucide-react'
 import { defaultState } from '../shared/WizardTypes'
 import type { WizardState, CampaignGoal } from '../shared/WizardTypes'
 import { validateDisplayStep } from './displayWizardValidation'
 import { buildCreatePayload } from '../shared/WizardHelpers'
-import StepGoalType from '../steps/StepGoalType'
 import StepConversionAndName from '../steps/StepConversionAndName'
 import DisplayStepCampaignSettings from './steps/DisplayStepCampaignSettings'
 import DisplayStepBudgetBidding from './steps/DisplayStepBudgetBidding'
@@ -69,15 +68,14 @@ interface Props {
   initialCampaignGoal?: CampaignGoal
 }
 
-// Step indices — sol sidebar düzeninde gerçek Google Ads Display akışı:
-// 0: Hedef & Tür
-// 1: Dönüşüm & İsim
-// 2: Kampanya Ayarları
-// 3: Bütçe ve Teklif
-// 4: Hedefleme
-// 5: Reklamlar
-// 6: İncele / Özet
-const TOTAL_STEPS = 7
+// Step indices — Display wizard, hedef/tür zaten Search wizard'da seçildiği için atlandı:
+// 0: Dönüşüm & İsim
+// 1: Kampanya Ayarları
+// 2: Bütçe ve Teklif
+// 3: Hedefleme
+// 4: Reklamlar
+// 5: İncele / Özet
+const TOTAL_STEPS = 6
 
 function normalizeError(err: unknown): string {
   const msg = err instanceof Error ? err.message : String(err)
@@ -101,7 +99,6 @@ export default function DisplayCampaignWizard({
   const t = useTranslations('dashboard.google.wizard')
 
   const STEPS: Array<{ label: string; icon: React.ReactNode }> = [
-    { label: t('goal.selectTitle'), icon: <Target className="w-4 h-4" /> },
     { label: t('conversion.title'), icon: <Flag className="w-4 h-4" /> },
     { label: t('display.steps.campaignSettings'), icon: <Settings2 className="w-4 h-4" /> },
     { label: t('display.steps.budgetBidding'), icon: <DollarSign className="w-4 h-4" /> },
@@ -157,7 +154,7 @@ export default function DisplayCampaignWizard({
   }
 
   const submit = async () => {
-    const err = validateDisplayStep(5, state, t)
+    const err = validateDisplayStep(4, state, t)
     if (err) {
       setError(err)
       return
@@ -312,13 +309,12 @@ export default function DisplayCampaignWizard({
 
             {submitResult !== 'full' && submitResult !== 'partial' && (
               <>
-                {step === 0 && <StepGoalType {...stepProps} />}
-                {step === 1 && <StepConversionAndName {...stepProps} />}
-                {step === 2 && <DisplayStepCampaignSettings {...stepProps} />}
-                {step === 3 && <DisplayStepBudgetBidding {...stepProps} />}
-                {step === 4 && <DisplayStepTargeting {...stepProps} />}
-                {step === 5 && <DisplayStepAds {...stepProps} />}
-                {step === 6 && <DisplayStepSummary {...stepProps} />}
+                {step === 0 && <StepConversionAndName {...stepProps} />}
+                {step === 1 && <DisplayStepCampaignSettings {...stepProps} />}
+                {step === 2 && <DisplayStepBudgetBidding {...stepProps} />}
+                {step === 3 && <DisplayStepTargeting {...stepProps} />}
+                {step === 4 && <DisplayStepAds {...stepProps} />}
+                {step === 5 && <DisplayStepSummary {...stepProps} />}
               </>
             )}
           </div>

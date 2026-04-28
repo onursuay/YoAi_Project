@@ -202,14 +202,14 @@ export default function GoogleCampaignWizard({
             </div>
           )}
           {submitResult === 'partial' && (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-amber-50 border border-amber-200">
-              <AlertTriangle className="w-12 h-12 text-amber-600 mb-3" />
-              <h3 className="text-lg font-semibold text-amber-800 mb-1">{t('result.partialTitle')}</h3>
-              <p className="text-sm text-amber-700 text-center mb-4">{t('result.partialMessage')}</p>
+            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-gray-50 border border-gray-200">
+              <AlertTriangle className="w-12 h-12 text-gray-600 mb-3" />
+              <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('result.partialTitle')}</h3>
+              <p className="text-sm text-gray-700 text-center mb-4">{t('result.partialMessage')}</p>
               <button
                 type="button"
                 onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700 text-white"
+                className="px-4 py-2 text-sm font-medium bg-gray-700 text-white rounded-lg hover:bg-gray-800"
               >
                 {t('result.acknowledge')}
               </button>
@@ -228,20 +228,20 @@ export default function GoogleCampaignWizard({
                 <>
                   <StepGoalType {...stepProps} />
                   {state.campaignType === 'PERFORMANCE_MAX' && (
-                    <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                      <p className="text-sm font-medium text-amber-800">{t('performanceMaxPlaceholder')}</p>
+                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+                      <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
                     </div>
                   )}
                   {state.campaignType === 'DISPLAY' && (
-                    <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-4">
-                      <p className="text-sm font-medium text-amber-800">{t('displayPlaceholder')}</p>
+                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+                      <p className="text-sm font-medium text-primary">{t('displayPlaceholder')}</p>
                     </div>
                   )}
                 </>
               )}
               {step >= 1 && state.campaignType === 'PERFORMANCE_MAX' && (
-                <div className="rounded-xl border-2 border-amber-200 bg-amber-50 p-6 text-center">
-                  <p className="text-sm font-medium text-amber-800">{t('performanceMaxPlaceholder')}</p>
+                <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
+                  <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
                 </div>
               )}
               {step >= 1 && state.campaignType !== 'PERFORMANCE_MAX' && (

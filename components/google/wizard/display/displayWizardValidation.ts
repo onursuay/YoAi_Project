@@ -22,14 +22,9 @@ export function validateDisplayStep(
   t: (key: string, params?: any) => string
 ): string | null {
   switch (step) {
-    // Step 0: Hedef & Tür — GoalType picks are always valid
-    case 0:
-      return null
-
-    // Step 1: Dönüşüm Hedefleri & Kampanya Adı
-    case 1: {
+    // Step 0: Dönüşüm Hedefleri & Kampanya Adı
+    case 0: {
       if (!state.campaignName.trim()) return t('validation.campaignNameRequired')
-      // Web sitesi ziyaretleri işaretli ise URL geçerli olmalı
       if (state.desiredOutcomeWebsite) {
         if (!state.finalUrl.trim() || state.finalUrl.trim() === 'https://') {
           return t('conversion.websiteUrlRequired')
@@ -38,7 +33,6 @@ export function validateDisplayStep(
           return t('conversion.websiteUrlInvalid')
         }
       }
-      // Telefon aramaları işaretli ise ülke kodu + numara geçerli olmalı
       if (state.desiredOutcomePhone) {
         if (!state.desiredOutcomePhoneCountryCode?.trim()) {
           return t('conversion.phoneCountryRequired')
@@ -52,14 +46,14 @@ export function validateDisplayStep(
       return null
     }
 
-    // Step 2: Kampanya Ayarları — language required. Locations: boş ise "tüm ülkeler" kabul edilir (Search ile aynı davranış).
-    case 2: {
+    // Step 1: Kampanya Ayarları
+    case 1: {
       if (state.languageIds.length === 0) return t('validation.languageRequired')
       return null
     }
 
-    // Step 3: Bütçe & Teklif
-    case 3: {
+    // Step 2: Bütçe & Teklif
+    case 2: {
       if (!state.dailyBudget || parseFloat(state.dailyBudget) < 1) return t('validation.minBudget')
       if (state.displayBiddingFocus === 'CONVERSIONS' && state.displayConversionsSub === 'TARGET_CPA') {
         if (!state.targetCpa || parseFloat(state.targetCpa) <= 0) return t('validation.targetCpaRequired')
@@ -76,12 +70,12 @@ export function validateDisplayStep(
       return null
     }
 
-    // Step 4: Hedefleme (Audience) — no required selections
-    case 4:
+    // Step 3: Hedefleme (Audience) — no required selections
+    case 3:
       return null
 
-    // Step 5: Reklamlar (Ads)
-    case 5: {
+    // Step 4: Reklamlar (Ads)
+    case 4: {
       if (!isValidDisplayUrl(state.finalUrl)) return t('validation.urlRequired')
       const hasLandscape = state.displayAssets.some(a => a.kind === 'MARKETING_IMAGE')
       const hasSquare = state.displayAssets.some(a => a.kind === 'SQUARE_MARKETING_IMAGE')
@@ -102,8 +96,8 @@ export function validateDisplayStep(
       return null
     }
 
-    // Step 6: Özet — review only
-    case 6:
+    // Step 5: Özet — review only
+    case 5:
       return null
 
     default:

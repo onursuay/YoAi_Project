@@ -134,6 +134,13 @@
 
 ---
 
+## 2026-04-20 — Google Display wizard adım 0 duplikasyonu düzeltildi
+- **Sorun:** "Görüntülü Reklam" seçilince DisplayCampaignWizard açılıyor; fakat adım 0'ında yine aynı `StepGoalType` (Hedef & Tür seçimi) render ediliyordu — Search wizard ile birebir aynı ekran iki kez görünüyordu.
+- **Çözüm:** `DisplayCampaignWizard`'dan `StepGoalType` adımı (eski step 0) tamamen kaldırıldı. Tüm adımlar 1 aşağı kaydırıldı (6 adımlı akış). `displayWizardValidation.ts` case numaraları da güncellendi. `GoogleCampaignWizard`'daki yasak amber renkleri primary/gray ile değiştirildi.
+- **Dosyalar:** components/google/wizard/display/DisplayCampaignWizard.tsx, components/google/wizard/display/displayWizardValidation.ts, components/google/wizard/GoogleCampaignWizard.tsx
+
+---
+
 ## 2026-04-20 — YoAlgoritma persisted stale error için hot-heal
 - **Sorun:** metaDeepFetcher'a cookie fallback eklendi ama command-center yalnızca Supabase'deki persisted daily-run sonucunu döndüğü için eski tarama sonucundaki "Meta bağlantısı bulunamadı" hatası sayfada kalmaya devam ediyordu.
 - **Çözüm:** app/yoai/page.tsx içine hot-heal useEffect: ccData.errors içinde "Meta bağlantısı" içeren bir hata varsa, localStorage cache temizlenir ve `triggerBackgroundBootstrap()` tetiklenerek yeni bir daily-run (fix uygulanmış) çalıştırılır. Tek seferlik guard (`healedRef`).
