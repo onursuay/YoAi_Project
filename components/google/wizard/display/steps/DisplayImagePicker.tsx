@@ -105,12 +105,11 @@ async function buildCropOptions(file: File): Promise<CropOption[]> {
 export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, defaultWebUrl, t }: Props) {
   const [tab, setTab] = useState<TabId>('recommendations')
 
-  // Recommendations
-  const [recUrl, setRecUrl] = useState(defaultWebUrl ?? '')
+  // Recommendations — beslemeyi her zaman finalUrl (defaultWebUrl) yapar
   const [recLoading, setRecLoading] = useState(false)
   const [recError, setRecError] = useState<string | null>(null)
   const [recImages, setRecImages] = useState<WebImage[]>([])
-  const [recLoaded, setRecLoaded] = useState(false)
+  const [recLoadedFor, setRecLoadedFor] = useState<string | null>(null)
 
   // Library
   const [libLoading, setLibLoading] = useState(false)
@@ -153,21 +152,16 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
     }
   }, [isOpen])
 
-  // Sync recUrl when defaultWebUrl changes (e.g. user filled finalUrl before opening picker)
-  useEffect(() => {
-    if (defaultWebUrl && defaultWebUrl !== 'https://') setRecUrl(defaultWebUrl)
-  }, [defaultWebUrl])
-
   const loadRecommendations = async (urlOverride?: string) => {
-    const url = (urlOverride ?? recUrl).trim()
+    const url = (urlOverride ?? defaultWebUrl ?? '').trim()
     if (!url || url === 'https://') return
-    if (recLoaded && !urlOverride) return
+    if (recLoadedFor === url || recLoading) return
     setRecLoading(true); setRecError(null)
     try {
       const res = await fetch(`/api/integrations/google-ads/assets/scrape?url=${encodeURIComponent(url)}`)
       const json = await res.json()
       if (!res.ok) { setRecError(json.error ?? t('display.imagePicker.scrapeError')); return }
-      setRecImages(json.images ?? []); setRecLoaded(true)
+      setRecImages(json.images ?? []); setRecLoadedFor(url)
     } catch { setRecError(t('display.imagePicker.scrapeError')) }
     finally { setRecLoading(false) }
   }
@@ -394,7 +388,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
         {showTabs && (
           <div className="border-b border-gray-200 px-6">
             <div className="flex gap-1 overflow-x-auto">
-              <Tab active={tab === 'recommendations'} onClick={() => { setTab('recommendations'); void loadRecommendations() }} icon={<Sparkles className="w-4 h-4" />} label={t('display.imagePicker.tabRec')} />
+              <Tab active={tab === 'recommendations'} onClick={() => { setTab('recommendations'); void loadRecommendations(defaultWebUrl) }} icon={<Sparkles className="w-4 h-4" />} label={t('display.imagePicker.tabRec')} />
               <Tab active={tab === 'library'} onClick={() => { setTab('library'); void loadLibrary() }} icon={<FolderOpen className="w-4 h-4" />} label={t('display.imagePicker.tabLibrary')} />
               <Tab active={tab === 'web'} onClick={() => setTab('web')} icon={<Globe className="w-4 h-4" />} label={t('display.imagePicker.tabWeb')} />
               <Tab active={tab === 'upload'} onClick={() => setTab('upload')} icon={<Upload className="w-4 h-4" />} label={t('display.imagePicker.tabUpload')} />
@@ -433,9 +427,8 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
             <>
               {tab === 'recommendations' && (
                 <RecPane
-                  url={recUrl} setUrl={setRecUrl}
+                  finalUrl={defaultWebUrl}
                   loading={recLoading} error={recError} images={recImages}
-                  onScan={() => void loadRecommendations(recUrl)}
                   onPick={pickWeb} t={t}
                 />
               )}
@@ -484,24 +477,75 @@ function Tab({ active, onClick, icon, label }: { active: boolean; onClick: () =>
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function RecPane({ url, setUrl, loading, error, images, onScan, onPick, t }: { url: string; setUrl: (v: string) => void; loading: boolean; error: string | null; images: WebImage[]; onScan: () => void; onPick: (i: WebImage) => void; t: (k: string, p?: any) => string }) {
-  return (
-    <div className="space-y-4">
-      <p className="text-sm text-gray-600">{t('display.imagePicker.recHintUrl') || 'Reklamınızın Nihai URL\'sini girin — sayfa görsellerini otomatik tarayalım.'}</p>
-      <div className="flex gap-2">
-        <div className="relative flex-1">
-          <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
-          <input className={`${inputCls} pl-9`} value={url} onChange={e => setUrl(e.target.value)} onKeyDown={e => { if (e.key === 'Enter') onScan() }} placeholder="https://example.com" />
-        </div>
-        <button type="button" onClick={onScan} disabled={loading || !url.trim() || url === 'https://'} className="px-4 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50">
-          {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : (t('display.imagePicker.scan') || 'Tara')}
-        </button>
+function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: string; loading: boolean; error: string | null; images: WebImage[]; onPick: (i: WebImage) => void; t: (k: string, p?: any) => string }) {
+  const hasUrl = !!finalUrl && finalUrl.trim() !== '' && finalUrl !== 'https://'
+
+  if (!hasUrl) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 px-6 text-center">
+        <svg className="w-32 h-32 mb-5" viewBox="0 0 200 160" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+          {/* Saksı + bitki */}
+          <path d="M50 130 L60 145 L92 145 L102 130 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
+          <path d="M76 130 C 76 110, 64 100, 56 96" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M76 130 C 76 110, 88 100, 96 96" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinecap="round" />
+          <path d="M56 96 C 50 92, 50 84, 56 80 C 62 84, 62 92, 56 96 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
+          <path d="M96 96 C 102 92, 102 84, 96 80 C 90 84, 90 92, 96 96 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
+          <path d="M76 130 L 76 105" stroke="#9ca3af" strokeWidth="2" />
+          <path d="M76 105 C 76 95, 76 85, 76 75" stroke="#9ca3af" strokeWidth="2" />
+          <path d="M76 75 C 70 70, 64 70, 60 75" stroke="#9ca3af" strokeWidth="2" fill="none" />
+          <path d="M76 80 C 82 75, 88 75, 92 80" stroke="#9ca3af" strokeWidth="2" fill="none" />
+          {/* Kum saati */}
+          <rect x="118" y="80" width="40" height="6" stroke="#9ca3af" strokeWidth="2" fill="none" />
+          <rect x="118" y="124" width="40" height="6" stroke="#9ca3af" strokeWidth="2" fill="none" />
+          <path d="M122 86 L 154 86 L 142 105 L 154 124 L 122 124 L 134 105 Z" stroke="#9ca3af" strokeWidth="2" fill="none" strokeLinejoin="round" />
+          <path d="M134 105 C 134 100, 142 100, 142 105" stroke="#9ca3af" strokeWidth="2" fill="none" />
+        </svg>
+        <h4 className="text-base font-semibold text-gray-900 mb-2">
+          {t('display.imagePicker.recEmptyTitle') || 'Henüz önerilen öğe yok'}
+        </h4>
+        <p className="text-sm text-gray-500 max-w-md">
+          {t('display.imagePicker.recEmptyHint') || 'Önerilen öğeler nihai URL\'nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın.'}
+        </p>
       </div>
-      {error && <p className="text-xs text-red-500">{error}</p>}
-      {!loading && !error && images.length === 0 && url && url !== 'https://' && (
-        <p className="text-sm text-gray-400 text-center py-8">{t('display.imagePicker.recEmpty') || 'Bu URL\'de görsel bulunamadı.'}</p>
-      )}
-      {!loading && images.length > 0 && <ImageGrid images={images} onPick={onPick} />}
+    )
+  }
+
+  if (loading) {
+    return (
+      <div className="flex flex-col items-center justify-center py-16 text-gray-400">
+        <Loader2 className="w-6 h-6 animate-spin mb-3" />
+        <p className="text-sm">{t('display.imagePicker.recScanning') || 'Sayfa taranıyor…'}</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <p className="text-sm text-red-600 mb-2">{error}</p>
+        <p className="text-xs text-gray-500 break-all">{finalUrl}</p>
+      </div>
+    )
+  }
+
+  if (images.length === 0) {
+    return (
+      <div className="flex flex-col items-center justify-center py-12 text-center">
+        <h4 className="text-base font-semibold text-gray-900 mb-2">
+          {t('display.imagePicker.recEmptyTitle') || 'Henüz önerilen öğe yok'}
+        </h4>
+        <p className="text-sm text-gray-500 max-w-md">
+          {t('display.imagePicker.recNoImagesHint') || 'Bu URL\'de uygun görsel bulunamadı. Yükle veya Web sitesi sekmesinden ekleyebilirsiniz.'}
+        </p>
+        <p className="text-xs text-gray-400 mt-2 break-all">{finalUrl}</p>
+      </div>
+    )
+  }
+
+  return (
+    <div className="space-y-3">
+      <p className="text-xs text-gray-500">{t('display.imagePicker.recScannedFrom', { url: finalUrl }) || `Kaynak: ${finalUrl}`}</p>
+      <ImageGrid images={images} onPick={onPick} />
     </div>
   )
 }

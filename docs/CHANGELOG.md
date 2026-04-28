@@ -32,6 +32,13 @@
 
 ---
 
+## 2026-04-28 — Öneriler tab'ı: URL inputu kaldırıldı, Google'ın boş-durum ekranı eklendi
+- **Sorun:** "Reklamınızda kullanılacak resimleri seçin → Öneriler" tab'ında ayrı bir URL inputu vardı. Google Ads'te bu alan otomatik olarak Nihai URL'den beslenir; URL girilmemişse illüstrasyonlu bir boş-durum gösterilir.
+- **Çözüm:** RecPane'in URL inputu ve "Tara" butonu kaldırıldı. Tab açıldığında 5. adımdaki Nihai URL (`defaultWebUrl`) ile otomatik scrape yapılır. Nihai URL boşsa Google'ın "Henüz önerilen öğe yok" başlığı + saksı/kum saati illüstrasyonu + "Önerilen öğeler nihai URL'nizi ve hedeflemenizi temel alır…" açıklamasıyla aynı boş-durum gösteriliyor. URL değiştiğinde önbellek (`recLoadedFor`) sıfırlanıp yeniden taranıyor.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayImagePicker.tsx`
+
+---
+
 ## 2026-04-28 — Display "Yükle" tab'ında çoklu görsel yükleme
 - **Sorun:** "Reklamınızda kullanılacak resimleri seçin → Yükle" tab'ında file input `multiple` olmasına rağmen sadece ilk dosya işleniyordu; aynı anda birden fazla görsel eklenemiyordu.
 - **Çözüm:** Çoklu seçim için bulk handler eklendi. 1 dosya seçildiğinde mevcut "kategori onayla / kırpma" akışı korunuyor; 2+ dosya seçildiğinde her dosya otomatik kategoriye atanıyor (uyumsuz oranlarda ilk kırpma seçeneği uygulanıyor) ve doğrudan Google Ads'e yükleniyor. İlerleme sayacı (X / N) ve dosya başına hata raporu eklendi.
