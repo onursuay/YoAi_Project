@@ -35,3 +35,18 @@ Uyarı / bilgi bantları için bunları kullan:
 - **Başarı:** `bg-emerald-50` / `text-emerald-700` / `border-emerald-200`
 
 Tüm butonlar ve ikonlar için de aynı kural geçerli (no amber, no yellow).
+
+## Kitle Hedefleme Picker UX (Dropdown davranışı)
+Wizard adımı içindeki "Kitle Hedefleme" alanları (Arama / Göz at sekmeli kitle segmenti picker'ı) **dropdown gibi davranır**:
+
+1. **Default açık başlar** (kullanıcı seçim yapabilsin)
+2. **Picker dışına tıklandığında otomatik kapanır** — `useEffect` + `mousedown` listener, `ref.current.contains(target)` kontrolü
+3. **Kapalıyken tetikleyici buton** görünür: seçim sayısı (örn. "4 kitle segmenti seçildi") + chevron; tıklanınca yeniden açılır
+4. **Seçili chip'ler picker durumundan bağımsız** her zaman görünür kalır
+
+**Uygulama scope'u:**
+- ✅ Wizard step içindeki inline picker'lar (StepAudience.tsx — Display + Search wizard'ları için ortak)
+- ❌ Modal içindeki picker'lar (modal'ın kendi outside-click davranışı zaten kapatıyor)
+- ❌ Zaten `CollapsibleSection` ile sarılı picker'lar (PMax sinyal panelleri — kendi expand/collapse'ı var)
+
+Yeni bir kitle picker UI'ı eklenirse bu pattern'i uygula (ref + outside-click + trigger button).
