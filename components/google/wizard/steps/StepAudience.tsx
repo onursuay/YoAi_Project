@@ -71,6 +71,20 @@ export default function StepAudience({ state, update, t }: StepProps) {
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set())
 
+  // Dropdown davranışı: dış tıklamada kapan
+  const [pickerOpen, setPickerOpen] = useState(true)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [pickerOpen])
+
   // Load browse data
   const loadBrowse = useCallback(async () => {
     if (browseData) return
@@ -190,6 +204,24 @@ export default function StepAudience({ state, update, t }: StepProps) {
         </div>
       </div>
 
+      {/* Kitle segmenti picker — tıklanınca açılır, dış tıklamada kapanır */}
+      {!pickerOpen && (
+        <button
+          type="button"
+          onClick={() => setPickerOpen(true)}
+          className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg text-sm bg-white hover:border-gray-400 transition-colors"
+        >
+          <span className="text-gray-700 font-medium">
+            {state.selectedAudienceSegments.length > 0
+              ? t('audience.segmentsSelected', { count: state.selectedAudienceSegments.length })
+              : t('audience.searchPlaceholder')}
+          </span>
+          <ChevronDown className="w-4 h-4 text-gray-400" />
+        </button>
+      )}
+
+      {pickerOpen && (
+      <div ref={pickerRef} className="space-y-4">
       {/* Tabs: Arama / Göz at */}
       <div className="flex border-b border-gray-200">
         <button
@@ -378,6 +410,9 @@ export default function StepAudience({ state, update, t }: StepProps) {
             )
           })}
         </div>
+      )}
+
+      </div>
       )}
 
       {/* Selected segments summary */}
