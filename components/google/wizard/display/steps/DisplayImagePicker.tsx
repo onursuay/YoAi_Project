@@ -115,6 +115,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
   // Library
   const [libLoading, setLibLoading] = useState(false)
   const [libError, setLibError] = useState<string | null>(null)
+  const [libDetails, setLibDetails] = useState<string | null>(null)
   const [libAssets, setLibAssets] = useState<LibraryAsset[]>([])
   const [libLoaded, setLibLoaded] = useState(false)
 
@@ -171,19 +172,27 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
     finally { setRecLoading(false) }
   }
 
-  const loadLibrary = async () => {
-    if (libLoaded || libLoading) return
-    setLibLoading(true); setLibError(null)
+  const loadLibrary = async (force = false) => {
+    if (libLoading) return
+    if (libLoaded && !force) return
+    setLibLoading(true); setLibError(null); setLibDetails(null)
     try {
       const res = await fetch('/api/integrations/google-ads/assets/library?type=IMAGE')
       const json = await res.json()
-      if (!res.ok) { setLibError(json.error ?? t('display.imagePicker.libraryError')); return }
+      if (!res.ok) {
+        setLibError(json.error ?? t('display.imagePicker.libraryError'))
+        if (json.details) setLibDetails(String(json.details))
+        return
+      }
       const filtered = (json.assets as LibraryAsset[]).filter(a => {
         if (!a.width || !a.height) return false
         return compatibleKindsFor(a.width, a.height).length > 0
       })
       setLibAssets(filtered); setLibLoaded(true)
-    } catch { setLibError(t('display.imagePicker.libraryError')) }
+    } catch (e) {
+      setLibError(t('display.imagePicker.libraryError'))
+      setLibDetails(e instanceof Error ? e.message : String(e))
+    }
     finally { setLibLoading(false) }
   }
 
@@ -382,7 +391,15 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
                 />
               )}
               {tab === 'library' && (
-                <LibraryPane loading={libLoading} error={libError} assets={libAssets} onPick={pickLibrary} t={t} />
+                <LibraryPane
+                  loading={libLoading}
+                  error={libError}
+                  details={libDetails}
+                  assets={libAssets}
+                  onPick={pickLibrary}
+                  onRetry={() => void loadLibrary(true)}
+                  t={t}
+                />
               )}
               {tab === 'web' && (
                 <WebPane url={webUrl} setUrl={setWebUrl} loading={webLoading} error={webError} images={webImages} onScrape={doWebScrape} onPick={pickWeb} t={t} />
@@ -441,12 +458,24 @@ function RecPane({ url, setUrl, loading, error, images, onScan, onPick, t }: { u
 }
 
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
-function LibraryPane({ loading, error, assets, onPick, t }: { loading: boolean; error: string | null; assets: LibraryAsset[]; onPick: (a: LibraryAsset) => void; t: (k: string, p?: any) => string }) {
+function LibraryPane({ loading, error, details, assets, onPick, onRetry, t }: { loading: boolean; error: string | null; details: string | null; assets: LibraryAsset[]; onPick: (a: LibraryAsset) => void; onRetry: () => void; t: (k: string, p?: any) => string }) {
   if (loading) return <div className="flex items-center justify-center py-16 text-gray-400"><Loader2 className="w-6 h-6 animate-spin" /></div>
   if (error) return (
-    <div className="space-y-3 py-8 text-center">
-      <p className="text-sm text-red-500">{error}</p>
-      <p className="text-xs text-gray-400">Bu Google Ads hesabında asset kitaplığına erişim yok olabilir. "Yükle" sekmesinden görsel ekleyebilirsiniz.</p>
+    <div className="space-y-3 py-8 px-4 text-center">
+      <p className="text-sm font-medium text-red-600">{error}</p>
+      {details && (
+        <p className="text-[11px] text-gray-500 break-words font-mono bg-gray-50 border border-gray-200 rounded-lg px-3 py-2 max-w-xl mx-auto">
+          {details}
+        </p>
+      )}
+      <p className="text-xs text-gray-500">Bu Google Ads hesabında asset kitaplığına erişim yok olabilir. &quot;Yükle&quot; sekmesinden görsel ekleyebilirsiniz.</p>
+      <button
+        type="button"
+        onClick={onRetry}
+        className="mt-2 px-4 py-2 text-sm font-medium border border-gray-300 rounded-lg hover:bg-gray-50 transition-colors"
+      >
+        Tekrar dene
+      </button>
     </div>
   )
   if (assets.length === 0) return <p className="text-sm text-gray-500 text-center py-16">{t('display.imagePicker.libraryEmpty')}</p>

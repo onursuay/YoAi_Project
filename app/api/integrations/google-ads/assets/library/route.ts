@@ -115,6 +115,7 @@ export async function GET(req: NextRequest) {
   } catch (e: unknown) {
     const message = e instanceof Error ? e.message : String(e)
     console.error('[assets/library] error:', message)
-    return NextResponse.json({ error: msg.generic }, { status: 500 })
+    // Gerçek sebebi (customer ID yok / OAuth scope eksik / asset access denied) UI'a yansıt
+    return NextResponse.json({ error: msg.generic, details: message }, { status: 500 })
   }
 }
