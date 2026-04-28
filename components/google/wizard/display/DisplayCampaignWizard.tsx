@@ -249,11 +249,12 @@ export default function DisplayCampaignWizard({
       </div>
 
       {/* ── Body: 2-column layout ── */}
-      <div className="flex-1 overflow-y-auto bg-white relative">
-        {/* Google-renkli yılan gibi kenarda dönen ışık */}
+      <div className="flex-1 relative overflow-hidden bg-white">
+        {/* Google-renkli yılan ışık — viewport frame'inde, kartların altında */}
         <div className="google-snake-border" aria-hidden="true" />
-        <div className="relative z-10 max-w-6xl mx-auto px-8 py-8">
-          <div className="grid grid-cols-3 gap-8">
+        <div className="absolute inset-0 overflow-y-auto z-10">
+          <div className="max-w-6xl mx-auto px-8 py-8">
+            <div className="grid grid-cols-3 gap-8">
             {/* Left column — Step content */}
             <div className="col-span-2 space-y-4">
               {submitResult === 'full' && (
@@ -306,6 +307,7 @@ export default function DisplayCampaignWizard({
             {/* Right column — Sticky sidebar */}
             <div className="col-span-1">
               <DisplaySidebar state={state} currentStep={step} t={t} />
+            </div>
             </div>
           </div>
         </div>
