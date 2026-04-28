@@ -32,6 +32,18 @@
 
 ---
 
+## 2026-04-28 — Görsel modal: yanıltıcı "15 resim seçin" başlığı + counter + hard cap
+- **Sorun:** Google Ads "Reklamınızda kullanılacak 15 resim seçin" başlığı zorunluluk algısı yaratıyor (asıl: max 15, min 1). Ayrıca multi-upload limiti aşabiliyordu — kullanıcı 16+ görsel ekleyebilirdi.
+- **Çözüm (UX writer + altyapı):**
+  1. **Başlık:** "Reklamınızda kullanılacak resimleri seçin" → **"Reklam görsellerini seçin"** (eylem-odaklı, dayatma yok).
+  2. **Sayaç pill:** Başlık yanında `X / 15` rozeti — ilerleme hissi, hedef değil üst limit.
+  3. **Alt-açıklama:** "En fazla 15 görsel ekleyebilirsiniz — daha çok varyasyon, daha iyi optimizasyon." (fayda-odaklı).
+  4. **Hard cap altyapısı:** `remainingSlots` hesaplandı; tek dosya yüklemede, multi-upload'da ve PendingPane → handleImport'ta limit aşımı engellendi. Multi-upload'da fazla seçilen dosyalar atlanıp net mesaj gösteriliyor: "N görsel atlandı: en fazla 15 görsel eklenebilir (kalan kontenjan: K)."
+  5. **Eşzamanlı yükleme güvenliği:** Bulk loop içinde yerel `added` sayacı tutuldu — `existing` prop'unun bulk içinde stale kalmasına karşı koruma.
+- **Dosyalar:** `components/google/wizard/display/steps/DisplayImagePicker.tsx`
+
+---
+
 ## 2026-04-28 — Öneriler boş-durum: çeviri key'leri görünüyordu, metinler hardcode edildi
 - **Sorun:** Boş-durum ekranında "dashboard.google.wizard.display.imagePicker.recEmptyTitle" gibi çeviri anahtarları ham olarak görünüyordu. `t() || 'fallback'` deseni çalışmıyor çünkü çeviri yoksa `t()` key string'in kendisini döner (truthy).
 - **Çözüm:** Tüm boş-durum metinleri Google'ın birebir Türkçesine sabitlendi: "Henüz önerilen öğe yok" + "Önerilen öğeler nihai URL'nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın." Ayrıca illüstrasyon Google'ın saksı + bitki + kum saati + buharlı çay fincanı kompozisyonuna yaklaştırıldı.

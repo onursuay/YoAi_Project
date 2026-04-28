@@ -41,6 +41,7 @@ interface Props {
 }
 
 const IMAGE_KINDS: ImageKind[] = ['MARKETING_IMAGE', 'SQUARE_MARKETING_IMAGE', 'PORTRAIT_MARKETING_IMAGE']
+const IMAGE_MAX = 15
 const RATIO_LABEL: Record<ImageKind, string> = {
   MARKETING_IMAGE: '1.91:1', SQUARE_MARKETING_IMAGE: '1:1', PORTRAIT_MARKETING_IMAGE: '4:5',
 }
@@ -104,6 +105,8 @@ async function buildCropOptions(file: File): Promise<CropOption[]> {
 
 export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, defaultWebUrl, t }: Props) {
   const [tab, setTab] = useState<TabId>('recommendations')
+  const imageCount = existing.filter(a => IMAGE_KINDS.includes(a.kind as ImageKind)).length
+  const remainingSlots = Math.max(0, IMAGE_MAX - imageCount)
 
   // Recommendations — beslemeyi her zaman finalUrl (defaultWebUrl) yapar
   const [recLoading, setRecLoading] = useState(false)
@@ -222,6 +225,10 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
     setUploadErr(null); setCropSource(null)
     if (!/^image\/(jpeg|png|gif)$/i.test(file.type)) { setUploadErr(t('display.uploadErrorType')); return }
     if (file.size > MAX_IMAGE_BYTES) { setUploadErr(t('display.uploadErrorSize')); return }
+    if (remainingSlots <= 0) {
+      setUploadErr(`Maksimum ${IMAGE_MAX} görsele ulaştınız. Yeni görsel eklemek için önce mevcut görsellerden birini kaldırın.`)
+      return
+    }
     let dims: { width: number; height: number }
     try { dims = await readImageDimensions(file) }
     catch { setUploadErr(t('display.uploadErrorType')); return }
@@ -254,10 +261,26 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
 
   const onMultiFilesPick = async (files: File[]) => {
     setUploadErr(null); setCropSource(null); setPending(null); setPendingKind(null)
+    if (remainingSlots <= 0) {
+      setUploadErr(`Maksimum ${IMAGE_MAX} görsele ulaştınız. Yeni görsel eklemek için önce mevcut görsellerden birini kaldırın.`)
+      return
+    }
     const errors: string[] = []
-    setBulkBusy(true); setBulkProgress({ done: 0, total: files.length })
-    for (let i = 0; i < files.length; i++) {
-      const file = files[i]
+    let processed = files
+    if (files.length > remainingSlots) {
+      const skipped = files.length - remainingSlots
+      processed = files.slice(0, remainingSlots)
+      errors.push(`${skipped} görsel atlandı: en fazla ${IMAGE_MAX} görsel eklenebilir (kalan kontenjan: ${remainingSlots}).`)
+    }
+    let added = 0
+    setBulkBusy(true); setBulkProgress({ done: 0, total: processed.length })
+    for (let i = 0; i < processed.length; i++) {
+      if (imageCount + added >= IMAGE_MAX) {
+        const left = processed.length - i
+        if (left > 0) errors.push(`${left} görsel atlandı: maksimum ${IMAGE_MAX} görsele ulaşıldı.`)
+        break
+      }
+      const file = processed[i]
       try {
         if (!/^image\/(jpeg|png|gif)$/i.test(file.type)) { errors.push(`${file.name}: ${t('display.uploadErrorType')}`); continue }
         if (file.size > MAX_IMAGE_BYTES) { errors.push(`${file.name}: ${t('display.uploadErrorSize')}`); continue }
@@ -288,10 +311,11 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
         const json = await res.json()
         if (!res.ok) { errors.push(`${file.name}: ${json.error ?? t('display.imagePicker.importError')}`); continue }
         onAdd({ resourceName: json.resourceName, kind, previewUrl, name: file.name })
+        added++
       } catch {
         errors.push(`${file.name}: ${t('display.imagePicker.importError')}`)
       } finally {
-        setBulkProgress({ done: i + 1, total: files.length })
+        setBulkProgress({ done: i + 1, total: processed.length })
       }
     }
     setBulkBusy(false); setBulkProgress(null)
@@ -337,6 +361,10 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
 
   const handleImport = async () => {
     if (!pending || !pendingKind) return
+    if (remainingSlots <= 0) {
+      setImportErr(`Maksimum ${IMAGE_MAX} görsele ulaştınız. Yeni görsel eklemek için önce mevcut görsellerden birini kaldırın.`)
+      return
+    }
     if (pending.width && pending.height) {
       const spec = IMAGE_SPECS[pendingKind]
       const diff = Math.abs((pending.width / pending.height) - spec.ratio) / spec.ratio
@@ -379,9 +407,19 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">{t('display.imagePicker.title')}</h3>
-          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"><X className="w-5 h-5" /></button>
+        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200">
+          <div className="flex-1 pr-4">
+            <div className="flex items-center gap-3">
+              <h3 className="text-lg font-semibold text-gray-900">Reklam görsellerini seçin</h3>
+              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
+                {imageCount} / {IMAGE_MAX}
+              </span>
+            </div>
+            <p className="text-xs text-gray-500 mt-1">
+              En fazla {IMAGE_MAX} görsel ekleyebilirsiniz — daha çok varyasyon, daha iyi optimizasyon.
+            </p>
+          </div>
+          <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 shrink-0"><X className="w-5 h-5" /></button>
         </div>
 
         {/* Tab bar — only when not in pending/crop mode */}
