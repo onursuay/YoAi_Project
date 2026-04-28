@@ -442,14 +442,15 @@ interface BrowseData {
 
 type BrowseSectionKey = Exclude<keyof BrowseData, 'state'>
 
+// Tüm kategoriler tek tip emerald — proje rengi
 const CATEGORY_COLORS: Record<string, string> = {
-  AFFINITY: 'bg-purple-50 text-purple-700',
-  IN_MARKET: 'bg-green-50 text-green-700',
-  DETAILED_DEMOGRAPHIC: 'bg-orange-50 text-orange-700',
-  LIFE_EVENT: 'bg-pink-50 text-pink-700',
-  USER_LIST: 'bg-blue-50 text-blue-700',
-  CUSTOM_AUDIENCE: 'bg-teal-50 text-teal-700',
-  COMBINED_AUDIENCE: 'bg-indigo-50 text-indigo-700',
+  AFFINITY: 'bg-emerald-50 text-emerald-700',
+  IN_MARKET: 'bg-emerald-50 text-emerald-700',
+  DETAILED_DEMOGRAPHIC: 'bg-emerald-50 text-emerald-700',
+  LIFE_EVENT: 'bg-emerald-50 text-emerald-700',
+  USER_LIST: 'bg-emerald-50 text-emerald-700',
+  CUSTOM_AUDIENCE: 'bg-emerald-50 text-emerald-700',
+  COMBINED_AUDIENCE: 'bg-emerald-50 text-emerald-700',
 }
 
 const BROWSE_SECTIONS: Array<{ key: BrowseSectionKey; label: string; icon: typeof Users }> = [
