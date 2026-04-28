@@ -476,6 +476,20 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set())
   const [audienceNameInput, setAudienceNameInput] = useState('')
 
+  // Dropdown davranışı: dış tıklamada kapan (CLAUDE.md — Kitle Hedefleme Picker UX)
+  const [pickerOpen, setPickerOpen] = useState(true)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [pickerOpen])
+
   const loadBrowse = useCallback(async () => {
     if (browseData) return
     setBrowseLoading(true)
@@ -579,6 +593,23 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
       <CollapsibleSection title={t('signals.yourData')} defaultOpen={true}>
         <p className="text-[12px] text-gray-500 mb-3">{t('signals.yourDataDesc')}</p>
 
+        {!pickerOpen && (
+          <button
+            type="button"
+            onClick={() => setPickerOpen(true)}
+            className="w-full flex items-center justify-between px-4 py-3 mb-3 border border-gray-300 rounded-lg text-sm bg-white hover:border-gray-400 transition-colors"
+          >
+            <span className="text-gray-700 font-medium">
+              {state.selectedAudienceSegments.length > 0
+                ? `${state.selectedAudienceSegments.length} kitle segmenti seçildi`
+                : 'Kitle segmenti seç'}
+            </span>
+            <ChevronDown className="w-4 h-4 text-gray-400" />
+          </button>
+        )}
+
+        {pickerOpen && (
+        <div ref={pickerRef}>
         {/* Tabs: Arama / Göz at */}
         <div className="flex border-b border-gray-200 mb-3">
           <button
@@ -708,6 +739,8 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
               )
             })}
           </div>
+        )}
+        </div>
         )}
       </CollapsibleSection>
 

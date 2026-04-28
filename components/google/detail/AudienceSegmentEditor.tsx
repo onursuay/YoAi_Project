@@ -145,6 +145,20 @@ export default function AudienceSegmentEditor({
   const [expandedSections, setExpandedSections] = useState<Set<string>>(new Set())
   const [expandedParents, setExpandedParents] = useState<Set<string>>(new Set())
 
+  // Dropdown davranışı: dış tıklamada kapan (CLAUDE.md — Kitle Hedefleme Picker UX)
+  const [pickerOpen, setPickerOpen] = useState(true)
+  const pickerRef = useRef<HTMLDivElement>(null)
+  useEffect(() => {
+    if (!pickerOpen) return
+    const handler = (e: MouseEvent) => {
+      if (pickerRef.current && !pickerRef.current.contains(e.target as Node)) {
+        setPickerOpen(false)
+      }
+    }
+    document.addEventListener('mousedown', handler)
+    return () => document.removeEventListener('mousedown', handler)
+  }, [pickerOpen])
+
   // Escape key
   useEffect(() => {
     const handler = (e: KeyboardEvent) => { if (e.key === 'Escape') onClose() }
@@ -407,6 +421,23 @@ export default function AudienceSegmentEditor({
                 </div>
               )}
 
+              {!pickerOpen && (
+                <button
+                  type="button"
+                  onClick={() => setPickerOpen(true)}
+                  className="w-full flex items-center justify-between px-4 py-3 border border-gray-300 rounded-lg text-sm bg-white hover:border-gray-400 transition-colors"
+                >
+                  <span className="text-gray-700 font-medium">
+                    {selectedSegments.length > 0
+                      ? `${selectedSegments.length} kitle segmenti seçildi`
+                      : 'Kitle segmenti seç'}
+                  </span>
+                  <ChevronDown className="w-4 h-4 text-gray-400" />
+                </button>
+              )}
+
+              {pickerOpen && (
+              <div ref={pickerRef} className="space-y-3">
               {/* Tabs: Search / Browse */}
               <div className="flex border-b border-gray-200">
                 <button
@@ -605,6 +636,8 @@ export default function AudienceSegmentEditor({
                     )
                   })}
                 </div>
+              )}
+              </div>
               )}
             </>
           )}

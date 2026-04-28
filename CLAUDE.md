@@ -36,17 +36,20 @@ Uyarı / bilgi bantları için bunları kullan:
 
 Tüm butonlar ve ikonlar için de aynı kural geçerli (no amber, no yellow).
 
-## Kitle Hedefleme Picker UX (Dropdown davranışı)
-Wizard adımı içindeki "Kitle Hedefleme" alanları (Arama / Göz at sekmeli kitle segmenti picker'ı) **dropdown gibi davranır**:
+## Kitle Hedefleme Picker UX (Dropdown davranışı) — Proje Geneli
+Projedeki **TÜM "Kitle Hedefleme" picker'ları** (Arama / Göz at sekmeli kitle segmenti UI'ı) — kampanya türünden ve bağlamdan bağımsız olarak — aynı dropdown davranışına sahiptir:
 
 1. **Default açık başlar** (kullanıcı seçim yapabilsin)
 2. **Picker dışına tıklandığında otomatik kapanır** — `useEffect` + `mousedown` listener, `ref.current.contains(target)` kontrolü
 3. **Kapalıyken tetikleyici buton** görünür: seçim sayısı (örn. "4 kitle segmenti seçildi") + chevron; tıklanınca yeniden açılır
 4. **Seçili chip'ler picker durumundan bağımsız** her zaman görünür kalır
 
-**Uygulama scope'u:**
-- ✅ Wizard step içindeki inline picker'lar (StepAudience.tsx — Display + Search wizard'ları için ortak)
-- ❌ Modal içindeki picker'lar (modal'ın kendi outside-click davranışı zaten kapatıyor)
-- ❌ Zaten `CollapsibleSection` ile sarılı picker'lar (PMax sinyal panelleri — kendi expand/collapse'ı var)
+**Uygulama (istisnasız):**
+- ✅ `components/google/wizard/steps/StepAudience.tsx` (Search + Display wizard ortak)
+- ✅ `components/google/wizard/pmax/steps/PMaxStepAssetGroup.tsx` (PMax wizard — `CollapsibleSection` içinde olsa bile dropdown davranışı uygulanır)
+- ✅ `components/google/detail/AudienceSegmentEditor.tsx` (modal içinde olsa bile dropdown davranışı uygulanır)
 
-Yeni bir kitle picker UI'ı eklenirse bu pattern'i uygula (ref + outside-click + trigger button).
+## Kitle Segmenti Chip Renk Kuralı
+Tüm kategori (AFFINITY, IN_MARKET, DETAILED_DEMOGRAPHIC, LIFE_EVENT, USER_LIST, CUSTOM_AUDIENCE, COMBINED_AUDIENCE) chip'leri tek tip `bg-emerald-50` + `text-emerald-700` kullanır. Kategoriye göre değişen mor/turuncu/pembe/mavi/teal/indigo renkler **kullanılmaz**.
+
+Yeni bir kitle picker UI'ı eklenirse hem dropdown davranışını hem chip rengi kuralını uygula.
