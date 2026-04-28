@@ -560,7 +560,7 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
         <h4 className="text-[15px] font-medium text-gray-900 mb-3">
           Henüz önerilen öğe yok
         </h4>
-        <p className="text-[13px] text-gray-600 leading-relaxed max-w-2xl">
+        <p className="text-[13px] text-gray-600 leading-relaxed max-w-4xl">
           Önerilen öğeler nihai URL&apos;nizi ve hedeflemenizi temel alır. Bunlardan bazılarını görmek için, henüz yapmadıysanız nihai URL eklemeyi deneyin veya başka bir web sitesini ya da sosyal medya platformunu tarayın.
         </p>
       </div>
