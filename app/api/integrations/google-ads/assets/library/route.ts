@@ -61,7 +61,7 @@ export async function GET(req: NextRequest) {
         WHERE asset.type = 'YOUTUBE_VIDEO'
         LIMIT 200
       `
-      const rows = await searchGAds<VideoAssetRow>(ctx, query, { pageSize: 200, maxRows: 200 })
+      const rows = await searchGAds<VideoAssetRow>(ctx, query, { maxRows: 200 })
       const assets = rows
         .filter(r => r.asset?.resourceName && r.asset.youtubeVideoAsset?.youtubeVideoId)
         .map(r => {
@@ -91,7 +91,7 @@ export async function GET(req: NextRequest) {
       WHERE asset.type = 'IMAGE'
       LIMIT 200
     `
-    const rows = await searchGAds<AssetRow>(ctx, query, { pageSize: 200, maxRows: 200 })
+    const rows = await searchGAds<AssetRow>(ctx, query, { maxRows: 200 })
     const assets = rows
       .filter(r => r.asset?.resourceName && r.asset.imageAsset?.fullSize?.url)
       .map(r => {
