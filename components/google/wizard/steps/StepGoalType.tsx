@@ -93,8 +93,8 @@ export default function StepGoalType({ state, update, t }: StepProps) {
         })}
       </div>
 
-      {/* Dynamic Campaign Type Selection */}
-      {availableTypes.length > 0 && (
+      {/* Kampanya Türü yalnızca "Kılavuz Olmadan" seçilince görünür */}
+      {state.campaignGoal === 'NO_GOAL' && availableTypes.length > 0 && (
         <div>
           <h4 className="text-sm font-semibold text-gray-900 mb-2">{t('goal.campaignTypeTitle')}</h4>
           <div className={`grid gap-2 ${availableTypes.length === 1 ? 'grid-cols-1' : 'grid-cols-2'}`}>
