@@ -571,6 +571,7 @@
           "uploadErrorType": "Only JPG/PNG/GIF images are allowed",
           "uploadErrorSize": "Image exceeds 5 MB limit",
           "uploadErrorGeneric": "Upload failed. Please try again.",
+          "uploadCloudLabel": "Add from cloud:",
           "addFromStock": "Add stock image",
           "imageSectionLabel": "Images",
           "imageSectionHint": "Landscape {landscape} · Square {square} · max 15 images",

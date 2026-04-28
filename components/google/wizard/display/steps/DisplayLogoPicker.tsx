@@ -1,10 +1,12 @@
 'use client'
 
-import { useRef, useState } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import { X, Loader2, Check, Search, Upload, FolderOpen, Globe } from 'lucide-react'
+import { useLocale } from 'next-intl'
 import type { DisplayAsset, DisplayAssetKind } from '../../shared/WizardTypes'
 import { inputCls } from '../../shared/WizardTypes'
 import { IMAGE_SPECS, validateImageForKind, readImageDimensions, MAX_IMAGE_BYTES } from './displayImageSpecs'
+import { pickImageFromGoogleDrive, isGoogleDriveConfigured } from './googleDrivePicker'
 
 type LogoKind = 'LOGO' | 'SQUARE_LOGO'
 type TabId = 'library' | 'web' | 'upload'
@@ -319,6 +321,7 @@ export default function DisplayLogoPicker({ isOpen, onClose, existing, onAdd, de
               uploadRef={uploadRef}
               uploading={uploading}
               error={uploadErr}
+              setErr={setUploadErr}
               onPick={onFilePick}
               t={t}
             />
@@ -450,14 +453,36 @@ function WebPane({
 }
 
 function UploadPane({
-  uploadRef, uploading, error, onPick, t,
+  uploadRef, uploading, error, onPick, setErr, t,
 }: {
   uploadRef: React.MutableRefObject<HTMLInputElement | null>;
   uploading: boolean; error: string | null;
   onPick: (f: File) => void;
+  setErr: (s: string | null) => void;
   // eslint-disable-next-line @typescript-eslint/no-explicit-any
   t: (k: string, p?: any) => string;
 }) {
+  const locale = useLocale()
+  const [driveBusy, setDriveBusy] = useState(false)
+  const [driveAvailable, setDriveAvailable] = useState<boolean | null>(null)
+
+  useEffect(() => {
+    isGoogleDriveConfigured().then(setDriveAvailable).catch(() => setDriveAvailable(false))
+  }, [])
+
+  const onDriveClick = async () => {
+    setErr(null)
+    setDriveBusy(true)
+    try {
+      const file = await pickImageFromGoogleDrive(locale === 'en' ? 'en' : 'tr')
+      if (file) onPick(file)
+    } catch (e: unknown) {
+      setErr(e instanceof Error ? e.message : String(e))
+    } finally {
+      setDriveBusy(false)
+    }
+  }
+
   return (
     <div className="space-y-4">
       <p className="text-sm text-gray-600">{t('display.logoPicker.uploadHint')}</p>
@@ -491,10 +516,30 @@ function UploadPane({
           }}
         />
       </div>
+      {driveAvailable && (
+        <div className="flex items-center gap-2">
+          <span className="text-xs text-gray-500">{t('display.uploadCloudLabel')}</span>
+          <button
+            type="button"
+            onClick={onDriveClick}
+            disabled={driveBusy}
+            className="inline-flex items-center gap-2 px-3 py-1.5 text-[13px] font-medium border border-gray-200 hover:border-blue-400 hover:text-blue-600 rounded-lg text-gray-700 transition-colors disabled:opacity-50"
+          >
+            {driveBusy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : (
+              <svg className="w-3.5 h-3.5" viewBox="0 0 87.3 78" xmlns="http://www.w3.org/2000/svg">
+                <path d="m6.6 66.85 3.85 6.65c.8 1.4 1.95 2.5 3.3 3.3l13.75-23.8h-27.5c0 1.55.4 3.1 1.2 4.5z" fill="#0066da"/>
+                <path d="m43.65 25-13.75-23.8c-1.35.8-2.5 1.9-3.3 3.3l-25.4 44a9.06 9.06 0 0 0 -1.2 4.5h27.5z" fill="#00ac47"/>
+                <path d="m73.55 76.8c1.35-.8 2.5-1.9 3.3-3.3l1.6-2.75 7.65-13.25c.8-1.4 1.2-2.95 1.2-4.5h-27.502l5.852 11.5z" fill="#ea4335"/>
+                <path d="m43.65 25 13.75-23.8c-1.35-.8-2.9-1.2-4.5-1.2h-18.5c-1.6 0-3.15.45-4.5 1.2z" fill="#00832d"/>
+                <path d="m59.8 53h-32.3l-13.75 23.8c1.35.8 2.9 1.2 4.5 1.2h50.8c1.6 0 3.15-.45 4.5-1.2z" fill="#2684fc"/>
+                <path d="m73.4 26.5-12.7-22c-.8-1.4-1.95-2.5-3.3-3.3l-13.75 23.8 16.15 28h27.45c0-1.55-.4-3.1-1.2-4.5z" fill="#ffba00"/>
+              </svg>
+            )}
+            Google Drive
+          </button>
+        </div>
+      )}
       {error && <p className="text-xs text-red-500">{error}</p>}
-      <p className="text-[11px] text-gray-400 leading-relaxed">
-        {t('display.logoPicker.cloudSoon')}
-      </p>
     </div>
   )
 }

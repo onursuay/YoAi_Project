@@ -571,6 +571,7 @@
           "uploadErrorType": "Yalnızca JPG/PNG/GIF görsel yüklenebilir",
           "uploadErrorSize": "Görsel 5 MB sınırını aşıyor",
           "uploadErrorGeneric": "Yükleme başarısız oldu. Tekrar deneyin.",
+          "uploadCloudLabel": "Bulut'tan ekle:",
           "addFromStock": "Stok resim ekle",
           "imageSectionLabel": "Resimler",
           "imageSectionHint": "Yatay {landscape} · Kare {square} · max 15 resim",
