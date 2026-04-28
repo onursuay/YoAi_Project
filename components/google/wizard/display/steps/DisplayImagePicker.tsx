@@ -407,18 +407,8 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
   return (
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        <div className="flex items-start justify-between px-6 py-4 border-b border-gray-200">
-          <div className="flex-1 pr-4">
-            <div className="flex items-center gap-3">
-              <h3 className="text-lg font-semibold text-gray-900">Reklam görsellerini seçin</h3>
-              <span className="inline-flex items-center px-2 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-700">
-                {imageCount} / {IMAGE_MAX}
-              </span>
-            </div>
-            <p className="text-xs text-gray-500 mt-1">
-              En fazla {IMAGE_MAX} görsel ekleyebilirsiniz — daha çok varyasyon, daha iyi optimizasyon.
-            </p>
-          </div>
+        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
+          <h3 className="text-lg font-semibold text-gray-900">Reklamınızda Kullanılacak 15 Görsel Seçin...</h3>
           <button type="button" onClick={onClose} className="p-2 rounded-lg hover:bg-gray-100 text-gray-500 shrink-0"><X className="w-5 h-5" /></button>
         </div>
 
