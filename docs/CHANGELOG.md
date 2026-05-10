@@ -2,6 +2,30 @@
 
 ---
 
+## 2026-05-10 — Faz 0B: Publish audit binding + budget guard + explicit confirmation
+- **Sorun:** Faz 0A'da yoai_publish_audit_log tablosu ve publishAuditStore helper'ı eklendi ama publish akışına bağlanmamıştı. Ek olarak: budget guard yoktu (proposal'daki dailyBudget cap'siz Meta'ya iletiliyordu), idle phase'de explicit checkbox onay yoktu, partial failure orphan kaynaklar hiçbir yerde izlenmiyordu.
+- **Çözüm:**
+  - **Budget guard** (`one-click-approve/route.ts`): `evaluateBudgetGuard()` helper Meta API çağrısından ÖNCE çalışır. Cap kaynağı `process.env.YOAI_MAX_DAILY_BUDGET_TRY` (default 1000 TRY). 3 blok kodu: `BUDGET_GUARD_BLOCKED` (cap aşımı), `BUDGET_MISSING_OR_INVALID` (NaN/<=0), `UNSUPPORTED_BUDGET_CURRENCY` (TRY dışı). Tümü 422 + audit `blocked`.
+  - **Audit log binding**: `recordPublishAuditAttempt()` ile `pending` insert (proposal validate edildikten hemen sonra), her stage'de `updatePublishAuditStatus()` ile geçiş — `success` (orchestrator ok), `blocked` (budget/capability/preflight/needs_input), `failed` (creative gen / meta upload / campaign_failed / route exception), `orphaned` (adset_failed = campaign orphan, ad_failed = campaign+adset orphan). `payload_hash` (SHA-256), `payload_excerpt`/`response_excerpt` `sanitizeResponseExcerpt()` ile token/secret/cookie redact'li.
+  - **Orphan resource tracking**: `OrchestratorResult.created` zaten partial result dönüyor — orchestrator'a dokunulmadan audit log'a `orphan_resources` JSONB array'i olarak yazılır: `[{platform, type: 'campaign'|'adset'|'ad', id, parent_id?}]`. Rollback eklenmedi (Meta delete endpoint'lerine dokunmamak gerekti — bilerek Faz 0C+'ye bırakıldı).
+  - **Response contract**: success → `{ ok:true, data, auditId, auditWarning? }`; budget block → `{ ok:false, code, message, maxDailyBudget, requestedBudget, auditId }`; audit yazımı başarısız ama publish başarılı → `{ ok:true, ..., auditWarning:'AUDIT_LOG_WRITE_FAILED' }`.
+  - **OneClickApproveDialog idle phase**: detaylı özet (Platform/Kampanya Adı/Hedef/Günlük Bütçe/Reklam Özeti+CTA), bilgi kutusu (`bg-primary/5 + text-primary` — onaylı palet, amber YOK), zorunlu checkbox ("Bu reklamın Meta hesabımda PAUSED olarak oluşturulacağını ... onaylıyorum"), buton: "Onayla ve PAUSED Olarak Oluştur" (checkbox işaretsizken disabled).
+- **Korunanlar:**
+  - `lib/yoai/meta/orchestrator.ts` — DOKUNULMADI. Partial result mevcut yapısı yeterli.
+  - `app/api/integrations/meta/**`, `app/api/integrations/google-ads/**` — DOKUNULMADI.
+  - `lib/yoai/adCreator.ts`, AI proposal promptları, daily-run, deepAnalysis, googleDeepFetcher, metaDeepFetcher, diagnosis, decision — DOKUNULMADI.
+  - PAUSED default davranışı korundu (her zaman PAUSED kuruluyor).
+  - Mevcut `recordActionOutcome` learning kaydı korundu (action_outcomes ayrı tablo).
+  - Google Ads / Meta wizard'lar değişmedi.
+- **Güvenlik:** `sanitizeResponseExcerpt` her audit yazısında token/refresh_token/cookie/secret/api_key alanlarını `[REDACTED]` ile değiştiriyor; string >2000 char kırpılıyor; array >50 kesiliyor; depth >6 `[...]`.
+- **Doğrulama:** `npx tsc --noEmit` → 0 error · `npm run build` → ✓ tüm route'lar derlendi · /yoai bundle 21.3→21.6 kB (idle phase detayları).
+- **Dosyalar:**
+  - `app/api/yoai/one-click-approve/route.ts` (budget guard + audit binding)
+  - `components/yoai/OneClickApproveDialog.tsx` (idle phase: checkbox + detaylar)
+- **Migration apply:** Faz 0A migration'larının (özellikle `yoai_publish_audit_log`) production'da uygulanmış olması gerekir. Uygulanmadıysa `recordPublishAuditAttempt` AUDIT_LOSS log atar ama publish akışı kırılmaz; response'da `auditWarning: 'AUDIT_LOG_WRITE_FAILED'` döner.
+
+---
+
 ## 2026-05-10 — Faz 0A: YoAlgoritma audit foundation (DB migration + RLS + audit log)
 - **Sorun:** YoAlgoritma Merkezi'nin onay/yayın denetim altyapısı eksikti — `yoai_action_outcomes` migration'da kayıtlı değildi (sadece `docs/sql/` altında manuel SQL), `learningStore.ts` tablo yoksa sessizce no-op'a düşüyordu (audit kaybı), `yoai_daily_runs`/`yoai_articles` için FK + RLS yoktu, publish denetimi için bir tablo da yoktu.
 - **Çözüm:**

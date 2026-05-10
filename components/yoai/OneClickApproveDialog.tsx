@@ -51,6 +51,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
     conversionEvent?: string
   }>({})
   const [result, setResult] = useState<SuccessResult | null>(null)
+  const [confirmAcknowledged, setConfirmAcknowledged] = useState<boolean>(false)
 
   async function submit(overrideChoices?: typeof choices) {
     setPhase('running')
@@ -122,24 +123,90 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
         <div className="p-6">
           {phase === 'idle' && (
             <div className="space-y-4">
-              <div className="bg-gray-50 rounded-xl p-4">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-2">
-                  Kampanya
-                </p>
-                <p className="text-sm font-medium text-gray-900">{proposal.campaignName}</p>
-                <p className="text-xs text-gray-500 mt-1">
-                  {proposal.objectiveLabel} · Günlük bütçe: {proposal.dailyBudget} TL
-                </p>
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2">
+                <div className="flex items-center justify-between">
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
+                    Platform
+                  </p>
+                  <span className="text-xs font-medium text-gray-900">Meta</span>
+                </div>
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    Kampanya Adı
+                  </p>
+                  <p className="text-sm font-medium text-gray-900 leading-snug">
+                    {proposal.campaignName || '—'}
+                  </p>
+                </div>
+                {proposal.objectiveLabel && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Hedef
+                    </p>
+                    <p className="text-sm text-gray-700">{proposal.objectiveLabel}</p>
+                  </div>
+                )}
+                <div>
+                  <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                    Günlük Bütçe
+                  </p>
+                  <p className="text-sm font-semibold text-gray-900">
+                    ₺{proposal.dailyBudget ?? '—'}
+                  </p>
+                </div>
+                {(proposal.headline || proposal.callToAction) && (
+                  <div>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
+                      Reklam Özeti
+                    </p>
+                    {proposal.headline && (
+                      <p className="text-sm text-gray-700 leading-snug">{proposal.headline}</p>
+                    )}
+                    {proposal.callToAction && (
+                      <p className="text-xs text-gray-500 mt-1">CTA: {proposal.callToAction}</p>
+                    )}
+                  </div>
+                )}
               </div>
-              <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-700">
-                Onay verdiğinde kampanya + reklam seti + reklam (görsel dahil) tümü{' '}
-                <strong>PAUSED</strong> olarak oluşturulur. Hiçbir şey otomatik yayınlanmaz.
+
+              <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-xs text-primary leading-relaxed">
+                <p className="font-semibold mb-1">Bu işlem ne yapacak:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Meta hesabınızda yeni bir kampanya, reklam seti ve reklam oluşturur.</li>
+                  <li>
+                    Tüm kaynaklar <strong>PAUSED</strong> durumda kurulur — hiçbir şey otomatik
+                    yayına gitmez.
+                  </li>
+                  <li>
+                    Yayına almak için Meta Ads Manager üzerinden <strong>manuel olarak aktif</strong>
+                    {' '}etmeniz gerekir.
+                  </li>
+                </ul>
               </div>
+
+              <label className="flex items-start gap-2 cursor-pointer select-none">
+                <input
+                  type="checkbox"
+                  checked={confirmAcknowledged}
+                  onChange={(e) => setConfirmAcknowledged(e.target.checked)}
+                  className="mt-0.5 w-4 h-4 accent-primary"
+                />
+                <span className="text-xs text-gray-700 leading-relaxed">
+                  Bu reklamın Meta hesabımda <strong>PAUSED</strong> olarak oluşturulacağını,
+                  bütçesini ve detaylarını kontrol ettiğimi onaylıyorum.
+                </span>
+              </label>
+
               <button
                 onClick={start}
-                className="w-full py-3 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90"
+                disabled={!confirmAcknowledged}
+                className={`w-full py-3 rounded-xl text-sm font-medium transition-colors ${
+                  confirmAcknowledged
+                    ? 'bg-primary text-white hover:bg-primary/90'
+                    : 'bg-gray-200 text-gray-400 cursor-not-allowed'
+                }`}
               >
-                Taslağı Oluşturmaya Başla
+                Onayla ve PAUSED Olarak Oluştur
               </button>
             </div>
           )}
