@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-10 — Google Ads Wizard UI Shell Standardizasyonu (Search + Display + PMax)
+- **Sorun:** Display wizard modern full-screen tasarımı kazanmıştı; Search ve PMax hâlâ eski centered-modal/blue-button görünümünde duruyordu. PMax'ın partial result bandı amber/yellow kullanıyordu (proje renk yasağı).
+- **Çözüm:**
+  - Yeni paylaşılan UI primitive'leri (`shared/GoogleWizardUI.tsx`): `GoogleWizardSection`, `GoogleWizardRadioCard`, `GoogleWizardSummaryCard`, `GoogleWizardSummaryRow`, `GoogleWizardResultState`, `googleWizardInputCls`.
+  - Yeni paylaşılan full-screen layout (`shared/GoogleWizardShell.tsx`): üst header (logo + eyebrow + title + X), sol dikey step menüsü (sub-nav opsiyonel), orta içerik, opsiyonel sağ sticky özet, alt footer (back / step indicator / next-submit), google-snake-border, ESC kapat, body scroll lock, success/partial result bandı.
+  - Display wizard yeni shell'e taşındı — görünüm birebir korundu, DisplaySidebar ve google-snake-border yerinde.
+  - Search wizard centered modal'dan full-screen shell'e geçti; 8 step, validation, payload, PMax/Display routing davranışı değişmedi. Renkler primary'ye normalize edildi.
+  - PMax wizard yeni shell'i kullanıyor; 6 step, asset group sub-nav (campaign-settings step'i altında 9 anchor), submit gating (`hasBlockingIssues`) korundu. Amber partial banner emerald/gray paletine geçti.
+  - `DisplayWizardUI.tsx` artık paylaşılan primitive'lere alias re-export yapan ince bir wrapper — eski Display step component'leri (`DisplayStepAds`, `DisplaySidebar` vb.) hiç değişmeden çalışmaya devam ediyor.
+- **Korunanlar:** wizard step sayıları/sırası, tüm step component'leri, `validateStep`/`validateDisplayStep`/`validatePMaxStep`, `buildCreatePayload`/`buildPerformanceMaxCreatePayload`, API route'lar, Supabase/auth/middleware, AB Siyasi Reklamları ve Yayın Kontrolü/Summary akışı.
+- **Dosyalar:**
+  - Yeni: `components/google/wizard/shared/GoogleWizardUI.tsx`, `components/google/wizard/shared/GoogleWizardShell.tsx`
+  - Güncellendi: `components/google/wizard/GoogleCampaignWizard.tsx`, `components/google/wizard/display/DisplayCampaignWizard.tsx`, `components/google/wizard/display/DisplayWizardUI.tsx`, `components/google/wizard/pmax/PMaxCampaignWizard.tsx`
+
+---
+
 ## 2026-04-28 — Display Wizard: Native select → Meta WizardSelect + arkaplan gradient
 - **Sorun:** Display wizard'ı Meta'ya hizalamış olsam da iki belirgin fark kalmıştı: (1) arka plan beyaz görünüyordu, (2) native HTML `<select>` elementinin açılan menüsü tarayıcı/OS tarafından çiziliyordu — yazı tipi/boyutu Meta'nın özel dropdown'undan farklıydı.
 - **Çözüm:**

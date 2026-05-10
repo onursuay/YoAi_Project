@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { defaultState } from './shared/WizardTypes'
 import type { WizardState, CampaignGoal } from './shared/WizardTypes'
 import { validateStep } from './shared/WizardValidation'
 import { buildCreatePayload } from './shared/WizardHelpers'
+import GoogleWizardShell, { type ResultBanner } from './shared/GoogleWizardShell'
 import StepGoalType from './steps/StepGoalType'
 import StepConversionAndName from './steps/StepConversionAndName'
 import StepBiddingAcquisition from './steps/StepBiddingAcquisition'
@@ -55,14 +55,14 @@ export default function GoogleCampaignWizard({
   const t = useTranslations('dashboard.google.wizard')
   // Search-specific 8-step flow
   const STEPS = [
-    t('steps.goal'),
-    t('steps.conversionAndName'),
-    t('steps.bidding'),
-    t('steps.campaignSettings'),
-    t('steps.aiMax'),
-    t('steps.keywordsAndAds'),
-    t('steps.budget'),
-    t('steps.summary'),
+    { label: t('steps.goal') },
+    { label: t('steps.conversionAndName') },
+    { label: t('steps.bidding') },
+    { label: t('steps.campaignSettings') },
+    { label: t('steps.aiMax') },
+    { label: t('steps.keywordsAndAds') },
+    { label: t('steps.budget') },
+    { label: t('steps.summary') },
   ]
 
   useEffect(() => {
@@ -98,6 +98,18 @@ export default function GoogleCampaignWizard({
   }
 
   const back = () => { setError(null); setStep(s => s - 1) }
+
+  const goToStep = (target: number) => {
+    if (target === step) return
+    if (target > step) {
+      for (let i = step; i < target; i++) {
+        const err = validateStep(i, state, t)
+        if (err) { setError(err); setStep(i); return }
+      }
+    }
+    setError(null)
+    setStep(target)
+  }
 
   const submit = async () => {
     // PERFORMANCE_MAX: do not submit — has separate flow
@@ -137,162 +149,85 @@ export default function GoogleCampaignWizard({
     }
   }
 
+  const handleClose = () => { setStep(0); setState(defaultState); setError(null); setSubmitResult(null); onClose() }
+
   const acknowledgeResult = () => {
     onSuccess()
     handleClose()
   }
 
-  const handleClose = () => { setStep(0); setState(defaultState); setError(null); setSubmitResult(null); onClose() }
-
-  if (!isOpen) return null
-
   const stepProps = { state, update, t }
+  const isFirstStep = step === 0
+  const isLastStep = step === TOTAL_STEPS - 1
+  const isResultShown = submitResult === 'full' || submitResult === 'partial'
+
+  const resultBanner: ResultBanner | null = isResultShown
+    ? {
+        variant: submitResult === 'full' ? 'full' : 'partial',
+        title: submitResult === 'full' ? t('result.fullTitle') : t('result.partialTitle'),
+        message: submitResult === 'full' ? t('result.fullMessage') : t('result.partialMessage'),
+        acknowledgeLabel: t('result.acknowledge'),
+        onAcknowledge: acknowledgeResult,
+      }
+    : null
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50">
-      <div className="bg-white rounded-2xl shadow-2xl w-full max-w-3xl max-h-[90vh] flex flex-col" onClick={e => e.stopPropagation()}>
-        {/* Header */}
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <div>
-            <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
-            <p className="text-sm text-gray-500">{step + 1} / {TOTAL_STEPS} — {STEPS[step]}</p>
-          </div>
-          <button
-            type="button"
-            onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
-            className="p-2 rounded-lg hover:bg-gray-100 text-gray-500"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Progress */}
-        <div className="px-6 pt-4">
-          <div className="flex items-center gap-1">
-            {STEPS.map((_, i) => (
-              <div key={i} className="flex items-center gap-1 flex-1">
-                <div
-                  className={`w-6 h-6 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 ${
-                    i < step ? 'bg-green-500 text-white' : i === step ? 'bg-blue-600 text-white' : 'bg-gray-200 text-gray-500'
-                  }`}
-                  title={STEPS[i]}
-                >
-                  {i < step ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                </div>
-                {i < TOTAL_STEPS - 1 && <div className={`flex-1 h-0.5 ${i < step ? 'bg-green-400' : 'bg-gray-200'}`} />}
-              </div>
-            ))}
-          </div>
-        </div>
-
-        {/* Body */}
-        <div className="flex-1 overflow-y-auto px-6 py-4 space-y-4">
-          {submitResult === 'full' && (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
-              <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
-              <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
-              <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
-              <button
-                type="button"
-                onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
-              >
-                {t('result.acknowledge')}
-              </button>
+    <GoogleWizardShell
+      isOpen={isOpen}
+      onClose={isResultShown ? acknowledgeResult : handleClose}
+      eyebrow={t('display.wizardHeaderEyebrow')}
+      title={t('title')}
+      steps={STEPS}
+      currentStep={step}
+      campaignTypeLabel={t('display.campaignTypeSearch')}
+      onStepClick={goToStep}
+      errorMessage={error}
+      resultBanner={resultBanner}
+      isFirstStep={isFirstStep}
+      isLastStep={isLastStep}
+      submitting={submitting}
+      onBack={back}
+      onNext={next}
+      onSubmit={submit}
+      labels={{
+        cancel: t('nav.cancel'),
+        back: t('nav.back'),
+        next: t('nav.next'),
+        submit: t('nav.submit'),
+        submitting: t('nav.submitting'),
+      }}
+    >
+      {step === 0 && (
+        <>
+          <StepGoalType {...stepProps} />
+          {state.campaignType === 'PERFORMANCE_MAX' && (
+            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
             </div>
           )}
-          {submitResult === 'partial' && (
-            <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-gray-50 border border-gray-200">
-              <AlertTriangle className="w-12 h-12 text-gray-600 mb-3" />
-              <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('result.partialTitle')}</h3>
-              <p className="text-sm text-gray-700 text-center mb-4">{t('result.partialMessage')}</p>
-              <button
-                type="button"
-                onClick={acknowledgeResult}
-                className="px-4 py-2 text-sm font-medium bg-gray-700 text-white rounded-lg hover:bg-gray-800"
-              >
-                {t('result.acknowledge')}
-              </button>
+          {state.campaignType === 'DISPLAY' && (
+            <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
+              <p className="text-sm font-medium text-primary">{t('displayPlaceholder')}</p>
             </div>
           )}
-          {error && submitResult !== 'full' && submitResult !== 'partial' && (
-            <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700">
-              <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-              <span>{error}</span>
-            </div>
-          )}
-
-          {submitResult !== 'full' && submitResult !== 'partial' && (
-            <>
-              {step === 0 && (
-                <>
-                  <StepGoalType {...stepProps} />
-                  {state.campaignType === 'PERFORMANCE_MAX' && (
-                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-                      <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
-                    </div>
-                  )}
-                  {state.campaignType === 'DISPLAY' && (
-                    <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-4">
-                      <p className="text-sm font-medium text-primary">{t('displayPlaceholder')}</p>
-                    </div>
-                  )}
-                </>
-              )}
-              {step >= 1 && state.campaignType === 'PERFORMANCE_MAX' && (
-                <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
-                  <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
-                </div>
-              )}
-              {step >= 1 && state.campaignType !== 'PERFORMANCE_MAX' && (
-                <>
-                  {step === 1 && <StepConversionAndName {...stepProps} />}
-                  {step === 2 && <StepBiddingAcquisition {...stepProps} />}
-                  {step === 3 && <StepCampaignSettingsSearch {...stepProps} />}
-                  {step === 4 && <StepAIMax {...stepProps} />}
-                  {step === 5 && <StepKeywordsAndAds {...stepProps} />}
-                  {step === 6 && <StepBudget {...stepProps} />}
-                  {step === 7 && <StepSummary {...stepProps} />}
-                </>
-              )}
-            </>
-          )}
+        </>
+      )}
+      {step >= 1 && state.campaignType === 'PERFORMANCE_MAX' && (
+        <div className="rounded-xl border-2 border-primary/20 bg-primary/5 p-6 text-center">
+          <p className="text-sm font-medium text-primary">{t('performanceMaxPlaceholder')}</p>
         </div>
-
-        {/* Footer — hidden when showing success/partial result */}
-        {submitResult !== 'full' && submitResult !== 'partial' && (
-        <div className="flex items-center justify-between px-6 py-4 border-t border-gray-200">
-          <button
-            type="button"
-            onClick={step === 0 ? handleClose : back}
-            className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
-            disabled={submitting}
-          >
-            {step === 0 ? <X className="w-4 h-4" /> : <ChevronLeft className="w-4 h-4" />}
-            {step === 0 ? t('nav.cancel') : t('nav.back')}
-          </button>
-          {step < TOTAL_STEPS - 1 ? (
-            <button
-              type="button"
-              onClick={next}
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-            >
-              {t('nav.next')} <ChevronRight className="w-4 h-4" />
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={submitting}
-              className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700 disabled:opacity-50"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {submitting ? t('nav.submitting') : t('nav.submit')}
-            </button>
-          )}
-        </div>
-        )}
-      </div>
-    </div>
+      )}
+      {step >= 1 && state.campaignType !== 'PERFORMANCE_MAX' && (
+        <>
+          {step === 1 && <StepConversionAndName {...stepProps} />}
+          {step === 2 && <StepBiddingAcquisition {...stepProps} />}
+          {step === 3 && <StepCampaignSettingsSearch {...stepProps} />}
+          {step === 4 && <StepAIMax {...stepProps} />}
+          {step === 5 && <StepKeywordsAndAds {...stepProps} />}
+          {step === 6 && <StepBudget {...stepProps} />}
+          {step === 7 && <StepSummary {...stepProps} />}
+        </>
+      )}
+    </GoogleWizardShell>
   )
 }

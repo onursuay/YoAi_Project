@@ -2,11 +2,11 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, AlertCircle, Loader2, CheckCircle2, AlertTriangle, Check } from 'lucide-react'
 import { defaultState } from '../shared/WizardTypes'
 import type { WizardState, CampaignGoal } from '../shared/WizardTypes'
 import { validateDisplayStep } from './displayWizardValidation'
 import { buildCreatePayload } from '../shared/WizardHelpers'
+import GoogleWizardShell, { type ResultBanner } from '../shared/GoogleWizardShell'
 import StepConversionAndName from '../steps/StepConversionAndName'
 import DisplayStepCampaignSettings from './steps/DisplayStepCampaignSettings'
 import DisplayStepBudgetBidding from './steps/DisplayStepBudgetBidding'
@@ -123,22 +123,6 @@ export default function DisplayCampaignWizard({
     setSubmitResult(null)
   }, [isOpen, initialCampaignGoal])
 
-  // Lock body scroll & Escape key
-  useEffect(() => {
-    if (!isOpen) return
-    const prev = document.body.style.overflow
-    document.body.style.overflow = 'hidden'
-    const handleKey = (e: KeyboardEvent) => {
-      if (e.key === 'Escape') handleClose()
-    }
-    document.addEventListener('keydown', handleKey)
-    return () => {
-      document.body.style.overflow = prev
-      document.removeEventListener('keydown', handleKey)
-    }
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [isOpen])
-
   const update = useCallback((partial: Partial<WizardState>) => {
     setState(prev => ({ ...prev, ...partial }))
   }, [])
@@ -212,11 +196,6 @@ export default function DisplayCampaignWizard({
     }
   }
 
-  const acknowledgeResult = () => {
-    onSuccess()
-    handleClose()
-  }
-
   const handleClose = () => {
     setStep(0)
     setState(buildDisplayInitialState(initialCampaignGoal))
@@ -225,193 +204,58 @@ export default function DisplayCampaignWizard({
     onClose()
   }
 
-  if (!isOpen) return null
+  const acknowledgeResult = () => {
+    onSuccess()
+    handleClose()
+  }
 
   const isFirstStep = step === 0
   const isLastStep = step === TOTAL_STEPS - 1
   const isResultShown = submitResult === 'full' || submitResult === 'partial'
 
+  const resultBanner: ResultBanner | null = isResultShown
+    ? {
+        variant: submitResult === 'full' ? 'full' : 'partial',
+        title: submitResult === 'full' ? t('result.fullTitle') : t('result.partialTitle'),
+        message: submitResult === 'full' ? t('result.fullMessage') : t('result.partialMessage'),
+        acknowledgeLabel: t('result.acknowledge'),
+        onAcknowledge: acknowledgeResult,
+      }
+    : null
+
   return (
-    <div className="fixed inset-0 z-50 flex flex-col bg-white">
-      {/* ── Header (Meta tarzı: logo + eyebrow + title) ── */}
-      <div className="h-16 flex items-center justify-between px-6 border-b border-gray-200 flex-shrink-0">
-        <div className="flex items-center gap-3">
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src="/integration-icons/google-ads.svg"
-            alt="Google Ads"
-            width={32}
-            height={32}
-            className="shrink-0"
-          />
-          <div className="flex flex-col leading-tight">
-            <span className="text-[11px] font-semibold tracking-[0.12em] text-gray-500">
-              {t('display.wizardHeaderEyebrow')}
-            </span>
-            <h2 className="text-base font-semibold text-gray-900">
-              {t('display.wizardHeaderTitle')}
-            </h2>
-          </div>
-        </div>
-
-        <button
-          onClick={isResultShown ? acknowledgeResult : handleClose}
-          className="p-2 text-gray-500 hover:text-gray-700 hover:bg-gray-100 rounded-lg transition-colors"
-          aria-label={t('nav.cancel')}
-        >
-          <X className="w-5 h-5" />
-        </button>
-      </div>
-
-      {/* ── Body: 3-column layout (sol step menüsü + içerik + sağ özet) ── */}
-      <div className="flex-1 relative overflow-hidden bg-white">
-        {/* Google-renkli yılan ışık — viewport frame'inde, kartların altında */}
-        <div className="google-snake-border" aria-hidden="true" />
-        <div className="absolute inset-0 overflow-y-auto z-10">
-          <div className="max-w-7xl mx-auto px-6 py-8 flex gap-8">
-            {/* ─── Sol: dikey step menüsü ─── */}
-            <aside className="w-56 shrink-0">
-              <nav className="sticky top-0 space-y-1">
-                <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider px-3 mb-3">
-                  {campaignTypeLabel}
-                </p>
-                {PROGRESS_STEPS.map((s, i) => {
-                  const isCompleted = i < step
-                  const isCurrent = i === step
-                  const isClickable = isCompleted && !isResultShown
-                  return (
-                    <button
-                      key={i}
-                      type="button"
-                      disabled={!isClickable}
-                      onClick={() => isClickable && goToStep(i)}
-                      className={`w-full flex items-center gap-3 px-3 py-2.5 rounded-lg text-sm transition-colors ${
-                        isCurrent
-                          ? 'bg-primary/10 text-primary font-semibold'
-                          : isCompleted
-                            ? 'text-gray-700 hover:bg-gray-50 cursor-pointer'
-                            : 'text-gray-400 cursor-default'
-                      }`}
-                    >
-                      <span
-                        className={`w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold shrink-0 border-2 ${
-                          isCompleted
-                            ? 'bg-primary border-primary text-white'
-                            : isCurrent
-                              ? 'border-primary bg-white text-primary'
-                              : 'border-gray-300 bg-white text-gray-400'
-                        }`}
-                      >
-                        {isCompleted ? <Check className="w-3.5 h-3.5" /> : i + 1}
-                      </span>
-                      <span className="flex-1 text-left truncate">{s.label}</span>
-                    </button>
-                  )
-                })}
-              </nav>
-            </aside>
-
-            {/* ─── Orta + Sağ: içerik gridi ─── */}
-            <div className="flex-1 grid grid-cols-3 gap-8 min-w-0">
-            {/* Left column — Step content */}
-            <div className="col-span-2 space-y-4">
-              {submitResult === 'full' && (
-                <div className="flex flex-col items-center justify-center py-10 px-6 rounded-xl bg-emerald-50 border border-emerald-200">
-                  <CheckCircle2 className="w-12 h-12 text-emerald-600 mb-3" />
-                  <h3 className="text-lg font-semibold text-emerald-800 mb-1">{t('result.fullTitle')}</h3>
-                  <p className="text-sm text-emerald-700 text-center mb-4">{t('result.fullMessage')}</p>
-                  <button
-                    type="button"
-                    onClick={acknowledgeResult}
-                    className="px-5 py-2.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    {t('result.acknowledge')}
-                  </button>
-                </div>
-              )}
-              {submitResult === 'partial' && (
-                <div className="flex flex-col items-center justify-center py-10 px-6 rounded-xl bg-gray-50 border border-gray-200">
-                  <AlertTriangle className="w-12 h-12 text-gray-600 mb-3" />
-                  <h3 className="text-lg font-semibold text-gray-800 mb-1">{t('result.partialTitle')}</h3>
-                  <p className="text-sm text-gray-700 text-center mb-4">{t('result.partialMessage')}</p>
-                  <button
-                    type="button"
-                    onClick={acknowledgeResult}
-                    className="px-5 py-2.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors"
-                  >
-                    {t('result.acknowledge')}
-                  </button>
-                </div>
-              )}
-              {error && !isResultShown && (
-                <div className="flex items-start gap-2 p-3.5 rounded-xl bg-red-50 border border-red-200 text-sm text-red-700">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {!isResultShown && (
-                <>
-                  {step === 0 && <StepConversionAndName {...stepProps} />}
-                  {step === 1 && <DisplayStepCampaignSettings {...stepProps} />}
-                  {step === 2 && <DisplayStepBudgetBidding {...stepProps} />}
-                  {step === 3 && <DisplayStepTargeting {...stepProps} />}
-                  {step === 4 && <DisplayStepAds {...stepProps} />}
-                  {step === 5 && <DisplayStepSummary {...stepProps} />}
-                </>
-              )}
-            </div>
-
-            {/* Right column — Sticky sidebar */}
-            <div className="col-span-1">
-              <DisplaySidebar state={state} currentStep={step} t={t} />
-            </div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      {/* ── Footer ── */}
-      {!isResultShown && (
-        <div className="h-16 flex items-center justify-between px-8 border-t border-gray-200 bg-white flex-shrink-0">
-          <button
-            type="button"
-            onClick={isFirstStep ? handleClose : back}
-            disabled={submitting}
-            className={`px-5 py-2.5 rounded-lg text-sm font-medium transition-colors ${
-              isFirstStep
-                ? 'text-gray-700 hover:bg-gray-50'
-                : 'text-gray-700 border border-gray-300 hover:bg-gray-50'
-            }`}
-          >
-            {isFirstStep ? t('nav.cancel') : t('nav.back')}
-          </button>
-
-          <span className="text-xs text-gray-400">
-            {step + 1} / {TOTAL_STEPS}
-          </span>
-
-          {isLastStep ? (
-            <button
-              type="button"
-              onClick={submit}
-              disabled={submitting}
-              className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center gap-2"
-            >
-              {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-              {submitting ? t('nav.submitting') : t('nav.submit')}
-            </button>
-          ) : (
-            <button
-              type="button"
-              onClick={next}
-              className="px-6 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors"
-            >
-              {t('nav.next')}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
+    <GoogleWizardShell
+      isOpen={isOpen}
+      onClose={isResultShown ? acknowledgeResult : handleClose}
+      eyebrow={t('display.wizardHeaderEyebrow')}
+      title={t('display.wizardHeaderTitle')}
+      steps={PROGRESS_STEPS}
+      currentStep={step}
+      campaignTypeLabel={campaignTypeLabel}
+      onStepClick={goToStep}
+      rightSummary={<DisplaySidebar state={state} currentStep={step} t={t} />}
+      errorMessage={error}
+      resultBanner={resultBanner}
+      isFirstStep={isFirstStep}
+      isLastStep={isLastStep}
+      submitting={submitting}
+      onBack={back}
+      onNext={next}
+      onSubmit={submit}
+      labels={{
+        cancel: t('nav.cancel'),
+        back: t('nav.back'),
+        next: t('nav.next'),
+        submit: t('nav.submit'),
+        submitting: t('nav.submitting'),
+      }}
+    >
+      {step === 0 && <StepConversionAndName {...stepProps} />}
+      {step === 1 && <DisplayStepCampaignSettings {...stepProps} />}
+      {step === 2 && <DisplayStepBudgetBidding {...stepProps} />}
+      {step === 3 && <DisplayStepTargeting {...stepProps} />}
+      {step === 4 && <DisplayStepAds {...stepProps} />}
+      {step === 5 && <DisplayStepSummary {...stepProps} />}
+    </GoogleWizardShell>
   )
 }

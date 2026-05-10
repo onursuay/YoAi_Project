@@ -2,11 +2,11 @@
 
 import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
-import { X, ChevronLeft, ChevronRight, Check, AlertCircle, Loader2, CheckCircle2, AlertTriangle } from 'lucide-react'
 import { defaultPMaxState } from './shared/PMaxWizardTypes'
 import type { PMaxWizardState } from './shared/PMaxWizardTypes'
 import { validatePMaxStep, getPMaxBlockingIssues } from './shared/PMaxWizardValidation'
 import { buildPerformanceMaxCreatePayload } from './shared/PMaxCreatePayload'
+import GoogleWizardShell, { type ResultBanner, type WizardShellStep } from '../shared/GoogleWizardShell'
 import PMaxStepEntry from './steps/PMaxStepEntry'
 import PMaxStepBiddingAcquisition from './steps/PMaxStepBiddingAcquisition'
 import PMaxStepCampaignSettings from './steps/PMaxStepCampaignSettings'
@@ -39,26 +39,27 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
   const [submitResult, setSubmitResult] = useState<PMaxSubmitResult>(null)
 
   const t = useTranslations('dashboard.google.pmaxWizard')
-  const STEPS = [
-    t('steps.entry'),
-    t('steps.bidding'),
-    t('steps.campaignSettings'),
-    t('steps.assetGroup'),
-    t('steps.budget'),
-    t('steps.summary'),
+  const tCommon = useTranslations('dashboard.google.wizard')
+
+  const CAMPAIGN_SETTINGS_SUBS: { id: string; label: string }[] = [
+    { id: 'pmax-settings-section-0', label: t('settings.locationsTitle') },
+    { id: 'pmax-settings-section-1', label: t('settings.languagesTitle') },
+    { id: 'pmax-settings-section-2', label: t('settings.euPoliticalTitle') },
+    { id: 'pmax-settings-section-3', label: t('settings.devicesTitle') },
+    { id: 'pmax-settings-section-4', label: t('settings.scheduleTitle') },
+    { id: 'pmax-settings-section-5', label: t('settings.datesTitle') },
+    { id: 'pmax-settings-section-6', label: t('settings.urlOptionsTitle') },
+    { id: 'pmax-settings-section-7', label: t('settings.pageFeedsTitle') },
+    { id: 'pmax-settings-section-8', label: t('settings.brandExclusionsTitle') },
   ]
 
-  // Sub-nav items for Campaign Settings step
-  const CAMPAIGN_SETTINGS_SUBS = [
-    t('settings.locationsTitle'),
-    t('settings.languagesTitle'),
-    t('settings.euPoliticalTitle'),
-    t('settings.devicesTitle'),
-    t('settings.scheduleTitle'),
-    t('settings.datesTitle'),
-    t('settings.urlOptionsTitle'),
-    t('settings.pageFeedsTitle'),
-    t('settings.brandExclusionsTitle'),
+  const STEPS: WizardShellStep[] = [
+    { label: t('steps.entry') },
+    { label: t('steps.bidding') },
+    { label: t('steps.campaignSettings'), subItems: CAMPAIGN_SETTINGS_SUBS },
+    { label: t('steps.assetGroup') },
+    { label: t('steps.budget') },
+    { label: t('steps.summary') },
   ]
 
   useEffect(() => {
@@ -85,6 +86,18 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
   const back = () => {
     setError(null)
     setStep(s => s - 1)
+  }
+
+  const goToStep = (target: number) => {
+    if (target === step) return
+    if (target > step) {
+      for (let i = step; i < target; i++) {
+        const err = validatePMaxStep(i, state, t)
+        if (err) { setError(err); setStep(i); return }
+      }
+    }
+    setError(null)
+    setStep(target)
   }
 
   const submit = async () => {
@@ -123,11 +136,6 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
     }
   }
 
-  const acknowledgeResult = () => {
-    onSuccess()
-    handleClose()
-  }
-
   const handleClose = () => {
     setStep(0)
     setState(defaultPMaxState)
@@ -136,189 +144,72 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
     onClose()
   }
 
-  if (!isOpen) return null
+  const acknowledgeResult = () => {
+    onSuccess()
+    handleClose()
+  }
 
   const stepProps = { state, update, t }
   const blockingIssues = step === 5 ? getPMaxBlockingIssues(state, t) : []
   const hasBlockingIssues = blockingIssues.length > 0
 
-  // Step validation status icons for sidebar
-  const stepValidated = (i: number): 'done' | 'error' | 'none' => {
-    if (i >= step) return 'none'
+  const isFirstStep = step === 0
+  const isLastStep = step === TOTAL_STEPS - 1
+  const isResultShown = submitResult === 'full' || submitResult === 'partial'
+
+  // Step status: validated done/error before current; current; pending after
+  const stepStatusOf = (i: number): 'done' | 'error' | 'current' | 'pending' => {
+    if (i === step) return 'current'
+    if (i > step) return 'pending'
     const err = validatePMaxStep(i, state, t)
     return err ? 'error' : 'done'
   }
 
+  const resultBanner: ResultBanner | null = isResultShown
+    ? {
+        variant: submitResult === 'full' ? 'full' : 'partial',
+        title: submitResult === 'full' ? t('result.fullTitle') : t('result.partialTitle'),
+        message: submitResult === 'full' ? t('result.fullMessage') : t('result.partialMessage'),
+        acknowledgeLabel: t('result.acknowledge'),
+        onAcknowledge: acknowledgeResult,
+      }
+    : null
+
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50">
-      <div
-        className="bg-white rounded-2xl shadow-2xl w-full max-w-7xl max-h-[92vh] flex flex-col"
-        onClick={e => e.stopPropagation()}
-      >
-        {/* Top header */}
-        <div className="flex items-center justify-between px-6 py-3 border-b border-gray-200 bg-white rounded-t-2xl">
-          <span className="text-[15px] font-semibold text-gray-900">{t('title')}</span>
-          <button
-            type="button"
-            onClick={submitResult === 'full' || submitResult === 'partial' ? acknowledgeResult : handleClose}
-            className="p-1.5 rounded-lg hover:bg-gray-100 text-gray-500"
-          >
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-
-        {/* Main layout: sidebar + content */}
-        <div className="flex flex-1 overflow-hidden">
-          {/* Left sidebar navigation — Google Ads style */}
-          <nav className="w-52 shrink-0 border-r border-gray-200 bg-gray-50/50 overflow-y-auto py-2">
-            {STEPS.map((label, i) => {
-              const isActive = step === i
-              const status = stepValidated(i)
-              return (
-                <div key={i}>
-                  <button
-                    type="button"
-                    onClick={() => {
-                      if (i < step) {
-                        setError(null)
-                        setStep(i)
-                      }
-                    }}
-                    disabled={i > step}
-                    className={`w-full flex items-center gap-2.5 px-4 py-2.5 text-left text-sm transition-colors ${
-                      isActive
-                        ? 'bg-white text-blue-700 font-semibold border-l-[3px] border-blue-600'
-                        : i < step
-                          ? 'text-gray-700 hover:bg-gray-100 cursor-pointer'
-                          : 'text-gray-400 cursor-default'
-                    }`}
-                  >
-                    {status === 'done' && <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0" />}
-                    {status === 'error' && <AlertCircle className="w-4 h-4 text-red-500 shrink-0" />}
-                    {status === 'none' && (
-                      <span className={`w-4 h-4 rounded-full border-2 shrink-0 flex items-center justify-center text-[10px] font-bold ${
-                        isActive ? 'border-blue-600 text-blue-600' : 'border-gray-300 text-gray-400'
-                      }`}>
-                        {i + 1}
-                      </span>
-                    )}
-                    <span className="truncate">{label}</span>
-                  </button>
-                  {/* Sub-navigation for Campaign Settings */}
-                  {i === 2 && isActive && (
-                    <div className="ml-6 border-l border-gray-200 pl-2 py-1">
-                      {CAMPAIGN_SETTINGS_SUBS.map((sub, si) => (
-                        <a
-                          key={si}
-                          href={`#pmax-settings-section-${si}`}
-                          className="block px-2 py-1 text-xs text-gray-500 hover:text-blue-600 truncate"
-                        >
-                          {sub}
-                        </a>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              )
-            })}
-          </nav>
-
-          {/* Right content area */}
-          <div className="flex-1 flex flex-col overflow-hidden">
-            {/* Step title bar */}
-            <div className="px-6 pt-4 pb-2">
-              <h2 className="text-lg font-semibold text-gray-900">{STEPS[step]}</h2>
-              {step === 2 && (
-                <p className="text-[13px] text-gray-500 mt-0.5">{t('settings.subtitle')}</p>
-              )}
-            </div>
-
-            {/* Scrollable content */}
-            <div className="flex-1 overflow-y-auto px-6 pb-4">
-              {submitResult === 'full' && (
-                <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-green-50 border border-green-200">
-                  <CheckCircle2 className="w-12 h-12 text-green-600 mb-3" />
-                  <h3 className="text-lg font-semibold text-green-800 mb-1">{t('result.fullTitle')}</h3>
-                  <p className="text-sm text-green-700 text-center mb-4">{t('result.fullMessage')}</p>
-                  <button
-                    type="button"
-                    onClick={acknowledgeResult}
-                    className="px-4 py-2 text-sm font-medium bg-green-600 text-white rounded-lg hover:bg-green-700"
-                  >
-                    {t('result.acknowledge')}
-                  </button>
-                </div>
-              )}
-              {submitResult === 'partial' && (
-                <div className="flex flex-col items-center justify-center py-8 px-4 rounded-xl bg-amber-50 border border-amber-200">
-                  <AlertTriangle className="w-12 h-12 text-amber-600 mb-3" />
-                  <h3 className="text-lg font-semibold text-amber-800 mb-1">{t('result.partialTitle')}</h3>
-                  <p className="text-sm text-amber-700 text-center mb-4">{t('result.partialMessage')}</p>
-                  <button
-                    type="button"
-                    onClick={acknowledgeResult}
-                    className="px-4 py-2 text-sm font-medium bg-amber-600 text-white rounded-lg hover:bg-amber-700"
-                  >
-                    {t('result.acknowledge')}
-                  </button>
-                </div>
-              )}
-              {error && (
-                <div className="flex items-start gap-2 p-3 rounded-lg bg-red-50 border border-red-200 text-sm text-red-700 mb-4">
-                  <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
-                  <span>{error}</span>
-                </div>
-              )}
-
-              {!submitResult && step === 0 && <PMaxStepEntry {...stepProps} />}
-              {!submitResult && step === 1 && <PMaxStepBiddingAcquisition {...stepProps} />}
-              {!submitResult && step === 2 && <PMaxStepCampaignSettings {...stepProps} />}
-              {!submitResult && step === 3 && <PMaxStepAssetGroup {...stepProps} />}
-              {!submitResult && step === 4 && <PMaxStepBudget {...stepProps} />}
-              {!submitResult && step === 5 && <PMaxStepSummary {...stepProps} />}
-            </div>
-
-            {/* Bottom navigation */}
-            {!submitResult && (
-              <div className="flex items-center justify-between px-6 py-3 border-t border-gray-200 bg-white rounded-b-2xl">
-                <button
-                  type="button"
-                  onClick={step === 0 ? handleClose : back}
-                  className="flex items-center gap-1.5 px-4 py-2 text-sm text-gray-600 hover:text-gray-900 rounded-lg hover:bg-gray-100"
-                  disabled={submitting}
-                >
-                  {step === 0 ? t('nav.cancel') : (
-                    <>
-                      <ChevronLeft className="w-4 h-4" />
-                      {t('nav.back')}
-                    </>
-                  )}
-                </button>
-                {step < TOTAL_STEPS - 1 ? (
-                  <button
-                    type="button"
-                    onClick={next}
-                    className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700"
-                  >
-                    {t('nav.next')} <ChevronRight className="w-4 h-4" />
-                  </button>
-                ) : (
-                  <button
-                    type="button"
-                    onClick={submit}
-                    disabled={submitting || hasBlockingIssues}
-                    className="flex items-center gap-1.5 px-5 py-2 text-sm font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
-                    title={hasBlockingIssues ? blockingIssues[0] : undefined}
-                  >
-                    {submitting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
-                    {submitting ? t('nav.submitting') : t('nav.submit')}
-                  </button>
-                )}
-              </div>
-            )}
-          </div>
-        </div>
-      </div>
-    </div>
+    <GoogleWizardShell
+      isOpen={isOpen}
+      onClose={isResultShown ? acknowledgeResult : handleClose}
+      eyebrow={tCommon('display.wizardHeaderEyebrow')}
+      title={t('title')}
+      steps={STEPS}
+      currentStep={step}
+      campaignTypeLabel={tCommon('display.campaignTypePerformanceMax')}
+      onStepClick={goToStep}
+      stepStatusOf={stepStatusOf}
+      errorMessage={error}
+      resultBanner={resultBanner}
+      isFirstStep={isFirstStep}
+      isLastStep={isLastStep}
+      submitting={submitting}
+      submitDisabled={hasBlockingIssues}
+      submitDisabledReason={blockingIssues[0]}
+      onBack={back}
+      onNext={next}
+      onSubmit={submit}
+      labels={{
+        cancel: t('nav.cancel'),
+        back: t('nav.back'),
+        next: t('nav.next'),
+        submit: t('nav.submit'),
+        submitting: t('nav.submitting'),
+      }}
+    >
+      {step === 0 && <PMaxStepEntry {...stepProps} />}
+      {step === 1 && <PMaxStepBiddingAcquisition {...stepProps} />}
+      {step === 2 && <PMaxStepCampaignSettings {...stepProps} />}
+      {step === 3 && <PMaxStepAssetGroup {...stepProps} />}
+      {step === 4 && <PMaxStepBudget {...stepProps} />}
+      {step === 5 && <PMaxStepSummary {...stepProps} />}
+    </GoogleWizardShell>
   )
 }
