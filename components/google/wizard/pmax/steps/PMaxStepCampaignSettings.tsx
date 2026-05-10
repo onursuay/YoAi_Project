@@ -131,7 +131,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                   onClick={() => toggleLanguage(lang.id)}
                   className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-full text-sm border transition-colors ${
                     selected
-                      ? 'border-blue-500 bg-blue-50 text-blue-700'
+                      ? 'border-primary bg-primary/5 text-primary'
                       : 'border-gray-200 hover:border-gray-300 text-gray-700'
                   }`}
                 >
@@ -151,7 +151,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
           <label
             className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
               state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'
-                ? 'border-blue-300 bg-blue-50/50'
+                ? 'border-primary/30 bg-primary/5/50'
                 : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
             }`}
           >
@@ -161,7 +161,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               value="NOT_POLITICAL"
               checked={state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'}
               onChange={() => update({ euPoliticalAdsDeclaration: 'NOT_POLITICAL' })}
-              className="text-blue-600 focus:ring-blue-500"
+              className="text-primary focus:ring-primary/20"
             />
             <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalNotPolitical')}</span>
           </label>
@@ -173,7 +173,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
           <label
             className={`flex items-center gap-3 py-2.5 px-3 rounded border cursor-pointer transition-colors ${
               state.euPoliticalAdsDeclaration === 'POLITICAL'
-                ? 'border-blue-300 bg-blue-50/50'
+                ? 'border-primary/30 bg-primary/5/50'
                 : 'border-gray-100 hover:border-gray-200 bg-gray-50/30'
             }`}
           >
@@ -183,21 +183,21 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               value="POLITICAL"
               checked={state.euPoliticalAdsDeclaration === 'POLITICAL'}
               onChange={() => update({ euPoliticalAdsDeclaration: 'POLITICAL' })}
-              className="text-blue-600 focus:ring-blue-500"
+              className="text-primary focus:ring-primary/20"
             />
             <span className="text-[13px] font-medium text-gray-900">{t('settings.euPoliticalPolitical')}</span>
           </label>
           {state.euPoliticalAdsDeclaration === 'POLITICAL' && (
-            <div className="flex items-start gap-2 p-3 mt-1 rounded border border-amber-200 bg-amber-50/60 text-[13px] text-amber-900">
-              <Info className="w-4 h-4 shrink-0 mt-0.5 text-amber-600" />
+            <div className="flex items-start gap-2 p-3 mt-1 rounded border border-gray-200 bg-gray-50/60 text-[13px] text-gray-700">
+              <Info className="w-4 h-4 shrink-0 mt-0.5 text-gray-600" />
               <div>
                 <p className="font-medium">{t('settings.euPoliticalWarningLine1')}</p>
-                <p className="mt-1 text-amber-800">{t('settings.euPoliticalWarningLine2')}</p>
+                <p className="mt-1 text-gray-800">{t('settings.euPoliticalWarningLine2')}</p>
                 <a
                   href={euPolicyUrl}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-1.5 inline-block text-blue-600 hover:text-blue-700 underline"
+                  className="mt-1.5 inline-block text-primary hover:text-primary underline"
                 >
                   {t('settings.euPoliticalWarningLearnMore')}
                 </a>
@@ -218,7 +218,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 type="checkbox"
                 checked={state.devices.includes(device)}
                 onChange={() => toggleDevice(device)}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm text-gray-700">{t(DEVICE_LABELS[device])}</span>
             </label>
@@ -266,7 +266,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               {MINUTES.map(m => <option key={m} value={m}>{MINUTE_LABELS[m]}</option>)}
             </select>
           </div>
-          <button type="button" onClick={() => { if (addingDay) addScheduleEntry() }} className="text-sm text-blue-600 hover:underline">
+          <button type="button" onClick={() => { if (addingDay) addScheduleEntry() }} className="text-sm text-primary hover:underline">
             {t('settings.scheduleAddLink')}
           </button>
 
@@ -282,7 +282,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                       {dayEntries.map((entry, idx) => {
                         const globalIdx = state.adSchedule.indexOf(entry)
                         return (
-                          <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
+                          <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/5 text-primary text-xs font-medium">
                             {String(entry.startHour).padStart(2, '0')}:{MINUTE_LABELS[entry.startMinute]}–{String(entry.endHour).padStart(2, '0')}:{MINUTE_LABELS[entry.endMinute]}
                             <button type="button" onClick={() => removeScheduleEntry(globalIdx)} className="hover:text-red-500"><X className="w-3 h-3" /></button>
                           </span>
@@ -310,11 +310,11 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
             <label className="block text-sm text-gray-600 mb-1">{t('settings.endDate')}</label>
             <div className="space-y-2">
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="pmaxEndDate" checked={!state.endDate} onChange={() => update({ endDate: '' })} className="text-blue-600" />
+                <input type="radio" name="pmaxEndDate" checked={!state.endDate} onChange={() => update({ endDate: '' })} className="text-primary" />
                 <span className="text-sm">{t('settings.endDateNone')}</span>
               </label>
               <label className="flex items-center gap-2 cursor-pointer">
-                <input type="radio" name="pmaxEndDate" checked={!!state.endDate} onChange={() => update({ endDate: state.startDate || '' })} className="text-blue-600" />
+                <input type="radio" name="pmaxEndDate" checked={!!state.endDate} onChange={() => update({ endDate: state.startDate || '' })} className="text-primary" />
                 <input type="date" className={`${inputCls} max-w-[200px]`} value={state.endDate} onChange={e => update({ endDate: e.target.value })} min={state.startDate || undefined} />
               </label>
             </div>
@@ -368,7 +368,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                   </button>
                 </div>
               ))}
-              <button type="button" onClick={addCustomParam} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+              <button type="button" onClick={addCustomParam} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                 <Plus className="w-3.5 h-3.5" /> {t('settings.customParamAdd')}
               </button>
             </div>
@@ -385,7 +385,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               type="checkbox"
               checked={state.finalUrlExpansionEnabled}
               onChange={e => update({ finalUrlExpansionEnabled: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600"
+              className="rounded border-gray-300 text-primary"
             />
             <span className="text-sm text-gray-700">{t('settings.finalUrlExpansionLabel')}</span>
           </label>
@@ -439,7 +439,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 type="checkbox"
                 checked={state.demographicExclusions.ageEnabled}
                 onChange={e => update({ demographicExclusions: { ...state.demographicExclusions, ageEnabled: e.target.checked, ages: e.target.checked ? state.demographicExclusions.ages : [] } })}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm font-medium text-gray-700">{t('settings.ageExclusionsEnable')}</span>
             </label>
@@ -456,7 +456,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                           : state.demographicExclusions.ages.filter(a => a !== age)
                         update({ demographicExclusions: { ...state.demographicExclusions, ages } })
                       }}
-                      className="rounded border-gray-300 text-blue-600"
+                      className="rounded border-gray-300 text-primary"
                     />
                     <span className="text-sm text-gray-700">{age === 'UNKNOWN' ? t('settings.ageUnknown') : age}</span>
                   </label>
@@ -471,7 +471,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                 type="checkbox"
                 checked={state.demographicExclusions.genderEnabled}
                 onChange={e => update({ demographicExclusions: { ...state.demographicExclusions, genderEnabled: e.target.checked, genders: e.target.checked ? state.demographicExclusions.genders : [] } })}
-                className="rounded border-gray-300 text-blue-600"
+                className="rounded border-gray-300 text-primary"
               />
               <span className="text-sm font-medium text-gray-700">{t('settings.genderExclusionsEnable')}</span>
             </label>
@@ -488,7 +488,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
                           : state.demographicExclusions.genders.filter(x => x !== g)
                         update({ demographicExclusions: { ...state.demographicExclusions, genders } })
                       }}
-                      className="rounded border-gray-300 text-blue-600"
+                      className="rounded border-gray-300 text-primary"
                     />
                     <span className="text-sm text-gray-700">{t(`settings.gender${g}`)}</span>
                   </label>
@@ -508,7 +508,7 @@ export default function PMaxStepCampaignSettings({ state, update, t }: PMaxStepP
               type="checkbox"
               checked={state.dataExclusionsEnabled}
               onChange={e => update({ dataExclusionsEnabled: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600"
+              className="rounded border-gray-300 text-primary"
             />
             <span className="text-sm text-gray-700">{t('settings.dataExclusionsEnable')}</span>
           </label>

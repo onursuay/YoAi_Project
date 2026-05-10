@@ -228,7 +228,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
       {/* Conversion goals — real data from Google Ads API, cleaner card UI */}
       <div>
         <div className="flex items-center gap-2 mb-2">
-          <Target className="w-4 h-4 text-blue-600" />
+          <Target className="w-4 h-4 text-primary" />
           <label className="text-[15px] font-semibold text-gray-900">
             {t('conversion.title')}
           </label>
@@ -252,7 +252,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
         )}
 
         {!loading && !fetchError && conversionActions.length === 0 && (
-          <div className="flex items-start gap-2 p-3 rounded border border-amber-200 bg-amber-50/50 text-[13px] text-amber-800">
+          <div className="flex items-start gap-2 p-3 rounded border border-gray-200 bg-gray-50/50 text-[13px] text-gray-800">
             <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
             <span>{t('conversion.empty')}</span>
           </div>
@@ -273,7 +273,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                     key={goal.resourceName}
                     className={`flex items-center gap-2.5 py-2 px-2.5 rounded border cursor-pointer transition-colors ${
                       isSelected
-                        ? 'border-blue-200 bg-blue-50/40'
+                        ? 'border-primary/20 bg-primary/5/40'
                         : 'border-gray-100 hover:border-gray-200 hover:bg-gray-50/30'
                     }`}
                   >
@@ -281,7 +281,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                       type="checkbox"
                       checked={isSelected}
                       onChange={() => toggleGoal(goal.resourceName)}
-                      className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
+                      className="rounded border-gray-300 text-primary focus:ring-primary/20 w-4 h-4 shrink-0"
                     />
                     <div className="flex items-center justify-center w-6 h-6 rounded bg-gray-50 text-gray-500 shrink-0">
                       <CategoryIcon className="w-3.5 h-3.5" />
@@ -295,7 +295,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                         {!isEnabled && (
                           <>
                             <span className="text-gray-300 text-[13px]">·</span>
-                            <span className="text-[13px] text-amber-600">
+                            <span className="text-[13px] text-gray-600">
                               {t('conversion.statusUnenabled')}
                             </span>
                           </>
@@ -312,12 +312,12 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                           }}
                           className={`flex items-center gap-1 px-2 py-0.5 rounded text-[13px] font-medium transition-colors ${
                             isPrimary
-                              ? 'bg-amber-50 text-amber-700 border border-amber-200'
+                              ? 'bg-gray-50 text-gray-700 border border-gray-200'
                               : 'bg-gray-50 text-gray-600 hover:bg-gray-100 border border-gray-200'
                           }`}
                           title={isPrimary ? t('conversion.primaryGoalTitle') : t('conversion.setAsPrimaryTitle')}
                         >
-                          <Star className={`w-3 h-3 ${isPrimary ? 'fill-amber-500 text-amber-500' : ''}`} />
+                          <Star className={`w-3 h-3 ${isPrimary ? 'fill-primary text-primary' : ''}`} />
                           {isPrimary ? t('conversion.primary') : t('conversion.set')}
                         </button>
                       ) : (
@@ -341,7 +341,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
         )}
 
         {!loading && !fetchError && conversionActions.length > 0 && t('conversion.uiOnlyNote') && (
-          <p className="mt-2 flex items-center gap-1.5 text-[13px] text-amber-700/90">
+          <p className="mt-2 flex items-center gap-1.5 text-[13px] text-gray-700/90">
             <Info className="w-3.5 h-3.5 shrink-0" />
             {t('conversion.uiOnlyNote')}
           </p>
@@ -355,14 +355,14 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
 
         {/* Web sitesi ziyaretleri */}
         <div className={`rounded border transition-colors ${
-          state.desiredOutcomeWebsite ? 'border-blue-100 bg-blue-50/20' : 'border-gray-100 bg-gray-50/30'
+          state.desiredOutcomeWebsite ? 'border-blue-100 bg-primary/5/20' : 'border-gray-100 bg-gray-50/30'
         }`}>
           <label className="flex items-center gap-2 px-2.5 py-2 cursor-pointer">
             <input
               type="checkbox"
               checked={state.desiredOutcomeWebsite}
               onChange={e => update({ desiredOutcomeWebsite: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
+              className="rounded border-gray-300 text-primary focus:ring-primary/20 w-4 h-4 shrink-0"
             />
             <span className="text-[13px] font-medium text-gray-900">{t('conversion.outcomeWebsiteVisits')}</span>
           </label>
@@ -391,14 +391,14 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
 
         {/* Telefon Aramaları */}
         <div className={`rounded border transition-colors ${
-          state.desiredOutcomePhone ? 'border-blue-100 bg-blue-50/20' : 'border-gray-100 bg-gray-50/30'
+          state.desiredOutcomePhone ? 'border-blue-100 bg-primary/5/20' : 'border-gray-100 bg-gray-50/30'
         }`}>
           <label className="flex items-center gap-2 px-2.5 py-2 cursor-pointer">
             <input
               type="checkbox"
               checked={state.desiredOutcomePhone}
               onChange={e => update({ desiredOutcomePhone: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600 focus:ring-blue-500 w-4 h-4 shrink-0"
+              className="rounded border-gray-300 text-primary focus:ring-primary/20 w-4 h-4 shrink-0"
             />
             <span className="text-[13px] font-medium text-gray-900">{t('conversion.outcomePhoneCalls')}</span>
           </label>
@@ -406,7 +406,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
             <div className="px-2.5 pb-2.5 pt-0">
               <div className="grid grid-cols-[140px_minmax(0,1fr)] gap-3 items-center w-full">
                 <select
-                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!state.desiredOutcomePhoneCountryCode?.trim() ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white ${!state.desiredOutcomePhoneCountryCode?.trim() ? 'border-red-400' : 'border-gray-300'}`}
                   value={state.desiredOutcomePhoneCountryCode}
                   onChange={e => update({ desiredOutcomePhoneCountryCode: e.target.value })}
                 >
@@ -419,7 +419,7 @@ export default function StepConversionAndName({ state, update, t }: StepProps) {
                   inputMode="numeric"
                   pattern="[0-9]*"
                   autoComplete="tel-national"
-                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-blue-500 bg-white ${!isValidPhoneForCountry(state.desiredOutcomePhoneNumber, state.desiredOutcomePhoneCountryCode ?? '') ? 'border-red-400' : 'border-gray-300'}`}
+                  className={`h-10 w-full min-w-0 rounded-md border px-3 text-[13px] focus:outline-none focus:ring-2 focus:ring-primary/20 bg-white ${!isValidPhoneForCountry(state.desiredOutcomePhoneNumber, state.desiredOutcomePhoneCountryCode ?? '') ? 'border-red-400' : 'border-gray-300'}`}
                   value={state.desiredOutcomePhoneNumber}
                   onChange={e => update({ desiredOutcomePhoneNumber: sanitizePhoneDigits(e.target.value) })}
                   onKeyDown={e => { if (!isAllowedPhoneKey(e)) e.preventDefault() }}

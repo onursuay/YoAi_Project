@@ -127,7 +127,7 @@ export default function StepSummary({ state, t }: StepProps) {
             {advisoryRecs.length > 0 ? (
               <ul className="space-y-1">
                 {advisoryRecs.map((rec, i) => (
-                  <li key={i} className="flex items-center gap-2 text-sm text-amber-800">
+                  <li key={i} className="flex items-center gap-2 text-sm text-gray-800">
                     <Info className="w-4 h-4 shrink-0" />
                     {rec}
                   </li>
@@ -149,7 +149,7 @@ export default function StepSummary({ state, t }: StepProps) {
       </div>
 
       {showBudgetWarning && (
-        <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+        <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200 text-sm text-gray-800">
           <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
           <span>{t('summary.budgetWarning', { budget: state.dailyBudget, recommended })}</span>
         </div>
@@ -218,7 +218,7 @@ export default function StepSummary({ state, t }: StepProps) {
         {state.adSchedule.length > 0 && (
           <div className="flex flex-wrap gap-1 py-2">
             {state.adSchedule.map((e, i) => (
-              <span key={i} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+              <span key={i} className="text-xs bg-primary/5 text-primary px-2 py-0.5 rounded">
                 {t(`summary.dayLabelsShort.${e.dayOfWeek}`)} {String(e.startHour).padStart(2, '0')}:00–{String(e.endHour).padStart(2, '0')}:00
               </span>
             ))}
@@ -267,7 +267,7 @@ export default function StepSummary({ state, t }: StepProps) {
             <Row label={t('summary.audienceModeLabel')} value={t(`summary.audienceModeLabels.${state.audienceMode}`) || state.audienceMode} />
             <div className="flex flex-wrap gap-1 py-1">
               {state.selectedAudienceSegments.map(seg => (
-                <span key={`${seg.category}-${seg.id}`} className="text-xs bg-blue-50 text-blue-700 px-2 py-0.5 rounded">
+                <span key={`${seg.category}-${seg.id}`} className="text-xs bg-primary/5 text-primary px-2 py-0.5 rounded">
                   {seg.name}
                 </span>
               ))}

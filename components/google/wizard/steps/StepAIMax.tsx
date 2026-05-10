@@ -15,19 +15,19 @@ export default function StepAIMax({ state, update, t }: StepProps) {
       {/* Master toggle */}
       <section>
         <div className="flex items-center gap-2 mb-2">
-          <Zap className="w-5 h-5 text-amber-500" />
+          <Zap className="w-5 h-5 text-primary" />
           <h4 className="text-sm font-semibold text-gray-900">{t('aiMax.title')}</h4>
         </div>
         <label
           className={`flex items-center gap-3 p-4 rounded-lg border cursor-pointer transition-colors ${
-            aiMax.enabled ? 'border-amber-300 bg-amber-50' : 'border-gray-200 hover:border-gray-300 bg-white'
+            aiMax.enabled ? 'border-gray-300 bg-gray-50' : 'border-gray-200 hover:border-gray-300 bg-white'
           }`}
         >
           <input
             type="checkbox"
             checked={aiMax.enabled}
             onChange={e => setAiMax({ enabled: e.target.checked })}
-            className="rounded border-gray-300 text-amber-600 focus:ring-amber-500 w-5 h-5"
+            className="rounded border-gray-300 text-gray-600 focus:ring-primary/20 w-5 h-5"
           />
           <span className="text-sm font-medium text-gray-900">
             {aiMax.enabled ? t('aiMax.enabled') : t('aiMax.disabled')}
@@ -41,7 +41,7 @@ export default function StepAIMax({ state, update, t }: StepProps) {
           <p className="text-sm text-gray-600">
             {t('aiMax.description')}
           </p>
-          <p className="mt-2 flex items-center gap-1.5 text-xs text-amber-700/90">
+          <p className="mt-2 flex items-center gap-1.5 text-xs text-gray-700/90">
             <Info className="w-3.5 h-3.5 shrink-0" />
             {t('aiMax.uiOnlyNote')}
           </p>
@@ -52,20 +52,20 @@ export default function StepAIMax({ state, update, t }: StepProps) {
       {aiMax.enabled && (
         <section className="space-y-3">
           <div className="flex items-center gap-2 mb-2">
-            <Sparkles className="w-4 h-4 text-amber-500" />
+            <Sparkles className="w-4 h-4 text-primary" />
             <h5 className="text-sm font-semibold text-gray-900">{t('aiMax.summaryOptions')}</h5>
           </div>
 
           <label
             className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-              aiMax.broadMatchWithAI ? 'border-amber-200 bg-amber-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
+              aiMax.broadMatchWithAI ? 'border-gray-200 bg-gray-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
             }`}
           >
             <input
               type="checkbox"
               checked={aiMax.broadMatchWithAI}
               onChange={e => setAiMax({ broadMatchWithAI: e.target.checked })}
-              className="mt-1 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              className="mt-1 rounded border-gray-300 text-gray-600 focus:ring-primary/20"
             />
             <div>
               <span className="text-sm font-medium text-gray-900">{t('aiMax.broadMatchWithAI')}</span>
@@ -75,14 +75,14 @@ export default function StepAIMax({ state, update, t }: StepProps) {
 
           <label
             className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-              aiMax.targetingExpansion ? 'border-amber-200 bg-amber-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
+              aiMax.targetingExpansion ? 'border-gray-200 bg-gray-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
             }`}
           >
             <input
               type="checkbox"
               checked={aiMax.targetingExpansion}
               onChange={e => setAiMax({ targetingExpansion: e.target.checked })}
-              className="mt-1 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              className="mt-1 rounded border-gray-300 text-gray-600 focus:ring-primary/20"
             />
             <div>
               <span className="text-sm font-medium text-gray-900">{t('aiMax.targetingExpansion')}</span>
@@ -92,14 +92,14 @@ export default function StepAIMax({ state, update, t }: StepProps) {
 
           <label
             className={`flex items-start gap-3 p-3 rounded-lg border cursor-pointer transition-colors ${
-              aiMax.creativeOptimization ? 'border-amber-200 bg-amber-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
+              aiMax.creativeOptimization ? 'border-gray-200 bg-gray-50/50' : 'border-gray-200 hover:border-gray-300 bg-white'
             }`}
           >
             <input
               type="checkbox"
               checked={aiMax.creativeOptimization}
               onChange={e => setAiMax({ creativeOptimization: e.target.checked })}
-              className="mt-1 rounded border-gray-300 text-amber-600 focus:ring-amber-500"
+              className="mt-1 rounded border-gray-300 text-gray-600 focus:ring-primary/20"
             />
             <div>
               <span className="text-sm font-medium text-gray-900">{t('aiMax.creativeOptimization')}</span>

@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-10 — Search + PMax step içleri Display tasarım dilinde renk/kart parite
+- **Sorun:** Sağ Özet paneli ve shell Display ile aynıydı ama step iç form'ları (input focus ring, button rengi, kart chrome, banner palette) Search'te ve PMax'te hâlâ blue-500/amber/yellow eski tema kullanıyordu — Display ile görsel parite eksikti.
+- **Çözüm:**
+  - `inputCls` paylaşılan constant'ları (Search `WizardTypes.ts`, PMax `PMaxWizardTypes.ts`) Display'in `googleWizardInputCls` palette'ine taşındı (`px-4 py-3`, `bg-white transition-colors`, `focus:ring-primary/20 focus:border-primary`). Tüm `inputCls` kullanan input/select/textarea'lar şimdi Display ile birebir aynı görünüm.
+  - Tüm Search ve PMax step dosyalarında palet tarama: `focus:ring-blue-500` → `focus:ring-primary/20`, `text-blue-600/700/800` → `text-primary`, `bg-blue-600/700` → `bg-primary*`, `border-blue-*` → `border-primary*`. Proje renk yasağı temizliği: `bg-amber-*`, `text-amber-*`, `border-amber-*`, `bg-yellow-*` → gray-50/200/700 paletine (warning) veya red-300 (validation ring).
+  - Yeni paylaşılan primitive'ler: `GoogleWizardField` (label + required + hint + error tek bir yapıda) ve `GoogleWizardInfoBox` (info/success/warning/danger banner — amber yok).
+  - `StepBudget` (Search) tamamen Display dilinde 3 `GoogleWizardSection` kartına yeniden organize edildi (DollarSign / Info / Calendar icon + title).
+  - `StepBiddingAcquisition` (Search) `GoogleWizardSection` ile sarmalandı (DollarSign + Users); radio kartları `border-2 rounded-xl shadow-sm` Display chrome'una hizalandı.
+  - PMax `CollapsibleSection`'ları `rounded-lg` → `rounded-xl` Display chrome'una hizalandı.
+- **Korunanlar:** Tüm validation, payload, submit, API logic. Step sayıları/sırası. Search RSA yapısı, PMax asset group state. Display tarafı dokunulmadı.
+- **Dosyalar:**
+  - Yeni primitive: `components/google/wizard/shared/GoogleWizardUI.tsx` (Field + InfoBox eklendi)
+  - Constant: `components/google/wizard/shared/WizardTypes.ts`, `components/google/wizard/pmax/shared/PMaxWizardTypes.ts`
+  - Section yeniden yazıldı: `components/google/wizard/steps/StepBudget.tsx`, `StepBiddingAcquisition.tsx`
+  - Palet swap (sed): tüm 14 step dosyası — Search 8 + PMax 6
+
+---
+
 ## 2026-05-10 — Wizard summary panel: seçim ekranlarında gizle (Search + PMax step 0)
 - **Sorun:** "Kampanya Hedefinizi Seçin" ekranı bir form adımı değil, seçim ekranı; sağ Özet paneli orada hâlâ görünüyordu. PMax giriş (Entry) ekranı da seçim/entry niteliğinde — özet panel orada da gereksizdi.
 - **Çözüm:** Hem Search hem PMax wizard `step > 0` koşulunda paneli render ediyor, `step === 0`'da `null` geçiyor. Shell'in `hasRightSummary = !!rightSummary` mantığı boş kolon bırakmadan içeriği tam genişliğe yayıyor.

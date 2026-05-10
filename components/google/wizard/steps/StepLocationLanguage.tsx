@@ -138,7 +138,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
               setLocationScope('all')
               update({ locations: [], proximityTargets: [], geoSearchCountry: '' })
             }}
-            className="text-blue-600"
+            className="text-primary"
           />
           <span className="text-sm">{t('settings.locationsAllCountries')}</span>
         </label>
@@ -151,7 +151,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
               setLocationScope('turkey')
               update({ geoSearchCountry: 'TR', locations: [], proximityTargets: [] })
             }}
-            className="text-blue-600"
+            className="text-primary"
           />
           <span className="text-sm">{t('location.countryTR')}</span>
         </label>
@@ -165,7 +165,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
               update({ geoSearchCountry: '' })
               setTimeout(() => inputRef.current?.focus(), 50)
             }}
-            className="text-blue-600"
+            className="text-primary"
           />
           <span className="text-sm">{t('settings.locationsCustom')}</span>
         </label>
@@ -209,7 +209,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
                   return (
                     <div
                       key={r.id}
-                      className={`flex items-center justify-between px-4 py-2.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 ${added ? 'bg-blue-50/50' : ''}`}
+                      className={`flex items-center justify-between px-4 py-2.5 border-b border-gray-100 last:border-0 hover:bg-gray-50 ${added ? 'bg-primary/5/50' : ''}`}
                     >
                       <div className="flex-1 min-w-0">
                         <div className="font-medium text-gray-900 truncate">{r.name}</div>
@@ -222,13 +222,13 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
                       </div>
                       <div className="flex items-center gap-1 shrink-0 ml-2">
                         {added ? (
-                          <span className="text-xs text-blue-600">Eklendi</span>
+                          <span className="text-xs text-primary">Eklendi</span>
                         ) : (
                           <>
                             <button
                               type="button"
                               onClick={() => addLocation(r, false)}
-                              className="px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded"
+                              className="px-2 py-1 text-xs font-medium text-primary hover:bg-primary/5 rounded"
                             >
                               Dahil et
                             </button>
@@ -255,7 +255,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
       <button
         type="button"
         onClick={() => setAdvancedOpen(true)}
-        className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
+        className="inline-flex items-center gap-2 text-sm text-primary hover:underline"
       >
         <MapPin className="w-4 h-4" />
         Gelişmiş arama
@@ -271,7 +271,7 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
             {state.locations.map(loc => (
               <span
                 key={loc.id}
-                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${loc.isNegative ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}
+                className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${loc.isNegative ? 'bg-red-100 text-red-800' : 'bg-primary/10 text-primary'}`}
               >
                 {loc.name}
                 {loc.isNegative && <span className="text-red-500 text-xs">(Hariç)</span>}
@@ -305,29 +305,29 @@ export default function StepLocationLanguage({ state, update, t }: StepProps) {
 
       {/* Location targeting mode */}
       <details className="text-sm">
-        <summary className="text-blue-600 cursor-pointer hover:underline flex items-center gap-1">
+        <summary className="text-primary cursor-pointer hover:underline flex items-center gap-1">
           <ChevronDown className="w-4 h-4" />
           {t('settings.locationOptionsToggle')}
         </summary>
         <div className="mt-3 space-y-2 pl-1">
           <p className="text-xs font-medium text-gray-600 mb-1">{t('settings.locationModeTitle')}</p>
-          <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_OR_INTEREST' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+          <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_OR_INTEREST' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
             <input
               type="radio"
               name="searchLocationMode"
               checked={state.locationTargetingMode === 'PRESENCE_OR_INTEREST'}
               onChange={() => update({ locationTargetingMode: 'PRESENCE_OR_INTEREST' })}
-              className="mt-0.5 text-blue-600"
+              className="mt-0.5 text-primary"
             />
             <span className="text-sm text-gray-800">{t('settings.locationModePresenceInterest')}</span>
           </label>
-          <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_ONLY' ? 'border-blue-500 bg-blue-50' : 'border-gray-200'}`}>
+          <label className={`flex items-start gap-2 p-2.5 rounded-lg border cursor-pointer ${state.locationTargetingMode === 'PRESENCE_ONLY' ? 'border-primary bg-primary/5' : 'border-gray-200'}`}>
             <input
               type="radio"
               name="searchLocationMode"
               checked={state.locationTargetingMode === 'PRESENCE_ONLY'}
               onChange={() => update({ locationTargetingMode: 'PRESENCE_ONLY' })}
-              className="mt-0.5 text-blue-600"
+              className="mt-0.5 text-primary"
             />
             <span className="text-sm text-gray-800">{t('settings.locationModePresenceOnly')}</span>
           </label>

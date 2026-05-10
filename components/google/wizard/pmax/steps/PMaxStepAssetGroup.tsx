@@ -137,7 +137,7 @@ function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
         <button
           type="button"
           onClick={() => setShowDialog(true)}
-          className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-medium"
+          className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
         >
           <Plus className="w-3.5 h-3.5" /> {role === 'image' ? t('assetGroup.addImage') : t('assetGroup.addLogo')}
         </button>
@@ -165,7 +165,7 @@ function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
                 onClick={() => setActiveTab(tab.key as 'upload')}
                 className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors whitespace-nowrap ${
                   activeTab === tab.key
-                    ? 'border-blue-500 text-blue-600'
+                    ? 'border-primary text-primary'
                     : 'border-transparent text-gray-500 hover:text-gray-700'
                 }`}
               >
@@ -182,14 +182,14 @@ function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
                 onDragLeave={() => setDragOver(false)}
                 onDrop={handleDrop}
                 className={`border-2 border-dashed rounded-lg p-8 text-center cursor-pointer transition-colors ${
-                  dragOver ? 'border-blue-400 bg-blue-50' : 'border-gray-300 hover:border-gray-400'
+                  dragOver ? 'border-blue-400 bg-primary/5' : 'border-gray-300 hover:border-gray-400'
                 }`}
                 onClick={() => fileInputRef.current?.click()}
               >
                 <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                 <p className="text-sm text-gray-600">{t('assetGroup.uploadDragDrop')}</p>
                 <p className="text-[12px] text-gray-400 mt-1">{sizeHint}</p>
-                <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
+                <button type="button" className="mt-2 text-sm text-primary hover:underline font-medium">
                   {t('assetGroup.uploadBrowseFiles')}
                 </button>
                 <input
@@ -220,7 +220,7 @@ function ImageUploadDialog({ assets, onAdd, onRemove, maxCount, role, t }: {
               <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] text-gray-600 hover:text-gray-800">
                 {t('assetGroup.imageCancel')}
               </button>
-              <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+              <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-primary rounded hover:bg-primary/90">
                 {t('assetGroup.imageSave')}
               </button>
             </div>
@@ -274,7 +274,7 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
     <CollapsibleSection
       title={t('assetGroup.videosTitle')}
       count={videos.length}
-      icon={<div className={`w-2 h-2 rounded-full ${videos.length > 0 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+      icon={<div className={`w-2 h-2 rounded-full ${videos.length > 0 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
     >
       <div className="space-y-3">
         {/* Existing videos */}
@@ -300,7 +300,7 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
           <button
             type="button"
             onClick={() => setShowDialog(true)}
-            className="inline-flex items-center gap-1.5 text-sm text-blue-600 hover:underline font-medium"
+            className="inline-flex items-center gap-1.5 text-sm text-primary hover:underline font-medium"
           >
             <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addVideo')}
           </button>
@@ -334,12 +334,12 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
                   onClick={() => setVideoTab(tab.key)}
                   className={`px-4 py-2.5 text-[13px] font-medium border-b-2 transition-colors ${
                     videoTab === tab.key
-                      ? 'border-blue-500 text-blue-600'
+                      ? 'border-primary text-primary'
                       : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   {tab.label}
-                  {tab.beta && <span className="ml-1 px-1 py-0.5 text-[10px] font-bold text-blue-700 bg-blue-100 rounded">BETA</span>}
+                  {tab.beta && <span className="ml-1 px-1 py-0.5 text-[10px] font-bold text-primary bg-primary/10 rounded">BETA</span>}
                 </button>
               ))}
             </div>
@@ -361,7 +361,7 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
                       type="button"
                       onClick={handleYouTubeAdd}
                       disabled={!ytUrl.trim()}
-                      className="px-4 py-2 text-[13px] font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 disabled:opacity-50"
+                      className="px-4 py-2 text-[13px] font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
                     >
                       {t('assetGroup.videoAdd')}
                     </button>
@@ -378,7 +378,7 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
                     <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
                     <p className="text-sm text-gray-600">{t('assetGroup.videoUploadDragDrop')}</p>
                     <p className="text-[12px] text-gray-400 mt-1">{t('assetGroup.videoUploadHint')}</p>
-                    <button type="button" className="mt-2 text-sm text-blue-600 hover:underline font-medium">
+                    <button type="button" className="mt-2 text-sm text-primary hover:underline font-medium">
                       {t('assetGroup.uploadBrowseFiles')}
                     </button>
                     <input
@@ -401,7 +401,7 @@ function VideoUploadSection({ videos, onAdd, onAddYouTube, onRemove, maxCount, t
                 <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] text-gray-600 hover:text-gray-800">
                   {t('assetGroup.videoCancel')}
                 </button>
-                <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-blue-600 rounded hover:bg-blue-700">
+                <button type="button" onClick={() => setShowDialog(false)} className="px-3 py-1.5 text-[13px] font-medium text-white bg-primary rounded hover:bg-primary/90">
                   {t('assetGroup.videoSave')}
                 </button>
               </div>
@@ -578,7 +578,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
         </div>
         <button
           type="button"
-          className="text-sm text-blue-600 hover:underline font-medium whitespace-nowrap"
+          className="text-sm text-primary hover:underline font-medium whitespace-nowrap"
           onClick={() => {
             // "Kayıtlı kitle sinyali ekle" — toggle browse
             if (tab !== 'browse') setTab('browse')
@@ -616,7 +616,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             type="button"
             onClick={() => setTab('search')}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === 'search' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              tab === 'search' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {t('signals.tabSearch')}
@@ -625,7 +625,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             type="button"
             onClick={() => setTab('browse')}
             className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-              tab === 'browse' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+              tab === 'browse' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
             }`}
           >
             {t('signals.tabBrowse')}
@@ -643,9 +643,9 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
                 value={searchQuery}
                 onChange={e => handleSearchInput(e.target.value)}
                 placeholder={t('signals.searchPlaceholder')}
-                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
               />
-              {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-blue-500" />}
+              {searching && <Loader2 className="absolute right-3 top-1/2 -translate-y-1/2 w-4 h-4 animate-spin text-primary" />}
             </div>
             {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
               <p className="text-sm text-gray-500 text-center py-4">{t('signals.noResults')}</p>
@@ -671,7 +671,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             )}
             {browseError && <p className="text-sm text-red-500">{browseError}</p>}
             {browseData?.state === 'data_not_ready' && (
-              <div className="p-3 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+              <div className="p-3 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 text-sm">
                 {t('signals.dataNotReady')}
               </div>
             )}
@@ -755,7 +755,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             </div>
           )}
           {!browseLoading && !browseData && (
-            <button type="button" onClick={loadBrowse} className="text-sm text-blue-600 hover:underline">
+            <button type="button" onClick={loadBrowse} className="text-sm text-primary hover:underline">
               {t('signals.loadInterests')}
             </button>
           )}
@@ -816,7 +816,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
       {/* Selected segments summary */}
       {state.selectedAudienceSegments.length > 0 && (
         <div className="space-y-2 pt-2">
-          <p className="text-xs font-medium text-blue-600">
+          <p className="text-xs font-medium text-primary">
             {t('signals.audienceCount', { count: state.selectedAudienceSegments.length })}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -856,7 +856,7 @@ function AudienceRow({ item, selected, onToggle }: {
         type="checkbox"
         checked={selected}
         onChange={onToggle}
-        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        className="rounded border-gray-300 text-primary focus:ring-primary/20"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-900 truncate">{item.name}</p>
@@ -902,15 +902,15 @@ function AdPreview({ state, t }: { state: PMaxStepProps['state']; t: PMaxStepPro
           </div>
         </div>
         {/* Headlines */}
-        <p className="text-sm font-semibold text-blue-700 leading-tight">{headline1}</p>
-        {headline2 && <p className="text-sm font-semibold text-blue-700 leading-tight">{headline2}</p>}
+        <p className="text-sm font-semibold text-primary leading-tight">{headline1}</p>
+        {headline2 && <p className="text-sm font-semibold text-primary leading-tight">{headline2}</p>}
         {/* Description */}
         {desc && <p className="text-xs text-gray-600 line-clamp-2">{desc}</p>}
         {/* Sitelinks preview */}
         {state.sitelinks.filter(sl => sl.title.trim()).length > 0 && (
           <div className="flex flex-wrap gap-1.5 pt-1">
             {state.sitelinks.filter(sl => sl.title.trim()).slice(0, 4).map((sl, i) => (
-              <span key={i} className="text-[10px] text-blue-600 px-2 py-0.5 border border-blue-200 rounded-full">{sl.title}</span>
+              <span key={i} className="text-[10px] text-primary px-2 py-0.5 border border-primary/20 rounded-full">{sl.title}</span>
             ))}
           </div>
         )}
@@ -1035,7 +1035,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             <CollapsibleSection
               title={t('assetGroup.headlinesTitle')}
               count={filledHeadlines}
-              icon={<div className={`w-2 h-2 rounded-full ${filledHeadlines >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+              icon={<div className={`w-2 h-2 rounded-full ${filledHeadlines >= 3 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
             >
               <div className="space-y-2">
                 {state.headlines.map((h, i) => (
@@ -1052,7 +1052,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                   </div>
                 ))}
                 {state.headlines.length < 15 && (
-                  <button type="button" onClick={addHeadline} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  <button type="button" onClick={addHeadline} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                     <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addHeadline')}
                   </button>
                 )}
@@ -1063,7 +1063,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             <CollapsibleSection
               title={t('assetGroup.longHeadlinesTitle')}
               count={filledLongHeadlines}
-              icon={<div className={`w-2 h-2 rounded-full ${filledLongHeadlines >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+              icon={<div className={`w-2 h-2 rounded-full ${filledLongHeadlines >= 1 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
             >
               <div className="space-y-2">
                 {state.longHeadlines.map((h, i) => (
@@ -1080,7 +1080,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                   </div>
                 ))}
                 {state.longHeadlines.length < 5 && (
-                  <button type="button" onClick={addLongHeadline} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  <button type="button" onClick={addLongHeadline} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                     <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addLongHeadline')}
                   </button>
                 )}
@@ -1091,7 +1091,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             <CollapsibleSection
               title={t('assetGroup.descriptionsTitle')}
               count={filledDescriptions}
-              icon={<div className={`w-2 h-2 rounded-full ${filledDescriptions >= 3 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+              icon={<div className={`w-2 h-2 rounded-full ${filledDescriptions >= 3 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
             >
               <p className="text-[12px] text-gray-500 mb-2">{t('assetGroup.descriptionsHint')}</p>
               <div className="space-y-2">
@@ -1110,7 +1110,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                   </div>
                 ))}
                 {state.descriptions.length < 5 && (
-                  <button type="button" onClick={addDescription} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  <button type="button" onClick={addDescription} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                     <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addDescription')}
                   </button>
                 )}
@@ -1121,7 +1121,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             <CollapsibleSection
               title={t('assetGroup.imagesTitle')}
               count={state.images.length}
-              icon={<div className={`w-2 h-2 rounded-full ${state.images.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+              icon={<div className={`w-2 h-2 rounded-full ${state.images.length >= 1 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
             >
               <ImageUploadDialog
                 assets={state.images}
@@ -1137,7 +1137,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             <CollapsibleSection
               title={t('assetGroup.logosTitle')}
               count={state.logos.length}
-              icon={<div className={`w-2 h-2 rounded-full ${state.logos.length >= 1 ? 'bg-blue-500' : 'bg-gray-300'}`} />}
+              icon={<div className={`w-2 h-2 rounded-full ${state.logos.length >= 1 ? 'bg-primary/50' : 'bg-gray-300'}`} />}
             >
               <ImageUploadDialog
                 assets={state.logos}
@@ -1202,7 +1202,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                           <p className="text-sm text-gray-400">{t('assetGroup.sitelinkLabel')} {n}</p>
                           <p className="text-xs text-gray-300">{t('assetGroup.sitelinkDesc')}</p>
                         </div>
-                        <button type="button" onClick={addSitelink} className="text-gray-400 hover:text-blue-600">
+                        <button type="button" onClick={addSitelink} className="text-gray-400 hover:text-primary">
                           <Plus className="w-4 h-4" />
                         </button>
                       </div>
@@ -1223,7 +1223,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
                   </div>
                 ))}
                 {state.sitelinks.length > 0 && state.sitelinks.length < 8 && (
-                  <button type="button" onClick={addSitelink} className="inline-flex items-center gap-1 text-sm text-blue-600 hover:underline">
+                  <button type="button" onClick={addSitelink} className="inline-flex items-center gap-1 text-sm text-primary hover:underline">
                     <Plus className="w-3.5 h-3.5" /> {t('assetGroup.addSitelink')}
                   </button>
                 )}
@@ -1244,7 +1244,7 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
             </CollapsibleSection>
 
             {/* Diğer öğe türleri (Other Asset Types) — collapsed toggle */}
-            <div className="text-sm text-blue-600 hover:underline cursor-pointer flex items-center gap-1">
+            <div className="text-sm text-primary hover:underline cursor-pointer flex items-center gap-1">
               <ChevronDown className="w-3.5 h-3.5" />
               {t('assetGroup.otherAssetTypes')}
             </div>
@@ -1299,28 +1299,28 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
       <CollapsibleSection title={t('assetGroup.optimizationTitle')} defaultOpen={false}>
         <div className="space-y-3">
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-            <input type="checkbox" checked={state.textCustomizationEnabled} onChange={e => update({ textCustomizationEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
+            <input type="checkbox" checked={state.textCustomizationEnabled} onChange={e => update({ textCustomizationEnabled: e.target.checked })} className="rounded border-gray-300 text-primary" />
             <div>
               <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.textCustomization')}</span>
               <p className="text-[12px] text-gray-500">{t('assetGroup.textCustomizationDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-            <input type="checkbox" checked={state.finalUrlExpansionEnabled} onChange={e => update({ finalUrlExpansionEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
+            <input type="checkbox" checked={state.finalUrlExpansionEnabled} onChange={e => update({ finalUrlExpansionEnabled: e.target.checked })} className="rounded border-gray-300 text-primary" />
             <div>
               <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.finalUrlExpansion')}</span>
               <p className="text-[12px] text-gray-500">{t('assetGroup.finalUrlExpansionDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-            <input type="checkbox" checked={state.imageEnhancementEnabled} onChange={e => update({ imageEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
+            <input type="checkbox" checked={state.imageEnhancementEnabled} onChange={e => update({ imageEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-primary" />
             <div>
               <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.imageEnhancement')}</span>
               <p className="text-[12px] text-gray-500">{t('assetGroup.imageEnhancementDesc')}</p>
             </div>
           </label>
           <label className="flex items-center gap-3 p-3 rounded-lg border border-gray-200 cursor-pointer hover:bg-gray-50">
-            <input type="checkbox" checked={state.videoEnhancementEnabled} onChange={e => update({ videoEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-blue-600" />
+            <input type="checkbox" checked={state.videoEnhancementEnabled} onChange={e => update({ videoEnhancementEnabled: e.target.checked })} className="rounded border-gray-300 text-primary" />
             <div>
               <span className="text-[13px] font-medium text-gray-700">{t('assetGroup.videoEnhancement')}</span>
               <p className="text-[12px] text-gray-500">{t('assetGroup.videoEnhancementDesc')}</p>
@@ -1351,9 +1351,9 @@ export default function PMaxStepAssetGroup({ state, update, t }: PMaxStepProps) 
           {state.searchThemes.length > 0 && (
             <div className="flex gap-2 flex-wrap">
               {state.searchThemes.map((st, i) => (
-                <span key={`${st.text}-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-blue-50 text-blue-800 text-sm border border-blue-200">
+                <span key={`${st.text}-${i}`} className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-full bg-primary/5 text-primary text-sm border border-primary/20">
                   {st.text}
-                  <button type="button" onClick={() => removeSearchTheme(i)} className="hover:text-red-600 p-0.5 rounded-full hover:bg-blue-100">
+                  <button type="button" onClick={() => removeSearchTheme(i)} className="hover:text-red-600 p-0.5 rounded-full hover:bg-primary/10">
                     <X className="w-3.5 h-3.5" />
                   </button>
                 </span>

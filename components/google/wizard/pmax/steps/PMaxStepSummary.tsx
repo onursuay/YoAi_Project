@@ -60,7 +60,7 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
                 <AlertCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
                 <span className="text-sm text-red-700">{issue}</span>
               </div>
-              <button type="button" className="text-sm text-blue-600 hover:underline shrink-0 ml-4">
+              <button type="button" className="text-sm text-primary hover:underline shrink-0 ml-4">
                 {t('summary.viewAction')}
               </button>
             </div>
@@ -77,12 +77,12 @@ export default function PMaxStepSummary({ state, t }: PMaxStepProps) {
           </div>
           <p className="text-sm text-gray-500">{t('summary.advisoryDesc')}</p>
           {advisoryRecs.map((rec, i) => (
-            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-amber-50 border border-amber-200">
+            <div key={i} className="flex items-center justify-between p-3 rounded-lg bg-gray-50 border border-gray-200">
               <div className="flex items-start gap-2">
-                <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
-                <span className="text-sm text-amber-800">{rec}</span>
+                <AlertTriangle className="w-4 h-4 text-primary shrink-0 mt-0.5" />
+                <span className="text-sm text-gray-800">{rec}</span>
               </div>
-              <button type="button" className="text-sm text-blue-600 hover:underline shrink-0 ml-4">
+              <button type="button" className="text-sm text-primary hover:underline shrink-0 ml-4">
                 {t('summary.viewAction')}
               </button>
             </div>

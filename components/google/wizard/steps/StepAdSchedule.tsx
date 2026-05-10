@@ -60,7 +60,7 @@ export default function StepAdSchedule({ state, update, t }: StepProps) {
 
       {/* Presets */}
       <div className="flex gap-2">
-        <button type="button" onClick={applyBusinessHours} className="px-3 py-1.5 text-xs font-medium bg-blue-50 text-blue-700 border border-blue-200 rounded-lg hover:bg-blue-100">
+        <button type="button" onClick={applyBusinessHours} className="px-3 py-1.5 text-xs font-medium bg-primary/5 text-primary border border-primary/20 rounded-lg hover:bg-primary/10">
           <Clock className="w-3 h-3 inline mr-1" />{t('schedule.businessHours')}
         </button>
         <button type="button" onClick={clearAll} className="px-3 py-1.5 text-xs font-medium bg-gray-50 text-gray-600 border border-gray-200 rounded-lg hover:bg-gray-100">
@@ -81,7 +81,7 @@ export default function StepAdSchedule({ state, update, t }: StepProps) {
                   {dayEntries.map((entry, idx) => {
                     const globalIdx = state.adSchedule.indexOf(entry)
                     return (
-                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-blue-50 text-blue-700 text-xs font-medium">
+                      <span key={idx} className="inline-flex items-center gap-1 px-2 py-0.5 rounded bg-primary/5 text-primary text-xs font-medium">
                         {String(entry.startHour).padStart(2, '0')}:{MINUTE_LABELS[entry.startMinute]}
                         –
                         {String(entry.endHour).padStart(2, '0')}:{MINUTE_LABELS[entry.endMinute]}
@@ -95,7 +95,7 @@ export default function StepAdSchedule({ state, update, t }: StepProps) {
                 <button
                   type="button"
                   onClick={() => { setAddingDay(addingDay === day ? null : day); setNewStart(9); setNewEnd(18); setNewStartMin('ZERO'); setNewEndMin('ZERO') }}
-                  className="text-blue-600 hover:text-blue-800"
+                  className="text-primary hover:text-primary"
                 >
                   <Plus className="w-4 h-4" />
                 </button>
@@ -118,7 +118,7 @@ export default function StepAdSchedule({ state, update, t }: StepProps) {
                   <select className={`${inputCls} w-14 py-1 text-xs`} value={newEndMin} onChange={e => setNewEndMin(e.target.value as Minute)}>
                     {MINUTES.map(m => <option key={m} value={m}>{MINUTE_LABELS[m]}</option>)}
                   </select>
-                  <button type="button" onClick={addEntry} className="px-3 py-1 text-xs font-medium bg-blue-600 text-white rounded hover:bg-blue-700">
+                  <button type="button" onClick={addEntry} className="px-3 py-1 text-xs font-medium bg-primary text-white rounded hover:bg-primary/90">
                     {t('schedule.add')}
                   </button>
                 </div>

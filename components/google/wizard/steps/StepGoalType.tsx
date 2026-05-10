@@ -79,13 +79,13 @@ export default function StepGoalType({ state, update, t }: StepProps) {
               onClick={() => handleGoalChange(id)}
               className={`flex flex-col items-start gap-2 p-4 rounded-xl border-2 text-left transition-all ${
                 active
-                  ? 'border-blue-500 bg-blue-50'
+                  ? 'border-primary bg-primary/5'
                   : 'border-gray-200 hover:border-gray-300 bg-white'
               } ${id === 'NO_GOAL' ? 'col-span-2' : ''}`}
             >
-              <Icon className={`w-5 h-5 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+              <Icon className={`w-5 h-5 ${active ? 'text-primary' : 'text-gray-400'}`} />
               <div>
-                <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{t(`goal.labels.${id}`)}</p>
+                <p className={`text-sm font-semibold ${active ? 'text-primary' : 'text-gray-800'}`}>{t(`goal.labels.${id}`)}</p>
                 <p className="text-xs text-gray-500 mt-0.5">{t(`goal.descs.${id}`)}</p>
               </div>
             </button>
@@ -108,13 +108,13 @@ export default function StepGoalType({ state, update, t }: StepProps) {
                   onClick={() => handleTypeChange(ct.type)}
                   className={`flex items-start gap-3 p-3 rounded-lg border-2 text-left transition-all ${
                     active
-                      ? 'border-blue-500 bg-blue-50'
+                      ? 'border-primary bg-primary/5'
                       : 'border-gray-200 hover:border-gray-300 bg-white'
                   }`}
                 >
-                  <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${active ? 'text-blue-600' : 'text-gray-400'}`} />
+                  <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${active ? 'text-primary' : 'text-gray-400'}`} />
                   <div>
-                    <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>{t(`summary.campaignTypeLabels.${ct.type}`)}</p>
+                    <p className={`text-sm font-semibold ${active ? 'text-primary' : 'text-gray-800'}`}>{t(`summary.campaignTypeLabels.${ct.type}`)}</p>
                     <p className="text-xs text-gray-500 mt-0.5">{t(`campaignTypeDescs.${ct.type}`)}</p>
                   </div>
                 </button>

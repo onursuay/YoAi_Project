@@ -4,13 +4,14 @@ import { AlertCircle, Info, Calendar, DollarSign } from 'lucide-react'
 import type { StepProps } from '../shared/WizardTypes'
 import { inputCls } from '../shared/WizardTypes'
 import { getBudgetRecommendation } from '../shared/WizardValidation'
+import { GoogleWizardSection } from '../shared/GoogleWizardUI'
 
 const LOW_BUDGET_THRESHOLD = 10
 
 function Field({ label, required, children }: { label: string; required?: boolean; children: React.ReactNode }) {
   return (
     <div>
-      <label className="block text-sm font-medium text-gray-700 mb-1">
+      <label className="block text-[13px] font-medium text-gray-700 mb-1.5">
         {label} {required && <span className="text-red-500">*</span>}
       </label>
       {children}
@@ -29,14 +30,16 @@ export default function StepBudget({ state, update, t }: StepProps) {
   const isManualCpc = state.biddingStrategy === 'MANUAL_CPC'
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-8">
       {/* 1. Daily budget input */}
-      <section>
-        <h4 className="text-sm font-semibold text-gray-900 mb-3">{t('budget.dailyBudget')}</h4>
+      <GoogleWizardSection
+        icon={<DollarSign className="w-[18px] h-[18px]" />}
+        title={t('budget.dailyBudget')}
+      >
         <Field label={t('budget.dailyBudget')} required>
           <div className="relative max-w-[240px]">
             <input
-              className={`${inputCls} pr-12 ${hasInvalidBudget ? 'border-amber-500 ring-1 ring-amber-500' : ''} ${showRecommendationWarning ? 'border-amber-400' : ''}`}
+              className={`${inputCls} pr-12 ${hasInvalidBudget ? 'border-red-300 ring-1 ring-red-300' : ''}`}
               type="number"
               min="1"
               step="1"
@@ -50,45 +53,36 @@ export default function StepBudget({ state, update, t }: StepProps) {
           </div>
         </Field>
         {hasInvalidBudget && (
-          <div className="flex items-center gap-2 mt-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+          <div className="flex items-center gap-2 mt-3 text-xs text-red-700 bg-red-50 border border-red-200 rounded-lg px-3 py-2">
             <AlertCircle className="w-3.5 h-3.5 shrink-0" />
             {t('validation.minBudget')}
           </div>
         )}
-      </section>
 
-      {/* 2. Budget recommendation block */}
-      <section>
-        <div className="flex items-start gap-2 p-4 rounded-lg bg-blue-50 border border-blue-200">
-          <DollarSign className="w-5 h-5 text-blue-600 shrink-0 mt-0.5" />
+        <div className="flex items-start gap-2 p-4 mt-4 rounded-xl bg-primary/5 border border-primary/20">
+          <DollarSign className="w-5 h-5 text-primary shrink-0 mt-0.5" />
           <div>
-            <p className="text-sm font-semibold text-blue-900">{t('budget.recommendationTitle')}</p>
-            <p className="text-sm text-blue-800 mt-1">
+            <p className="text-sm font-semibold text-primary">{t('budget.recommendationTitle')}</p>
+            <p className="text-sm text-primary mt-1">
               {recommended} {t('budget.trySuffix')}/gün — {t('budget.recommendationText')}
             </p>
             {showRecommendationWarning && (
-              <p className="text-sm text-amber-800 mt-2 font-medium">
+              <p className="text-sm text-gray-800 mt-2 font-medium">
                 {t('validation.minBudget')} Bu strateji için önerilen: {recommended} {t('budget.trySuffix')}/gün.
               </p>
             )}
           </div>
         </div>
-      </section>
 
-      {/* 3. Very low budget warning */}
-      {showLowBudgetWarning && (
-        <section>
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-amber-50 border border-amber-200 text-sm text-amber-800">
+        {showLowBudgetWarning && (
+          <div className="flex items-start gap-2 mt-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200 text-sm text-gray-800">
             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
             <span>{t('budget.lowBudgetWarning')}</span>
           </div>
-        </section>
-      )}
+        )}
 
-      {/* 4. Strategy / budget compatibility notes */}
-      {(hasTargetCpa || hasTargetRoas || isManualCpc) && (
-        <section>
-          <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
+        {(hasTargetCpa || hasTargetRoas || isManualCpc) && (
+          <div className="flex items-start gap-2 mt-3 p-3.5 rounded-xl bg-gray-50 border border-gray-200">
             <Info className="w-4 h-4 text-gray-600 shrink-0 mt-0.5" />
             <div className="text-sm text-gray-700">
               {hasTargetCpa && <p>{t('budget.strategyNoteCpa')}</p>}
@@ -96,39 +90,32 @@ export default function StepBudget({ state, update, t }: StepProps) {
               {isManualCpc && !hasTargetCpa && !hasTargetRoas && <p>{t('budget.manualCpcNote')}</p>}
             </div>
           </div>
-        </section>
-      )}
+        )}
+      </GoogleWizardSection>
 
-      {/* 5. Delivery / learning warning block */}
-      <section>
-        <div className="flex items-start gap-2 p-4 rounded-lg bg-gray-50 border border-gray-200">
-          <Info className="w-5 h-5 text-gray-600 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-semibold text-gray-900">{t('budget.deliveryLearningTitle')}</p>
-            <p className="text-sm text-gray-600 mt-1">{t('budget.deliveryLearningText')}</p>
-          </div>
-        </div>
-      </section>
+      {/* 2. Delivery / learning info */}
+      <GoogleWizardSection
+        icon={<Info className="w-[18px] h-[18px]" />}
+        title={t('budget.deliveryLearningTitle')}
+        description={t('budget.deliveryLearningText')}
+      >
+        <p className="text-xs text-gray-500">{t('budget.deliveryLearningText')}</p>
+      </GoogleWizardSection>
 
-      {/* 6. Date range summary (read-only) */}
-      <section>
-        <div className="flex items-start gap-2 p-3 rounded-lg border border-gray-200 bg-white">
-          <Calendar className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
-          <div>
-            <p className="text-sm font-medium text-gray-700">{t('budget.dateRangeTitle')}</p>
-            <p className="text-sm text-gray-600 mt-0.5">
-              {state.startDate && state.endDate
-                ? t('budget.dateRangeSet', { start: state.startDate, end: state.endDate })
-                : state.startDate
-                  ? t('budget.dateRangeStartOnly', { start: state.startDate })
-                  : t('budget.dateRangeNone')}
-            </p>
-            <p className="text-xs text-gray-400 mt-1">
-              {t('budget.dateRangeHint')}
-            </p>
-          </div>
-        </div>
-      </section>
+      {/* 3. Date range summary (read-only) */}
+      <GoogleWizardSection
+        icon={<Calendar className="w-[18px] h-[18px]" />}
+        title={t('budget.dateRangeTitle')}
+      >
+        <p className="text-sm text-gray-700">
+          {state.startDate && state.endDate
+            ? t('budget.dateRangeSet', { start: state.startDate, end: state.endDate })
+            : state.startDate
+              ? t('budget.dateRangeStartOnly', { start: state.startDate })
+              : t('budget.dateRangeNone')}
+        </p>
+        <p className="text-xs text-gray-400 mt-1">{t('budget.dateRangeHint')}</p>
+      </GoogleWizardSection>
     </div>
   )
 }

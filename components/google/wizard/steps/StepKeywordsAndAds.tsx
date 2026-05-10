@@ -27,7 +27,7 @@ function Field({ label, required, children }: { label: string; required?: boolea
 
 function InlineWarning({ children }: { children: React.ReactNode }) {
   return (
-    <div className="flex items-center gap-2 mt-1.5 text-xs text-amber-700 bg-amber-50 border border-amber-200 rounded px-2 py-1.5">
+    <div className="flex items-center gap-2 mt-1.5 text-xs text-gray-700 bg-gray-50 border border-gray-200 rounded px-2 py-1.5">
       <AlertTriangle className="w-3.5 h-3.5 shrink-0" />
       {children}
     </div>
@@ -93,7 +93,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
 
   const competitionColor = (c: string) => {
     if (c === 'LOW') return 'text-green-600 bg-green-50'
-    if (c === 'MEDIUM') return 'text-amber-600 bg-amber-50'
+    if (c === 'MEDIUM') return 'text-gray-600 bg-gray-50'
     if (c === 'HIGH') return 'text-red-600 bg-red-50'
     return 'text-gray-500 bg-gray-50'
   }
@@ -207,7 +207,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                         {competitionLabel(idea.competition)}
                       </span>
                     </span>
-                    <button type="button" onClick={() => addSuggestion(idea.text)} className="text-blue-600 hover:text-blue-800">
+                    <button type="button" onClick={() => addSuggestion(idea.text)} className="text-primary hover:text-primary">
                       <Plus className="w-4 h-4" />
                     </button>
                   </div>
@@ -236,7 +236,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
         <h4 className="text-[15px] font-semibold text-gray-900 mb-3">{t('adgroup.urlPathSectionTitle')}</h4>
         <Field label={t('ad.finalUrl')} required>
           <input
-            className={`${inputCls} ${hasInvalidUrl ? 'border-amber-500 ring-1 ring-amber-500' : ''}`}
+            className={`${inputCls} ${hasInvalidUrl ? 'border-gray-400 ring-1 ring-red-300' : ''}`}
             type="url"
             value={state.finalUrl}
             onChange={e => update({ finalUrl: e.target.value })}
@@ -261,7 +261,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
         <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('adgroup.headlinesSectionTitle')}</h4>
         <p className="text-[13px] text-gray-500 mb-3">{t('adgroup.headlinesHint')}</p>
         <p className="text-xs font-medium text-gray-600 mb-2">
-          {t('adgroup.headlinesCount', { count: headlines.length })}{(headlines.length < 3) && <span className="text-amber-600"> {t('adgroup.headlinesMinRequired')}</span>}
+          {t('adgroup.headlinesCount', { count: headlines.length })}{(headlines.length < 3) && <span className="text-gray-600"> {t('adgroup.headlinesMinRequired')}</span>}
         </p>
         <div className="space-y-2">
           {state.headlines.map((h, i) => {
@@ -274,7 +274,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                     {i + 1}{isRequired ? ' *' : ''}
                   </span>
                   <input
-                    className={`${inputCls} flex-1 ${isOverflow ? 'border-amber-500' : ''}`}
+                    className={`${inputCls} flex-1 ${isOverflow ? 'border-gray-400' : ''}`}
                     maxLength={30}
                     value={h}
                     onChange={e => {
@@ -285,7 +285,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                     }}
                     placeholder={isRequired ? t('ad.headlineRequired', { n: i + 1 }) : t('ad.headlineOptional', { n: i + 1 })}
                   />
-                  <span className={`text-xs w-8 text-right ${isOverflow ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+                  <span className={`text-xs w-8 text-right ${isOverflow ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
                     {h.length}/30
                   </span>
                 </div>
@@ -306,7 +306,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
         <h4 className="text-[15px] font-semibold text-gray-900 mb-1">{t('adgroup.descriptionsSectionTitle')}</h4>
         <p className="text-[13px] text-gray-500 mb-3">{t('adgroup.descriptionsHint')}</p>
         <p className="text-xs font-medium text-gray-600 mb-2">
-          {t('adgroup.descriptionsCount', { count: descriptions.length })}{(descriptions.length < 2) && <span className="text-amber-600"> {t('adgroup.descriptionsMinRequired')}</span>}
+          {t('adgroup.descriptionsCount', { count: descriptions.length })}{(descriptions.length < 2) && <span className="text-gray-600"> {t('adgroup.descriptionsMinRequired')}</span>}
         </p>
         <div className="space-y-2">
           {state.descriptions.map((d, i) => {
@@ -319,7 +319,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                     {i + 1}{isRequired ? ' *' : ''}
                   </span>
                   <input
-                    className={`${inputCls} flex-1 ${isOverflow ? 'border-amber-500' : ''}`}
+                    className={`${inputCls} flex-1 ${isOverflow ? 'border-gray-400' : ''}`}
                     maxLength={90}
                     value={d}
                     onChange={e => {
@@ -330,7 +330,7 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                     }}
                     placeholder={isRequired ? t('ad.descriptionRequired', { n: i + 1 }) : t('ad.descriptionOptional', { n: i + 1 })}
                   />
-                  <span className={`text-xs w-8 text-right ${isOverflow ? 'text-amber-600 font-medium' : 'text-gray-400'}`}>
+                  <span className={`text-xs w-8 text-right ${isOverflow ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
                     {d.length}/90
                   </span>
                 </div>

@@ -1,6 +1,6 @@
 'use client'
 
-import { Check, CheckCircle2, AlertTriangle } from 'lucide-react'
+import { Check, CheckCircle2, AlertTriangle, AlertCircle, Info } from 'lucide-react'
 
 /**
  * Google Ads Wizard — paylaşılan UI primitive'leri.
@@ -149,6 +149,84 @@ export function GoogleWizardSummaryRow({
       >
         {value}
       </span>
+    </div>
+  )
+}
+
+interface FieldProps {
+  label: string
+  required?: boolean
+  hint?: string
+  error?: string
+  children: React.ReactNode
+}
+
+/**
+ * Display dilinde standart bir form field sarmalayıcısı:
+ *   - üstte küçük label (gray-700, font-medium, 13px)
+ *   - alt satırda input/select/textarea
+ *   - opsiyonel hint (gray-500, 12px)
+ *   - opsiyonel hata mesajı (red-700)
+ */
+export function GoogleWizardField({ label, required, hint, error, children }: FieldProps) {
+  return (
+    <div className="space-y-1.5">
+      <label className="block text-[13px] font-medium text-gray-700">
+        {label}
+        {required && <span className="text-red-500 ml-0.5">*</span>}
+      </label>
+      {children}
+      {hint && !error && <p className="text-xs text-gray-500">{hint}</p>}
+      {error && <p className="text-xs text-red-700">{error}</p>}
+    </div>
+  )
+}
+
+interface InfoBoxProps {
+  variant?: 'info' | 'success' | 'warning' | 'danger'
+  title?: string
+  children: React.ReactNode
+}
+
+/**
+ * Display dilinde standart bilgi/uyarı kutusu.
+ * Proje renk yasağı: amber/yellow yok — uyarı için gray, kritik için red.
+ */
+export function GoogleWizardInfoBox({ variant = 'info', title, children }: InfoBoxProps) {
+  const palette: Record<string, { bg: string; border: string; text: string; icon: React.ReactNode }> = {
+    info: {
+      bg: 'bg-gray-50',
+      border: 'border-gray-200',
+      text: 'text-gray-700',
+      icon: <Info className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />,
+    },
+    success: {
+      bg: 'bg-emerald-50',
+      border: 'border-emerald-200',
+      text: 'text-emerald-700',
+      icon: <CheckCircle2 className="w-4 h-4 text-emerald-600 shrink-0 mt-0.5" />,
+    },
+    warning: {
+      bg: 'bg-primary/5',
+      border: 'border-primary/20',
+      text: 'text-primary',
+      icon: <AlertCircle className="w-4 h-4 text-primary shrink-0 mt-0.5" />,
+    },
+    danger: {
+      bg: 'bg-red-50',
+      border: 'border-red-200',
+      text: 'text-red-700',
+      icon: <AlertCircle className="w-4 h-4 text-red-600 shrink-0 mt-0.5" />,
+    },
+  }
+  const p = palette[variant]
+  return (
+    <div className={`flex items-start gap-2 p-3.5 rounded-xl border ${p.bg} ${p.border} ${p.text} text-sm`}>
+      {p.icon}
+      <div className="flex-1 min-w-0">
+        {title && <p className="font-semibold mb-1">{title}</p>}
+        <div>{children}</div>
+      </div>
     </div>
   )
 }

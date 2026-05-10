@@ -54,7 +54,7 @@ export default function StepAdGroupKeywords({ state, update, t }: StepProps) {
 
   const competitionColor = (c: string) => {
     if (c === 'LOW') return 'text-green-600 bg-green-50'
-    if (c === 'MEDIUM') return 'text-amber-600 bg-amber-50'
+    if (c === 'MEDIUM') return 'text-gray-600 bg-gray-50'
     if (c === 'HIGH') return 'text-red-600 bg-red-50'
     return 'text-gray-500 bg-gray-50'
   }
@@ -121,7 +121,7 @@ export default function StepAdGroupKeywords({ state, update, t }: StepProps) {
                       {competitionLabel(idea.competition)}
                     </span>
                   </span>
-                  <button type="button" onClick={() => addSuggestion(idea.text)} className="text-blue-600 hover:text-blue-800">
+                  <button type="button" onClick={() => addSuggestion(idea.text)} className="text-primary hover:text-primary">
                     <Plus className="w-4 h-4" />
                   </button>
                 </div>

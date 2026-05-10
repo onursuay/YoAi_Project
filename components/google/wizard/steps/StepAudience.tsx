@@ -188,10 +188,10 @@ export default function StepAudience({ state, update, t }: StepProps) {
                 type="button"
                 onClick={() => update({ audienceMode: mode })}
                 className={`p-3 rounded-lg border-2 text-left transition-all ${
-                  active ? 'border-blue-500 bg-blue-50' : 'border-gray-200 hover:border-gray-300'
+                  active ? 'border-primary bg-primary/5' : 'border-gray-200 hover:border-gray-300'
                 }`}
               >
-                <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>
+                <p className={`text-sm font-semibold ${active ? 'text-primary' : 'text-gray-800'}`}>
                   {mode === 'OBSERVATION' ? t('audience.observation') : t('audience.targeting')}
                 </p>
                 <p className="text-xs text-gray-500 mt-0.5">
@@ -229,7 +229,7 @@ export default function StepAudience({ state, update, t }: StepProps) {
           type="button"
           onClick={() => setTab('search')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'search' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            tab === 'search' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <Search className="w-3.5 h-3.5 inline mr-1.5" />
@@ -239,7 +239,7 @@ export default function StepAudience({ state, update, t }: StepProps) {
           type="button"
           onClick={() => setTab('browse')}
           className={`px-4 py-2 text-sm font-medium border-b-2 transition-colors ${
-            tab === 'browse' ? 'border-blue-500 text-blue-600' : 'border-transparent text-gray-500 hover:text-gray-700'
+            tab === 'browse' ? 'border-primary text-primary' : 'border-transparent text-gray-500 hover:text-gray-700'
           }`}
         >
           <Layers className="w-3.5 h-3.5 inline mr-1.5" />
@@ -257,11 +257,11 @@ export default function StepAudience({ state, update, t }: StepProps) {
               value={searchQuery}
               onChange={e => handleSearchInput(e.target.value)}
               placeholder={t('audience.searchPlaceholder')}
-              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+              className="w-full pl-9 pr-3 py-2 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
             />
             {searching && (
               <div className="absolute right-3 top-0 bottom-0 flex items-center">
-                <Loader2 className="w-4 h-4 animate-spin text-blue-500" />
+                <Loader2 className="w-4 h-4 animate-spin text-primary" />
               </div>
             )}
           </div>
@@ -308,7 +308,7 @@ export default function StepAudience({ state, update, t }: StepProps) {
           {browseError && <p className="text-sm text-red-500">{browseError}</p>}
 
           {browseData?.state === 'data_not_ready' && (
-            <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
+            <div className="p-4 rounded-lg bg-gray-50 border border-gray-200 text-gray-800 text-sm">
               {t('audience.dataNotReady')}
             </div>
           )}
@@ -419,7 +419,7 @@ export default function StepAudience({ state, update, t }: StepProps) {
       {/* Selected segments summary */}
       {state.selectedAudienceSegments.length > 0 && (
         <div className="space-y-2">
-          <p className="text-xs font-medium text-blue-600">
+          <p className="text-xs font-medium text-primary">
             {t('audience.segmentsSelected', { count: state.selectedAudienceSegments.length })}
           </p>
           <div className="flex flex-wrap gap-1.5">
@@ -467,7 +467,7 @@ function AudienceRow({ item, selected, onToggle, t }: {
         type="checkbox"
         checked={selected}
         onChange={onToggle}
-        className="rounded border-gray-300 text-blue-600 focus:ring-blue-500"
+        className="rounded border-gray-300 text-primary focus:ring-primary/20"
       />
       <div className="flex-1 min-w-0">
         <p className="text-sm text-gray-900 truncate">{item.name}</p>

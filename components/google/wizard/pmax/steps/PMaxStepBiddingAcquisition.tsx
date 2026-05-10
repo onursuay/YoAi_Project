@@ -8,7 +8,7 @@ import { inputCls } from '../shared/PMaxWizardTypes'
 function CollapsibleSection({ title, defaultOpen = true, children }: { title: string; defaultOpen?: boolean; children: React.ReactNode }) {
   const [open, setOpen] = useState(defaultOpen)
   return (
-    <div className="border border-gray-200 rounded-lg bg-white">
+    <div className="bg-white rounded-xl border border-gray-200">
       <button
         type="button"
         onClick={() => setOpen(!open)}
@@ -72,7 +72,7 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
                       targetCpa: e.target.checked ? state.targetCpa : '',
                     })
                   }}
-                  className="rounded border-gray-300 text-blue-600"
+                  className="rounded border-gray-300 text-primary"
                 />
                 <span className="text-[13px] font-medium text-gray-900">{t('bidding.setCpaOptional')}</span>
               </label>
@@ -109,7 +109,7 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
                       targetRoas: e.target.checked ? state.targetRoas : '',
                     })
                   }}
-                  className="rounded border-gray-300 text-blue-600"
+                  className="rounded border-gray-300 text-primary"
                 />
                 <span className="text-[13px] font-medium text-gray-900">{t('bidding.setRoasOptional')}</span>
               </label>
@@ -143,7 +143,7 @@ export default function PMaxStepBiddingAcquisition({ state, update, t }: PMaxSte
               type="checkbox"
               checked={state.bidOnlyForNewCustomers}
               onChange={e => update({ bidOnlyForNewCustomers: e.target.checked })}
-              className="rounded border-gray-300 text-blue-600"
+              className="rounded border-gray-300 text-primary"
             />
             <span className="text-[13px] font-medium text-gray-900">{t('bidding.newCustomersOnly')}</span>
           </label>
