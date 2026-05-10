@@ -19,6 +19,7 @@ import {
 } from './campaignTypeIntelligence'
 import type { CampaignSynthesisPackage } from './synthesisTypes'
 import { buildSynthesisContextForPrompt } from './synthesisEngine'
+import type { MultiAiDecisionDeskResult } from './multiAiTypes'
 
 /* ── Types ── */
 
@@ -374,6 +375,8 @@ function buildPrompt(
   persistedCompetitorContext?: string | null,
   /** Faz 3: Synthesis Engine paketleri (campaign_id → package). */
   synthesisPackagesByCampaignId?: Record<string, CampaignSynthesisPackage>,
+  /** Faz 4: Multi-AI Decision Desk sonuçları (campaign_id → desk result). */
+  decisionDeskResultsByCampaignId?: Record<string, MultiAiDecisionDeskResult>,
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
   const knowledge = isGoogle ? GOOGLE_TYPE_KNOWLEDGE : META_OBJECTIVE_KNOWLEDGE
@@ -449,6 +452,10 @@ JSON formatında yanıt ver:
     const synthesisBlock = synthesisPkg
       ? `\n  ${buildSynthesisContextForPrompt(synthesisPkg).replace(/\n/g, '\n  ')}`
       : ''
+    const deskResult = decisionDeskResultsByCampaignId?.[fa.campaignId]
+    const deskBlock = deskResult?.decisionContextForPrompt
+      ? `\n  DECISION DESK:\n  ${deskResult.decisionContextForPrompt.replace(/\n/g, '\n  ')}`
+      : ''
     return `[${fa.objectiveLabel}] ${fa.campaignName} (ID: ${fa.campaignId})
   Uygunluk: ${fa.fitScore}/100
   Güçlü: ${fa.strengths.join(', ') || 'yok'}
@@ -457,7 +464,7 @@ JSON formatında yanıt ver:
   ${fa.currentParams.destination ? `Dönüşüm hedefi: ${fa.currentParams.destination}` : ''}
   ${fa.currentParams.optimizationGoal ? `Opt hedef: ${fa.currentParams.optimizationGoal}` : ''}
   ${fa.currentParams.biddingStrategy ? `Teklif: ${fa.currentParams.biddingStrategy}` : ''}
-  Öneriler: ${fa.optimizationSuggestions.join('; ') || 'yok'}${doctrineLine ? `\n  DOCTRINE:\n  ${doctrineLine.replace(/\n/g, '\n  ')}` : ''}${synthesisBlock}`
+  Öneriler: ${fa.optimizationSuggestions.join('; ') || 'yok'}${doctrineLine ? `\n  DOCTRINE:\n  ${doctrineLine.replace(/\n/g, '\n  ')}` : ''}${synthesisBlock}${deskBlock}`
   }).join('\n\n')
 
   const compTexts = competitorAds.slice(0, 5).map((a, i) => `${i + 1}. [${a.pageName}] "${a.body?.slice(0, 80) || a.title || ''}"`).join('\n')
@@ -528,6 +535,8 @@ export async function generateFullAutoProposals(
   persistedCompetitorContext?: string | null,
   /** Faz 3: Synthesis Engine paketleri — varsa prompt'a additive olarak eklenir. */
   synthesisPackagesByCampaignId?: Record<string, CampaignSynthesisPackage>,
+  /** Faz 4: Multi-AI Decision Desk sonuçları — varsa prompt'a additive olarak eklenir. */
+  decisionDeskResultsByCampaignId?: Record<string, MultiAiDecisionDeskResult>,
 ): Promise<AdCreationResult> {
   // 1. Filter active campaigns for this platform
   const activeCampaigns = campaigns.filter(c =>
@@ -583,6 +592,7 @@ export async function generateFullAutoProposals(
       doctrineSummariesByCampaignId,
       persistedCompetitorContext,
       synthesisPackagesByCampaignId,
+      decisionDeskResultsByCampaignId,
     )
     const aiResult = await callAI(system, userPrompt)
 

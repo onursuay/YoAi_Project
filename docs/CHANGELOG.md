@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-10 — Faz 4: Multi-AI Decision Desk / Role-Based AI Evaluation + Judge Layer
+- **Sorun:** Tek model ile üretilen AI proposal'larının karar kalitesi ve gerekçe güvenilirliği sınırlıydı; farklı perspektifler (strateji, kreatif, risk, teknik) tek çağrıda birleştiriliyordu.
+- **Çözüm:**
+  - **yoai_model_decisions tablosu** — `supabase/migrations/20260510006000_create_yoai_model_decisions.sql`: 5 rol (strategist/creative/risk_policy/technical_validator/judge) ve 4 provider (openai/anthropic/gemini/deterministic) için audit kayıtları; RLS ile kullanıcı yalnızca kendi kayıtlarını okur.
+  - **multiAiTypes.ts** — `MultiAiRole`, `MultiAiProvider`, `RoleDecisionOutput`, `StrategistDecision`, `CreativeDecision`, `RiskPolicyDecision`, `TechnicalValidatorDecision`, `JudgeDecision`, `MultiAiDecisionDeskResult` tip tanımları.
+  - **Provider wrapper'ları** — `aiProviders/openaiProvider.ts` (strategist/validator/judge), `aiProviders/anthropicProvider.ts` (risk_policy), `aiProviders/geminiProvider.ts` (creative, text-only bu fazda). API key yoksa `status='skipped'`; timeout ve hata durumunda `status='timeout'/'failed'`. Secret loglama yok.
+  - **providerGuards.ts** — Timeout wrapper, JSON parse helper, secret redaction, input hash, cost estimation utilities.
+  - **modelDecisionStore.ts** — `recordModelDecisionBatch()`, `listModelDecisions()`, `getLatestDecisionDeskResult()`. Tablo yoksa `[TABLE_MISSING]` warn; sistem kırılmaz.
+  - **multiAiDecisionDesk.ts** — `isMultiAiEnabled()`, `runStrategistRole()`, `runCreativeRole()`, `runRiskPolicyRole()`, `runTechnicalValidatorRole()`, `runJudgeRole()`, `runMultiAiDecisionDesk()`. Roller paralel çalışır; judge tüm çıktıları sentezler; cost guard ve timeout koruması; deterministic fallback judge.
+  - **adCreator.ts** — `decisionDeskResultsByCampaignId` parametresi eklendi; judge context prompt'a additive block olarak eklenir. Output schema değişmedi.
+  - **generate-ad/route.ts** — `YOAI_MULTI_AI_ENABLED=true` ise synthesis paketleri üzerinden desk çalışır; disabled ise hiçbir provider çağrısı olmaz. Pending approval mapping ve publish lifecycle dokunulmadı.
+  - **Shadow mode** — Multi-AI yalnızca proposal generation context kalitesini artırır; DB'ye audit kaydı yazar; publish yapmaz; approval status değiştirmez.
+- **Dosyalar:** `supabase/migrations/20260510006000_create_yoai_model_decisions.sql`, `lib/yoai/multiAiTypes.ts`, `lib/yoai/aiProviders/providerGuards.ts`, `lib/yoai/aiProviders/openaiProvider.ts`, `lib/yoai/aiProviders/anthropicProvider.ts`, `lib/yoai/aiProviders/geminiProvider.ts`, `lib/yoai/modelDecisionStore.ts`, `lib/yoai/multiAiDecisionDesk.ts`, `lib/yoai/adCreator.ts` (additive), `app/api/yoai/generate-ad/route.ts` (additive)
+
 ## 2026-05-10 — Faz 3.5: Env Security Hardening (Cron + Webhook + Token + server-only)
 - **Sorun:** Env/API Key Audit'ten gelen 8 kritik/yüksek bulgular: cron endpoint'leri CRON_SECRET yokken production'da açık kalıyordu; Meta webhook'ta hardcoded verify token fallback vardı; META_TOKEN_SECRET eksikken production'da sessiz hata oluşuyordu; `lib/supabase/client.ts` (service role key) `server-only` ile korunmuyordu; `.env.example` hiç yoktu.
 - **Çözüm:**

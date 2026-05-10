@@ -14,6 +14,8 @@ import { buildCompetitorContextForPrompt } from '@/lib/yoai/competitorInsightSto
 import { normalizeCampaignType } from '@/lib/yoai/campaignTypeIntelligence'
 import { buildSynthesisPackagesForCampaigns } from '@/lib/yoai/synthesisEngine'
 import type { CampaignSynthesisPackage } from '@/lib/yoai/synthesisTypes'
+import { runMultiAiDecisionDesk, shouldUseDecisionDesk } from '@/lib/yoai/multiAiDecisionDesk'
+import type { MultiAiDecisionDeskResult } from '@/lib/yoai/multiAiTypes'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -112,6 +114,27 @@ export async function POST(request: Request) {
             console.warn('[GenerateAd] synthesis build failed (non-fatal):', e)
           }
 
+          // Faz 4: Multi-AI Decision Desk — enabled ise synthesis paketleri üzerinden çalışır.
+          // Disabled ise veya hata olursa eski generation path bozulmaz.
+          let decisionDeskResultsByCampaignId: Record<string, MultiAiDecisionDeskResult> | undefined
+          if (userId && synthesisPackagesByCampaignId && shouldUseDecisionDesk()) {
+            decisionDeskResultsByCampaignId = {}
+            for (const [campaignId, pkg] of Object.entries(synthesisPackagesByCampaignId)) {
+              try {
+                const deskResult = await runMultiAiDecisionDesk(
+                  { userId, synthesisPackage: pkg, proposalId: null },
+                  { timeoutMs: Number(process.env.YOAI_MULTI_AI_TIMEOUT_MS || 45_000) },
+                )
+                decisionDeskResultsByCampaignId[campaignId] = deskResult
+                console.log(
+                  `[GenerateAd] MultiAI ${p}/${campaignId}: status=${deskResult.status} judge=${deskResult.judgeDecision ?? 'none'}`,
+                )
+              } catch (e) {
+                console.warn(`[GenerateAd] MultiAI desk failed for ${campaignId} (non-fatal):`, e)
+              }
+            }
+          }
+
           const result = await generateFullAutoProposals(
             p,
             competitorAnalysis.userProfile,
@@ -121,6 +144,7 @@ export async function POST(request: Request) {
             structuralAnalysis.issues,
             persistedCompetitorContext,
             synthesisPackagesByCampaignId,
+            decisionDeskResultsByCampaignId,
           )
           console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
           results.push(result)
