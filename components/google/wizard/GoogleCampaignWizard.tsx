@@ -161,6 +161,9 @@ export default function GoogleCampaignWizard({
   const isFirstStep = step === 0
   const isLastStep = step === TOTAL_STEPS - 1
   const isResultShown = submitResult === 'full' || submitResult === 'partial'
+  // "Kampanya Hedefinizi Seçin" (step 0) seçim ekranıdır — özet paneli yalnızca
+  // gerçek wizard form adımlarında (step > 0) görünür.
+  const showSearchSummary = step > 0
 
   const resultBanner: ResultBanner | null = isResultShown
     ? {
@@ -182,7 +185,7 @@ export default function GoogleCampaignWizard({
       currentStep={step}
       campaignTypeLabel={t('display.campaignTypeSearch')}
       onStepClick={goToStep}
-      rightSummary={step === 0 ? undefined : <SearchSummaryPanel state={state} currentStep={step} t={t} />}
+      rightSummary={showSearchSummary ? <SearchSummaryPanel state={state} currentStep={step} t={t} /> : null}
       errorMessage={error}
       resultBanner={resultBanner}
       isFirstStep={isFirstStep}

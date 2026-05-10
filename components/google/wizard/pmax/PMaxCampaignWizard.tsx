@@ -157,6 +157,9 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
   const isFirstStep = step === 0
   const isLastStep = step === TOTAL_STEPS - 1
   const isResultShown = submitResult === 'full' || submitResult === 'partial'
+  // PMax giriş ekranı (step 0) seçim/entry niteliğindedir — özet paneli yalnızca
+  // gerçek form adımlarında (step > 0) görünür.
+  const showPMaxSummary = step > 0
 
   // Step status: validated done/error before current; current; pending after
   const stepStatusOf = (i: number): 'done' | 'error' | 'current' | 'pending' => {
@@ -188,14 +191,16 @@ export default function PMaxCampaignWizard({ isOpen, onClose, onSuccess, onToast
       onStepClick={goToStep}
       stepStatusOf={stepStatusOf}
       rightSummary={
-        <PMaxSummaryPanel
-          state={state}
-          currentStep={step}
-          t={t}
-          sidebarTitle={tCommon('display.summarySidebarTitle')}
-          readyLabel={tCommon('display.summaryReadyLabel')}
-          missingLabel={tCommon('display.summaryMissingLabel')}
-        />
+        showPMaxSummary ? (
+          <PMaxSummaryPanel
+            state={state}
+            currentStep={step}
+            t={t}
+            sidebarTitle={tCommon('display.summarySidebarTitle')}
+            readyLabel={tCommon('display.summaryReadyLabel')}
+            missingLabel={tCommon('display.summaryMissingLabel')}
+          />
+        ) : null
       }
       errorMessage={error}
       resultBanner={resultBanner}

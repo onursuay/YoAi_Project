@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-10 — Wizard summary panel: seçim ekranlarında gizle (Search + PMax step 0)
+- **Sorun:** "Kampanya Hedefinizi Seçin" ekranı bir form adımı değil, seçim ekranı; sağ Özet paneli orada hâlâ görünüyordu. PMax giriş (Entry) ekranı da seçim/entry niteliğinde — özet panel orada da gereksizdi.
+- **Çözüm:** Hem Search hem PMax wizard `step > 0` koşulunda paneli render ediyor, `step === 0`'da `null` geçiyor. Shell'in `hasRightSummary = !!rightSummary` mantığı boş kolon bırakmadan içeriği tam genişliğe yayıyor.
+- **Dosyalar:** `components/google/wizard/GoogleCampaignWizard.tsx`, `components/google/wizard/pmax/PMaxCampaignWizard.tsx`
+
+---
+
 ## 2026-05-10 — Search wizard step 0 (Hedef & Tür) ekranında sağ Özet paneli gizlendi
 - **Sorun:** "Kampanya Hedefinizi Seçin / Hedef & Tür" ekranında sağ Özet paneli kolon gibi yer kaplıyordu; kart seçim alanı dengesiz duruyordu.
 - **Çözüm:** `GoogleCampaignWizard` artık `step === 0` iken `rightSummary` prop'unu `undefined` geçiyor. Shell'in `hasRightSummary` flag'i zaten boş kolon bırakmadan düz content layout'a geçiyor; step 1+'da panel eski gibi görünüyor. PMax step 0 (Entry) gerçek form ekranı olduğu için orada panel kalmaya devam ediyor; Display'a dokunulmadı.
