@@ -2,6 +2,51 @@
 
 ---
 
+## 2026-05-10 — Faz 2: Competitor Ad Intelligence Persistence (Meta Ad Library Store + Insights)
+- **Sorun:** Rakip reklam verisi sessionStorage'da 15 dk cache seviyesinde, kalıcı `competitor_ads` tablosu yok; aynı reklam tekrar geldiğinde duplicate kayıt riski var; Google Ads Transparency endpoint'i sahte/boş dönüyor ama UI bunu netleştirmiyor; AI proposal generator rakip insight'a erişebiliyor ama veri tarihsel/güvenilir değil.
+- **Çözüm:**
+  - **Yeni migration** `20260510005000_create_yoai_competitor_ads.sql` — `yoai_competitor_ads` tablosu (platform, source, source_ad_id, source_page_id, ad_fingerprint, advertiser_*, query_keyword, industry_keyword, campaign_type_context, ad_body/title/description, call_to_action, destination_url, publisher_platforms JSONB, ad_delivery_start/stop, creative_assets JSONB, raw_payload JSONB, extracted_signals JSONB, first_seen, last_seen, seen_count, is_active) + 8 index + RLS (`select/insert/update/delete WHERE user_id = auth.uid() OR service_role`) + **unique dedupe index** `(user_id, platform, source, ad_fingerprint)`.
+  - **Yeni migration** `20260510005100_create_yoai_competitor_insights.sql` — `yoai_competitor_insights` tablosu (top_hooks, top_ctas, top_value_props, common_phrases, creative_patterns, offer_patterns, publisher_distribution JSONB, competitor_summary, confidence 0-100, raw_ad_ids, generated_at, expires_at) + COALESCE-li expression unique index ile (user_id, platform, source, COALESCE(campaign_type_context,''), COALESCE(query_keyword,'')) tuple bazında en güncel snapshot garantisi + RLS (kendi kayıtları + service_role).
+  - **Yeni helper** `lib/yoai/competitorAdStore.ts` — `normalizeMetaAdLibraryAd(rawAd, context)` (ham + camelCase Meta Ad Library response'unu tolere eder), `buildCompetitorAdFingerprint(ad)` (source_ad_id varsa `sid:source:id`, yoksa SHA-256 advertiser+title+body hash), `upsertCompetitorAds(userId, ads, context)` (mevcut fingerprint'leri tek select ile çeker, batch insert + paralel update; `first_seen` korunur, `last_seen`/`seen_count` artırılır), `listCompetitorAds(userId, filters)`, `getRecentCompetitorAds(userId, lookbackDays=30)`, `markCompetitorAdSeen(userId, fingerprint, platform, source)`, `sanitizeCompetitorRawPayload(raw)` (publishAuditStore.sanitizeResponseExcerpt reuse — token/cookie/secret/api_key/client_secret REDACTED, max-2000-char string, max-50-item array, max-depth 6). Deterministik signal extraction: urgency/price/social_proof/quality/offer token set'leri + cta_type. Tablo yoksa structured TABLE_MISSING warning + boş sonuç döner; çağıran flow kırılmaz.
+  - **Yeni helper** `lib/yoai/competitorInsightStore.ts` — `generateCompetitorInsightFromAds(ads, context)` deterministik kural-tabanlı snapshot üretir (LLM çağrısı YOK; HOOK/VALUE_PROP/OFFER/PHRASE token set'leri + CTA + publisher distribution sayımı; confidence = `min(60, ads*3) + min(40, advertisers*8)`). `upsertCompetitorInsight(userId, snapshot)` tuple unique index üzerinden select+update/insert pattern (NULL'lı tuple'lar için PostgreSQL davranışı nötrlendi). `getLatestCompetitorInsight(userId, filters)` ve `buildCompetitorContextForPrompt(userId, campaignTypeContext, queryKeyword, {platform, maxChars=1200})` — kademeli fallback: spesifik tuple → sadece campaign_type → sadece platform; veri yoksa null döner.
+  - **app/api/yoai/competitors/meta-ad-library/route.ts** — Mevcut Meta Ad Library Graph API çağrısı KORUNDU; response shape (camelCase `data: [...]`) **geriye dönük uyumlu**. session_id cookie'sinden userId alınır, ham response normalize edilip `upsertCompetitorAds` çağrılır, sonra `generateCompetitorInsightFromAds` + `upsertCompetitorInsight`. Yeni alan: `persisted: { inserted, updated, skipped, insightId, errors }`. `?campaign_type_context=` query param desteği eklendi (opsiyonel). Tüm persistence try/catch içinde non-fatal — DB hata atarsa response yine eski shape ile döner.
+  - **app/api/yoai/competitors/analyze/route.ts** — `runFullCompetitorAnalysis` çağrısı KORUNDU; mevcut UI alanları (userProfile/competitorAds/comparison/errors) aynı. Best-effort persistence: ilk Meta kampanyasının `normalizeCampaignType` ile baskın campaign type'ı çıkarılır, userProfile.keywords ile query_keyword türetilir, sonuçlar `upsertCompetitorAds` (idempotent — fingerprint dedupe) + `upsertCompetitorInsight` ile yazılır. Ek alan: `persisted: { inserted, updated, skipped, insightId, campaignTypeContext, queryKeyword, errors }`.
+  - **app/api/yoai/competitors/google-auction/route.ts** — Dürüst modelleme: `{ ok: true, supported: false, source: 'google_ads_transparency', reason: 'not_implemented_or_unavailable', next_step: 'Doğrulanmış erişim, scrape stratejisi veya manuel konektör gerekiyor.', data: { competitors: [], ads: [], errors: ['...sahte rakip verisi üretilmiyor.'] } }`. **Sahte Google rakip reklamı üretilmedi.**
+  - **components/yoai/CompetitorDashboard.tsx** — Yeni opsiyonel "Kalıcı analiz kaydı" banner'ı (yalnızca `persisted.inserted + persisted.updated > 0` ise gösterilir): yeni rakip / güncellenen rakip / campaign_type / query_keyword / insight kaydedildi bilgileri. **Mock veri YOK** — sadece API'dan dönen sayılar gösterilir. SessionStorage cache 15 dk korundu (büyük UI redesign yok); cache key'ine `persisted` snapshot'ı eklendi. Renk paleti `bg-gray-50 / border-gray-200 / text-gray-700` (CLAUDE.md kuralı: amber/yellow YOK).
+  - **lib/yoai/adCreator.ts** — `generateFullAutoProposals()` ve `buildPrompt()` opsiyonel `persistedCompetitorContext?: string | null` parametresi kabul eder. Doluysa user prompt'un sonuna `KALICI RAKİP İÇGÖRÜSÜ (DB):\n...` bloğu append edilir. **Output JSON schema DEĞİŞMEDİ**, generate logic dokunulmadı, daily-run akışı bozulmadı (default `undefined`).
+  - **app/api/yoai/generate-ad/route.ts** — Her platform için `normalizeCampaignType` ile baskın campaign type → `buildCompetitorContextForPrompt(userId, campaignType, null, {platform})` ile kalıcı insight çekilir, `generateFullAutoProposals`'a additive olarak geçirilir. Hata durumunda null kalır, akış değişmez.
+- **Korunanlar:**
+  - `app/api/integrations/meta/**`, `app/api/integrations/google-ads/**`, `app/api/integrations/tiktok-ads/**` — DOKUNULMADI.
+  - `lib/yoai/meta/orchestrator.ts`, `metaDeepFetcher.ts`, `googleDeepFetcher.ts`, `meta/diagnosis.ts`, `meta/decision.ts` — DOKUNULMADI.
+  - `lib/yoai/competitorAnalyzer.ts` — DOKUNULMADI (mevcut Meta Ad Library çağrısı/text extraction/keyword pipeline aynen çalışıyor).
+  - `app/api/yoai/one-click-approve/route.ts`, `execute-action/route.ts`, `daily-run/route.ts` — DOKUNULMADI (Faz 0/1 lifecycle korundu).
+  - Google/Meta wizard dosyaları, Supabase client config, auth/middleware — DOKUNULMADI.
+  - AI proposal output JSON schema — DEĞİŞMEDİ.
+  - Faz 0A audit log + 0B budget guard + 0C/0D approval lifecycle + Faz 1 doctrine — KORUNDU.
+- **Davranış garantileri:**
+  - Migration uygulanmazsa: structured TABLE_MISSING warning'ler atılır; meta-ad-library / analyze response'u eski (Faz 1) shape ile döner, `persisted` alanı eklenmez. UI sadece banner göstermez. Hiçbir flow crash etmez.
+  - Sahte rakip verisi üretmiyor: ham response'tan ad_fingerprint deterministik üretilir; raw_payload sanitize edilir (token/secret REDACTED).
+  - Google Ads Transparency: çalışmıyor, çalışmıyor diyor; DB'ye sahte Google rakip reklamı yazılmaz.
+  - Faz 2'de yeni LLM çağrısı YOK; insight üretimi tamamen deterministik kural-tabanlı.
+  - Görsel/video extraction yok: `creative_assets` boş array (placeholder değil; Faz sonraki için alan hazır).
+  - Tablo yoksa generate-ad'in kalıcı insight context'i `null` döner — adCreator prompt'una ek blok eklemez, mevcut akış ile birebir aynı.
+- **Doğrulama:** `npx tsc --noEmit` → 0 error · `npm run build` → ✓ /api/yoai/competitors/{analyze,google-auction,meta-ad-library} ve /api/yoai/generate-ad temiz derlendi · /yoai bundle 24.9 kB sabit (server-only persistence; client bundle büyümedi).
+- **Migration apply gereksinimi:** İsteğe bağlı. Uygulanmazsa rakip reklam persistence kaybolur ama mevcut UI/AI akışı eski (Faz 1) davranışıyla çalışır.
+- **Dosyalar:**
+  - `supabase/migrations/20260510005000_create_yoai_competitor_ads.sql` (yeni)
+  - `supabase/migrations/20260510005100_create_yoai_competitor_insights.sql` (yeni)
+  - `lib/yoai/competitorAdStore.ts` (yeni)
+  - `lib/yoai/competitorInsightStore.ts` (yeni)
+  - `app/api/yoai/competitors/meta-ad-library/route.ts` (additive persist + camelCase response korundu)
+  - `app/api/yoai/competitors/analyze/route.ts` (additive persist + campaign type binding)
+  - `app/api/yoai/competitors/google-auction/route.ts` (dürüst unsupported response)
+  - `components/yoai/CompetitorDashboard.tsx` (kalıcı analiz banner'ı)
+  - `lib/yoai/adCreator.ts` (additive persistedCompetitorContext param)
+  - `app/api/yoai/generate-ad/route.ts` (kalıcı insight prompt context wiring)
+  - `docs/CHANGELOG.md` (bu giriş)
+
+---
+
 ## 2026-05-10 — Faz 1: Campaign Type Intelligence + DB-driven platform doctrine
 - **Sorun:** Meta doctrine kısmen güçlü ama kod içinde hardcoded; Google doctrine generic, Display/Video/PMax-spesifik kurallar yok; doctrine DB'de değil yeni kural eklemek deploy gerektiriyor; kampanya tipi normalize edilmiş olsa bile diagnosis/proposal pipeline'ında güçlü kullanılmıyordu.
 - **Çözüm:**

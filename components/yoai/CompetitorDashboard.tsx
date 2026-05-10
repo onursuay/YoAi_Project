@@ -11,8 +11,18 @@ interface AnalysisResult {
   errors: string[]
 }
 
+interface PersistedSummary {
+  inserted: number
+  updated: number
+  skipped: number
+  insightId: string | null
+  campaignTypeContext?: string | null
+  queryKeyword?: string | null
+}
+
 export default function CompetitorDashboard() {
   const [data, setData] = useState<AnalysisResult | null>(null)
+  const [persisted, setPersisted] = useState<PersistedSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'gaps' | 'competitors' | 'profile'>('gaps')
 
@@ -24,6 +34,7 @@ export default function CompetitorDashboard() {
         const parsed = JSON.parse(cached)
         if (Date.now() - parsed.ts < 15 * 60 * 1000) {
           setData(parsed.data)
+          if (parsed.persisted) setPersisted(parsed.persisted)
           setLoading(false)
           return
         }
@@ -35,7 +46,13 @@ export default function CompetitorDashboard() {
       .then(json => {
         if (json.ok && json.data) {
           setData(json.data)
-          try { sessionStorage.setItem('yoai_competitor_v2', JSON.stringify({ data: json.data, ts: Date.now() })) } catch {}
+          if (json.persisted) setPersisted(json.persisted as PersistedSummary)
+          try {
+            sessionStorage.setItem(
+              'yoai_competitor_v2',
+              JSON.stringify({ data: json.data, persisted: json.persisted ?? null, ts: Date.now() }),
+            )
+          } catch {}
         }
       })
       .catch(() => {})
@@ -86,6 +103,24 @@ export default function CompetitorDashboard() {
           </p>
         </div>
       </div>
+
+      {/* Persisted-record bilgisi (Faz 2) — sadece veri varsa göster, mock yok */}
+      {persisted && (persisted.inserted + persisted.updated > 0) && (
+        <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-700 flex flex-wrap items-center gap-x-3 gap-y-1">
+          <span className="font-medium text-gray-900">Kalıcı analiz kaydı:</span>
+          <span>{persisted.inserted} yeni rakip</span>
+          <span>{persisted.updated} mevcut rakip güncellendi</span>
+          {persisted.campaignTypeContext && (
+            <span className="text-gray-500">tip: {persisted.campaignTypeContext}</span>
+          )}
+          {persisted.queryKeyword && (
+            <span className="text-gray-500">sorgu: {persisted.queryKeyword}</span>
+          )}
+          {persisted.insightId && (
+            <span className="text-gray-500">içgörü kaydedildi</span>
+          )}
+        </div>
+      )}
 
       {/* Tabs */}
       <div className="flex gap-1 mb-4 bg-gray-100 rounded-xl p-1">

@@ -368,6 +368,8 @@ function buildPrompt(
   structuralIssues?: StructuralIssue[],
   /** Faz 1: kampanya türü başına DB-driven doctrine summary'leri. */
   doctrineSummariesByCampaignId?: Record<string, string>,
+  /** Faz 2: yoai_competitor_insights'tan okunmuş kalıcı rakip içgörü özeti. */
+  persistedCompetitorContext?: string | null,
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
   const knowledge = isGoogle ? GOOGLE_TYPE_KNOWLEDGE : META_OBJECTIVE_KNOWLEDGE
@@ -447,6 +449,12 @@ JSON formatında yanıt ver:
 
   const compTexts = competitorAds.slice(0, 5).map((a, i) => `${i + 1}. [${a.pageName}] "${a.body?.slice(0, 80) || a.title || ''}"`).join('\n')
 
+  // Faz 2 (additive): kalıcı rakip içgörü context'i — sadece varsa append et,
+  // mevcut rakip akışını override etmez.
+  const persistedBlock = persistedCompetitorContext
+    ? `\n\nKALICI RAKİP İÇGÖRÜSÜ (DB):\n${persistedCompetitorContext}`
+    : ''
+
   const user = `KAMPANYA ANALİZLERİ:
 ${analysisDetails}
 
@@ -454,7 +462,7 @@ RAKİP KARŞILAŞTIRMA:
 ${comparison.competitorSummary || 'Rakip verisi yok'}
 
 RAKİP REKLAMLARI:
-${compTexts || 'Yok'}
+${compTexts || 'Yok'}${persistedBlock}
 
 GÖREV: Her kampanya için AYNI amaca karşılık gelen daha güçlü AI kampanya yapısı öner.
 ${fitAnalyses.length} öneri bekleniyor.`
@@ -503,6 +511,8 @@ export async function generateFullAutoProposals(
   competitorAds: CompetitorAd[],
   campaigns: DeepCampaignInsight[],
   structuralIssues?: StructuralIssue[],
+  /** Faz 2: yoai_competitor_insights'tan okunan kalıcı rakip içgörü özeti (opsiyonel). */
+  persistedCompetitorContext?: string | null,
 ): Promise<AdCreationResult> {
   // 1. Filter active campaigns for this platform
   const activeCampaigns = campaigns.filter(c =>
@@ -556,6 +566,7 @@ export async function generateFullAutoProposals(
       competitorAds,
       structuralIssues,
       doctrineSummariesByCampaignId,
+      persistedCompetitorContext,
     )
     const aiResult = await callAI(system, userPrompt)
 

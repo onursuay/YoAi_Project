@@ -10,6 +10,8 @@ import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
 import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import { bulkInsertPendingApprovalsIfMissing } from '@/lib/yoai/approvalStore'
+import { buildCompetitorContextForPrompt } from '@/lib/yoai/competitorInsightStore'
+import { normalizeCampaignType } from '@/lib/yoai/campaignTypeIntelligence'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -62,7 +64,40 @@ export async function POST(request: Request) {
       for (const p of platforms) {
         try {
           console.log(`[GenerateAd] Generating for ${p}...`)
-          const result = await generateFullAutoProposals(p, competitorAnalysis.userProfile, competitorAnalysis.comparison, competitorAnalysis.competitorAds, allCampaigns, structuralAnalysis.issues)
+
+          // Faz 2 (additive): platform için baskın campaign type'a uygun
+          // kalıcı rakip içgörüsünü prompt'a ek context olarak geçir.
+          // Hata olursa sessizce null kalır; mevcut akış değişmez.
+          let persistedCompetitorContext: string | null = null
+          if (userId) {
+            try {
+              const platformLower = p === 'Meta' ? 'meta' : 'google'
+              const firstActive = allCampaigns.find(
+                (c: any) => c.platform === p && (c.status === 'ACTIVE' || c.status === 'ENABLED'),
+              )
+              const campaignType = firstActive
+                ? normalizeCampaignType(firstActive).campaignType
+                : null
+              persistedCompetitorContext = await buildCompetitorContextForPrompt(
+                userId,
+                campaignType,
+                null,
+                { platform: platformLower },
+              )
+            } catch (e) {
+              console.warn('[GenerateAd] persistedCompetitorContext fetch failed (non-fatal):', e)
+            }
+          }
+
+          const result = await generateFullAutoProposals(
+            p,
+            competitorAnalysis.userProfile,
+            competitorAnalysis.comparison,
+            competitorAnalysis.competitorAds,
+            allCampaigns,
+            structuralAnalysis.issues,
+            persistedCompetitorContext,
+          )
           console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
           results.push(result)
         } catch (e) {
