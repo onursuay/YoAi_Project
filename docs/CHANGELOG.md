@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-11 — Faz 2B: Google Ads Transparency Connector + Meta Scanner Completion
+- **Sorun:** Google rakip reklam verisi mevcut değildi; `google-auction` route her zaman `supported:false` dönüyordu; `CompetitorDashboard` Google bağlantı durumunu göstermiyordu.
+- **Çözüm:**
+  - **googleTransparencyConnector.ts** (yeni) — SerpApi `google_ads_transparency_center` engine üzerinden Google Ads Transparency araması. `SERPAPI_API_KEY` yoksa `supported:false` döner, sahte veri üretilmez. `normalizeGoogleTransparencyAd()` ile `NormalizedCompetitorAd` formatına dönüştürür.
+  - **competitorScanner.ts** (yeni) — Meta + Google rakip taramasını birleştiren unified scanner. `deriveCompetitorQueriesFromCampaigns()` (max 5 sorgu), `runMetaCompetitorScanForUser()`, `runGoogleCompetitorScanForUser()`, `runCompetitorScanForUser()` (Promise.allSettled — her platform soft-fail). Sahte veri üretilmez.
+  - **google-auction/route.ts** güncellendi — SerpApi connector kullanılıyor; sonuçlar `upsertCompetitorAds` + `generateCompetitorInsightFromAds` + `upsertCompetitorInsight` ile persist ediliyor. Key yoksa `{ supported:false, reason:'SERPAPI_API_KEY_missing' }`.
+  - **CompetitorDashboard.tsx** güncellendi — Header'a Meta / Google bağlantı durumu badge'leri eklendi (connected=emerald, missing_key/unavailable=gray). Google status `/api/yoai/competitors/google-auction` üzerinden fire-and-forget ile kontrol edilir.
+  - **.env.example** güncellendi — `SERPAPI_API_KEY` ve `GOOGLE_ADS_TRANSPARENCY_PROVIDER=serpapi` eklendi.
+- **Dosyalar:** `lib/yoai/googleTransparencyConnector.ts`, `lib/yoai/competitorScanner.ts`, `app/api/yoai/competitors/google-auction/route.ts`, `components/yoai/CompetitorDashboard.tsx`, `.env.example`
+
 ## 2026-05-11 — Faz 5: Approval Lifecycle Advanced / Decision Desk Visibility + Versioning + Rejection Learning Foundation
 - **Sorun:** Multi-AI Decision Desk kararları kullanıcıya görünmüyordu; rejection/hold kararları yapısal kategori içermiyordu; approval'ların düzenleme geçmişi kaydedilmiyordu.
 - **Çözüm:**

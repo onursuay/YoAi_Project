@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Loader2, AlertTriangle, TrendingUp, Info, Inbox, Target, Eye } from 'lucide-react'
+import { Loader2, AlertTriangle, TrendingUp, Info, Inbox, Target, Eye, CheckCircle2, XCircle } from 'lucide-react'
 import type { UserAdProfile, CompetitorAd, CompetitorGap, CompetitorComparison } from '@/lib/yoai/competitorAnalyzer'
 
 interface AnalysisResult {
@@ -20,13 +20,30 @@ interface PersistedSummary {
   queryKeyword?: string | null
 }
 
+type GoogleTransparencyStatus = 'unknown' | 'connected' | 'missing_key' | 'unavailable'
+
 export default function CompetitorDashboard() {
   const [data, setData] = useState<AnalysisResult | null>(null)
   const [persisted, setPersisted] = useState<PersistedSummary | null>(null)
   const [loading, setLoading] = useState(true)
   const [activeTab, setActiveTab] = useState<'gaps' | 'competitors' | 'profile'>('gaps')
+  const [googleStatus, setGoogleStatus] = useState<GoogleTransparencyStatus>('unknown')
 
   useEffect(() => {
+    // Check Google Transparency status (fire-and-forget)
+    fetch('/api/yoai/competitors/google-auction')
+      .then(r => r.json())
+      .then(json => {
+        if (json.supported === false && json.reason === 'SERPAPI_API_KEY_missing') {
+          setGoogleStatus('missing_key')
+        } else if (json.supported === false) {
+          setGoogleStatus('unavailable')
+        } else if (json.ok && json.supported !== false) {
+          setGoogleStatus('connected')
+        }
+      })
+      .catch(() => setGoogleStatus('unavailable'))
+
     // Try cache
     try {
       const cached = sessionStorage.getItem('yoai_competitor_v2')
@@ -101,6 +118,32 @@ export default function CompetitorDashboard() {
           <p className="text-xs text-gray-400 mt-0.5">
             Reklamlarınız analiz edildi → Rakipler bulundu → Boşluklar tespit edildi
           </p>
+        </div>
+        <div className="flex items-center gap-2 text-[11px]">
+          {/* Meta status — always shown */}
+          <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
+            <CheckCircle2 className="w-3 h-3" />
+            Meta
+          </span>
+          {/* Google Transparency status */}
+          {googleStatus === 'connected' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-emerald-50 border border-emerald-200 text-emerald-700 font-medium">
+              <CheckCircle2 className="w-3 h-3" />
+              Google
+            </span>
+          )}
+          {googleStatus === 'missing_key' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title="SERPAPI_API_KEY tanımlı değil">
+              <XCircle className="w-3 h-3" />
+              Google (key yok)
+            </span>
+          )}
+          {googleStatus === 'unavailable' && (
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title="Google Ads Transparency bağlı değil">
+              <XCircle className="w-3 h-3" />
+              Google
+            </span>
+          )}
         </div>
       </div>
 
