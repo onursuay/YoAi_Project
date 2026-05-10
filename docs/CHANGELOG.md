@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-05-11 — Faz 7: Result Tracking / Feedback Loop
+- **Sorun:** Öneri sonuçları (before/after metrikleri) kaydedilmiyordu; uygulama etkisi takip edilemiyordu.
+- **Çözüm:**
+  - **yoai_recommendation_results migration** (yeni) — `supabase/migrations/20260510008000_create_yoai_recommendation_results.sql`: proposal_id, approval_id, source_campaign_id, platform, before_snapshot, after_snapshot, metric_delta, outcome (pending/improved/no_change/declined/insufficient_data), outcome_summary, status, RLS user-owned.
+  - **resultTrackingStore.ts** (yeni) — `recordBeforeSnapshot()`, `recordAfterSnapshot()` (delta+outcome hesaplar), `computeMetricDelta()` (sayısal alan karşılaştırma), `summarizeOutcomeDeterministic()` (CTR±%15, CPC±%15, ROAS±%10 eşikleri), `listRecommendationResults()`. Supabase null guard; tablo yoksa soft-fail.
+  - **results/route.ts** (yeni) — GET: liste (outcome/status/sourceCampaignId/limit filtreler); POST: `action:'before'` yeni kayıt, `action:'after'` delta+outcome güncelle.
+  - **ApprovalHistoryPanel.tsx** güncellendi — expand açılınca `/api/yoai/results` lazy fetch; outcome badge (improved=emerald, declined=red, no_change/insufficient_data/pending=gray) satır header'ında gösterilir; expanded detail'de "Öneri Sonucu" satırı eklendi.
+- **Dosyalar:** `supabase/migrations/20260510008000_create_yoai_recommendation_results.sql`, `lib/yoai/resultTrackingStore.ts`, `app/api/yoai/results/route.ts`, `components/yoai/ApprovalHistoryPanel.tsx`
+
 ## 2026-05-11 — Faz 6: Direct Publish Safety Layer Advanced
 - **Sorun:** `one-click-approve` route'unda payload doğrulama, içerik politikası kontrolü ve feature flag guard yoktu; güvenlik kontrolleri dağınıktı.
 - **Çözüm:**

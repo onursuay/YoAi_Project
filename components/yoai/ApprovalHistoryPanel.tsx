@@ -22,6 +22,9 @@ import {
   ChevronDown,
   ChevronUp,
   History,
+  TrendingUp,
+  TrendingDown,
+  Minus,
 } from 'lucide-react'
 
 type ApprovalStatus =
@@ -104,6 +107,17 @@ const DECISION_BADGE_CLASSES: Record<string, string> = {
   needs_human_review: 'bg-gray-50 text-gray-700 border-gray-200',
 }
 
+const OUTCOME_META: Record<
+  string,
+  { label: string; classes: string; icon: typeof TrendingUp }
+> = {
+  improved: { label: 'İyileşti', classes: 'bg-emerald-50 text-emerald-700 border-emerald-200', icon: TrendingUp },
+  declined: { label: 'Geriledi', classes: 'bg-red-50 text-red-700 border-red-200', icon: TrendingDown },
+  no_change: { label: 'Değişim Yok', classes: 'bg-gray-100 text-gray-600 border-gray-200', icon: Minus },
+  insufficient_data: { label: 'Veri Yetersiz', classes: 'bg-gray-50 text-gray-500 border-gray-200', icon: Minus },
+  pending: { label: 'Sonuç Bekleniyor', classes: 'bg-gray-50 text-gray-500 border-gray-200', icon: Clock },
+}
+
 interface Props {
   /** Parent değiştiğinde refresh tetikler (her artırımda yeniden fetch). */
   refreshKey?: number
@@ -169,10 +183,42 @@ function formatTime(iso: string | null): string {
   }
 }
 
+interface OutcomeResult {
+  outcome: string
+  outcome_summary: string | null
+  proposal_id: string
+}
+
 export default function ApprovalHistoryPanel({ refreshKey }: Props) {
   const [records, setRecords] = useState<ApprovalRecord[] | null>(null)
   const [loading, setLoading] = useState(true)
   const [expandedId, setExpandedId] = useState<string | null>(null)
+  const [outcomeMap, setOutcomeMap] = useState<Record<string, OutcomeResult>>({})
+
+  const fetchOutcomeForApproval = useCallback(async (rec: ApprovalRecord) => {
+    if (!rec.proposal_id || outcomeMap[rec.proposal_id]) return
+    try {
+      const res = await fetch(
+        `/api/yoai/results?limit=1${rec.source_campaign_id ? `&sourceCampaignId=${encodeURIComponent(rec.source_campaign_id)}` : ''}`,
+        { credentials: 'include' },
+      )
+      if (!res.ok) return
+      const json = await res.json()
+      if (json.ok && Array.isArray(json.data) && json.data.length > 0) {
+        const row = json.data[0]
+        setOutcomeMap((prev) => ({
+          ...prev,
+          [rec.proposal_id]: {
+            outcome: row.outcome,
+            outcome_summary: row.outcome_summary,
+            proposal_id: rec.proposal_id,
+          },
+        }))
+      }
+    } catch {
+      // non-fatal
+    }
+  }, [outcomeMap])
 
   const fetchHistory = useCallback(async () => {
     try {
@@ -243,6 +289,10 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
               ? (DECISION_BADGE_CLASSES[badgeDecision] ?? 'bg-gray-50 text-gray-500 border-gray-200')
               : null
 
+            const outcomeResult = outcomeMap[rec.proposal_id]
+            const outcomeMeta = outcomeResult ? OUTCOME_META[outcomeResult.outcome] : null
+            const OutcomeIcon = outcomeMeta?.icon
+
             return (
               <div key={rec.id} className="px-4 py-3">
                 <div className="flex items-start gap-3">
@@ -273,6 +323,14 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
                           AI: {DECISION_BADGE_LABELS[badgeDecision] ?? badgeDecision}
                         </span>
                       )}
+                      {outcomeMeta && OutcomeIcon && (
+                        <span
+                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[10px] font-medium ${outcomeMeta.classes}`}
+                        >
+                          <OutcomeIcon className="w-2.5 h-2.5" />
+                          {outcomeMeta.label}
+                        </span>
+                      )}
                     </div>
                     {reason && !expanded && (
                       <p className="text-[12px] text-gray-600 mt-1 line-clamp-1">
@@ -281,7 +339,11 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
                     )}
                   </div>
                   <button
-                    onClick={() => setExpandedId(expanded ? null : rec.id)}
+                    onClick={() => {
+                      const nextExpanded = expanded ? null : rec.id
+                      setExpandedId(nextExpanded)
+                      if (nextExpanded) fetchOutcomeForApproval(rec)
+                    }}
                     className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:bg-gray-100"
                     title={expanded ? 'Kapat' : 'Detay'}
                   >
@@ -334,6 +396,12 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
                       <DetailRow
                         label="AI Kararı"
                         value={`${DECISION_BADGE_LABELS[badgeDecision] ?? badgeDecision}${badge?.confidence ? ` (${badge.confidence}%)` : ''}`}
+                      />
+                    )}
+                    {outcomeResult && outcomeMeta && (
+                      <DetailRow
+                        label="Öneri Sonucu"
+                        value={`${outcomeMeta.label}${outcomeResult.outcome_summary ? ` — ${outcomeResult.outcome_summary}` : ''}`}
                       />
                     )}
                     {rec.publish_audit_id && (
