@@ -12,6 +12,10 @@ import {
   hashPayload,
   sanitizeResponseExcerpt,
 } from '@/lib/yoai/publishAuditStore'
+import {
+  markApprovalPublished,
+  recordPublishAttemptOnApproval,
+} from '@/lib/yoai/approvalStore'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -122,6 +126,24 @@ function buildPayloadExcerpt(proposal: FullAdProposal): unknown {
 export async function POST(request: Request) {
   let auditId: string | null = null
   let auditWarning: string | null = null
+  let approvalId: string | null = null
+  let userIdForCatch: string | null = null
+
+  // Helper: terminal-olmayan publish blokları için yoai_pending_approvals.metadata.last_publish_attempt yazımı.
+  // Status değiştirmez; proposal pending/hold/editing kalmaya devam edebilir.
+  const notifyApprovalAttempt = async (code: string, message: string) => {
+    if (approvalId && userIdForCatch) {
+      try {
+        await recordPublishAttemptOnApproval(userIdForCatch, approvalId, {
+          code,
+          message,
+          auditId,
+        })
+      } catch (e) {
+        console.warn('[OneClick] notifyApprovalAttempt failed (non-fatal):', e)
+      }
+    }
+  }
 
   try {
     const cookieStore = await cookies()
@@ -129,6 +151,7 @@ export async function POST(request: Request) {
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli.' }, { status: 401 })
     }
+    userIdForCatch = userId
 
     const body = await request.json()
     const proposal = body?.proposal as FullAdProposal | undefined
@@ -137,6 +160,9 @@ export async function POST(request: Request) {
       pixelId?: string
       leadFormId?: string
       conversionEvent?: string
+    }
+    if (typeof body?.approvalId === 'string' && body.approvalId.length > 0) {
+      approvalId = body.approvalId
     }
 
     if (!proposal || proposal.platform !== 'Meta') {
@@ -201,6 +227,7 @@ export async function POST(request: Request) {
           }),
         })
       }
+      await notifyApprovalAttempt(budgetCheck.code, budgetCheck.message)
       return NextResponse.json(
         {
           ok: false,
@@ -228,6 +255,10 @@ export async function POST(request: Request) {
           }),
         })
       }
+      await notifyApprovalAttempt(
+        'UNSUPPORTED',
+        capability.unsupportedReason || 'Bu kombinasyon desteklenmiyor.',
+      )
       return NextResponse.json(
         {
           ok: false,
@@ -282,6 +313,7 @@ export async function POST(request: Request) {
           error_message: 'UNSUPPORTED: bağlı Facebook sayfası yok',
         })
       }
+      await notifyApprovalAttempt('UNSUPPORTED', 'bağlı Facebook sayfası yok')
       return NextResponse.json(
         {
           ok: false,
@@ -305,6 +337,7 @@ export async function POST(request: Request) {
               error_message: 'UNSUPPORTED: hesapta pixel yok',
             })
           }
+          await notifyApprovalAttempt('UNSUPPORTED', 'hesapta pixel yok')
           return NextResponse.json(
             {
               ok: false,
@@ -337,6 +370,7 @@ export async function POST(request: Request) {
               error_message: 'UNSUPPORTED: lead form yok',
             })
           }
+          await notifyApprovalAttempt('UNSUPPORTED', 'lead form yok')
           return NextResponse.json(
             {
               ok: false,
@@ -410,6 +444,7 @@ export async function POST(request: Request) {
           response_excerpt: sanitizeResponseExcerpt({ preflight }),
         })
       }
+      await notifyApprovalAttempt('PREFLIGHT_BLOCKED', preflight.message)
       return NextResponse.json(
         {
           ok: false,
@@ -457,6 +492,7 @@ export async function POST(request: Request) {
           error_message: `CREATIVE_FAILED.image_generate: ${errMsg}`,
         })
       }
+      await notifyApprovalAttempt('CREATIVE_FAILED.image_generate', errMsg)
       return NextResponse.json(
         {
           ok: false,
@@ -500,6 +536,7 @@ export async function POST(request: Request) {
           error_message: `CREATIVE_FAILED.meta_upload: ${errMsg}`,
         })
       }
+      await notifyApprovalAttempt('CREATIVE_FAILED.meta_upload', errMsg)
       return NextResponse.json(
         {
           ok: false,
@@ -550,6 +587,17 @@ export async function POST(request: Request) {
             resolvedParams: result.resolvedParams,
           }),
         })
+      }
+      // Approval queue: kayıt published olarak işaretlenir.
+      if (approvalId) {
+        try {
+          await markApprovalPublished(userId, approvalId, auditId, {
+            published_via: 'one_click_approve',
+            created: result.created,
+          })
+        } catch (e) {
+          console.warn('[OneClick] markApprovalPublished failed (non-fatal):', e)
+        }
       }
       // Mevcut learning kaydı (action_outcomes) — değişmedi
       try {
@@ -634,6 +682,10 @@ export async function POST(request: Request) {
       })
     }
 
+    // Approval queue: status değiştirilmez (proposal yaşıyor — yeniden denenebilir).
+    // Sadece metadata.last_publish_attempt güncellenir.
+    await notifyApprovalAttempt(result.status.toUpperCase(), result.message)
+
     // Mevcut learning kaydı (action_outcomes) — applied=false
     try {
       await recordActionOutcome({
@@ -670,6 +722,7 @@ export async function POST(request: Request) {
         error_message: `ROUTE_EXCEPTION: ${errMsg}`,
       })
     }
+    await notifyApprovalAttempt('ROUTE_EXCEPTION', errMsg)
     return NextResponse.json(
       {
         ok: false,

@@ -2,6 +2,44 @@
 
 ---
 
+## 2026-05-10 — Faz 0C: Approval lifecycle foundation (pending queue + reject + hold + detail)
+- **Sorun:** AI Reklam Önerileri için kalıcı approval queue yoktu — pending/rejected/hold/edit state'leri, rejection_reason, approval history hiçbiri DB'de tutulmuyordu. Kart aksiyonları (Detayları Gör / Reddet / Beklet / Düzenle) UI'da yoktu. Bekleyen Onaylar metriği gerçek approval kayıtlarına bağlanabilir değildi.
+- **Çözüm:**
+  - **Yeni migration** `20260510003000_create_yoai_pending_approvals.sql` — `signups(id) UUID FK + ON DELETE CASCADE`, status enum (pending/approved/rejected/hold/editing/published/failed/expired), proposal_snapshot JSONB, rejection_reason/hold_reason/status_reason, edited_payload, approved_at/rejected_at/held_at/published_at/failed_at, publish_audit_id (FK yoai_publish_audit_log), metadata JSONB, 8 index, 4 RLS policy + unique (user_id, proposal_id) duplicate guard.
+  - **Yeni helper** `lib/yoai/approvalStore.ts` — `bulkInsertPendingApprovalsIfMissing()` (proposal listesi için tek-roundtrip insert + ON CONFLICT DO NOTHING), `upsertPendingApprovalFromProposal()` (per-row, protected status'ları korur), `listApprovals(filters)`, `getApprovalById()`, `updateApprovalStatus()` (transition guard'lı), `markApprovalPublished()`, `markApprovalFailed()`, `recordPublishAttemptOnApproval()` (status değiştirmez, sadece metadata.last_publish_attempt yazar), `countPendingApprovals()`. Tablo yoksa AUDIT_LOSS log + null/false döner.
+  - **Yeni API route** `app/api/yoai/approvals/route.ts` — GET: list/filter/count (status csv, platform, limit, ?count=1).
+  - **Yeni API route** `app/api/yoai/approvals/[id]/route.ts` — GET single, PATCH status update (sadece pending/rejected/hold/editing — published/approved/failed direkt yazılamaz). `ALLOWED_USER_TRANSITIONS` matrix ile geçiş guard'ı: `INVALID_TRANSITION → 409`, `NOT_FOUND → 404`, `TABLE_MISSING → 503`.
+  - **generate-ad/route.ts wiring** — Hem persisted path hem live generation path'inde `bulkInsertPendingApprovalsIfMissing()` çağrılır (non-fatal try/catch). Yeni proposal'lar pending kayıt oluşturur, mevcut kayıtlar (rejected/hold/published vb.) DOKUNULMAZ.
+  - **one-click-approve/route.ts wiring** — Body'den `approvalId` alınır. Publish başarılı → `markApprovalPublished(userId, approvalId, auditId)` (status='published', published_at, publish_audit_id FK). Budget block / preflight block / capability unsupported / creative fail / orchestrator partial fail → status DEĞİŞMEZ; sadece `recordPublishAttemptOnApproval` ile `metadata.last_publish_attempt = {at, code, message, auditId}` yazılır — proposal yaşıyor, kullanıcı tekrar deneyebilir.
+  - **AiAdSuggestions UI** — yeniden yazıldı:
+    - Mount'ta `/api/yoai/approvals?limit=200` ile approval state çekilir.
+    - Card altına 4-buton row: **Detayları Gör** (modal), **Düzenle** (disabled, "sonraki fazda"), **Beklet** (textarea modal → PATCH hold), **Reddet** (textarea modal → PATCH rejected). Meta için ek **Onayla ve Yayınla (PAUSED)** big button — OneClickApproveDialog'a `approvalId` geçiriyor.
+    - Card durum badge'leri: Yayınlandı (emerald) · Reddedildi (gray + reason + Geri Al) · Bekletildi (gray + reason + Aktif Et) · Failed (status_reason inline). Hepsi onaylı palet (amber YOK).
+    - DetailModal: 19 alanlı tablo + Google headlines/descriptions array'leri.
+    - ReasonModal: ortak component (reject + hold), textarea + Onayla/İptal.
+  - **OneClickApproveDialog** — yeni props: `approvalId`, `onPublished`. Body'ye `approvalId` aktarılır; success'te parent'a notify edilir (state refresh).
+- **Korunanlar:**
+  - `lib/yoai/meta/orchestrator.ts`, `lib/yoai/meta/diagnosis.ts`, `lib/yoai/meta/decision.ts`, `lib/yoai/adCreator.ts`, `lib/yoai/deepAnalysis.ts`, `lib/yoai/metaDeepFetcher.ts`, `lib/yoai/googleDeepFetcher.ts` — DOKUNULMADI.
+  - `app/api/integrations/meta/**`, `app/api/integrations/google-ads/**`, `app/api/integrations/tiktok-ads/**` — DOKUNULMADI.
+  - `app/api/yoai/execute-action/route.ts`, `daily-run`, `command-center`, `competitors/*`, Search/Display/PMax wizard'ları — DOKUNULMADI.
+  - PAUSED default + budget guard + explicit checkbox confirmation (Faz 0B) korundu.
+  - AI proposal generation, prompt'lar, ad_proposals_data JSONB yapısı — DEĞİŞMEDİ. Geriye dönük uyumlu.
+  - Command Center metrikleri (CommandCenterHeader pendingApprovals = ccData.drafts.length) bu fazda DEĞİŞTİRİLMEDİ — `/api/yoai/approvals?count=1` endpoint'i hazır, UI binding sonraki minor PR'da yapılabilir.
+- **Status transitions** (PATCH endpoint izinli geçişleri): pending→{rejected,hold,editing}, hold→{rejected,pending,editing}, editing→{rejected,hold,pending}, rejected→{pending}, failed→{pending}, expired→{pending}. published/approved → terminal (publish flow dışı PATCH'tan yazılamaz).
+- **Doğrulama:** `npx tsc --noEmit` → 0 error · `npm run build` → ✓ tüm route'lar derlendi · /yoai bundle 21.6→23.5 kB.
+- **Migration apply gereksinimi:** `supabase/migrations/20260510003000_create_yoai_pending_approvals.sql` production'da uygulanmalı. Faz 0A'daki `yoai_publish_audit_log` zaten dependency (publish_audit_id FK).
+- **Dosyalar:**
+  - `supabase/migrations/20260510003000_create_yoai_pending_approvals.sql` (yeni)
+  - `lib/yoai/approvalStore.ts` (yeni)
+  - `app/api/yoai/approvals/route.ts` (yeni)
+  - `app/api/yoai/approvals/[id]/route.ts` (yeni)
+  - `app/api/yoai/generate-ad/route.ts` (approval upsert wiring)
+  - `app/api/yoai/one-click-approve/route.ts` (approvalId binding + status update)
+  - `components/yoai/AiAdSuggestions.tsx` (yeniden yazıldı: aksiyon row + modal'lar)
+  - `components/yoai/OneClickApproveDialog.tsx` (approvalId + onPublished props)
+
+---
+
 ## 2026-05-10 — Faz 0B: Publish audit binding + budget guard + explicit confirmation
 - **Sorun:** Faz 0A'da yoai_publish_audit_log tablosu ve publishAuditStore helper'ı eklendi ama publish akışına bağlanmamıştı. Ek olarak: budget guard yoktu (proposal'daki dailyBudget cap'siz Meta'ya iletiliyordu), idle phase'de explicit checkbox onay yoktu, partial failure orphan kaynaklar hiçbir yerde izlenmiyordu.
 - **Çözüm:**

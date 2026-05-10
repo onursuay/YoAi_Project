@@ -23,6 +23,10 @@ import type { FullAdProposal } from '@/lib/yoai/adCreator'
 interface Props {
   proposal: FullAdProposal
   onClose: () => void
+  /** Faz 0C: yoai_pending_approvals row id — publish başarılı olursa published olarak işaretlenir */
+  approvalId?: string | null
+  /** Faz 0C: publish başarılı olduğunda parent'ı bilgilendir (UI state senkronizasyonu) */
+  onPublished?: (approvalId: string | null) => void
 }
 
 type Phase = 'idle' | 'running' | 'needs_input' | 'success' | 'error'
@@ -40,7 +44,7 @@ interface SuccessResult {
   adId?: string
 }
 
-export default function OneClickApproveDialog({ proposal, onClose }: Props) {
+export default function OneClickApproveDialog({ proposal, onClose, approvalId, onPublished }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [message, setMessage] = useState<string>('')
   const [needs, setNeeds] = useState<NeedsInput>({})
@@ -63,6 +67,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
         body: JSON.stringify({
           proposal,
           choices: overrideChoices || choices,
+          approvalId: approvalId ?? undefined,
         }),
       })
       const json = await res.json()
@@ -71,6 +76,7 @@ export default function OneClickApproveDialog({ proposal, onClose }: Props) {
         setResult(json.created || {})
         setMessage(json.message || 'Kampanya hazır.')
         setPhase('success')
+        if (onPublished) onPublished(approvalId ?? null)
         return
       }
 

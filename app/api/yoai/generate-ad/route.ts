@@ -8,6 +8,8 @@ import { getBestAvailableRun, upsertDailyRun, getTurkeyDate } from '@/lib/yoai/d
 import type { Platform } from '@/lib/yoai/analysisTypes'
 import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
 import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
+import type { FullAdProposal } from '@/lib/yoai/adCreator'
+import { bulkInsertPendingApprovalsIfMissing } from '@/lib/yoai/approvalStore'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -94,6 +96,19 @@ export async function POST(request: Request) {
           const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
           const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
           console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
+
+          // Approval queue mapping: eksik proposal_id'leri pending olarak ekle.
+          // Mevcut (rejected/hold/published vb.) kayıtlar dokunulmaz.
+          try {
+            await bulkInsertPendingApprovalsIfMissing(
+              userId,
+              persistedProposals as FullAdProposal[],
+              null,
+            )
+          } catch (e) {
+            console.warn('[GenerateAd] approvals upsert (persisted) failed (non-fatal):', e)
+          }
+
           return NextResponse.json({
             ok: true,
             data: {
@@ -179,6 +194,20 @@ export async function POST(request: Request) {
         console.log(`[GenerateAd] Persisted ${allProposals.length} proposals to daily run store`)
       } catch (e) {
         console.error('[GenerateAd] Persist error:', e)
+      }
+
+      // Approval queue mapping: yeni proposal'lar için pending kayıt oluştur.
+      try {
+        const approvalRes = await bulkInsertPendingApprovalsIfMissing(
+          userId,
+          allProposals as FullAdProposal[],
+          null,
+        )
+        console.log(
+          `[GenerateAd] Approvals upsert: inserted=${approvalRes.inserted} skipped=${approvalRes.skipped}`,
+        )
+      } catch (e) {
+        console.warn('[GenerateAd] approvals upsert (live) failed (non-fatal):', e)
       }
     }
 
