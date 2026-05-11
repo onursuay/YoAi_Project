@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — YoAlgoritma Dark Premium Kart Tasarımı + Lab Arka Planı
+- **Sorun:** AI Reklam Önerisi kartları sade beyaz/açık tonlarda, premium AI deneyimi hissini yeterince vermiyordu. Arka planda dekoratif unsur yoktu.
+- **Çözüm:** (1) `AdPreviewCard.tsx` tamamen yeniden tasarlandı: kart arka planı `bg-[#0f172a]` (dark navy), border `border-[#23314d]`, hover `border-emerald-400/40`, iç preview panel `bg-[#151f33]`. Badge renkleri `bg-indigo-500/20 text-indigo-200`, güven metni `text-slate-400`, label/value çiftleri slate tonları, beklenen performans `text-emerald-400`, AI gerekçesi `text-indigo-400` başlıkla. CTA enum'ları humanize edildi (`SEND_MESSAGE → Mesaj Gönder` vb.). (2) `app/yoai/page.tsx`'te sağ içerik alanına 7 adet vektörel deney tüpü SVG eklendi — `pointer-events-none`, `absolute inset-0`, opacity 0.055–0.07, emerald/cyan/indigo tonlar, farklı boyut ve rotasyonlarda, CSS `@keyframes` ile yavaş yüzen animasyon. Sidebar'a hiç dokunulmadı.
+- **Dosyalar:** `components/yoai/AdPreviewCard.tsx`, `app/yoai/page.tsx`
+
 ## 2026-05-11 — Competitor Insight insightError Yüzey Çıkarma + Table-Missing Görünürlüğü
 - **Sorun:** `yoai_competitor_insights` tablosu production'da henüz yaratılmamışsa (migration uygulanmamış), `upsertCompetitorInsight` içindeki `isTableMissingError` dalı hata fırlatmak yerine `return null` yapıyordu. Route'un `catch` bloğu bunu yakalamıyordu; `insightRow = null` oluyordu ama `insightError` set edilmiyordu. Sonuç: response'da `insightId=null`, hiç `insightError` yok — sorun tamamen sessiz kalıyordu.
 - **Çözüm:** (1) `upsertCompetitorInsight`'ta table-missing durumları `return null` yerine `throw new Error('competitor_insight_table_missing: apply migration ...')` yapıyor. (2) Aynı şekilde `!supabase` / `!userId` guard'ları da `throw` yapıyor. (3) Her iki route'a (Meta + Google, tüm sağlayıcı path'ları) `if (insightRow === null && !insightError)` safety-net check eklendi; bu durum da `insightError` olarak response'a yansıyor. Artık tüm insight başarısızlıkları response'da görünür; migration uygulanmadıysa `insightError: "competitor_insight_table_missing: apply migration ..."` mesajı gelir.
