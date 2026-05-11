@@ -43,7 +43,7 @@ export async function POST(request: Request) {
     // Resolve userId once
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const userId = cookieStore.get('session_id')?.value
+    const userId = cookieStore.get('user_id')?.value
 
     // ── Helpers ──
     const cookieHeader = request.headers.get('cookie') || ''

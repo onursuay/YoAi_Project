@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — Faz 2D: Identity Key Fix — session_id → user_id
+- **Sorun:** 15 yoai route, DB anahtarı olarak `session_id` (her login'de değişen rastgele UUID) kullanıyordu. CRON `user_id` (signups.id — stabil) ile yazıyor, UI `session_id` ile okuyordu. Veri asla görüntülenemiyordu.
+- **Çözüm:** Tüm yoai API route'larında `cookieStore.get('session_id')` → `cookieStore.get('user_id')` olarak değiştirildi (15 dosya, 20 satır).
+- **Dosyalar:** `generate-ad`, `daily-run`, `command-center`, `results`, `approvals`, `approvals/[id]`, `approvals/[id]/versions`, `one-click-approve`, `actions/record`, `actions/outcomes`, `competitors/analyze`, `competitors/meta-ad-library`, `competitors/google-auction`, `articles`, `articles/[id]`
+
 ## 2026-05-11 — Faz 2C (fix): Apify Runtime Timeout Safety
 - **Sorun:** `waitForFinish=120 s` + 30 s buffer = 150 s; Vercel `maxDuration=60 s` → production timeout riski.
 - **Çözüm:**

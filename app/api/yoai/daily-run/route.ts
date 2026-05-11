@@ -144,7 +144,7 @@ export async function POST(request: Request) {
     // Auth: get user ID from session
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const userId = cookieStore.get('session_id')?.value
+    const userId = cookieStore.get('user_id')?.value
 
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
@@ -260,7 +260,7 @@ export async function POST(request: Request) {
     try {
       const { cookies } = await import('next/headers')
       const cookieStore = await cookies()
-      const userId = cookieStore.get('session_id')?.value
+      const userId = cookieStore.get('user_id')?.value
       if (userId) {
         await upsertDailyRun({
           user_id: userId,

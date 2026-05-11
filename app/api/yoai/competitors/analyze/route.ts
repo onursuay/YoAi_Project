@@ -64,7 +64,7 @@ export async function GET(request: Request) {
 
     try {
       const cookieStore = await cookies()
-      const userId = cookieStore.get('session_id')?.value
+      const userId = cookieStore.get('user_id')?.value
       if (userId && result.competitorAds.length > 0) {
         // Hangi campaign type baskın? → İlk Meta kampanyasının normalize tipi.
         let campaignTypeContext: string | null = null

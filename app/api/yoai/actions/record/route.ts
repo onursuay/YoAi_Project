@@ -24,7 +24,7 @@ export const maxDuration = 15
 export async function POST(request: Request) {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('session_id')?.value
+    const userId = cookieStore.get('user_id')?.value
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli.' }, { status: 401 })
     }

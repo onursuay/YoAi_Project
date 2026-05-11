@@ -5,7 +5,7 @@ import { supabase } from '@/lib/supabase/client'
 export const dynamic = 'force-dynamic'
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('session_id')?.value ?? null
+  return cookieStore.get('user_id')?.value ?? null
 }
 
 // GET /api/yoai/articles — List all articles for current user
