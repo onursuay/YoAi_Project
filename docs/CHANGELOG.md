@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — KPI Dashboard Platform Ayrımı (Meta / Google)
+- **Sorun:** YoAlgoritma KPI özet alanı Meta ve Google metriklerini tek toplamda gösteriyordu. CTR ve CPC hangi platforma ait belli değildi.
+- **Çözüm:** KpiDashboard'a platform tab'ı eklendi (Tümü / Meta / Google). Tümü modunda yanıltıcı CTR/CPC kaldırıldı; Meta ve Google tab'larında platformBreakdown verisiyle CTR ve CPC ayrı hesaplanıyor. Kart başlıkları "Meta CTR", "Google CPC" gibi platform bazlı hale getirildi.
+- **Dosyalar:** `components/yoai/KpiDashboard.tsx`
+
 ## 2026-05-11 — AiAdSuggestions: Duplicate Startup Fetch Fix
 - **Sorun:** `/yoai` fresh açılışında `generate-ad` endpoint'i 2 kez çağrılıyordu. `connectedPlatforms` prop'u parent re-render'da yeni dizi referansı olarak gelince `fetchProposals` useCallback yeniden oluşuyor, useEffect ikinci kez tetikleniyordu.
 - **Çözüm:** `connectedPlatforms` değeri `connectedPlatformsRef` ile ref'e alındı; `fetchProposals` deps listesi boşaltıldı (`[]`). useEffect'e `lastFetchedKeyRef` guard eklendi: `platformsKey = connectedPlatforms.slice().sort().join(',')` değişmemişse fetch yapılmıyor. `forceGenerate=true` çağrıları guard'dan bağımsız, doğrudan `fetchProposals(true)` ile çalışmaya devam ediyor.
