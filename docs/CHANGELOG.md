@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — Onay Geçmişi Modern Kart Grid Tasarımı
+- **Sorun:** ApprovalHistoryPanel accordion/liste görünümündeydi; teknik ID alanları (Proposal ID, Audit ID) ana ekranda görünüyordu; tasarım modern kart mantığına uymuyordu.
+- **Çözüm:** Bileşen tamamen yeniden tasarlandı. Accordion kaldırıldı, responsive kart grid oluşturuldu (1/2/3 kolon). Her kart; status badge, platform badge, AI kararı badge, sonuç badge, kampanya adı, hedef, bütçe, başlık, CTA, neden, kategori badge ve tarih gösteriyor. Teknik alanlar (Proposal ID, Audit ID, Kaynak Kampanya) "Detay" butonuyla açılan kart alt bölümüne taşındı. Hover animasyonu (hafif yükselme + shadow) eklendi.
+- **Dosyalar:** `components/yoai/ApprovalHistoryPanel.tsx`
+
 ## 2026-05-11 — KPI Dashboard Platform Ayrımı (Meta / Google)
 - **Sorun:** YoAlgoritma KPI özet alanı Meta ve Google metriklerini tek toplamda gösteriyordu. CTR ve CPC hangi platforma ait belli değildi.
 - **Çözüm:** KpiDashboard'a platform tab'ı eklendi (Tümü / Meta / Google). Tümü modunda yanıltıcı CTR/CPC kaldırıldı; Meta ve Google tab'larında platformBreakdown verisiyle CTR ve CPC ayrı hesaplanıyor. Kart başlıkları "Meta CTR", "Google CPC" gibi platform bazlı hale getirildi.
