@@ -100,6 +100,25 @@ export async function GET(request: Request) {
           })
         }
 
+        // Actor FAILED — diagnostic bilgileri dön, sahte veri yok.
+        if (scanResult.reason === 'actor_failed') {
+          return NextResponse.json({
+            ok: true,
+            supported: true,
+            reason: 'actor_failed',
+            runStatus: scanResult.runStatus,
+            provider: 'apify',
+            actorId: scanResult.actorId,
+            runId: scanResult.runId,
+            datasetId: scanResult.datasetId,
+            error: scanResult.error,
+            statusMessage: scanResult.statusMessage,
+            exitCode: scanResult.exitCode,
+            durationMillis: scanResult.durationMillis,
+            data: [],
+          })
+        }
+
         // Geriye dönük uyumlu camelCase shape
         const ads = scanResult.ads.map((ad) => ({
           id: ad.source_ad_id ?? undefined,

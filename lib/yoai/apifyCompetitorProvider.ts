@@ -41,6 +41,9 @@ export interface ApifyActorRunResult {
   datasetId: string
   status: string
   error?: string
+  statusMessage?: string
+  exitCode?: number
+  durationMillis?: number
 }
 
 export interface ApifyQualityStats {
@@ -69,6 +72,9 @@ export interface ApifyScanResult {
   runId?: string
   datasetId?: string
   error?: string
+  statusMessage?: string
+  exitCode?: number
+  durationMillis?: number
   qualityStats?: ApifyQualityStats
 }
 
@@ -127,8 +133,8 @@ export function buildMetaActorInput(params: MetaApifyScanParams): Record<string,
   return {
     urls: [searchUrl],
     scrapeAdDetails: false,
-    totalRecords: maxRecords,
-    limitPerInputUrl: maxRecords,
+    count: maxRecords,
+    limitPerSource: maxRecords,
   }
 }
 
@@ -143,14 +149,12 @@ export function buildGoogleActorInput(params: GoogleApifyScanParams): Record<str
   const maxResults = params.maxResults ?? 50
   const region = params.region || 'TR'
 
-  return {
+  const input: Record<string, unknown> = {
     searchQuery: params.query,
     maxResults,
-    platform: 'all',
-    region: region || undefined,
-    dateFrom: undefined,
-    dateTo: undefined,
   }
+  if (region) input.region = region
+  return input
 }
 
 /* ──────────────────────────────────────────────────────────
@@ -223,8 +227,19 @@ export async function runApifyActor(
     const runId = (runData?.id as string) ?? ''
     const datasetId = (runData?.defaultDatasetId as string) ?? ''
     const status = (runData?.status as string) ?? 'UNKNOWN'
+    const statusMessage = (runData?.statusMessage as string) ?? undefined
+    const exitCode =
+      typeof runData?.exitCode === 'number' ? (runData.exitCode as number) : undefined
+    const statsRaw =
+      runData?.stats && typeof runData.stats === 'object'
+        ? (runData.stats as Record<string, unknown>)
+        : null
+    const durationMillis =
+      typeof statsRaw?.durationMillis === 'number'
+        ? (statsRaw.durationMillis as number)
+        : undefined
 
-    return { runId, datasetId, status }
+    return { runId, datasetId, status, statusMessage, exitCode, durationMillis }
   } catch (e) {
     const msg = e instanceof Error ? e.message : String(e)
     console.warn('[ApifyProvider] runApifyActor error:', msg)
@@ -547,7 +562,11 @@ export async function runMetaApifyAdLibraryScan(
       provider: 'apify',
       actorId,
       runId: runResult.runId || undefined,
+      datasetId: runResult.datasetId || undefined,
       error: runResult.error || `Actor status: ${runResult.status}`,
+      statusMessage: runResult.statusMessage,
+      exitCode: runResult.exitCode,
+      durationMillis: runResult.durationMillis,
     }
   }
 
@@ -683,7 +702,11 @@ export async function runGoogleApifyTransparencyScan(
       provider: 'apify',
       actorId,
       runId: runResult.runId || undefined,
+      datasetId: runResult.datasetId || undefined,
       error: runResult.error || `Actor status: ${runResult.status}`,
+      statusMessage: runResult.statusMessage,
+      exitCode: runResult.exitCode,
+      durationMillis: runResult.durationMillis,
     }
   }
 

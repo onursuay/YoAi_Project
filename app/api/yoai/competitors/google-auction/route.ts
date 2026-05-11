@@ -113,6 +113,11 @@ export async function GET(request: Request) {
           provider: 'apify',
           actorId: scanResult.actorId,
           runId: scanResult.runId,
+          datasetId: scanResult.datasetId,
+          error: scanResult.error,
+          statusMessage: scanResult.statusMessage,
+          exitCode: scanResult.exitCode,
+          durationMillis: scanResult.durationMillis,
           data: {
             ads: [],
             inserted: 0,
