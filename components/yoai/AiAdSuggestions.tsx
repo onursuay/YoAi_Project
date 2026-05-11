@@ -427,7 +427,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
 
     if (status === 'published') {
       return (
-        <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-950/40 border border-emerald-500/30 rounded-lg text-[12px] text-emerald-400">
+        <div className="flex items-center gap-2 px-3 py-2.5 bg-emerald-950/40 text-[12px] text-emerald-300">
           <CheckCircle2 className="w-3.5 h-3.5 shrink-0" />
           <span className="font-medium">Yayınlandı</span>
           <span className="text-[11px] opacity-60 ml-auto">Ads Manager'dan kontrol et</span>
@@ -437,8 +437,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
 
     if (status === 'rejected') {
       return (
-        <div className="space-y-2">
-          <div className="flex items-start gap-2 px-3 py-2 bg-red-950/30 border border-red-500/20 rounded-lg text-[12px] text-red-400">
+        <div className="space-y-2 p-3">
+          <div className="flex items-start gap-2 px-3 py-2 bg-red-950/30 border border-red-500/20 rounded-lg text-[12px] text-red-300">
             <X className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-medium">Reddedildi</p>
@@ -450,7 +450,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
           <button
             onClick={() => approval && handleReopen(approval.id)}
             disabled={submittingPatch || !approval}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[12px] font-medium disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[12px] font-medium disabled:opacity-50"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Geri Al
           </button>
@@ -461,8 +461,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
 
     if (status === 'hold') {
       return (
-        <div className="space-y-2">
-          <div className="flex items-start gap-2 px-3 py-2 bg-slate-800/60 border border-slate-700/40 rounded-lg text-[12px] text-slate-400">
+        <div className="space-y-2 p-3">
+          <div className="flex items-start gap-2 px-3 py-2 bg-slate-800/60 border border-slate-700/40 rounded-lg text-[12px] text-slate-300">
             <PauseCircle className="w-3.5 h-3.5 shrink-0 mt-0.5" />
             <div className="flex-1">
               <p className="font-medium">Bekletildi</p>
@@ -474,7 +474,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
           <button
             onClick={() => approval && handleReopen(approval.id)}
             disabled={submittingPatch || !approval}
-            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-300 rounded-lg text-[12px] font-medium disabled:opacity-50"
+            className="w-full inline-flex items-center justify-center gap-1.5 px-3 py-1.5 bg-slate-800 hover:bg-slate-700 text-slate-200 rounded-lg text-[12px] font-medium disabled:opacity-50"
           >
             <RotateCcw className="w-3.5 h-3.5" /> Aktif Et
           </button>
@@ -486,23 +486,23 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     // pending / editing / failed / expired / approved → ONAYLA / REDDET
     if (confirmRejectId === proposalId) {
       return (
-        <div className="rounded-lg overflow-hidden border border-red-500/30 bg-red-950/20">
+        <div className="bg-red-950/20">
           <p className="text-[11px] text-red-300 text-center py-2.5 px-3 font-medium">
             Bu öneriyi reddetmek istiyor musunuz?
           </p>
-          <div className="flex border-t border-red-500/20">
+          <div className="flex items-center border-t border-red-500/20">
             <button
               onClick={() => handleConfirmReject(proposalId, approval?.id)}
               disabled={submittingPatch}
-              className="flex-1 py-2.5 bg-red-600/30 hover:bg-red-600/50 text-red-300 font-bold text-[11px] tracking-wider transition-colors disabled:opacity-40"
+              className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40"
             >
               {submittingPatch ? '…' : 'REDDET'}
             </button>
-            <div className="w-px bg-red-500/20 shrink-0" />
+            <span className="text-red-300/60 select-none pointer-events-none px-2 text-sm">/</span>
             <button
               onClick={() => setConfirmRejectId(null)}
               disabled={submittingPatch}
-              className="flex-1 py-2.5 bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 text-[11px] tracking-wider transition-colors disabled:opacity-40"
+              className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40"
             >
               VAZGEÇ
             </button>
@@ -512,29 +512,29 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     }
 
     return (
-      <div className="space-y-2">
-        <div className="flex rounded-lg overflow-hidden border border-slate-700/60">
+      <div>
+        <div className="flex items-center">
           <button
             onClick={() => onOpenWizard(proposal)}
-            className="flex-1 py-3 bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600/40 text-emerald-400 font-bold text-[12px] tracking-wider transition-colors"
+            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors"
           >
             ONAYLA
           </button>
-          <div className="w-px bg-slate-700/60 shrink-0" />
+          <span className="text-slate-300 select-none pointer-events-none px-2 text-sm">/</span>
           <button
             onClick={() => proposalId && setConfirmRejectId(proposalId)}
             disabled={submittingPatch}
-            className="flex-1 py-3 bg-red-950/30 hover:bg-red-950/50 active:bg-red-950/70 text-red-400 font-bold text-[12px] tracking-wider transition-colors disabled:opacity-40"
+            className="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40"
           >
             REDDET
           </button>
         </div>
         {status === 'failed' && approval?.status_reason && (
-          <p className="text-[11px] text-slate-500 px-1">
+          <p className="text-[11px] text-slate-400 px-3 pt-2 pb-1">
             <span className="font-medium">Son deneme:</span> {approval.status_reason}
           </p>
         )}
-        {renderDecisionBadge()}
+        {(() => { const badge = renderDecisionBadge(); return badge ? <div className="px-3 pb-3 pt-2">{badge}</div> : null })()}
       </div>
     )
   }
@@ -567,10 +567,14 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
                   }
                 : undefined
               return (
-                <div key={p.id || `meta_${i}`} className="space-y-2">
-                  <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} diagnostic={diagnostic} />
-                  {renderActionRow(p)}
-                </div>
+                <AdPreviewCard
+                  key={p.id || `meta_${i}`}
+                  proposal={p}
+                  selected={false}
+                  onSelect={() => onOpenWizard(p)}
+                  diagnostic={diagnostic}
+                  actionFooter={renderActionRow(p)}
+                />
               )
             })}
           </div>
@@ -588,10 +592,13 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {googleProposals.map((p, i) => (
-              <div key={p.id || `google_${i}`} className="space-y-2">
-                <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
-                {renderActionRow(p)}
-              </div>
+              <AdPreviewCard
+                key={p.id || `google_${i}`}
+                proposal={p}
+                selected={false}
+                onSelect={() => onOpenWizard(p)}
+                actionFooter={renderActionRow(p)}
+              />
             ))}
           </div>
         </div>
