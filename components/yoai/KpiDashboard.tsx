@@ -137,15 +137,15 @@ export default function KpiDashboard({ kpis }: Props) {
       : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
 
   return (
-    <div className="flex flex-col sm:flex-row gap-4 items-start">
+    <div className="flex flex-col sm:flex-row gap-3 items-start">
       {/* Platform Selector — vertical left rail on desktop, horizontal on mobile */}
-      <div className="flex sm:flex-col gap-1 w-full sm:w-24 shrink-0">
+      <div className="flex sm:flex-col gap-1 w-full sm:w-14 shrink-0">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={[
-              'flex-1 sm:flex-none w-full px-3 py-2 rounded-xl border text-[13px] font-medium transition-all text-left whitespace-nowrap',
+              'flex-1 sm:flex-none w-full px-2 py-1.5 rounded-lg border text-[11px] font-medium transition-all text-left whitespace-nowrap',
               tab === t.key
                 ? 'bg-primary/10 text-primary border-primary/30'
                 : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary/20 hover:text-gray-700',
