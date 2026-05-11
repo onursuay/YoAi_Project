@@ -91,6 +91,28 @@ const HOLD_CATEGORY_LABELS: Record<string, string> = {
   'diğer': 'Diğer',
 }
 
+const CTA_LABELS: Record<string, string> = {
+  SEND_MESSAGE: 'Mesaj Gönder',
+  LEARN_MORE: 'Daha Fazla Bilgi Al',
+  SHOP_NOW: 'Alışveriş Yap',
+  SIGN_UP: 'Kayıt Ol',
+  CONTACT_US: 'Bize Ulaş',
+  GET_QUOTE: 'Teklif Al',
+  CALL_NOW: 'Hemen Ara',
+  DOWNLOAD: 'İndir',
+  APPLY_NOW: 'Başvur',
+  BOOK_NOW: 'Rezervasyon Yap',
+  WATCH_MORE: 'Daha Fazla İzle',
+}
+
+function humanizeCta(raw: string): string {
+  if (CTA_LABELS[raw]) return CTA_LABELS[raw]
+  return raw
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
 const DECISION_BADGE_LABELS: Record<string, string> = {
   publish_ready: 'Yayına Hazır',
   needs_edit: 'Düzenleme Gerekli',
@@ -252,12 +274,17 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-4">
-        <History className="w-4 h-4 text-gray-500" />
-        <h2 className="text-lg font-semibold text-gray-900">Onay Geçmişi</h2>
-        {records && records.length > 0 && (
-          <span className="text-[12px] text-gray-500">son {records.length} kayıt</span>
-        )}
+      <div className="mb-5">
+        <div className="flex items-center gap-2 mb-1">
+          <History className="w-4 h-4 text-gray-500" />
+          <h2 className="text-lg font-semibold text-gray-900">Onay Geçmişi</h2>
+          {records && records.length > 0 && (
+            <span className="text-[12px] text-gray-500">son {records.length} kayıt</span>
+          )}
+        </div>
+        <p className="text-[13px] text-gray-500 leading-relaxed">
+          AI tarafından oluşturulan reklam önerilerinizin onay, bekletme, reddetme ve yayın geçmişini buradan takip edebilirsiniz.
+        </p>
       </div>
 
       {(!records || records.length === 0) ? (
@@ -316,7 +343,7 @@ function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProp
   const OutcomeIcon = outcomeMeta?.icon
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+    <div className="bg-white rounded-2xl border border-gray-200 shadow-sm hover:shadow-md hover:border-primary/30 hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
       {/* Card header */}
       <div className="p-4 flex-1">
         {/* Top badges row */}
@@ -364,7 +391,7 @@ function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProp
             <InfoRow label="Başlık" value={rec.proposal_snapshot.headline} truncate />
           )}
           {rec.proposal_snapshot?.callToAction && (
-            <InfoRow label="CTA" value={rec.proposal_snapshot.callToAction} />
+            <InfoRow label="CTA" value={humanizeCta(rec.proposal_snapshot.callToAction)} />
           )}
           {reason && (
             <InfoRow label="Neden" value={reason} truncate />
@@ -396,8 +423,9 @@ function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProp
 
       {/* Expanded technical details */}
       {expanded && (
-        <div className="px-4 pb-3 pt-0 border-t border-gray-50">
-          <div className="mt-3 space-y-1.5">
+        <div className="mx-3 mb-3 rounded-xl bg-gray-50/60 border border-gray-100 px-3 py-3">
+          <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide mb-2">Teknik Detaylar</p>
+          <div className="space-y-1.5">
             {rec.proposal_snapshot?.headline && rec.proposal_snapshot?.campaignName && (
               <DetailRow label="Başlık (tam)" value={rec.proposal_snapshot.headline} />
             )}
@@ -420,20 +448,20 @@ function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProp
       )}
 
       {/* Card footer actions */}
-      <div className="px-4 py-2.5 border-t border-gray-50 flex items-center justify-end">
+      <div className="px-4 py-2.5 border-t border-gray-100 flex items-center justify-end">
         <button
           onClick={onToggleDetail}
-          className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-gray-700 transition-colors"
+          className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-primary transition-colors"
         >
           {expanded ? (
             <>
               <ChevronUp className="w-3.5 h-3.5" />
-              Gizle
+              Detayları Gizle
             </>
           ) : (
             <>
               <ChevronDown className="w-3.5 h-3.5" />
-              Detay
+              Detayları Gör
             </>
           )}
         </button>
@@ -445,8 +473,8 @@ function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProp
 function InfoRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
   return (
     <div className="flex items-baseline gap-2">
-      <span className="text-[11px] text-gray-400 shrink-0 w-16">{label}</span>
-      <span className={`text-[12px] text-gray-700 flex-1 ${truncate ? 'truncate' : ''}`}>
+      <span className="text-[11px] text-gray-400 shrink-0 whitespace-nowrap" style={{ minWidth: '5.5rem' }}>{label}</span>
+      <span className={`text-[12px] text-gray-700 flex-1 min-w-0 ${truncate ? 'truncate' : ''}`}>
         {value}
       </span>
     </div>
