@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — Apify Actor Input Mapping Düzeltildi + Failure Diagnostics Eklendi
+- **Sorun:** Meta actor `totalRecords`/`limitPerInputUrl` yanlış input key kullanıyordu; boş sonuç riskini artırıyordu. Google actor `platform:'all'` geçersiz enum gönderdiği için FAILED oluyordu. Actor hata verdiğinde `statusMessage`, `exitCode`, `durationMillis` bilgileri route response'ında görünmüyordu.
+- **Çözüm:** (1) `buildMetaActorInput`: `totalRecords` → `count`, `limitPerInputUrl` → `limitPerSource` olarak düzeltildi. (2) `buildGoogleActorInput`: `platform:'all'` tamamen kaldırıldı; `dateFrom`/`dateTo` undefined alanları da temizlendi — actor default tüm platformları tarar. (3) `runApifyActor`: Apify `runData`'dan `statusMessage`, `exitCode`, `stats.durationMillis` yakalanıp `ApifyActorRunResult`'a eklendi. (4) `runMetaApifyAdLibraryScan` / `runGoogleApifyTransparencyScan`: `actor_failed` branch bu diagnostic alanları `ApifyScanResult`'a propagate ediyor. (5) `meta-ad-library` route: `actor_failed` için explicit branch + diagnostic alanlar. (6) `google-auction` route: pending/empty/failed response'a `statusMessage`/`exitCode`/`durationMillis` eklendi.
+- **Dosyalar:** `lib/yoai/apifyCompetitorProvider.ts`, `app/api/yoai/competitors/meta-ad-library/route.ts`, `app/api/yoai/competitors/google-auction/route.ts`
+
 ## 2026-05-11 — YoAlgoritma Command Center Sadeleştirildi + Öneri Kartları Modernize Edildi
 - **Sorun:** /yoai ekranında KPI alanı ve Onay Geçmişi görünüyordu, sayfa odağını dağıtıyordu. Öneri kartları düzdü, platform bazlı renkli çerçeveler ve üst çizgiler vardı. "Onayla ve Yayınla" butonu kart arka planından ayrışmıyordu.
 - **Çözüm:** (1) KpiDashboard render ve import'u page.tsx'den kaldırıldı. (2) ApprovalHistoryPanel render ve import'u page.tsx'den kaldırıldı, historyRefreshKey state temizlendi. (3) Sayfa sırası: Hero → AI Reklam Önerileri → AI Analiz Yetenekleri. (4) AdPreviewCard'dan Meta mavi ve Google 4-renkli üst çubuklar kaldırıldı. (5) Kart arka planı soft yeşil gradient (`from-white via-emerald-50/30 to-white`), border emerald-100/70, shadow-sm, hover: shadow-md + border-emerald-200/80. (6) Kart içine `radial-gradient` soft glow overlay eklendi (%10 opacity, pointer-events-none). (7) "Onayla ve Yayınla" butonu `bg-emerald-600 hover:bg-emerald-700 text-white font-semibold` ile netleştirildi.
