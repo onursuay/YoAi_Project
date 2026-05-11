@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — Onay Geçmişi Kart UI Polish
+- **Sorun:** Günlük Bütçe label'ı iki satıra kırılıyor; CTA teknik enum olarak görünüyor (SEND_MESSAGE vb.); kart çerçevesi yeterince belirgin değil; Detay bölümü karta entegre görünmüyor; alan amacı kullanıcıya açık değil.
+- **Çözüm:** Alan başlığının altına Türkçe açıklama eklendi. `InfoRow` label'larına `whitespace-nowrap` + `5.5rem` min-width uygulandı (Günlük Bütçe artık tek satırda). CTA enum'ları için `humanizeCta` fonksiyonu eklendi (SEND_MESSAGE → Mesaj Gönder; bilinmeyenleri otomatik capitalize). Kart border `gray-200`'e güçlendirildi, hover'da `primary/30` border + shadow-md eklendi. Detay bölümü `bg-gray-50/60` + `rounded-xl` ile kart içine entegre edildi, "Teknik Detaylar" başlığı ile ayrıştırıldı. "Detay" butonu "Detayları Gör / Detayları Gizle" olarak güncellendi.
+- **Dosyalar:** `components/yoai/ApprovalHistoryPanel.tsx`
+
 ## 2026-05-11 — Onay Geçmişi Modern Kart Grid Tasarımı
 - **Sorun:** ApprovalHistoryPanel accordion/liste görünümündeydi; teknik ID alanları (Proposal ID, Audit ID) ana ekranda görünüyordu; tasarım modern kart mantığına uymuyordu.
 - **Çözüm:** Bileşen tamamen yeniden tasarlandı. Accordion kaldırıldı, responsive kart grid oluşturuldu (1/2/3 kolon). Her kart; status badge, platform badge, AI kararı badge, sonuç badge, kampanya adı, hedef, bütçe, başlık, CTA, neden, kategori badge ve tarih gösteriyor. Teknik alanlar (Proposal ID, Audit ID, Kaynak Kampanya) "Detay" butonuyla açılan kart alt bölümüne taşındı. Hover animasyonu (hafif yükselme + shadow) eklendi.
