@@ -4,23 +4,40 @@ import { resolveMetaContext } from '@/lib/meta/context'
 import {
   normalizeMetaAdLibraryAd,
   upsertCompetitorAds,
+  buildCompetitorAdFingerprint,
   type NormalizedCompetitorAd,
 } from '@/lib/yoai/competitorAdStore'
+import {
+  runMetaApifyAdLibraryScan,
+  isApifyEnabled,
+} from '@/lib/yoai/apifyCompetitorProvider'
 import {
   generateCompetitorInsightFromAds,
   upsertCompetitorInsight,
 } from '@/lib/yoai/competitorInsightStore'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 /* ────────────────────────────────────────────────────────────
    GET /api/yoai/competitors/meta-ad-library?q=keyword&country=TR
-   Proxies Meta Ad Library API.
-   Faz 2: Dönüş alanları geriye dönük uyumludur (data: [...]).
-   Yeni eklemeler:
-     - persisted: { inserted, updated, skipped, insightId }
-       (yalnızca DB persistence çalıştıysa)
+   Meta rakip reklam araması.
+
+   META_AD_LIBRARY_PROVIDER=apify → Apify actor (token gerekmez).
+   META_AD_LIBRARY_PROVIDER=official (default) → Meta Graph API.
+
+   Faz 2C: Apify path eklendi; mevcut camelCase response shape
+   geriye dönük uyumlu olarak korundu.
    ──────────────────────────────────────────────────────────── */
+
+function getMetaProvider(): string {
+  return (
+    process.env.META_AD_LIBRARY_PROVIDER ||
+    process.env.COMPETITOR_ADS_PROVIDER ||
+    'official'
+  ).toLowerCase()
+}
+
 export async function GET(request: Request) {
   try {
     const { searchParams } = new URL(request.url)
@@ -32,18 +49,138 @@ export async function GET(request: Request) {
       return NextResponse.json({ ok: false, error: 'Arama sorgusu (q) gereklidir' }, { status: 400 })
     }
 
+    const provider = getMetaProvider()
+
+    // ── Apify path ──
+    if (provider === 'apify') {
+      if (!isApifyEnabled()) {
+        return NextResponse.json({
+          ok: true,
+          supported: false,
+          reason: 'APIFY_API_TOKEN_missing',
+          provider: 'apify',
+          data: [],
+        })
+      }
+
+      try {
+        const cookieStore = await cookies()
+        const userId = cookieStore.get('session_id')?.value
+
+        const scanResult = await runMetaApifyAdLibraryScan({
+          query,
+          country,
+          campaignTypeContext,
+        })
+
+        if (!scanResult.supported) {
+          return NextResponse.json({
+            ok: true,
+            supported: false,
+            reason: scanResult.reason,
+            provider: 'apify',
+            actorId: scanResult.actorId,
+            error: scanResult.error,
+            data: [],
+          })
+        }
+
+        // Geriye dönük uyumlu camelCase shape
+        const ads = scanResult.ads.map((ad) => ({
+          id: ad.source_ad_id ?? undefined,
+          pageName: ad.advertiser_page_name ?? '',
+          pageId: ad.source_page_id ?? '',
+          adCreativeBody: ad.ad_body ?? '',
+          adCreativeLinkTitle: ad.ad_title ?? '',
+          adCreativeDescription: ad.ad_description ?? '',
+          adStartDate: ad.ad_delivery_start_time ?? '',
+          adEndDate: ad.ad_delivery_stop_time ?? '',
+          platforms: ad.publisher_platforms ?? [],
+          isActive: ad.is_active,
+        }))
+
+        let persisted: {
+          inserted: number
+          updated: number
+          skipped: number
+          insightId: string | null
+          errors: string[]
+          rawCount: number
+          normalizedCount: number
+          usefulCount: number
+        } | null = null
+
+        if (userId && scanResult.ads.length > 0) {
+          const withFingerprints: NormalizedCompetitorAd[] = scanResult.ads.map((ad) => ({
+            ...ad,
+            ad_fingerprint:
+              ad.ad_fingerprint ||
+              buildCompetitorAdFingerprint({
+                source: ad.source,
+                source_ad_id: ad.source_ad_id,
+                advertiser_page_name: ad.advertiser_page_name,
+                ad_body: ad.ad_body,
+                ad_title: ad.ad_title,
+                ad_description: ad.ad_description,
+              }),
+          }))
+
+          const upsertResult = await upsertCompetitorAds(userId, withFingerprints)
+
+          const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
+            platform: 'meta',
+            source: 'apify_meta_ad_library',
+            campaign_type_context: campaignTypeContext,
+            query_keyword: query,
+          })
+          const insightRow =
+            snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+
+          persisted = {
+            inserted: upsertResult.inserted,
+            updated: upsertResult.updated,
+            skipped: upsertResult.skipped,
+            insightId: insightRow?.id ?? null,
+            errors: upsertResult.errors,
+            rawCount: scanResult.rawCount,
+            normalizedCount: scanResult.normalizedCount,
+            usefulCount: scanResult.usefulCount,
+          }
+        }
+
+        return NextResponse.json({
+          ok: true,
+          supported: true,
+          provider: 'apify',
+          actorId: scanResult.actorId,
+          data: ads,
+          ...(persisted ? { persisted } : {}),
+        })
+      } catch (apifyErr) {
+        console.warn('[Meta Ad Library/Apify] error:', apifyErr)
+        return NextResponse.json(
+          {
+            ok: false,
+            error: apifyErr instanceof Error ? apifyErr.message : 'Apify scan hatası',
+          },
+          { status: 500 },
+        )
+      }
+    }
+
+    // ── Meta Graph API path (official) ──
     const ctx = await resolveMetaContext()
     if (!ctx) {
       return NextResponse.json({ ok: false, error: 'Meta bağlantısı bulunamadı' }, { status: 401 })
     }
 
-    // Call Meta Ad Library API
     const params = new URLSearchParams({
       access_token: ctx.userAccessToken,
       search_terms: query,
       ad_reached_countries: `["${country}"]`,
       ad_active_status: 'ACTIVE',
-      fields: 'id,page_name,page_id,ad_creative_bodies,ad_creative_link_titles,ad_creative_link_descriptions,ad_delivery_start_time,ad_delivery_stop_time,publisher_platforms',
+      fields:
+        'id,page_name,page_id,ad_creative_bodies,ad_creative_link_titles,ad_creative_link_descriptions,ad_delivery_start_time,ad_delivery_stop_time,publisher_platforms',
       limit: '25',
     })
 
@@ -52,10 +189,15 @@ export async function GET(request: Request) {
     if (!res.ok) {
       const errorData = await res.json().catch(() => ({}))
       console.error('[Meta Ad Library] Error:', res.status, errorData)
-      return NextResponse.json({
-        ok: false,
-        error: errorData?.error?.message || `Meta Ad Library API hatası (${res.status})`,
-      }, { status: res.status === 401 ? 401 : 502 })
+      return NextResponse.json(
+        {
+          ok: false,
+          error:
+            (errorData as { error?: { message?: string } })?.error?.message ||
+            `Meta Ad Library API hatası (${res.status})`,
+        },
+        { status: res.status === 401 ? 401 : 502 },
+      )
     }
 
     const data = await res.json()
@@ -66,16 +208,20 @@ export async function GET(request: Request) {
       id: ad.id,
       pageName: (ad as { page_name?: string }).page_name || '',
       pageId: (ad as { page_id?: string }).page_id || '',
-      adCreativeBody: (ad as { ad_creative_bodies?: string[] }).ad_creative_bodies?.[0] || '',
-      adCreativeLinkTitle: (ad as { ad_creative_link_titles?: string[] }).ad_creative_link_titles?.[0] || '',
-      adCreativeDescription: (ad as { ad_creative_link_descriptions?: string[] }).ad_creative_link_descriptions?.[0] || '',
-      adStartDate: (ad as { ad_delivery_start_time?: string }).ad_delivery_start_time || '',
+      adCreativeBody:
+        (ad as { ad_creative_bodies?: string[] }).ad_creative_bodies?.[0] || '',
+      adCreativeLinkTitle:
+        (ad as { ad_creative_link_titles?: string[] }).ad_creative_link_titles?.[0] || '',
+      adCreativeDescription:
+        (ad as { ad_creative_link_descriptions?: string[] }).ad_creative_link_descriptions?.[0] || '',
+      adStartDate:
+        (ad as { ad_delivery_start_time?: string }).ad_delivery_start_time || '',
       adEndDate: (ad as { ad_delivery_stop_time?: string }).ad_delivery_stop_time || '',
       platforms: (ad as { publisher_platforms?: string[] }).publisher_platforms || [],
       isActive: !(ad as { ad_delivery_stop_time?: string }).ad_delivery_stop_time,
     }))
 
-    // ── Faz 2: Best-effort persistence ──
+    // ── Best-effort persistence ──
     let persisted: {
       inserted: number
       updated: number
@@ -94,7 +240,9 @@ export async function GET(request: Request) {
           query_keyword: query,
           campaign_type_context: campaignTypeContext,
         }
-        const normalized: NormalizedCompetitorAd[] = rawAds.map((raw) => normalizeMetaAdLibraryAd(raw, adContext))
+        const normalized: NormalizedCompetitorAd[] = rawAds.map((raw) =>
+          normalizeMetaAdLibraryAd(raw, adContext),
+        )
         const upsertResult = await upsertCompetitorAds(userId, normalized)
 
         const snapshot = generateCompetitorInsightFromAds(normalized, {
@@ -103,9 +251,8 @@ export async function GET(request: Request) {
           campaign_type_context: campaignTypeContext,
           query_keyword: query,
         })
-        const insightRow = snapshot.ads_count > 0
-          ? await upsertCompetitorInsight(userId, snapshot)
-          : null
+        const insightRow =
+          snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
 
         persisted = {
           inserted: upsertResult.inserted,
@@ -119,7 +266,12 @@ export async function GET(request: Request) {
       console.warn('[Meta Ad Library] persistence failed (non-fatal):', persistErr)
     }
 
-    return NextResponse.json({ ok: true, data: ads, ...(persisted ? { persisted } : {}) })
+    return NextResponse.json({
+      ok: true,
+      provider: 'official',
+      data: ads,
+      ...(persisted ? { persisted } : {}),
+    })
   } catch (error) {
     console.error('[Meta Ad Library] Error:', error)
     return NextResponse.json(

@@ -1,17 +1,25 @@
 /* ──────────────────────────────────────────────────────────
-   YoAlgoritma — Competitor Scanner (Faz 2B)
+   YoAlgoritma — Competitor Scanner (Faz 2C)
 
    Meta ve Google rakip reklam taraması için unified helper.
-   Meta: Meta Ad Library API (mevcut route/helper'ı kullanır).
-   Google: Google Ads Transparency via SerpApi connector.
+   Meta:   Apify (META_AD_LIBRARY_PROVIDER=apify) veya Meta API.
+   Google: Apify (GOOGLE_ADS_TRANSPARENCY_PROVIDER=apify) veya SerpApi.
 
-   Sahte veri üretilmez. SerpApi key yoksa Google scan skip.
+   Meta kampanya → sadece Meta scan.
+   Google kampanya → sadece Google scan.
+   Çapraz tarama yok.
+   Sahte veri üretilmez.
    ────────────────────────────────────────────────────────── */
 
 import {
   searchGoogleTransparencyAds,
   isGoogleTransparencyEnabled,
 } from './googleTransparencyConnector'
+import {
+  runMetaApifyAdLibraryScan,
+  runGoogleApifyTransparencyScan,
+  isApifyEnabled,
+} from './apifyCompetitorProvider'
 import {
   upsertCompetitorAds,
   buildCompetitorAdFingerprint,
@@ -21,6 +29,22 @@ import {
   generateCompetitorInsightFromAds,
   upsertCompetitorInsight,
 } from './competitorInsightStore'
+
+function getMetaProvider(): string {
+  return (
+    process.env.META_AD_LIBRARY_PROVIDER ||
+    process.env.COMPETITOR_ADS_PROVIDER ||
+    'official'
+  ).toLowerCase()
+}
+
+function getGoogleProvider(): string {
+  return (
+    process.env.GOOGLE_ADS_TRANSPARENCY_PROVIDER ||
+    process.env.COMPETITOR_ADS_PROVIDER ||
+    'serpapi'
+  ).toLowerCase()
+}
 
 /* ── Types ── */
 
@@ -117,18 +141,20 @@ export function deriveCompetitorQueriesFromCampaigns(
 
 /**
  * Meta Ad Library üzerinden rakip reklamları tarar ve persist eder.
- * metaAccessToken gereklidir; yoksa supported:false döner.
+ * META_AD_LIBRARY_PROVIDER=apify ise Apify kullanır (token gerekmez).
+ * Aksi halde Meta API (metaAccessToken gerekir).
  * Sahte veri üretilmez.
  */
 export async function runMetaCompetitorScanForUser(
   userId: string,
-  params: CompetitorScanParams & { metaAccessToken: string },
+  params: CompetitorScanParams & { metaAccessToken?: string },
 ): Promise<CompetitorScanResult> {
-  if (!params.metaAccessToken) {
+  const query = params.keyword || params.advertiserDomain
+  if (!query) {
     return {
       platform: 'meta',
-      supported: false,
-      reason: 'meta_access_token_missing',
+      supported: true,
+      reason: 'no_query',
       inserted: 0,
       updated: 0,
       skipped: 0,
@@ -137,12 +163,111 @@ export async function runMetaCompetitorScanForUser(
     }
   }
 
-  const query = params.keyword || params.advertiserDomain
-  if (!query) {
+  // ── Apify path ──
+  if (getMetaProvider() === 'apify') {
+    if (!isApifyEnabled()) {
+      return {
+        platform: 'meta',
+        supported: false,
+        reason: 'APIFY_API_TOKEN_missing',
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        insightId: null,
+        adCount: 0,
+      }
+    }
+
+    try {
+      const scanResult = await runMetaApifyAdLibraryScan({
+        query,
+        country: params.region ?? 'TR',
+        campaignTypeContext: params.campaignTypeContext,
+      })
+
+      if (!scanResult.supported) {
+        return {
+          platform: 'meta',
+          supported: false,
+          reason: scanResult.reason,
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          insightId: null,
+          adCount: 0,
+          error: scanResult.error,
+        }
+      }
+
+      if (scanResult.ads.length === 0) {
+        return {
+          platform: 'meta',
+          supported: true,
+          reason: scanResult.reason,
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          insightId: null,
+          adCount: 0,
+        }
+      }
+
+      const withFingerprints: NormalizedCompetitorAd[] = scanResult.ads.map((ad) => ({
+        ...ad,
+        query_keyword: ad.query_keyword ?? query,
+        ad_fingerprint:
+          ad.ad_fingerprint ||
+          buildCompetitorAdFingerprint({
+            source: ad.source,
+            source_ad_id: ad.source_ad_id,
+            advertiser_page_name: ad.advertiser_page_name,
+            ad_body: ad.ad_body,
+            ad_title: ad.ad_title,
+            ad_description: ad.ad_description,
+          }),
+      }))
+
+      const upsertResult = await upsertCompetitorAds(userId, withFingerprints)
+      const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
+        platform: 'meta',
+        source: 'apify_meta_ad_library',
+        campaign_type_context: params.campaignTypeContext ?? null,
+        query_keyword: query,
+      })
+      const insightRow =
+        snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+
+      return {
+        platform: 'meta',
+        supported: true,
+        inserted: upsertResult.inserted,
+        updated: upsertResult.updated,
+        skipped: upsertResult.skipped,
+        insightId: insightRow?.id ?? null,
+        adCount: withFingerprints.length,
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.warn('[CompetitorScanner][Meta/Apify] error:', msg)
+      return {
+        platform: 'meta',
+        supported: true,
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        insightId: null,
+        adCount: 0,
+        error: msg,
+      }
+    }
+  }
+
+  // ── Meta API path (official) ──
+  if (!params.metaAccessToken) {
     return {
       platform: 'meta',
-      supported: true,
-      reason: 'no_query',
+      supported: false,
+      reason: 'meta_access_token_missing',
       inserted: 0,
       updated: 0,
       skipped: 0,
@@ -281,13 +406,132 @@ export async function runMetaCompetitorScanForUser(
 /* ── Google competitor scan ── */
 
 /**
- * Google Ads Transparency Center (SerpApi) üzerinden rakip reklamları tarar.
- * SERPAPI_API_KEY yoksa supported:false döner — sahte veri yok.
+ * Google Ads Transparency Center üzerinden rakip reklamları tarar.
+ * GOOGLE_ADS_TRANSPARENCY_PROVIDER=apify ise Apify kullanır.
+ * Aksi halde SerpApi (SERPAPI_API_KEY gerekir).
+ * Google Ads API rakip reklam için KULLANILMAZ.
+ * Sahte veri üretilmez.
  */
 export async function runGoogleCompetitorScanForUser(
   userId: string,
   params: CompetitorScanParams,
 ): Promise<CompetitorScanResult> {
+  const query = params.keyword || params.advertiserDomain || ''
+
+  // ── Apify path ──
+  if (getGoogleProvider() === 'apify') {
+    if (!isApifyEnabled()) {
+      console.log('[CompetitorScanner][Google] Apify token yok — Google Transparency tarama atlandı.')
+      return {
+        platform: 'google',
+        supported: false,
+        reason: 'APIFY_API_TOKEN_missing',
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        insightId: null,
+        adCount: 0,
+      }
+    }
+
+    if (!query) {
+      return {
+        platform: 'google',
+        supported: true,
+        reason: 'no_query',
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        insightId: null,
+        adCount: 0,
+      }
+    }
+
+    try {
+      const scanResult = await runGoogleApifyTransparencyScan({
+        query,
+        region: params.region ?? 'TR',
+        campaignTypeContext: params.campaignTypeContext,
+      })
+
+      if (!scanResult.supported) {
+        return {
+          platform: 'google',
+          supported: false,
+          reason: scanResult.reason,
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          insightId: null,
+          adCount: 0,
+          error: scanResult.error,
+        }
+      }
+
+      if (scanResult.ads.length === 0) {
+        return {
+          platform: 'google',
+          supported: true,
+          reason: scanResult.reason,
+          inserted: 0,
+          updated: 0,
+          skipped: 0,
+          insightId: null,
+          adCount: 0,
+        }
+      }
+
+      const withFingerprints: NormalizedCompetitorAd[] = scanResult.ads.map((ad) => ({
+        ...ad,
+        query_keyword: ad.query_keyword ?? query,
+        ad_fingerprint:
+          ad.ad_fingerprint ||
+          buildCompetitorAdFingerprint({
+            source: ad.source,
+            source_ad_id: ad.source_ad_id,
+            advertiser_page_name: ad.advertiser_page_name,
+            ad_body: ad.ad_body,
+            ad_title: ad.ad_title,
+            ad_description: ad.ad_description,
+          }),
+      }))
+
+      const upsertResult = await upsertCompetitorAds(userId, withFingerprints)
+      const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
+        platform: 'google',
+        source: 'apify_google_ads_transparency',
+        campaign_type_context: params.campaignTypeContext ?? null,
+        query_keyword: query,
+      })
+      const insightRow =
+        snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+
+      return {
+        platform: 'google',
+        supported: true,
+        inserted: upsertResult.inserted,
+        updated: upsertResult.updated,
+        skipped: upsertResult.skipped,
+        insightId: insightRow?.id ?? null,
+        adCount: withFingerprints.length,
+      }
+    } catch (e) {
+      const msg = e instanceof Error ? e.message : String(e)
+      console.warn('[CompetitorScanner][Google/Apify] error:', msg)
+      return {
+        platform: 'google',
+        supported: true,
+        inserted: 0,
+        updated: 0,
+        skipped: 0,
+        insightId: null,
+        adCount: 0,
+        error: msg,
+      }
+    }
+  }
+
+  // ── SerpApi fallback path ──
   if (!isGoogleTransparencyEnabled()) {
     console.log('[CompetitorScanner][Google] SerpApi key yok — Google Transparency tarama atlandı.')
     return {
@@ -336,8 +580,6 @@ export async function runGoogleCompetitorScanForUser(
       }
     }
 
-    // fingerprint eksikse tamamla
-    const query = params.keyword || params.advertiserDomain || ''
     const withFingerprints: NormalizedCompetitorAd[] = result.ads.map((ad) => ({
       ...ad,
       query_keyword: ad.query_keyword ?? query,
@@ -400,12 +642,14 @@ export async function runCompetitorScanForUser(
   userId: string,
   params: CompetitorScanParams & { metaAccessToken?: string },
 ): Promise<RunCompetitorScanResult> {
+  // Apify provider ise metaAccessToken olmadan da Meta scan çalışır.
+  const metaProvider = getMetaProvider()
+  const shouldRunMeta =
+    metaProvider === 'apify' ? isApifyEnabled() : !!params.metaAccessToken
+
   const [metaResult, googleResult] = await Promise.allSettled([
-    params.metaAccessToken
-      ? runMetaCompetitorScanForUser(userId, {
-          ...params,
-          metaAccessToken: params.metaAccessToken,
-        })
+    shouldRunMeta
+      ? runMetaCompetitorScanForUser(userId, params)
       : Promise.resolve(null),
     runGoogleCompetitorScanForUser(userId, params),
   ])

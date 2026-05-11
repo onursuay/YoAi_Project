@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-11 — Faz 2C: Apify Competitor Provider Layer
+- **Sorun:** SerpApi Google + Meta API rakip reklam taraması için her ikisi de ayrı kimlik gerektiriyordu; birleşik bir Apify provider katmanı yoktu; actor input'ları backend tarafından dinamik üretilmiyordu.
+- **Çözüm:**
+  - **apifyCompetitorProvider.ts** (yeni) — `isApifyEnabled()`, `getApifyConfig()`, `runApifyActor()`, `fetchApifyDatasetItems()`, `buildMetaActorInput()`, `buildGoogleActorInput()`, `normalizeApifyMetaAd()`, `normalizeApifyGoogleAd()`, `mapApifyMetaToCompetitorAd()`, `mapApifyGoogleToCompetitorAd()`, `runMetaApifyAdLibraryScan()`, `runGoogleApifyTransparencyScan()`. Hardcoded demo query/URL yok. APIFY_API_TOKEN yoksa `supported:false`. Boş sonuç `empty_result` olarak raporlanır; sahte veri üretilmez. Quality stats (raw/normalized/useful/missing oranlar) her scan'de console.info ile loglanır.
+  - **competitorScanner.ts** güncellendi — `runMetaCompetitorScanForUser()` ve `runGoogleCompetitorScanForUser()` Apify branch eklendi. `META_AD_LIBRARY_PROVIDER=apify` → Apify; aksi halde Meta API. `GOOGLE_ADS_TRANSPARENCY_PROVIDER=apify` → Apify; aksi halde SerpApi fallback. Meta kampanya sadece Meta actor, Google kampanya sadece Google actor — çapraz tarama yok. `runCompetitorScanForUser()` Apify provider'da metaAccessToken olmadan da Meta scan çalıştırır.
+  - **google-auction/route.ts** güncellendi — `GOOGLE_ADS_TRANSPARENCY_PROVIDER=apify` ise Apify Google actor kullanır; değilse SerpApi path korunur. Response'a `provider`, `actorId`, `rawCount`, `normalizedCount`, `usefulCount` eklendi.
+  - **meta-ad-library/route.ts** güncellendi — `META_AD_LIBRARY_PROVIDER=apify` ise Apify Meta actor kullanır; değilse Meta Graph API path korunur. Mevcut camelCase response shape geriye dönük uyumlu. Response'a `provider`, `actorId`, persist metadata eklendi.
+  - **.env.example** güncellendi — `APIFY_API_TOKEN`, `APIFY_META_AD_LIBRARY_ACTOR_ID`, `APIFY_GOOGLE_ADS_TRANSPARENCY_ACTOR_ID`, `COMPETITOR_ADS_PROVIDER`, `META_AD_LIBRARY_PROVIDER`, `GOOGLE_ADS_TRANSPARENCY_PROVIDER` eklendi.
+- **Dosyalar:** `lib/yoai/apifyCompetitorProvider.ts`, `lib/yoai/competitorScanner.ts`, `app/api/yoai/competitors/google-auction/route.ts`, `app/api/yoai/competitors/meta-ad-library/route.ts`, `.env.example`, `docs/CHANGELOG.md`
+
 ## 2026-05-11 — Faz 7: Result Tracking / Feedback Loop
 - **Sorun:** Öneri sonuçları (before/after metrikleri) kaydedilmiyordu; uygulama etkisi takip edilemiyordu.
 - **Çözüm:**
