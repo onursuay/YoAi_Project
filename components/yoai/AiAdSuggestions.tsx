@@ -490,19 +490,19 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
           <p className="text-[11px] text-red-300 text-center py-2.5 px-3 font-medium">
             Bu öneriyi reddetmek istiyor musunuz?
           </p>
-          <div className="flex items-center border-t border-red-500/20">
+          <div className="relative flex border-t border-red-500/20">
             <button
               onClick={() => handleConfirmReject(proposalId, approval?.id)}
               disabled={submittingPatch}
-              className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40"
+              className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40 rounded-bl-2xl"
             >
               {submittingPatch ? '…' : 'REDDET'}
             </button>
-            <span className="text-red-300/60 select-none pointer-events-none px-2 text-sm">/</span>
+            <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg select-none pointer-events-none z-10">/</span>
             <button
               onClick={() => setConfirmRejectId(null)}
               disabled={submittingPatch}
-              className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40"
+              className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] tracking-wider uppercase transition-colors disabled:opacity-40 rounded-br-2xl"
             >
               VAZGEÇ
             </button>
@@ -513,18 +513,18 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
 
     return (
       <div>
-        <div className="flex items-center">
+        <div className="relative flex">
           <button
             onClick={() => onOpenWizard(proposal)}
-            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors"
+            className="flex-1 py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors rounded-bl-2xl"
           >
             ONAYLA
           </button>
-          <span className="text-slate-300 select-none pointer-events-none px-2 text-sm">/</span>
+          <span className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 text-white font-bold text-lg select-none pointer-events-none z-10">/</span>
           <button
             onClick={() => proposalId && setConfirmRejectId(proposalId)}
             disabled={submittingPatch}
-            className="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40"
+            className="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40 rounded-br-2xl"
           >
             REDDET
           </button>

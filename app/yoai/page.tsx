@@ -6,7 +6,6 @@ import YoAlgoritmaHeader from '@/components/yoai/YoAlgoritmaHeader'
 import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 // HealthOverviewCards removed — stats moved into CommandCenterHeader
-import AnalysisCapabilities from '@/components/yoai/AnalysisCapabilities'
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
 import AiAdSuggestions from '@/components/yoai/AiAdSuggestions'
 import { useCredits } from '@/components/providers/CreditProvider'
@@ -505,8 +504,6 @@ export default function YoAiPage() {
                 onApprovalChanged={handleApprovalChanged}
               />
             )}
-
-            <AnalysisCapabilities />
 
             {!ccLoading && ccRunDate && (
               <p className="text-center text-[10px] text-gray-400 pb-4">

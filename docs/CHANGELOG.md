@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — Slash Divider Overlay + AI Analiz Yetenekleri Kaldırıldı
+- **Sorun:** ONAYLA/REDDET butonları arasında "/" işareti için ayrı padding (px-2) ile boşluk açılıyordu. Slash butonlar arasına gap yaratıyordu. "AI Analiz Yetenekleri" bölümü /yoai sayfasında gereksiz yer kaplıyordu.
+- **Çözüm:** Slash span kaldırıldı, container `relative flex` yapıldı; slash `absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 pointer-events-none z-10` overlay olarak yerleştirildi. ONAYLA `rounded-bl-2xl`, REDDET `rounded-br-2xl`. REDDET/VAZGEÇ mini-confirm aynı mantıkla güncellendi. `AnalysisCapabilities` bileşeni page.tsx'ten kaldırıldı (import + kullanım).
+- **Dosyalar:** `components/yoai/AiAdSuggestions.tsx`, `app/yoai/page.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-11 — Proposal Kart Hizalama + Aksiyon Buton Kontrast Düzeltmesi
 - **Sorun:** Aynı satırdaki proposal kartları farklı yükseklikte bitiyordu. ONAYLA/REDDET butonları şeffaf arka planla okunaksız görünüyordu. Ayraç dikey çizgi ("|") olarak görünüyordu. AI Kontrol Notu bazı kartların yüksekliğini aşırı büyütüyordu. Yazı kontrası düşüktü.
 - **Çözüm:** `AdPreviewCard` kökü `h-full flex flex-col` yapıldı; ana içerik alanı `flex-1`; action footer kart içine taşınarak `border-t` ile ayrıldı. `actionFooter?: ReactNode` prop eklendi, kart artık `div` (eskiden `button`). ONAYLA: `bg-emerald-600 text-white`; REDDET: `bg-red-600 text-white`. Ayraç "/" metin karakteri oldu, tıklanamaz. AI Kontrol Notu `max-h-[110px] overflow-hidden line-clamp-2` ile sınırlandı. Label renkleri `text-slate-500` → `text-slate-400`, açıklama renkleri `text-slate-400` → `text-slate-300`'e yükseltildi. Mini-confirm separator da "|" → "/" güncellendi.
