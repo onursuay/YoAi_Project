@@ -318,10 +318,8 @@ export default function YoAiPage() {
       {/* Custom header — no language selector, with recommendations ticker */}
       <YoAlgoritmaHeader actions={ccData?.actions} />
       <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20 relative">
-        {/* Decorative lab test tube background — only in idle/proposal view */}
-        {isIdleWithNoMessages && (
-          <>
-            <style>{`
+        {/* Decorative lab test tube background — always visible in /yoai content area */}
+        <style>{`
               @keyframes yoaiTubeDrift1 {
                 0%, 100% { transform: translateY(0px) translateX(0px) rotate(-18deg); }
                 50% { transform: translateY(-14px) translateX(6px) rotate(-18deg); }
@@ -353,8 +351,8 @@ export default function YoAiPage() {
               @media (prefers-reduced-motion: reduce) {
                 [data-yoai-tube] { animation: none !important; }
               }
-            `}</style>
-            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+        `}</style>
+        <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
               {/* Tube 1 — top right, emerald */}
               <div data-yoai-tube style={{ position: 'absolute', top: '3%', right: '5%', animation: 'yoaiTubeDrift1 8s ease-in-out infinite', color: '#10b981', opacity: 0.07 }}>
                 <svg width="36" height="76" viewBox="0 0 20 44" fill="none">
@@ -425,9 +423,7 @@ export default function YoAiPage() {
                   <path d="M5 28 L5 30 Q5 42 10 42 Q15 42 15 30 L15 28Z" fill="currentColor" opacity="0.5" />
                 </svg>
               </div>
-            </div>
-          </>
-        )}
+        </div>
         {isIdleWithNoMessages ? (
           <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-8 pb-12 relative z-10">
             {ccError && !ccLoading && (
