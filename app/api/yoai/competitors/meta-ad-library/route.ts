@@ -138,6 +138,7 @@ export async function GET(request: Request) {
           updated: number
           skipped: number
           insightId: string | null
+          insightError?: string
           errors: string[]
           rawCount: number
           normalizedCount: number
@@ -161,20 +162,29 @@ export async function GET(request: Request) {
 
           const upsertResult = await upsertCompetitorAds(userId, withFingerprints)
 
-          const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
-            platform: 'meta',
-            source: 'apify_meta_ad_library',
-            campaign_type_context: campaignTypeContext,
-            query_keyword: query,
-          })
-          const insightRow =
-            snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+          let insightRow: { id: string } | null = null
+          let insightError: string | null = null
+          try {
+            const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
+              platform: 'meta',
+              source: 'apify_meta_ad_library',
+              campaign_type_context: campaignTypeContext,
+              query_keyword: query,
+            })
+            if (snapshot.ads_count > 0) {
+              insightRow = await upsertCompetitorInsight(userId, snapshot)
+            }
+          } catch (err) {
+            insightError = err instanceof Error ? err.message : String(err)
+            console.warn('[Meta Ad Library/Apify] insight store error:', insightError)
+          }
 
           persisted = {
             inserted: upsertResult.inserted,
             updated: upsertResult.updated,
             skipped: upsertResult.skipped,
             insightId: insightRow?.id ?? null,
+            ...(insightError ? { insightError } : {}),
             errors: upsertResult.errors,
             rawCount: scanResult.rawCount,
             normalizedCount: scanResult.normalizedCount,
@@ -261,6 +271,7 @@ export async function GET(request: Request) {
       updated: number
       skipped: number
       insightId: string | null
+      insightError?: string
       errors: string[]
     } | null = null
 
@@ -279,20 +290,29 @@ export async function GET(request: Request) {
         )
         const upsertResult = await upsertCompetitorAds(userId, normalized)
 
-        const snapshot = generateCompetitorInsightFromAds(normalized, {
-          platform: 'meta',
-          source: 'meta_ad_library',
-          campaign_type_context: campaignTypeContext,
-          query_keyword: query,
-        })
-        const insightRow =
-          snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+        let insightRow: { id: string } | null = null
+        let insightError: string | null = null
+        try {
+          const snapshot = generateCompetitorInsightFromAds(normalized, {
+            platform: 'meta',
+            source: 'meta_ad_library',
+            campaign_type_context: campaignTypeContext,
+            query_keyword: query,
+          })
+          if (snapshot.ads_count > 0) {
+            insightRow = await upsertCompetitorInsight(userId, snapshot)
+          }
+        } catch (err) {
+          insightError = err instanceof Error ? err.message : String(err)
+          console.warn('[Meta Ad Library] insight store error:', insightError)
+        }
 
         persisted = {
           inserted: upsertResult.inserted,
           updated: upsertResult.updated,
           skipped: upsertResult.skipped,
           insightId: insightRow?.id ?? null,
+          ...(insightError ? { insightError } : {}),
           errors: upsertResult.errors,
         }
       }

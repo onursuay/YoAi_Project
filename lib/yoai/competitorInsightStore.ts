@@ -227,15 +227,26 @@ export async function upsertCompetitorInsight(
 
   // PostgreSQL'in expression unique index'i COALESCE(...) ile çalıştığı için
   // upsert'in "onConflict" alanını kullanmak yerine select+update/insert pattern'ini izliyoruz.
-  const { data: existing, error: selErr } = await supabase
+  // Not: NULL karşılaştırması için .is() kullanılmalı — .eq(col, null) PostgREST'te
+  // `col=eq.null` (string) üretir, NULL değerleri eşleştirmez.
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let selectQ: any = supabase
     .from('yoai_competitor_insights')
     .select('id')
     .eq('user_id', userId)
     .eq('platform', insight.platform)
     .eq('source', insight.source)
-    .eq('campaign_type_context', insight.campaign_type_context ?? null)
-    .eq('query_keyword', insight.query_keyword ?? null)
-    .maybeSingle()
+  if (insight.campaign_type_context == null) {
+    selectQ = selectQ.is('campaign_type_context', null)
+  } else {
+    selectQ = selectQ.eq('campaign_type_context', insight.campaign_type_context)
+  }
+  if (insight.query_keyword == null) {
+    selectQ = selectQ.is('query_keyword', null)
+  } else {
+    selectQ = selectQ.eq('query_keyword', insight.query_keyword)
+  }
+  const { data: existing, error: selErr } = await selectQ.maybeSingle()
 
   if (selErr && selErr.code !== 'PGRST116') {
     if (isTableMissingError(selErr)) {
@@ -243,7 +254,7 @@ export async function upsertCompetitorInsight(
       return null
     }
     console.error('[CompetitorInsightStore] select error:', selErr)
-    return null
+    throw new Error(`competitor_insight_select_failed: ${selErr.message || selErr.code}`)
   }
 
   const payload: Record<string, unknown> = {
@@ -286,7 +297,7 @@ export async function upsertCompetitorInsight(
         return null
       }
       console.error('[CompetitorInsightStore] update error:', error)
-      return null
+      throw new Error(`competitor_insight_update_failed: ${error.message || error.code}`)
     }
     return data as { id: string }
   }
@@ -302,7 +313,7 @@ export async function upsertCompetitorInsight(
       return null
     }
     console.error('[CompetitorInsightStore] insert error:', error)
-    return null
+    throw new Error(`competitor_insight_insert_failed: ${error.message || error.code}`)
   }
   return data as { id: string }
 }

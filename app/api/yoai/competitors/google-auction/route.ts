@@ -252,14 +252,22 @@ export async function GET(request: Request) {
 
     const upsertResult = await upsertCompetitorAds(userId, withFingerprints)
 
-    const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
-      platform: 'google',
-      source: 'google_ads_transparency_serpapi',
-      campaign_type_context: campaignTypeContext,
-      query_keyword: query,
-    })
-    const insightRow =
-      snapshot.ads_count > 0 ? await upsertCompetitorInsight(userId, snapshot) : null
+    let insightRow: { id: string } | null = null
+    let insightError: string | null = null
+    try {
+      const snapshot = generateCompetitorInsightFromAds(withFingerprints, {
+        platform: 'google',
+        source: 'google_ads_transparency_serpapi',
+        campaign_type_context: campaignTypeContext,
+        query_keyword: query,
+      })
+      if (snapshot.ads_count > 0) {
+        insightRow = await upsertCompetitorInsight(userId, snapshot)
+      }
+    } catch (err) {
+      insightError = err instanceof Error ? err.message : String(err)
+      console.warn('[google-auction/serpapi] insight store error:', insightError)
+    }
 
     return NextResponse.json({
       ok: true,
@@ -271,6 +279,7 @@ export async function GET(request: Request) {
         updated: upsertResult.updated,
         skipped: upsertResult.skipped,
         insightId: insightRow?.id ?? null,
+        ...(insightError ? { insightError } : {}),
         rawCount: result.rawCount,
       },
     })
