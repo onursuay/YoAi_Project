@@ -317,9 +317,119 @@ export default function YoAiPage() {
     <>
       {/* Custom header — no language selector, with recommendations ticker */}
       <YoAlgoritmaHeader actions={ccData?.actions} />
-      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20 relative">
+        {/* Decorative lab test tube background — only in idle/proposal view */}
+        {isIdleWithNoMessages && (
+          <>
+            <style>{`
+              @keyframes yoaiTubeDrift1 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(-18deg); }
+                50% { transform: translateY(-14px) translateX(6px) rotate(-18deg); }
+              }
+              @keyframes yoaiTubeDrift2 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(22deg); }
+                50% { transform: translateY(-10px) translateX(-5px) rotate(22deg); }
+              }
+              @keyframes yoaiTubeDrift3 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(-8deg); }
+                50% { transform: translateY(-16px) translateX(4px) rotate(-8deg); }
+              }
+              @keyframes yoaiTubeDrift4 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(34deg); }
+                50% { transform: translateY(-9px) translateX(-7px) rotate(34deg); }
+              }
+              @keyframes yoaiTubeDrift5 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(-28deg); }
+                50% { transform: translateY(-13px) translateX(5px) rotate(-28deg); }
+              }
+              @keyframes yoaiTubeDrift6 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(12deg); }
+                50% { transform: translateY(-11px) translateX(-3px) rotate(12deg); }
+              }
+              @keyframes yoaiTubeDrift7 {
+                0%, 100% { transform: translateY(0px) translateX(0px) rotate(-42deg); }
+                50% { transform: translateY(-8px) translateX(6px) rotate(-42deg); }
+              }
+              @media (prefers-reduced-motion: reduce) {
+                [data-yoai-tube] { animation: none !important; }
+              }
+            `}</style>
+            <div className="pointer-events-none absolute inset-0 overflow-hidden" aria-hidden="true">
+              {/* Tube 1 — top right, emerald */}
+              <div data-yoai-tube style={{ position: 'absolute', top: '3%', right: '5%', animation: 'yoaiTubeDrift1 8s ease-in-out infinite', color: '#10b981', opacity: 0.07 }}>
+                <svg width="36" height="76" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 22 L5 30 Q5 42 10 42 Q15 42 15 30 L15 22Z" fill="currentColor" opacity="0.55" />
+                </svg>
+              </div>
+              {/* Tube 2 — upper right, cyan */}
+              <div data-yoai-tube style={{ position: 'absolute', top: '18%', right: '9%', animation: 'yoaiTubeDrift2 11s ease-in-out infinite', animationDelay: '1.5s', color: '#06b6d4', opacity: 0.065 }}>
+                <svg width="28" height="60" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 18 L5 30 Q5 42 10 42 Q15 42 15 30 L15 18Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+              {/* Tube 3 — top left, indigo */}
+              <div data-yoai-tube style={{ position: 'absolute', top: '6%', left: '3%', animation: 'yoaiTubeDrift3 9.5s ease-in-out infinite', animationDelay: '0.8s', color: '#818cf8', opacity: 0.06 }}>
+                <svg width="32" height="70" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 26 L5 30 Q5 42 10 42 Q15 42 15 30 L15 26Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+              {/* Tube 4 — mid right, emerald small */}
+              <div data-yoai-tube style={{ position: 'absolute', top: '42%', right: '2%', animation: 'yoaiTubeDrift4 10s ease-in-out infinite', animationDelay: '2.2s', color: '#34d399', opacity: 0.06 }}>
+                <svg width="24" height="52" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 24 L5 30 Q5 42 10 42 Q15 42 15 30 L15 24Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+              {/* Tube 5 — mid left, cyan */}
+              <div data-yoai-tube style={{ position: 'absolute', top: '38%', left: '6%', animation: 'yoaiTubeDrift5 12s ease-in-out infinite', animationDelay: '3s', color: '#22d3ee', opacity: 0.055 }}>
+                <svg width="30" height="66" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 20 L5 30 Q5 42 10 42 Q15 42 15 30 L15 20Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+              {/* Tube 6 — bottom right, indigo */}
+              <div data-yoai-tube style={{ position: 'absolute', bottom: '18%', right: '11%', animation: 'yoaiTubeDrift6 9s ease-in-out infinite', animationDelay: '1s', color: '#a5b4fc', opacity: 0.065 }}>
+                <svg width="26" height="56" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 16 L5 30 Q5 42 10 42 Q15 42 15 30 L15 16Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+              {/* Tube 7 — bottom left, emerald */}
+              <div data-yoai-tube style={{ position: 'absolute', bottom: '28%', left: '2%', animation: 'yoaiTubeDrift7 13s ease-in-out infinite', animationDelay: '2s', color: '#6ee7b7', opacity: 0.055 }}>
+                <svg width="22" height="48" viewBox="0 0 20 44" fill="none">
+                  <rect x="3" y="0" width="14" height="2.5" rx="1.25" fill="currentColor" />
+                  <rect x="3" y="2.5" width="2" height="28" fill="currentColor" />
+                  <rect x="15" y="2.5" width="2" height="28" fill="currentColor" />
+                  <path d="M5 30 Q5 42 10 42 Q15 42 15 30Z" fill="currentColor" />
+                  <path d="M5 28 L5 30 Q5 42 10 42 Q15 42 15 30 L15 28Z" fill="currentColor" opacity="0.5" />
+                </svg>
+              </div>
+            </div>
+          </>
+        )}
         {isIdleWithNoMessages ? (
-          <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-8 pb-12">
+          <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-8 pb-12 relative z-10">
             {ccError && !ccLoading && (
               <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 <p className="text-sm text-red-700">{ccError}</p>
