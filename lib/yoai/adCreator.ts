@@ -622,7 +622,8 @@ export async function generateFullAutoProposals(
             }
             // HARD GUARD: rakip verisi yoksa competitorInsight'ı AI'nın yazdığı metinden al,
             // sessizce hallucination yapmasın. Gerçek veri yoksa platform doğru kaynak adıyla söyle.
-            const hasCompetitorData = competitorAds.length > 0
+            // persistedCompetitorContext varsa AI prompt'ta zaten beslendi — boş mesaj verme.
+            const hasCompetitorData = competitorAds.length > 0 || !!persistedCompetitorContext
             const emptyCompetitorMsg = getEmptyCompetitorMessage(platform)
             const competitorInsight = hasCompetitorData
               ? (p.competitorInsight || 'Rakip verisi değerlendirildi.')

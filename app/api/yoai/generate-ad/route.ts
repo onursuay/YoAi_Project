@@ -1,6 +1,8 @@
 import { NextResponse } from 'next/server'
 import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
-import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
+import { runFullCompetitorAnalysis, compareWithCompetitors } from '@/lib/yoai/competitorAnalyzer'
+import type { CompetitorAd } from '@/lib/yoai/competitorAnalyzer'
+import { listCompetitorAds } from '@/lib/yoai/competitorAdStore'
 import { runStructuralAnalysis } from '@/lib/yoai/platformKnowledge'
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
@@ -136,13 +138,46 @@ export async function POST(request: Request) {
             }
           }
 
-          // competitorAnalysis.competitorAds sadece Meta Ad Library'den gelir;
-          // Google proposals'a Meta reklamları geçirilmemeli — platform bazlı filtrele.
-          const platformCompetitorAds = p === 'Meta' ? competitorAnalysis.competitorAds : []
+          // competitorAnalysis.competitorAds sadece Meta Ad Library'den gelir.
+          // Meta için Meta reklamları; Google için DB'den platform='google' filtresiyle ayrıca çek.
+          let platformCompetitorAds: CompetitorAd[] = []
+          let platformComparison = competitorAnalysis.comparison
+
+          if (p === 'Meta') {
+            platformCompetitorAds = competitorAnalysis.competitorAds
+          } else if (p === 'Google' && userId) {
+            try {
+              const googleRows = await listCompetitorAds(userId, {
+                platform: 'google',
+                active_only: false,
+                limit: 50,
+              })
+              if (googleRows.length > 0) {
+                platformCompetitorAds = googleRows.map((row) => ({
+                  id: row.id,
+                  pageName: row.advertiser_page_name || '',
+                  pageId: row.source_page_id || '',
+                  body: row.ad_body || '',
+                  title: row.ad_title || '',
+                  description: row.ad_description || '',
+                  startDate: row.ad_delivery_start_time || '',
+                  platforms: row.publisher_platforms || [],
+                  isActive: row.is_active,
+                }))
+                platformComparison = compareWithCompetitors(competitorAnalysis.userProfile, platformCompetitorAds)
+                console.log(`[GenerateAd] Google: ${platformCompetitorAds.length} competitor ads from DB`)
+              } else {
+                console.log('[GenerateAd] Google: no competitor ads in DB — competitor context empty')
+              }
+            } catch (e) {
+              console.warn('[GenerateAd] Google competitor ads DB fetch failed (non-fatal):', e)
+            }
+          }
+
           const result = await generateFullAutoProposals(
             p,
             competitorAnalysis.userProfile,
-            competitorAnalysis.comparison,
+            platformComparison,
             platformCompetitorAds,
             allCampaigns,
             structuralAnalysis.issues,
