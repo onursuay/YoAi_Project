@@ -137,18 +137,18 @@ export default function KpiDashboard({ kpis }: Props) {
       : 'grid-cols-2 md:grid-cols-3 lg:grid-cols-6'
 
   return (
-    <div className="space-y-3">
-      {/* Platform Tabs */}
-      <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-1 w-fit">
+    <div className="flex flex-col sm:flex-row gap-4 items-start">
+      {/* Platform Selector — vertical left rail on desktop, horizontal on mobile */}
+      <div className="flex sm:flex-col gap-1 w-full sm:w-24 shrink-0">
         {tabs.map(t => (
           <button
             key={t.key}
             onClick={() => setTab(t.key)}
             className={[
-              'px-4 py-1.5 rounded-lg text-[13px] font-medium transition-all',
+              'flex-1 sm:flex-none w-full px-3 py-2 rounded-xl border text-[13px] font-medium transition-all text-left whitespace-nowrap',
               tab === t.key
-                ? 'bg-white text-gray-900 shadow-sm'
-                : 'text-gray-500 hover:text-gray-700',
+                ? 'bg-primary/10 text-primary border-primary/30'
+                : 'bg-gray-50 text-gray-500 border-gray-200 hover:border-primary/20 hover:text-gray-700',
             ].join(' ')}
           >
             {t.label}
@@ -157,31 +157,33 @@ export default function KpiDashboard({ kpis }: Props) {
       </div>
 
       {/* KPI Cards */}
-      {metrics.length === 0 ? (
-        <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center text-[13px] text-gray-400">
-          {tab === 'meta' ? 'Meta kampanya verisi bulunamadı.' : 'Google kampanya verisi bulunamadı.'}
-        </div>
-      ) : (
-        <div className={`grid ${colClass} gap-3`}>
-          {metrics.map(m => {
-            const Icon = m.icon
-            return (
-              <div
-                key={m.label}
-                className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all"
-              >
-                <div className="flex items-center gap-2 mb-2">
-                  <div className={`w-8 h-8 ${m.iconBg} rounded-lg flex items-center justify-center`}>
-                    <Icon className={`w-4 h-4 ${m.iconColor}`} />
+      <div className="flex-1 min-w-0">
+        {metrics.length === 0 ? (
+          <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center text-[13px] text-gray-400">
+            {tab === 'meta' ? 'Meta kampanya verisi bulunamadı.' : 'Google kampanya verisi bulunamadı.'}
+          </div>
+        ) : (
+          <div className={`grid ${colClass} gap-3`}>
+            {metrics.map(m => {
+              const Icon = m.icon
+              return (
+                <div
+                  key={m.label}
+                  className="bg-white rounded-2xl border border-gray-100 p-5 hover:shadow-md transition-all"
+                >
+                  <div className="flex items-center gap-2 mb-2">
+                    <div className={`w-8 h-8 ${m.iconBg} rounded-lg flex items-center justify-center`}>
+                      <Icon className={`w-4 h-4 ${m.iconColor}`} />
+                    </div>
+                    <span className="text-[13px] text-gray-500 font-medium">{m.label}</span>
                   </div>
-                  <span className="text-[13px] text-gray-500 font-medium">{m.label}</span>
+                  <p className="text-base font-bold text-gray-900">{m.value}</p>
                 </div>
-                <p className="text-base font-bold text-gray-900">{m.value}</p>
-              </div>
-            )
-          })}
-        </div>
-      )}
+              )
+            })}
+          </div>
+        )}
+      </div>
     </div>
   )
 }
