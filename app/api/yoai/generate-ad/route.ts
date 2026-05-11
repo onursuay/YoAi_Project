@@ -11,6 +11,7 @@ import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import { bulkInsertPendingApprovalsIfMissing } from '@/lib/yoai/approvalStore'
 import { buildCompetitorContextForPrompt } from '@/lib/yoai/competitorInsightStore'
+import { sanitizeProposalForDisplay } from '@/lib/yoai/competitorDisplay'
 import { normalizeCampaignType } from '@/lib/yoai/campaignTypeIntelligence'
 import { buildSynthesisPackagesForCampaigns } from '@/lib/yoai/synthesisEngine'
 import type { CampaignSynthesisPackage } from '@/lib/yoai/synthesisTypes'
@@ -176,7 +177,8 @@ export async function POST(request: Request) {
       const run = await getBestAvailableRun(userId)
 
       if (run?.ad_proposals_data?.proposals) {
-        const persistedProposals = run.ad_proposals_data.proposals as any[]
+        const rawPersisted = run.ad_proposals_data.proposals as any[]
+        const persistedProposals = rawPersisted.map(sanitizeProposalForDisplay)
         if (persistedProposals.length > 0) {
           const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
           const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length

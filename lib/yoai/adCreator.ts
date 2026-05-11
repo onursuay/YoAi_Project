@@ -20,6 +20,7 @@ import {
 import type { CampaignSynthesisPackage } from './synthesisTypes'
 import { buildSynthesisContextForPrompt } from './synthesisEngine'
 import type { MultiAiDecisionDeskResult } from './multiAiTypes'
+import { getEmptyCompetitorMessage } from './competitorDisplay'
 
 /* ── Types ── */
 
@@ -622,11 +623,7 @@ export async function generateFullAutoProposals(
             // HARD GUARD: rakip verisi yoksa competitorInsight'ı AI'nın yazdığı metinden al,
             // sessizce hallucination yapmasın. Gerçek veri yoksa platform doğru kaynak adıyla söyle.
             const hasCompetitorData = competitorAds.length > 0
-            const emptyCompetitorMsg = platform === 'Meta'
-              ? 'Meta reklam kütüphanesinde bu kampanya bağlamıyla eşleşen rakip reklam bulunamadı. Karşılaştırma yapılmadı.'
-              : platform === 'Google'
-              ? 'Google reklam şeffaflık merkezinde bu kampanya bağlamıyla eşleşen rakip reklam bulunamadı. Karşılaştırma yapılmadı.'
-              : 'Rakip reklam verisi bulunamadı. Karşılaştırma yapılmadı.'
+            const emptyCompetitorMsg = getEmptyCompetitorMessage(platform)
             const competitorInsight = hasCompetitorData
               ? (p.competitorInsight || 'Rakip verisi değerlendirildi.')
               : emptyCompetitorMsg

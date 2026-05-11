@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
+import { sanitizeProposalForDisplay } from '@/lib/yoai/competitorDisplay'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 import type { DiagnosisResult, RootCauseId } from '@/lib/yoai/meta/diagnosis'
 import type { Decision } from '@/lib/yoai/meta/decision'
@@ -147,7 +148,7 @@ const DESTINATION_LABEL_MAP: Record<string, string> = {
   CALL: 'Telefon Araması',
 }
 
-const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v1'
+const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v2'
 type CacheShape = {
   proposals: FullAdProposal[]
   summary: Summary
@@ -161,7 +162,11 @@ function readCache(): CacheShape | null {
   try {
     const raw = localStorage.getItem(PROPOSAL_CACHE_KEY)
     if (!raw) return null
-    return JSON.parse(raw) as CacheShape
+    const parsed = JSON.parse(raw) as CacheShape
+    if (Array.isArray(parsed.proposals)) {
+      parsed.proposals = parsed.proposals.map(sanitizeProposalForDisplay) as FullAdProposal[]
+    }
+    return parsed
   } catch {
     return null
   }
@@ -239,7 +244,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
         const json = await res.json()
 
         if (json.ok && json.data?.proposals) {
-          allProposals = json.data.proposals as FullAdProposal[]
+          allProposals = (json.data.proposals as FullAdProposal[]).map(sanitizeProposalForDisplay)
           totalSummary = json.data.summary || totalSummary
           wasPersisted = !!json.persisted
           if (Array.isArray(json.data.diagnoses)) {
