@@ -7,6 +7,12 @@ interface Props {
   proposal: FullAdProposal
   selected: boolean
   onSelect: () => void
+  diagnostic?: {
+    label: string
+    summary: string
+    action?: string
+    isHealthy: boolean
+  }
 }
 
 const CTA_LABELS: Record<string, string> = {
@@ -77,16 +83,32 @@ const DESTINATION_LABEL: Record<string, string> = {
   CALL: 'Telefon Araması',
 }
 
+const BIDDING_STRATEGY_LABEL: Record<string, string> = {
+  MAXIMIZE_CONVERSIONS: 'Dönüşümleri Artır',
+  MAXIMIZE_CLICKS: 'Tıklamaları Artır',
+  TARGET_CPA: 'Hedef CPA',
+  TARGET_ROAS: 'Hedef ROAS',
+  TARGET_IMPRESSION_SHARE: 'Hedef Gösterim Payı',
+  MANUAL_CPC: 'Manuel CPC',
+  MANUAL_CPM: 'Manuel CPM',
+  ENHANCED_CPC: 'Gelişmiş CPC',
+  MAXIMIZE_CONVERSION_VALUE: 'Dönüşüm Değerini Artır',
+}
+
 function fmtOptGoal(v?: string): string {
   if (!v) return '—'
-  return OPTIMIZATION_GOAL_LABEL[v] || v
+  return OPTIMIZATION_GOAL_LABEL[v] || v.replace(/_/g, ' ')
 }
 function fmtDest(v?: string): string {
   if (!v) return '—'
-  return DESTINATION_LABEL[v] || v
+  return DESTINATION_LABEL[v] || v.replace(/_/g, ' ')
+}
+function fmtBidding(v?: string): string {
+  if (!v) return '—'
+  return BIDDING_STRATEGY_LABEL[v] || v.replace(/_/g, ' ')
 }
 
-export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
+export default function AdPreviewCard({ proposal, selected, onSelect, diagnostic }: Props) {
   const isGoogle = proposal.platform === 'Google'
 
   return (
@@ -149,7 +171,7 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
           {proposal.biddingStrategy && (
             <div className="flex justify-between">
               <span className="text-slate-500">Teklif</span>
-              <span className="text-slate-300">{proposal.biddingStrategy}</span>
+              <span className="text-slate-300">{fmtBidding(proposal.biddingStrategy)}</span>
             </div>
           )}
           {proposal.destinationType && (
@@ -165,9 +187,9 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
         {/* Ad preview */}
         <div className="px-4 pb-3 flex-1">
           {isGoogle ? (
-            <div className="bg-[#151f33] border border-slate-700/60 rounded-xl p-3">
-              <div className="flex items-center gap-1.5 mb-1.5">
-                <span className="text-[9px] font-bold text-slate-300 bg-slate-700/60 px-1 py-0.5 rounded">
+            <div className="bg-[#151f33] border border-slate-700/60 rounded-xl p-3 space-y-2.5">
+              <div className="flex items-center gap-1.5">
+                <span className="text-[9px] font-bold text-slate-300 bg-slate-700/60 px-1.5 py-0.5 rounded">
                   Reklam
                 </span>
                 {proposal.finalUrl && (
@@ -177,21 +199,50 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
                   </span>
                 )}
               </div>
-              <h3 className="text-[13px] font-medium text-blue-300 leading-snug mb-1">
-                {proposal.headlines?.slice(0, 3).join(' | ') || proposal.headline}
-              </h3>
-              <p className="text-[11px] text-slate-400 leading-relaxed mb-2">
-                {proposal.descriptions?.slice(0, 2).join(' ') || proposal.description}
-              </p>
+
+              {proposal.headlines && proposal.headlines.length > 0 ? (
+                <div>
+                  <p className="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-1">Önerilen Başlıklar</p>
+                  <div className="flex flex-wrap gap-1">
+                    {proposal.headlines.slice(0, 5).map((h, i) => (
+                      <span key={i} className="text-[10px] bg-slate-700/50 text-blue-300 px-2 py-0.5 rounded border border-slate-600/40 leading-snug">
+                        {h}
+                      </span>
+                    ))}
+                    {proposal.headlines.length > 5 && (
+                      <span className="text-[10px] text-slate-500 px-1 py-0.5">+{proposal.headlines.length - 5}</span>
+                    )}
+                  </div>
+                </div>
+              ) : proposal.headline ? (
+                <p className="text-[13px] font-medium text-blue-300 leading-snug">{proposal.headline}</p>
+              ) : null}
+
+              {proposal.descriptions && proposal.descriptions.length > 0 ? (
+                <div>
+                  <p className="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-1">Açıklamalar</p>
+                  <div className="space-y-0.5">
+                    {proposal.descriptions.slice(0, 2).map((d, i) => (
+                      <p key={i} className="text-[11px] text-slate-400 leading-relaxed">{d}</p>
+                    ))}
+                  </div>
+                </div>
+              ) : proposal.description ? (
+                <p className="text-[11px] text-slate-400 leading-relaxed">{proposal.description}</p>
+              ) : null}
+
               {proposal.keywords && proposal.keywords.length > 0 && (
                 <div className="pt-2 border-t border-slate-700/50">
-                  <p className="text-[9px] text-slate-500 mb-1">Önerilen Anahtar Kelimeler:</p>
+                  <p className="text-[9px] text-slate-500 font-medium uppercase tracking-wider mb-1">Anahtar Kelimeler</p>
                   <div className="flex flex-wrap gap-1">
-                    {proposal.keywords.slice(0, 5).map((k, i) => (
-                      <span key={i} className="text-[9px] bg-slate-800 text-slate-400 px-1.5 py-0.5 rounded border border-slate-700/50">
+                    {proposal.keywords.slice(0, 6).map((k, i) => (
+                      <span key={i} className="text-[9px] bg-emerald-950/40 text-emerald-400 px-1.5 py-0.5 rounded border border-emerald-500/20">
                         {k}
                       </span>
                     ))}
+                    {proposal.keywords.length > 6 && (
+                      <span className="text-[9px] text-slate-500">+{proposal.keywords.length - 6}</span>
+                    )}
                   </div>
                 </div>
               )}
@@ -243,9 +294,35 @@ export default function AdPreviewCard({ proposal, selected, onSelect }: Props) {
         )}
 
         {/* Expected performance */}
-        <div className="px-4 pb-3">
-          <p className="text-[10px] text-emerald-400 font-medium">{proposal.expectedPerformance}</p>
-        </div>
+        {proposal.expectedPerformance && (
+          <div className="px-4 pb-3">
+            <p className="text-[10px] text-emerald-400 font-medium">{proposal.expectedPerformance}</p>
+          </div>
+        )}
+
+        {/* AI Kontrol Notu (diagnostic) */}
+        {diagnostic && (
+          <div className={`mx-4 mb-3 rounded-lg px-3 py-2 border ${
+            diagnostic.isHealthy
+              ? 'bg-emerald-950/30 border-emerald-500/20'
+              : 'bg-slate-800/60 border-slate-700/40'
+          }`}>
+            <p className={`text-[9px] font-semibold uppercase tracking-wider mb-0.5 ${
+              diagnostic.isHealthy ? 'text-emerald-500' : 'text-slate-500'
+            }`}>
+              AI Kontrol Notu
+            </p>
+            <p className={`text-[10px] font-medium ${diagnostic.isHealthy ? 'text-emerald-300' : 'text-slate-300'}`}>
+              {diagnostic.label}
+            </p>
+            <p className={`text-[10px] mt-0.5 leading-relaxed ${diagnostic.isHealthy ? 'text-emerald-400/70' : 'text-slate-400'}`}>
+              {diagnostic.summary}
+            </p>
+            {diagnostic.action && (
+              <p className="text-[10px] mt-1 text-slate-400">→ Önerilen: {diagnostic.action}</p>
+            )}
+          </div>
+        )}
       </div>
     </button>
   )

@@ -44,6 +44,19 @@ interface SuccessResult {
   adId?: string
 }
 
+function humanizeErrorMsg(msg: string): string {
+  const lower = msg.toLowerCase()
+  if (
+    lower.includes('yoai_direct_publish_enabled') ||
+    lower.includes('direct_publish') ||
+    lower.includes('feature flag') ||
+    lower.includes('publish_enabled')
+  ) {
+    return 'Canlı yayın özelliği şu anda kapalı. Reklamı yayına almak için yayın ayarlarının etkinleştirilmesi gerekiyor.'
+  }
+  return msg.replace(/\bPAUSED\b/g, 'taslak')
+}
+
 export default function OneClickApproveDialog({ proposal, onClose, approvalId, onPublished }: Props) {
   const [phase, setPhase] = useState<Phase>('idle')
   const [message, setMessage] = useState<string>('')
@@ -87,7 +100,8 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
         return
       }
 
-      setMessage(json.message || json.error || 'Hata.')
+      const rawMsg = json.message || json.error || 'Hata.'
+      setMessage(humanizeErrorMsg(rawMsg))
       setPhase('error')
     } catch (e) {
       setMessage(e instanceof Error ? e.message : 'Bağlantı hatası.')
@@ -180,8 +194,8 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                 <ul className="list-disc list-inside space-y-0.5">
                   <li>Meta hesabınızda yeni bir kampanya, reklam seti ve reklam oluşturur.</li>
                   <li>
-                    Tüm kaynaklar <strong>PAUSED</strong> durumda kurulur — hiçbir şey otomatik
-                    yayına gitmez.
+                    Kampanya <strong>taslak</strong> olarak hazırlanır — hiçbir şey otomatik
+                    yayına girmez.
                   </li>
                   <li>
                     Yayına almak için Meta Ads Manager üzerinden <strong>manuel olarak aktif</strong>
@@ -218,7 +232,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                   className="mt-0.5 w-4 h-4 accent-primary"
                 />
                 <span className="text-xs text-gray-700 leading-relaxed">
-                  Bu reklamın Meta hesabımda <strong>PAUSED</strong> olarak oluşturulacağını,
+                  Bu reklamın Meta hesabımda <strong>taslak</strong> olarak oluşturulacağını,
                   bütçesini ve detaylarını kontrol ettiğimi onaylıyorum.
                 </span>
               </label>
@@ -232,7 +246,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Onayla ve PAUSED Olarak Oluştur
+                Onayla ve Kampanya Oluştur
               </button>
             </div>
           )}
@@ -362,7 +376,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                 </div>
               )}
               <p className="text-[11px] text-gray-400 mt-3">
-                Tümü PAUSED. Yayına almak için Meta Ads Manager'dan aktif et.
+                Kampanya taslak olarak oluşturuldu. Yayına almak için Meta Ads Manager'dan aktif edebilirsiniz.
               </p>
               <button
                 onClick={onClose}
