@@ -19,7 +19,7 @@
    Toplam bütçet: 45 s (actor) + 10 s (dataset) ≈ 55 s < 60 s.
    ────────────────────────────────────────────────────────── */
 
-import type { NormalizedCompetitorAd } from './competitorAdStore'
+import type { NormalizedCompetitorAd, CompetitorCreativeAsset } from './competitorAdStore'
 
 const APIFY_BASE = 'https://api.apify.com/v2'
 
@@ -285,6 +285,40 @@ export async function fetchApifyDatasetItems(
 }
 
 /* ──────────────────────────────────────────────────────────
+   normalizeAdDate
+   Unix seconds (number), Unix ms (number), numeric string,
+   ISO/date string → ISO string | null.
+   Actor'lar farklı format döndürebilir; hepsini handle eder.
+   ────────────────────────────────────────────────────────── */
+
+function normalizeAdDate(value: unknown): string | null {
+  if (value === null || value === undefined) return null
+
+  if (typeof value === 'number') {
+    if (!Number.isFinite(value) || value <= 0) return null
+    // > 9_999_999_999 → ms; <= → seconds
+    const ms = value > 9_999_999_999 ? value : value * 1000
+    const d = new Date(ms)
+    return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  }
+
+  if (typeof value === 'string') {
+    const t = value.trim()
+    if (!t) return null
+    const num = Number(t)
+    if (!Number.isNaN(num) && num > 0) {
+      const ms = num > 9_999_999_999 ? num : num * 1000
+      const d = new Date(ms)
+      return Number.isNaN(d.getTime()) ? null : d.toISOString()
+    }
+    const d = new Date(t)
+    return Number.isNaN(d.getTime()) ? null : d.toISOString()
+  }
+
+  return null
+}
+
+/* ──────────────────────────────────────────────────────────
    normalizeApifyMetaAd
    curious_coder/facebook-ads-library-scraper çıktısını
    NormalizedCompetitorAd formatına dönüştürür.
@@ -341,16 +375,12 @@ export function normalizeApifyMetaAd(
       ? [platformsRaw]
       : ['facebook']
 
-  const startTime =
-    (get(
-      'adDeliveryStartTime',
-      'ad_delivery_start_time',
-      'startDate',
-      'start_date',
-    ) as string | null) ?? null
-  const stopTime =
-    (get('adDeliveryStopTime', 'ad_delivery_stop_time', 'endDate', 'end_date') as string | null) ??
-    null
+  const startTime = normalizeAdDate(
+    get('adDeliveryStartTime', 'ad_delivery_start_time', 'adStartDate', 'startDate', 'start_date'),
+  )
+  const stopTime = normalizeAdDate(
+    get('adDeliveryStopTime', 'ad_delivery_stop_time', 'adEndDate', 'endDate', 'end_date'),
+  )
 
   return {
     platform: 'meta',
@@ -397,7 +427,10 @@ export function normalizeApifyGoogleAd(
     return undefined
   }
 
-  const sourceAdId = (get('adId', 'ad_id', 'id') as string | null) ?? null
+  // creativeId → source_ad_id (fingerprint için birincil key)
+  const sourceAdId = (get('creativeId', 'creative_id', 'adId', 'ad_id', 'id') as string | null) ?? null
+  // advertiserId → source_page_id
+  const sourcePageId = (get('advertiserId', 'advertiser_id', 'pageId', 'page_id') as string | null) ?? null
   const advertiserName =
     (get('advertiserName', 'advertiser_name', 'brand', 'company') as string | null) ?? null
   const advertiserDomain =
@@ -407,20 +440,38 @@ export function normalizeApifyGoogleAd(
   const adBody =
     (get('description', 'body', 'ad_body', 'adBody', 'text', 'content') as string | null) ?? null
   const adDesc = (get('ad_description', 'adDescription', 'subtitle') as string | null) ?? null
+  // adUrl → destination_url
   const destinationUrl =
-    (get('destinationUrl', 'destination_url', 'targetUrl', 'url', 'link') as string | null) ?? null
-  const startDate =
-    (get('startDate', 'start_date', 'dateFrom', 'firstSeen', 'first_seen') as string | null) ?? null
-  const endDate =
-    (get('endDate', 'end_date', 'dateTo', 'lastSeen', 'last_seen') as string | null) ?? null
+    (get('adUrl', 'ad_url', 'destinationUrl', 'destination_url', 'targetUrl', 'url', 'link') as string | null) ?? null
+  // firstShown / lastShown → dates (with Unix seconds support)
+  const startDate = normalizeAdDate(
+    get('firstShown', 'first_shown', 'startDate', 'start_date', 'dateFrom', 'firstSeen', 'first_seen'),
+  )
+  const endDate = normalizeAdDate(
+    get('lastShown', 'last_shown', 'endDate', 'end_date', 'dateTo', 'lastSeen', 'last_seen'),
+  )
   const region = (get('region', 'country', 'geo') as string | null) ?? null
-  const format = (get('format', 'adFormat', 'type') as string | null) ?? null
+  const adFormat = (get('adFormat', 'ad_format', 'format', 'type') as string | null) ?? null
+
+  // imageUrl / previewUrl → creative_assets
+  const imageUrl = (get('imageUrl', 'image_url') as string | null) ?? null
+  const previewUrl = (get('previewUrl', 'preview_url', 'videoUrl', 'video_url') as string | null) ?? null
+  const creativeAssets: CompetitorCreativeAsset[] = []
+  if (imageUrl) creativeAssets.push({ type: 'image', image_url: imageUrl })
+  if (previewUrl) {
+    const isVideo = !!adFormat?.toLowerCase().includes('video')
+    creativeAssets.push(
+      isVideo
+        ? { type: 'video', video_url: previewUrl }
+        : { type: 'thumbnail', thumbnail_url: previewUrl },
+    )
+  }
 
   return {
     platform: 'google',
     source: 'apify_google_ads_transparency',
     source_ad_id: sourceAdId,
-    source_page_id: null,
+    source_page_id: sourcePageId,
     ad_fingerprint: '',
     advertiser_name: advertiserName,
     advertiser_page_name: advertiserName,
@@ -436,9 +487,9 @@ export function normalizeApifyGoogleAd(
     publisher_platforms: ['google'],
     ad_delivery_start_time: startDate,
     ad_delivery_stop_time: endDate,
-    creative_assets: [],
+    creative_assets: creativeAssets,
     raw_payload: raw,
-    extracted_signals: { region, format },
+    extracted_signals: { region, format: adFormat },
     is_active: !endDate,
   }
 }
