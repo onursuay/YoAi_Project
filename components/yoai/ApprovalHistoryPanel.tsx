@@ -3,11 +3,11 @@
 /* ──────────────────────────────────────────────────────────
    YoAlgoritma — Approval History Panel (Faz 0D)
 
-   Kullanıcının son approval kararlarını gösteren basit liste.
+   Kullanıcının son approval kararlarını modern kart grid'inde gösterir.
    Veri kaynağı: /api/yoai/approvals?limit=20 (yoai_pending_approvals).
 
-   Salt okunur; aksiyonlar AiAdSuggestions kartlarında. Detay için
-   inline expand kullanır (modal değil).
+   Salt okunur; aksiyon kartları AiAdSuggestions'da.
+   Detay bilgileri (teknik alanlar) kart altındaki "Detay" bölümünde.
    ────────────────────────────────────────────────────────── */
 
 import { useEffect, useState, useCallback } from 'react'
@@ -19,12 +19,12 @@ import {
   PauseCircle,
   Pencil,
   AlertTriangle,
-  ChevronDown,
-  ChevronUp,
   History,
   TrendingUp,
   TrendingDown,
   Minus,
+  ChevronDown,
+  ChevronUp,
 } from 'lucide-react'
 
 type ApprovalStatus =
@@ -119,7 +119,6 @@ const OUTCOME_META: Record<
 }
 
 interface Props {
-  /** Parent değiştiğinde refresh tetikler (her artırımda yeniden fetch). */
   refreshKey?: number
 }
 
@@ -253,169 +252,203 @@ export default function ApprovalHistoryPanel({ refreshKey }: Props) {
 
   return (
     <div>
-      <div className="flex items-center gap-2 mb-3">
+      <div className="flex items-center gap-2 mb-4">
         <History className="w-4 h-4 text-gray-500" />
         <h2 className="text-lg font-semibold text-gray-900">Onay Geçmişi</h2>
-        <span className="text-[12px] text-gray-500">
-          {records && records.length > 0 ? `son ${records.length} kayıt` : ''}
-        </span>
+        {records && records.length > 0 && (
+          <span className="text-[12px] text-gray-500">son {records.length} kayıt</span>
+        )}
       </div>
 
       {(!records || records.length === 0) ? (
-        <div className="bg-white rounded-2xl border border-gray-100 border-dashed p-6 text-center">
-          <Inbox className="w-7 h-7 text-gray-300 mx-auto mb-2" />
+        <div className="bg-white rounded-2xl border border-dashed border-gray-200 p-8 text-center">
+          <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-3" />
           <p className="text-sm text-gray-500">
             Henüz onaylanmış, reddedilmiş veya bekletilmiş öneri yok.
           </p>
         </div>
       ) : (
-        <div className="bg-white rounded-2xl border border-gray-100 overflow-hidden divide-y divide-gray-100">
-          {records.map((rec) => {
-            const meta = STATUS_META[rec.status] || STATUS_META.pending
-            const Icon = meta.icon
-            const expanded = expandedId === rec.id
-            const title =
-              rec.proposal_snapshot?.campaignName ||
-              rec.proposal_snapshot?.headline ||
-              `Öneri ${rec.proposal_id.slice(0, 8)}`
-            const reason =
-              rec.rejection_reason || rec.hold_reason || rec.status_reason || null
-
-            const rejectionCategory = rec.metadata?.rejection_category as string | null | undefined
-            const holdCategory = rec.metadata?.hold_category as string | null | undefined
-            const badge = rec.decision_badge
-            const badgeDecision = badge?.finalDecision
-            const badgeClass = badgeDecision
-              ? (DECISION_BADGE_CLASSES[badgeDecision] ?? 'bg-gray-50 text-gray-500 border-gray-200')
-              : null
-
-            const outcomeResult = outcomeMap[rec.proposal_id]
-            const outcomeMeta = outcomeResult ? OUTCOME_META[outcomeResult.outcome] : null
-            const OutcomeIcon = outcomeMeta?.icon
-
-            return (
-              <div key={rec.id} className="px-4 py-3">
-                <div className="flex items-start gap-3">
-                  <div
-                    className={`shrink-0 inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-medium ${meta.classes}`}
-                  >
-                    <Icon className="w-3 h-3" />
-                    {meta.label}
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <p className="text-sm font-medium text-gray-900 truncate">{title}</p>
-                    <div className="flex items-center gap-2 text-[11px] text-gray-500 mt-0.5 flex-wrap">
-                      <span className="uppercase">{rec.platform}</span>
-                      <span>·</span>
-                      <span>{formatTime(rec.updated_at || rec.created_at)}</span>
-                      {rec.published_at && (
-                        <>
-                          <span>·</span>
-                          <span className="text-emerald-600">
-                            yayın {formatTime(rec.published_at)}
-                          </span>
-                        </>
-                      )}
-                      {badgeDecision && badgeClass && (
-                        <span
-                          className={`inline-flex items-center px-1.5 py-0.5 rounded border text-[10px] font-medium ${badgeClass}`}
-                        >
-                          AI: {DECISION_BADGE_LABELS[badgeDecision] ?? badgeDecision}
-                        </span>
-                      )}
-                      {outcomeMeta && OutcomeIcon && (
-                        <span
-                          className={`inline-flex items-center gap-0.5 px-1.5 py-0.5 rounded border text-[10px] font-medium ${outcomeMeta.classes}`}
-                        >
-                          <OutcomeIcon className="w-2.5 h-2.5" />
-                          {outcomeMeta.label}
-                        </span>
-                      )}
-                    </div>
-                    {reason && !expanded && (
-                      <p className="text-[12px] text-gray-600 mt-1 line-clamp-1">
-                        {reason}
-                      </p>
-                    )}
-                  </div>
-                  <button
-                    onClick={() => {
-                      const nextExpanded = expanded ? null : rec.id
-                      setExpandedId(nextExpanded)
-                      if (nextExpanded) fetchOutcomeForApproval(rec)
-                    }}
-                    className="shrink-0 inline-flex items-center justify-center w-7 h-7 rounded-lg text-gray-400 hover:bg-gray-100"
-                    title={expanded ? 'Kapat' : 'Detay'}
-                  >
-                    {expanded ? (
-                      <ChevronUp className="w-4 h-4" />
-                    ) : (
-                      <ChevronDown className="w-4 h-4" />
-                    )}
-                  </button>
-                </div>
-
-                {expanded && (
-                  <div className="mt-3 pl-2 space-y-2 border-l-2 border-gray-100 ml-1">
-                    <DetailRow label="Proposal ID" value={rec.proposal_id} mono />
-                    {rec.source_campaign_id && (
-                      <DetailRow label="Kaynak Kampanya" value={rec.source_campaign_id} mono />
-                    )}
-                    {rec.proposal_snapshot?.objectiveLabel && (
-                      <DetailRow
-                        label="Hedef"
-                        value={rec.proposal_snapshot.objectiveLabel}
-                      />
-                    )}
-                    {rec.proposal_snapshot?.dailyBudget != null && (
-                      <DetailRow
-                        label="Günlük Bütçe"
-                        value={`₺${rec.proposal_snapshot.dailyBudget}`}
-                      />
-                    )}
-                    {rec.proposal_snapshot?.headline && (
-                      <DetailRow label="Başlık" value={rec.proposal_snapshot.headline} />
-                    )}
-                    {rec.proposal_snapshot?.callToAction && (
-                      <DetailRow label="CTA" value={rec.proposal_snapshot.callToAction} />
-                    )}
-                    {reason && <DetailRow label="Neden" value={reason} />}
-                    {rejectionCategory && (
-                      <DetailRow
-                        label="Red Kategorisi"
-                        value={REJECTION_CATEGORY_LABELS[rejectionCategory] ?? rejectionCategory}
-                      />
-                    )}
-                    {holdCategory && (
-                      <DetailRow
-                        label="Bekletme Kategorisi"
-                        value={HOLD_CATEGORY_LABELS[holdCategory] ?? holdCategory}
-                      />
-                    )}
-                    {badgeDecision && (
-                      <DetailRow
-                        label="AI Kararı"
-                        value={`${DECISION_BADGE_LABELS[badgeDecision] ?? badgeDecision}${badge?.confidence ? ` (${badge.confidence}%)` : ''}`}
-                      />
-                    )}
-                    {outcomeResult && outcomeMeta && (
-                      <DetailRow
-                        label="Öneri Sonucu"
-                        value={`${outcomeMeta.label}${outcomeResult.outcome_summary ? ` — ${outcomeResult.outcome_summary}` : ''}`}
-                      />
-                    )}
-                    {rec.publish_audit_id && (
-                      <DetailRow label="Audit ID" value={rec.publish_audit_id} mono />
-                    )}
-                    <DetailRow label="Oluşturuldu" value={formatTime(rec.created_at)} />
-                    <DetailRow label="Güncellendi" value={formatTime(rec.updated_at)} />
-                  </div>
-                )}
-              </div>
-            )
-          })}
+        <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+          {records.map((rec) => (
+            <ApprovalCard
+              key={rec.id}
+              rec={rec}
+              expanded={expandedId === rec.id}
+              outcomeResult={outcomeMap[rec.proposal_id]}
+              onToggleDetail={() => {
+                const next = expandedId === rec.id ? null : rec.id
+                setExpandedId(next)
+                if (next) fetchOutcomeForApproval(rec)
+              }}
+            />
+          ))}
         </div>
       )}
+    </div>
+  )
+}
+
+interface CardProps {
+  rec: ApprovalRecord
+  expanded: boolean
+  outcomeResult: OutcomeResult | undefined
+  onToggleDetail: () => void
+}
+
+function ApprovalCard({ rec, expanded, outcomeResult, onToggleDetail }: CardProps) {
+  const meta = STATUS_META[rec.status] || STATUS_META.pending
+  const Icon = meta.icon
+
+  const title =
+    rec.proposal_snapshot?.campaignName ||
+    rec.proposal_snapshot?.headline ||
+    'İsimsiz Öneri'
+
+  const reason = rec.rejection_reason || rec.hold_reason || rec.status_reason || null
+  const rejectionCategory = rec.metadata?.rejection_category as string | null | undefined
+  const holdCategory = rec.metadata?.hold_category as string | null | undefined
+  const badge = rec.decision_badge
+  const badgeDecision = badge?.finalDecision
+  const badgeClass = badgeDecision
+    ? (DECISION_BADGE_CLASSES[badgeDecision] ?? 'bg-gray-50 text-gray-500 border-gray-200')
+    : null
+  const outcomeMeta = outcomeResult ? OUTCOME_META[outcomeResult.outcome] : null
+  const OutcomeIcon = outcomeMeta?.icon
+
+  return (
+    <div className="bg-white rounded-2xl border border-gray-100 shadow-sm hover:shadow-md hover:-translate-y-0.5 transition-all duration-200 flex flex-col">
+      {/* Card header */}
+      <div className="p-4 flex-1">
+        {/* Top badges row */}
+        <div className="flex items-center gap-2 flex-wrap mb-3">
+          <span
+            className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-lg border text-[11px] font-medium ${meta.classes}`}
+          >
+            <Icon className="w-3 h-3" />
+            {meta.label}
+          </span>
+          <span className="inline-flex items-center px-2 py-1 rounded-lg border border-gray-200 bg-gray-50 text-[11px] font-medium text-gray-600 uppercase tracking-wide">
+            {rec.platform}
+          </span>
+          {badgeDecision && badgeClass && (
+            <span
+              className={`inline-flex items-center px-2 py-1 rounded-lg border text-[11px] font-medium ${badgeClass}`}
+            >
+              AI: {DECISION_BADGE_LABELS[badgeDecision] ?? badgeDecision}
+            </span>
+          )}
+          {outcomeMeta && OutcomeIcon && (
+            <span
+              className={`inline-flex items-center gap-1 px-2 py-1 rounded-lg border text-[11px] font-medium ${outcomeMeta.classes}`}
+            >
+              <OutcomeIcon className="w-3 h-3" />
+              {outcomeMeta.label}
+            </span>
+          )}
+        </div>
+
+        {/* Campaign name */}
+        <p className="text-sm font-semibold text-gray-900 leading-snug mb-2 line-clamp-2">
+          {title}
+        </p>
+
+        {/* Key details */}
+        <div className="space-y-1.5">
+          {rec.proposal_snapshot?.objectiveLabel && (
+            <InfoRow label="Hedef" value={rec.proposal_snapshot.objectiveLabel} />
+          )}
+          {rec.proposal_snapshot?.dailyBudget != null && (
+            <InfoRow label="Günlük Bütçe" value={`₺${rec.proposal_snapshot.dailyBudget}`} />
+          )}
+          {rec.proposal_snapshot?.headline && (
+            <InfoRow label="Başlık" value={rec.proposal_snapshot.headline} truncate />
+          )}
+          {rec.proposal_snapshot?.callToAction && (
+            <InfoRow label="CTA" value={rec.proposal_snapshot.callToAction} />
+          )}
+          {reason && (
+            <InfoRow label="Neden" value={reason} truncate />
+          )}
+          {(rejectionCategory || holdCategory) && (
+            <div className="flex items-center gap-1.5 flex-wrap pt-0.5">
+              {rejectionCategory && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-red-50 text-red-700 border border-red-200 text-[11px] font-medium">
+                  {REJECTION_CATEGORY_LABELS[rejectionCategory] ?? rejectionCategory}
+                </span>
+              )}
+              {holdCategory && (
+                <span className="inline-flex items-center px-2 py-0.5 rounded-md bg-gray-50 text-gray-600 border border-gray-200 text-[11px] font-medium">
+                  {HOLD_CATEGORY_LABELS[holdCategory] ?? holdCategory}
+                </span>
+              )}
+            </div>
+          )}
+        </div>
+
+        {/* Date */}
+        <p className="text-[11px] text-gray-400 mt-3">
+          {formatTime(rec.updated_at || rec.created_at)}
+          {rec.published_at && (
+            <span className="text-emerald-500 ml-2">· yayın {formatTime(rec.published_at)}</span>
+          )}
+        </p>
+      </div>
+
+      {/* Expanded technical details */}
+      {expanded && (
+        <div className="px-4 pb-3 pt-0 border-t border-gray-50">
+          <div className="mt-3 space-y-1.5">
+            {rec.proposal_snapshot?.headline && rec.proposal_snapshot?.campaignName && (
+              <DetailRow label="Başlık (tam)" value={rec.proposal_snapshot.headline} />
+            )}
+            {rec.source_campaign_id && (
+              <DetailRow label="Kaynak Kampanya" value={rec.source_campaign_id} mono />
+            )}
+            {outcomeResult?.outcome_summary && (
+              <DetailRow label="Sonuç Notu" value={outcomeResult.outcome_summary} />
+            )}
+            {rec.publish_audit_id && (
+              <DetailRow label="Audit ID" value={rec.publish_audit_id} mono />
+            )}
+            <DetailRow label="Öneri ID" value={rec.proposal_id} mono />
+            <DetailRow label="Oluşturuldu" value={formatTime(rec.created_at)} />
+            {badge?.confidence != null && badge.confidence > 0 && (
+              <DetailRow label="AI Güven" value={`${badge.confidence}%`} />
+            )}
+          </div>
+        </div>
+      )}
+
+      {/* Card footer actions */}
+      <div className="px-4 py-2.5 border-t border-gray-50 flex items-center justify-end">
+        <button
+          onClick={onToggleDetail}
+          className="inline-flex items-center gap-1 text-[12px] text-gray-500 hover:text-gray-700 transition-colors"
+        >
+          {expanded ? (
+            <>
+              <ChevronUp className="w-3.5 h-3.5" />
+              Gizle
+            </>
+          ) : (
+            <>
+              <ChevronDown className="w-3.5 h-3.5" />
+              Detay
+            </>
+          )}
+        </button>
+      </div>
+    </div>
+  )
+}
+
+function InfoRow({ label, value, truncate }: { label: string; value: string; truncate?: boolean }) {
+  return (
+    <div className="flex items-baseline gap-2">
+      <span className="text-[11px] text-gray-400 shrink-0 w-16">{label}</span>
+      <span className={`text-[12px] text-gray-700 flex-1 ${truncate ? 'truncate' : ''}`}>
+        {value}
+      </span>
     </div>
   )
 }
@@ -431,10 +464,10 @@ function DetailRow({
 }) {
   return (
     <div className="grid grid-cols-3 gap-2 text-[12px]">
-      <span className="text-gray-500">{label}</span>
+      <span className="text-gray-400">{label}</span>
       <span
-        className={`col-span-2 text-gray-800 break-words ${
-          mono ? 'font-mono text-[11px]' : ''
+        className={`col-span-2 text-gray-600 break-words ${
+          mono ? 'font-mono text-[10px]' : ''
         }`}
       >
         {value}
