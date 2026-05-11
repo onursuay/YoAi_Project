@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef } from 'react'
 import {
   Inbox,
   Zap,
@@ -180,6 +180,10 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
   const [submittingPatch, setSubmittingPatch] = useState(false)
   const [detailApproval, setDetailApproval] = useState<ApprovalRecord | undefined>(undefined)
 
+  const connectedPlatformsRef = useRef(connectedPlatforms)
+  connectedPlatformsRef.current = connectedPlatforms
+  const lastFetchedKeyRef = useRef<string | null>(null)
+
   const refreshApprovals = useCallback(async () => {
     try {
       const res = await fetch('/api/yoai/approvals?limit=200', { credentials: 'include' })
@@ -217,7 +221,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
         const res = await fetch('/api/yoai/generate-ad', {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },
-          body: JSON.stringify({ platforms: connectedPlatforms, forceGenerate }),
+          body: JSON.stringify({ platforms: connectedPlatformsRef.current, forceGenerate }),
         })
         const json = await res.json()
 
@@ -267,7 +271,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
         }
       }
     },
-    [connectedPlatforms],
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+    [],
   )
 
   useEffect(() => {
@@ -275,6 +280,9 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
       setLoading(false)
       return
     }
+    const key = connectedPlatforms.slice().sort().join(',')
+    if (key === lastFetchedKeyRef.current) return
+    lastFetchedKeyRef.current = key
     Promise.all([fetchProposals(), refreshApprovals()]).finally(() => setLoading(false))
   }, [connectedPlatforms, fetchProposals, refreshApprovals])
 
