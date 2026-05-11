@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-11 — AiAdSuggestions: Duplicate Startup Fetch Fix
+- **Sorun:** `/yoai` fresh açılışında `generate-ad` endpoint'i 2 kez çağrılıyordu. `connectedPlatforms` prop'u parent re-render'da yeni dizi referansı olarak gelince `fetchProposals` useCallback yeniden oluşuyor, useEffect ikinci kez tetikleniyordu.
+- **Çözüm:** `connectedPlatforms` değeri `connectedPlatformsRef` ile ref'e alındı; `fetchProposals` deps listesi boşaltıldı (`[]`). useEffect'e `lastFetchedKeyRef` guard eklendi: `platformsKey = connectedPlatforms.slice().sort().join(',')` değişmemişse fetch yapılmıyor. `forceGenerate=true` çağrıları guard'dan bağımsız, doğrudan `fetchProposals(true)` ile çalışmaya devam ediyor.
+- **Dosyalar:** `components/yoai/AiAdSuggestions.tsx`
+
 ## 2026-05-11 — Faz 2D: Identity Key Fix — session_id → user_id
 - **Sorun:** 15 yoai route, DB anahtarı olarak `session_id` (her login'de değişen rastgele UUID) kullanıyordu. CRON `user_id` (signups.id — stabil) ile yazıyor, UI `session_id` ile okuyordu. Veri asla görüntülenemiyordu.
 - **Çözüm:** Tüm yoai API route'larında `cookieStore.get('session_id')` → `cookieStore.get('user_id')` olarak değiştirildi (15 dosya, 20 satır).
