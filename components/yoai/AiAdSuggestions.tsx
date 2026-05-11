@@ -9,7 +9,6 @@ import {
   PauseCircle,
 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
-import OneClickApproveDialog from './OneClickApproveDialog'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 import type { DiagnosisResult, RootCauseId } from '@/lib/yoai/meta/diagnosis'
@@ -79,17 +78,6 @@ interface ApprovalRecord {
   metadata?: Record<string, unknown>
   decision_badge?: DecisionBadge | null
 }
-
-const REJECTION_CATEGORIES = [
-  { value: 'yanlış_kampanya_türü', label: 'Yanlış Kampanya Türü' },
-  { value: 'düşük_kalite', label: 'Düşük Kalite' },
-  { value: 'bütçe_uygunsuz', label: 'Bütçe Uygunsuz' },
-  { value: 'kreatif_uygunsuz', label: 'Kreatif Uygunsuz' },
-  { value: 'hedefleme_uygunsuz', label: 'Hedefleme Uygunsuz' },
-  { value: 'marka_dili_uygunsuz', label: 'Marka Dili Uygunsuz' },
-  { value: 'politika_riski', label: 'Politika Riski' },
-  { value: 'diğer', label: 'Diğer' },
-]
 
 const DECISION_BADGE_LABEL: Record<string, string> = {
   publish_ready: 'Yayına Hazır',
@@ -202,15 +190,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
   // ── Approval queue state ──
   const [approvalsByProposalId, setApprovalsByProposalId] = useState<Record<string, ApprovalRecord>>({})
 
-  // ── Modals ──
-  const [oneClickProposal, setOneClickProposal] = useState<{
-    proposal: FullAdProposal
-    approvalId: string | null
-  } | null>(null)
-  const [rejectTarget, setRejectTarget] = useState<{ proposal: FullAdProposal; approvalId: string } | null>(null)
-  const [reasonText, setReasonText] = useState('')
-  const [rejectCategory, setRejectCategory] = useState('')
   const [submittingPatch, setSubmittingPatch] = useState(false)
+  const [confirmRejectId, setConfirmRejectId] = useState<string | null>(null)
 
   const connectedPlatformsRef = useRef(connectedPlatforms)
   connectedPlatformsRef.current = connectedPlatforms
@@ -371,19 +352,38 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     if (onApprovalChanged) onApprovalChanged()
   }
 
-  const handleRejectConfirm = async () => {
-    if (!rejectTarget) return
-    const reason = reasonText.trim() || 'Reddedildi'
-    const meta: Record<string, unknown> = {}
-    if (rejectCategory) meta.rejection_category = rejectCategory
-    await patchApproval(rejectTarget.approvalId, {
-      status: 'rejected',
-      rejection_reason: reason,
-      ...(Object.keys(meta).length > 0 ? { metadata: meta } : {}),
-    })
-    setRejectTarget(null)
-    setReasonText('')
-    setRejectCategory('')
+  const handleConfirmReject = async (proposalId: string | undefined, approvalId?: string) => {
+    if (!proposalId) return
+    setSubmittingPatch(true)
+    try {
+      if (approvalId) {
+        const res = await fetch(`/api/yoai/approvals/${approvalId}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ status: 'rejected', rejection_reason: 'Kullanıcı tarafından reddedildi' }),
+          credentials: 'include',
+        })
+        if (!res.ok) console.warn('[AiAdSuggestions] reject PATCH failed')
+      }
+      setProposals(prev => {
+        const next = prev.filter(p => p.id !== proposalId)
+        try {
+          const cacheRaw = localStorage.getItem(PROPOSAL_CACHE_KEY)
+          if (cacheRaw) {
+            const cache = JSON.parse(cacheRaw)
+            cache.proposals = next
+            localStorage.setItem(PROPOSAL_CACHE_KEY, JSON.stringify(cache))
+          }
+        } catch { /* noop */ }
+        return next
+      })
+      if (onApprovalChanged) onApprovalChanged()
+    } catch (e) {
+      console.error('[AiAdSuggestions] reject error:', e)
+    } finally {
+      setSubmittingPatch(false)
+      setConfirmRejectId(null)
+    }
   }
 
   const handleReopen = async (approvalId: string) => {
@@ -391,7 +391,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
   }
 
   // ── Card action row renderer (Meta + Google) ──
-  const renderActionRow = (proposal: FullAdProposal, isMeta: boolean) => {
+  const renderActionRow = (proposal: FullAdProposal) => {
     const proposalId = proposal.id
     const approval = proposalId ? approvalsByProposalId[proposalId] : undefined
     const status = approval?.status ?? 'pending'
@@ -479,30 +479,47 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     }
 
     // pending / editing / failed / expired / approved → ONAYLA / REDDET
+    if (confirmRejectId === proposalId) {
+      return (
+        <div className="rounded-lg overflow-hidden border border-red-500/30 bg-red-950/20">
+          <p className="text-[11px] text-red-300 text-center py-2.5 px-3 font-medium">
+            Bu öneriyi reddetmek istiyor musunuz?
+          </p>
+          <div className="flex border-t border-red-500/20">
+            <button
+              onClick={() => handleConfirmReject(proposalId, approval?.id)}
+              disabled={submittingPatch}
+              className="flex-1 py-2.5 bg-red-600/30 hover:bg-red-600/50 text-red-300 font-bold text-[11px] tracking-wider transition-colors disabled:opacity-40"
+            >
+              {submittingPatch ? '…' : 'REDDET'}
+            </button>
+            <div className="w-px bg-red-500/20 shrink-0" />
+            <button
+              onClick={() => setConfirmRejectId(null)}
+              disabled={submittingPatch}
+              className="flex-1 py-2.5 bg-slate-800/60 hover:bg-slate-700/60 text-slate-300 text-[11px] tracking-wider transition-colors disabled:opacity-40"
+            >
+              VAZGEÇ
+            </button>
+          </div>
+        </div>
+      )
+    }
+
     return (
       <div className="space-y-2">
         <div className="flex rounded-lg overflow-hidden border border-slate-700/60">
           <button
-            onClick={() => {
-              if (isMeta) {
-                setOneClickProposal({ proposal, approvalId: approval?.id ?? null })
-              } else {
-                onOpenWizard(proposal)
-              }
-            }}
+            onClick={() => onOpenWizard(proposal)}
             className="flex-1 py-3 bg-emerald-600/20 hover:bg-emerald-600/30 active:bg-emerald-600/40 text-emerald-400 font-bold text-[12px] tracking-wider transition-colors"
           >
             ONAYLA
           </button>
           <div className="w-px bg-slate-700/60 shrink-0" />
           <button
-            onClick={() => {
-              if (!approval) return
-              setReasonText('')
-              setRejectTarget({ proposal, approvalId: approval.id })
-            }}
-            disabled={!approval || submittingPatch}
-            className="flex-1 py-3 bg-red-950/30 hover:bg-red-950/50 active:bg-red-950/70 text-red-400 font-bold text-[12px] tracking-wider transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+            onClick={() => proposalId && setConfirmRejectId(proposalId)}
+            disabled={submittingPatch}
+            className="flex-1 py-3 bg-red-950/30 hover:bg-red-950/50 active:bg-red-950/70 text-red-400 font-bold text-[12px] tracking-wider transition-colors disabled:opacity-40"
           >
             REDDET
           </button>
@@ -547,52 +564,12 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
               return (
                 <div key={p.id || `meta_${i}`} className="space-y-2">
                   <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} diagnostic={diagnostic} />
-                  {renderActionRow(p, true)}
+                  {renderActionRow(p)}
                 </div>
               )
             })}
           </div>
         </div>
-      )}
-
-      {/* One-click approve dialog */}
-      {oneClickProposal && (
-        <OneClickApproveDialog
-          proposal={oneClickProposal.proposal}
-          approvalId={oneClickProposal.approvalId}
-          onClose={() => {
-            setOneClickProposal(null)
-            refreshApprovals()
-          }}
-          onPublished={() => {
-            refreshApprovals()
-            if (onApprovalChanged) onApprovalChanged()
-          }}
-        />
-      )}
-
-      {/* Reject modal */}
-      {rejectTarget && (
-        <ReasonModal
-          title="Öneriyi Reddet"
-          description="Bu öneriyi neden reddediyorsunuz?"
-          placeholder="Reddetme nedeni (opsiyonel)"
-          confirmLabel="Reddet"
-          confirmVariant="danger"
-          value={reasonText}
-          onChange={setReasonText}
-          onCancel={() => {
-            setRejectTarget(null)
-            setReasonText('')
-            setRejectCategory('')
-          }}
-          onConfirm={handleRejectConfirm}
-          submitting={submittingPatch}
-          categories={REJECTION_CATEGORIES}
-          categoryValue={rejectCategory}
-          onCategoryChange={setRejectCategory}
-          categoryLabel="Red Kategorisi"
-        />
       )}
 
       {/* Google proposals */}
@@ -608,7 +585,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
             {googleProposals.map((p, i) => (
               <div key={p.id || `google_${i}`} className="space-y-2">
                 <AdPreviewCard proposal={p} selected={false} onSelect={() => onOpenWizard(p)} />
-                {renderActionRow(p, false)}
+                {renderActionRow(p)}
               </div>
             ))}
           </div>
@@ -618,139 +595,3 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
   )
 }
 
-/* ── CTA enum → kullanıcı dostu Türkçe ── */
-const CTA_LABELS: Record<string, string> = {
-  SEND_MESSAGE: 'Mesaj Gönder',
-  LEARN_MORE: 'Daha Fazla Bilgi Al',
-  SHOP_NOW: 'Hemen Alışveriş Yap',
-  SIGN_UP: 'Kayıt Ol',
-  SUBSCRIBE: 'Abone Ol',
-  BOOK_TRAVEL: 'Seyahat Rezervasyonu Yap',
-  WATCH_MORE: 'Daha Fazla İzle',
-  APPLY_NOW: 'Hemen Başvur',
-  CONTACT_US: 'Bize Ulaşın',
-  GET_QUOTE: 'Teklif Al',
-  DOWNLOAD: 'İndir',
-  INSTALL_MOBILE_APP: 'Uygulamayı İndir',
-  OPEN_LINK: 'Bağlantıyı Aç',
-  ORDER_NOW: 'Hemen Sipariş Ver',
-  GET_OFFER: 'Teklifi Gör',
-  LISTEN_NOW: 'Hemen Dinle',
-  GET_DIRECTIONS: 'Yol Tarifi Al',
-  CALL_NOW: 'Hemen Ara',
-  SAVE: 'Kaydet',
-  BUY_NOW: 'Hemen Satın Al',
-  FIND_A_GROUP: 'Grup Bul',
-  BUY_TICKETS: 'Bilet Al',
-  SEE_MENU: 'Menüyü Gör',
-  PLAY_GAME: 'Oyunu Oyna',
-  GET_SHOWTIMES: 'Seans Saatlerini Gör',
-  REQUEST_TIME: 'Randevu Al',
-  SEE_ALL_OFFERS: 'Tüm Teklifleri Gör',
-  FOLLOW_PAGE: 'Sayfayı Takip Et',
-}
-
-function humanizeCta(cta: string | undefined | null): string | undefined {
-  if (!cta) return undefined
-  return CTA_LABELS[cta.toUpperCase()] ?? cta
-}
-
-/* ── Reusable reason modal (for reject + hold) ── */
-
-function ReasonModal({
-  title,
-  description,
-  placeholder,
-  confirmLabel,
-  confirmVariant,
-  value,
-  onChange,
-  onCancel,
-  onConfirm,
-  submitting,
-  categories,
-  categoryValue,
-  onCategoryChange,
-  categoryLabel,
-}: {
-  title: string
-  description: string
-  placeholder: string
-  confirmLabel: string
-  confirmVariant: 'primary' | 'danger'
-  value: string
-  onChange: (v: string) => void
-  onCancel: () => void
-  onConfirm: () => void
-  submitting: boolean
-  categories?: Array<{ value: string; label: string }>
-  categoryValue?: string
-  onCategoryChange?: (v: string) => void
-  categoryLabel?: string
-}) {
-  const confirmCls =
-    confirmVariant === 'danger'
-      ? 'bg-red-600 hover:bg-red-700 text-white'
-      : 'bg-primary hover:bg-primary/90 text-white'
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-start justify-center pt-24 px-4 overflow-y-auto">
-      <div className="absolute inset-0 bg-black/40" onClick={onCancel} />
-      <div className="relative bg-white rounded-2xl shadow-2xl w-full max-w-md mb-12 animate-popup-scale">
-        <div className="flex items-center justify-between px-6 py-4 border-b border-gray-100">
-          <h2 className="text-lg font-semibold text-gray-900">{title}</h2>
-          <button onClick={onCancel} className="text-gray-400 hover:text-gray-600">
-            <X className="w-5 h-5" />
-          </button>
-        </div>
-        <div className="p-6 space-y-4">
-          <p className="text-sm text-gray-600">{description}</p>
-          {categories && categories.length > 0 && onCategoryChange && (
-            <div>
-              {categoryLabel && (
-                <label className="block text-[11px] font-semibold text-gray-500 uppercase tracking-wide mb-1.5">
-                  {categoryLabel} <span className="text-gray-400 font-normal">(opsiyonel)</span>
-                </label>
-              )}
-              <select
-                value={categoryValue ?? ''}
-                onChange={(e) => onCategoryChange(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 bg-white"
-              >
-                <option value="">— Seçiniz —</option>
-                {categories.map((c) => (
-                  <option key={c.value} value={c.value}>
-                    {c.label}
-                  </option>
-                ))}
-              </select>
-            </div>
-          )}
-          <textarea
-            value={value}
-            onChange={(e) => onChange(e.target.value)}
-            placeholder={placeholder}
-            rows={4}
-            className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30"
-          />
-          <div className="flex items-center justify-end gap-2">
-            <button
-              onClick={onCancel}
-              disabled={submitting}
-              className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg disabled:opacity-50"
-            >
-              İptal
-            </button>
-            <button
-              onClick={onConfirm}
-              disabled={submitting}
-              className={`px-5 py-2 rounded-lg text-sm font-medium disabled:opacity-50 ${confirmCls}`}
-            >
-              {submitting ? 'Kaydediliyor…' : confirmLabel}
-            </button>
-          </div>
-        </div>
-      </div>
-    </div>
-  )
-}

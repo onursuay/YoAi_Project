@@ -14,7 +14,7 @@ interface Props {
   initialProposal?: FullAdProposal | null
 }
 
-type Step = 'platform' | 'generating' | 'preview' | 'preflight' | 'creative' | 'publishing' | 'done'
+type Step = 'platform' | 'generating' | 'preview' | 'preflight' | 'creative' | 'confirm' | 'publishing' | 'done'
 
 export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal }: Props) {
   // If opened with a specific proposal, skip directly to preview
@@ -56,11 +56,10 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
   const handleContinueFromPreview = () => {
     const selected = proposals[selectedIndex]
     if (!selected) return
-    // Meta → preflight step; Google → direct publish (eski akış)
     if (selected.platform === 'Meta') {
       setStep('preflight')
     } else {
-      handlePublish(null, null)
+      setStep('confirm')
     }
   }
 
@@ -115,7 +114,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
       let json: any
       try { json = JSON.parse(text) } catch { json = { ok: false, error: `Invalid JSON: ${text.slice(0, 200)}` } }
 
-      setPublishResult({ ok: json.ok, message: json.message || json.error || 'İşlem tamamlandı' })
+      setPublishResult({ ok: json.ok, message: (json.message || json.error || 'İşlem tamamlandı').replace(/\bPAUSED\b/g, 'taslak') })
       setStep('done')
     } catch (e) {
       const msg = e instanceof Error ? e.message : String(e)
@@ -133,8 +132,12 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
           <div className="flex items-center gap-3">
             <div className="w-9 h-9 bg-primary/10 rounded-xl flex items-center justify-center"><Sparkles className="w-5 h-5 text-primary" /></div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">AI Reklam Oluştur</h2>
-              <p className="text-xs text-gray-400">Reklamlarınız + Rakip analizi → Tam kampanya yapısı</p>
+              <h2 className="text-lg font-semibold text-gray-900">
+                {initialProposal ? 'Öneri Onayı' : 'AI Reklam Oluştur'}
+              </h2>
+              <p className="text-xs text-gray-400">
+                {initialProposal ? 'Öneriyi inceleyin ve yayınlayın' : 'Reklamlarınız + Rakip analizi → Tam kampanya yapısı'}
+              </p>
             </div>
           </div>
           <button onClick={onClose} className="text-gray-400 hover:text-gray-600"><X className="w-5 h-5" /></button>
@@ -198,6 +201,61 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                 </button>
                 <button onClick={handleContinueFromPreview} className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors">
                   Devam Et<ChevronRight className="w-4 h-4" />
+                </button>
+              </div>
+            </div>
+          )}
+
+          {step === 'confirm' && proposals[selectedIndex] && (
+            <div>
+              <div className="flex items-center gap-2 mb-5">
+                <div className="w-8 h-8 bg-gray-100 rounded-xl flex items-center justify-center">
+                  <span className="text-sm font-bold text-gray-700">G</span>
+                </div>
+                <div>
+                  <h3 className="text-sm font-semibold text-gray-900">Son Onay</h3>
+                  <p className="text-xs text-gray-400">Aşağıdaki kampanya oluşturulacak — kontrol edin</p>
+                </div>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl p-4 space-y-2.5 mb-5">
+                {[
+                  { label: 'Platform', value: proposals[selectedIndex].platform },
+                  { label: 'Kampanya', value: proposals[selectedIndex].campaignName },
+                  { label: 'Hedef', value: proposals[selectedIndex].objectiveLabel || proposals[selectedIndex].campaignObjective },
+                  { label: 'Bütçe', value: proposals[selectedIndex].dailyBudget != null ? `₺${proposals[selectedIndex].dailyBudget}/gün` : undefined },
+                  { label: 'Reklam Grubu', value: proposals[selectedIndex].adsetName },
+                  { label: 'Başlık', value: proposals[selectedIndex].headlines?.[0] || proposals[selectedIndex].headline },
+                  { label: 'Hedef URL', value: proposals[selectedIndex].finalUrl },
+                ].filter(f => f.value).map(f => (
+                  <div key={f.label} className="grid grid-cols-3 gap-2">
+                    <span className="text-[11px] text-gray-500 font-semibold uppercase tracking-wide pt-0.5">{f.label}</span>
+                    <span className="col-span-2 text-sm text-gray-800 break-all">{f.value}</span>
+                  </div>
+                ))}
+              </div>
+
+              <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-xs text-primary mb-5 leading-relaxed">
+                <p className="font-semibold mb-1">Bu işlem ne yapacak:</p>
+                <ul className="list-disc list-inside space-y-0.5">
+                  <li>Google Ads hesabınızda yeni bir kampanya, reklam grubu ve reklam oluşturur.</li>
+                  <li>Kampanya taslak olarak hazırlanır — bütçeyi ve detayları kontrol edin.</li>
+                  <li>Yayına almak için Google Ads Manager üzerinden aktif edebilirsiniz.</li>
+                </ul>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+                <button
+                  onClick={() => setStep('preview')}
+                  className="inline-flex items-center gap-1.5 px-4 py-2 text-gray-600 text-sm hover:bg-gray-100 rounded-lg transition-colors"
+                >
+                  <ChevronLeft className="w-4 h-4" />Geri
+                </button>
+                <button
+                  onClick={() => handlePublish(null, null)}
+                  className="inline-flex items-center gap-2 px-6 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors"
+                >
+                  Yayınla<ChevronRight className="w-4 h-4" />
                 </button>
               </div>
             </div>
