@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-12 — Proposal Policy Guard (Faz B)
+- **Sorun:** YoAlgoritma'nın ürettiği öneriler UI'ya ve publish akışına, platform kuralları açısından hiç kontrol edilmeden düşüyordu. Google başlıklarında ünlem, 30 karakter üzeri başlık, 90 karakter üzeri açıklama, teknik enum görünürlüğü (MAXIMIZE_CONVERSIONS, OUTCOME_ENGAGEMENT vb.) ve Meta'da geçersiz objective/destination kombinasyonları (OUTCOME_ENGAGEMENT + ON_AD) gözden kaçıyordu.
+- **Çözüm:** `lib/yoai/proposalPolicyGuard.ts` oluşturuldu. Google guard: ünlem kaldırma, emoji kaldırma, başlık 30 / açıklama 90 karakter limiti (normalize + violation), teknik enum Türkçeye çevirme, ALLCAPS yoğunluğu, generic headline tespiti. Meta guard: capability matrix (`capabilityMatrix.ts`) ile objective/destination uyumluluk kontrolü, geçersiz destination'ları fallback ile normalize etme (ON_AD→ON_PAGE, WHATSAPP→ON_PAGE vb.), teknik enum temizleme. Official Ads Knowledge Base forbidden_values entegrasyonu. `adCreator.ts`'e `applyPolicyGuardToProposals` çağrısı eklendi; rejected öneriler proposal listesinden çıkarılıyor. `FullAdProposal` tipine geriye uyumlu `policyStatus?`, `policyViolations?`, `policySummary?` alanları eklendi. `AdPreviewCard.tsx` review_required durumunda "Platform Kuralı Uyarısı" bandı gösteriyor. `AiAdSuggestions.tsx` rejected proposal'ları filtreden geçiriyor. Unit testler eklendi.
+- **Dosyalar:** `lib/yoai/proposalPolicyGuard.ts` (yeni), `lib/yoai/adCreator.ts`, `components/yoai/AdPreviewCard.tsx`, `components/yoai/AiAdSuggestions.tsx`, `src/tests/proposalPolicyGuard.test.ts` (yeni), `docs/CHANGELOG.md`
+
+---
+
 ## 2026-05-12 — Official Ads Knowledge Base Foundation (Faz A)
 - **Sorun:** Google ve Meta reklam bilgileri adCreator.ts içinde hardcoded sabit olarak tutuluyordu; DB-driven, güncellenebilir ve resmi kaynaklara bağlanabilir bir yapı yoktu.
 - **Çözüm:** 4 yeni tablo oluşturuldu (`official_ads_sources`, `official_ads_knowledge_items`, `official_ads_doc_snapshots`, `official_ads_refresh_runs`). 10 resmi kaynak URL'si ve 12 knowledge item (6 Meta objective + 6 Google kampanya türü) seed edildi. `officialAdsKnowledgeStore.ts` loader yazıldı: 60s cache, table-missing fallback, boş liste dönünce adCreator.ts hardcoded fallback devreye girer. `adCreator.ts`'e DB knowledge entegrasyonu eklendi: `getApprovedKnowledgeByPlatform` ile AI prompt'a `RESMİ BİLGİ TABANI (DB)` bloğu additive olarak ekleniyor. Mevcut proposal şeması, approval/publish logic, UI bileşenleri değişmedi.

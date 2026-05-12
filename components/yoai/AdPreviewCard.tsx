@@ -325,6 +325,18 @@ export default function AdPreviewCard({ proposal, selected, onSelect, diagnostic
             )}
           </div>
         )}
+
+        {/* Platform Kuralı Uyarısı (policy guard) */}
+        {proposal.policyStatus === 'review_required' && proposal.policySummary && (
+          <div className="mx-4 mb-3 rounded-lg px-3 py-2 border bg-primary/5 border-primary/20">
+            <p className="text-[9px] font-semibold uppercase tracking-wider mb-0.5 text-primary">
+              Platform Kuralı Uyarısı
+            </p>
+            <p className="text-[10px] leading-relaxed line-clamp-3 text-primary/80">
+              {proposal.policySummary}
+            </p>
+          </div>
+        )}
       </div>
 
       {/* Action footer — pinned at card bottom, outside clickable area */}

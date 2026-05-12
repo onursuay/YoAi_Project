@@ -320,8 +320,8 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     )
   }
 
-  const metaProposals = proposals.filter((p) => p.platform === 'Meta')
-  const googleProposals = proposals.filter((p) => p.platform === 'Google')
+  const metaProposals = proposals.filter((p) => p.platform === 'Meta' && p.policyStatus !== 'rejected')
+  const googleProposals = proposals.filter((p) => p.platform === 'Google' && p.policyStatus !== 'rejected')
   const newMetaCount = metaProposals.filter((p) => p.isNewObjective).length
   const newGoogleCount = googleProposals.filter((p) => p.isNewObjective).length
 

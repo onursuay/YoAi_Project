@@ -22,6 +22,9 @@ import { buildSynthesisContextForPrompt } from './synthesisEngine'
 import type { MultiAiDecisionDeskResult } from './multiAiTypes'
 import { getEmptyCompetitorMessage } from './competitorDisplay'
 import { getApprovedKnowledgeByPlatform } from './officialAdsKnowledgeStore'
+import type { OfficialAdsKnowledgeItem } from './officialAdsKnowledgeStore'
+import { applyPolicyGuardToProposals } from './proposalPolicyGuard'
+import type { PolicyViolationDetail } from './proposalPolicyGuard'
 
 /* ── Types ── */
 
@@ -94,6 +97,10 @@ export interface FullAdProposal {
   // What was analyzed to produce this
   analyzedParameters: string[] // list of parameters that were considered
   suggestedChanges: string[]   // specific changes vs current setup
+  // Policy Guard (Faz B) — geriye uyumlu, opsiyonel
+  policyStatus?: 'publishable' | 'review_required' | 'rejected'
+  policyViolations?: PolicyViolationDetail[]
+  policySummary?: string
 }
 
 export interface AdCreationResult {
@@ -576,10 +583,12 @@ export async function generateFullAutoProposals(
 
   // 2c. Faz A: Official Ads Knowledge Base — DB'den onaylı bilgi yükle; hata durumunda null ile devam.
   let officialKnowledgeContext: string | null = null
+  let knowledgeItemsForGuard: OfficialAdsKnowledgeItem[] = []
   try {
     const dbKnowledge = await getApprovedKnowledgeByPlatform(
       platform === 'Google' ? 'google' : 'meta',
     )
+    knowledgeItemsForGuard = dbKnowledge
     if (dbKnowledge.length > 0) {
       const lines = dbKnowledge
         .filter(item => item.summary)
@@ -674,6 +683,20 @@ export async function generateFullAutoProposals(
   }
 
   console.log(`[AdCreator] ${platform}: total ${proposals.length} proposals from ${Math.ceil(fitAnalyses.length / BATCH_SIZE)} batches`)
+
+  // 3b. Faz B: Policy Guard — her proposal'ı platform kurallarına göre kontrol et
+  try {
+    proposals = applyPolicyGuardToProposals(proposals, platform, knowledgeItemsForGuard)
+    const rejectedCount = proposals.filter(p => p.policyStatus === 'rejected').length
+    const reviewCount = proposals.filter(p => p.policyStatus === 'review_required').length
+    if (rejectedCount > 0 || reviewCount > 0) {
+      console.log(`[AdCreator] PolicyGuard: ${rejectedCount} rejected, ${reviewCount} review_required`)
+    }
+    // rejected önerileri proposals'tan çıkar — UI'ya düşmeyecek
+    proposals = proposals.filter(p => p.policyStatus !== 'rejected')
+  } catch (e) {
+    console.warn('[AdCreator] policyGuard failed (non-fatal):', e)
+  }
 
   // 4. Build summary
   const criticalIssues = fitAnalyses.filter(fa => fa.fitScore < 40).length
