@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-12 — Monthly Official Ads Docs Refresh
+- **Sorun:** Google ve Meta resmi dokümanları değiştiğinde YoAlgoritma bunu fark etmiyordu; knowledge base manuel güncelleme gerektiriyordu.
+- **Çözüm:** `lib/yoai/officialAdsDocsRefresh.ts` oluşturuldu: `normalizeOfficialAdsContent` (html/rss/markdown/manual_review stratejileri), `hashOfficialAdsContent` (SHA-256), `summarizeOfficialAdsDiff`, `classifyOfficialAdsChange` (critical/high → review_required, medium/low → active), `fetchOfficialAdsSource` (15s timeout, AbortController), `runOfficialAdsDocsRefresh` (supabase injection). `app/api/cron/official-ads-refresh/route.ts` oluşturuldu: CRON_SECRET koruması (Authorization: Bearer veya ?secret=), `official_ads_refresh_runs` tablosuna run kaydı, her kaynak için fetch+normalize+hash karşılaştırması, hash değişmişse snapshot yazma + source status güncelleme, fetch hatasında job patlamaz. `vercel.json`'a `0 6 1 * *` (her ayın 1'i 06:00 UTC) monthly cron eklendi. Mevcut daily-run cron değişmedi. Approved knowledge items otomatik ezilmez; sadece sources/snapshots/refresh_runs tabloları yazılır. 12/12 unit test geçiyor, typecheck temiz, build başarılı.
+- **Dosyalar:** `lib/yoai/officialAdsDocsRefresh.ts` (yeni), `app/api/cron/official-ads-refresh/route.ts` (yeni), `vercel.json`, `src/tests/officialAdsDocsRefresh.test.ts` (yeni), `docs/CHANGELOG.md`
+
+---
+
 ## 2026-05-12 — Competitor Query Expander
 - **Sorun:** Rakip bulunamadı sorununun büyük bölümü gerçekten rakip olmamasından değil, yanlış veya zayıf arama sorgusundan kaynaklanıyordu. Tek düz anahtar kelime yerine kampanya niyetine dayalı bağlamsal sorgular üretilmesi gerekiyordu.
 - **Çözüm:** `lib/yoai/competitorQueryExpander.ts` oluşturuldu. `CampaignIntentProfile` + kampanya sinyallerinden (servis adı, domain, offer type, detected_keywords, keyword list, reklam grubu adları) platform-spesifik `CompetitorQueryPlan` üretir. Google için niyet odaklı arama sorguları, Meta için sosyal reklam dili sorgular ayrı üretilir; platformlar karışmaz. Deterministic heuristic önce çalışır; confidence < 50 ise OpenAI ile genişletilir; LLM başarısız olursa sistem kırılmaz. `lib/yoai/competitorScanner.ts`'e `deriveCompetitorQueryPlan` fonksiyonu ve `CompetitorScanResult`'a diagnostic alanları eklendi (`usedQuery`, `querySource`, `queryPlanConfidence`, `queryPlanReason`, `noResultReason`, `rawCount`, `usefulCount`). `meta-ad-library/route.ts` ve `google-auction/route.ts`'e `diagnostic` response bloğu eklendi; rakip bulunamadı sebebi 5 kategoriye ayrıldı (query üretilemedi, sonuç yok, actor hata, usefulCount=0, platform auth eksik). 16/16 unit test geçiyor.

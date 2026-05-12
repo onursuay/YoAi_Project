@@ -3,6 +3,10 @@
     {
       "path": "/api/yoai/daily-run",
       "schedule": "0 5 * * *"
+    },
+    {
+      "path": "/api/cron/official-ads-refresh",
+      "schedule": "0 6 1 * *"
     }
   ]
 }
