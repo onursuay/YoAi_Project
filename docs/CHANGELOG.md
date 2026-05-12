@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-12 — Restore Proposal Generation After Stale Cleanup
+- **Sorun:** Stale/generic proposal cleanup başarıyla yapıldıktan sonra `yoai_pending_approvals` tablosundaki tüm eski öneriler `expired` olarak işaretlendi. Ancak `daily_run_store`'daki kayıtlı öneri verisi hâlâ duruyordu. `forceGenerate=false` ile API çağrıldığında: (1) kayıtlı run bulunuyor, (2) tüm öneriler visibility filter'da expired olarak düşürülüyor, (3) `persistedProposals = []` olmasına rağmen `persisted: true` ile return ediliyor. Live generation hiç tetiklenmiyor → UI "AI kampanya önerisi üretilemedi." gösteriyor.
+- **Çözüm:** `route.ts` persisted path'ine `shouldGenerateLive` bayrağı eklendi. Visibility filter sonrası `persistedProposals.length === 0` ama `beforeFilter > 0` ise (yani öneriler stale cleanup ile temizlenmişse) empty return yerine canlı üretim başlatılıyor. İlk kez açan kullanıcı veya gerçekten veri olmayan durum için empty return davranışı korundu. Generic filtre, policy guard, approval logic değiştirilmedi.
+- **Dosyalar:** `app/api/yoai/generate-ad/route.ts`
+
+---
+
 ## 2026-05-12 — Proposal Visibility Root Fix (Production)
 - **Sorun:** Ekranda "Hızlı Yanıt Al!", "Kariyerinize Yön Verin!", "Usta Kaynakçı Olun!" gibi jenerik kartlar görünüyordu. Meta/Google kartlarında "Meta Ad Library'den rakip reklam bulunamadı..." boş kutular gösteriliyordu. localStorage v3 cache eski stale proposal'ları tutuyordu. Grid tek kolon gibi davranıyor, sağ taraf boş kalıyordu. Sunucu ve UI filtre kuralları farklıydı.
 - **Çözüm:** (1) `GENERIC_CONTENT_PATTERNS` genişletildi — 15 pattern: hızlı yanıt al, kariyerinize yön verin, usta kaynakçı olun, hemen başvurun, kaliteli hizmet, uygun fiyatlı, fırsatları kaçırmayın vb. (2) `sanitizeProposalForDisplay` tüm platformlarda boş/yanlış competitor insight'ı kaldıracak şekilde güncellendi — "bulunamadı" mesajları `undefined` yapılıyor, boş kutu renderlanmıyor. (3) `proposalVisibilityFilter.ts` yeni merkezi filtre — hem API route hem UI `isVisible` aynı kuralı uygular. (4) `AiAdSuggestions` cache key v4'e bump edildi, eski v1/v2/v3 key'ler mount'ta silinir, API boş döndüğünde eski cache temizlenir. (5) `isVisible()` içine `isGenericProposalContent()` eklendi — UI'da ek koruma katmanı. (6) Grid `gridClass(count)` ile dinamik — 1 kart tek kolon, 2 kart 2 kolon, 3+ kart 3 kolon. (7) `engineVersion: 'yoalgoritma-intelligence-v4'` yeni proposal'lara eklendi. (8) 22 test yazıldı, tamamı geçti.

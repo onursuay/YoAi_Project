@@ -271,6 +271,7 @@ export async function POST(request: Request) {
     //    Kullanıcı tam yeniden üretim isterse forceGenerate=true gönderir.
     if (!forceGenerate && userId) {
       const run = await getBestAvailableRun(userId)
+      let shouldGenerateLive = false
 
       if (run?.ad_proposals_data?.proposals) {
         const rawPersisted = run.ad_proposals_data.proposals as any[]
@@ -292,51 +293,62 @@ export async function POST(request: Request) {
 
           // Merkezi filtre: expired + policyRejected + generic content
           // filterVisibleYoaiProposals ile UI ve API aynı kuralı uygular.
+          const beforeFilter = persistedProposals.length
           try {
             const expiredApprovals = await listApprovals(userId, { status: 'expired', limit: 500 })
             const expiredIds = expiredApprovals.length > 0
               ? new Set(expiredApprovals.map((a: { proposal_id: string }) => a.proposal_id))
               : undefined
-            const before = persistedProposals.length
             persistedProposals = filterVisibleYoaiProposals(persistedProposals as any, { expiredIds }) as any[]
-            const removed = before - persistedProposals.length
+            const removed = beforeFilter - persistedProposals.length
             if (removed > 0) console.log(`[GenerateAd] Visibility filter: removed ${removed} stale/generic/rejected proposals`)
           } catch (e) {
             console.warn('[GenerateAd] visibility filter non-fatal:', e)
           }
 
-          const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
-          const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-          console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
+          if (persistedProposals.length > 0) {
+            const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
+            const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
+            console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
 
-          return NextResponse.json({
-            ok: true,
-            data: {
-              proposals: persistedProposals,
-              fitAnalyses: persistedFitAnalyses,
-              summary: {
-                ...(run.ad_proposals_data.summary || {}),
-                metaCount,
-                googleCount,
-                proposalsGenerated: persistedProposals.length,
+            return NextResponse.json({
+              ok: true,
+              data: {
+                proposals: persistedProposals,
+                fitAnalyses: persistedFitAnalyses,
+                summary: {
+                  ...(run.ad_proposals_data.summary || {}),
+                  metaCount,
+                  googleCount,
+                  proposalsGenerated: persistedProposals.length,
+                },
+                diagnoses: run.ad_proposals_data.diagnoses || [],
+                decisions: run.ad_proposals_data.decisions || [],
               },
-              diagnoses: run.ad_proposals_data.diagnoses || [],
-              decisions: run.ad_proposals_data.decisions || [],
-            },
-            persisted: true,
-            run_date: run.run_date,
-          })
+              persisted: true,
+              run_date: run.run_date,
+            })
+          }
+
+          // Tüm kayıtlı öneriler stale cleanup sonrası filtrelendi → canlı üretim başlat.
+          if (beforeFilter > 0) {
+            shouldGenerateLive = true
+            console.log('[GenerateAd] All persisted proposals filtered after stale cleanup; triggering live generation...')
+          }
         }
       }
 
-      // Persisted yok — boş veri dön. Live üretimi sadece forceGenerate ile çalıştır.
-      console.log('[GenerateAd] No persisted data; returning empty (forceGenerate=false).')
-      return NextResponse.json({
-        ok: true,
-        data: { proposals: [], fitAnalyses: [], summary: { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }, diagnoses: [], decisions: [] },
-        persisted: false,
-        empty: true,
-      })
+      if (!shouldGenerateLive) {
+        // Persisted yok — boş veri dön. Live üretimi sadece forceGenerate ile çalıştır.
+        console.log('[GenerateAd] No persisted data; returning empty (forceGenerate=false).')
+        return NextResponse.json({
+          ok: true,
+          data: { proposals: [], fitAnalyses: [], summary: { totalCampaignsAnalyzed: 0, criticalIssues: 0, opportunities: 0, proposalsGenerated: 0, metaCount: 0, googleCount: 0 }, diagnoses: [], decisions: [] },
+          persisted: false,
+          empty: true,
+        })
+      }
+      // shouldGenerateLive: stale cleanup sonrası tüm öneri filtrelendi; canlı üretim başlatılıyor.
     }
 
     // 2. Full live generation — ONLY when forceGenerate=true
