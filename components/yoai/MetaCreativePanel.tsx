@@ -255,7 +255,7 @@ export default function MetaCreativePanel({
               : 'bg-primary text-white hover:bg-primary/90'
           }`}
         >
-          Kampanyayı Oluştur (PAUSED)
+          Taslak Kampanya Oluştur
         </button>
       </div>
     </div>
