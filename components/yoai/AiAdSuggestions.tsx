@@ -148,7 +148,7 @@ const DESTINATION_LABEL_MAP: Record<string, string> = {
   CALL: 'Telefon Araması',
 }
 
-const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v2'
+const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v3'
 type CacheShape = {
   proposals: FullAdProposal[]
   summary: Summary
@@ -320,8 +320,15 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     )
   }
 
-  const metaProposals = proposals.filter((p) => p.platform === 'Meta' && p.policyStatus !== 'rejected')
-  const googleProposals = proposals.filter((p) => p.platform === 'Google' && p.policyStatus !== 'rejected')
+  // expired = stale/superseded — günlük intelligence scan tarafından işaretlenmiş, gösterilmemeli
+  const isVisible = (p: FullAdProposal) => {
+    if (p.policyStatus === 'rejected') return false
+    const approvalStatus = approvalsByProposalId[p.id]?.status
+    if (approvalStatus === 'expired') return false
+    return true
+  }
+  const metaProposals = proposals.filter((p) => p.platform === 'Meta' && isVisible(p))
+  const googleProposals = proposals.filter((p) => p.platform === 'Google' && isVisible(p))
   const newMetaCount = metaProposals.filter((p) => p.isNewObjective).length
   const newGoogleCount = googleProposals.filter((p) => p.isNewObjective).length
 

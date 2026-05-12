@@ -14,6 +14,12 @@ import {
 } from '@/lib/yoai/dailyRunStore'
 import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
 import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
+import {
+  runDailyActiveCampaignIntelligence,
+  applyStaleCleanup,
+  loadActionableApprovals,
+  type DailyIntelligenceScanSummary,
+} from '@/lib/yoai/dailyActiveCampaignIntelligence'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120 // allow up to 2 minutes for full analysis
@@ -69,10 +75,24 @@ export async function GET(request: Request) {
     let skipped = 0
     let failed = 0
 
+    // Cron-level aggregate diagnostics
+    const runSummary = {
+      scannedUsers: 0,
+      activeCampaignsScanned: { Meta: 0, Google: 0 },
+      proposalsCreated: 0,
+      proposalsMarkedStale: 0,
+      proposalsReviewRequired: 0,
+      intentRefreshCount: 0,
+      competitorRefreshCount: 0,
+      errors: [] as string[],
+    }
+
     for (const userId of userIds) {
       try {
         if (await isTodayCompleted(userId)) { skipped++; continue }
         if (await isRunning(userId)) { skipped++; continue }
+
+        runSummary.scannedUsers++
 
         // Mark running
         await upsertDailyRun({ user_id: userId, run_date: today, status: 'running', command_center_data: null, ad_proposals_data: null })
@@ -82,18 +102,48 @@ export async function GET(request: Request) {
 
         // Run proposals
         let adProposalsData: any = { proposals: [], fitAnalyses: [], summary: {} }
+        let intelligenceSummary: DailyIntelligenceScanSummary | null = null
         try {
           const [metaResult, googleResult] = await Promise.all([
             fetchMetaDeep(userId).catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
             fetchGoogleDeep(userId).catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
           ])
           const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
+
+          // Track scanned campaign counts
+          runSummary.activeCampaignsScanned.Meta += metaResult.campaigns.length
+          runSummary.activeCampaignsScanned.Google += googleResult.campaigns.length
+
           if (allCampaigns.length > 0) {
+            // ── Active Campaign Intelligence Scan ──
+            let staleCount = 0
+            try {
+              const existingApprovals = await loadActionableApprovals(userId)
+              if (existingApprovals.length > 0) {
+                const scanResult = runDailyActiveCampaignIntelligence(allCampaigns as any, existingApprovals)
+                intelligenceSummary = scanResult.summary
+                if (scanResult.proposalsToMarkStale.length > 0) {
+                  staleCount = await applyStaleCleanup(userId, scanResult.proposalsToMarkStale)
+                  runSummary.proposalsMarkedStale += staleCount
+                }
+                runSummary.proposalsReviewRequired += scanResult.proposalsToMarkNeedsReview.length
+                console.log(
+                  `[DailyRun][Intelligence] User ${userId}: ${existingApprovals.length} scanned, ` +
+                  `${staleCount} stale, ${scanResult.proposalsToKeep.length} kept, ` +
+                  `${scanResult.campaignsNeedingUpdate.length} campaigns need update`,
+                )
+              }
+            } catch (e) {
+              console.error(`[DailyRun][Intelligence] User ${userId} scan error (non-fatal):`, e)
+            }
+
             const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
             const competitorAnalysis = await runFullCompetitorAnalysis(allCampaigns, '', baseUrl).catch(() => ({
               userProfile: { keywords: [], themes: [], ctaTypes: [], formats: [], platforms: [], topPerformingAds: [], weakAds: [], avgCtr: 0, avgCpc: 0, totalSpend: 0, objectives: [], destinations: [], optimizationGoals: [], biddingStrategies: [], channelTypes: [] },
               competitorAds: [], comparison: { competitorThemes: [], competitorCTAs: [], competitorFormats: [], gaps: [], competitorSummary: '' }, errors: [],
             }))
+            runSummary.competitorRefreshCount++
+
             const structuralAnalysis = runStructuralAnalysis(allCampaigns)
             const platforms = [...new Set(allCampaigns.map(c => c.platform))] as ('Meta' | 'Google')[]
             const allProposals: any[] = []
@@ -106,8 +156,11 @@ export async function GET(request: Request) {
                 totalSummary.totalCampaignsAnalyzed += r.summary.totalCampaignsAnalyzed; totalSummary.criticalIssues += r.summary.criticalIssues
                 totalSummary.opportunities += r.summary.opportunities; totalSummary.proposalsGenerated += r.summary.proposalsGenerated
                 totalSummary.metaCount += r.summary.metaCount; totalSummary.googleCount += r.summary.googleCount
+                runSummary.proposalsCreated += r.proposals.length
               } catch {}
             }
+            runSummary.intentRefreshCount++
+
             // Diagnosis + decision attach (sadece Meta, mevcut akışı bozmaz)
             let diagnoses: any[] = []
             let decisions: any[] = []
@@ -115,7 +168,14 @@ export async function GET(request: Request) {
               diagnoses = diagnoseCampaigns(allCampaigns)
               decisions = decideForDiagnoses(diagnoses)
             } catch {}
-            adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions }
+            adProposalsData = {
+              proposals: allProposals,
+              fitAnalyses: allFitAnalyses,
+              summary: totalSummary,
+              diagnoses,
+              decisions,
+              intelligenceScan: intelligenceSummary,
+            }
           }
         } catch {}
 
@@ -123,12 +183,22 @@ export async function GET(request: Request) {
         completed++
       } catch (e) {
         console.error(`[DailyRun] User ${userId} failed:`, e)
+        runSummary.errors.push(`User ${userId}: ${String(e)}`)
         await upsertDailyRun({ user_id: userId, run_date: today, status: 'failed', command_center_data: null, ad_proposals_data: null, error_message: String(e) }).catch(() => {})
         failed++
       }
     }
 
-    return NextResponse.json({ ok: true, message: 'Günlük analiz tamamlandı', date: today, users: userIds.size, completed, skipped, failed })
+    return NextResponse.json({
+      ok: true,
+      message: 'Günlük analiz tamamlandı',
+      date: today,
+      users: userIds.size,
+      completed,
+      skipped,
+      failed,
+      runSummary,
+    })
   } catch (error) {
     console.error('[DailyRun Cron] Error:', error)
     return NextResponse.json({ ok: false, error: String(error) }, { status: 500 })
@@ -184,6 +254,7 @@ export async function POST(request: Request) {
 
     // ── 2. Run ad proposals for both platforms ──
     let adProposalsData: any = { metaProposals: [], googleProposals: [], summary: {} }
+    let intelligenceSummary: DailyIntelligenceScanSummary | null = null
     try {
       const [metaResult, googleResult] = await Promise.all([
         fetchMetaDeep().catch(() => ({ campaigns: [] as any[], errors: [], connected: false })),
@@ -192,6 +263,21 @@ export async function POST(request: Request) {
       const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
 
       if (allCampaigns.length > 0) {
+        // ── Active Campaign Intelligence Scan ──
+        try {
+          const existingApprovals = await loadActionableApprovals(userId)
+          if (existingApprovals.length > 0) {
+            const scanResult = runDailyActiveCampaignIntelligence(allCampaigns as any, existingApprovals)
+            intelligenceSummary = scanResult.summary
+            if (scanResult.proposalsToMarkStale.length > 0) {
+              const staleCount = await applyStaleCleanup(userId, scanResult.proposalsToMarkStale)
+              console.log(`[DailyRun][POST] Intelligence: ${staleCount} öneri stale yapıldı.`)
+            }
+          }
+        } catch (e) {
+          console.error('[DailyRun][POST] Intelligence scan error (non-fatal):', e)
+        }
+
         const [competitorAnalysis, structuralAnalysis] = await Promise.all([
           runFullCompetitorAnalysis(allCampaigns, cookieHeader, baseUrl).catch(() => ({ userProfile: { keywords: [], themes: [], ctaTypes: [], formats: [], platforms: [], topPerformingAds: [], weakAds: [], avgCtr: 0, avgCpc: 0, totalSpend: 0, objectives: [], destinations: [], optimizationGoals: [], biddingStrategies: [], channelTypes: [] }, competitorAds: [], comparison: { competitorThemes: [], competitorCTAs: [], competitorFormats: [], gaps: [], competitorSummary: '' }, errors: [] })),
           Promise.resolve(runStructuralAnalysis(allCampaigns)),
@@ -232,14 +318,21 @@ export async function POST(request: Request) {
           diagnoses = diagnoseCampaigns(allCampaigns)
           decisions = decideForDiagnoses(diagnoses)
         } catch {}
-        adProposalsData = { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions }
+        adProposalsData = {
+          proposals: allProposals,
+          fitAnalyses: allFitAnalyses,
+          summary: totalSummary,
+          diagnoses,
+          decisions,
+          intelligenceScan: intelligenceSummary,
+        }
       }
     } catch (e) {
       console.error('[DailyRun] Ad proposals error:', e)
     }
 
     // ── 3. Persist completed run ──
-    const savedRun = await upsertDailyRun({
+    await upsertDailyRun({
       user_id: userId,
       run_date: today,
       status: 'completed',
@@ -252,6 +345,7 @@ export async function POST(request: Request) {
       message: 'Günlük analiz tamamlandı',
       run_date: today,
       proposals_count: adProposalsData.proposals?.length || 0,
+      intelligenceScan: intelligenceSummary,
     })
   } catch (error) {
     console.error('[DailyRun] Fatal error:', error)
