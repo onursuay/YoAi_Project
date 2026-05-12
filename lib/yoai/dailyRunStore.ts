@@ -153,14 +153,21 @@ export async function isRunning(userId: string): Promise<boolean> {
   const today = getTurkeyDate()
   const { data } = await supabase
     .from('yoai_daily_runs')
-    .select('id')
+    .select('id, updated_at')
     .eq('user_id', userId)
     .eq('run_date', today)
     .eq('status', 'running')
     .limit(1)
     .single()
 
-  return !!data
+  if (!data) return false
+
+  // A run stuck in 'running' for >3 hours means it timed out — allow retry
+  const updatedAt = new Date((data as any).updated_at || 0)
+  const threeHoursAgo = new Date(Date.now() - 3 * 60 * 60 * 1000)
+  if (updatedAt < threeHoursAgo) return false
+
+  return true
 }
 
 /* ── Check: Has today's run been completed? ── */

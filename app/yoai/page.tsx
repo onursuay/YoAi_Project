@@ -446,7 +446,7 @@ export default function YoAiPage() {
                 <p className="text-sm text-gray-700 flex-1">
                   {bootstrapping
                     ? 'İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.'
-                    : 'Henüz günlük analiz yok. Her gün 16:15\'da otomatik çalışır; şimdi başlatmak için:'}
+                    : 'Henüz günlük analiz yok. Her gün 08:00\'da otomatik çalışır; şimdi başlatmak için:'}
                 </p>
                 {!bootstrapping && (
                   <button
@@ -507,7 +507,7 @@ export default function YoAiPage() {
 
             {!ccLoading && ccRunDate && (
               <p className="text-center text-[10px] text-gray-400 pb-4">
-                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 16:15'de otomatik güncellenir
+                Analiz tarihi: {ccRunDate} · Günlük analiz her gün 08:00'da otomatik güncellenir
               </p>
             )}
           </div>

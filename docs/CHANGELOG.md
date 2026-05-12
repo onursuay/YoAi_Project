@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-12 — Daily Run Freshness + Analysis Timestamp Fix
+- **Sorun:** (1) UI "Analiz tarihi" alanında "Her gün 16:15'de otomatik güncellenir" yazıyordu; gerçek cron `0 5 * * *` = 05:00 UTC = **08:00 İstanbul**. (2) `generate-ad`: DB'deki run'da `proposals: []` (boş array) varsa `shouldGenerateLive` hiç set edilmiyordu; stale run için yeni öneri üretimi tetiklenmiyordu. (3) `isRunning`: timeout'a uğramış (>3 saat) 'running' kayıtlar aynı gün içindeki manuel retry'ı bloke ediyordu. (4) `maxDuration = 120` — 10 kampanya + çoklu AI batch ile zaman aşımı riski vardı.
+- **Çözüm:** (1) `app/yoai/page.tsx` — "16:15" → "08:00" (2 yer). (2) `generate-ad/route.ts` — `shouldGenerateLive` check genişletildi: run varsa ama `proposals` null/boş ise VE run önceki günden kalıyorsa live generation tetiklenir. (3) `dailyRunStore.ts` — `isRunning` fonksiyonu `updated_at` da okuyacak şekilde güncellendi; 3 saatten eski 'running' kayıt stuck sayılıp retry'a izin verir. (4) Her iki route'ta `maxDuration` 120→300 artırıldı. (5) `daily-run/route.ts` comment düzeltildi: `"0 7 * * *"` → `"0 5 * * *"`.
+- **Dosyalar:** `app/yoai/page.tsx`, `app/api/yoai/generate-ad/route.ts`, `app/api/yoai/daily-run/route.ts`, `lib/yoai/dailyRunStore.ts`
+
+---
+
 ## 2026-05-12 — Restore Proposal Generation After Stale Cleanup
 - **Sorun:** Stale/generic proposal cleanup başarıyla yapıldıktan sonra `yoai_pending_approvals` tablosundaki tüm eski öneriler `expired` olarak işaretlendi. Ancak `daily_run_store`'daki kayıtlı öneri verisi hâlâ duruyordu. `forceGenerate=false` ile API çağrıldığında: (1) kayıtlı run bulunuyor, (2) tüm öneriler visibility filter'da expired olarak düşürülüyor, (3) `persistedProposals = []` olmasına rağmen `persisted: true` ile return ediliyor. Live generation hiç tetiklenmiyor → UI "AI kampanya önerisi üretilemedi." gösteriyor.
 - **Çözüm:** `route.ts` persisted path'ine `shouldGenerateLive` bayrağı eklendi. Visibility filter sonrası `persistedProposals.length === 0` ama `beforeFilter > 0` ise (yani öneriler stale cleanup ile temizlenmişse) empty return yerine canlı üretim başlatılıyor. İlk kez açan kullanıcı veya gerçekten veri olmayan durum için empty return davranışı korundu. Generic filtre, policy guard, approval logic değiştirilmedi.

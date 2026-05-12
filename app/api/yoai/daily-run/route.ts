@@ -22,11 +22,11 @@ import {
 } from '@/lib/yoai/dailyActiveCampaignIntelligence'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120 // allow up to 2 minutes for full analysis
+export const maxDuration = 300 // allow up to 5 minutes for full analysis (multi-platform, batched AI calls)
 
 /* ────────────────────────────────────────────────────────────
    GET /api/yoai/daily-run
-   Called by Vercel Cron (schedule: "0 7 * * *" = 10:00 Istanbul).
+   Called by Vercel Cron (schedule: "0 5 * * *" = 08:00 Istanbul).
    Runs daily analysis for all active users with connections.
    ──────────────────────────────────────────────────────────── */
 export async function GET(request: Request) {

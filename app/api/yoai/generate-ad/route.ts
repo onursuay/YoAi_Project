@@ -26,7 +26,7 @@ import type { CompetitorQueryPlan } from '@/lib/yoai/competitorQueryExpander'
 import type { CampaignIntentProfile } from '@/lib/yoai/campaignIntentEngine'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 120
+export const maxDuration = 300
 
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/generate-ad
@@ -335,6 +335,17 @@ export async function POST(request: Request) {
             shouldGenerateLive = true
             console.log('[GenerateAd] All persisted proposals filtered after stale cleanup; triggering live generation...')
           }
+        }
+      }
+
+      // Edge case: run var ama proposals boş (null / [] ) VE run önceki günden kalma
+      // → live generation tetikle (stale run hiç öneri üretememişse yenile)
+      if (!shouldGenerateLive && run && run.run_date < getTurkeyDate()) {
+        const stored = run.ad_proposals_data?.proposals
+        const hasNoProposals = !stored || (Array.isArray(stored) && (stored as unknown[]).length === 0)
+        if (hasNoProposals) {
+          shouldGenerateLive = true
+          console.log(`[GenerateAd] Stale run (${run.run_date}) has no proposals; triggering live generation...`)
         }
       }
 
