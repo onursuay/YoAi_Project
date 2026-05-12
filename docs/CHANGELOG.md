@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-12 — Official Ads Knowledge Base Foundation (Faz A)
+- **Sorun:** Google ve Meta reklam bilgileri adCreator.ts içinde hardcoded sabit olarak tutuluyordu; DB-driven, güncellenebilir ve resmi kaynaklara bağlanabilir bir yapı yoktu.
+- **Çözüm:** 4 yeni tablo oluşturuldu (`official_ads_sources`, `official_ads_knowledge_items`, `official_ads_doc_snapshots`, `official_ads_refresh_runs`). 10 resmi kaynak URL'si ve 12 knowledge item (6 Meta objective + 6 Google kampanya türü) seed edildi. `officialAdsKnowledgeStore.ts` loader yazıldı: 60s cache, table-missing fallback, boş liste dönünce adCreator.ts hardcoded fallback devreye girer. `adCreator.ts`'e DB knowledge entegrasyonu eklendi: `getApprovedKnowledgeByPlatform` ile AI prompt'a `RESMİ BİLGİ TABANI (DB)` bloğu additive olarak ekleniyor. Mevcut proposal şeması, approval/publish logic, UI bileşenleri değişmedi.
+- **Dosyalar:** `supabase/migrations/20260512000000_create_official_ads_knowledge_base.sql`, `lib/yoai/officialAdsKnowledgeStore.ts`, `lib/yoai/adCreator.ts`, `docs/CHANGELOG.md`
+
+---
+
 ## 2026-05-11 — Wizard Dark Premium Tasarım + Meta Preflight Uyumluluk Düzeltmesi
 - **Sorun:** ONAYLA sonrası açılan wizard ve MetaPreflightPanel eski beyaz modal tasarımında kalıyordu. `OUTCOME_ENGAGEMENT + ON_AD` kombinasyonu capability matrix'te yoktu, preflight "v1 kapsamında desteklenmiyor" teknik hatası veriyordu. `PAUSED`, `pageSel.source` gibi teknik stringler kullanıcıya görünüyordu.
 - **Çözüm:** `AdCreationWizard.tsx` tüm adımlar dark premium (`bg-[#0f172a]`, `border-[#1e2d45]`) tasarıma taşındı. `MetaPreflightPanel.tsx` dark renk paleti, koyu input/select/radio, kullanıcı dostu hata mesajları, `ASSET_LABELS` map ile teknik asset adları Türkçe'ye çevrildi, "PAUSED" butonu kaldırıldı. `normalizeMetaDestination()` fonksiyonu ile `OUTCOME_ENGAGEMENT + ON_AD/WHATSAPP/MESSENGER/IG_DIRECT` → `ON_PAGE` normalize edildi. `lib/yoai/adCreator.ts` `OUTCOME_ENGAGEMENT.bestDestinations` sadece desteklenen `['ON_PAGE', 'WEBSITE']` olarak düzeltildi.

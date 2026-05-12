@@ -21,6 +21,7 @@ import type { CampaignSynthesisPackage } from './synthesisTypes'
 import { buildSynthesisContextForPrompt } from './synthesisEngine'
 import type { MultiAiDecisionDeskResult } from './multiAiTypes'
 import { getEmptyCompetitorMessage } from './competitorDisplay'
+import { getApprovedKnowledgeByPlatform } from './officialAdsKnowledgeStore'
 
 /* ── Types ── */
 
@@ -378,6 +379,8 @@ function buildPrompt(
   synthesisPackagesByCampaignId?: Record<string, CampaignSynthesisPackage>,
   /** Faz 4: Multi-AI Decision Desk sonuçları (campaign_id → desk result). */
   decisionDeskResultsByCampaignId?: Record<string, MultiAiDecisionDeskResult>,
+  /** Faz A: Official Ads Knowledge Base'den yüklenen onaylı bilgi özeti (opsiyonel). */
+  officialKnowledgeContext?: string | null,
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
   const knowledge = isGoogle ? GOOGLE_TYPE_KNOWLEDGE : META_OBJECTIVE_KNOWLEDGE
@@ -409,7 +412,7 @@ ${Object.entries(knowledge).map(([key, k]) => {
     return `${key} (${mk.label}): ${mk.purpose}. Destinasyonlar: ${mk.bestDestinations.join(', ')}. Opt hedefler: ${mk.bestOptGoals.join(', ')}. CTA: ${mk.idealCTAs.join(', ')}. Min bütçe: ₺${mk.minBudget}.`
   }
 }).join('\n')}
-
+${officialKnowledgeContext ? `\nRESMİ BİLGİ TABANI (DB):\n${officialKnowledgeContext}\n` : ''}
 JSON formatında yanıt ver:
 {
   "proposals": [
@@ -571,6 +574,24 @@ export async function generateFullAutoProposals(
     console.warn('[AdCreator] doctrine summaries fetch failed (non-fatal):', e)
   }
 
+  // 2c. Faz A: Official Ads Knowledge Base — DB'den onaylı bilgi yükle; hata durumunda null ile devam.
+  let officialKnowledgeContext: string | null = null
+  try {
+    const dbKnowledge = await getApprovedKnowledgeByPlatform(
+      platform === 'Google' ? 'google' : 'meta',
+    )
+    if (dbKnowledge.length > 0) {
+      const lines = dbKnowledge
+        .filter(item => item.summary)
+        .map(item => `[${item.normalized_key}] ${item.summary}`)
+      if (lines.length > 0) {
+        officialKnowledgeContext = lines.join('\n')
+      }
+    }
+  } catch (e) {
+    console.warn('[AdCreator] officialAdsKnowledge load failed (non-fatal):', e)
+  }
+
   // 3. Call AI in batches of 3 to avoid timeout (7 campaigns = 3+3+1 batches)
   const BATCH_SIZE = 3
   let proposals: FullAdProposal[] = []
@@ -594,6 +615,7 @@ export async function generateFullAutoProposals(
       persistedCompetitorContext,
       synthesisPackagesByCampaignId,
       decisionDeskResultsByCampaignId,
+      officialKnowledgeContext,
     )
     const aiResult = await callAI(system, userPrompt)
 
