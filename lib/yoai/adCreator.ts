@@ -104,6 +104,8 @@ export interface FullAdProposal {
   policyStatus?: 'publishable' | 'review_required' | 'rejected'
   policyViolations?: PolicyViolationDetail[]
   policySummary?: string
+  // Proposal Engine versiyonu — eski snapshot'ları legacy olarak işaretlemek için
+  engineVersion?: string
 }
 
 export interface AdCreationResult {
@@ -703,6 +705,7 @@ export async function generateFullAutoProposals(
               analyzedParameters: p.analyzedParameters || [],
               suggestedChanges: p.suggestedChanges || [],
               competitorInsight,
+              engineVersion: 'yoalgoritma-intelligence-v4',
             }
           })
         proposals.push(...batchProposals)

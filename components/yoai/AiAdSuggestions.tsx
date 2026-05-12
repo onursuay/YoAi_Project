@@ -10,7 +10,7 @@ import {
 } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
-import { sanitizeProposalForDisplay } from '@/lib/yoai/competitorDisplay'
+import { sanitizeProposalForDisplay, isGenericProposalContent } from '@/lib/yoai/competitorDisplay'
 import type { Platform } from '@/lib/yoai/analysisTypes'
 import type { DiagnosisResult, RootCauseId } from '@/lib/yoai/meta/diagnosis'
 import type { Decision } from '@/lib/yoai/meta/decision'
@@ -148,7 +148,10 @@ const DESTINATION_LABEL_MAP: Record<string, string> = {
   CALL: 'Telefon Araması',
 }
 
-const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v3'
+const PROPOSAL_CACHE_KEY = 'yoai_proposals_cache_v4'
+// Eski key'leri temizle — stale data gösterme
+const LEGACY_CACHE_KEYS = ['yoai_proposals_cache_v1', 'yoai_proposals_cache_v2', 'yoai_proposals_cache_v3']
+
 type CacheShape = {
   proposals: FullAdProposal[]
   summary: Summary
@@ -157,14 +160,24 @@ type CacheShape = {
   persisted: boolean
 }
 
+function purgeLegacyCache() {
+  if (typeof window === 'undefined') return
+  for (const key of LEGACY_CACHE_KEYS) {
+    try { localStorage.removeItem(key) } catch { /* noop */ }
+  }
+}
+
 function readCache(): CacheShape | null {
   if (typeof window === 'undefined') return null
+  purgeLegacyCache()
   try {
     const raw = localStorage.getItem(PROPOSAL_CACHE_KEY)
     if (!raw) return null
     const parsed = JSON.parse(raw) as CacheShape
     if (Array.isArray(parsed.proposals)) {
-      parsed.proposals = parsed.proposals.map(sanitizeProposalForDisplay) as FullAdProposal[]
+      parsed.proposals = parsed.proposals
+        .map(sanitizeProposalForDisplay)
+        .filter(p => !isGenericProposalContent(p)) as FullAdProposal[]
     }
     return parsed
   } catch {
@@ -287,6 +300,9 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
         } catch {
           /* noop */
         }
+      } else {
+        // API filtered everything — eski cache'i koruma; temizle
+        try { localStorage.removeItem(PROPOSAL_CACHE_KEY) } catch { /* noop */ }
       }
     },
     // eslint-disable-next-line react-hooks/exhaustive-deps
@@ -320,13 +336,17 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     )
   }
 
-  // expired = stale/superseded — günlük intelligence scan tarafından işaretlenmiş, gösterilmemeli
+  // expired = stale/superseded — günlük scan işaretlemiş; generic = placeholder içerik
   const isVisible = (p: FullAdProposal) => {
     if (p.policyStatus === 'rejected') return false
     const approvalStatus = approvalsByProposalId[p.id]?.status
     if (approvalStatus === 'expired') return false
+    if (isGenericProposalContent(p)) return false
     return true
   }
+
+  const gridClass = (count: number) =>
+    `grid gap-4 grid-cols-1${count >= 2 ? ' md:grid-cols-2' : ''}${count >= 3 ? ' lg:grid-cols-3' : ''}`
   const metaProposals = proposals.filter((p) => p.platform === 'Meta' && isVisible(p))
   const googleProposals = proposals.filter((p) => p.platform === 'Google' && isVisible(p))
   const newMetaCount = metaProposals.filter((p) => p.isNewObjective).length
@@ -557,7 +577,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
               {metaProposals.length} öneri{newMetaCount > 0 ? ` (${newMetaCount} yeni amaç)` : ''}
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={gridClass(metaProposals.length)}>
             {metaProposals.map((p, i) => {
               const diag = p.sourceCampaignId
                 ? diagnoses.find((d) => d.campaignId === p.sourceCampaignId)
@@ -597,7 +617,7 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
               {googleProposals.length} öneri{newGoogleCount > 0 ? ` (${newGoogleCount} yeni amaç)` : ''}
             </span>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          <div className={gridClass(googleProposals.length)}>
             {googleProposals.map((p, i) => (
               <AdPreviewCard
                 key={p.id || `google_${i}`}
