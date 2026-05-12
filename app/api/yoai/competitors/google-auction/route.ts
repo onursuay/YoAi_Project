@@ -58,9 +58,23 @@ export async function GET(request: Request) {
   const advertiserDomain = url.searchParams.get('advertiserDomain') ?? undefined
   const region = url.searchParams.get('region') ?? 'TR'
   const campaignTypeContext = url.searchParams.get('campaignTypeContext') ?? null
+  // Diagnostic context — caller (scanner) can pass these to surface in response
+  const querySource = url.searchParams.get('query_source') ?? undefined
+  const queryPlanConfidence = url.searchParams.get('query_plan_confidence')
+    ? Number(url.searchParams.get('query_plan_confidence'))
+    : undefined
+  const queryPlanReason = url.searchParams.get('query_plan_reason') ?? undefined
 
   const query = keyword || advertiserDomain || ''
   const provider = getGoogleProvider()
+
+  const diagnostic = {
+    usedQuery: query,
+    platform: 'google' as const,
+    querySource: querySource ?? 'manual',
+    ...(queryPlanConfidence !== undefined ? { queryPlanConfidence } : {}),
+    ...(queryPlanReason ? { queryPlanReason } : {}),
+  }
 
   // ── Apify path ──
   if (provider === 'apify') {
@@ -71,6 +85,7 @@ export async function GET(request: Request) {
         reason: 'APIFY_API_TOKEN_missing',
         provider: 'apify',
         data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+        diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
       })
     }
 
@@ -81,6 +96,7 @@ export async function GET(request: Request) {
         reason: 'no_query',
         provider: 'apify',
         data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+        diagnostic: { ...diagnostic, noResultReason: 'query_plan_üretilemedi_veya_query_yok' },
       })
     }
 
@@ -100,10 +116,12 @@ export async function GET(request: Request) {
           actorId: scanResult.actorId,
           error: scanResult.error,
           data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+          diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
         })
       }
 
       if (scanResult.isPending || scanResult.ads.length === 0) {
+        const noResultReason = scanResult.isPending ? 'actor_api_hata_verdi' : 'query_üretildi_sonuç_yok'
         return NextResponse.json({
           ok: true,
           supported: true,
@@ -126,6 +144,7 @@ export async function GET(request: Request) {
             insightId: null,
             rawCount: scanResult.rawCount,
           },
+          diagnostic: { ...diagnostic, rawCount: scanResult.rawCount, noResultReason },
         })
       }
 
@@ -166,6 +185,7 @@ export async function GET(request: Request) {
         console.warn('[google-auction/apify] upsertCompetitorInsight returned null without error')
       }
 
+      const apifyUsefulCount = scanResult.usefulCount ?? withFingerprints.length
       return NextResponse.json({
         ok: true,
         supported: true,
@@ -181,7 +201,13 @@ export async function GET(request: Request) {
           ...(upsertResult.errors.length > 0 ? { errors: upsertResult.errors } : {}),
           rawCount: scanResult.rawCount,
           normalizedCount: scanResult.normalizedCount,
-          usefulCount: scanResult.usefulCount,
+          usefulCount: apifyUsefulCount,
+        },
+        diagnostic: {
+          ...diagnostic,
+          rawCount: scanResult.rawCount,
+          usefulCount: apifyUsefulCount,
+          ...(apifyUsefulCount === 0 ? { noResultReason: 'rakip_verisi_usefulCount_sıfır' } : {}),
         },
       })
     } catch (e) {
@@ -199,6 +225,7 @@ export async function GET(request: Request) {
       reason: 'SERPAPI_API_KEY_missing',
       provider: 'serpapi',
       data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+      diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
     })
   }
 
@@ -209,6 +236,7 @@ export async function GET(request: Request) {
       reason: 'no_query',
       provider: 'serpapi',
       data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+      diagnostic: { ...diagnostic, noResultReason: 'query_plan_üretilemedi_veya_query_yok' },
     })
   }
 
@@ -228,6 +256,7 @@ export async function GET(request: Request) {
         provider: 'serpapi',
         error: result.error,
         data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+        diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
       })
     }
 
@@ -237,6 +266,7 @@ export async function GET(request: Request) {
         supported: true,
         provider: 'serpapi',
         data: { ads: [], inserted: 0, updated: 0, skipped: 0, insightId: null },
+        diagnostic: { ...diagnostic, rawCount: result.rawCount ?? 0, noResultReason: 'query_üretildi_sonuç_yok' },
       })
     }
 
@@ -277,6 +307,7 @@ export async function GET(request: Request) {
       console.warn('[google-auction/serpapi] upsertCompetitorInsight returned null without error')
     }
 
+    const serpUsefulCount = withFingerprints.length
     return NextResponse.json({
       ok: true,
       supported: true,
@@ -289,6 +320,12 @@ export async function GET(request: Request) {
         insightId: insightRow?.id ?? null,
         ...(insightError ? { insightError } : {}),
         rawCount: result.rawCount,
+      },
+      diagnostic: {
+        ...diagnostic,
+        rawCount: result.rawCount ?? 0,
+        usefulCount: serpUsefulCount,
+        ...(serpUsefulCount === 0 ? { noResultReason: 'rakip_verisi_usefulCount_sıfır' } : {}),
       },
     })
   } catch (e) {

@@ -44,9 +44,27 @@ export async function GET(request: Request) {
     const query = searchParams.get('q')
     const country = searchParams.get('country') || 'TR'
     const campaignTypeContext = searchParams.get('campaign_type_context')
+    // Diagnostic context — caller (scanner) can pass these to surface in response
+    const querySource = searchParams.get('query_source') ?? undefined
+    const queryPlanConfidence = searchParams.get('query_plan_confidence')
+      ? Number(searchParams.get('query_plan_confidence'))
+      : undefined
+    const queryPlanReason = searchParams.get('query_plan_reason') ?? undefined
 
     if (!query) {
-      return NextResponse.json({ ok: false, error: 'Arama sorgusu (q) gereklidir' }, { status: 400 })
+      return NextResponse.json({
+        ok: false,
+        error: 'Arama sorgusu (q) gereklidir',
+        diagnostic: { noResultReason: 'query_plan_üretilemedi_veya_query_yok', platform: 'meta' },
+      }, { status: 400 })
+    }
+
+    const diagnostic = {
+      usedQuery: query,
+      platform: 'meta' as const,
+      querySource: querySource ?? 'manual',
+      ...(queryPlanConfidence !== undefined ? { queryPlanConfidence } : {}),
+      ...(queryPlanReason ? { queryPlanReason } : {}),
     }
 
     const provider = getMetaProvider()
@@ -60,6 +78,7 @@ export async function GET(request: Request) {
           reason: 'APIFY_API_TOKEN_missing',
           provider: 'apify',
           data: [],
+          diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
         })
       }
 
@@ -82,6 +101,7 @@ export async function GET(request: Request) {
             actorId: scanResult.actorId,
             error: scanResult.error,
             data: [],
+            diagnostic: { ...diagnostic, noResultReason: 'platform_auth_env_eksik' },
           })
         }
 
@@ -97,6 +117,7 @@ export async function GET(request: Request) {
             actorId: scanResult.actorId,
             runId: scanResult.runId,
             data: [],
+            diagnostic: { ...diagnostic, noResultReason: 'actor_api_hata_verdi' },
           })
         }
 
@@ -116,6 +137,7 @@ export async function GET(request: Request) {
             exitCode: scanResult.exitCode,
             durationMillis: scanResult.durationMillis,
             data: [],
+            diagnostic: { ...diagnostic, noResultReason: 'actor_api_hata_verdi' },
           })
         }
 
@@ -196,6 +218,10 @@ export async function GET(request: Request) {
           }
         }
 
+        const noResultReason = ads.length === 0 ? 'query_üretildi_sonuç_yok' : undefined
+        const usefulCount = persisted?.usefulCount ?? (ads.length > 0 ? ads.length : 0)
+        const finalNoResultReason = noResultReason ?? (usefulCount === 0 && ads.length > 0 ? 'rakip_verisi_usefulCount_sıfır' : noResultReason)
+
         return NextResponse.json({
           ok: true,
           supported: true,
@@ -203,6 +229,12 @@ export async function GET(request: Request) {
           actorId: scanResult.actorId,
           data: ads,
           ...(persisted ? { persisted } : {}),
+          diagnostic: {
+            ...diagnostic,
+            rawCount: scanResult.rawCount,
+            usefulCount,
+            ...(finalNoResultReason ? { noResultReason: finalNoResultReason } : {}),
+          },
         })
       } catch (apifyErr) {
         console.warn('[Meta Ad Library/Apify] error:', apifyErr)
@@ -328,11 +360,18 @@ export async function GET(request: Request) {
       console.warn('[Meta Ad Library] persistence failed (non-fatal):', persistErr)
     }
 
+    const officialNoResultReason = ads.length === 0 ? 'query_üretildi_sonuç_yok' : undefined
     return NextResponse.json({
       ok: true,
       provider: 'official',
       data: ads,
       ...(persisted ? { persisted } : {}),
+      diagnostic: {
+        ...diagnostic,
+        rawCount: rawAds.length,
+        usefulCount: ads.length,
+        ...(officialNoResultReason ? { noResultReason: officialNoResultReason } : {}),
+      },
     })
   } catch (error) {
     console.error('[Meta Ad Library] Error:', error)

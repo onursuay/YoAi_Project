@@ -29,6 +29,13 @@ import {
   generateCompetitorInsightFromAds,
   upsertCompetitorInsight,
 } from './competitorInsightStore'
+import {
+  expandCompetitorQueries,
+  buildDeterministicQueryPlan,
+  type CompetitorQueryPlan,
+  type QueryExpanderInput,
+} from './competitorQueryExpander'
+import type { CampaignIntentProfile } from './campaignIntentEngine'
 
 function getMetaProvider(): string {
   return (
@@ -75,6 +82,20 @@ export interface CompetitorScanResult {
   insightId: string | null
   adCount: number
   error?: string
+  // Diagnostic fields
+  usedQuery?: string
+  querySource?: 'intent' | 'fallback' | 'manual'
+  queryPlanConfidence?: number
+  queryPlanReason?: string
+  noResultReason?: string
+  rawCount?: number
+  usefulCount?: number
+}
+
+export interface CompetitorQueryPlanResult {
+  queryPlan: CompetitorQueryPlan
+  querySource: 'intent' | 'fallback'
+  primaryQuery: string
 }
 
 export interface RunCompetitorScanResult {
@@ -135,6 +156,50 @@ export function deriveCompetitorQueriesFromCampaigns(
   }
 
   return params.slice(0, 5)
+}
+
+/**
+ * İntent profili varsa query expander kullanarak platform-specific query plan üretir.
+ * Intent profili yoksa mevcut campaign-based derivation'a fallback yapar.
+ * Meta query planı yalnızca meta için, Google query planı yalnızca google için kullanılır.
+ */
+export async function deriveCompetitorQueryPlan(
+  campaigns: CampaignBasic[],
+  platform: 'google' | 'meta',
+  intentProfile?: CampaignIntentProfile | null,
+): Promise<CompetitorQueryPlanResult> {
+  if (intentProfile) {
+    const campaignName = campaigns[0]?.name ?? ''
+    const keywordList = campaigns.flatMap(c => c.keywords ?? [])
+    const adGroupNames: string[] = []
+
+    const expanderInput: QueryExpanderInput = {
+      platform,
+      intentProfile,
+      campaignName,
+      keywordList,
+      adGroupNames,
+    }
+
+    const queryPlan = await expandCompetitorQueries(expanderInput)
+    const primaryQuery = queryPlan.primary_queries[0] ?? ''
+
+    return { queryPlan, querySource: 'intent', primaryQuery }
+  }
+
+  // Fallback: deterministic campaign-based derivation
+  const fallbackParams = deriveCompetitorQueriesFromCampaigns(campaigns)
+  const fallbackKeyword = fallbackParams[0]?.keyword || fallbackParams[0]?.advertiserDomain || ''
+  const campaignName = campaigns[0]?.name ?? ''
+
+  const expanderInput: QueryExpanderInput = {
+    platform,
+    campaignName,
+    keywordList: campaigns.flatMap(c => c.keywords ?? []),
+  }
+  const queryPlan = buildDeterministicQueryPlan(expanderInput)
+
+  return { queryPlan, querySource: 'fallback', primaryQuery: fallbackKeyword }
 }
 
 /* ── Meta competitor scan ── */
