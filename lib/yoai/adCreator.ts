@@ -27,6 +27,7 @@ import { applyPolicyGuardToProposals } from './proposalPolicyGuard'
 import type { PolicyViolationDetail } from './proposalPolicyGuard'
 import type { CampaignIntentProfile } from './campaignIntentEngine'
 import { formatIntentForPrompt } from './campaignIntentEngine'
+import type { CompetitorQueryPlan } from './competitorQueryExpander'
 
 /* ── Types ── */
 
@@ -392,6 +393,8 @@ function buildPrompt(
   officialKnowledgeContext?: string | null,
   /** Intent Engine: campaign_id → CampaignIntentProfile. */
   intentProfilesByCampaignId?: Record<string, CampaignIntentProfile>,
+  /** Competitor Query Expander: campaign_id → platform-specific query plan. */
+  competitorQueryPlansByCampaignId?: Record<string, CompetitorQueryPlan>,
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
   const knowledge = isGoogle ? GOOGLE_TYPE_KNOWLEDGE : META_OBJECTIVE_KNOWLEDGE
@@ -486,6 +489,11 @@ JSON formatında yanıt ver:
     const intentBlock = intentProfile
       ? `\n${formatIntentForPrompt(intentProfile)}`
       : ''
+    const queryPlan = competitorQueryPlansByCampaignId?.[fa.campaignId]
+    const queryPlanBlock = queryPlan && queryPlan.primary_queries.length > 0
+      ? `\n  RAKİP SORGU PLANI (${queryPlan.platform.toUpperCase()}, güven:${queryPlan.confidence}%): ` +
+        [...queryPlan.primary_queries.slice(0, 3), ...queryPlan.secondary_queries.slice(0, 2)].join(' | ')
+      : ''
     return `[${fa.objectiveLabel}] ${fa.campaignName} (ID: ${fa.campaignId})
   Uygunluk: ${fa.fitScore}/100
   Güçlü: ${fa.strengths.join(', ') || 'yok'}
@@ -494,7 +502,7 @@ JSON formatında yanıt ver:
   ${fa.currentParams.destination ? `Dönüşüm hedefi: ${fa.currentParams.destination}` : ''}
   ${fa.currentParams.optimizationGoal ? `Opt hedef: ${fa.currentParams.optimizationGoal}` : ''}
   ${fa.currentParams.biddingStrategy ? `Teklif: ${fa.currentParams.biddingStrategy}` : ''}
-  Öneriler: ${fa.optimizationSuggestions.join('; ') || 'yok'}${doctrineLine ? `\n  DOCTRINE:\n  ${doctrineLine.replace(/\n/g, '\n  ')}` : ''}${synthesisBlock}${deskBlock}${intentBlock}`
+  Öneriler: ${fa.optimizationSuggestions.join('; ') || 'yok'}${doctrineLine ? `\n  DOCTRINE:\n  ${doctrineLine.replace(/\n/g, '\n  ')}` : ''}${synthesisBlock}${deskBlock}${intentBlock}${queryPlanBlock}`
   }).join('\n\n')
 
   const compTexts = competitorAds.slice(0, 5).map((a, i) => `${i + 1}. [${a.pageName}] "${a.body?.slice(0, 80) || a.title || ''}"`).join('\n')
@@ -569,6 +577,8 @@ export async function generateFullAutoProposals(
   decisionDeskResultsByCampaignId?: Record<string, MultiAiDecisionDeskResult>,
   /** Intent Engine: campaign_id → CampaignIntentProfile. */
   intentProfilesByCampaignId?: Record<string, CampaignIntentProfile>,
+  /** Competitor Query Expander: campaign_id → platform-specific query plan (platform izolasyonu garantili). */
+  competitorQueryPlansByCampaignId?: Record<string, CompetitorQueryPlan>,
 ): Promise<AdCreationResult> {
   // 1. Filter active campaigns for this platform
   const activeCampaigns = campaigns.filter(c =>
@@ -647,6 +657,7 @@ export async function generateFullAutoProposals(
       decisionDeskResultsByCampaignId,
       officialKnowledgeContext,
       intentProfilesByCampaignId,
+      competitorQueryPlansByCampaignId,
     )
     const aiResult = await callAI(system, userPrompt)
 
@@ -707,12 +718,14 @@ export async function generateFullAutoProposals(
   console.log(`[AdCreator] ${platform}: total ${proposals.length} proposals from ${Math.ceil(fitAnalyses.length / BATCH_SIZE)} batches`)
 
   // 3b. Faz B: Policy Guard — her proposal'ı platform kurallarına göre kontrol et
+  let policyRejectedCount = 0
+  let policyReviewRequiredCount = 0
   try {
     proposals = applyPolicyGuardToProposals(proposals, platform, knowledgeItemsForGuard)
-    const rejectedCount = proposals.filter(p => p.policyStatus === 'rejected').length
-    const reviewCount = proposals.filter(p => p.policyStatus === 'review_required').length
-    if (rejectedCount > 0 || reviewCount > 0) {
-      console.log(`[AdCreator] PolicyGuard: ${rejectedCount} rejected, ${reviewCount} review_required`)
+    policyRejectedCount = proposals.filter(p => p.policyStatus === 'rejected').length
+    policyReviewRequiredCount = proposals.filter(p => p.policyStatus === 'review_required').length
+    if (policyRejectedCount > 0 || policyReviewRequiredCount > 0) {
+      console.log(`[AdCreator] PolicyGuard: ${policyRejectedCount} rejected, ${policyReviewRequiredCount} review_required`)
     }
     // rejected önerileri proposals'tan çıkar — UI'ya düşmeyecek
     proposals = proposals.filter(p => p.policyStatus !== 'rejected')
@@ -743,6 +756,11 @@ export async function generateFullAutoProposals(
       batches: Math.ceil(fitAnalyses.length / BATCH_SIZE),
       aiError: aiError || null,
       proposalsCount: proposals.length,
+      policyRejectedCount,
+      policyReviewRequiredCount,
+      competitorQueryPlansUsed: competitorQueryPlansByCampaignId
+        ? Object.keys(competitorQueryPlansByCampaignId).length
+        : 0,
     },
   }
 }

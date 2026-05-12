@@ -19,7 +19,9 @@ import { buildSynthesisPackagesForCampaigns } from '@/lib/yoai/synthesisEngine'
 import type { CampaignSynthesisPackage } from '@/lib/yoai/synthesisTypes'
 import { runMultiAiDecisionDesk, shouldUseDecisionDesk } from '@/lib/yoai/multiAiDecisionDesk'
 import type { MultiAiDecisionDeskResult } from '@/lib/yoai/multiAiTypes'
-import { buildIntentProfilesForCampaigns } from '@/lib/yoai/campaignIntentEngine'
+import { buildProposalEngineContext } from '@/lib/yoai/proposalEngineOrchestrator'
+import type { EngineContextDiagnostics } from '@/lib/yoai/proposalEngineOrchestrator'
+import type { CompetitorQueryPlan } from '@/lib/yoai/competitorQueryExpander'
 import type { CampaignIntentProfile } from '@/lib/yoai/campaignIntentEngine'
 
 export const dynamic = 'force-dynamic'
@@ -58,6 +60,9 @@ export async function POST(request: Request) {
       fetchMetaDeep(userId || undefined).catch(e => { console.error('[GenerateAd] Meta fetch failed:', e); return { campaigns: [] as any[], errors: ['Meta fetch hatası'], connected: false } }),
       fetchGoogleDeep(userId || undefined).catch(e => { console.error('[GenerateAd] Google fetch failed:', e); return { campaigns: [] as any[], errors: ['Google fetch hatası'], connected: false } }),
     ])
+
+    // Orchestrator diagnostics accumulator — platform başına toplanır, response'a eklenir
+    const engineDiagnosticsMap: Record<string, EngineContextDiagnostics> = {}
 
     const generateForPlatforms = async (platforms: Platform[], allCampaigns: any[]) => {
       const [competitorAnalysis, structuralAnalysis] = await Promise.all([
@@ -140,27 +145,28 @@ export async function POST(request: Request) {
             }
           }
 
-          // Intent Engine: kampanya bağlamını çıkar, proposal öncesine ekle.
-          // Hata durumunda undefined kalır; adCreator eski path ile devam eder.
+          // Proposal Engine Orchestrator: intent profiles + platform-specific competitor
+          // query plans — tek çağrıyla her ikisini de üretir ve diagnostics döner.
+          // Hata olursa hem intentProfilesByCampaignId hem
+          // competitorQueryPlansByCampaignId boş kalır; adCreator fallback path ile devam eder.
           let intentProfilesByCampaignId: Record<string, CampaignIntentProfile> | undefined
+          let competitorQueryPlansByCampaignId: Record<string, CompetitorQueryPlan> | undefined
           try {
-            const platformCampaignsForIntent = allCampaigns.filter(
-              (c: any) => c.platform === p && (c.status === 'ACTIVE' || c.status === 'ENABLED'),
+            const platformCampaignsForOrchestrator = allCampaigns.filter(
+              (c: any) => c.platform === p,
             )
-            if (platformCampaignsForIntent.length > 0) {
-              const intentResult = await buildIntentProfilesForCampaigns(platformCampaignsForIntent, {
+            if (platformCampaignsForOrchestrator.length > 0) {
+              const engineCtx = await buildProposalEngineContext({
                 userId: userId || null,
+                platform: p,
+                platformCampaigns: platformCampaignsForOrchestrator,
               })
-              intentProfilesByCampaignId = intentResult.profileMap
-              console.log(
-                `[GenerateAd] ${p} intent: ${intentResult.count} profiles, warnings=${intentResult.warnings.length}`,
-              )
-              if (intentResult.warnings.length > 0) {
-                console.warn(`[GenerateAd] ${p} intent warnings:`, intentResult.warnings.slice(0, 3))
-              }
+              intentProfilesByCampaignId = engineCtx.intentProfilesByCampaignId
+              competitorQueryPlansByCampaignId = engineCtx.competitorQueryPlansByCampaignId
+              engineDiagnosticsMap[p] = engineCtx.diagnostics
             }
           } catch (e) {
-            console.warn('[GenerateAd] intent profiles build failed (non-fatal):', e)
+            console.warn('[GenerateAd] orchestrator failed (non-fatal):', e)
           }
 
           // competitorAnalysis.competitorAds sadece Meta Ad Library'den gelir.
@@ -210,6 +216,7 @@ export async function POST(request: Request) {
             synthesisPackagesByCampaignId,
             decisionDeskResultsByCampaignId,
             intentProfilesByCampaignId,
+            competitorQueryPlansByCampaignId,
           )
           console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
           results.push(result)
@@ -222,13 +229,40 @@ export async function POST(request: Request) {
       const proposals: any[] = []
       const fitAnalyses: any[] = []
       const debugInfo: any[] = []
+
+      // Aggregate engine diagnostics across all platforms
+      const engineDiagnostics = {
+        intentProfilesUsed: 0,
+        lowConfidenceIntentCount: 0,
+        competitorQueryPlansUsed: 0,
+        queryPlanConfidenceLow: 0,
+        policyRejectedCount: 0,
+        policyReviewRequiredCount: 0,
+        fallbackUsed: false,
+        byPlatform: engineDiagnosticsMap,
+      }
+
       for (const r of results) {
         if (!r) continue
         proposals.push(...r.proposals)
         fitAnalyses.push(...r.fitAnalyses)
-        if ((r as any)._debug) debugInfo.push((r as any)._debug)
+        if ((r as any)._debug) {
+          const d = (r as any)._debug
+          debugInfo.push(d)
+          engineDiagnostics.policyRejectedCount += d.policyRejectedCount ?? 0
+          engineDiagnostics.policyReviewRequiredCount += d.policyReviewRequiredCount ?? 0
+        }
       }
-      return { proposals, fitAnalyses, debugInfo }
+
+      for (const diag of Object.values(engineDiagnosticsMap)) {
+        engineDiagnostics.intentProfilesUsed += diag.intentProfilesBuilt
+        engineDiagnostics.lowConfidenceIntentCount += diag.lowConfidenceIntentCount
+        engineDiagnostics.competitorQueryPlansUsed += diag.competitorQueryPlansBuilt
+        engineDiagnostics.queryPlanConfidenceLow += diag.queryPlanConfidenceLow
+        if (diag.fallbackUsed) engineDiagnostics.fallbackUsed = true
+      }
+
+      return { proposals, fitAnalyses, debugInfo, engineDiagnostics }
     }
 
     // 1. Persisted veri varsa her zaman dön (kısmi bile olsa).
@@ -303,7 +337,7 @@ export async function POST(request: Request) {
     if (googleResult.connected) effectivePlatforms.push('Google')
     console.log(`[GenerateAd] Effective platforms: ${effectivePlatforms.join(', ')} (Meta: ${metaResult.campaigns.length} campaigns, Google: ${googleResult.campaigns.length} campaigns)`)
 
-    const { proposals: allProposals, fitAnalyses: allFitAnalyses, debugInfo: platformDebug } = await generateForPlatforms(effectivePlatforms, allCampaigns)
+    const { proposals: allProposals, fitAnalyses: allFitAnalyses, debugInfo: platformDebug, engineDiagnostics } = await generateForPlatforms(effectivePlatforms, allCampaigns)
 
     const metaCount = allProposals.filter((p: any) => p.platform === 'Meta').length
     const googleCount = allProposals.filter((p: any) => p.platform === 'Google').length
@@ -364,6 +398,7 @@ export async function POST(request: Request) {
       ok: true,
       data: { proposals: allProposals, fitAnalyses: allFitAnalyses, summary: totalSummary, diagnoses, decisions },
       persisted: false,
+      engineDiagnostics,
       _debug: {
         metaCampaigns: metaResult.campaigns.length,
         metaConnected: metaResult.connected,
