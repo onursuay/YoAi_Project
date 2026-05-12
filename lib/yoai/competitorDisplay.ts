@@ -1,3 +1,34 @@
+const GENERIC_CONTENT_PATTERNS = [
+  'videomuzu kaçırmayın',
+  'yeni ürünler sizi bekliyor',
+  'sitemizi ziyaret edin',
+  'hemen tıklayın',
+]
+
+const TECHNICAL_ENUM_RE = /\b(OUTCOME_[A-Z_]+|CONVERSION_[A-Z_]+|OPTIMIZE_[A-Z_]+|RESULT_TYPE_[A-Z_]+)\b/
+
+export function isGenericProposalContent(proposal: {
+  headline?: string
+  headlines?: string[]
+  primaryText?: string
+  description?: string
+  descriptions?: string[]
+}): boolean {
+  const parts = [
+    proposal.headline,
+    ...(proposal.headlines ?? []),
+    proposal.primaryText,
+    proposal.description,
+    ...(proposal.descriptions ?? []),
+  ].filter((s): s is string => typeof s === 'string' && s.length > 0)
+
+  if (parts.length === 0) return false
+  const lower = parts.join(' ').toLowerCase()
+  if (GENERIC_CONTENT_PATTERNS.some(p => lower.includes(p))) return true
+  if (TECHNICAL_ENUM_RE.test(parts.join(' '))) return true
+  return false
+}
+
 export function getCompetitorSourceLabel(platform: string): string {
   if (platform === 'Meta') return 'Meta Reklam Kütüphanesi'
   if (platform === 'Google') return 'Google Reklam Şeffaflık Merkezi'

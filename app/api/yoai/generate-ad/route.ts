@@ -11,9 +11,9 @@ import type { Platform } from '@/lib/yoai/analysisTypes'
 import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
 import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
-import { bulkInsertPendingApprovalsIfMissing } from '@/lib/yoai/approvalStore'
+import { bulkInsertPendingApprovalsIfMissing, listApprovals } from '@/lib/yoai/approvalStore'
 import { buildCompetitorContextForPrompt } from '@/lib/yoai/competitorInsightStore'
-import { sanitizeProposalForDisplay } from '@/lib/yoai/competitorDisplay'
+import { sanitizeProposalForDisplay, isGenericProposalContent } from '@/lib/yoai/competitorDisplay'
 import { normalizeCampaignType } from '@/lib/yoai/campaignTypeIntelligence'
 import { buildSynthesisPackagesForCampaigns } from '@/lib/yoai/synthesisEngine'
 import type { CampaignSynthesisPackage } from '@/lib/yoai/synthesisTypes'
@@ -273,12 +273,9 @@ export async function POST(request: Request) {
 
       if (run?.ad_proposals_data?.proposals) {
         const rawPersisted = run.ad_proposals_data.proposals as any[]
-        const persistedProposals = rawPersisted.map(sanitizeProposalForDisplay)
+        let persistedProposals = rawPersisted.map(sanitizeProposalForDisplay)
         if (persistedProposals.length > 0) {
           const persistedFitAnalyses = (run.ad_proposals_data.fitAnalyses || []) as any[]
-          const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
-          const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
-          console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
 
           // Approval queue mapping: eksik proposal_id'leri pending olarak ekle.
           // Mevcut (rejected/hold/published vb.) kayıtlar dokunulmaz.
@@ -291,6 +288,36 @@ export async function POST(request: Request) {
           } catch (e) {
             console.warn('[GenerateAd] approvals upsert (persisted) failed (non-fatal):', e)
           }
+
+          // Filter 1: daily-run intelligence scan tarafından expired yapılan proposal'ları kaldır.
+          // UI-level filtre (isVisible) timing bağımlı — API'de de filtrele.
+          try {
+            const expiredApprovals = await listApprovals(userId, { status: 'expired', limit: 500 })
+            if (expiredApprovals.length > 0) {
+              const expiredIds = new Set(expiredApprovals.map(a => a.proposal_id))
+              const before = persistedProposals.length
+              persistedProposals = persistedProposals.filter((p: any) => !expiredIds.has(p.id))
+              const removed = before - persistedProposals.length
+              if (removed > 0) console.log(`[GenerateAd] Expired filter: removed ${removed} stale proposals`)
+            }
+          } catch (e) {
+            console.warn('[GenerateAd] expired filter non-fatal:', e)
+          }
+
+          // Filter 2: policyStatus=rejected proposal'ları kaldır (persisted path'de de geçerli).
+          persistedProposals = persistedProposals.filter((p: any) => p.policyStatus !== 'rejected')
+
+          // Filter 3: Jenerik / placeholder içerikli proposal'ları kaldır.
+          {
+            const before = persistedProposals.length
+            persistedProposals = persistedProposals.filter((p: any) => !isGenericProposalContent(p))
+            const removed = before - persistedProposals.length
+            if (removed > 0) console.log(`[GenerateAd] Generic filter: removed ${removed} proposals`)
+          }
+
+          const metaCount = persistedProposals.filter((p: any) => p.platform === 'Meta').length
+          const googleCount = persistedProposals.filter((p: any) => p.platform === 'Google').length
+          console.log(`[GenerateAd] Returning persisted (Meta: ${metaCount}, Google: ${googleCount})`)
 
           return NextResponse.json({
             ok: true,
