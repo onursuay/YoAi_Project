@@ -1,10 +1,10 @@
 'use client'
 
 import { useEffect, useMemo, useState } from 'react'
-import { Loader2, X, Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle2, Building2, MapPin, Target, Globe } from 'lucide-react'
+import { Loader2, X, Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle2, Building2, MapPin, Target, Globe, ChevronDown, Check } from 'lucide-react'
 import type { SectorMainItem } from '@/lib/yoai/sectorCatalog'
 import { isValidCompetitorReference, MIN_COMPETITORS_REQUIRED } from '@/lib/yoai/businessProfileValidation'
-import WizardSelect, { type WizardSelectOption } from '@/components/meta/wizard/WizardSelect'
+import type { WizardSelectOption } from '@/components/meta/wizard/WizardSelect'
 
 interface CompetitorDraft {
   competitor_name: string
@@ -387,7 +387,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
           {step === 1 && (
             <div className="space-y-4">
               <Field label="Ana Sektör *">
-                <WizardSelect
+                <BusinessProfileSelect
                   value={draft.sector_main}
                   onChange={(value) => { setField('sector_main', value); setField('sector_sub', '') }}
                   options={sectorOptions}
@@ -396,7 +396,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                 />
               </Field>
               <Field label="Alt Sektör / Faaliyet Tipi">
-                <WizardSelect
+                <BusinessProfileSelect
                   value={draft.sector_sub}
                   onChange={(value) => setField('sector_sub', value)}
                   options={subSectorOptions}
@@ -416,7 +416,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
           {step === 2 && (
             <div className="space-y-4">
               <Field label="Ana Dönüşüm Hedefi *">
-                <WizardSelect
+                <BusinessProfileSelect
                   value={draft.main_conversion_goal}
                   onChange={(value) => setField('main_conversion_goal', value)}
                   options={withCurrentOption(MAIN_CONVERSION_OPTIONS, draft.main_conversion_goal)}
@@ -513,7 +513,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
               </Field>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                 <Field label="Aylık Reklam Bütçesi">
-                  <WizardSelect
+                  <BusinessProfileSelect
                     value={draft.monthly_ad_budget_range}
                     onChange={(value) => setField('monthly_ad_budget_range', value)}
                     options={MONTHLY_BUDGET_OPTIONS}
@@ -521,7 +521,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                   />
                 </Field>
                 <Field label="Marka Dili / Tonu">
-                  <WizardSelect
+                  <BusinessProfileSelect
                     value={draft.brand_tone}
                     onChange={(value) => setField('brand_tone', value)}
                     options={withCurrentOption(BRAND_TONE_OPTIONS, draft.brand_tone)}
@@ -596,6 +596,85 @@ function SourceField({ label, value, onChange, placeholder }: { label: string; v
       <label className="block text-xs font-semibold text-gray-700 mb-1.5">{label}</label>
       <input value={value} onChange={(e) => onChange(e.target.value)} placeholder={placeholder}
         className={INPUT_CLASS} />
+    </div>
+  )
+}
+
+function BusinessProfileSelect({
+  value,
+  onChange,
+  options,
+  disabled = false,
+  error = false,
+  placeholder = 'Seçiniz...',
+}: {
+  value: string
+  onChange: (v: string) => void
+  options: WizardSelectOption[]
+  disabled?: boolean
+  error?: boolean
+  placeholder?: string
+}) {
+  const [open, setOpen] = useState(false)
+  const selected = options.find((o) => o.value === value)
+
+  return (
+    <div className="relative">
+      <button
+        type="button"
+        disabled={disabled}
+        aria-haspopup="listbox"
+        aria-expanded={open}
+        onClick={() => !disabled && setOpen((current) => !current)}
+        onBlur={(event) => {
+          if (!event.currentTarget.parentElement?.contains(event.relatedTarget as Node | null)) setOpen(false)
+        }}
+        className={`
+          w-full flex items-center justify-between px-3.5 py-2.5 border rounded-xl text-sm text-left transition-all
+          shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)]
+          ${open ? 'border-primary ring-2 ring-primary/20' : error ? 'border-red-400 ring-1 ring-red-300' : 'border-gray-200 hover:border-gray-300'}
+          ${disabled ? 'bg-gray-50 opacity-60 cursor-not-allowed text-gray-500' : 'bg-white cursor-pointer'}
+        `}
+      >
+        <span className={selected ? 'text-gray-800 font-medium' : 'text-gray-400'}>
+          {selected?.label ?? placeholder}
+        </span>
+        <ChevronDown className={`w-4 h-4 flex-shrink-0 transition-transform duration-200 mr-0.5 ${open ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
+      </button>
+
+      {open && (
+        <div
+          role="listbox"
+          className="absolute z-[80] w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] max-h-64 overflow-y-auto py-1"
+        >
+          {options.map((option) => {
+            const isSelected = option.value === value
+            return (
+              <button
+                key={option.value}
+                type="button"
+                role="option"
+                aria-selected={isSelected}
+                disabled={option.disabled}
+                onMouseDown={(event) => event.preventDefault()}
+                onClick={() => {
+                  if (option.disabled) return
+                  onChange(option.value)
+                  setOpen(false)
+                }}
+                className={`
+                  w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors
+                  ${option.disabled ? 'opacity-40 cursor-not-allowed' : ''}
+                  ${isSelected ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}
+                `}
+              >
+                <span>{option.label}</span>
+                {isSelected && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+              </button>
+            )
+          })}
+        </div>
+      )}
     </div>
   )
 }

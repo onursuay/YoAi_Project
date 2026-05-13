@@ -155,6 +155,27 @@ test('Rakipler adımı net 3 rakip hata mesajını içeriyor', () => {
   assert.ok(onboardingSrc.includes('Her rakip için firma adı, web sitesi veya sosyal medya hesabından en az birini girmeniz yeterlidir.'))
 })
 
+console.log('\n[4] Business Profile dropdown sözleşmesi')
+
+test('BusinessProfileOnboarding native select / option render etmiyor', () => {
+  assert.ok(!/<select\b/.test(onboardingSrc), 'native <select> kalmış')
+  assert.ok(!/<option\b/.test(onboardingSrc), 'native <option> kalmış')
+})
+
+test('Tüm Business Profile dropdown alanları custom BusinessProfileSelect kullanıyor', () => {
+  const usages = onboardingSrc.match(/<BusinessProfileSelect\b/g) || []
+  assert.ok(usages.length >= 5, `beklenen en az 5 custom dropdown, bulunan ${usages.length}`)
+  assert.ok(onboardingSrc.includes('function BusinessProfileSelect'))
+})
+
+test('Custom dropdown native OS menüsü yerine listbox paneli kullanıyor', () => {
+  assert.ok(onboardingSrc.includes('aria-haspopup="listbox"'))
+  assert.ok(onboardingSrc.includes('role="listbox"'))
+  assert.ok(onboardingSrc.includes('role="option"'))
+  assert.ok(onboardingSrc.includes('z-[80]'))
+  assert.ok(onboardingSrc.includes('max-h-64 overflow-y-auto'))
+})
+
 setTimeout(() => {
   console.log('')
   console.log(`Geçen: ${passed}`)
