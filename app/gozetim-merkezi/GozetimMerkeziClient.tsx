@@ -75,6 +75,17 @@ interface RecentSignup {
   hasProfile: boolean
 }
 
+interface FailedScanEntry {
+  id: string
+  profile_id: string | null
+  source_type: string | null
+  source_url: string | null
+  source_owner_type: string | null
+  scanned_at: string | null
+  error_message: string | null
+  error_type: string
+}
+
 interface OverviewPayload {
   ok: boolean
   kpis: {
@@ -83,14 +94,22 @@ interface OverviewPayload {
     onboardingPending: number
     usersWithoutProfile: number
     totalProfiles: number
+    intelligenceMissing: number
     totalScans: number
     failedScans: number
     runningScans: number
     completedScans: number
     avgIntelConfidence: number | null
+    signups24h: number
+    signups7d: number
+    totalCompetitors: number
+    totalSources: number
   }
   profiles: ProfileEntry[]
   recentSignups: RecentSignup[]
+  errorTypeCounts: Record<string, number>
+  recentFailedScans: FailedScanEntry[]
+  diagnostics: string[]
 }
 
 function formatDate(value: string | null | undefined): string {
@@ -122,10 +141,6 @@ function scanStatusBadgeClass(status: string | null | undefined): string {
     return 'bg-primary/5 text-primary border-primary/20'
   }
   return 'bg-gray-50 text-gray-700 border-gray-200'
-}
-
-function pickProfileScans(entry: ProfileEntry, profileId: string): ScanSummary[] {
-  return entry.sourceScansSummary.filter((s) => (s as any).profile_id === profileId || true)
 }
 
 function KpiCard({
@@ -164,7 +179,10 @@ export default function GozetimMerkeziClient() {
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<OverviewPayload | null>(null)
   const [search, setSearch] = useState<string>('')
-  const [selectedProfileId, setSelectedProfileId] = useState<string | null>(null)
+  const [filterOnboarding, setFilterOnboarding] = useState<'all' | 'complete' | 'incomplete' | 'no_profile'>('all')
+  const [filterScan, setFilterScan] = useState<'all' | 'completed' | 'failed' | 'running' | 'none'>('all')
+  const [filterIntel, setFilterIntel] = useState<'all' | 'missing' | 'present'>('all')
+  const [selectedKey, setSelectedKey] = useState<string | null>(null)
   const [reloadKey, setReloadKey] = useState<number>(0)
 
   useEffect(() => {
@@ -173,10 +191,17 @@ export default function GozetimMerkeziClient() {
     setError(null)
     fetch('/api/admin/gozetim-merkezi', { cache: 'no-store' })
       .then(async (r) => {
+        const text = await r.text()
+        let parsed: any = null
+        try { parsed = text ? JSON.parse(text) : null } catch {}
         if (!r.ok) {
-          throw new Error(`HTTP ${r.status}`)
+          const detail = parsed?.message || parsed?.error || `HTTP ${r.status}`
+          const diag = Array.isArray(parsed?.diagnostics) && parsed.diagnostics.length
+            ? ` · ${parsed.diagnostics.join(' · ')}`
+            : ''
+          throw new Error(`${detail}${diag}`)
         }
-        return r.json()
+        return parsed as OverviewPayload
       })
       .then((json: OverviewPayload) => {
         if (cancelled) return
@@ -200,24 +225,53 @@ export default function GozetimMerkeziClient() {
   const filteredProfiles = useMemo(() => {
     if (!data) return [] as ProfileEntry[]
     const q = search.trim().toLowerCase()
-    if (!q) return data.profiles
     return data.profiles.filter((entry) => {
-      const fields: Array<string | null | undefined> = [
-        entry.user?.email,
-        entry.user?.name,
-        entry.profile?.business_name,
-        entry.profile?.sector_main,
-        entry.profile?.sector_sub,
-        entry.profile?.target_location,
-      ]
-      return fields.some((f) => (f || '').toLowerCase().includes(q))
+      // Search
+      if (q) {
+        const fields: Array<string | null | undefined> = [
+          entry.user?.email,
+          entry.user?.name,
+          entry.profile?.business_name,
+          entry.profile?.company_name,
+          entry.profile?.sector_main,
+          entry.profile?.sector_sub,
+          entry.profile?.target_location,
+        ]
+        if (!fields.some((f) => (f || '').toLowerCase().includes(q))) return false
+      }
+      // Onboarding filter
+      if (filterOnboarding !== 'all') {
+        const hasProfile = !!entry.profile
+        const done = !!entry.profile?.onboarding_completed
+        if (filterOnboarding === 'no_profile' && hasProfile) return false
+        if (filterOnboarding === 'complete' && (!hasProfile || !done)) return false
+        if (filterOnboarding === 'incomplete' && (!hasProfile || done)) return false
+      }
+      // Scan filter
+      if (filterScan !== 'all') {
+        const scans = entry.sourceScansSummary || []
+        const has = (st: string) => scans.some((s) => (s.scan_status || '').toLowerCase() === st)
+        if (filterScan === 'none' && scans.length > 0) return false
+        if (filterScan === 'completed' && !(has('completed') || has('success') || has('done'))) return false
+        if (filterScan === 'failed' && !(has('failed') || has('error'))) return false
+        if (filterScan === 'running' && !(has('running') || has('pending') || has('queued'))) return false
+      }
+      // Intelligence filter
+      if (filterIntel !== 'all') {
+        const hasIntel = !!entry.intelligenceSummary
+        if (filterIntel === 'missing' && hasIntel) return false
+        if (filterIntel === 'present' && !hasIntel) return false
+      }
+      return true
     })
-  }, [data, search])
+  }, [data, search, filterOnboarding, filterScan, filterIntel])
 
   const selectedEntry = useMemo(() => {
-    if (!data || !selectedProfileId) return null
-    return data.profiles.find((p) => p.profile?.id === selectedProfileId) || null
-  }, [data, selectedProfileId])
+    if (!data || !selectedKey) return null
+    return (
+      data.profiles.find((p) => (p.profile?.id || `signup:${p.user?.id}`) === selectedKey) || null
+    )
+  }, [data, selectedKey])
 
   return (
     <div className="px-6 py-6 max-w-[1400px] mx-auto">
@@ -317,21 +371,96 @@ export default function GozetimMerkeziClient() {
           icon={Sparkles}
           tone="gray"
         />
+
+        <KpiCard
+          label="Intelligence Eksik"
+          value={data?.kpis.intelligenceMissing ?? (loading ? '…' : 0)}
+          icon={AlertTriangle}
+          tone="primary"
+        />
+        <KpiCard
+          label="Toplam Rakip"
+          value={data?.kpis.totalCompetitors ?? (loading ? '…' : 0)}
+          icon={Database}
+          tone="gray"
+        />
+        <KpiCard
+          label="Son 24s Kayıt"
+          value={data?.kpis.signups24h ?? (loading ? '…' : 0)}
+          icon={Users}
+          tone="emerald"
+        />
+        <KpiCard
+          label="Son 7g Kayıt"
+          value={data?.kpis.signups7d ?? (loading ? '…' : 0)}
+          icon={Users}
+          tone="emerald"
+        />
+        <KpiCard
+          label="Toplam Kaynak"
+          value={data?.kpis.totalSources ?? (loading ? '…' : 0)}
+          icon={Database}
+          tone="gray"
+        />
       </section>
+
+      {/* Diagnostic banner */}
+      {data && data.diagnostics && data.diagnostics.length > 0 && (
+        <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
+          <div className="font-semibold mb-1">Kısmi veri uyarısı</div>
+          <ul className="list-disc pl-5 space-y-0.5">
+            {data.diagnostics.map((d, i) => (
+              <li key={i} className="break-all">{d}</li>
+            ))}
+          </ul>
+        </div>
+      )}
 
       {/* Arama ve liste */}
       <section className="mt-8">
-        <div className="mb-3 flex items-center justify-between">
+        <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-base font-semibold text-gray-900">Kullanıcı & Firma Listesi</h2>
-          <div className="relative w-72 max-w-full">
-            <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
-            <input
-              type="text"
-              value={search}
-              onChange={(e) => setSearch(e.target.value)}
-              placeholder="E-posta, firma, sektör, lokasyon ara"
-              className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-            />
+          <div className="flex flex-wrap items-center gap-2">
+            <select
+              value={filterOnboarding}
+              onChange={(e) => setFilterOnboarding(e.target.value as any)}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
+            >
+              <option value="all">Onboarding · Tümü</option>
+              <option value="complete">Onboarding tamam</option>
+              <option value="incomplete">Onboarding eksik</option>
+              <option value="no_profile">Profilsiz</option>
+            </select>
+            <select
+              value={filterScan}
+              onChange={(e) => setFilterScan(e.target.value as any)}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
+            >
+              <option value="all">Tarama · Tümü</option>
+              <option value="completed">Tamamlandı</option>
+              <option value="failed">Hatalı</option>
+              <option value="running">Çalışıyor / Bekliyor</option>
+              <option value="none">Tarama yok</option>
+            </select>
+            <select
+              value={filterIntel}
+              onChange={(e) => setFilterIntel(e.target.value as any)}
+              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
+            >
+              <option value="all">Intelligence · Tümü</option>
+              <option value="present">Var</option>
+              <option value="missing">Eksik</option>
+            </select>
+            <div className="relative w-72 max-w-full">
+              <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
+              <input
+                type="text"
+                value={search}
+                onChange={(e) => setSearch(e.target.value)}
+                placeholder="E-posta, firma, sektör, lokasyon ara"
+                className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
+              />
+            </div>
           </div>
         </div>
 
@@ -369,6 +498,7 @@ export default function GozetimMerkeziClient() {
               {!loading &&
                 filteredProfiles.map((entry) => {
                   const profile = entry.profile || {}
+                  const hasProfile = !!entry.profile
                   const sourceCount = Array.isArray(profile.social_handles)
                     ? profile.social_handles.length
                     : Object.keys(profile.social_handles || {}).length
@@ -378,31 +508,46 @@ export default function GozetimMerkeziClient() {
                     .sort()
                     .pop()
                   const confidence = entry.intelligenceSummary?.confidence
-                  const onboardingDone = !!profile.onboarding_completed
+                  const onboardingDone = hasProfile && !!profile.onboarding_completed
+                  const key = profile.id || `signup:${entry.user?.id}`
                   return (
-                    <tr key={profile.id} className="hover:bg-gray-50">
+                    <tr key={key} className="hover:bg-gray-50">
                       <td className="px-3 py-2 font-medium text-gray-900">
                         {entry.user?.email || '—'}
                       </td>
-                      <td className="px-3 py-2 text-gray-700">{profile.business_name || '—'}</td>
-                      <td className="px-3 py-2 text-gray-600">
-                        {profile.sector_main || '—'}
-                        {profile.sector_sub ? ` / ${profile.sector_sub}` : ''}
+                      <td className="px-3 py-2 text-gray-700">
+                        {hasProfile ? (profile.business_name || profile.company_name || '—') : (
+                          <span className="text-gray-400 italic">Profilsiz</span>
+                        )}
                       </td>
-                      <td className="px-3 py-2 text-gray-600">{profile.target_location || '—'}</td>
+                      <td className="px-3 py-2 text-gray-600">
+                        {hasProfile ? (
+                          <>
+                            {profile.sector_main || '—'}
+                            {profile.sector_sub ? ` / ${profile.sector_sub}` : ''}
+                          </>
+                        ) : '—'}
+                      </td>
+                      <td className="px-3 py-2 text-gray-600">{(hasProfile && profile.target_location) || '—'}</td>
                       <td className="px-3 py-2">
-                        <span
-                          className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${
-                            onboardingDone
-                              ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
-                              : 'bg-primary/5 text-primary border-primary/20'
-                          }`}
-                        >
-                          {onboardingDone ? 'Tamam' : 'Eksik'}
-                        </span>
+                        {!hasProfile ? (
+                          <span className="inline-flex items-center rounded border px-2 py-0.5 text-xs bg-gray-50 text-gray-700 border-gray-200">
+                            Profilsiz
+                          </span>
+                        ) : (
+                          <span
+                            className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${
+                              onboardingDone
+                                ? 'bg-emerald-50 text-emerald-700 border-emerald-200'
+                                : 'bg-primary/5 text-primary border-primary/20'
+                            }`}
+                          >
+                            {onboardingDone ? 'Tamam' : 'Eksik'}
+                          </span>
+                        )}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-700">
-                        {sourceCount}
+                        {hasProfile ? sourceCount : 0}
                       </td>
                       <td className="px-3 py-2 text-right tabular-nums text-gray-700">
                         {entry.competitors.length}
@@ -413,7 +558,7 @@ export default function GozetimMerkeziClient() {
                       <td className="px-3 py-2 text-gray-500">{formatDate(lastScan)}</td>
                       <td className="px-3 py-2 text-right">
                         <button
-                          onClick={() => setSelectedProfileId(profile.id)}
+                          onClick={() => setSelectedKey(key)}
                           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
                           Detay
@@ -475,9 +620,75 @@ export default function GozetimMerkeziClient() {
         </section>
       )}
 
+      {/* Hata Takibi */}
+      {data && (data.recentFailedScans.length > 0 || Object.keys(data.errorTypeCounts).length > 0) && (
+        <section className="mt-8">
+          <h2 className="mb-3 text-base font-semibold text-gray-900">Hata Takibi</h2>
+          <div className="grid grid-cols-1 gap-3 lg:grid-cols-3">
+            <div className="rounded-xl border border-gray-200 bg-white p-4">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Hata Tipi Dağılımı
+              </div>
+              {Object.keys(data.errorTypeCounts).length === 0 ? (
+                <div className="text-sm text-gray-500">Kayıt yok.</div>
+              ) : (
+                <ul className="space-y-1">
+                  {Object.entries(data.errorTypeCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([k, v]) => (
+                      <li
+                        key={k}
+                        className="flex items-center justify-between rounded border border-gray-200 bg-gray-50 px-2 py-1 text-xs"
+                      >
+                        <span className="text-gray-700">{k}</span>
+                        <span className="tabular-nums font-medium text-gray-900">{v}</span>
+                      </li>
+                    ))}
+                </ul>
+              )}
+            </div>
+            <div className="rounded-xl border border-gray-200 bg-white p-4 lg:col-span-2">
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-gray-500">
+                Son Hatalı Tarama
+              </div>
+              {data.recentFailedScans.length === 0 ? (
+                <div className="text-sm text-gray-500">Kayıt yok.</div>
+              ) : (
+                <ul className="space-y-2">
+                  {data.recentFailedScans.map((s) => (
+                    <li
+                      key={s.id}
+                      className="rounded border border-red-200 bg-red-50 px-3 py-2 text-xs text-red-700"
+                    >
+                      <div className="flex flex-wrap items-center justify-between gap-2">
+                        <span className="font-medium">
+                          {s.source_type || '—'}
+                          {s.source_owner_type ? ` · ${s.source_owner_type}` : ''}
+                          {' · '}
+                          <span className="rounded border border-red-200 bg-white px-1.5 py-0.5 text-[10px] text-red-700">
+                            {s.error_type}
+                          </span>
+                        </span>
+                        <span className="text-[11px] opacity-70">{formatDate(s.scanned_at)}</span>
+                      </div>
+                      {s.source_url && (
+                        <div className="mt-1 truncate text-[11px] text-red-800/80">{s.source_url}</div>
+                      )}
+                      {s.error_message && (
+                        <div className="mt-1 text-[11px]">{s.error_message}</div>
+                      )}
+                    </li>
+                  ))}
+                </ul>
+              )}
+            </div>
+          </div>
+        </section>
+      )}
+
       {/* Detay drawer */}
       {selectedEntry && (
-        <DetailDrawer entry={selectedEntry} onClose={() => setSelectedProfileId(null)} />
+        <DetailDrawer entry={selectedEntry} onClose={() => setSelectedKey(null)} />
       )}
     </div>
   )

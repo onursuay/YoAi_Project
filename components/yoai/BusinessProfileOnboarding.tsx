@@ -182,6 +182,16 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
     }
   }, [])
 
+  // ESC ile kapatma — onClose verilmişse çalışır. onboarding tamamlanmış sayılmaz.
+  useEffect(() => {
+    if (!onClose) return
+    const handler = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose()
+    }
+    window.addEventListener('keydown', handler)
+    return () => window.removeEventListener('keydown', handler)
+  }, [onClose])
+
   const subSectors = useMemo(() => {
     const main = sectors.find((s) => s.id === draft.sector_main)
     return main?.subs || []
@@ -263,14 +273,14 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
 
   return (
     <div className="fixed inset-0 z-[60] flex items-end md:items-center justify-center bg-black/50 backdrop-blur-sm overflow-y-auto" role="dialog" aria-modal="true" aria-labelledby="onboarding-title">
-      <div className="bg-white w-full max-w-3xl rounded-t-3xl md:rounded-3xl shadow-2xl my-0 md:my-8 max-h-[95vh] flex flex-col">
+      <div className="bg-white w-full max-w-3xl rounded-t-3xl md:rounded-3xl shadow-2xl my-0 md:my-8 max-h-[95vh] flex flex-col overflow-hidden">
         {/* Header */}
-        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100">
+        <div className="flex items-start justify-between px-6 pt-6 pb-4 border-b border-gray-100 bg-white">
           <div className="flex-1">
             <h2 id="onboarding-title" className="text-lg font-semibold text-gray-900">İşletme Profili</h2>
             <p className="text-xs text-gray-500 mt-1">Bu bilgileri YoAi reklam önerileri, strateji ve hedef kitle analizlerinde referans olarak kullanır.</p>
           </div>
-          {isEditMode && onClose && (
+          {onClose && (
             <button onClick={onClose} className="ml-3 p-2 hover:bg-gray-100 rounded-lg" aria-label="Kapat">
               <X className="w-5 h-5 text-gray-500" />
             </button>

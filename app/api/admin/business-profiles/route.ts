@@ -43,33 +43,35 @@ export async function GET(req: NextRequest) {
     const userIds = (profiles || []).map((p: any) => p.user_id)
     const profileIds = (profiles || []).map((p: any) => p.id)
 
-    const [{ data: competitors }, { data: scans }, { data: intelligence }] = await Promise.all([
-      supabase
-        .from('user_business_competitors')
-        .select('*')
-        .in('user_id', userIds.length ? userIds : ['__none__']),
-      supabase
-        .from('user_business_source_scans')
-        .select('*')
-        .in('profile_id', profileIds.length ? profileIds : ['__none__']),
-      supabase
-        .from('user_business_intelligence')
-        .select('*')
-        .in('user_id', userIds.length ? userIds : ['__none__']),
-    ])
+    // UUID kolonlu sorgularda boş array için sentinel ('__none__') Postgres
+    // syntax error yapar; o yüzden boşken sorguyu atlıyoruz.
+    const fetchCompetitors = userIds.length
+      ? supabase.from('user_business_competitors').select('*').in('user_id', userIds)
+      : Promise.resolve({ data: [] as any[], error: null })
+    const fetchScans = profileIds.length
+      ? supabase.from('user_business_source_scans').select('*').in('profile_id', profileIds)
+      : Promise.resolve({ data: [] as any[], error: null })
+    const fetchIntel = userIds.length
+      ? supabase.from('user_business_intelligence').select('*').in('user_id', userIds)
+      : Promise.resolve({ data: [] as any[], error: null })
+
+    const [competitorsRes, scansRes, intelRes] = await Promise.all([fetchCompetitors, fetchScans, fetchIntel])
+    const competitors = (competitorsRes as any).data || []
+    const scans = (scansRes as any).data || []
+    const intelligence = (intelRes as any).data || []
 
     const compByUser = new Map<string, any[]>()
-    for (const c of (competitors || [])) {
+    for (const c of competitors) {
       if (!compByUser.has(c.user_id)) compByUser.set(c.user_id, [])
       compByUser.get(c.user_id)!.push(c)
     }
     const scanByProfile = new Map<string, any[]>()
-    for (const s of (scans || [])) {
+    for (const s of scans) {
       if (!scanByProfile.has(s.profile_id)) scanByProfile.set(s.profile_id, [])
       scanByProfile.get(s.profile_id)!.push(s)
     }
     const intelByUser = new Map<string, any>()
-    for (const i of (intelligence || [])) {
+    for (const i of intelligence) {
       intelByUser.set(i.user_id, i)
     }
 

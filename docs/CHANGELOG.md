@@ -2,6 +2,26 @@
 
 ---
 
+## 2026-05-13 — Gözetim Merkezi HTTP 500 Fix + Onboarding Modal Polish
+- **Sorun:**
+  1. Business Profile onboarding modal'ında alt köşelerde gri arka plan footer'ı `rounded-3xl` köşelerden taşırıyordu (overflow-hidden eksikti).
+  2. Onboarding modal X butonu sadece `isEditMode` iken görünüyordu — yeni kullanıcı modal'ı kapatamıyor, sayfa dışına çıkamıyordu.
+  3. Gözetim Merkezi (`/gozetim-merkezi`) HTTP 500 veriyordu; tablo `Veri alınamadı` görüntülüyordu. Profilsiz kullanıcılar listede hiç görünmüyordu.
+- **Kök neden:**
+  - `app/api/admin/gozetim-merkezi/route.ts` ve `app/api/admin/business-profiles/route.ts`, boş profile listesi durumunda `.in('profile_id', ['__none__'])` sentinel kullanıyordu. `profile_id` UUID kolonu — Postgres `invalid input syntax for type uuid: "__none__"` döndürüp tüm Promise.all'u 500'e çakıyordu.
+  - Sadece profile'i olan kullanıcılar listeye dahil ediliyordu — kayıt olup profile oluşturmamış kullanıcılar Gözetim Merkezi'ne giremiyordu.
+  - `BusinessProfileGuard` sadece `silent` modu için `onClose` geçiyordu; kullanıcı modal'ı kapatamıyordu.
+- **Çözüm:**
+  - **`app/api/admin/gozetim-merkezi/route.ts`**: UUID sentinel kaldırıldı; boş array'de sorgu tamamen atlanıyor (`Promise.resolve({ data: [] })`). Her alt query bağımsız `diagnostics` listesine yazılıyor — kısmi hata olsa bile UI veri alabiliyor ve hata bant olarak görüntüleniyor. Signups query'sinde olmayan kullanıcılar `profile: null` ile listeye eklendi → kayıt olup profile oluşturmayan kullanıcılar artık tabloda "Profilsiz" olarak görünüyor. Yeni KPI'lar: `intelligenceMissing`, `signups24h`, `signups7d`, `totalCompetitors`, `totalSources`. `errorTypeCounts` + `recentFailedScans` failed scan'lerin tipini sınıflandırıyor (`login_wall`, `no_extractable_metadata`, `scraper_provider_missing`, `http_404`, `apify_error`, `timeout`, `network`).
+  - **`app/api/admin/business-profiles/route.ts`**: Aynı UUID sentinel düzeltmesi uygulandı.
+  - **`app/gozetim-merkezi/GozetimMerkeziClient.tsx`**: Yeni KPI kartları + filtreler (Onboarding / Tarama / Intelligence) + diagnostic banner + "Hata Takibi" bloku (tip dağılımı + son hatalı tarama listesi) + profilsiz satır render desteği. Detay drawer profile-id yerine entry-key ile çalışıyor.
+  - **`components/yoai/BusinessProfileOnboarding.tsx`**: Modal container `overflow-hidden` ile rounded radius'tan taşan footer arka planı engellendi. X butonu artık `onClose` her tanımlandığında görünüyor (eski `isEditMode && onClose` koşulu kaldırıldı). ESC tuşu desteği eklendi.
+  - **`components/yoai/BusinessProfileGuard.tsx`**: `onClose` her zaman geçiyor; kullanıcı modal'ı kapatınca onboarding **tamamlanmış sayılmıyor** — Guard kilit ekranı (`{area} kilidi açık değil`) bırakılıyor ve "İşletme Profilini Tamamla" butonu modal'ı yeniden açıyor. Yalnızca `onComplete` `state='completed'` set ediyor.
+  - **`src/tests/gozetimMerkeziAccess.test.ts`**: UUID sentinel yasağı, `diagnostics`, `profileless`, signups24h/7d, error sınıflandırma, intelligenceMissing testleri eklendi (31 test geçiyor).
+  - **`src/tests/businessProfileOnboardingModal.test.ts` (yeni)**: 7 statik test — modal overflow-hidden, onClose-bağlı X butonu, ESC kapatma, Guard kilit ekranı, onClose içinde `setState('completed')` bypass yok, amber/yellow class yasağı.
+- **Güvenlik:** `checkAdminAccess` aynen korundu. Yetkisiz kullanıcı 404 ile reddediliyor, normal kullanıcı sessizce `/dashboard`'a yönleniyor. `ADMIN_SECRET` header path'i kaldırılmadı. Diagnostic mesajları sadece yetkili oturum için döner.
+- **Dosyalar:** `app/api/admin/gozetim-merkezi/route.ts`, `app/api/admin/business-profiles/route.ts`, `app/gozetim-merkezi/GozetimMerkeziClient.tsx`, `components/yoai/BusinessProfileOnboarding.tsx`, `components/yoai/BusinessProfileGuard.tsx`, `src/tests/gozetimMerkeziAccess.test.ts`, `src/tests/businessProfileOnboardingModal.test.ts`
+
 ## 2026-05-13 — Apify Social Profile Actor Integration
 - **Sorun:** Business Intelligence Profile sosyal medya kaynakları yalnızca public metadata fallback ile taranıyordu. Instagram, Facebook, TikTok çoğu zaman login wall döndürdüğünden gerçek profil verisi elde edilemiyordu. Apify entegrasyonu yoktu.
 - **Çözüm:**

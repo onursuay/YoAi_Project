@@ -84,7 +84,7 @@ export default function BusinessProfileGuard({ children, area, silent = false }:
                   className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90"
                 >
                   <Sparkles className="w-4 h-4" />
-                  Profili Tamamla
+                  İşletme Profilini Tamamla
                 </button>
               </div>
             </div>
@@ -97,7 +97,7 @@ export default function BusinessProfileGuard({ children, area, silent = false }:
               setState('completed')
               refresh()
             }}
-            onClose={silent ? () => setShowOnboarding(false) : undefined}
+            onClose={() => setShowOnboarding(false)}
           />
         )}
       </>

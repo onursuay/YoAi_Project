@@ -138,6 +138,56 @@ test('overview endpoint scan extracted_* alanlarını ve scan_status döner', ()
   assert.ok(overviewSrc.includes('scan_status'))
 })
 
+test('overview endpoint UUID kolonu için boş array sentinel kullanmıyor', () => {
+  // Boş profil/user id listesi UUID kolonuna `__none__` ile gönderilirse
+  // Postgres "invalid input syntax for type uuid" hatası verir; tüm
+  // endpoint 500'e çakılır. Sentinel kullanılmadığını ve boş array
+  // durumunda sorgunun atlandığını doğrula.
+  assert.ok(
+    !overviewSrc.includes("['__none__']"),
+    'UUID sentinel hâlâ kullanılıyor — boş profil listesinde 500 riski',
+  )
+  assert.ok(
+    /Promise\.resolve\(\{\s*data:\s*\[\]/.test(overviewSrc),
+    'Boş array için query atlama dalı yok',
+  )
+})
+
+test('overview endpoint diagnostics dizisi döndürüyor', () => {
+  assert.ok(overviewSrc.includes('diagnostics'))
+})
+
+test('overview endpoint profilsiz kullanıcıları profile=null ile dahil ediyor', () => {
+  assert.ok(/profileless|profile:\s*null/.test(overviewSrc))
+})
+
+test('overview endpoint signups24h / signups7d KPI hesaplıyor', () => {
+  assert.ok(overviewSrc.includes('signups24h'))
+  assert.ok(overviewSrc.includes('signups7d'))
+})
+
+test('overview endpoint hata tipi sınıflandırması yapıyor', () => {
+  assert.ok(overviewSrc.includes('login_wall'))
+  assert.ok(overviewSrc.includes('no_extractable_metadata'))
+  assert.ok(overviewSrc.includes('scraper_provider_missing'))
+  assert.ok(overviewSrc.includes('http_404'))
+  assert.ok(overviewSrc.includes('errorTypeCounts'))
+})
+
+test('overview endpoint intelligenceMissing KPI içeriyor', () => {
+  assert.ok(overviewSrc.includes('intelligenceMissing'))
+})
+
+const adminBpFile2 = path.join(__dirname, '..', '..', 'app', 'api', 'admin', 'business-profiles', 'route.ts')
+const adminBpSrc2 = fs.readFileSync(adminBpFile2, 'utf-8')
+
+test('business-profiles endpoint UUID kolonu için sentinel kullanmıyor', () => {
+  assert.ok(
+    !adminBpSrc2.includes("['__none__']"),
+    'business-profiles endpoint hâlâ __none__ sentinel kullanıyor',
+  )
+})
+
 test('ADMIN_SECRET manuel kullanım korunuyor (checkAdminAccess içinde)', () => {
   assert.ok(
     superAdminSrc.includes('x-admin-secret') && superAdminSrc.includes('ADMIN_SECRET'),
