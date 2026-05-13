@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-13 — Apify Social Profile Actor Integration
+- **Sorun:** Business Intelligence Profile sosyal medya kaynakları yalnızca public metadata fallback ile taranıyordu. Instagram, Facebook, TikTok çoğu zaman login wall döndürdüğünden gerçek profil verisi elde edilemiyordu. Apify entegrasyonu yoktu.
+- **Çözüm:**
+  - **`lib/yoai/apifySocialConfig.ts` (yeni):** Env-based Apify config helper. `APIFY_API_TOKEN`, platform-specific actor ID env'leri (APIFY_INSTAGRAM/FACEBOOK/LINKEDIN/YOUTUBE/TIKTOK_*_ACTOR_ID), `getApifyToken()`, `getApifyActorId(platform)`, `isApifyReady(platform)`, `buildActorInput(platform, url)`. Token/secret loglanmaz.
+  - **`lib/yoai/apifySocialRunner.ts` (yeni):** Apify REST API runner. Async flow: actor start → poll status → dataset fetch. Timeout 90s, rate-limit (429), failed actor durumları net raporlanır (`apify_token_missing`, `apify_actor_missing`, `apify_run_failed`, `apify_dataset_empty`, `apify_timeout`, `apify_rate_limited`). Sistem kırılmaz.
+  - **`lib/yoai/socialProfileNormalizer.ts` (yeni):** Per-platform normalizer (Instagram, Facebook, LinkedIn, YouTube, TikTok). `NormalizedSocialProfile` ortak shape. Defensive parsing — field yoksa uydurma yok. `normalizeSocialProfile(platform, raw, url)` dispatch.
+  - **`lib/yoai/socialSourceScanner.ts` (güncellendi):** Apify token + actor ID mevcutsa → Apify actor dene → normalize → output. Apify fail/empty → public metadata fallback. `error_message` formatında `|provider:{value}` her durumda yazılır. Gözetim Merkezi mevcut parser ile uyumlu.
+  - **`src/tests/apifySocialScanner.test.ts` (yeni):** 28 test — config, runner mock, normalizer per-platform, fake data kontrolü, token güvenlik, BI memory binding, Gözetim Merkezi data shape.
+- **Dosyalar:** `lib/yoai/apifySocialConfig.ts`, `lib/yoai/apifySocialRunner.ts`, `lib/yoai/socialProfileNormalizer.ts`, `lib/yoai/socialSourceScanner.ts`, `src/tests/apifySocialScanner.test.ts`
+
 ## 2026-05-13 — Hidden Gözetim Merkezi Dashboard
 - **Sorun:** Kullanıcı/firma/scan/BI durumlarını ayrı bir admin domain'i açmadan, sadece `onursuay@hotmail.com` hesabına gizli görünecek şekilde proje içinden izlemek gerekiyordu. Normal kullanıcı sidebar item'ı görmemeli; URL'yi bilse bile 403 değil sessiz redirect almalı; admin alanının varlığı sızdırılmamalı. ADMIN_SECRET manuel erişim bozulmamalı.
 - **Çözüm:**

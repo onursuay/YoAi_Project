@@ -2,20 +2,28 @@
    YoAi — Social Source Scanner
 
    Sosyal medya kaynaklarını (Instagram, Facebook, LinkedIn,
-   YouTube, TikTok) en azından PUBLIC METADATA düzeyinde
-   tarar. Bot engeli / login wall karşılaşırsa partial veya
-   failed olarak işaretler. Fake data ÜRETMEZ.
+   YouTube, TikTok) tarar.
 
    Strateji:
-     1) Önce HTTP fetch dene (og:title, og:description, title,
-        meta description, canonical, görünür gövde özeti).
-     2) Eğer içerik login wall ise (Login required, sign up to
-        continue vb.) scan_status='partial' veya 'failed' yaz.
-     3) Sağlayıcı (Apify) entegrasyonu burada yer almaz —
-        bu modül public metadata fallback'idir.
+     1) APIFY_API_TOKEN + platform actor ID mevcutsa → Apify
+        actor çalıştır, sonucu normalize et.
+     2) Apify fail/empty ise → public metadata fallback dene.
+     3) Public metadata da fail ise → scan_status='failed'.
+     4) Her durumda provider_used ve error_message net yazılır.
+     5) Fake data ÜRETİLMEZ.
    ────────────────────────────────────────────────────────── */
 
 import type { SourceScanInput, SourceScanOutput, SourceType } from './businessSourceScanner'
+import {
+  type ApifySocialPlatform,
+  getApifyToken,
+  getApifyActorId,
+  platformToProviderUsed,
+  isApifyReady,
+  buildActorInput,
+} from './apifySocialConfig'
+import { runApifyActor } from './apifySocialRunner'
+import { normalizeSocialProfile, type NormalizedSocialProfile } from './socialProfileNormalizer'
 
 const FETCH_TIMEOUT_MS = 8_000
 const RAW_EXCERPT_CHARS = 1_500
@@ -27,9 +35,7 @@ export function isSocialSourceType(type: SourceType): boolean {
   return SOCIAL_TYPES.includes(type)
 }
 
-/* ── HTML helpers (intentionally duplicated to keep this module
-   independent of businessSourceScanner internals; both modules
-   are small) ──────────────────────────────────────────────── */
+/* ── HTML helpers ─────────────────────────────────────────── */
 
 function stripHtml(html: string): string {
   return html
@@ -123,7 +129,7 @@ function extractKeywords(text: string, max = 15): string[] {
     .map(([k]) => k)
 }
 
-/* ── Login-wall / blocked-page detection ──────────────────── */
+/* ── Login-wall detection ─────────────────────────────────── */
 
 const LOGIN_WALL_MARKERS = [
   'log in to see',
@@ -139,16 +145,13 @@ const LOGIN_WALL_MARKERS = [
 
 function looksLikeLoginWall(text: string): boolean {
   const lower = text.toLowerCase()
-  let hits = 0
   for (const m of LOGIN_WALL_MARKERS) {
-    if (lower.includes(m)) hits++
-    if (hits >= 1) return true
+    if (lower.includes(m)) return true
   }
-  // Heuristic: very short body with mostly UI strings
   return text.length < 200 && /login|sign in|oturum/i.test(lower)
 }
 
-/* ── Provider info ─────────────────────────────────────────── */
+/* ── Provider info (kept for backward compatibility) ──────── */
 
 export interface SocialScanProviderInfo {
   provider: 'public_metadata' | 'apify' | 'none'
@@ -156,16 +159,16 @@ export interface SocialScanProviderInfo {
 }
 
 export function getSocialScanProviderInfo(): SocialScanProviderInfo {
-  const apifyTokenPresent = !!(process.env.APIFY_API_TOKEN || process.env.APIFY_TOKEN)
+  const apifyTokenPresent = !!getApifyToken()
   return {
     provider: 'public_metadata',
     apifyTokenPresent,
   }
 }
 
-/* ── Public scanner ───────────────────────────────────────── */
+/* ── Shared helpers ───────────────────────────────────────── */
 
-function failed(input: SourceScanInput, now: string, error: string, providerUsed: string): SourceScanOutput & { provider_used?: string } {
+function failedOutput(input: SourceScanInput, now: string, error: string, providerUsed: string): SourceScanOutput {
   return {
     source_type: input.source_type,
     source_url: input.source_url || null,
@@ -189,38 +192,55 @@ function failed(input: SourceScanInput, now: string, error: string, providerUsed
 }
 
 function userAgentForType(type: SourceType): string {
-  // YouTube and LinkedIn tend to be more permissive for typical browsers;
-  // generic UA works for all and avoids platform-specific games.
   void type
   return 'Mozilla/5.0 (compatible; YoAi-SocialScanner/1.0; +https://yoai)'
 }
 
-/**
- * scanSocialSource — public metadata fallback.
- *
- * Provider seçimi:
- *   - APIFY_API_TOKEN varsa "provider_used = apify_not_wired" olarak işaretlenir
- *     (gerçek Apify actor entegrasyonu sosyal kaynaklar için kuruluncaya kadar
- *     bu modül public HTTP'i deniyor — sahte veri üretmez).
- *   - Token yoksa "provider_used = public_metadata".
- *
- * Public HTTP başarısızsa → failed.
- * Public HTTP başarılı ama login wall → partial (description tutulur).
- */
-export async function scanSocialSource(input: SourceScanInput): Promise<SourceScanOutput> {
-  const now = new Date().toISOString()
-  const url = (input.source_url || '').trim()
-  if (!url) {
-    return failed(input, now, 'no_url', 'none')
-  }
-  if (!isSocialSourceType(input.source_type)) {
-    return failed(input, now, 'unsupported_source_type', 'none')
-  }
+/* ── Build output from Apify-normalized profile ────────────── */
 
-  const providerInfo = getSocialScanProviderInfo()
-  const providerUsed: string = providerInfo.apifyTokenPresent
-    ? 'apify_present_public_metadata_fallback'
-    : 'public_metadata'
+function buildOutputFromApify(
+  profile: NormalizedSocialProfile,
+  input: SourceScanInput,
+  now: string,
+  provider: string,
+): SourceScanOutput {
+  const corpus = [profile.bio, ...profile.recentPostTexts].filter(Boolean).join(' ')
+  const rawExcerpt = corpus.slice(0, RAW_EXCERPT_CHARS) || null
+
+  const socialProof = profile.followersCount !== null
+    ? `${profile.followersCount.toLocaleString('tr-TR')} takipçi`
+    : null
+
+  return {
+    source_type: input.source_type,
+    source_url: profile.sourceUrl || input.source_url || null,
+    scan_status: 'completed',
+    raw_excerpt: rawExcerpt,
+    extracted_title: profile.profileName,
+    extracted_description: profile.bio ?? profile.description,
+    extracted_services: profile.extractedServices,
+    extracted_products: [],
+    extracted_keywords: [...profile.extractedKeywords, ...profile.hashtags.slice(0, 5)].slice(0, 15),
+    extracted_audience: profile.extractedAudience,
+    extracted_locations: profile.extractedLocations,
+    extracted_ctas: profile.extractedCtas,
+    extracted_brand_tone: profile.extractedBrandTone,
+    extracted_offers: profile.extractedOffers,
+    extracted_social_proof: socialProof,
+    confidence: profile.confidence,
+    error_message: `|provider:${provider}`,
+    scanned_at: now,
+  }
+}
+
+/* ── Public metadata path (HTTP fallback) ─────────────────── */
+
+async function scanPublicMetadata(
+  input: SourceScanInput,
+  now: string,
+  providerUsed: string,
+): Promise<SourceScanOutput> {
+  const url = (input.source_url || '').trim()
 
   const controller = new AbortController()
   const timeout = setTimeout(() => controller.abort(), FETCH_TIMEOUT_MS)
@@ -237,12 +257,12 @@ export async function scanSocialSource(input: SourceScanInput): Promise<SourceSc
     clearTimeout(timeout)
 
     if (!res.ok) {
-      return failed(input, now, `http_${res.status}`, providerUsed)
+      return failedOutput(input, now, `http_${res.status}`, providerUsed)
     }
 
     const ct = res.headers.get('content-type') || ''
     if (!ct.includes('text/html') && !ct.includes('application/xhtml')) {
-      return failed(input, now, `unsupported_content_type:${ct.split(';')[0]}`, providerUsed)
+      return failedOutput(input, now, `unsupported_content_type:${ct.split(';')[0]}`, providerUsed)
     }
 
     const html = await res.text()
@@ -259,17 +279,18 @@ export async function scanSocialSource(input: SourceScanInput): Promise<SourceSc
     const ctas = findHints(corpus, CTA_HINTS, 5)
     const offers = findHints(corpus, OFFER_HINTS, 5)
 
-    // Minimal signal threshold — if neither title nor description came out,
-    // treat as failed (we never invent data).
     if (!title && !description && body.length < 200) {
-      return failed(input, now, 'no_extractable_metadata', providerUsed)
+      return failedOutput(input, now, 'no_extractable_metadata', providerUsed)
     }
 
-    // Login wall yet some metadata exists → partial
     const status: SourceScanOutput['scan_status'] = blocked ? 'failed' : 'completed'
-    const errorMessage = blocked ? `login_wall|provider:${providerUsed}` : null
+    const errorMessage = blocked
+      ? `login_wall|provider:${providerUsed}`
+      : providerUsed === 'public_metadata'
+        ? null  // no-change for plain public_metadata success
+        : `|provider:${providerUsed}` // fallback_public_metadata: track provider even on success
 
-    const confidence = blocked
+    const conf = blocked
       ? 0
       : Math.min(
           80,
@@ -296,13 +317,70 @@ export async function scanSocialSource(input: SourceScanInput): Promise<SourceSc
       extracted_brand_tone: null,
       extracted_offers: blocked ? [] : offers,
       extracted_social_proof: canonical && /verified|doğrulanmış/i.test(corpus) ? canonical : null,
-      confidence,
+      confidence: conf,
       error_message: errorMessage,
       scanned_at: now,
     }
   } catch (e) {
     clearTimeout(timeout)
     const msg = e instanceof Error ? e.message : 'unknown_error'
-    return failed(input, now, msg.includes('aborted') ? 'timeout' : msg.slice(0, 160), providerUsed)
+    return failedOutput(
+      input,
+      now,
+      msg.includes('aborted') ? 'timeout' : msg.slice(0, 160),
+      providerUsed,
+    )
   }
+}
+
+/* ── Main scanner ─────────────────────────────────────────── */
+
+/**
+ * scanSocialSource
+ *
+ * Provider selection:
+ *   1. APIFY_API_TOKEN + platform actor ID present → try Apify
+ *   2. Apify success → return normalized output, provider=apify_<platform>
+ *   3. Apify fail/empty → fallback to public metadata (provider=fallback_public_metadata)
+ *   4. No Apify config → public metadata directly (provider=public_metadata)
+ *   5. Public metadata fail → failed scan (fake data never produced)
+ */
+export async function scanSocialSource(input: SourceScanInput): Promise<SourceScanOutput> {
+  const now = new Date().toISOString()
+  const url = (input.source_url || '').trim()
+
+  if (!url) {
+    return failedOutput(input, now, 'no_url', 'none')
+  }
+  if (!isSocialSourceType(input.source_type)) {
+    return failedOutput(input, now, 'unsupported_source_type', 'none')
+  }
+
+  const platform = input.source_type as ApifySocialPlatform
+
+  // ── Apify path ──────────────────────────────────────────
+  if (isApifyReady(platform)) {
+    const token = getApifyToken()!
+    const actorId = getApifyActorId(platform)!
+    const actorInput = buildActorInput(platform, url)
+    const apifyResult = await runApifyActor(token, actorId, actorInput)
+
+    if (apifyResult.ok && apifyResult.items.length > 0) {
+      const profile = normalizeSocialProfile(platform, apifyResult.items[0], url)
+      if (profile.confidence > 0 || profile.profileName || profile.bio) {
+        return buildOutputFromApify(profile, input, now, platformToProviderUsed(platform))
+      }
+      // Apify returned data but normalizer extracted nothing useful
+    }
+
+    // Apify failed or empty → try public metadata fallback
+    return scanPublicMetadata(input, now, 'fallback_public_metadata')
+  }
+
+  // ── Public metadata path (no Apify) ─────────────────────
+  const providerUsed: string = getApifyToken()
+    ? 'apify_actor_missing_public_metadata'
+    : 'public_metadata'
+
+  return scanPublicMetadata(input, now, providerUsed)
 }
