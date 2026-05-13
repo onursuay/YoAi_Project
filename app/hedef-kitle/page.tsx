@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Sparkles, Globe, Users, Target } from 'lucide-react'
+import { Plus, Sparkles, Globe, Users, Target, Info } from 'lucide-react'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
 import { ToastContainer } from '@/components/Toast'
@@ -24,6 +24,24 @@ interface Assets {
   pixels: { id: string; name: string }[]
   instagramAccounts: { id: string; username: string }[]
   pages: { id: string; name: string }[]
+}
+
+interface AudienceBusinessContextSnapshot {
+  businessContextLoaded: boolean
+  businessContextConfidence: number
+  sectorLabel: string | null
+  location: string[]
+  competitorCount: number
+  hasIntelligenceMemory: boolean
+  summaryText: string
+  audienceSeedHints: {
+    audiencePains: string[]
+    audienceMotivations: string[]
+    audienceTypes: string[]
+    declaredTargetAudience: string | null
+    recommendedMetaObjectives: string[]
+    recommendedGoogleCampaignTypes: string[]
+  }
 }
 
 interface MetaAudience {
@@ -74,6 +92,8 @@ export default function HedefKitlePage() {
   const [wizardOpen, setWizardOpen] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [assets, setAssets] = useState<Assets>({ pixels: [], instagramAccounts: [], pages: [] })
+  const [businessContext, setBusinessContext] =
+    useState<AudienceBusinessContextSnapshot | null>(null)
 
   const addToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     const id = crypto.randomUUID()
@@ -126,6 +146,24 @@ export default function HedefKitlePage() {
     }
   }, [])
 
+  const fetchBusinessContext = useCallback(async () => {
+    try {
+      const res = await fetch('/api/audiences/business-context')
+      if (!res.ok) {
+        setBusinessContext(null)
+        return
+      }
+      const json = await res.json()
+      if (json?.ok && json?.data) {
+        setBusinessContext(json.data as AudienceBusinessContextSnapshot)
+      } else {
+        setBusinessContext(null)
+      }
+    } catch {
+      setBusinessContext(null)
+    }
+  }, [])
+
   const fetchAssets = useCallback(async () => {
     try {
       const res = await fetch('/api/meta/capabilities')
@@ -145,7 +183,8 @@ export default function HedefKitlePage() {
   useEffect(() => {
     fetchAudiences()
     fetchAssets()
-  }, [fetchAudiences, fetchAssets])
+    fetchBusinessContext()
+  }, [fetchAudiences, fetchAssets, fetchBusinessContext])
 
   const handleDelete = async (id: string) => {
     try {
@@ -166,6 +205,52 @@ export default function HedefKitlePage() {
       />
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-6xl mx-auto space-y-4">
+          {/* Business Intelligence Memory banner — Hedef Kitle runtime context */}
+          {businessContext && businessContext.businessContextLoaded && (
+            <div className="rounded-2xl border border-primary/20 bg-primary/5 p-4">
+              <div className="flex items-start gap-3">
+                <div className="w-9 h-9 rounded-xl bg-primary/10 flex items-center justify-center shrink-0">
+                  <Info className="w-5 h-5 text-primary" />
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-center gap-2 flex-wrap">
+                    <h3 className="text-sm font-semibold text-primary">
+                      Business Intelligence Memory bağlı
+                    </h3>
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                      Güven %{businessContext.businessContextConfidence}
+                    </span>
+                    {businessContext.hasIntelligenceMemory && (
+                      <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700 border border-emerald-200">
+                        Hafıza aktif
+                      </span>
+                    )}
+                  </div>
+                  <p className="text-sm text-gray-700 mt-1.5 leading-relaxed">
+                    {businessContext.summaryText}
+                  </p>
+                  {(businessContext.audienceSeedHints.audienceMotivations.length > 0 ||
+                    businessContext.audienceSeedHints.audiencePains.length > 0) && (
+                    <div className="mt-3 grid grid-cols-1 md:grid-cols-2 gap-2 text-xs text-gray-700">
+                      {businessContext.audienceSeedHints.audiencePains.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-900">Hedef kitle ihtiyaçları:</span>{' '}
+                          {businessContext.audienceSeedHints.audiencePains.slice(0, 4).join(', ')}
+                        </div>
+                      )}
+                      {businessContext.audienceSeedHints.audienceMotivations.length > 0 && (
+                        <div>
+                          <span className="font-medium text-gray-900">Motivasyonlar:</span>{' '}
+                          {businessContext.audienceSeedHints.audienceMotivations.slice(0, 4).join(', ')}
+                        </div>
+                      )}
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
           {/* Platform Switcher: Meta / Google */}
           <PlatformTabs activePlatform={platform} onPlatformChange={setPlatform} />
 

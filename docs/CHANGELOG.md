@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-13 — Social Source Scanner Provider + Hedef Kitle Business Context Runtime Binding
+- **Sorun:** Sosyal medya kaynakları (Instagram/Facebook/LinkedIn/YouTube/TikTok) `scraper_provider_missing` ile failed kalıyordu — hiç taranmıyordu. Hedef Kitle alanında BusinessProfileGuard dışında Business Intelligence Memory runtime context olarak hiç bağlanmamıştı.
+- **Çözüm:**
+  - **`lib/yoai/socialSourceScanner.ts` (yeni):** Sosyal kaynaklar için public HTTP metadata fallback — og:title / og:description / title / meta description / canonical / site_name / body excerpt çıkarır. Login wall tespit eder; tespit edilirse `scan_status=failed` + `error_message=login_wall|provider:…` yazar. Hiçbir extractable metadata yoksa `no_extractable_metadata` ile failed. Fake veri YOK.
+  - **`businessSourceScanner.ts` entegrasyonu:** Sosyal kaynak çağrıları artık `scanSocialSource` modülüne delege ediliyor; `scraper_provider_missing` / `social_scraper_not_implemented` literal'leri kaldırıldı.
+  - **`lib/yoai/audienceBusinessContext.ts` (yeni):** Hedef Kitle runtime context interface'i (`AudienceBusinessContextRuntime` + `AudienceSeedHints`). Pure builder `buildAudienceContextFromBusiness(ctx)` test edilebilir; wrapper `getAudienceBusinessContext(userId)` dynamic import üzerinden supabase'i runtime'da yükler. AI persona generator için stabil seed hint şeması: sectorMain/Sub/Label, primaryLocations, audiencePains, audienceMotivations, audienceTypes, keywordThemes, brandTone, productsOrServices, mainConversionGoal, declaredTargetAudience, recommendedMetaObjectives, recommendedGoogleCampaignTypes.
+  - **`/api/audiences/business-context` (yeni route):** Cookie-tabanlı; `getAudienceBusinessContext` ile runtime audience context döner — businessContextLoaded, sector, location, sourceCoverage, confidence, seed hints.
+  - **`app/hedef-kitle/page.tsx` UI binding:** Sayfa açıldığında runtime context'i fetch eder; loaded ise sayfa başına Business Intelligence Memory bilgilendirme banner'ı (sektör / hedef kitle ihtiyaçları / motivasyonlar) eklenir. CLAUDE.md renk paletine uygun: `bg-primary/5 border-primary/20`, chip'ler `bg-emerald-50 text-emerald-700`.
+  - **Super admin scan visibility:** `/api/admin/business-profiles` her scan için artık ayrı `sourceScansSummary` döner — provider_used, errorCore (normalize edilmiş `|provider:` ayrıştırması), source_type/url, scan_status, confidence, extracted_title/description/keywords/services.
+- **Test:** `src/tests/socialSourceScanner.test.ts` (13 test — fetch mocking; provider info; og metadata happy path; login wall failed; HTTP 404; network error; entegre business binding) + `src/tests/hedefKitleBusinessContextBinding.test.ts` (11 test — pure builder; locked/ready context; seed hint şeması; AI generator interface stabilitesi). `businessIntelligenceProfile.test.ts` sosyal provider eski beklentisi güncellendi. Typecheck temiz, build temiz.
+- **Dosyalar:** `lib/yoai/socialSourceScanner.ts` (yeni), `lib/yoai/businessSourceScanner.ts`, `lib/yoai/audienceBusinessContext.ts` (yeni), `app/api/audiences/business-context/route.ts` (yeni), `app/hedef-kitle/page.tsx`, `app/api/admin/business-profiles/route.ts`, `src/tests/socialSourceScanner.test.ts` (yeni), `src/tests/hedefKitleBusinessContextBinding.test.ts` (yeni), `src/tests/businessIntelligenceProfile.test.ts`.
+
+---
+
 ## 2026-05-13 — Business Intelligence Profile + Sector Dropdown + Multi-Source Scanner + YoAlgoritma Card UI Cleanup
 - **Sorun:** YoAi kullanıcı işletmesini tanımadan reklam, strateji, hedef kitle veya öneri üretiyordu; sektör/lokasyon bağlamı yoktu. YoAlgoritma proposal kartları geniş ekranda 3 kolon değildi, üstte gereksiz Meta/Google bölüm başlıkları vardı, kart sol üstünde teknik kampanya türü badge'i gözüküyordu, "OUTCOME_ENGAGEMENT" gibi enum'lar kullanıcıya sızabiliyordu.
 - **Çözüm:**

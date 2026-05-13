@@ -169,13 +169,25 @@ test('No URL → skipped status, no fake data', async () => {
   assert.strictEqual(result.raw_excerpt, null)
 })
 
-test('Sosyal sağlayıcı yoksa scraper_provider_missing yazılır', async () => {
+test('Sosyal kaynak public metadata fallback ile taranır (artık scraper_provider_missing değil)', async () => {
+  // Apify olmadığında bile sosyal kaynaklar public metadata üzerinden
+  // taranmalıdır. Network erişimi olmayan bir host hedeflenirse failed döner
+  // ama hata mesajı eski 'scraper_provider_missing' literal'ini içermez.
   const prev = process.env.APIFY_API_TOKEN
   delete process.env.APIFY_API_TOKEN
   delete process.env.APIFY_TOKEN
-  const result = await scanBusinessSource({ source_type: 'instagram', source_url: 'https://instagram.com/x' })
-  assert.strictEqual(result.scan_status, 'failed')
-  assert.ok(result.error_message?.includes('scraper_provider_missing') || result.error_message?.includes('social_scraper_not_implemented'))
+  const result = await scanBusinessSource({
+    source_type: 'instagram',
+    source_url: 'http://127.0.0.1:65535/no-listener',
+  })
+  // scan_status 'completed' veya 'failed' olabilir — ağ ortamına bağlı.
+  // Önemli olan: provider missing literal'i artık yok, fake veri yok.
+  assert.notStrictEqual(result.error_message, 'scraper_provider_missing')
+  assert.notStrictEqual(result.error_message, 'social_scraper_not_implemented')
+  if (result.scan_status === 'failed') {
+    assert.strictEqual(result.extracted_title, null)
+    assert.strictEqual(result.extracted_description, null)
+  }
   if (prev) process.env.APIFY_API_TOKEN = prev
 })
 

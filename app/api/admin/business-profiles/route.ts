@@ -73,12 +73,44 @@ export async function GET(req: NextRequest) {
       intelByUser.set(i.user_id, i)
     }
 
-    const enriched = (profiles || []).map((p: any) => ({
-      profile: p,
-      competitors: compByUser.get(p.user_id) || [],
-      sourceScans: scanByProfile.get(p.id) || [],
-      intelligence: intelByUser.get(p.user_id) || null,
-    }))
+    const enriched = (profiles || []).map((p: any) => {
+      const profileScans = scanByProfile.get(p.id) || []
+      // Süper admin görünürlüğü: her scan'in provider/hata özetini ayrı bir
+      // alanda da yaymak — UI ham scan'i de görür, normalize özet de görür.
+      const scanSummary = profileScans.map((s: any) => {
+        const err = typeof s.error_message === 'string' ? (s.error_message as string) : null
+        let providerUsed: string | null = null
+        let errorCore: string | null = err
+        if (err && err.includes('|provider:')) {
+          const [core, providerPart] = err.split('|provider:')
+          errorCore = core
+          providerUsed = providerPart || null
+        }
+        return {
+          source_type: s.source_type,
+          source_url: s.source_url,
+          source_owner_type: s.source_owner_type,
+          competitor_id: s.competitor_id,
+          scan_status: s.scan_status,
+          provider_used: providerUsed,
+          error_message: errorCore,
+          raw_error_message: err,
+          confidence: s.confidence,
+          scanned_at: s.scanned_at,
+          extracted_title: s.extracted_title,
+          extracted_description: s.extracted_description,
+          extracted_keywords: s.extracted_keywords || [],
+          extracted_services: s.extracted_services || [],
+        }
+      })
+      return {
+        profile: p,
+        competitors: compByUser.get(p.user_id) || [],
+        sourceScans: profileScans,
+        sourceScansSummary: scanSummary,
+        intelligence: intelByUser.get(p.user_id) || null,
+      }
+    })
 
     return NextResponse.json({ ok: true, count: enriched.length, data: enriched })
   } catch (e) {

@@ -1,3 +1,5 @@
+import { scanSocialSource } from './socialSourceScanner'
+
 /* ──────────────────────────────────────────────────────────
    YoAi — Business Source Scanner
 
@@ -343,23 +345,10 @@ function failed(input: SourceScanInput, now: string, error: string): SourceScanO
 const SOCIAL_TYPES: SourceType[] = ['instagram', 'facebook', 'linkedin', 'youtube', 'tiktok']
 
 async function scanSocial(input: SourceScanInput): Promise<SourceScanOutput> {
-  const now = new Date().toISOString()
-  const url = (input.source_url || '').trim()
-  if (!url) {
-    return failed(input, now, 'no_url')
-  }
-
-  // Sosyal scraper sağlayıcı kontrolü — APIFY token varsa Apify üzerinden,
-  // yoksa fail. Sahte veri üretmiyoruz.
-  const apifyToken = process.env.APIFY_API_TOKEN || process.env.APIFY_TOKEN
-  if (!apifyToken) {
-    return failed(input, now, 'scraper_provider_missing')
-  }
-
-  // Apify entegrasyonu çok platform-spesifik (her ağ için ayrı actor).
-  // Mevcut sürümde sosyal scraper yok — provider eksik kabul edilir.
-  // Buraya ileride apifyCompetitorProvider benzeri bir helper bağlanacak.
-  return failed(input, now, 'social_scraper_not_implemented')
+  // Sosyal kaynak taraması socialSourceScanner modülüne delege edilir.
+  // Önce public metadata (og:title, og:description, title, body excerpt) denenir;
+  // login wall karşılaşılırsa failed yazılır. Fake veri üretilmez.
+  return scanSocialSource(input)
 }
 
 /* ── Public API ───────────────────────────────────────────── */
