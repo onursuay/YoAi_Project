@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { navItems } from '@/lib/nav'
+import { navItems, gozetimMerkeziNavItem } from '@/lib/nav'
 import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
@@ -17,6 +17,21 @@ export default function SidebarNav() {
   const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
   const [collapsed, setCollapsed] = useState<boolean>(false)
   const [animate, setAnimate] = useState(false)
+  const [hasGozetimAccess, setHasGozetimAccess] = useState<boolean>(false)
+
+  // Gözetim Merkezi yetki kontrolü — yalnızca yetkili oturum için menü çıkar.
+  // Normal kullanıcı için cevap her zaman 200 olur, sızıntı yok.
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/admin/me', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((data) => {
+        if (cancelled) return
+        if (data && data.hasAccess === true) setHasGozetimAccess(true)
+      })
+      .catch(() => { /* sessizce yok say */ })
+    return () => { cancelled = true }
+  }, [])
 
   // Read saved state before paint, then enable transitions
   useLayoutEffect(() => {
@@ -81,9 +96,16 @@ export default function SidebarNav() {
       return id.replace(/-/g, '')
     }
 
-    return navItems.map(item => ({
+    const baseItems = hasGozetimAccess
+      ? [...navItems, gozetimMerkeziNavItem]
+      : navItems
+
+    return baseItems.map(item => ({
       ...item,
-      label: t(getTranslationKey(item.id)),
+      // Gözetim Merkezi sabit (Türkçe) etiket kullanır; locale-agnostic.
+      label: item.id === 'gozetim-merkezi'
+        ? item.label
+        : t(getTranslationKey(item.id)),
       href: item.href ? localePath(item.href, locale) : item.href,
       children: item.children?.map(child => ({
         ...child,
@@ -91,7 +113,7 @@ export default function SidebarNav() {
         href: child.href ? localePath(child.href, locale) : child.href,
       }))
     }))
-  }, [t, locale])
+  }, [t, locale, hasGozetimAccess])
 
   return (
     <div

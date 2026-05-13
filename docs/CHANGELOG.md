@@ -2,6 +2,21 @@
 
 ---
 
+## 2026-05-13 — Hidden Gözetim Merkezi Dashboard
+- **Sorun:** Kullanıcı/firma/scan/BI durumlarını ayrı bir admin domain'i açmadan, sadece `onursuay@hotmail.com` hesabına gizli görünecek şekilde proje içinden izlemek gerekiyordu. Normal kullanıcı sidebar item'ı görmemeli; URL'yi bilse bile 403 değil sessiz redirect almalı; admin alanının varlığı sızdırılmamalı. ADMIN_SECRET manuel erişim bozulmamalı.
+- **Çözüm:**
+  - **`lib/admin/superAdmin.ts` (yeni):** Merkezi yetki helper'ı. `SUPER_ADMIN_EMAILS` env (default `onursuay@hotmail.com`), `isSuperAdminEmail()`, `resolveSessionEmail()` (httpOnly `user_id` → signups.email lookup; public `user_email` cookie'ye güvenmez), `getIsCurrentUserSuperAdmin()`, `checkAdminAccess()` — `x-admin-secret` header VEYA oturum e-postası ile yetkilendirir, yetki yoksa 404 önerir (admin alanı sızdırılmaz).
+  - **`/api/admin/me`:** Sidebar görünürlük keşfi. Her oturum için 200 + `{ hasAccess: boolean }`. Yetkisiz kullanıcı için aynı şekil cevap → admin varlığı sızdırılmaz.
+  - **`/api/admin/gozetim-merkezi` (yeni konsolide endpoint):** KPI'ler (toplam kullanıcı, onboarding tamam/eksik, profilsiz kullanıcı, toplam scan, completed/running/failed scan, ortalama intelligence confidence), `signups` join'li firma listesi (kullanıcı email/isim/durum + profile + competitors + sourceScansSummary + intelligenceSummary), son kayıt olan kullanıcılar listesi. `checkAdminAccess` ile korumalı, 404 sızıntısız.
+  - **`/api/admin/business-profiles` hardening:** Eski `x-admin-secret`-only check → `checkAdminAccess` (header VEYA oturum). 401 yerine 404. ADMIN_SECRET manuel kullanım korunuyor.
+  - **`/gozetim-merkezi` route:** `app/gozetim-merkezi/page.tsx` server component — yetki yoksa `redirect('/dashboard')`. 403/forbidden ekranı yok. `layout.tsx` sidebar + main content. `GozetimMerkeziClient.tsx` (KPI grid, kullanıcı/firma tablosu, son kayıtlar tablosu, sağ tarafta açılan detay drawer — firma bilgileri / rakipler / source scan + extracted_title/description/keywords/services + error / business intelligence summary).
+  - **Sidebar (`components/SidebarNav.tsx`):** Mount'ta `/api/admin/me` fetch; `hasAccess=true` ise `gozetimMerkeziNavItem` dinamik enjekte. Default state `false` → normal kullanıcı item'ı asla görmez. `lib/nav.ts` içinde ayrı export, `navItems` içine konmaz.
+  - **UI kuralları:** `Süper Admin` / `Admin Panel` ifadesi hiçbir kullanıcı-facing metinde geçmez (sadece teknik helper adları). Renk paleti: gray/primary/emerald/red — amber/yellow yok. Scan status badge renkleri palet ile uyumlu.
+- **Test:** `src/tests/gozetimMerkeziAccess.test.ts` (24 test — allowlist, env override, ADMIN_SECRET path, 404 sızıntısı, signups join, scan extracted fields, sidebar gating, navItems içinde değil, page server-side guard, sessiz redirect, "Süper Admin"/"Admin Panel" UI metni yok, amber/yellow yok). Mevcut `businessIntelligenceProfile.test.ts` (18/18) çalışmaya devam ediyor. Typecheck temiz, `npm run build` temiz — `/gozetim-merkezi` route'u prod bundle'da kayıtlı.
+- **Dosyalar:** `lib/admin/superAdmin.ts` (yeni), `lib/nav.ts`, `components/SidebarNav.tsx`, `app/api/admin/me/route.ts` (yeni), `app/api/admin/gozetim-merkezi/route.ts` (yeni), `app/api/admin/business-profiles/route.ts`, `app/gozetim-merkezi/page.tsx` (yeni), `app/gozetim-merkezi/layout.tsx` (yeni), `app/gozetim-merkezi/GozetimMerkeziClient.tsx` (yeni), `src/tests/gozetimMerkeziAccess.test.ts` (yeni), `docs/CHANGELOG.md`.
+
+---
+
 ## 2026-05-13 — Social Source Scanner Provider + Hedef Kitle Business Context Runtime Binding
 - **Sorun:** Sosyal medya kaynakları (Instagram/Facebook/LinkedIn/YouTube/TikTok) `scraper_provider_missing` ile failed kalıyordu — hiç taranmıyordu. Hedef Kitle alanında BusinessProfileGuard dışında Business Intelligence Memory runtime context olarak hiç bağlanmamıştı.
 - **Çözüm:**

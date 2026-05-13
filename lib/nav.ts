@@ -8,7 +8,8 @@ import {
   FileText,
   Search,
   Puzzle,
-  Building2
+  Building2,
+  ShieldCheck
 } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 
@@ -132,4 +133,16 @@ export const navItems: NavItem[] = [
     ],
   },
 ]
+
+/**
+ * Gözetim Merkezi menü öğesi — yalnızca yetkili oturum için sidebar'a
+ * eklenir. `navItems` içine konmaz; client tarafında dinamik enjekte edilir.
+ * UI etiketi her zaman "Gözetim Merkezi" — locale dosyalarına ihtiyaç yoktur.
+ */
+export const gozetimMerkeziNavItem: NavItem = {
+  id: 'gozetim-merkezi',
+  label: 'Gözetim Merkezi',
+  href: '/gozetim-merkezi',
+  icon: ShieldCheck,
+}
 

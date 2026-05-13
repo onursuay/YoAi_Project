@@ -8,17 +8,17 @@
 
 import { NextRequest, NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
+import { checkAdminAccess } from '@/lib/admin/superAdmin'
 
 export const dynamic = 'force-dynamic'
 
 export async function GET(req: NextRequest) {
-  const adminSecret = process.env.ADMIN_SECRET
-  if (!adminSecret?.trim()) {
-    return NextResponse.json({ error: 'ADMIN_SECRET not configured' }, { status: 503 })
-  }
-  const headerSecret = req.headers.get('x-admin-secret')
-  if (headerSecret !== adminSecret) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
+  // Erişim: ADMIN_SECRET header (manuel/internal) VEYA Gözetim Merkezi
+  // yetkili oturum cookie'si. Yetkisiz çağrı admin alanının varlığını
+  // ele vermeden 404 ile reddedilir.
+  const access = await checkAdminAccess(req)
+  if (!access.ok) {
+    return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })
   }
   if (!supabase) {
     return NextResponse.json({ ok: false, error: 'supabase_unavailable' }, { status: 503 })
