@@ -196,7 +196,15 @@ async function runGeneratePlanJob(job: SyncJob): Promise<void> {
   await supabase.from('sync_jobs').update({ progress: 40 }).eq('id', job.id)
 
   // Blueprint üret — AI varsa AI, yoksa template fallback
-  const { blueprint, aiGenerated } = await generateBlueprintWithAI(inputRow.payload as InputPayload)
+  // Business context prompt block: API route business profile'ı çekip
+  // payload._yoai_business_context_prompt alanına yazmış olabilir.
+  const rawPayload = inputRow.payload as InputPayload & { _yoai_business_context_prompt?: string | null }
+  const businessContextPromptBlock = typeof rawPayload._yoai_business_context_prompt === 'string'
+    ? rawPayload._yoai_business_context_prompt
+    : null
+  const cleanPayload = { ...rawPayload }
+  delete (cleanPayload as Record<string, unknown>)._yoai_business_context_prompt
+  const { blueprint, aiGenerated } = await generateBlueprintWithAI(cleanPayload as InputPayload, businessContextPromptBlock)
 
   await supabase.from('sync_jobs').update({
     progress: 80,

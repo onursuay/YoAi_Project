@@ -345,12 +345,9 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
     return true
   }
 
-  const gridClass = (count: number) =>
-    `grid gap-4 grid-cols-1${count >= 2 ? ' md:grid-cols-2' : ''}${count >= 3 ? ' lg:grid-cols-3' : ''}`
-  const metaProposals = proposals.filter((p) => p.platform === 'Meta' && isVisible(p))
-  const googleProposals = proposals.filter((p) => p.platform === 'Google' && isVisible(p))
-  const newMetaCount = metaProposals.filter((p) => p.isNewObjective).length
-  const newGoogleCount = googleProposals.filter((p) => p.isNewObjective).length
+  // Tüm öneriler tek 3-kolon grid'de toplanır; Meta/Google bölüm başlığı yok.
+  const gridClass = 'grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3'
+  const visibleProposals = proposals.filter(isVisible)
 
   // ── PATCH helpers ──
   const patchApproval = async (
@@ -567,69 +564,35 @@ export default function AiAdSuggestions({ connectedPlatforms, onOpenWizard, onAp
   }
 
   return (
-    <div>
-      {/* Meta proposals */}
-      {metaProposals.length > 0 && (
-        <div className="mb-6">
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[11px] font-bold text-white bg-[#1877F2] px-2.5 py-1 rounded">Meta</span>
-            <span className="text-[12px] text-gray-500">
-              {metaProposals.length} öneri{newMetaCount > 0 ? ` (${newMetaCount} yeni amaç)` : ''}
-            </span>
-          </div>
-          <div className={gridClass(metaProposals.length)}>
-            {metaProposals.map((p, i) => {
-              const diag = p.sourceCampaignId
-                ? diagnoses.find((d) => d.campaignId === p.sourceCampaignId)
-                : undefined
-              const dec = p.sourceCampaignId
-                ? decisions.find((d) => d.campaignId === p.sourceCampaignId)
-                : undefined
-              const diagnostic = diag
-                ? {
-                    label: ROOT_CAUSE_LABEL[diag.primary.id],
-                    summary: diag.primary.summary,
-                    action: dec?.actions[0]?.title,
-                    isHealthy: diag.primary.id === 'healthy',
-                  }
-                : undefined
-              return (
-                <AdPreviewCard
-                  key={p.id || `meta_${i}`}
-                  proposal={p}
-                  selected={false}
-                  onSelect={() => onOpenWizard(p)}
-                  diagnostic={diagnostic}
-                  actionFooter={renderActionRow(p)}
-                />
-              )
-            })}
-          </div>
-        </div>
-      )}
-
-      {/* Google proposals */}
-      {googleProposals.length > 0 && (
-        <div>
-          <div className="flex items-center gap-2 mb-3">
-            <span className="text-[11px] font-bold text-white bg-gray-800 px-2.5 py-1 rounded">Google</span>
-            <span className="text-[12px] text-gray-500">
-              {googleProposals.length} öneri{newGoogleCount > 0 ? ` (${newGoogleCount} yeni amaç)` : ''}
-            </span>
-          </div>
-          <div className={gridClass(googleProposals.length)}>
-            {googleProposals.map((p, i) => (
-              <AdPreviewCard
-                key={p.id || `google_${i}`}
-                proposal={p}
-                selected={false}
-                onSelect={() => onOpenWizard(p)}
-                actionFooter={renderActionRow(p)}
-              />
-            ))}
-          </div>
-        </div>
-      )}
+    <div data-testid="yoai-proposal-grid">
+      <div className={gridClass}>
+        {visibleProposals.map((p, i) => {
+          const diag = p.sourceCampaignId
+            ? diagnoses.find((d) => d.campaignId === p.sourceCampaignId)
+            : undefined
+          const dec = p.sourceCampaignId
+            ? decisions.find((d) => d.campaignId === p.sourceCampaignId)
+            : undefined
+          const diagnostic = diag
+            ? {
+                label: ROOT_CAUSE_LABEL[diag.primary.id],
+                summary: diag.primary.summary,
+                action: dec?.actions[0]?.title,
+                isHealthy: diag.primary.id === 'healthy',
+              }
+            : undefined
+          return (
+            <AdPreviewCard
+              key={p.id || `proposal_${i}`}
+              proposal={p}
+              selected={false}
+              onSelect={() => onOpenWizard(p)}
+              diagnostic={diagnostic}
+              actionFooter={renderActionRow(p)}
+            />
+          )
+        })}
+      </div>
     </div>
   )
 }

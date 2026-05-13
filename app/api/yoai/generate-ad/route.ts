@@ -24,6 +24,7 @@ import { buildProposalEngineContext } from '@/lib/yoai/proposalEngineOrchestrato
 import type { EngineContextDiagnostics } from '@/lib/yoai/proposalEngineOrchestrator'
 import type { CompetitorQueryPlan } from '@/lib/yoai/competitorQueryExpander'
 import type { CampaignIntentProfile } from '@/lib/yoai/campaignIntentEngine'
+import { getBusinessContextForUser, buildBusinessContextPromptBlock } from '@/lib/yoai/businessContextStore'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 300
@@ -61,6 +62,11 @@ export async function POST(request: Request) {
       fetchMetaDeep(userId || undefined).catch(e => { console.error('[GenerateAd] Meta fetch failed:', e); return { campaigns: [] as any[], errors: ['Meta fetch hatası'], connected: false } }),
       fetchGoogleDeep(userId || undefined).catch(e => { console.error('[GenerateAd] Google fetch failed:', e); return { campaigns: [] as any[], errors: ['Google fetch hatası'], connected: false } }),
     ])
+
+    // Business context — kullanıcı işletmesi (zorunlu bağlam, locked değilse kullan)
+    const businessContext = userId ? await getBusinessContextForUser(userId) : null
+    const businessContextPromptBlock = businessContext ? buildBusinessContextPromptBlock(businessContext) : null
+    const businessKeywords = businessContext?.keywords || []
 
     // Orchestrator diagnostics accumulator — platform başına toplanır, response'a eklenir
     const engineDiagnosticsMap: Record<string, EngineContextDiagnostics> = {}
@@ -161,6 +167,7 @@ export async function POST(request: Request) {
                 userId: userId || null,
                 platform: p,
                 platformCampaigns: platformCampaignsForOrchestrator,
+                businessKeywords,
               })
               intentProfilesByCampaignId = engineCtx.intentProfilesByCampaignId
               competitorQueryPlansByCampaignId = engineCtx.competitorQueryPlansByCampaignId
@@ -218,6 +225,7 @@ export async function POST(request: Request) {
             decisionDeskResultsByCampaignId,
             intentProfilesByCampaignId,
             competitorQueryPlansByCampaignId,
+            businessContextPromptBlock,
           )
           console.log(`[GenerateAd] ${p}: ${result.proposals.length} proposals, aiGenerated: ${result.aiGenerated}`)
           results.push(result)

@@ -397,6 +397,8 @@ function buildPrompt(
   intentProfilesByCampaignId?: Record<string, CampaignIntentProfile>,
   /** Competitor Query Expander: campaign_id → platform-specific query plan. */
   competitorQueryPlansByCampaignId?: Record<string, CompetitorQueryPlan>,
+  /** Business Intelligence Profile — kullanıcı işletmesi için zorunlu bağlam. */
+  businessContextPromptBlock?: string | null,
 ): { system: string; user: string } {
   const isGoogle = platform === 'Google'
   const knowledge = isGoogle ? GOOGLE_TYPE_KNOWLEDGE : META_OBJECTIVE_KNOWLEDGE
@@ -524,6 +526,7 @@ ${comparison.competitorSummary || 'Rakip verisi yok'}
 RAKİP REKLAMLARI:
 ${compTexts || 'Yok'}${persistedBlock}
 
+${businessContextPromptBlock ? `\n${businessContextPromptBlock}\n` : ''}
 GÖREV: Her kampanya için AYNI amaca karşılık gelen daha güçlü AI kampanya yapısı öner.
 ${fitAnalyses.length} öneri bekleniyor.`
 
@@ -581,6 +584,8 @@ export async function generateFullAutoProposals(
   intentProfilesByCampaignId?: Record<string, CampaignIntentProfile>,
   /** Competitor Query Expander: campaign_id → platform-specific query plan (platform izolasyonu garantili). */
   competitorQueryPlansByCampaignId?: Record<string, CompetitorQueryPlan>,
+  /** Business Intelligence Profile prompt block — kullanıcı işletmesi için ortak bağlam. */
+  businessContextPromptBlock?: string | null,
 ): Promise<AdCreationResult> {
   // 1. Filter active campaigns for this platform
   const activeCampaigns = campaigns.filter(c =>
@@ -660,6 +665,7 @@ export async function generateFullAutoProposals(
       officialKnowledgeContext,
       intentProfilesByCampaignId,
       competitorQueryPlansByCampaignId,
+      businessContextPromptBlock,
     )
     const aiResult = await callAI(system, userPrompt)
 

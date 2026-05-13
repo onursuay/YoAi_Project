@@ -4,6 +4,80 @@ import type { ReactNode } from 'react'
 import { Globe } from 'lucide-react'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 
+// Kampanya amacı / objective enum'larını kullanıcıya Türkçe humanized göster.
+// Teknik enum (OUTCOME_ENGAGEMENT, MAXIMIZE_CONVERSIONS, vb.) kullanıcıya gösterilmez.
+const CAMPAIGN_TYPE_HUMAN_LABEL: Record<string, string> = {
+  // Meta objectives
+  OUTCOME_TRAFFIC: 'Trafik',
+  OUTCOME_ENGAGEMENT: 'Etkileşim',
+  OUTCOME_LEADS: 'Potansiyel Müşteri',
+  OUTCOME_SALES: 'Satış',
+  OUTCOME_AWARENESS: 'Bilinirlik',
+  OUTCOME_APP_PROMOTION: 'Uygulama Tanıtımı',
+  POST_ENGAGEMENT: 'Gönderi Etkileşimi',
+  TRAFFIC: 'Trafik',
+  CONVERSIONS: 'Dönüşüm',
+  ENGAGEMENT: 'Etkileşim',
+  LEAD_GENERATION: 'Potansiyel Müşteri',
+  VIDEO_VIEWS: 'Video İzlenmesi',
+  BRAND_AWARENESS: 'Marka Bilinirliği',
+  REACH: 'Erişim',
+  MESSAGES: 'Mesajlaşma',
+  CATALOG_SALES: 'Katalog Satışları',
+  MAXIMIZE_CONVERSIONS: 'Dönüşüm Maksimizasyonu',
+  SEND_MESSAGE: 'Mesaj Gönder',
+  // Google campaign types
+  SEARCH: 'Arama',
+  PERFORMANCE_MAX: 'Performance Max',
+  DISPLAY: 'Display',
+  VIDEO: 'Video',
+  SHOPPING: 'Shopping',
+  DISCOVERY: 'Discovery',
+  DEMAND_GEN: 'Demand Gen',
+  LOCAL: 'Local',
+  APP: 'App',
+}
+
+function humanizeCampaignType(value: string | undefined | null): string {
+  if (!value) return '—'
+  const upper = value.toUpperCase()
+  if (CAMPAIGN_TYPE_HUMAN_LABEL[upper]) return CAMPAIGN_TYPE_HUMAN_LABEL[upper]
+  // Bilinmeyen enum'u underscore'dan ayırıp Title Case yap
+  return upper
+    .replace(/^OUTCOME_/, '')
+    .replace(/_/g, ' ')
+    .toLowerCase()
+    .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+// Platform logo: küçük inline SVG marker — hem Meta hem Google için ayrı.
+function PlatformLogo({ platform }: { platform: string }) {
+  if (platform === 'Meta') {
+    return (
+      <span data-testid="platform-logo-meta" aria-label="Meta" title="Meta"
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-[#1877F2]">
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="white" aria-hidden="true">
+          <path d="M22.675 0H1.325C.593 0 0 .593 0 1.326v21.348C0 23.407.593 24 1.325 24h11.495v-9.294H9.692V11.01h3.128V8.41c0-3.099 1.893-4.785 4.659-4.785 1.325 0 2.464.099 2.795.143v3.24l-1.918.001c-1.504 0-1.795.715-1.795 1.763v2.31h3.587l-.467 3.696h-3.12V24h6.116c.732 0 1.325-.593 1.325-1.326V1.326C24 .593 23.407 0 22.675 0z" />
+        </svg>
+      </span>
+    )
+  }
+  if (platform === 'Google') {
+    return (
+      <span data-testid="platform-logo-google" aria-label="Google" title="Google"
+        className="inline-flex items-center justify-center w-8 h-8 rounded-lg bg-white border border-slate-300">
+        <svg viewBox="0 0 24 24" width="16" height="16" aria-hidden="true">
+          <path fill="#4285F4" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z" />
+          <path fill="#34A853" d="M12 23c2.97 0 5.46-.98 7.28-2.66l-3.57-2.77c-.98.66-2.23 1.06-3.71 1.06-2.86 0-5.29-1.93-6.16-4.53H2.18v2.84A10.99 10.99 0 0 0 12 23z" />
+          <path fill="#FBBC05" d="M5.84 14.09a6.6 6.6 0 0 1 0-4.18V7.07H2.18a11 11 0 0 0 0 9.86l3.66-2.84z" />
+          <path fill="#EA4335" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84C6.71 7.31 9.14 5.38 12 5.38z" />
+        </svg>
+      </span>
+    )
+  }
+  return null
+}
+
 interface Props {
   proposal: FullAdProposal
   selected: boolean
@@ -127,14 +201,12 @@ export default function AdPreviewCard({ proposal, selected, onSelect, diagnostic
       {/* Clickable main content */}
       <div onClick={onSelect} className="flex flex-col flex-1 cursor-pointer">
 
-        {/* TOP: Badge + Confidence */}
+        {/* TOP: Platform logo + new badge + confidence */}
         <div className="flex items-center justify-between px-4 pt-3 pb-2">
-          <div className="flex items-center gap-1.5 flex-wrap">
-            <span className="text-[10px] font-semibold px-1.5 py-0.5 rounded bg-indigo-500/20 text-indigo-200">
-              {proposal.objectiveLabel || (isGoogle ? 'Google' : 'Meta')}
-            </span>
+          <div className="flex items-center gap-2 flex-wrap">
+            <PlatformLogo platform={proposal.platform} />
             {proposal.isNewObjective && (
-              <span className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
+              <span data-testid="new-suggestion-badge" className="text-[9px] font-medium px-1.5 py-0.5 rounded bg-emerald-500/20 text-emerald-300">
                 Yeni Öneri
               </span>
             )}
@@ -144,6 +216,12 @@ export default function AdPreviewCard({ proposal, selected, onSelect, diagnostic
 
         {/* Campaign structure */}
         <div className="px-4 pb-3 space-y-0.5 text-[11px]">
+          <div className="flex justify-between" data-testid="campaign-type-row">
+            <span className="text-slate-400">Kampanya Türü</span>
+            <span className="text-white font-medium truncate max-w-[60%] text-right">
+              {proposal.objectiveLabel || humanizeCampaignType(proposal.campaignObjective)}
+            </span>
+          </div>
           <div className="flex justify-between">
             <span className="text-slate-400">Kampanya</span>
             <span className="text-white font-medium truncate max-w-[60%] text-right">{proposal.campaignName}</span>

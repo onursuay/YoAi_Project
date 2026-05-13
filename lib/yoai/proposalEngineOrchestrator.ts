@@ -56,8 +56,10 @@ export async function buildProposalEngineContext(params: {
   platform: Platform
   /** All campaigns for the target platform (active + paused — engine filters active internally). */
   platformCampaigns: DeepCampaignInsight[]
+  /** Business Intelligence Profile keywords (kullanıcı işletme bağlamı). */
+  businessKeywords?: string[]
 }): Promise<ProposalEngineContext> {
-  const { userId, platform, platformCampaigns } = params
+  const { userId, platform, platformCampaigns, businessKeywords } = params
 
   const activeCampaigns = platformCampaigns.filter(
     (c) => c.status === 'ACTIVE' || c.status === 'ENABLED',
@@ -109,7 +111,7 @@ export async function buildProposalEngineContext(params: {
         campaignName: campaign.campaignName,
         adGroupNames: campaign.adsets.map((a) => a.name),
         creativeTexts: collectCreativeTexts(campaign),
-        keywordList: [],
+        keywordList: Array.isArray(businessKeywords) ? businessKeywords.slice(0, 25) : [],
       })
       return { campaignId: campaign.id, plan }
     })

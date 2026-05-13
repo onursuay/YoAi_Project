@@ -117,7 +117,10 @@ function integrationLabel(status?: string): string {
 }
 
 // Ana fonksiyon — AI ile üret, başarısız olursa template fallback
-export async function generateBlueprintWithAI(input: InputPayload): Promise<{ blueprint: Blueprint; aiGenerated: boolean }> {
+export async function generateBlueprintWithAI(
+  input: InputPayload,
+  businessContextPromptBlock?: string | null,
+): Promise<{ blueprint: Blueprint; aiGenerated: boolean }> {
   const apiKey = process.env.OPENAI_API_KEY
   const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
   const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
@@ -141,7 +144,7 @@ export async function generateBlueprintWithAI(input: InputPayload): Promise<{ bl
         model,
         messages: [
           { role: 'system', content: SYSTEM_PROMPT },
-          { role: 'user', content: buildUserPrompt(input) },
+          { role: 'user', content: businessContextPromptBlock ? `${businessContextPromptBlock}\n\n${buildUserPrompt(input)}` : buildUserPrompt(input) },
         ],
         temperature: 0.4,
         max_tokens: 4000,

@@ -2,6 +2,24 @@
 
 ---
 
+## 2026-05-13 — Business Intelligence Profile + Sector Dropdown + Multi-Source Scanner + YoAlgoritma Card UI Cleanup
+- **Sorun:** YoAi kullanıcı işletmesini tanımadan reklam, strateji, hedef kitle veya öneri üretiyordu; sektör/lokasyon bağlamı yoktu. YoAlgoritma proposal kartları geniş ekranda 3 kolon değildi, üstte gereksiz Meta/Google bölüm başlıkları vardı, kart sol üstünde teknik kampanya türü badge'i gözüküyordu, "OUTCOME_ENGAGEMENT" gibi enum'lar kullanıcıya sızabiliyordu.
+- **Çözüm:**
+  - **Business Intelligence Profile altyapısı:** `user_business_profiles`, `user_business_competitors`, `user_business_source_scans`, `user_business_intelligence` Supabase tabloları (RLS aktif, service_role bypass).
+  - **Türkiye sektör kataloğu:** 18 ana sektör + ~200 alt sektör; onboarding dropdown'u dinamik yüklüyor.
+  - **Sektör + lokasyon intelligence:** Müşteri ihtiyaçları, kampanya tipi önerileri, riskli iddialar, anahtar kelime temaları üretiyor; sahte web research yok (`research_source='internal_inference'`).
+  - **Multi-source scanner:** Website / marketplace / Google Business gerçek HTTP fetch + HTML parsing; sosyal sağlayıcı yoksa `scraper_provider_missing` ile failed yazıyor — sahte veri üretmiyor.
+  - **Business context store:** Tüm üretim motorları için `getBusinessContextForUser(userId)` tek giriş; locked/diagnostic/source_coverage döner.
+  - **Onboarding modal:** 6 adımlı (Firma → Sektör → Hedef → Marka Kaynakları → Rakipler → Detay); en az 1 marka kaynağı + 3 rakip zorunlu.
+  - **Access guard:** Profili olmayan kullanıcı `/yoai`, `/strateji`, `/hedef-kitle`, `/google-ads`, `/meta-ads` route'larında kilitleniyor.
+  - **Üretim motoru bağlamaları:** YoAlgoritma `generate-ad` (adCreator prompt'u), Strateji `generate-plan` (ai-generator user prompt prefix), proposal engine orchestrator (`businessKeywords` → competitor query expander).
+  - **YoAlgoritma kart UI:** Meta/Google üst section başlıkları kaldırıldı; tek 3 kolon grid; kartın sol üstüne platform logosu (Meta/Google SVG); "Kampanya Türü" satırı eklendi; teknik enum'lar humanize (`OUTCOME_ENGAGEMENT` → "Etkileşim").
+  - **Süper admin endpoint:** `app/api/admin/business-profiles/route.ts` (ADMIN_SECRET) tüm profilleri + scan_status + intelligence özetlerini döner.
+  - **Eski filtreler korundu:** `policyStatus='rejected'`, `expired`, generic content filter, ONAYLA/REDDET akışı, publish/approval/preflight değişmedi.
+- **Dosyalar:** `supabase/migrations/20260513000000_create_business_intelligence_profile.sql`, `lib/yoai/sectorCatalog.ts`, `lib/yoai/sectorLocationIntelligence.ts`, `lib/yoai/businessSourceScanner.ts`, `lib/yoai/businessProfileStore.ts`, `lib/yoai/businessProfileValidation.ts`, `lib/yoai/businessContextStore.ts`, `lib/yoai/businessIntelligenceBuilder.ts`, `app/api/yoai/business-profile/route.ts`, `app/api/yoai/business-profile/sectors/route.ts`, `app/api/yoai/business-profile/scan/route.ts`, `app/api/admin/business-profiles/route.ts`, `app/api/yoai/generate-ad/route.ts`, `app/api/strategy/instances/[id]/generate-plan/route.ts`, `lib/yoai/adCreator.ts`, `lib/yoai/proposalEngineOrchestrator.ts`, `lib/strategy/ai-generator.ts`, `lib/strategy/job-runner.ts`, `components/yoai/BusinessProfileOnboarding.tsx`, `components/yoai/BusinessProfileGuard.tsx`, `components/yoai/AiAdSuggestions.tsx`, `components/yoai/AdPreviewCard.tsx`, `app/yoai/layout.tsx`, `app/strateji/layout.tsx`, `app/hedef-kitle/layout.tsx`, `app/google-ads/page.tsx`, `app/meta-ads/page.tsx`, `src/tests/businessIntelligenceProfile.test.ts`, `src/tests/yoalgoritmaProposalCardLayout.test.ts`
+
+---
+
 ## 2026-05-12 — Daily Run Freshness + Analysis Timestamp Fix
 - **Sorun:** (1) UI "Analiz tarihi" alanında "Her gün 16:15'de otomatik güncellenir" yazıyordu; gerçek cron `0 5 * * *` = 05:00 UTC = **08:00 İstanbul**. (2) `generate-ad`: DB'deki run'da `proposals: []` (boş array) varsa `shouldGenerateLive` hiç set edilmiyordu; stale run için yeni öneri üretimi tetiklenmiyordu. (3) `isRunning`: timeout'a uğramış (>3 saat) 'running' kayıtlar aynı gün içindeki manuel retry'ı bloke ediyordu. (4) `maxDuration = 120` — 10 kampanya + çoklu AI batch ile zaman aşımı riski vardı.
 - **Çözüm:** (1) `app/yoai/page.tsx` — "16:15" → "08:00" (2 yer). (2) `generate-ad/route.ts` — `shouldGenerateLive` check genişletildi: run varsa ama `proposals` null/boş ise VE run önceki günden kalıyorsa live generation tetiklenir. (3) `dailyRunStore.ts` — `isRunning` fonksiyonu `updated_at` da okuyacak şekilde güncellendi; 3 saatten eski 'running' kayıt stuck sayılıp retry'a izin verir. (4) Her iki route'ta `maxDuration` 120→300 artırıldı. (5) `daily-run/route.ts` comment düzeltildi: `"0 7 * * *"` → `"0 5 * * *"`.

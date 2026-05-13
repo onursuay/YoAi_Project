@@ -1,7 +1,9 @@
 import { NextResponse } from 'next/server'
+import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { createJob, runQueuedJobs } from '@/lib/strategy/job-runner'
+import { getBusinessContextForUser, buildBusinessContextPromptBlock } from '@/lib/yoai/businessContextStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -27,6 +29,31 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
 
   if (!instance) {
     return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })
+  }
+
+  // Business context — kullanıcı işletme bağlamını strateji input payload'una enjekte et
+  try {
+    const cookieStore = await cookies()
+    const userId = cookieStore.get('user_id')?.value
+    if (userId) {
+      const businessContext = await getBusinessContextForUser(userId)
+      const block = businessContext ? buildBusinessContextPromptBlock(businessContext) : null
+      if (block) {
+        const { data: latestInput } = await supabase
+          .from('strategy_inputs')
+          .select('id, payload')
+          .eq('strategy_instance_id', id)
+          .order('created_at', { ascending: false })
+          .limit(1)
+          .single()
+        if (latestInput?.id) {
+          const newPayload = { ...(latestInput.payload as object), _yoai_business_context_prompt: block }
+          await supabase.from('strategy_inputs').update({ payload: newPayload }).eq('id', latestInput.id)
+        }
+      }
+    }
+  } catch (e) {
+    console.warn('[strategy/generate-plan] business context inject failed (non-fatal):', e)
   }
 
   const jobId = await createJob(id, 'generate_plan')
