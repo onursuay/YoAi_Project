@@ -3,6 +3,7 @@
 import { useEffect, useMemo, useState } from 'react'
 import { Loader2, X, Plus, Trash2, ArrowRight, ArrowLeft, CheckCircle2, Building2, MapPin, Target, Globe } from 'lucide-react'
 import type { SectorMainItem } from '@/lib/yoai/sectorCatalog'
+import { isValidCompetitorReference, MIN_COMPETITORS_REQUIRED } from '@/lib/yoai/businessProfileValidation'
 import WizardSelect, { type WizardSelectOption } from '@/components/meta/wizard/WizardSelect'
 
 interface CompetitorDraft {
@@ -118,6 +119,8 @@ const BRAND_TONE_OPTIONS: WizardSelectOption[] = [
   { value: 'lüks/premium', label: 'Lüks / Premium' },
   { value: 'uzman/teknik', label: 'Uzman / Teknik' },
 ]
+
+const COMPETITOR_STEP_ERROR = `Devam etmek için en az ${MIN_COMPETITORS_REQUIRED} rakip ekleyin. Her rakip için firma adı, web sitesi veya sosyal medya hesabından en az birini girmeniz yeterlidir.`
 
 function withCurrentOption(options: WizardSelectOption[], value: string): WizardSelectOption[] {
   if (!value || options.some((o) => o.value === value)) return options
@@ -241,6 +244,10 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
     () => subSectors.map((s) => ({ value: s.id, label: s.label })),
     [subSectors],
   )
+  const validCompetitorCount = useMemo(
+    () => competitors.filter(isValidCompetitorReference).length,
+    [competitors],
+  )
 
   // ── Field helpers ──
   const setField = <K extends keyof ProfileDraft>(key: K, value: ProfileDraft[K]) => {
@@ -265,15 +272,20 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
       ].some((v) => v.trim().length > 0)
     }
     if (step === 4) {
-      const valid = competitors.filter((c) => {
-        const hasName = c.competitor_name.trim().length > 0
-        const hasAnySource = [c.website_url, c.instagram_url, c.facebook_url, c.linkedin_url, c.youtube_url, c.tiktok_url, c.google_business_url, c.extra_url].some((v) => v.trim().length > 0)
-        return hasName || hasAnySource
-      })
-      return valid.length >= 3
+      return validCompetitorCount >= MIN_COMPETITORS_REQUIRED
     }
     return true
-  }, [step, draft, competitors])
+  }, [step, draft, validCompetitorCount])
+
+  const handleNext = () => {
+    setErrors([])
+    if (step === 4 && validCompetitorCount < MIN_COMPETITORS_REQUIRED) {
+      setErrors([COMPETITOR_STEP_ERROR])
+      return
+    }
+    if (!stepValid) return
+    setStep((s) => Math.min(STEPS.length - 1, s + 1))
+  }
 
   const submit = async () => {
     setSubmitting(true)
@@ -284,11 +296,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           ...draft,
-          competitors: competitors.filter((c) => {
-            const hasName = c.competitor_name.trim().length > 0
-            const hasAnySource = [c.website_url, c.instagram_url, c.facebook_url, c.linkedin_url, c.youtube_url, c.tiktok_url, c.google_business_url, c.extra_url].some((v) => v.trim().length > 0)
-            return hasName || hasAnySource
-          }),
+          competitors: competitors.filter(isValidCompetitorReference),
         }),
       })
       const json = await res.json()
@@ -446,7 +454,12 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
           {/* STEP 4: Rakipler */}
           {step === 4 && (
             <div className="space-y-3">
-              <p className="text-xs text-gray-500">En az 3 rakip referansı zorunludur. Her rakip için en az ad veya 1 kaynak girilmelidir.</p>
+              <div className="rounded-xl border border-gray-200 bg-gray-50 px-3 py-2">
+                <p className="text-xs text-gray-600">En az 3 rakip ekleyin. Her rakip için bildiğiniz en az bir bilgiyi girmeniz yeterlidir: firma adı, web sitesi veya sosyal medya hesabı.</p>
+                <p className={`mt-1 text-[11px] font-medium ${validCompetitorCount >= MIN_COMPETITORS_REQUIRED ? 'text-primary' : 'text-red-600'}`}>
+                  Geçerli rakip: {validCompetitorCount} / {MIN_COMPETITORS_REQUIRED}
+                </p>
+              </div>
               {competitors.map((c, idx) => (
                 <div key={idx} className={`${CARD_CLASS} p-3 space-y-2`}>
                   <div className="flex items-center justify-between">
@@ -466,7 +479,15 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                       className={COMPACT_INPUT_CLASS} />
                     <input value={c.facebook_url} onChange={(e) => updateCompetitor(idx, 'facebook_url', e.target.value)} placeholder="Facebook"
                       className={COMPACT_INPUT_CLASS} />
+                    <input value={c.linkedin_url} onChange={(e) => updateCompetitor(idx, 'linkedin_url', e.target.value)} placeholder="LinkedIn"
+                      className={COMPACT_INPUT_CLASS} />
+                    <input value={c.youtube_url} onChange={(e) => updateCompetitor(idx, 'youtube_url', e.target.value)} placeholder="YouTube"
+                      className={COMPACT_INPUT_CLASS} />
+                    <input value={c.tiktok_url} onChange={(e) => updateCompetitor(idx, 'tiktok_url', e.target.value)} placeholder="TikTok"
+                      className={COMPACT_INPUT_CLASS} />
                     <input value={c.google_business_url} onChange={(e) => updateCompetitor(idx, 'google_business_url', e.target.value)} placeholder="Google İşletme"
+                      className={COMPACT_INPUT_CLASS} />
+                    <input value={c.extra_url} onChange={(e) => updateCompetitor(idx, 'extra_url', e.target.value)} placeholder="Diğer bağlantı"
                       className={COMPACT_INPUT_CLASS} />
                   </div>
                 </div>
@@ -543,7 +564,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
           </button>
           <div className="text-xs text-gray-500">{step + 1} / {STEPS.length}</div>
           {step < STEPS.length - 1 ? (
-            <button type="button" onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))} disabled={!stepValid || submitting}
+            <button type="button" onClick={handleNext} disabled={submitting || (step !== 4 && !stepValid)}
               className="inline-flex items-center gap-1.5 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 focus:outline-none focus:ring-2 focus:ring-primary/25 transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
               Devam <ArrowRight className="w-4 h-4" />
             </button>

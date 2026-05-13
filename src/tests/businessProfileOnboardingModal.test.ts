@@ -121,6 +121,40 @@ test('Modal ve Guard amber/yellow Tailwind class içermiyor', () => {
   }
 })
 
+console.log('\n[3] Rakipler adımı validasyon sözleşmesi')
+
+test('Rakipler adımı shared isValidCompetitorReference helper kullanıyor', () => {
+  assert.ok(onboardingSrc.includes('isValidCompetitorReference'))
+  assert.ok(onboardingSrc.includes('validCompetitorCount'))
+  assert.ok(onboardingSrc.includes('MIN_COMPETITORS_REQUIRED'))
+})
+
+test('Rakip payload standard field adlarıyla filtreleniyor', () => {
+  assert.ok(onboardingSrc.includes('competitors.filter(isValidCompetitorReference)'))
+  assert.ok(!onboardingSrc.includes('competitor_website_url'))
+})
+
+test('Rakipler adımı tüm standart rakip kaynak alanlarını render ediyor', () => {
+  for (const field of [
+    'competitor_name',
+    'website_url',
+    'instagram_url',
+    'facebook_url',
+    'linkedin_url',
+    'youtube_url',
+    'tiktok_url',
+    'google_business_url',
+    'extra_url',
+  ]) {
+    assert.ok(onboardingSrc.includes(field), `${field} eksik`)
+  }
+})
+
+test('Rakipler adımı net 3 rakip hata mesajını içeriyor', () => {
+  assert.ok(onboardingSrc.includes('Devam etmek için en az'))
+  assert.ok(onboardingSrc.includes('Her rakip için firma adı, web sitesi veya sosyal medya hesabından en az birini girmeniz yeterlidir.'))
+})
+
 setTimeout(() => {
   console.log('')
   console.log(`Geçen: ${passed}`)

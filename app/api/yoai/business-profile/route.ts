@@ -44,14 +44,18 @@ type ProfileFormBody = {
   compliance_notes?: string | null
   extra_notes?: string | null
   competitors?: Array<{
-    competitor_name: string
+    competitor_name?: string
+    name?: string | null
     website_url?: string | null
+    competitor_website_url?: string | null
     instagram_url?: string | null
     facebook_url?: string | null
     linkedin_url?: string | null
     youtube_url?: string | null
     tiktok_url?: string | null
     google_business_url?: string | null
+    google_business?: string | null
+    google_business_profile_url?: string | null
     extra_url?: string | null
   }>
 }
@@ -100,14 +104,14 @@ export async function POST(request: Request) {
     const body = (await request.json()) as ProfileFormBody
 
     const competitorsInput = (body.competitors || []).map((c) => ({
-      competitor_name: (c.competitor_name || '').trim(),
-      website_url: emptyToNull(c.website_url),
+      competitor_name: (c.competitor_name || c.name || '').trim(),
+      website_url: emptyToNull(c.website_url ?? c.competitor_website_url),
       instagram_url: emptyToNull(c.instagram_url),
       facebook_url: emptyToNull(c.facebook_url),
       linkedin_url: emptyToNull(c.linkedin_url),
       youtube_url: emptyToNull(c.youtube_url),
       tiktok_url: emptyToNull(c.tiktok_url),
-      google_business_url: emptyToNull(c.google_business_url),
+      google_business_url: emptyToNull(c.google_business_url ?? c.google_business ?? c.google_business_profile_url),
       extra_url: emptyToNull(c.extra_url),
     }))
 

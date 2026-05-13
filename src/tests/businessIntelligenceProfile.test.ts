@@ -7,7 +7,7 @@
 
 import assert from 'assert'
 import { SECTOR_CATALOG, getSectorMain, getSectorSubs, getSectorLabel, isValidSectorMain, isValidSectorSub } from '../../lib/yoai/sectorCatalog'
-import { validateProfileForOnboarding, MIN_COMPETITORS_REQUIRED } from '../../lib/yoai/businessProfileValidation'
+import { validateProfileForOnboarding, isValidCompetitorReference, MIN_COMPETITORS_REQUIRED, type CompetitorShape } from '../../lib/yoai/businessProfileValidation'
 import { buildSectorLocationInsight } from '../../lib/yoai/sectorLocationIntelligence'
 import { buildBusinessIntelligenceRow } from '../../lib/yoai/businessIntelligenceBuilder'
 import { scanBusinessSource } from '../../lib/yoai/businessSourceScanner'
@@ -81,6 +81,21 @@ const baseProfile: Partial<BusinessProfileRow> = {
   target_locations: ['Ankara'],
 }
 
+function competitor(fields: Partial<CompetitorShape>): CompetitorShape {
+  return {
+    competitor_name: null,
+    website_url: null,
+    instagram_url: null,
+    facebook_url: null,
+    linkedin_url: null,
+    youtube_url: null,
+    tiktok_url: null,
+    google_business_url: null,
+    extra_url: null,
+    ...fields,
+  }
+}
+
 test('Web sitesi olmadan sosyal kaynakla onboarding tamamlanır', () => {
   const v = validateProfileForOnboarding(
     { ...baseProfile, instagram_url: 'https://instagram.com/x', website_url: null },
@@ -136,6 +151,100 @@ test('3 rakip varsa onboarding tamamlanır', () => {
 
 test('MIN_COMPETITORS_REQUIRED sabiti 3', () => {
   assert.strictEqual(MIN_COMPETITORS_REQUIRED, 3)
+})
+
+test('3 rakip sadece isimle geçerli olur', () => {
+  const v = validateProfileForOnboarding(
+    { ...baseProfile, website_url: 'https://x.com' },
+    [
+      competitor({ competitor_name: 'A' }),
+      competitor({ competitor_name: 'B' }),
+      competitor({ competitor_name: 'C' }),
+    ],
+  )
+  assert.strictEqual(v.ok, true, JSON.stringify(v.errors))
+})
+
+test('3 rakip sadece website_url ile geçerli olur', () => {
+  const v = validateProfileForOnboarding(
+    { ...baseProfile, website_url: 'https://x.com' },
+    [
+      competitor({ website_url: 'https://a.com' }),
+      competitor({ website_url: 'https://b.com' }),
+      competitor({ website_url: 'https://c.com' }),
+    ],
+  )
+  assert.strictEqual(v.ok, true, JSON.stringify(v.errors))
+})
+
+test('3 rakip sosyal hesaplarla geçerli olur', () => {
+  const v = validateProfileForOnboarding(
+    { ...baseProfile, website_url: 'https://x.com' },
+    [
+      competitor({ instagram_url: 'https://instagram.com/a' }),
+      competitor({ facebook_url: 'https://facebook.com/b' }),
+      competitor({ tiktok_url: 'https://tiktok.com/@c' }),
+    ],
+  )
+  assert.strictEqual(v.ok, true, JSON.stringify(v.errors))
+})
+
+test('2 geçerli rakip ilerleyemez ve net hata döner', () => {
+  const v = validateProfileForOnboarding(
+    { ...baseProfile, website_url: 'https://x.com' },
+    [
+      competitor({ competitor_name: 'A' }),
+      competitor({ website_url: 'https://b.com' }),
+      competitor({}),
+    ],
+  )
+  assert.strictEqual(v.ok, false)
+  assert.ok(v.errors.some((e) => e.includes('Devam etmek için en az 3 rakip ekleyin')))
+})
+
+test('Tamamen boş rakip kartı sayılmaz', () => {
+  assert.strictEqual(isValidCompetitorReference(competitor({})), false)
+  assert.strictEqual(isValidCompetitorReference(competitor({ competitor_name: '  ' })), false)
+})
+
+test('Her rakipte tüm alanlar zorunlu değildir', () => {
+  assert.strictEqual(isValidCompetitorReference(competitor({ competitor_name: 'A' })), true)
+  assert.strictEqual(isValidCompetitorReference(competitor({ website_url: 'https://a.com' })), true)
+  assert.strictEqual(isValidCompetitorReference(competitor({ google_business_url: 'https://maps.google.com/a' })), true)
+  assert.strictEqual(isValidCompetitorReference(competitor({ extra_url: 'https://example.com/a' })), true)
+})
+
+test('competitor_name/name field mismatch yoktur: validation standard competitor_name alanını kullanır', () => {
+  const standard: CompetitorShape = competitor({ competitor_name: 'Standart Rakip' })
+  assert.strictEqual(isValidCompetitorReference(standard), true)
+  assert.ok(!('name' in standard), 'standard rakip shape name alanına ihtiyaç duymamalı')
+})
+
+test('website_url/competitor_website_url mismatch yoktur: validation standard website_url alanını kullanır', () => {
+  const standard: CompetitorShape = competitor({ website_url: 'https://standard.example' })
+  assert.strictEqual(isValidCompetitorReference(standard), true)
+  assert.ok(!('competitor_website_url' in standard), 'standard rakip shape competitor_website_url alanına ihtiyaç duymamalı')
+})
+
+test('Frontend payload backend validation’dan geçer', () => {
+  const frontendPayload: CompetitorShape[] = [
+    competitor({ competitor_name: 'Rakip A', website_url: 'https://a.com', google_business_url: '' }),
+    competitor({ competitor_name: 'Rakip B', instagram_url: 'https://instagram.com/b' }),
+    competitor({ competitor_name: '', website_url: 'https://c.com', extra_url: '' }),
+  ]
+  const v = validateProfileForOnboarding({ ...baseProfile, website_url: 'https://x.com' }, frontendPayload)
+  assert.strictEqual(v.ok, true, JSON.stringify(v.errors))
+})
+
+test('3 geçerli rakipte Devam kuralı çalışır', () => {
+  const validCount = [
+    competitor({ competitor_name: 'A' }),
+    competitor({ website_url: 'https://b.com' }),
+    competitor({ linkedin_url: 'https://linkedin.com/company/c' }),
+    competitor({}),
+  ].filter(isValidCompetitorReference).length
+  assert.strictEqual(validCount, 3)
+  assert.ok(validCount >= MIN_COMPETITORS_REQUIRED)
 })
 
 // ── Sector + location intelligence ────────────────────────────
