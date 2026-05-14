@@ -329,10 +329,12 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
 
   if (!bootstrapped) {
     return (
-      <div className="fixed inset-0 left-64 z-[60] flex items-center justify-center">
-        <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-xl border border-gray-100">
-          <Loader2 className="w-5 h-5 text-primary animate-spin" />
-          <p className="text-sm text-gray-700">Yükleniyor...</p>
+      <div className="fixed inset-0 z-[60] bg-black/40 backdrop-blur-sm">
+        <div className="absolute inset-0 left-64 flex items-center justify-center">
+          <div className="flex items-center gap-3 bg-white px-6 py-4 rounded-2xl shadow-xl">
+            <Loader2 className="w-5 h-5 text-primary animate-spin" />
+            <p className="text-sm text-gray-700">Yükleniyor...</p>
+          </div>
         </div>
       </div>
     )
