@@ -73,12 +73,6 @@ export const navItems: NavItem[] = [
     icon: Sparkles,
   },
   {
-    id: 'isletme-profili',
-    label: 'İşletme Profili',
-    href: '/yoai/isletme-profili',
-    icon: Briefcase,
-  },
-  {
     id: 'hedef-kitle',
     label: 'Hedef Kitle',
     href: '/hedef-kitle',

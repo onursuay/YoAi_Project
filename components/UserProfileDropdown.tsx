@@ -5,7 +5,7 @@ import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import Link from 'next/link'
 import { mapPathToLocale } from '@/lib/routes'
-import { User, FileText, CreditCard, HelpCircle, Globe, LogOut, ChevronRight, Check } from 'lucide-react'
+import { User, FileText, CreditCard, HelpCircle, Globe, LogOut, ChevronRight, Check, Briefcase } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
@@ -71,6 +71,7 @@ export default function UserProfileDropdown({ collapsed }: Props) {
 
   const menuItems = [
     { label: t('hesabim'), icon: User, href: ROUTES.MY_ACCOUNT },
+    { label: 'İşletme Profili', icon: Briefcase, href: '/yoai/isletme-profili' },
     { label: t('faturalarim'), icon: FileText, href: ROUTES.INVOICES },
     { label: t('abonelik'), icon: CreditCard, href: ROUTES.SUBSCRIPTION },
     { label: t('yardimMerkezi'), icon: HelpCircle, href: '#' },
