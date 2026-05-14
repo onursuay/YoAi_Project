@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-14 — İşletme Profili yönetim sayfası eklendi
+- **Sorun:** Onboarding'de kaydedilen işletme profili bilgileri düzenlenebilir bir alanda görünmüyordu
+- **Çözüm:** `/yoai/isletme-profili` sayfası oluşturuldu; profil ve rakipler bölüm bölüm görüntülenir, "Düzenle" butonu mevcut onboarding modalını edit modda açar. Sidebar'da YoAi altına "İşletme Profili" sub-item eklendi
+- **Dosyalar:** `app/yoai/isletme-profili/page.tsx`, `lib/nav.ts`
+
 ## 2026-05-14 — BusinessProfile step adı düzeltme + virgülle ayırın input fix
 - **Sorun:** Step 4 adı "Marka Kaynakları" yerine "Kaynaklar" olacaktı; virgülle ayırın input'larına virgül yazılınca karakter kayboluyordu (her onChange'de split/filter yapılıyordu)
 - **Çözüm:** STEPS dizisinde isim güncellendi; tüm virgülle-ayırın alanları için `CommaSeparatedInput` komponenti eklendi — raw text local state'de tutulur, sadece blur'da parse edilip draft'a yazılır

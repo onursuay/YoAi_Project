@@ -9,7 +9,8 @@ import {
   Search,
   Puzzle,
   Building2,
-  ShieldCheck
+  ShieldCheck,
+  Briefcase,
 } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 
@@ -70,6 +71,20 @@ export const navItems: NavItem[] = [
     label: 'YoAi',
     href: '/yoai',
     icon: Sparkles,
+    children: [
+      {
+        id: 'yoai-ana',
+        label: 'YoAi',
+        href: '/yoai',
+        icon: Sparkles,
+      },
+      {
+        id: 'isletme-profili',
+        label: 'İşletme Profili',
+        href: '/yoai/isletme-profili',
+        icon: Briefcase,
+      },
+    ],
   },
   {
     id: 'hedef-kitle',
