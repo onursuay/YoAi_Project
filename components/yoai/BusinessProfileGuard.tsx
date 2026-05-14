@@ -1,7 +1,7 @@
 'use client'
 
 import { useCallback, useEffect, useState } from 'react'
-import { Loader2, Lock, Sparkles } from 'lucide-react'
+import { Loader2, Lock, Sparkles, Building2, Target, Globe } from 'lucide-react'
 import BusinessProfileOnboarding from './BusinessProfileOnboarding'
 
 interface Props {
@@ -70,24 +70,48 @@ export default function BusinessProfileGuard({ children, area, silent = false }:
   if (state === 'incomplete') {
     return (
       <>
-        <div className="max-w-3xl mx-auto p-6 my-6">
-          <div className="bg-primary/5 border border-primary/20 rounded-2xl p-6">
-            <div className="flex items-start gap-4">
-              <div className="w-10 h-10 rounded-xl bg-primary/15 flex items-center justify-center shrink-0">
-                <Lock className="w-5 h-5 text-primary" />
-              </div>
-              <div className="flex-1">
-                <h2 className="text-base font-semibold text-gray-900 mb-1">{area} kilidi açık değil</h2>
-                <p className="text-sm text-gray-700 leading-relaxed">{LOCK_MESSAGE}</p>
-                <button
-                  onClick={() => setShowOnboarding(true)}
-                  className="mt-4 inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90"
-                >
-                  <Sparkles className="w-4 h-4" />
-                  İşletme Profilini Tamamla
-                </button>
+        <div className="flex items-center justify-center min-h-[calc(100vh-120px)] px-6 py-12">
+          <div className="w-full max-w-lg text-center space-y-8">
+            {/* Icon */}
+            <div className="flex justify-center">
+              <div className="relative">
+                <div className="w-20 h-20 rounded-2xl bg-primary/10 flex items-center justify-center shadow-[0_0_0_8px_rgba(var(--color-primary-rgb),0.06)]">
+                  <Lock className="w-9 h-9 text-primary" />
+                </div>
               </div>
             </div>
+
+            {/* Text */}
+            <div className="space-y-3">
+              <h2 className="text-2xl font-bold text-gray-900">{area} kilitli</h2>
+              <p className="text-base text-gray-500 leading-relaxed max-w-sm mx-auto">
+                Devam etmek için işletme profilinizi tamamlayın. Reklam önerileri, strateji ve hedef kitle analizleri bu bilgilere dayanır.
+              </p>
+            </div>
+
+            {/* Steps */}
+            <div className="grid grid-cols-3 gap-3">
+              {[
+                { icon: Building2, label: 'Firma & Sektör' },
+                { icon: Target, label: 'Hedef & Rakipler' },
+                { icon: Globe, label: 'Marka Kaynakları' },
+              ].map(({ icon: Icon, label }) => (
+                <div key={label} className="bg-gray-50 border border-gray-200 rounded-xl px-3 py-4 flex flex-col items-center gap-2">
+                  <Icon className="w-5 h-5 text-primary" />
+                  <span className="text-xs font-medium text-gray-600 text-center leading-tight">{label}</span>
+                </div>
+              ))}
+            </div>
+
+            {/* CTA */}
+            <button
+              onClick={() => setShowOnboarding(true)}
+              className="inline-flex items-center gap-2 px-7 py-3 bg-primary text-white rounded-xl text-sm font-semibold hover:bg-primary/90 shadow-[0_4px_14px_rgba(var(--color-primary-rgb),0.35)] transition-all hover:shadow-[0_6px_20px_rgba(var(--color-primary-rgb),0.45)] hover:-translate-y-0.5"
+            >
+              <Sparkles className="w-4 h-4" />
+              İşletme Profilini Tamamla
+            </button>
+            <p className="text-xs text-gray-400">Yaklaşık 3-5 dakika sürer · Tek seferlik kurulum</p>
           </div>
         </div>
         {showOnboarding && (
