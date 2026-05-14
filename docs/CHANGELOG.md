@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-14 — BusinessProfile step adı düzeltme + virgülle ayırın input fix
+- **Sorun:** Step 4 adı "Marka Kaynakları" yerine "Kaynaklar" olacaktı; virgülle ayırın input'larına virgül yazılınca karakter kayboluyordu (her onChange'de split/filter yapılıyordu)
+- **Çözüm:** STEPS dizisinde isim güncellendi; tüm virgülle-ayırın alanları için `CommaSeparatedInput` komponenti eklendi — raw text local state'de tutulur, sadece blur'da parse edilip draft'a yazılır
+- **Dosyalar:** `components/yoai/BusinessProfileOnboarding.tsx`
+
 ## 2026-05-13 — Gözetim Merkezi HTTP 500 Fix + Onboarding Modal Polish
 - **Sorun:**
   1. Business Profile onboarding modal'ında alt köşelerde gri arka plan footer'ı `rounded-3xl` köşelerden taşırıyordu (overflow-hidden eksikti).

@@ -86,13 +86,27 @@ const EMPTY_PROFILE: ProfileDraft = {
   extra_notes: '',
 }
 
-const STEPS = ['Firma', 'Sektör', 'Hedef', 'Marka Kaynakları', 'Rakipler', 'Detay'] as const
+const STEPS = ['Firma', 'Sektör', 'Hedef', 'Kaynaklar', 'Rakipler', 'Detay'] as const
 const STEP_ICONS = [Building2, Target, MapPin, Globe, CheckCircle2, ArrowRight] as const
 
 const INPUT_CLASS = 'w-full px-3.5 py-2.5 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all disabled:bg-gray-50 disabled:text-gray-500 disabled:cursor-not-allowed'
 const TEXTAREA_CLASS = `${INPUT_CLASS} resize-none leading-6`
 const COMPACT_INPUT_CLASS = 'w-full px-3 py-2 border border-gray-200 rounded-xl text-sm text-gray-800 placeholder:text-gray-400 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all'
 const CARD_CLASS = 'border border-gray-200 rounded-xl bg-white shadow-[0_1px_3px_rgba(0,0,0,0.06)] transition-all hover:border-gray-300'
+
+function CommaSeparatedInput({ value, onChange, placeholder, className }: { value: string[]; onChange: (v: string[]) => void; placeholder?: string; className?: string }) {
+  const [raw, setRaw] = useState(value.join(', '))
+  useEffect(() => { setRaw(value.join(', ')) }, [value.join(',')])
+  return (
+    <input
+      value={raw}
+      onChange={(e) => setRaw(e.target.value)}
+      onBlur={() => onChange(raw.split(',').map((s) => s.trim()).filter(Boolean))}
+      placeholder={placeholder}
+      className={className}
+    />
+  )
+}
 
 const MAIN_CONVERSION_OPTIONS: WizardSelectOption[] = [
   { value: 'Telefon araması', label: 'Telefon araması' },
@@ -376,7 +390,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                 <p className="text-[11px] text-gray-500 mt-1.5">YoAi bu açıklamadan reklam dilinizi ve tonunuzu çıkaracak.</p>
               </Field>
               <Field label="Sunduğunuz Ürünler / Hizmetler (virgülle ayırın)">
-                <input value={draft.products_or_services.join(', ')} onChange={(e) => setField('products_or_services', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                <CommaSeparatedInput value={draft.products_or_services} onChange={(v) => setField('products_or_services', v)}
                   placeholder="Örn: Öğle yemeği menüsü, brunch, özel etkinlik"
                   className={INPUT_CLASS} />
               </Field>
@@ -424,7 +438,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                 />
               </Field>
               <Field label="Hedef Lokasyon * (virgülle ayırın)">
-                <input value={draft.target_locations.join(', ')} onChange={(e) => setField('target_locations', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                <CommaSeparatedInput value={draft.target_locations} onChange={(v) => setField('target_locations', v)}
                   placeholder="Örn: Ankara, İstanbul Anadolu Yakası"
                   className={INPUT_CLASS} />
               </Field>
@@ -502,12 +516,12 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
           {step === 5 && (
             <div className="space-y-4">
               <Field label="Anahtar Kelimeler (virgülle ayırın)">
-                <input value={draft.keywords.join(', ')} onChange={(e) => setField('keywords', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                <CommaSeparatedInput value={draft.keywords} onChange={(v) => setField('keywords', v)}
                   placeholder="Örn: ankara restoran, öğle yemeği, brunch ankara"
                   className={INPUT_CLASS} />
               </Field>
               <Field label="En Karlı Hizmetler (virgülle ayırın)">
-                <input value={draft.most_profitable_services.join(', ')} onChange={(e) => setField('most_profitable_services', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                <CommaSeparatedInput value={draft.most_profitable_services} onChange={(v) => setField('most_profitable_services', v)}
                   placeholder="Örn: özel etkinlik, kurumsal yemek paketleri"
                   className={INPUT_CLASS} />
               </Field>
@@ -530,7 +544,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
                 </Field>
               </div>
               <Field label="Yasak İddialar (virgülle ayırın)">
-                <input value={draft.forbidden_claims.join(', ')} onChange={(e) => setField('forbidden_claims', e.target.value.split(',').map(s => s.trim()).filter(Boolean))}
+                <CommaSeparatedInput value={draft.forbidden_claims} onChange={(v) => setField('forbidden_claims', v)}
                   placeholder="Örn: sağlık iddiası, %100 garanti vaadi"
                   className={INPUT_CLASS} />
               </Field>
