@@ -315,7 +315,7 @@ export default function BusinessProfileOnboarding({ onComplete, onClose, isEditM
       })
       const json = await res.json()
       if (!res.ok || !json.ok) {
-        const errorList = Array.isArray(json.errors) ? json.errors : [json.error || 'Kayıt başarısız']
+        const errorList = Array.isArray(json.errors) ? json.errors : [json.detail ? `${json.error}: ${json.detail}` : json.error || 'Kayıt başarısız']
         setErrors(errorList)
         return
       }

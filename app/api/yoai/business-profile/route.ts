@@ -172,9 +172,16 @@ export async function POST(request: Request) {
     profilePayload.intelligence_status = 'running'
     profilePayload.last_scan_started_at = new Date().toISOString()
 
-    const upserted = await upsertProfile(profilePayload)
+    let upserted: Awaited<ReturnType<typeof upsertProfile>>
+    try {
+      upserted = await upsertProfile(profilePayload)
+    } catch (dbErr) {
+      const msg = dbErr instanceof Error ? dbErr.message : String(dbErr)
+      console.error('[business-profile POST] upsertProfile threw:', msg)
+      return NextResponse.json({ ok: false, error: 'profile_save_failed', detail: msg }, { status: 500 })
+    }
     if (!upserted || !upserted.id) {
-      return NextResponse.json({ ok: false, error: 'profile_save_failed' }, { status: 500 })
+      return NextResponse.json({ ok: false, error: 'profile_save_failed', detail: 'no_id_returned' }, { status: 500 })
     }
 
     const competitors = await replaceCompetitors(userId, upserted.id, competitorsInput.map((c) => ({

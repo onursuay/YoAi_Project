@@ -170,13 +170,13 @@ export async function upsertProfile(profile: BusinessProfileRow): Promise<Busine
       .select('*')
       .single()
     if (error) {
-      console.warn('[businessProfileStore] upsertProfile error:', error)
-      return null
+      console.error('[businessProfileStore] upsertProfile error:', JSON.stringify(error))
+      throw new Error(`supabase_error: ${error.message} (code: ${error.code})`)
     }
     return data as BusinessProfileRow
   } catch (e) {
-    console.warn('[businessProfileStore] upsertProfile exception:', e)
-    return null
+    console.error('[businessProfileStore] upsertProfile exception:', e)
+    throw e
   }
 }
 
