@@ -659,7 +659,7 @@ function BusinessProfileSelect({
       {open && (
         <div
           role="listbox"
-          className="absolute z-[80] w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] max-h-64 overflow-y-auto py-1"
+          className="absolute z-[80] w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] max-h-80 overflow-y-auto py-1.5"
         >
           {options.map((option) => {
             const isSelected = option.value === value
@@ -677,7 +677,7 @@ function BusinessProfileSelect({
                   setOpen(false)
                 }}
                 className={`
-                  w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors
+                  w-full flex items-center justify-between px-4 py-3 text-sm text-left transition-colors
                   ${option.disabled ? 'opacity-40 cursor-not-allowed' : ''}
                   ${isSelected ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}
                 `}
