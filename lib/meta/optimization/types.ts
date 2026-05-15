@@ -231,4 +231,8 @@ export interface MagicScanResult {
   problemTags: ProblemTag[]
   recommendations: Recommendation[]
   aiGenerated: boolean
+  /** True if the client requested AI; tracks user intent independent of outcome. */
+  aiRequested?: boolean
+  /** True when AI was requested but the rule-based fallback produced the output. */
+  aiFallbackUsed?: boolean
 }

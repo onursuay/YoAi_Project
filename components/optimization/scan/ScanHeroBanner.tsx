@@ -1,7 +1,7 @@
 'use client'
 
 import { useTranslations } from 'next-intl'
-import { Sparkles, Zap, Eye, ClipboardList, X } from 'lucide-react'
+import { Sparkles, Zap, Eye, ClipboardList, X, Info } from 'lucide-react'
 import type { MagicScanResult, Recommendation } from '@/lib/meta/optimization/types'
 
 interface ScanHeroBannerProps {
@@ -13,10 +13,11 @@ interface ScanHeroBannerProps {
 export default function ScanHeroBanner({ result, grouped, onClose }: ScanHeroBannerProps) {
   const t = useTranslations('dashboard.optimizasyon.magicScan')
   const isAI = result.aiGenerated
+  const fallbackUsed = Boolean(result.aiFallbackUsed)
 
   const stats = [
     { key: 'AUTO_APPLY_SAFE', icon: Zap, color: 'text-green-400', label: t('categories.autoApply') },
-    { key: 'REVIEW_REQUIRED', icon: Eye, color: 'text-amber-400', label: t('categories.review') },
+    { key: 'REVIEW_REQUIRED', icon: Eye, color: 'text-orange-300', label: t('categories.review') },
     { key: 'TASK', icon: ClipboardList, color: 'text-blue-400', label: t('categories.task') },
   ]
 
@@ -84,6 +85,14 @@ export default function ScanHeroBanner({ result, grouped, onClose }: ScanHeroBan
             <X className="w-4 h-4" />
           </button>
         </div>
+
+        {/* Fallback notice — shown when user asked for AI but rule engine answered */}
+        {fallbackUsed && (
+          <div className="mb-3 flex items-start gap-2 rounded-lg border border-white/15 bg-white/[0.06] px-3 py-2 text-[11px] text-white/80">
+            <Info className="w-3.5 h-3.5 mt-0.5 shrink-0 text-white/60" />
+            <span>{t('fallbackNotice')}</span>
+          </div>
+        )}
 
         {/* Stat cards */}
         <div className="flex items-center gap-3">

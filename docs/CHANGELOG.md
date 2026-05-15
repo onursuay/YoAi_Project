@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Optimizasyon Faz 1: Backend guard + fallback transparency + batch confirm + persistence
+- **Sorun:** Audit raporu 4 kritik açık tespit etti: (1) magic-scan/score endpoint'lerinde subscription kontrolü yoktu, client-side bypass mümkündü; (2) AI istendiği halde fallback'a düşüldüğünde kullanıcı bilemiyordu; (3) "Apply Selected" butonu çoklu Meta mutation'ı tek tıkla onaysız başlatabiliyordu; (4) tarama sonuçları DB'ye yazılmıyor, page refresh'te kayboluyordu.
+- **Çözüm:** Yeni `lib/meta/optimization/serverGuard.ts` — `canUseOptimization` mantığını server tarafına taşıdı, magic-scan + score route başlarına eklendi (mevcut Graph API çağrı mantığına dokunulmadı). `MagicScanResult` tipine `aiRequested`/`aiFallbackUsed` alanları eklendi; backend `useAI && !aiGenerated` durumunu flag'liyor. `ScanHeroBanner` fallback notice gösteriyor (amber yerine `text-orange-300`). `MagicScanResults` artık "Apply Selected" butonunu DiffPanel onay modalından geçiriyor — direkt apply yolu kapandı; DiffPanel `batchSummary` + Meta mutation uyarısı içeriyor. Yeni `POST/GET /api/yoai/optimization/recommendations` endpoint'i `recordBeforeSnapshot` ile her taramayı `yoai_recommendation_results` tablosuna fire-and-forget kaydediyor (Supabase yoksa graceful skip). `bg-amber-500` → `bg-orange-500` (RISK_COLORS), CLAUDE.md renk kuralı.
+- **Dosyalar:** `lib/meta/optimization/serverGuard.ts` (yeni), `lib/meta/optimization/types.ts`, `app/api/meta/optimization/magic-scan/route.ts`, `app/api/meta/optimization/score/route.ts`, `app/api/yoai/optimization/recommendations/route.ts` (yeni), `components/optimization/MagicScanResults.tsx`, `components/optimization/scan/ScanHeroBanner.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-15 — Apify tüm 5 platform çalışıyor: LinkedIn dev_fusion actor eklendi
 - **Sorun:** LinkedIn için çalışan actor yoktu, input format testi gerekiyordu
 - **Çözüm:** `dev_fusion/Linkedin-Company-Scraper` actor'ı izin onaylandı. Input key: `profileUrls` (startUrls değil). Canlı test: SUCCEEDED, companyName/description/industry/employeeCount döndü. `buildActorInput` LinkedIn dalı güncellendi. Tüm 5 platform (Instagram/Facebook/LinkedIn/YouTube/TikTok) Apify ile çalışıyor

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useMemo } from 'react'
+import { useState, useMemo, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { Loader2, X, AlertTriangle, CheckCircle } from 'lucide-react'
 import ScanHeroBanner from './scan/ScanHeroBanner'
@@ -24,7 +24,7 @@ interface MagicScanResultsProps {
 
 const RISK_COLORS = {
   low: 'bg-green-500',
-  medium: 'bg-amber-500',
+  medium: 'bg-orange-500',
   high: 'bg-red-500',
 }
 
@@ -45,6 +45,31 @@ export default function MagicScanResults({ result, onSuccess, onError, onClose }
   const [applyingIds, setApplyingIds] = useState<Set<string>>(new Set())
   const [errorMap, setErrorMap] = useState<Map<string, string>>(new Map())
   const [confirmRec, setConfirmRec] = useState<Recommendation | null>(null)
+  const persistedRef = useRef<number | null>(null)
+
+  // ── Auto-persist scan result to DB (fire-and-forget; non-blocking) ─────
+  // We snapshot every scan once so recommendation history survives refresh.
+  useEffect(() => {
+    if (!result?.timestamp || persistedRef.current === result.timestamp) return
+    persistedRef.current = result.timestamp
+    void fetch('/api/yoai/optimization/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaignId: result.campaignId,
+        campaignName: result.campaignName,
+        currency: result.currency,
+        timestamp: result.timestamp,
+        problemTags: result.problemTags,
+        recommendations: result.recommendations,
+        aiGenerated: result.aiGenerated,
+        aiRequested: result.aiRequested ?? false,
+        aiFallbackUsed: result.aiFallbackUsed ?? false,
+      }),
+    }).catch(() => {
+      // Persistence is non-blocking; failures are logged server-side.
+    })
+  }, [result])
 
   // Group recommendations by category
   const grouped = useMemo(() => {
@@ -237,7 +262,7 @@ export default function MagicScanResults({ result, onSuccess, onError, onClose }
       {/* Audit Timeline */}
       <AuditTimeline items={auditLog} onRollback={handleRollback} />
 
-      {/* Sticky Bottom Bar */}
+      {/* Sticky Bottom Bar — Apply Selected funnels through DiffPanel for confirmation */}
       {selected.size > 0 && (
         <div className="sticky bottom-0 bg-white/90 backdrop-blur-md border-t border-gray-200 px-5 py-3 flex items-center justify-between">
           <span className="text-xs text-gray-500 font-medium">
@@ -246,17 +271,11 @@ export default function MagicScanResults({ result, onSuccess, onError, onClose }
           <div className="flex items-center gap-2">
             <button
               onClick={() => setShowDiff(true)}
-              className="px-3 py-1.5 text-xs font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50 transition"
-            >
-              {t('reviewChanges')}
-            </button>
-            <button
-              onClick={handleApply}
-              disabled={applying}
+              disabled={applying || selectedRecs.length === 0}
               className="px-4 py-1.5 text-xs font-medium text-white bg-gradient-to-r from-green-600 to-green-500 rounded-lg hover:from-green-700 hover:to-green-600 disabled:opacity-50 flex items-center gap-1.5 transition shadow-sm"
             >
               {applying && <Loader2 className="w-3 h-3 animate-spin" />}
-              {t('applySelected')}
+              {t('reviewAndApply')}
             </button>
           </div>
         </div>
@@ -440,19 +459,25 @@ function DiffPanel({
           })}
         </div>
 
-        {/* Risk summary */}
-        <div className="px-5 pb-3">
-          <div className="flex items-center gap-2 text-xs text-gray-400">
-            <AlertTriangle className="w-3.5 h-3.5" />
-            <span>
-              {recommendations.filter(r => r.risk === 'high').length > 0
-                ? t('riskLevels.high')
-                : recommendations.filter(r => r.risk === 'medium').length > 0
-                  ? t('riskLevels.medium')
-                  : t('riskLevels.low')
-              } {t('risk').toLowerCase()}
-            </span>
-          </div>
+        {/* Risk summary + Meta mutation reminder */}
+        <div className="px-5 pb-3 space-y-2">
+          {(() => {
+            const highCount = recommendations.filter(r => r.risk === 'high').length
+            const medCount = recommendations.filter(r => r.risk === 'medium').length
+            const total = recommendations.length
+            const topRisk = highCount > 0 ? t('riskLevels.high') : medCount > 0 ? t('riskLevels.medium') : t('riskLevels.low')
+            return (
+              <>
+                <div className="flex items-center gap-2 text-xs text-gray-400">
+                  <AlertTriangle className="w-3.5 h-3.5" />
+                  <span>
+                    {t('batchSummary', { count: total })} — {topRisk} {t('risk').toLowerCase()}
+                  </span>
+                </div>
+                <div className="text-[11px] text-gray-500">{t('confirmWarning')}</div>
+              </>
+            )
+          })()}
         </div>
 
         {/* Actions */}

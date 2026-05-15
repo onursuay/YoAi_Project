@@ -2,12 +2,17 @@ import { NextResponse } from 'next/server'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { runRuleEngine } from '@/lib/meta/optimization/ruleEngine'
 import { generateRecommendations } from '@/lib/meta/optimization/aiRecommender'
+import { requireOptimizationAccess } from '@/lib/meta/optimization/serverGuard'
 import type { OptimizationCampaign, MagicScanResult } from '@/lib/meta/optimization/types'
 
 export const dynamic = 'force-dynamic'
 
 export async function POST(request: Request) {
   try {
+    // Subscription gate — must hold a plan that includes optimization
+    const gate = await requireOptimizationAccess()
+    if (!gate.ok) return gate.response
+
     // Auth check — ensure user has valid Meta token
     const ctx = await resolveMetaContext()
     if (!ctx) {
@@ -51,6 +56,10 @@ export async function POST(request: Request) {
       useAI,
     )
 
+    // If the user asked for AI but we fell back to the rule engine, flag it
+    // so the UI can be transparent about which path actually produced the output.
+    const aiFallbackUsed = Boolean(useAI) && !aiGenerated
+
     const result: MagicScanResult = {
       campaignId: campaign.id,
       campaignName: campaign.name,
@@ -59,6 +68,8 @@ export async function POST(request: Request) {
       problemTags,
       recommendations,
       aiGenerated,
+      aiRequested: Boolean(useAI),
+      aiFallbackUsed,
     }
 
     return NextResponse.json({ ok: true, data: result })

@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { resolveMetaContext } from '@/lib/meta/context'
+import { requireOptimizationAccess } from '@/lib/meta/optimization/serverGuard'
 import { getCacheKey, getCached, setCached } from '@/lib/meta/cache'
 import { normalizeInsights, emptyInsights } from '@/lib/meta/optimization/insightsNormalizer'
 import { resolveKpiTemplate } from '@/lib/meta/optimization/kpiRegistry'
@@ -37,6 +38,10 @@ const ADSET_INSIGHT_FIELDS = [
 
 export async function GET(request: Request) {
   try {
+    // Subscription gate — must hold a plan that includes optimization
+    const gate = await requireOptimizationAccess()
+    if (!gate.ok) return gate.response
+
     const ctx = await resolveMetaContext()
     if (!ctx) {
       return NextResponse.json(
