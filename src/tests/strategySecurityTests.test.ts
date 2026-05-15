@@ -338,5 +338,94 @@ test('GET handler .or() user_id bypass içermiyor', () => {
   )
 })
 
+// ─────────────────────────────────────────────────────────────
+// Backfill Migration — yapısal doğrulama
+// ─────────────────────────────────────────────────────────────
+console.log('\n▶ Backfill Migration — NULL user_id güvenli eşleşme')
+
+const BACKFILL_MIGRATION = 'supabase/migrations/20260516100000_strategy_instances_user_id_backfill.sql'
+
+test('backfill migration dosyası mevcut', () => {
+  assert.ok(
+    fs.existsSync(path.join(ROOT, BACKFILL_MIGRATION)),
+    `Backfill migration bulunamadı: ${BACKFILL_MIGRATION}`
+  )
+})
+
+test('backfill yalnızca NULL user_id kayıtları günceller (dolu olanlar korunur)', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes('si.user_id IS NULL'),
+    'WHERE si.user_id IS NULL koşulu eksik — dolu user_id kayıtlar üzerine yazılabilir!'
+  )
+})
+
+test('backfill tahminle değil meta_connections üzerinden join yapar', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes('public.meta_connections'),
+    'Backfill meta_connections tablosunu kullanmıyor'
+  )
+})
+
+test('backfill unambiguous (1:1) eşleşme CTE kullanıyor', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes('unambiguous'),
+    'Backfill unambiguous CTE içermiyor — ambiguous (çok kullanıcılı) hesapları filtrelemiyor'
+  )
+})
+
+test('backfill ambiguous hesapları HAVING COUNT(DISTINCT user_id) = 1 ile filtreler', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes('COUNT(DISTINCT user_id) = 1'),
+    'HAVING COUNT(DISTINCT user_id) = 1 filtresi eksik — ayni ad_account birden fazla user_id iceriyorsa risk var'
+  )
+})
+
+test('backfill ad_account_id normalizasyonu REPLACE ile yapılıyor (act_ prefix)', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes("REPLACE(si.ad_account_id, 'act_', '')") &&
+    sql.includes("REPLACE(u.selected_ad_account_id, 'act_', '')"),
+    "act_ prefix normalizasyonu eksik — eski kayıtlarda 'act_' olmayan ad_account eşleşmez"
+  )
+})
+
+test('backfill mevcut kayıtları silmiyor', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    !sql.includes('DELETE FROM') && !sql.includes('TRUNCATE'),
+    'Backfill migration DELETE veya TRUNCATE içeriyor — veri kaybı riski!'
+  )
+})
+
+test('backfill idempotent: tekrar çalıştırılabilir (user_id IS NULL koşulu)', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  // WHERE user_id IS NULL koşulu sayesinde zaten backfill edilmiş kayıtlar tekrar güncellenmez
+  const updateBlock = sql.match(/UPDATE public\.strategy_instances[\s\S]{0,400}/)?.[0] ?? ''
+  assert.ok(
+    updateBlock.includes('si.user_id IS NULL'),
+    'UPDATE WHERE si.user_id IS NULL eksik — tekrar çalıştırıldığında dolu kayıtlar overwrite edilebilir'
+  )
+})
+
+test('backfill orphan kayıt sayısını raporluyor', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    sql.includes('v_null_after') && sql.includes('Kalan orphan'),
+    'Backfill orphan kayıt raporlaması eksik'
+  )
+})
+
+test('backfill RLS politikalarına dokunmuyor', () => {
+  const sql = read(BACKFILL_MIGRATION)
+  assert.ok(
+    !sql.includes('DROP POLICY') && !sql.includes('DISABLE ROW LEVEL SECURITY'),
+    'Backfill migration RLS politikalarını değiştiriyor!'
+  )
+})
+
 /* ── Runner ── */
 void runAll()

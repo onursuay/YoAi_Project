@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-16 — Strateji NULL user_id Backfill Migration
+- **Sorun:** `20260516000000` migrasyonu öncesinde oluşturulmuş `strategy_instances` kayıtları `user_id = NULL` taşıyor. Yeni GET filtresinde (`.eq('user_id', ctx.userId)`) bu kayıtlar dışarıda kalıyor — kullanıcı eski stratejilerini göremez.
+- **Çözüm:** Güvenli (unambiguous) backfill migration yazıldı. `meta_connections.selected_ad_account_id` → `strategy_instances.ad_account_id` JOIN ile eşleşme yapılır. Aynı `ad_account_id`'ye birden fazla `user_id` karşılık geliyorsa o kayıtlara dokunulmaz (ambiguous). `act_` prefix normalizasyonu (`REPLACE`) yapılır; eski kayıtlarda prefix olmayabilir. Hiçbir kayıt silinmez. Orphan (eşleşme bulunamayan) kayıtlar NULL kalır, GET'te görünmez — bu kasıtlıdır. Migration idempotent: tekrar çalıştırılabilir. `RAISE NOTICE` ile güncellenen / ambiguous / orphan sayısı raporlanır. 10 yeni statik analiz testi eklendi.
+- **Dosyalar:** `supabase/migrations/20260516100000_strategy_instances_user_id_backfill.sql`, `src/tests/strategySecurityTests.test.ts`
+
 ## 2026-05-16 — Strateji Faz 1+2 Final Blocker Fix: GET izolasyonu + Owner bypass + Testler
 - **Sorun:** (1) GET `/api/strategy/instances` yalnızca `ad_account_id` filtresi kullanıyordu → aynı Meta hesabını kullanan iki farklı kullanıcı birbirinin stratejilerini görebiliyordu. (2) `onursuay@hotmail.com` owner hesabı plan/kredi/aylık limit engeline takılıyordu — backend'de bypass yoktu. (3) Faz 1+2 değişikliklerini doğrulayan otomatik test yoktu.
 - **Çözüm:** (1) GET handler'a `.eq('user_id', ctx.userId)` eklendi — çift izolasyon: `ad_account_id` + `user_id`. (2) `SUPER_ADMIN_EMAILS = ['onursuay@hotmail.com']` sabiti ve `isOwner(userId)` DB sorgusu eklendi (signups tablosundan email doğrulaması, case-insensitive). POST handler'da `if (!ownerMode)` bloğu: plan limit kontrolü, aylık sayım, kredi kontrolü, RPC düşme — tamamı owner'da atlanıyor. Instance oluşturma ve user_id kaydı her durumda çalışıyor. (3) `src/tests/strategySecurityTests.test.ts` dosyası oluşturuldu: 30 statik analiz testi — migration yapısı, GET çift filtreleme, owner bypass, normal kullanıcı kontrolleri, cross-user orphan koruması. Tüm testler geçiyor.
