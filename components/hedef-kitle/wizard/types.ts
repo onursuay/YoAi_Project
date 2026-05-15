@@ -234,6 +234,7 @@ export interface UnifiedAudience {
   metaAudienceId?: string | null
   adAccountId?: string
   errorMessage?: string | null
+  yoaiSpecJson?: Record<string, unknown>
   // Meta-only (from Graph API)
   subtype?: string
   approximateCount?: { lower: number; upper: number }

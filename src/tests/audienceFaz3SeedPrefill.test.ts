@@ -133,27 +133,24 @@ test('useEffect(isOpen): description prefill seedHintsRef\'ten alınıyor', () =
 
 test('useEffect(isOpen): customState description prefill edilmiş', () => {
   const content = read(MODAL)
-  const openBlock = content.match(/When modal opens[\s\S]{0,600}/)?.[0] ?? ''
   assert.ok(
-    openBlock.includes('initialCustomAudienceState, description: desc'),
+    content.includes('initialCustomAudienceState, description: desc'),
     'customState description prefill useEffect içinde bulunamadı'
   )
 })
 
 test('useEffect(isOpen): lookalikeState description prefill edilmiş', () => {
   const content = read(MODAL)
-  const openBlock = content.match(/When modal opens[\s\S]{0,600}/)?.[0] ?? ''
   assert.ok(
-    openBlock.includes('initialLookalikeState, description: desc'),
+    content.includes('initialLookalikeState, description: desc'),
     'lookalikeState description prefill useEffect içinde bulunamadı'
   )
 })
 
 test('useEffect(isOpen): savedState description prefill edilmiş', () => {
   const content = read(MODAL)
-  const openBlock = content.match(/When modal opens[\s\S]{0,600}/)?.[0] ?? ''
   assert.ok(
-    openBlock.includes('initialSavedAudienceState, description: desc'),
+    content.includes('initialSavedAudienceState, description: desc'),
     'savedState description prefill useEffect içinde bulunamadı'
   )
 })

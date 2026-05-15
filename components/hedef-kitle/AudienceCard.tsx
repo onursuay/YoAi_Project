@@ -7,6 +7,7 @@ import {
   RefreshCw,
   Trash2,
   RotateCcw,
+  Pencil,
   Globe,
   Users,
   Target,
@@ -21,6 +22,7 @@ interface AudienceCardProps {
   expanded: boolean
   onToggle: () => void
   onDelete?: (id: string) => void
+  onEdit?: (id: string) => void
   onSendToMeta?: (id: string) => void
   onSync?: (id: string) => void
   actionLoading?: boolean
@@ -56,6 +58,7 @@ export default function AudienceCard({
   expanded,
   onToggle,
   onDelete,
+  onEdit,
   onSendToMeta,
   onSync,
   actionLoading,
@@ -169,6 +172,16 @@ export default function AudienceCard({
             {/* Local audience actions */}
             {audience.origin === 'local' && (
               <>
+                {audience.status === 'DRAFT' && onEdit && (
+                  <button
+                    type="button"
+                    onClick={(e) => { e.stopPropagation(); onEdit(audience.id) }}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-600 bg-gray-100 hover:bg-gray-200 rounded-lg transition-colors"
+                  >
+                    <Pencil className="w-3.5 h-3.5" />
+                    Düzenle
+                  </button>
+                )}
                 {(audience.status === 'DRAFT' || audience.status === 'ERROR') && onSendToMeta && (
                   <button
                     type="button"

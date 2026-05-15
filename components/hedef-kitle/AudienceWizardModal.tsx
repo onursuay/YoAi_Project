@@ -2,13 +2,22 @@
 
 import { useState, useCallback, useEffect, useRef } from 'react'
 import { X, Shield, Copy, Compass } from 'lucide-react'
-import type { AudienceType } from './wizard/types'
+import type {
+  AudienceType,
+  AudienceSource,
+  CustomAudienceState,
+  CustomAudienceRule,
+  ExcludeRule,
+  LookalikeState,
+  SavedAudienceState,
+  LocationItem,
+  InterestItem,
+} from './wizard/types'
 import {
   initialCustomAudienceState,
   initialLookalikeState,
   initialSavedAudienceState,
 } from './wizard/types'
-import type { CustomAudienceState, LookalikeState, SavedAudienceState } from './wizard/types'
 import AudienceWizardProgress from './wizard/AudienceWizardProgress'
 import AudienceWizardNavigation from './wizard/AudienceWizardNavigation'
 // Custom Audience steps
@@ -29,6 +38,15 @@ import SavedStepInterests from './wizard/saved/StepInterests'
 import SavedStepExclude from './wizard/saved/StepExclude'
 import SavedStepSummary from './wizard/saved/StepSummary'
 
+interface EditAudienceData {
+  id: string
+  type: AudienceType
+  source?: AudienceSource | null
+  name: string
+  description?: string | null
+  yoai_spec_json: Record<string, unknown>
+}
+
 interface AudienceWizardModalProps {
   isOpen: boolean
   onClose: () => void
@@ -40,6 +58,7 @@ interface AudienceWizardModalProps {
     pages: { id: string; name: string }[]
   }
   initialType?: AudienceType
+  editAudience?: EditAudienceData | null
 }
 
 type WizardPhase = 'select-type' | 'custom' | 'lookalike' | 'saved' | 'confirm'
@@ -103,7 +122,8 @@ function typeToPhase(type?: AudienceType): WizardPhase {
   return 'select-type'
 }
 
-export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToast, assets, initialType }: AudienceWizardModalProps) {
+export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToast, assets, initialType, editAudience }: AudienceWizardModalProps) {
+  const isEditMode = !!editAudience
   const [phase, setPhase] = useState<WizardPhase>(typeToPhase(initialType))
   const [customState, setCustomState] = useState<CustomAudienceState>(initialCustomAudienceState)
   const [lookalikeState, setLookalikeState] = useState<LookalikeState>(initialLookalikeState)
@@ -131,34 +151,80 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
       .catch(() => {})
   }, [])
 
-  // When modal opens, set phase based on initialType + apply business context prefill
+  // When modal opens, set phase + apply edit data or business context prefill
   useEffect(() => {
     if (isOpen) {
-      const p = typeToPhase(initialType)
-      setPhase(p)
-      setPrevPhase(p)
-      setHasInitialType(!!initialType)
-      const desc = seedHintsRef.current?.declaredTargetAudience?.trim() ?? ''
-      setCustomState({ ...initialCustomAudienceState, description: desc })
-      setLookalikeState({ ...initialLookalikeState, description: desc })
-      setSavedState({ ...initialSavedAudienceState, description: desc })
+      if (editAudience) {
+        // Edit mode: reconstruct wizard state from existing audience spec
+        const p = typeToPhase(editAudience.type)
+        setPhase(p)
+        setPrevPhase(p)
+        setHasInitialType(true)
+        const spec = editAudience.yoai_spec_json
+        if (editAudience.type === 'CUSTOM') {
+          setCustomState({
+            currentStep: 1,
+            source: (editAudience.source ?? '') as AudienceSource | '',
+            rule: (spec.rule as CustomAudienceRule) ?? { retention: 30 },
+            excludeRules: (spec.excludeRules as ExcludeRule[]) ?? [],
+            name: editAudience.name,
+            description: editAudience.description ?? '',
+          })
+        } else if (editAudience.type === 'LOOKALIKE') {
+          setLookalikeState({
+            currentStep: 1,
+            seedAudienceId: String(spec.seedAudienceId ?? ''),
+            seedName: String(spec.seedName ?? ''),
+            countries: (spec.countries as string[]) ?? [],
+            sizePercent: Number(spec.sizePercent ?? 1),
+            name: editAudience.name,
+            description: editAudience.description ?? '',
+          })
+        } else {
+          setSavedState({
+            currentStep: 1,
+            locations: (spec.locations as LocationItem[]) ?? [],
+            ageMin: Number(spec.ageMin ?? 18),
+            ageMax: Number(spec.ageMax ?? 65),
+            genders: (spec.genders as number[]) ?? [],
+            locales: (spec.locales as number[]) ?? [],
+            interests: (spec.interests as InterestItem[]) ?? [],
+            excludeInterests: (spec.excludeInterests as InterestItem[]) ?? [],
+            advantageAudience: spec.advantageAudience !== false,
+            name: editAudience.name,
+            description: editAudience.description ?? '',
+          })
+        }
+      } else {
+        // Create mode: apply seed prefill
+        const p = typeToPhase(initialType)
+        setPhase(p)
+        setPrevPhase(p)
+        setHasInitialType(!!initialType)
+        const desc = seedHintsRef.current?.declaredTargetAudience?.trim() ?? ''
+        setCustomState({ ...initialCustomAudienceState, description: desc })
+        setLookalikeState({ ...initialLookalikeState, description: desc })
+        setSavedState({ ...initialSavedAudienceState, description: desc })
+      }
       setIsSubmitting(false)
       setPendingSubmitType(null)
     }
-  }, [isOpen, initialType])
+  }, [isOpen, initialType, editAudience])
 
   const reset = useCallback(() => {
-    const p = typeToPhase(initialType)
+    const p = editAudience ? typeToPhase(editAudience.type) : typeToPhase(initialType)
     setPhase(p)
     setPrevPhase(p)
-    setHasInitialType(!!initialType)
-    const desc = seedHintsRef.current?.declaredTargetAudience?.trim() ?? ''
+    setHasInitialType(editAudience ? true : !!initialType)
+    const desc = editAudience
+      ? (editAudience.description ?? '')
+      : (seedHintsRef.current?.declaredTargetAudience?.trim() ?? '')
     setCustomState({ ...initialCustomAudienceState, description: desc })
     setLookalikeState({ ...initialLookalikeState, description: desc })
     setSavedState({ ...initialSavedAudienceState, description: desc })
     setIsSubmitting(false)
     setPendingSubmitType(null)
-  }, [initialType])
+  }, [initialType, editAudience])
 
   const handleClose = () => {
     reset()
@@ -218,6 +284,64 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
   /* ── Submit ── */
   const submitAudience = async (type: AudienceType) => {
     setIsSubmitting(true)
+
+    // Edit mode: PATCH only — no Meta create (user does that from the list)
+    if (isEditMode && editAudience) {
+      try {
+        let patchBody: Record<string, unknown>
+        if (type === 'CUSTOM') {
+          patchBody = {
+            name: customState.name.trim(),
+            description: customState.description || null,
+            source: customState.source || null,
+            yoai_spec_json: { rule: customState.rule, excludeRules: customState.excludeRules },
+          }
+        } else if (type === 'LOOKALIKE') {
+          patchBody = {
+            name: lookalikeState.name.trim(),
+            description: lookalikeState.description || null,
+            yoai_spec_json: {
+              seedAudienceId: lookalikeState.seedAudienceId,
+              seedName: lookalikeState.seedName,
+              countries: lookalikeState.countries,
+              sizePercent: lookalikeState.sizePercent,
+            },
+          }
+        } else {
+          patchBody = {
+            name: savedState.name.trim(),
+            description: savedState.description || null,
+            yoai_spec_json: {
+              locations: savedState.locations,
+              ageMin: savedState.ageMin,
+              ageMax: savedState.ageMax,
+              genders: savedState.genders,
+              locales: savedState.locales,
+              interests: savedState.interests,
+              excludeInterests: savedState.excludeInterests,
+              advantageAudience: savedState.advantageAudience,
+            },
+          }
+        }
+        const res = await fetch(`/api/audiences/${editAudience.id}`, {
+          method: 'PATCH',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify(patchBody),
+        })
+        const json = await res.json()
+        if (!res.ok || !json.ok) throw new Error(json.message ?? 'Güncellenemedi')
+        onToast?.('Kitle güncellendi', 'success')
+        onSuccess?.()
+        handleClose()
+      } catch (err) {
+        onToast?.(err instanceof Error ? err.message : 'Beklenmeyen hata', 'error')
+      } finally {
+        setIsSubmitting(false)
+      }
+      return
+    }
+
+    // Create mode: POST + meta create
     try {
       let body: Record<string, unknown>
       if (type === 'CUSTOM') {
@@ -345,10 +469,10 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
           <h2 className="text-page-title font-semibold text-gray-900">
             {phase === 'select-type' && 'Yeni Hedef Kitle'}
-            {phase === 'custom' && 'Yeni Retargeting Kitlesi'}
-            {phase === 'lookalike' && 'Yeni Benzer Kitle'}
-            {phase === 'saved' && 'Yeni Detaylı Kitle'}
-            {phase === 'confirm' && 'Hedef Kitle Oluşturma Onayı'}
+            {phase === 'custom' && (isEditMode ? 'Retargeting Kitlesini Düzenle' : 'Yeni Retargeting Kitlesi')}
+            {phase === 'lookalike' && (isEditMode ? 'Benzer Kitleyi Düzenle' : 'Yeni Benzer Kitle')}
+            {phase === 'saved' && (isEditMode ? 'Detaylı Kitleyi Düzenle' : 'Yeni Detaylı Kitle')}
+            {phase === 'confirm' && (isEditMode ? 'Değişiklikleri Kaydet' : 'Hedef Kitle Oluşturma Onayı')}
           </h2>
           <button
             type="button"
@@ -455,10 +579,21 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
           {phase === 'confirm' && pendingSubmitType && (
             <div className="space-y-6">
               <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
-                <p className="text-sm font-semibold text-primary mb-1">Gerçek Meta Hesabında Oluşturulacak</p>
-                <p className="text-sm text-primary/80">
-                  Aşağıdaki hedef kitle, bağlı Meta reklam hesabınızda gerçekten oluşturulacaktır. Bu işlem geri alınamaz.
-                </p>
+                {isEditMode ? (
+                  <>
+                    <p className="text-sm font-semibold text-primary mb-1">Taslak Güncellenecek</p>
+                    <p className="text-sm text-primary/80">
+                      Değişiklikler kaydedilecek. Kitleyi Meta'ya göndermek için liste ekranındaki "Meta'ya Gönder" butonunu kullanın.
+                    </p>
+                  </>
+                ) : (
+                  <>
+                    <p className="text-sm font-semibold text-primary mb-1">Gerçek Meta Hesabında Oluşturulacak</p>
+                    <p className="text-sm text-primary/80">
+                      Aşağıdaki hedef kitle, bağlı Meta reklam hesabınızda gerçekten oluşturulacaktır. Bu işlem geri alınamaz.
+                    </p>
+                  </>
+                )}
               </div>
 
               <div className="bg-gray-50 rounded-xl border border-gray-200 divide-y divide-gray-200">
@@ -506,7 +641,9 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
                   disabled={isSubmitting}
                   className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
                 >
-                  {isSubmitting ? 'Oluşturuluyor...' : 'Oluştur ve Meta\'ya Gönder'}
+                  {isSubmitting
+                    ? (isEditMode ? 'Kaydediliyor...' : 'Oluşturuluyor...')
+                    : (isEditMode ? 'Kaydet' : 'Oluştur ve Meta\'ya Gönder')}
                 </button>
               </div>
             </div>

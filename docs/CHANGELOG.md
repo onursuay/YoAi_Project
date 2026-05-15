@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 7: DRAFT Edit UI
+- **Sorun:** DRAFT durumundaki kitleler liste ekranında düzenlenemiyordu; hata yapıldığında tek seçenek silip yeniden oluşturmaktı.
+- **Çözüm:** `AudienceCard` DRAFT kartlarına "Düzenle" (Pencil) butonu eklendi. Butona basıldığında wizard edit modda açılır: mevcut `yoai_spec_json` parse edilerek Custom/Lookalike/Saved state'i reconstruct edilir, form dolu gelir. Kaydet'e basıldığında `PATCH /api/audiences/[id]` çağrılır (Meta'ya gönderim yapılmaz — kullanıcı listeden "Meta'ya Gönder" ile manuel tetikler). Confirm ekranı edit/create moduna göre farklı metin gösterir. `UnifiedAudience`'a `yoaiSpecJson?` eklendi. Tüm 99 test geçiyor.
+- **Dosyalar:** `components/hedef-kitle/AudienceCard.tsx`, `components/hedef-kitle/AudienceList.tsx`, `components/hedef-kitle/AudienceWizardModal.tsx`, `components/hedef-kitle/wizard/types.ts`, `app/hedef-kitle/page.tsx`
+
 ## 2026-05-15 — Hedef Kitle Faz 3: Business Context Seed Prefill
 - **Sorun:** Wizard'ın tüm formlari (Custom/Lookalike/Saved) tamamen boş başlıyordu; kullanıcı onboarding'de girdiği hedef kitle açıklaması wizard'a taşınmıyordu.
 - **Çözüm:** `AudienceWizardModal` mount'ta `/api/audiences/business-context` çeker, `seedHintsRef` (useRef) ile saklar, modal her açılışında ve `reset()` çağrısında `declaredTargetAudience` değerini 3 wizard türünün `description` alanına prefill eder. İş profili yüklenmemişse veya fetch başarısız olursa sessizce boş string fallback — mevcut davranış korunur. Location/country alanları prefill edilmez (Meta key formatı uyumsuz). `audienceFaz3SeedPrefill.test.ts` (19 test) eklendi. Toplam 99 test, 0 hata.

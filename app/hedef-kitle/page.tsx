@@ -11,7 +11,7 @@ import PlatformTabs from '@/components/hedef-kitle/PlatformTabs'
 import type { Platform } from '@/components/hedef-kitle/PlatformTabs'
 import AudienceList from '@/components/hedef-kitle/AudienceList'
 import AudienceWizardModal from '@/components/hedef-kitle/AudienceWizardModal'
-import type { AudienceRow, AudienceType, UnifiedAudience } from '@/components/hedef-kitle/wizard/types'
+import type { AudienceRow, AudienceType, AudienceSource, UnifiedAudience } from '@/components/hedef-kitle/wizard/types'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
@@ -69,6 +69,7 @@ function mapLocalToUnified(row: AudienceRow): UnifiedAudience {
     metaAudienceId: row.meta_audience_id,
     adAccountId: row.ad_account_id,
     errorMessage: row.error_message,
+    yoaiSpecJson: row.yoai_spec_json,
   }
 }
 
@@ -103,6 +104,10 @@ export default function HedefKitlePage() {
   const [audiences, setAudiences] = useState<UnifiedAudience[]>([])
   const [loading, setLoading] = useState(true)
   const [wizardOpen, setWizardOpen] = useState(false)
+  const [editAudience, setEditAudience] = useState<{
+    id: string; type: AudienceType; source?: AudienceSource | null
+    name: string; description?: string | null; yoai_spec_json: Record<string, unknown>
+  } | null>(null)
   const [toasts, setToasts] = useState<Toast[]>([])
   const [assets, setAssets] = useState<Assets>({ pixels: [], instagramAccounts: [], pages: [] })
   const [businessContext, setBusinessContext] =
@@ -199,6 +204,20 @@ export default function HedefKitlePage() {
     fetchBusinessContext()
   }, [fetchAudiences, fetchAssets, fetchBusinessContext])
 
+  const handleEdit = useCallback((id: string) => {
+    const audience = audiences.find((a) => a.id === id && a.origin === 'local')
+    if (!audience || !audience.yoaiSpecJson) return
+    setEditAudience({
+      id: audience.id,
+      type: audience.type,
+      source: audience.source,
+      name: audience.name,
+      description: audience.description,
+      yoai_spec_json: audience.yoaiSpecJson,
+    })
+    setWizardOpen(true)
+  }, [audiences])
+
   const handleDelete = async (id: string) => {
     try {
       const res = await fetch(`/api/audiences/${id}`, { method: 'DELETE' })
@@ -290,6 +309,7 @@ export default function HedefKitlePage() {
                 audiences={aiAudiences}
                 loading={loading}
                 onDelete={handleDelete}
+                onEdit={handleEdit}
                 onRefresh={fetchAudiences}
                 onToast={addToast}
                 filter="ALL"
@@ -313,6 +333,7 @@ export default function HedefKitlePage() {
               audiences={audiences}
               loading={loading}
               onDelete={handleDelete}
+              onEdit={handleEdit}
               onRefresh={fetchAudiences}
               onToast={addToast}
               filter={activeTab as AudienceType}
@@ -324,11 +345,12 @@ export default function HedefKitlePage() {
       {/* Wizard Modal */}
       <AudienceWizardModal
         isOpen={wizardOpen}
-        onClose={() => setWizardOpen(false)}
+        onClose={() => { setWizardOpen(false); setEditAudience(null) }}
         onSuccess={fetchAudiences}
         onToast={addToast}
         assets={assets}
         initialType={activeTab === 'CUSTOM' ? 'CUSTOM' : activeTab === 'LOOKALIKE' ? 'LOOKALIKE' : activeTab === 'SAVED' ? 'SAVED' : undefined}
+        editAudience={editAudience}
       />
 
       {/* Toasts */}

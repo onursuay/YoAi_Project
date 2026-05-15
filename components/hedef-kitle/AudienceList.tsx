@@ -9,6 +9,7 @@ interface AudienceListProps {
   audiences: UnifiedAudience[]
   loading: boolean
   onDelete: (id: string) => void
+  onEdit?: (id: string) => void
   onRefresh: () => void
   onToast?: (message: string, type: 'success' | 'error' | 'info') => void
   filter?: AudienceType | 'ALL'
@@ -18,6 +19,7 @@ export default function AudienceList({
   audiences,
   loading,
   onDelete,
+  onEdit,
   onRefresh,
   onToast,
   filter = 'ALL',
@@ -132,6 +134,7 @@ export default function AudienceList({
               )
             }
             onDelete={onDelete}
+            onEdit={onEdit}
             onSendToMeta={handleSendToMeta}
             onSync={handleSync}
             actionLoading={actionLoadingIds.has(audience.id)}
