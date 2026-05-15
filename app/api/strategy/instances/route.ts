@@ -6,6 +6,19 @@ import { COST_PER_STRATEGY } from '@/lib/subscription/types'
 
 export const dynamic = 'force-dynamic'
 
+// Owner hesaplar plan / kredi / limit kontrolünden muaftır.
+const SUPER_ADMIN_EMAILS = ['onursuay@hotmail.com']
+
+async function isOwner(userId: string): Promise<boolean> {
+  if (!supabase) return false
+  const { data } = await supabase
+    .from('signups')
+    .select('email')
+    .eq('id', userId)
+    .single()
+  return SUPER_ADMIN_EMAILS.includes((data?.email ?? '').toLowerCase())
+}
+
 // Plan limitini DB'deki subscriptions satırından çözümle.
 // Satır yoksa ya da plan bilinmiyorsa güvenli default: 3/ay.
 async function resolveMonthlyStrategyLimit(userId: string): Promise<number> {
@@ -46,6 +59,7 @@ export async function GET() {
     .from('strategy_instances')
     .select('*')
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .order('created_at', { ascending: false })
 
   if (error) {
@@ -69,76 +83,81 @@ export async function POST(request: Request) {
 
   const userId = ctx.userId
 
-  // ── Plan limiti kontrolü ──────────────────────────────────
-  const monthlyLimit = await resolveMonthlyStrategyLimit(userId)
+  // ── Owner bypass: plan / kredi / limit kontrolü atlanır ──
+  const ownerMode = await isOwner(userId)
 
-  if (monthlyLimit === 0) {
-    return NextResponse.json(
-      { ok: false, error: 'plan_limit', message: 'Abonelik planınız strateji oluşturmaya izin vermiyor.' },
-      { status: 403 }
-    )
-  }
+  if (!ownerMode) {
+    // ── Plan limiti kontrolü ────────────────────────────────
+    const monthlyLimit = await resolveMonthlyStrategyLimit(userId)
 
-  if (monthlyLimit > 0) {
-    const currentMonthStart = new Date()
-    currentMonthStart.setDate(1)
-    currentMonthStart.setHours(0, 0, 0, 0)
+    if (monthlyLimit === 0) {
+      return NextResponse.json(
+        { ok: false, error: 'plan_limit', message: 'Abonelik planınız strateji oluşturmaya izin vermiyor.' },
+        { status: 403 }
+      )
+    }
 
-    const { count } = await supabase
-      .from('strategy_instances')
-      .select('id', { count: 'exact', head: true })
+    if (monthlyLimit > 0) {
+      const currentMonthStart = new Date()
+      currentMonthStart.setDate(1)
+      currentMonthStart.setHours(0, 0, 0, 0)
+
+      const { count } = await supabase
+        .from('strategy_instances')
+        .select('id', { count: 'exact', head: true })
+        .eq('user_id', userId)
+        .gte('created_at', currentMonthStart.toISOString())
+
+      if ((count ?? 0) >= monthlyLimit) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'monthly_limit_reached',
+            message: `Bu ay için strateji limitine ulaştınız (${monthlyLimit}/${monthlyLimit}).`,
+          },
+          { status: 429 }
+        )
+      }
+    }
+
+    // ── Kredi kontrolü ve atomik düşme ──────────────────────
+    // credit_balances satırı yoksa varsayılan 100 krediyle oluştur (trial kullanıcısı).
+    const { data: creditRow } = await supabase
+      .from('credit_balances')
+      .select('balance')
       .eq('user_id', userId)
-      .gte('created_at', currentMonthStart.toISOString())
+      .single()
 
-    if ((count ?? 0) >= monthlyLimit) {
+    if (!creditRow) {
+      await supabase
+        .from('credit_balances')
+        .upsert({ user_id: userId, balance: 100, total_earned: 100, total_spent: 0 }, { onConflict: 'user_id' })
+    } else if (creditRow.balance < COST_PER_STRATEGY) {
       return NextResponse.json(
         {
           ok: false,
-          error: 'monthly_limit_reached',
-          message: `Bu ay için strateji limitine ulaştınız (${monthlyLimit}/${monthlyLimit}).`,
+          error: 'insufficient_credits',
+          message: `Yetersiz kredi. Strateji oluşturmak için ${COST_PER_STRATEGY} kredi gerekli, mevcut: ${creditRow.balance}.`,
         },
-        { status: 429 }
+        { status: 402 }
       )
     }
-  }
 
-  // ── Kredi kontrolü ve atomik düşme ────────────────────────
-  // credit_balances satırı yoksa varsayılan 100 krediyle oluştur (trial kullanıcısı).
-  const { data: creditRow } = await supabase
-    .from('credit_balances')
-    .select('balance')
-    .eq('user_id', userId)
-    .single()
+    // Atomik düşme: balance >= cost ise günceller, yoksa -1 döner.
+    const { data: deductResult, error: deductError } = await supabase
+      .rpc('deduct_strategy_credit', { p_user_id: userId, p_cost: COST_PER_STRATEGY })
 
-  if (!creditRow) {
-    await supabase
-      .from('credit_balances')
-      .upsert({ user_id: userId, balance: 100, total_earned: 100, total_spent: 0 }, { onConflict: 'user_id' })
-  } else if (creditRow.balance < COST_PER_STRATEGY) {
-    return NextResponse.json(
-      {
-        ok: false,
-        error: 'insufficient_credits',
-        message: `Yetersiz kredi. Strateji oluşturmak için ${COST_PER_STRATEGY} kredi gerekli, mevcut: ${creditRow.balance}.`,
-      },
-      { status: 402 }
-    )
-  }
+    if (deductError) {
+      console.error('[strategy/instances/POST] credit deduct rpc error:', deductError)
+      return NextResponse.json({ ok: false, error: 'credit_deduct_failed', message: 'Kredi işlemi başarısız.' }, { status: 500 })
+    }
 
-  // Atomik düşme: balance >= cost ise günceller, yoksa -1 döner.
-  const { data: deductResult, error: deductError } = await supabase
-    .rpc('deduct_strategy_credit', { p_user_id: userId, p_cost: COST_PER_STRATEGY })
-
-  if (deductError) {
-    console.error('[strategy/instances/POST] credit deduct rpc error:', deductError)
-    return NextResponse.json({ ok: false, error: 'credit_deduct_failed', message: 'Kredi işlemi başarısız.' }, { status: 500 })
-  }
-
-  if (deductResult === -1) {
-    return NextResponse.json(
-      { ok: false, error: 'insufficient_credits', message: `Yetersiz kredi. Strateji oluşturmak için ${COST_PER_STRATEGY} kredi gerekli.` },
-      { status: 402 }
-    )
+    if (deductResult === -1) {
+      return NextResponse.json(
+        { ok: false, error: 'insufficient_credits', message: `Yetersiz kredi. Strateji oluşturmak için ${COST_PER_STRATEGY} kredi gerekli.` },
+        { status: 402 }
+      )
+    }
   }
 
   // ── Instance oluştur ──────────────────────────────────────
@@ -179,5 +198,5 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'db_error', message: error.message }, { status: 500 })
   }
 
-  return NextResponse.json({ ok: true, instance: data, creditsRemaining: deductResult }, { status: 201 })
+  return NextResponse.json({ ok: true, instance: data, ownerBypass: ownerMode || undefined }, { status: 201 })
 }
