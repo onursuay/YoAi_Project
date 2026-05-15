@@ -74,6 +74,7 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
           fingerprintLast4: dbConn.accessToken.slice(-4),
           userAccessToken: dbConn.accessToken,
           source: 'db' as const,
+          userId: userId ?? '',
         }
       }
     } catch (e) {
@@ -93,12 +94,14 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
       const stillValid = cookieToken && (!cookieExpiresAt || Date.now() < parseInt(cookieExpiresAt, 10))
       if (stillValid && cookieAdAccountId) {
         const accountId = cookieAdAccountId.startsWith('act_') ? cookieAdAccountId : `act_${cookieAdAccountId}`
+        const cookieUserId = cookieStore.get('user_id')?.value ?? ''
         ctx = {
           client: null as any,
           accountId,
           fingerprintLast4: cookieToken!.slice(-4),
           userAccessToken: cookieToken!,
           source: 'cookie' as any,
+          userId: cookieUserId,
         }
       }
     } catch (e) {

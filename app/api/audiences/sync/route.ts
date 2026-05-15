@@ -41,6 +41,7 @@ export async function POST(request: Request) {
     .from('audiences')
     .select('*')
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .not('meta_audience_id', 'is', null)
     .not('status', 'eq', 'DELETED')
     .not('status', 'eq', 'DRAFT')

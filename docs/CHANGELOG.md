@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 2: user_id Bağlama + RLS
+- **Sorun:** `audiences` tablosunda `user_id` kolonu yoktu; tüm sorgular yalnızca `ad_account_id` ile izole ediliyordu — aynı reklam hesabını kullanan farklı kullanıcılar birbirinin kitlesini görebilirdi.
+- **Çözüm:** `user_id TEXT` kolonu eklendi, DB indexi oluşturuldu, tablo RLS etkinleştirildi (SELECT/INSERT/UPDATE/DELETE policy). `MetaContext` arayüzüne `userId` alanı eklendi ve tüm audience API route'larında (list, create, get, patch, delete, sync, meta-create) `.eq('user_id', ctx.userId)` filtresi + INSERT'e `user_id` yazımı eklendi. 59 mevcut test geçti, TypeScript sıfır hata.
+- **Dosyalar:** `supabase/migrations/20260515100000_audiences_user_id_rls.sql` (yeni), `lib/meta/context.ts`, `app/api/audiences/route.ts`, `app/api/audiences/[id]/route.ts`, `app/api/audiences/[id]/create/route.ts`, `app/api/audiences/sync/route.ts`, `lib/yoai/metaDeepFetcher.ts`
+
 ## 2026-05-15 — Hedef Kitle Faz 1 Test Coverage
 - **Sorun:** Faz 1 değişikliklerinin (copy, exclude payload, confirmation) test kanıtı yoktu.
 - **Çözüm:** 2 yeni test dosyası eklendi. `audiencePayloadBuilder.test.ts`: 35 test — PIXEL/IG/PAGE/VIDEO/LEADFORM include/exclude payload doğruluğu, cross-source exclusion throw, unsupported source throw, Lookalike ratio/country, SavedAudience targeting. `audienceWizardConfirmation.test.ts`: 24 test — StepSummary copy regresyon, confirm phase varlığı, navigateStep onay bypass yokluğu, pendingSubmitType flow, amber/yellow renk regresyon (20 dosya). Mevcut 11 BI context testi de geçti. Toplam 70 test, 0 hata.

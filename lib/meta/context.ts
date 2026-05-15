@@ -15,6 +15,8 @@ export interface MetaContext {
   userAccessToken: string
   /** Where the context was resolved from */
   source: 'db' | 'cookie'
+  /** Authenticated user ID from cookie — used for DB row isolation */
+  userId: string
 }
 
 export async function resolveMetaContext(): Promise<MetaContext | null> {
@@ -30,7 +32,7 @@ export async function resolveMetaContext(): Promise<MetaContext | null> {
         const accountId = normalizeAccountId(dbConn.selectedAdAccountId)
         const fingerprintLast4 = dbConn.accessToken.length >= 4 ? dbConn.accessToken.slice(-4) : '****'
         const client = new MetaGraphClient({ accessToken: dbConn.accessToken })
-        return { client, accountId, fingerprintLast4, userAccessToken: dbConn.accessToken, source: 'db' }
+        return { client, accountId, fingerprintLast4, userAccessToken: dbConn.accessToken, source: 'db', userId: sessionId }
       }
     } catch {
       // DB failure → fall through to cookie

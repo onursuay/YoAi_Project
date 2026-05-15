@@ -22,6 +22,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     .select('*')
     .eq('id', id)
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .single()
 
   if (error || !data) {
@@ -50,6 +51,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .select('status')
     .eq('id', id)
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .single()
 
   if (!existing) {
@@ -81,6 +83,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     .update(updates)
     .eq('id', id)
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .select()
     .single()
 
@@ -110,6 +113,7 @@ export async function DELETE(_request: Request, { params }: { params: Promise<{ 
     .update({ status: 'DELETED', updated_at: new Date().toISOString() })
     .eq('id', id)
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
 
   if (error) {
     console.error('[audiences/DELETE] Supabase error:', error)

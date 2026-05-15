@@ -19,6 +19,7 @@ export async function GET() {
     .from('audiences')
     .select('*')
     .eq('ad_account_id', ctx.accountId)
+    .eq('user_id', ctx.userId)
     .neq('status', 'DELETED')
     .order('created_at', { ascending: false })
 
@@ -66,6 +67,7 @@ export async function POST(request: Request) {
 
   const row = {
     ad_account_id: ctx.accountId,
+    user_id: ctx.userId,
     type,
     source: source ?? null,
     name: name.trim(),
