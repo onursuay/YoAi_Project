@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 1A/1B: Copy + Payload + Confirmation Fix
+- **Sorun:** 3 wizard StepSummary'de "Meta'ya gönderim Faz 2'de aktif edilecek" yanıltıcı metni vardı; exclude rules payload'a kaynak tipi taşınmıyordu; CATALOG/APP/OFFLINE/CUSTOMER_LIST seçilince generic ENGAGEMENT fallback ile Meta'ya yanlış payload gönderiliyordu; kullanıcı onayı olmadan Meta'ya audience oluşturuluyordu; 6 dosyada amber/yellow Tailwind ihlali mevcuttu.
+- **Çözüm:** Tüm StepSummary metinleri gerçeği yansıtacak şekilde güncellendi. Wizard son adımında "Oluştur ve Meta'ya Gönder" confirmation modal'ı eklendi — kullanıcı açık onay vermeden Meta'ya POST yapılmıyor. Exclude rules payloadBuilder'da: PIXEL exclusions filtre bilgisini taşıyor; IG/PAGE/VIDEO/LEADFORM case'lerine event_sources içeren exclusion handling eklendi; cross-source exclusion hata fırlatıyor. Desteklenmeyen kaynak tipleri (CATALOG/APP/OFFLINE/CUSTOMER_LIST) artık throw ile engelleniyor; StepSource'ta disabled; StepRule'da "desteklenmiyor" mesajı. Amber/yellow ihlalleri CLAUDE.md kuralına uygun palet ile değiştirildi.
+- **Dosyalar:** `components/hedef-kitle/AudienceWizardModal.tsx`, `components/hedef-kitle/wizard/types.ts`, `components/hedef-kitle/wizard/AudienceWizardNavigation.tsx`, `components/hedef-kitle/wizard/custom/StepSummary.tsx`, `components/hedef-kitle/wizard/custom/StepExclude.tsx`, `components/hedef-kitle/wizard/custom/StepSource.tsx`, `components/hedef-kitle/wizard/custom/StepRule.tsx`, `components/hedef-kitle/wizard/lookalike/StepSummary.tsx`, `components/hedef-kitle/wizard/saved/StepSummary.tsx`, `components/hedef-kitle/wizard/saved/StepExclude.tsx`, `lib/meta/audiences/payloadBuilder.ts`
+
 ## 2026-05-15 — Başvuru Durumu / Ön Görüşme Kartı UI Polish
 - **Sorun:** `/basvuru-durumu` ekranı ve `PreMeetingApprovalModal` kartı dar, küçük ikonlu ve animasyonsuzdu; premium hissi vermiyordu.
 - **Çözüm:** Her iki kart genişletildi (max-w-xl→max-w-2xl / max-w-md→max-w-lg), padding ve başlık boyutları artırıldı (text-3xl), ikon alanı büyütüldü (h-16→h-20) ve pulse/glow animasyonu eklendi. Kart mount sırasında fade+scale-in girişi, footer metni gecikmeli fade-in ile gösteriliyor. Birincil CTA butonlarına renkli shadow eklendi; ikincil CTA metin kontrası iyileştirildi. Hiçbir onay/ön görüşme/API/guard/mail mantığına dokunulmadı.
