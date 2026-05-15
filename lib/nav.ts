@@ -102,37 +102,6 @@ export const navItems: NavItem[] = [
     href: '/entegrasyon',
     icon: Puzzle,
   },
-  {
-    id: 'kurumsal',
-    label: 'Kurumsal',
-    icon: Building2,
-    children: [
-      {
-        id: 'gizlilik-politikasi',
-        label: 'Gizlilik Politikası',
-        href: '/gizlilik-politikasi',
-        icon: FileText,
-      },
-      {
-        id: 'cerez-politikasi',
-        label: 'Çerez Politikası',
-        href: '/cerez-politikasi',
-        icon: FileText,
-      },
-      {
-        id: 'kullanim-kosullari',
-        label: 'Kullanım Koşulları',
-        href: '/kullanim-kosullari',
-        icon: FileText,
-      },
-      {
-        id: 'veri-silme',
-        label: 'Veri Silme',
-        href: '/veri-silme',
-        icon: FileText,
-      },
-    ],
-  },
 ]
 
 /**

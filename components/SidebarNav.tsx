@@ -3,7 +3,7 @@
 import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
-import { navItems, gozetimMerkeziNavItem } from '@/lib/nav'
+import { navItems } from '@/lib/nav'
 import { localePath } from '@/lib/routes'
 import { ChevronDown, PanelLeftClose, PanelLeftOpen } from 'lucide-react'
 import UserProfileDropdown from '@/components/UserProfileDropdown'
@@ -96,16 +96,9 @@ export default function SidebarNav() {
       return id.replace(/-/g, '')
     }
 
-    const baseItems = hasGozetimAccess
-      ? [...navItems, gozetimMerkeziNavItem]
-      : navItems
-
-    return baseItems.map(item => ({
+    return navItems.map(item => ({
       ...item,
-      // Gözetim Merkezi sabit (Türkçe) etiket kullanır; locale-agnostic.
-      label: item.id === 'gozetim-merkezi'
-        ? item.label
-        : t(getTranslationKey(item.id)),
+      label: t(getTranslationKey(item.id)),
       href: item.href ? localePath(item.href, locale) : item.href,
       children: item.children?.map(child => ({
         ...child,
@@ -113,7 +106,7 @@ export default function SidebarNav() {
         href: child.href ? localePath(child.href, locale) : child.href,
       }))
     }))
-  }, [t, locale, hasGozetimAccess])
+  }, [t, locale])
 
   return (
     <div
@@ -280,7 +273,7 @@ export default function SidebarNav() {
       <SidebarInfoCards collapsed={collapsed} />
 
       <div className="p-4 border-t border-gray-200">
-        <UserProfileDropdown collapsed={collapsed} />
+        <UserProfileDropdown collapsed={collapsed} hasGozetimAccess={hasGozetimAccess} />
       </div>
     </div>
   )
