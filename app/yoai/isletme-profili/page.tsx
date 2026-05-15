@@ -56,12 +56,13 @@ function ConfidenceRing({ value }: { value: number }) {
   const radius = 28
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (value / 100) * circumference
-  const color = value >= 80 ? '#10b981' : value >= 50 ? '#3b82f6' : '#f97316'
+  const color = value >= 80 ? '#6ee7b7' : value >= 50 ? '#93c5fd' : '#fdba74'
 
   return (
-    <div className="relative w-20 h-20 flex items-center justify-center">
-      <svg className="absolute inset-0 -rotate-90" width="80" height="80">
-        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="5" />
+    <div className="relative w-20 h-20 shrink-0">
+      {/* SVG ring — rotated so arc starts at top */}
+      <svg className="-rotate-90" width="80" height="80">
+        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="5" />
         <circle
           cx="40" cy="40" r={radius} fill="none"
           stroke={color} strokeWidth="5"
@@ -71,9 +72,10 @@ function ConfidenceRing({ value }: { value: number }) {
           style={{ transition: 'stroke-dashoffset 1s ease' }}
         />
       </svg>
-      <div className="text-center z-10">
-        <p className="text-xl font-bold text-white leading-none">%{value}</p>
-        <p className="text-[9px] text-white/60 mt-0.5 leading-none">güven</p>
+      {/* Text overlay — absolutely centered over the SVG */}
+      <div className="absolute inset-0 flex flex-col items-center justify-center">
+        <p className="text-lg font-bold text-white leading-none drop-shadow-sm">%{value}</p>
+        <p className="text-[9px] font-medium text-white/80 mt-0.5 leading-none tracking-wide uppercase">güven</p>
       </div>
     </div>
   )
@@ -229,28 +231,30 @@ export default function IsletmeProfilPage() {
 
         {/* ── HERO CARD ── */}
         <div className="relative rounded-2xl overflow-hidden">
-          {/* Animated gradient background */}
-          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-emerald-700" />
+          {/* Base gradient — darker so white text pops */}
+          <div className="absolute inset-0 bg-gradient-to-br from-emerald-800 via-emerald-700 to-emerald-600" />
+          {/* Dark scrim for text contrast */}
+          <div className="absolute inset-0 bg-black/25" />
           {/* Animated blobs */}
           <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5 animate-pulse" style={{ animationDuration: '4s' }} />
           <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/5 animate-pulse" style={{ animationDuration: '6s' }} />
-          <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-emerald-300/5 animate-pulse" style={{ animationDuration: '5s' }} />
+          <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-white/5 animate-pulse" style={{ animationDuration: '5s' }} />
 
           {/* Content */}
           <div className="relative z-10 px-7 py-6 flex items-center justify-between gap-6">
             <div className="flex items-center gap-5 flex-1 min-w-0">
               <ConfidenceRing value={profile.profile_confidence} />
               <div className="min-w-0">
-                <h1 className="text-2xl font-bold text-white truncate">{profile.company_name}</h1>
+                <h1 className="text-2xl font-bold text-white drop-shadow-sm truncate">{profile.company_name}</h1>
                 {profile.sector_main && (
-                  <p className="text-white/60 text-sm mt-0.5">
+                  <p className="text-white/75 text-sm mt-0.5 font-medium">
                     {profile.sector_main}{profile.sector_sub ? ` · ${profile.sector_sub}` : ''}
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-2.5 flex-wrap">
                   <ScanBadge status={profile.scan_status} />
                   {profile.last_scan_completed_at && (
-                    <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
+                    <span className="inline-flex items-center gap-1 text-[11px] text-white/55 font-medium">
                       <Clock className="w-3 h-3" />
                       {new Date(profile.last_scan_completed_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
                     </span>
@@ -260,7 +264,7 @@ export default function IsletmeProfilPage() {
             </div>
             <button
               onClick={() => setShowEdit(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-xl text-sm font-medium transition-all shrink-0 backdrop-blur-sm"
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/20 hover:bg-white/30 border border-white/30 text-white rounded-xl text-sm font-semibold transition-all shrink-0 backdrop-blur-sm"
             >
               <Pencil className="w-3.5 h-3.5" /> Düzenle
             </button>
@@ -287,48 +291,70 @@ export default function IsletmeProfilPage() {
           ))}
         </div>
 
-        {/* ── MAIN GRID ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
-
-          {/* Firma Bilgileri – 2 sütun */}
-          <div className="lg:col-span-2">
-            <Card icon={Building2} title="Firma Bilgileri">
-              <div className="space-y-4">
-                <Field label="İşletme Açıklaması" value={profile.business_description} />
-                {profile.specialization && <Field label="Uzmanlık / Özel Hizmet" value={profile.specialization} />}
-                <Tags label="Ürünler / Hizmetler" items={profile.products_or_services} />
-              </div>
-            </Card>
+        {/* ── FİRMA BİLGİLERİ — tam genişlik ── */}
+        <Card icon={Building2} title="Firma Bilgileri">
+          <div className="space-y-4">
+            <Field label="İşletme Açıklaması" value={profile.business_description} />
+            {profile.specialization && <Field label="Uzmanlık / Özel Hizmet" value={profile.specialization} />}
+            <Tags label="Ürünler / Hizmetler" items={profile.products_or_services} />
           </div>
+        </Card>
 
-          {/* Hedef & Lokasyon – 1 sütun */}
-          <div>
-            <Card icon={Target} title="Hedef & Lokasyon">
-              <div className="space-y-4">
-                {profile.main_conversion_goal && (
-                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10">
-                    <Phone className="w-4 h-4 text-primary shrink-0" />
-                    <div>
-                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide">Ana Hedef</p>
-                      <p className="text-sm font-medium text-gray-800">{profile.main_conversion_goal}</p>
-                    </div>
+        {/* ── HEDEF & LOKASYON + MARKA KAYNAKLARI — yan yana ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+
+          {/* Hedef & Lokasyon */}
+          <Card icon={Target} title="Hedef & Lokasyon">
+            <div className="space-y-3">
+              {profile.main_conversion_goal && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Ana Hedef</p>
+                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/15">
+                    <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                    <span className="text-sm font-semibold text-gray-800">{profile.main_conversion_goal}</span>
                   </div>
-                )}
-                <Tags label="Hedef Lokasyonlar" items={profile.target_locations} />
-                {profile.target_audience && <Field label="Hedef Kitle" value={profile.target_audience} />}
-              </div>
-            </Card>
-          </div>
-        </div>
-
-        {/* Marka Kaynakları */}
-        {allSources.length > 0 && (
-          <Card icon={Globe} title="Marka Kaynakları">
-            <div className="flex flex-wrap gap-2">
-              {allSources.map((s) => <SourceLink key={s.label} label={s.label} url={s.url} />)}
+                </div>
+              )}
+              {profile.target_locations.length > 0 && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Hedef Lokasyonlar</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {profile.target_locations.map((loc) => (
+                      <span key={loc} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700">
+                        <MapPin className="w-3 h-3 text-gray-400" />{loc}
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+              {profile.target_audience && (
+                <div>
+                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Hedef Kitle</p>
+                  <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
+                    <p className="text-sm text-gray-800">{profile.target_audience}</p>
+                  </div>
+                </div>
+              )}
             </div>
           </Card>
-        )}
+
+          {/* Marka Kaynakları */}
+          {allSources.length > 0 && (
+            <Card icon={Globe} title="Marka Kaynakları">
+              <div className="grid grid-cols-2 gap-2">
+                {allSources.map((s) => (
+                  <a key={s.label} href={s.url!} target="_blank" rel="noopener noreferrer"
+                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:bg-primary/5 hover:border-primary/20 transition-colors group">
+                    <div className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/20 transition-colors">
+                      <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-primary transition-colors" />
+                    </div>
+                    <span className="text-xs font-medium text-gray-700 group-hover:text-primary transition-colors truncate">{s.label}</span>
+                  </a>
+                ))}
+              </div>
+            </Card>
+          )}
+        </div>
 
         {/* Pazarlama Detayları */}
         <Card icon={BarChart2} title="Pazarlama Detayları">

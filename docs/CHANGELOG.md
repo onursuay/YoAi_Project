@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — İşletme Profili hero + layout iyileştirmeleri
+- **Sorun:** Güven ring'inde %85 yazısı daire ile hizalı değil; hero üzerinde beyaz metin okunaksız; Hedef & Lokasyon ile Marka Kaynakları alt alta ve sade görünümlüydü
+- **Çözüm:** Ring: SVG + text katmanı `absolute inset-0` ile tam ortalandı, ring rengi açık tonda (emerald-300) güncellendi. Hero: koyu gradient + `bg-black/25` scrim eklendi, metin `drop-shadow` + `font-semibold` ile netleştirildi. Layout: Firma Bilgileri tam genişlik, Hedef & Lokasyon + Marka Kaynakları yan yana (2-col grid); lokasyonlar icon'lu kutucuklara, marka kaynakları 2-col grid kutucuklara alındı
+- **Dosyalar:** `app/yoai/isletme-profili/page.tsx`
+
 ## 2026-05-15 — İşletme profili tarama pipeline'ı düzeltildi: otomatik tarama + duplicate önleme
 - **Sorun:** /scan route'u sahte çalışıyordu (sadece status flip), re-scan'da eski scan kayıtları birikerek duplicate oluşturuyordu, UI'da gereksiz manuel "Tara" butonu vardı
 - **Çözüm:** (1) `deleteSourceScansForProfile` fonksiyonu eklendi — her taramada eski kayıtlar temizlenir. (2) `/scan` route'u gerçek `runScan` pipeline'ını çalıştıracak şekilde yeniden yazıldı. (3) UI'dan "Tara" butonu kaldırıldı, ScanBadge tüm status değerlerini (pending/running/completed/partial/failed) gösteriyor. (4) CLAUDE.md'ye tarama kuralları eklendi.
