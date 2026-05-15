@@ -76,8 +76,7 @@ async function runScan(
   pushOwn('google_business', profile.google_business_profile_url)
   pushOwn('marketplace', profile.marketplace_url)
 
-  const ownOutputs = await scanBusinessSources(ownInputs)
-
+  // Build competitor input lists synchronously before any await
   const compInputs: SourceScanInput[] = []
   const compIndex: { competitor_id: string }[] = []
   for (const comp of competitors) {
@@ -97,7 +96,12 @@ async function runScan(
       compIndex.push({ competitor_id: comp.id || '' })
     }
   }
-  const compOutputs = await scanBusinessSources(compInputs)
+
+  // Run own brand + competitor scans in parallel — stays within Vercel 60s maxDuration
+  const [ownOutputs, compOutputs] = await Promise.all([
+    scanBusinessSources(ownInputs),
+    scanBusinessSources(compInputs),
+  ])
 
   const dbRows: Omit<BusinessSourceScanRow, 'id' | 'created_at'>[] = []
   ownOutputs.forEach((out) => {

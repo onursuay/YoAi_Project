@@ -230,8 +230,7 @@ async function runProfileScansAndIntelligence(
   pushOwn('google_business', profile.google_business_profile_url)
   pushOwn('marketplace', profile.marketplace_url)
 
-  const ownOutputs = await scanBusinessSources(ownInputs.map((o) => o.input))
-
+  // Build competitor input lists synchronously before any await
   const competitorScanRows: SourceScanInput[] = []
   const competitorScanIndex: { competitor_id: string }[] = []
   for (const comp of competitors) {
@@ -251,7 +250,12 @@ async function runProfileScansAndIntelligence(
       competitorScanIndex.push({ competitor_id: comp.id || '' })
     }
   }
-  const competitorOutputs = await scanBusinessSources(competitorScanRows)
+
+  // Run own brand + competitor scans in parallel — stays within Vercel 60s maxDuration
+  const [ownOutputs, competitorOutputs] = await Promise.all([
+    scanBusinessSources(ownInputs.map((o) => o.input)),
+    scanBusinessSources(competitorScanRows),
+  ])
 
   const dbRows: Omit<BusinessSourceScanRow, 'id' | 'created_at'>[] = []
   ownOutputs.forEach((out) => {
