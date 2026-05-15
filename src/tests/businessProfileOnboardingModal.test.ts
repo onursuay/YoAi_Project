@@ -83,8 +83,20 @@ test('ESC tuşu onClose verildiğinde modal\'ı kapatır', () => {
 console.log('\n[2] Guard kapatma sonrası kilit davranışı')
 
 test('Guard incomplete state\'inde kilit kart + buton render ediyor', () => {
-  assert.ok(guardSrc.includes('kilidi açık değil'))
-  assert.ok(guardSrc.includes('İşletme Profilini Tamamla'))
+  // Locked state başlığı: `{area} kilitli` (commit 7f08247'de redesign — eski
+  // `kilidi açık değil` metni kaldırıldı). Lock ikonu + CTA korunur.
+  assert.ok(
+    /\{area\}\s+kilitli/.test(guardSrc),
+    "Guard başlığı '{area} kilitli' formatında değil",
+  )
+  assert.ok(
+    /<Lock\s/.test(guardSrc),
+    'Guard incomplete state Lock ikonu içermiyor',
+  )
+  assert.ok(
+    guardSrc.includes('İşletme Profilini Tamamla'),
+    "Guard CTA 'İşletme Profilini Tamamla' butonu eksik",
+  )
 })
 
 test('Guard kapatma için onClose her zaman geçiyor (silent dışı senaryolar dahil)', () => {
