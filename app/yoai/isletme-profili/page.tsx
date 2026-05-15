@@ -53,30 +53,48 @@ interface Competitor {
 }
 
 function ConfidenceRing({ value }: { value: number }) {
+  const cx = 40
+  const cy = 40
   const radius = 28
   const circumference = 2 * Math.PI * radius
   const offset = circumference - (value / 100) * circumference
-  const color = value >= 80 ? '#6ee7b7' : value >= 50 ? '#93c5fd' : '#fdba74'
+  const arcColor = value >= 80 ? '#6ee7b7' : value >= 50 ? '#93c5fd' : '#fdba74'
 
   return (
-    <div className="relative w-20 h-20 shrink-0">
-      {/* SVG ring — rotated so arc starts at top */}
-      <svg className="-rotate-90" width="80" height="80">
-        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="5" />
+    <div className="shrink-0">
+      <svg width="80" height="80" viewBox="0 0 80 80">
+        {/* Track */}
+        <circle cx={cx} cy={cy} r={radius} fill="none" stroke="rgba(255,255,255,0.2)" strokeWidth="5" />
+        {/* Progress arc — rotated around SVG center, not via CSS */}
         <circle
-          cx="40" cy="40" r={radius} fill="none"
-          stroke={color} strokeWidth="5"
+          cx={cx} cy={cy} r={radius} fill="none"
+          stroke={arcColor} strokeWidth="5"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
           strokeLinecap="round"
+          transform={`rotate(-90 ${cx} ${cy})`}
           style={{ transition: 'stroke-dashoffset 1s ease' }}
         />
+        {/* Value — textAnchor+dominantBaseline = mathematically exact center */}
+        <text
+          x={cx} y={cy - 5}
+          textAnchor="middle" dominantBaseline="middle"
+          fill="white" fontSize="15" fontWeight="700"
+          style={{ fontFamily: 'inherit' }}
+        >
+          %{value}
+        </text>
+        {/* Label */}
+        <text
+          x={cx} y={cy + 10}
+          textAnchor="middle" dominantBaseline="middle"
+          fill="rgba(255,255,255,0.7)" fontSize="8" fontWeight="500"
+          letterSpacing="1"
+          style={{ fontFamily: 'inherit', textTransform: 'uppercase' }}
+        >
+          GÜVEN
+        </text>
       </svg>
-      {/* Text overlay — absolutely centered over the SVG */}
-      <div className="absolute inset-0 flex flex-col items-center justify-center">
-        <p className="text-lg font-bold text-white leading-none drop-shadow-sm">%{value}</p>
-        <p className="text-[9px] font-medium text-white/80 mt-0.5 leading-none tracking-wide uppercase">güven</p>
-      </div>
     </div>
   )
 }
@@ -300,60 +318,67 @@ export default function IsletmeProfilPage() {
           </div>
         </Card>
 
-        {/* ── HEDEF & LOKASYON + MARKA KAYNAKLARI — yan yana ── */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-5">
+        {/* ── HEDEF & KAYNAKLAR — tek kart, 4 sütun ── */}
+        <div className="bg-white border border-gray-100 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] overflow-hidden">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 divide-y sm:divide-y-0 sm:divide-x divide-gray-100">
 
-          {/* Hedef & Lokasyon */}
-          <Card icon={Target} title="Hedef & Lokasyon">
-            <div className="space-y-3">
-              {profile.main_conversion_goal && (
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Ana Hedef</p>
-                  <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/15">
-                    <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
-                    <span className="text-sm font-semibold text-gray-800">{profile.main_conversion_goal}</span>
-                  </div>
+            {/* Ana Hedef */}
+            <div className="p-5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Ana Hedef</p>
+              {profile.main_conversion_goal ? (
+                <div className="inline-flex items-center gap-2 px-3 py-2 rounded-xl bg-primary/5 border border-primary/15">
+                  <Phone className="w-3.5 h-3.5 text-primary shrink-0" />
+                  <span className="text-sm font-semibold text-gray-800">{profile.main_conversion_goal}</span>
                 </div>
-              )}
-              {profile.target_locations.length > 0 && (
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Hedef Lokasyonlar</p>
-                  <div className="flex flex-wrap gap-1.5">
-                    {profile.target_locations.map((loc) => (
-                      <span key={loc} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700">
-                        <MapPin className="w-3 h-3 text-gray-400" />{loc}
-                      </span>
-                    ))}
-                  </div>
-                </div>
-              )}
-              {profile.target_audience && (
-                <div>
-                  <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-2">Hedef Kitle</p>
-                  <div className="px-3 py-2 rounded-xl bg-gray-50 border border-gray-100">
-                    <p className="text-sm text-gray-800">{profile.target_audience}</p>
-                  </div>
-                </div>
+              ) : (
+                <span className="text-sm text-gray-300 italic">—</span>
               )}
             </div>
-          </Card>
 
-          {/* Marka Kaynakları */}
-          {allSources.length > 0 && (
-            <Card icon={Globe} title="Marka Kaynakları">
-              <div className="grid grid-cols-2 gap-2">
-                {allSources.map((s) => (
-                  <a key={s.label} href={s.url!} target="_blank" rel="noopener noreferrer"
-                    className="flex items-center gap-2 px-3 py-2.5 rounded-xl bg-gray-50 border border-gray-100 hover:bg-primary/5 hover:border-primary/20 transition-colors group">
-                    <div className="w-6 h-6 rounded-lg bg-white border border-gray-200 flex items-center justify-center shrink-0 shadow-sm group-hover:border-primary/20 transition-colors">
-                      <ExternalLink className="w-3 h-3 text-gray-400 group-hover:text-primary transition-colors" />
-                    </div>
-                    <span className="text-xs font-medium text-gray-700 group-hover:text-primary transition-colors truncate">{s.label}</span>
-                  </a>
-                ))}
-              </div>
-            </Card>
-          )}
+            {/* Hedef Lokasyonlar */}
+            <div className="p-5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Hedef Lokasyonlar</p>
+              {profile.target_locations.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {profile.target_locations.map((loc) => (
+                    <span key={loc} className="inline-flex items-center gap-1 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs font-medium text-gray-700">
+                      <MapPin className="w-3 h-3 text-gray-400 shrink-0" />{loc}
+                    </span>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-gray-300 italic">—</span>
+              )}
+            </div>
+
+            {/* Hedef Kitle */}
+            <div className="p-5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Hedef Kitle</p>
+              {profile.target_audience ? (
+                <p className="text-sm text-gray-800 leading-relaxed">{profile.target_audience}</p>
+              ) : (
+                <span className="text-sm text-gray-300 italic">—</span>
+              )}
+            </div>
+
+            {/* Marka Kaynakları */}
+            <div className="p-5">
+              <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest mb-3">Marka Kaynakları</p>
+              {allSources.length > 0 ? (
+                <div className="flex flex-wrap gap-1.5">
+                  {allSources.map((s) => (
+                    <a key={s.label} href={s.url!} target="_blank" rel="noopener noreferrer"
+                      className="inline-flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg bg-gray-50 border border-gray-100 text-xs font-medium text-gray-600 hover:bg-primary/5 hover:text-primary hover:border-primary/20 transition-colors">
+                      <ExternalLink className="w-3 h-3 shrink-0" />{s.label}
+                    </a>
+                  ))}
+                </div>
+              ) : (
+                <span className="text-sm text-gray-300 italic">—</span>
+              )}
+            </div>
+
+          </div>
         </div>
 
         {/* Pazarlama Detayları */}

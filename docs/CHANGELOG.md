@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — İşletme Profili: güven ring merkez fix + hedef/kaynaklar 4-sütun grid
+- **Sorun:** %85 güven yazısı daire içinde merkeze hizalı değil (CSS rotate + absolute div kayması); Hedef & Lokasyon + Marka Kaynakları iki ayrı kartda yükseklik dengesizliği ve boş alan sorunu
+- **Çözüm:** Ring: CSS `-rotate-90` kaldırıldı, arc `transform="rotate(-90 40 40)"` SVG attribute ile döndürülüyor; metin `<text>` elementi `textAnchor="middle"` + `dominantBaseline="middle"` ile geometrik merkeze sabitlendi. Layout: iki ayrı kart yerine tek kart `grid-cols-4` + `divide-x` ile 4 eşit sütun (Ana Hedef / Lokasyonlar / Hedef Kitle / Marka Kaynakları)
+- **Dosyalar:** `app/yoai/isletme-profili/page.tsx`
+
 ## 2026-05-15 — İşletme Profili hero + layout iyileştirmeleri
 - **Sorun:** Güven ring'inde %85 yazısı daire ile hizalı değil; hero üzerinde beyaz metin okunaksız; Hedef & Lokasyon ile Marka Kaynakları alt alta ve sade görünümlüydü
 - **Çözüm:** Ring: SVG + text katmanı `absolute inset-0` ile tam ortalandı, ring rengi açık tonda (emerald-300) güncellendi. Hero: koyu gradient + `bg-black/25` scrim eklendi, metin `drop-shadow` + `font-semibold` ile netleştirildi. Layout: Firma Bilgileri tam genişlik, Hedef & Lokasyon + Marka Kaynakları yan yana (2-col grid); lokasyonlar icon'lu kutucuklara, marka kaynakları 2-col grid kutucuklara alındı
