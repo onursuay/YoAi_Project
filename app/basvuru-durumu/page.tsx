@@ -9,7 +9,7 @@
  *   3) Onaylı (veya owner) ise /dashboard'a yönlendir.
  *   4) Aksi halde başvuru özetini göster + ön görüşme popup'larını yönet.
  */
-import { useCallback, useEffect, useState } from 'react'
+import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
 import Image from 'next/image'
 import Link from 'next/link'
@@ -67,6 +67,8 @@ export default function BasvuruDurumuPage() {
   const [showApprovalPopup, setShowApprovalPopup] = useState(false)
   const [showScheduleModal, setShowScheduleModal] = useState(false)
   const [declining, setDeclining] = useState(false)
+  const [cardVisible, setCardVisible] = useState(false)
+  const cardTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
   const refresh = useCallback(async () => {
     try {
@@ -99,6 +101,15 @@ export default function BasvuruDurumuPage() {
     refresh()
   }, [refresh])
 
+  useEffect(() => {
+    if (!loading) {
+      cardTimerRef.current = setTimeout(() => setCardVisible(true), 40)
+      return () => {
+        if (cardTimerRef.current) clearTimeout(cardTimerRef.current)
+      }
+    }
+  }, [loading])
+
   async function handleDecline() {
     if (declining) return
     setDeclining(true)
@@ -125,27 +136,35 @@ export default function BasvuruDurumuPage() {
   const name = data?.name || ''
   const email = data?.email || ''
 
-  let icon = <CalendarClock className="h-8 w-8 text-emerald-300" />
+  let icon = <CalendarClock className="h-10 w-10 text-emerald-300" />
+  let iconBg = 'bg-emerald-400/10 border-emerald-400/20'
+  let iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
   let title = 'Başvurunuz değerlendirme aşamasında'
   let description =
     'Hesabınızı incelemeye aldık. Ön görüşme tamamlandıktan sonra ekibimiz başvurunuzu nihai olarak onaylayacaktır.'
   let badgeText = 'BAŞVURU ALINDI'
 
   if (status === 'rejected') {
-    icon = <XCircle className="h-8 w-8 text-red-300" />
+    icon = <XCircle className="h-10 w-10 text-red-400" />
+    iconBg = 'bg-red-500/10 border-red-500/20'
+    iconGlow = 'shadow-[0_0_28px_0px_rgba(248,113,113,0.2)]'
     title = 'Başvurunuz şu anda onaylanmadı'
     description =
       'Başvurunuzu inceledik ve şu anda onaylayamadık. Sorularınız için destek ekibimizle iletişime geçebilirsiniz.'
     badgeText = 'BAŞVURU REDDEDİLDİ'
   } else if (premeeting === 'scheduled') {
-    icon = <CheckCircle2 className="h-8 w-8 text-emerald-300" />
+    icon = <CheckCircle2 className="h-10 w-10 text-emerald-300" />
+    iconBg = 'bg-emerald-400/10 border-emerald-400/20'
+    iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
     title = 'Ön görüşmeniz planlandı'
     description = `Ön görüşmeniz ${fmtIstanbul(
       data?.premeetingScheduledAt,
     )} (Europe/Istanbul) olarak planlandı. Görüşme sonrası ekibimiz başvurunuzu nihai olarak değerlendirecek.`
     badgeText = 'GÖRÜŞME PLANLANDI'
   } else if (premeeting === 'declined') {
-    icon = <ShieldCheck className="h-8 w-8 text-emerald-300" />
+    icon = <ShieldCheck className="h-10 w-10 text-emerald-300" />
+    iconBg = 'bg-emerald-400/10 border-emerald-400/20'
+    iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
     title = 'Geri bildiriminiz iletildi'
     description =
       'Geri bildiriminiz destek ekibimize iletildi. Sizinle en kısa sürede iletişime geçeceğiz.'
@@ -161,50 +180,62 @@ export default function BasvuruDurumuPage() {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center px-4 py-10 bg-[#060609] text-white">
-      <div className="w-full max-w-xl relative z-10">
+    <div className="min-h-screen flex items-center justify-center px-4 py-12 bg-[#060609] text-white">
+      <div className="w-full max-w-2xl relative z-10">
         {/* Logo */}
-        <div className="flex justify-center mb-6">
+        <div
+          className={[
+            'flex justify-center mb-8 transition-all duration-500 ease-out',
+            cardVisible ? 'opacity-100 translate-y-0' : 'opacity-0 -translate-y-2',
+          ].join(' ')}
+        >
           <Link href="/">
             <Image
               src="/logos/yoai-logo.png"
               alt="YoAi"
-              width={88}
-              height={30}
+              width={96}
+              height={32}
               className="brightness-0 invert"
               priority
             />
           </Link>
         </div>
 
-        <div className="bg-white/[0.04] border border-white/10 rounded-3xl p-8 backdrop-blur-sm">
+        <div
+          className={[
+            'bg-white/[0.04] border border-white/10 rounded-3xl p-10 backdrop-blur-sm',
+            'transition-all duration-500 ease-out',
+            cardVisible ? 'opacity-100 scale-100 translate-y-0' : 'opacity-0 scale-[0.97] translate-y-4',
+          ].join(' ')}
+        >
           {/* Icon */}
-          <div className="flex justify-center mb-5">
-            <div className="w-16 h-16 rounded-2xl bg-emerald-400/10 border border-emerald-400/20 flex items-center justify-center">
-              {icon}
+          <div className="flex justify-center mb-6">
+            <div className={`relative w-20 h-20 rounded-2xl border flex items-center justify-center ${iconBg} ${iconGlow}`}>
+              <div className={`absolute inset-0 rounded-2xl ${iconBg} animate-pulse opacity-50`} />
+              <span className="relative">{icon}</span>
             </div>
           </div>
 
           <div className="text-center">
-            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-3 py-1 text-[11px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-emerald-400/20">
+            <span className="inline-flex items-center gap-1.5 rounded-full bg-emerald-400/10 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-emerald-300 ring-1 ring-emerald-400/20">
               {badgeText}
             </span>
-            <h1 className="mt-3 text-2xl font-bold tracking-tight">{title}</h1>
-            <p className="mt-3 text-base text-gray-400 leading-relaxed">{description}</p>
+            <h1 className="mt-4 text-3xl font-bold tracking-tight">{title}</h1>
+            <p className="mt-4 text-[16px] text-gray-400 leading-relaxed max-w-lg mx-auto">{description}</p>
           </div>
 
           {/* Account summary */}
-          <div className="mt-7 rounded-2xl border border-white/10 bg-white/[0.03] divide-y divide-white/[0.06]">
-            <div className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-              <div className="text-gray-400">Ad Soyad</div>
+          <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] divide-y divide-white/[0.06]">
+            <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
+              <div className="text-gray-400 font-medium">Ad Soyad</div>
               <div className="col-span-2 text-white">{name || '—'}</div>
             </div>
-            <div className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-              <div className="text-gray-400">E-posta</div>
+            <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
+              <div className="text-gray-400 font-medium">E-posta</div>
               <div className="col-span-2 text-white break-all">{email || '—'}</div>
             </div>
-            <div className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-              <div className="text-gray-400">Durum</div>
+            <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
+              <div className="text-gray-400 font-medium">Durum</div>
               <div className="col-span-2 text-white">
                 {status === 'approved'
                   ? 'Onaylandı'
@@ -218,8 +249,8 @@ export default function BasvuruDurumuPage() {
               </div>
             </div>
             {premeeting === 'scheduled' && data?.premeetingScheduledAt && (
-              <div className="grid grid-cols-3 gap-4 px-4 py-3 text-sm">
-                <div className="text-gray-400">Görüşme Saati</div>
+              <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
+                <div className="text-gray-400 font-medium">Görüşme Saati</div>
                 <div className="col-span-2 text-white">
                   {fmtIstanbul(data.premeetingScheduledAt)}
                 </div>
@@ -228,12 +259,12 @@ export default function BasvuruDurumuPage() {
           </div>
 
           {/* Actions */}
-          <div className="mt-6 flex flex-col gap-2 sm:flex-row sm:justify-center">
+          <div className="mt-7 flex flex-col gap-3 sm:flex-row sm:justify-center">
             {premeeting === 'pending' && status !== 'rejected' && (
               <button
                 type="button"
                 onClick={() => setShowScheduleModal(true)}
-                className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-5 py-3 text-sm font-semibold text-black hover:bg-emerald-400 transition"
+                className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-7 py-3.5 text-[15px] font-semibold text-black shadow-md shadow-emerald-500/20 hover:bg-emerald-400 hover:shadow-lg hover:shadow-emerald-400/25 transition"
               >
                 Görüşme Planla
               </button>
@@ -242,21 +273,26 @@ export default function BasvuruDurumuPage() {
               <button
                 type="button"
                 onClick={() => setShowScheduleModal(true)}
-                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-5 py-3 text-sm font-semibold text-white hover:bg-white/[0.08] transition"
+                className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-[15px] font-semibold text-white hover:bg-white/[0.08] transition"
               >
                 Saati Değiştir
               </button>
             )}
             <Link
               href="/"
-              className="inline-flex items-center justify-center rounded-xl border border-white/10 px-5 py-3 text-sm font-semibold text-gray-300 hover:bg-white/[0.04] transition"
+              className="inline-flex items-center justify-center rounded-xl border border-white/10 px-7 py-3.5 text-[15px] font-semibold text-gray-300 hover:bg-white/[0.04] transition"
             >
               Ana Sayfaya Dön
             </Link>
           </div>
         </div>
 
-        <p className="mt-6 text-center text-xs text-gray-500">
+        <p
+          className={[
+            'mt-6 text-center text-xs text-gray-500 transition-all duration-700 delay-300',
+            cardVisible ? 'opacity-100' : 'opacity-0',
+          ].join(' ')}
+        >
           Sorularınız için <a className="text-emerald-400 hover:underline" href="mailto:info@yodijital.com">info@yodijital.com</a>
         </p>
       </div>
