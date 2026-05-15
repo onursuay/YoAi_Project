@@ -204,6 +204,16 @@ export default function HedefKitlePage() {
     fetchBusinessContext()
   }, [fetchAudiences, fetchAssets, fetchBusinessContext])
 
+  // Auto-poll every 30s while any audience is still transitioning
+  useEffect(() => {
+    const hasInFlight = audiences.some(
+      (a) => a.origin === 'local' && (a.status === 'CREATING' || a.status === 'POPULATING')
+    )
+    if (!hasInFlight) return
+    const interval = setInterval(fetchAudiences, 30_000)
+    return () => clearInterval(interval)
+  }, [audiences, fetchAudiences])
+
   const handleEdit = useCallback((id: string) => {
     const audience = audiences.find((a) => a.id === id && a.origin === 'local')
     if (!audience || !audience.yoaiSpecJson) return
@@ -291,14 +301,16 @@ export default function HedefKitlePage() {
             <div className="flex-1">
               <Tabs tabs={AUDIENCE_TABS} activeTab={activeTab} onTabChange={handleTabChange} />
             </div>
-            <button
-              type="button"
-              onClick={() => setWizardOpen(true)}
-              className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
-            >
-              <Plus className="w-4 h-4" />
-              Yeni Kitle
-            </button>
+            {activeTab !== 'AI' && (
+              <button
+                type="button"
+                onClick={() => setWizardOpen(true)}
+                className="inline-flex items-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
+              >
+                <Plus className="w-4 h-4" />
+                Yeni Kitle
+              </button>
+            )}
           </div>
 
           {/* AI Tab — Strategy-created audiences */}

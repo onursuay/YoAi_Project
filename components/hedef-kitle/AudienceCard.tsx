@@ -1,5 +1,6 @@
 'use client'
 
+import { useState, useEffect } from 'react'
 import {
   ChevronDown,
   ExternalLink,
@@ -65,6 +66,18 @@ export default function AudienceCard({
 }: AudienceCardProps) {
   const typeConfig = TYPE_ICONS[audience.type]
   const TypeIcon = typeConfig.icon
+  const [pendingDelete, setPendingDelete] = useState(false)
+
+  // Auto-cancel confirm after 4s, or when card collapses
+  useEffect(() => {
+    if (!pendingDelete) return
+    const t = setTimeout(() => setPendingDelete(false), 4000)
+    return () => clearTimeout(t)
+  }, [pendingDelete])
+
+  useEffect(() => {
+    if (!expanded) setPendingDelete(false)
+  }, [expanded])
 
   return (
     <div className={`bg-white rounded-2xl border transition-shadow ${
@@ -211,14 +224,34 @@ export default function AudienceCard({
                   </button>
                 )}
                 {audience.status !== 'DELETED' && onDelete && (
-                  <button
-                    type="button"
-                    onClick={(e) => { e.stopPropagation(); onDelete(audience.id) }}
-                    className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-                  >
-                    <Trash2 className="w-3.5 h-3.5" />
-                    Sil
-                  </button>
+                  pendingDelete ? (
+                    <div className="inline-flex items-center gap-1 rounded-lg border border-red-200 bg-red-50 px-2 py-1">
+                      <span className="text-xs text-red-600 font-medium mr-1">Emin misin?</span>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); onDelete(audience.id) }}
+                        className="text-xs font-semibold text-red-600 hover:text-red-700 px-1.5 py-0.5 rounded hover:bg-red-100 transition-colors"
+                      >
+                        Evet
+                      </button>
+                      <button
+                        type="button"
+                        onClick={(e) => { e.stopPropagation(); setPendingDelete(false) }}
+                        className="text-xs text-gray-500 hover:text-gray-700 px-1.5 py-0.5 rounded hover:bg-gray-100 transition-colors"
+                      >
+                        İptal
+                      </button>
+                    </div>
+                  ) : (
+                    <button
+                      type="button"
+                      onClick={(e) => { e.stopPropagation(); setPendingDelete(true) }}
+                      className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-gray-500 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
+                    >
+                      <Trash2 className="w-3.5 h-3.5" />
+                      Sil
+                    </button>
+                  )
                 )}
               </>
             )}
