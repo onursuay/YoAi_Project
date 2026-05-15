@@ -1249,3 +1249,8 @@
   - Wizard arka planı teal gradyana alındı
   - `BudgetOptimizationCard` tam olarak yeniden yazıldı
 - **Dosyalar:** `components/meta/wizard/WizardSelect.tsx` (yeni), `StepCampaign.tsx`, `StepAdSet.tsx`, `StepAd.tsx`, `TabDetails.tsx`, `TabBudget.tsx`, `TabAudience.tsx`, `AdTextFields.tsx`, `BudgetOptimizationCard.tsx`, `WizardProgress.tsx`, `WizardSidebar.tsx`, `CampaignWizard.tsx`
+
+## 2026-05-15 — Scan paralel çalıştırma (Kısmi sorunu fix)
+- **Sorun:** Kendi marka + rakip taramaları sıralı çalışıyordu (toplam ~100s), Vercel 60s limitini aşıyor, scan_status 'partial' ya da 'running' kalıyordu
+- **Çözüm:** `runProfileScansAndIntelligence` ve `runScan` içinde `Promise.all` ile her iki tarama grubu paralel çalıştırılıyor (toplam süre ~50s, 60s limitinin altında)
+- **Dosyalar:** `app/api/yoai/business-profile/route.ts`, `app/api/yoai/business-profile/scan/route.ts`
