@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 1 Test Coverage
+- **Sorun:** Faz 1 değişikliklerinin (copy, exclude payload, confirmation) test kanıtı yoktu.
+- **Çözüm:** 2 yeni test dosyası eklendi. `audiencePayloadBuilder.test.ts`: 35 test — PIXEL/IG/PAGE/VIDEO/LEADFORM include/exclude payload doğruluğu, cross-source exclusion throw, unsupported source throw, Lookalike ratio/country, SavedAudience targeting. `audienceWizardConfirmation.test.ts`: 24 test — StepSummary copy regresyon, confirm phase varlığı, navigateStep onay bypass yokluğu, pendingSubmitType flow, amber/yellow renk regresyon (20 dosya). Mevcut 11 BI context testi de geçti. Toplam 70 test, 0 hata.
+- **Dosyalar:** `src/tests/audiencePayloadBuilder.test.ts` (yeni), `src/tests/audienceWizardConfirmation.test.ts` (yeni)
+
 ## 2026-05-15 — Hedef Kitle Faz 1A/1B: Copy + Payload + Confirmation Fix
 - **Sorun:** 3 wizard StepSummary'de "Meta'ya gönderim Faz 2'de aktif edilecek" yanıltıcı metni vardı; exclude rules payload'a kaynak tipi taşınmıyordu; CATALOG/APP/OFFLINE/CUSTOMER_LIST seçilince generic ENGAGEMENT fallback ile Meta'ya yanlış payload gönderiliyordu; kullanıcı onayı olmadan Meta'ya audience oluşturuluyordu; 6 dosyada amber/yellow Tailwind ihlali mevcuttu.
 - **Çözüm:** Tüm StepSummary metinleri gerçeği yansıtacak şekilde güncellendi. Wizard son adımında "Oluştur ve Meta'ya Gönder" confirmation modal'ı eklendi — kullanıcı açık onay vermeden Meta'ya POST yapılmıyor. Exclude rules payloadBuilder'da: PIXEL exclusions filtre bilgisini taşıyor; IG/PAGE/VIDEO/LEADFORM case'lerine event_sources içeren exclusion handling eklendi; cross-source exclusion hata fırlatıyor. Desteklenmeyen kaynak tipleri (CATALOG/APP/OFFLINE/CUSTOMER_LIST) artık throw ile engelleniyor; StepSource'ta disabled; StepRule'da "desteklenmiyor" mesajı. Amber/yellow ihlalleri CLAUDE.md kuralına uygun palet ile değiştirildi.
