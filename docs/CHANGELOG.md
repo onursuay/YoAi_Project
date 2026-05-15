@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 9: Arka Plan Sync Cron
+- **Sorun:** POPULATING/CREATING durumundaki Meta kitleleri otomatik olarak READY/ERROR/DELETED durumuna geçmiyordu; kullanıcı "Senkronize Et" butonuna manuel basması gerekiyordu.
+- **Çözüm:** `GET /api/cron/audiences-sync` endpoint'i oluşturuldu. Vercel Cron ile her saat başı çalışır. DB'den `CREATING` veya `POPULATING` statüsündeki ve `meta_audience_id` atanmış tüm kitleleri çeker; `user_id` bazında gruplar; her kullanıcının Meta bağlantısını alır; `/{metaAudienceId}?fields=id,approximate_count_lower_bound,...` ile durum sorgular. `operation_status.code === 200` ya da `approximate_count_lower_bound > 0` → READY; Meta error 100 → DELETED; `opCode >= 400` → ERROR. Tüm DB güncellemeleri `.eq('user_id', userId)` ile güvenli şekilde kısıtlanır. `vercel.json`'a `"schedule": "0 * * * *"` cron kaydı eklendi.
+- **Dosyalar:** `app/api/cron/audiences-sync/route.ts` (yeni), `vercel.json`
+
 ## 2026-05-15 — Hedef Kitle Faz 7: DRAFT Edit UI
 - **Sorun:** DRAFT durumundaki kitleler liste ekranında düzenlenemiyordu; hata yapıldığında tek seçenek silip yeniden oluşturmaktı.
 - **Çözüm:** `AudienceCard` DRAFT kartlarına "Düzenle" (Pencil) butonu eklendi. Butona basıldığında wizard edit modda açılır: mevcut `yoai_spec_json` parse edilerek Custom/Lookalike/Saved state'i reconstruct edilir, form dolu gelir. Kaydet'e basıldığında `PATCH /api/audiences/[id]` çağrılır (Meta'ya gönderim yapılmaz — kullanıcı listeden "Meta'ya Gönder" ile manuel tetikler). Confirm ekranı edit/create moduna göre farklı metin gösterir. `UnifiedAudience`'a `yoaiSpecJson?` eklendi. Tüm 99 test geçiyor.
