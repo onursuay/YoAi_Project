@@ -49,6 +49,31 @@ Projedeki **TÜM "Kitle Hedefleme" picker'ları** (Arama / Göz at sekmeli kitle
 - ✅ `components/google/wizard/pmax/steps/PMaxStepAssetGroup.tsx` (PMax wizard — `CollapsibleSection` içinde olsa bile dropdown davranışı uygulanır)
 - ✅ `components/google/detail/AudienceSegmentEditor.tsx` (modal içinde olsa bile dropdown davranışı uygulanır)
 
+## Apify Entegrasyonu — Kritik Kurallar
+
+### Actor ID Encoding (KESİNLİKLE DEĞİŞTİRİLMEZ)
+Apify API, actor ID'lerindeki `/` karakterini `~` olarak bekler. `encodeURIComponent` **yasaktır** — `apify%2Finstagram-profile-scraper` yerine `apify~instagram-profile-scraper` gönderilmeli.
+- **Doğru:** `actorId.replace(/\//g, '~')`
+- **Yanlış:** `encodeURIComponent(actorId)`
+Bu kural `lib/yoai/apifySocialRunner.ts`'de `encodeActorId()` fonksiyonu ile uygulanır.
+
+### waitForFinish Stratejisi (Polling Yasak)
+Apify social runner `?waitForFinish=50` parametresi kullanır — Apify bağlantıyı açık tutar, iş bitince döner. Polling loop Vercel 60s limitini aşar, **kullanılmaz**.
+
+### Gerekli Environment Variable'lar
+`.env.local` VE Vercel dashboard'da bulunması gerekenler:
+```
+APIFY_API_TOKEN=                    ← Apify console'dan al
+APIFY_INSTAGRAM_PROFILE_ACTOR_ID=apify/instagram-profile-scraper
+APIFY_FACEBOOK_PAGE_ACTOR_ID=apify/facebook-pages-scraper
+APIFY_LINKEDIN_COMPANY_ACTOR_ID=curious_coder/linkedin-company-profile-scraper
+APIFY_YOUTUBE_CHANNEL_ACTOR_ID=streamers/youtube-channel-scraper
+APIFY_TIKTOK_PROFILE_ACTOR_ID=clockworks/tiktok-profile-scraper
+APIFY_META_AD_LIBRARY_ACTOR_ID=curious_coder/facebook-ads-library-scraper
+APIFY_GOOGLE_ADS_TRANSPARENCY_ACTOR_ID=solidcode/ads-transparency-scraper
+```
+Token eksikse `isApifyReady()` false döner, sistem public metadata fallback'e geçer — hiç crash olmaz.
+
 ## İşletme Profili Tarama Kuralları (Otomatik Tarama)
 
 ### Tarama Ne Zaman Çalışır

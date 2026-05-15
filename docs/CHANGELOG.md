@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-15 — Apify social scan encoding bug fix + env yapılandırması
+- **Sorun:** `apifySocialRunner.ts` actor ID'yi `encodeURIComponent` ile encode ediyordu → `apify%2Finstagram-profile-scraper` gönderiliyor, Apify `~` bekliyor → tüm social scan'ler 404 ile failliyor. Ayrıca 90s polling loop Vercel 60s limitini aşıyordu. `.env.local`'da hiç Apify değişkeni yoktu
+- **Çözüm:** `encodeActorId()` fonksiyonu `replace(/\//g, '~')` kullanır. Polling loop kaldırıldı, `?waitForFinish=50` ile synchronous yaklaşıma geçildi (toplam ~58s < 60s Vercel limiti). `.env.local`'a tüm actor ID'ler + token placeholder eklendi. CLAUDE.md'ye Apify kuralları işlendi
+- **Dosyalar:** `lib/yoai/apifySocialRunner.ts`, `.env.local`, `.env.example`, `CLAUDE.md`
+- **Yapılacak:** `APIFY_API_TOKEN` Apify console'dan (console.apify.com) alınıp `.env.local` VE Vercel dashboard'a eklenecek
+
 ## 2026-05-15 — İşletme Profili: sektör formatı, Ana Hedef chip, kaynak grid taşma fix
 - **Sorun:** Sektör etiketleri ham DB değeriyle ("egitim · mesleki_belgelendirme") görünüyordu; Ana Hedef büyük kutu, lokasyon chip'leriyle tutarsız; Marka Kaynakları'nda 5+ kaynak flex-wrap ile taşıyordu
 - **Çözüm:** `formatSector()` helper eklendi (alt çizgi → boşluk, baş harf büyük, Türkçe locale). Ana Hedef lokasyon chip stiliyle eşleştirildi. Marka Kaynakları `grid-cols-2` sabit grid'e alındı — kaç kaynak olursa olsun 2 sütunda dizilir, truncate ile taşmaz
