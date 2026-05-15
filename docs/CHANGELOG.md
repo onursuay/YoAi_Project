@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — İşletme Profili sayfası kart tasarımı ile yeniden tasarlandı
+- **Sorun:** Sayfa çok sıradan görünüyordu, bilgiler düz liste halinde sunuluyordu
+- **Çözüm:** Animasyonlu gradient hero kart, güven skoru ring'i, istatistik chip'leri, kart grid sistemi, hover animasyonları, "Tara" butonu eklendi. "Bekliyor" statüsü açıklandı: scan_status=pending → kaynak taraması henüz yapılmamış
+- **Dosyalar:** `app/yoai/isletme-profili/page.tsx`
+
 ## 2026-05-15 — İşletme Profili sayfası scroll sorunu düzeltildi
 - **Sorun:** `/yoai/isletme-profili` sayfasında içerik aşağı kaymıyor, bilgiler görünmüyordu
 - **Çözüm:** `MainContent` bileşenindeki `overflow-hidden` → `overflow-y-auto` olarak değiştirildi; içerik artık dikey scroll yapar

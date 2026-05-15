@@ -2,8 +2,10 @@
 
 import { useEffect, useState, useCallback } from 'react'
 import {
-  Loader2, Pencil, Building2, Target, MapPin, Globe,
-  Users, BarChart2, RefreshCcw, CheckCircle2, AlertCircle,
+  Loader2, Pencil, Building2, Target, Globe,
+  Users, BarChart2, CheckCircle2, AlertCircle, Zap,
+  MapPin, Phone, ExternalLink, TrendingUp, Shield,
+  Search, Clock,
 } from 'lucide-react'
 import BusinessProfileOnboarding from '@/components/yoai/BusinessProfileOnboarding'
 
@@ -50,43 +52,102 @@ interface Competitor {
   extra_url: string | null
 }
 
-function Section({ icon: Icon, title, children }: { icon: React.ComponentType<{ className?: string }>; title: string; children: React.ReactNode }) {
+function ConfidenceRing({ value }: { value: number }) {
+  const radius = 28
+  const circumference = 2 * Math.PI * radius
+  const offset = circumference - (value / 100) * circumference
+  const color = value >= 80 ? '#10b981' : value >= 50 ? '#3b82f6' : '#f97316'
+
   return (
-    <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-[0_1px_3px_rgba(0,0,0,0.06)]">
-      <div className="flex items-center gap-2 mb-4">
+    <div className="relative w-20 h-20 flex items-center justify-center">
+      <svg className="absolute inset-0 -rotate-90" width="80" height="80">
+        <circle cx="40" cy="40" r={radius} fill="none" stroke="rgba(255,255,255,0.15)" strokeWidth="5" />
+        <circle
+          cx="40" cy="40" r={radius} fill="none"
+          stroke={color} strokeWidth="5"
+          strokeDasharray={circumference}
+          strokeDashoffset={offset}
+          strokeLinecap="round"
+          style={{ transition: 'stroke-dashoffset 1s ease' }}
+        />
+      </svg>
+      <div className="text-center z-10">
+        <p className="text-xl font-bold text-white leading-none">%{value}</p>
+        <p className="text-[9px] text-white/60 mt-0.5 leading-none">güven</p>
+      </div>
+    </div>
+  )
+}
+
+function ScanBadge({ status, onScan, scanning }: { status: string; onScan: () => void; scanning: boolean }) {
+  if (status === 'completed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-400/30">
+        <CheckCircle2 className="w-3 h-3" /> Tarandı
+      </span>
+    )
+  }
+  if (status === 'running') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-blue-500/20 text-blue-300 text-xs font-medium border border-blue-400/30">
+        <Loader2 className="w-3 h-3 animate-spin" /> Taranıyor…
+      </span>
+    )
+  }
+  return (
+    <button
+      onClick={onScan}
+      disabled={scanning}
+      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-all disabled:opacity-60"
+    >
+      {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
+      {scanning ? 'Başlatılıyor…' : 'Tara'}
+    </button>
+  )
+}
+
+function Card({ icon: Icon, title, children, className = '' }: {
+  icon: React.ComponentType<{ className?: string }>
+  title: string
+  children: React.ReactNode
+  className?: string
+}) {
+  return (
+    <div className={`bg-white border border-gray-100 rounded-2xl shadow-[0_2px_12px_rgba(0,0,0,0.06)] hover:shadow-[0_4px_20px_rgba(0,0,0,0.09)] transition-shadow duration-300 overflow-hidden ${className}`}>
+      <div className="flex items-center gap-2.5 px-5 py-4 border-b border-gray-50">
         <div className="w-7 h-7 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
           <Icon className="w-3.5 h-3.5 text-primary" />
         </div>
         <h3 className="text-sm font-semibold text-gray-800">{title}</h3>
       </div>
-      {children}
+      <div className="p-5">{children}</div>
     </div>
   )
 }
 
 function Field({ label, value }: { label: string; value: string | null | undefined }) {
   return (
-    <div className="space-y-0.5">
-      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">{label}</p>
-      <p className="text-sm text-gray-800">{value || <span className="text-gray-400 italic">—</span>}</p>
+    <div className="space-y-1">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
+      <p className="text-sm text-gray-800 leading-relaxed">{value || <span className="text-gray-300 italic">—</span>}</p>
     </div>
   )
 }
 
 function Tags({ label, items }: { label: string; items: string[] }) {
   return (
-    <div className="space-y-1.5">
-      <p className="text-[11px] font-medium text-gray-400 uppercase tracking-wide">{label}</p>
+    <div className="space-y-2">
+      <p className="text-[10px] font-semibold text-gray-400 uppercase tracking-widest">{label}</p>
       {items.length > 0 ? (
         <div className="flex flex-wrap gap-1.5">
           {items.map((item) => (
-            <span key={item} className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
+            <span key={item} className="inline-flex items-center px-2.5 py-1 rounded-lg text-xs bg-emerald-50 text-emerald-700 border border-emerald-100 font-medium">
               {item}
             </span>
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-400 italic">—</p>
+        <p className="text-sm text-gray-300 italic">—</p>
       )}
     </div>
   )
@@ -96,8 +157,9 @@ function SourceLink({ label, url }: { label: string; url: string | null | undefi
   if (!url) return null
   return (
     <a href={url} target="_blank" rel="noopener noreferrer"
-      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-200 text-xs text-gray-700 hover:bg-gray-100 transition-colors font-medium">
+      className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-gray-50 border border-gray-100 text-xs text-gray-600 hover:bg-primary/5 hover:border-primary/20 hover:text-primary transition-colors font-medium group">
       {label}
+      <ExternalLink className="w-3 h-3 opacity-0 group-hover:opacity-100 transition-opacity" />
     </a>
   )
 }
@@ -107,6 +169,7 @@ export default function IsletmeProfilPage() {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
   const [loading, setLoading] = useState(true)
   const [showEdit, setShowEdit] = useState(false)
+  const [scanning, setScanning] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -123,6 +186,16 @@ export default function IsletmeProfilPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  const handleScan = async () => {
+    setScanning(true)
+    try {
+      await fetch('/api/yoai/business-profile/scan', { method: 'POST' })
+      await load()
+    } finally {
+      setScanning(false)
+    }
+  }
 
   if (loading) {
     return (
@@ -153,69 +226,136 @@ export default function IsletmeProfilPage() {
 
   return (
     <>
-      <div className="max-w-4xl mx-auto px-6 py-8 space-y-6">
-        {/* Header */}
-        <div className="flex items-start justify-between gap-4">
-          <div>
-            <h1 className="text-xl font-bold text-gray-900">{profile.company_name}</h1>
-            <div className="flex items-center gap-2 mt-1 flex-wrap">
-              {profile.sector_main && (
-                <span className="text-sm text-gray-500">{profile.sector_main}{profile.sector_sub ? ` · ${profile.sector_sub}` : ''}</span>
-              )}
-              <span className="text-gray-300">·</span>
-              <span className={`inline-flex items-center gap-1 text-xs font-medium px-2 py-0.5 rounded-full ${
-                profile.scan_status === 'completed' ? 'bg-emerald-50 text-emerald-700' :
-                profile.scan_status === 'running' ? 'bg-primary/5 text-primary' :
-                'bg-gray-100 text-gray-500'
-              }`}>
-                {profile.scan_status === 'completed' ? <CheckCircle2 className="w-3 h-3" /> :
-                 profile.scan_status === 'running' ? <Loader2 className="w-3 h-3 animate-spin" /> :
-                 <AlertCircle className="w-3 h-3" />}
-                {profile.scan_status === 'completed' ? 'Tarandı' :
-                 profile.scan_status === 'running' ? 'Taranıyor' : 'Bekliyor'}
-              </span>
-              <span className="text-xs text-gray-400">Güven: %{profile.profile_confidence}</span>
+      <div className="max-w-5xl mx-auto px-6 py-8 space-y-6">
+
+        {/* ── HERO CARD ── */}
+        <div className="relative rounded-2xl overflow-hidden">
+          {/* Animated gradient background */}
+          <div className="absolute inset-0 bg-gradient-to-br from-primary via-primary/90 to-emerald-700" />
+          {/* Animated blobs */}
+          <div className="absolute -top-16 -right-16 w-64 h-64 rounded-full bg-white/5 animate-pulse" style={{ animationDuration: '4s' }} />
+          <div className="absolute -bottom-12 -left-12 w-48 h-48 rounded-full bg-white/5 animate-pulse" style={{ animationDuration: '6s' }} />
+          <div className="absolute top-1/2 right-1/3 w-32 h-32 rounded-full bg-emerald-300/5 animate-pulse" style={{ animationDuration: '5s' }} />
+
+          {/* Content */}
+          <div className="relative z-10 px-7 py-6 flex items-center justify-between gap-6">
+            <div className="flex items-center gap-5 flex-1 min-w-0">
+              <ConfidenceRing value={profile.profile_confidence} />
+              <div className="min-w-0">
+                <h1 className="text-2xl font-bold text-white truncate">{profile.company_name}</h1>
+                {profile.sector_main && (
+                  <p className="text-white/60 text-sm mt-0.5">
+                    {profile.sector_main}{profile.sector_sub ? ` · ${profile.sector_sub}` : ''}
+                  </p>
+                )}
+                <div className="flex items-center gap-2 mt-2.5 flex-wrap">
+                  <ScanBadge status={profile.scan_status} onScan={handleScan} scanning={scanning} />
+                  {profile.last_scan_completed_at && (
+                    <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
+                      <Clock className="w-3 h-3" />
+                      {new Date(profile.last_scan_completed_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' })}
+                    </span>
+                  )}
+                </div>
+              </div>
             </div>
+            <button
+              onClick={() => setShowEdit(true)}
+              className="inline-flex items-center gap-2 px-4 py-2.5 bg-white/15 hover:bg-white/25 border border-white/20 text-white rounded-xl text-sm font-medium transition-all shrink-0 backdrop-blur-sm"
+            >
+              <Pencil className="w-3.5 h-3.5" /> Düzenle
+            </button>
           </div>
-          <button
-            onClick={() => setShowEdit(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors shrink-0"
-          >
-            <Pencil className="w-3.5 h-3.5" /> Düzenle
-          </button>
         </div>
 
-        {/* Firma & Açıklama */}
-        <Section icon={Building2} title="Firma Bilgileri">
-          <div className="space-y-3">
-            <Field label="İşletme Açıklaması" value={profile.business_description} />
-            {profile.specialization && <Field label="Uzmanlık / Özel Hizmet" value={profile.specialization} />}
-            <Tags label="Ürünler / Hizmetler" items={profile.products_or_services} />
-          </div>
-        </Section>
+        {/* ── STAT CHIPS ── */}
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
+          {[
+            { icon: TrendingUp, label: 'Hizmet', value: profile.products_or_services.length || '—', sub: 'ürün/hizmet' },
+            { icon: MapPin, label: 'Lokasyon', value: profile.target_locations.length || '—', sub: 'hedef bölge' },
+            { icon: Users, label: 'Rakip', value: competitors.length || '—', sub: 'takip edilen' },
+            { icon: Shield, label: 'Anahtar', value: profile.keywords.length || '—', sub: 'keyword' },
+          ].map(({ icon: Icon, label, value, sub }) => (
+            <div key={label} className="bg-white border border-gray-100 rounded-xl px-4 py-3.5 flex items-center gap-3 shadow-[0_1px_4px_rgba(0,0,0,0.05)]">
+              <div className="w-8 h-8 rounded-lg bg-primary/10 flex items-center justify-center shrink-0">
+                <Icon className="w-4 h-4 text-primary" />
+              </div>
+              <div>
+                <p className="text-lg font-bold text-gray-900 leading-none">{value}</p>
+                <p className="text-[11px] text-gray-400 mt-0.5">{sub}</p>
+              </div>
+            </div>
+          ))}
+        </div>
 
-        {/* Hedef & Lokasyon */}
-        <Section icon={Target} title="Hedef & Lokasyon">
-          <div className="space-y-3">
-            <Field label="Ana Dönüşüm Hedefi" value={profile.main_conversion_goal} />
-            <Tags label="Hedef Lokasyonlar" items={profile.target_locations} />
-            {profile.target_audience && <Field label="Hedef Kitle" value={profile.target_audience} />}
+        {/* ── MAIN GRID ── */}
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-5">
+
+          {/* Firma Bilgileri – 2 sütun */}
+          <div className="lg:col-span-2">
+            <Card icon={Building2} title="Firma Bilgileri">
+              <div className="space-y-4">
+                <Field label="İşletme Açıklaması" value={profile.business_description} />
+                {profile.specialization && <Field label="Uzmanlık / Özel Hizmet" value={profile.specialization} />}
+                <Tags label="Ürünler / Hizmetler" items={profile.products_or_services} />
+              </div>
+            </Card>
           </div>
-        </Section>
+
+          {/* Hedef & Lokasyon – 1 sütun */}
+          <div>
+            <Card icon={Target} title="Hedef & Lokasyon">
+              <div className="space-y-4">
+                {profile.main_conversion_goal && (
+                  <div className="flex items-center gap-2.5 p-3 rounded-xl bg-primary/5 border border-primary/10">
+                    <Phone className="w-4 h-4 text-primary shrink-0" />
+                    <div>
+                      <p className="text-[10px] font-semibold text-primary/70 uppercase tracking-wide">Ana Hedef</p>
+                      <p className="text-sm font-medium text-gray-800">{profile.main_conversion_goal}</p>
+                    </div>
+                  </div>
+                )}
+                <Tags label="Hedef Lokasyonlar" items={profile.target_locations} />
+                {profile.target_audience && <Field label="Hedef Kitle" value={profile.target_audience} />}
+              </div>
+            </Card>
+          </div>
+        </div>
 
         {/* Marka Kaynakları */}
         {allSources.length > 0 && (
-          <Section icon={Globe} title="Marka Kaynakları">
+          <Card icon={Globe} title="Marka Kaynakları">
             <div className="flex flex-wrap gap-2">
               {allSources.map((s) => <SourceLink key={s.label} label={s.label} url={s.url} />)}
             </div>
-          </Section>
+          </Card>
         )}
+
+        {/* Pazarlama Detayları */}
+        <Card icon={BarChart2} title="Pazarlama Detayları">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
+            <div className="space-y-4">
+              <Field label="Aylık Reklam Bütçesi" value={profile.monthly_ad_budget_range} />
+              <Field label="Marka Dili / Tonu" value={profile.brand_tone} />
+              {profile.compliance_notes && <Field label="Mevzuat / Uyumluluk Notları" value={profile.compliance_notes} />}
+            </div>
+            <div className="space-y-4">
+              <Tags label="Anahtar Kelimeler" items={profile.keywords} />
+              <Tags label="En Karlı Hizmetler" items={profile.most_profitable_services} />
+              {profile.forbidden_claims.length > 0 && <Tags label="Yasak İddialar" items={profile.forbidden_claims} />}
+            </div>
+          </div>
+          {profile.extra_notes && (
+            <div className="mt-4 pt-4 border-t border-gray-50">
+              <Field label="Ek Notlar" value={profile.extra_notes} />
+            </div>
+          )}
+        </Card>
 
         {/* Rakipler */}
         {competitors.length > 0 && (
-          <Section icon={Users} title={`Rakipler (${competitors.length})`}>
-            <div className="space-y-3">
+          <Card icon={Users} title={`Rakipler (${competitors.length})`}>
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {competitors.map((c, i) => {
                 const links = [
                   { label: 'Web', url: c.website_url },
@@ -228,13 +368,20 @@ export default function IsletmeProfilPage() {
                   { label: 'Diğer', url: c.extra_url },
                 ].filter((l) => l.url)
                 return (
-                  <div key={i} className="flex items-start gap-3 pb-3 border-b border-gray-100 last:border-0 last:pb-0">
-                    <div className="w-7 h-7 rounded-lg bg-gray-100 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0">{i + 1}</div>
+                  <div key={i} className="flex items-start gap-3 p-3 rounded-xl bg-gray-50 border border-gray-100">
+                    <div className="w-7 h-7 rounded-lg bg-white border border-gray-200 flex items-center justify-center text-xs font-bold text-gray-500 shrink-0 shadow-sm">
+                      {i + 1}
+                    </div>
                     <div className="flex-1 min-w-0">
-                      <p className="text-sm font-medium text-gray-800">{c.competitor_name || '—'}</p>
+                      <p className="text-sm font-semibold text-gray-800 truncate">{c.competitor_name || '—'}</p>
                       {links.length > 0 && (
-                        <div className="flex flex-wrap gap-1.5 mt-1.5">
-                          {links.map((l) => <SourceLink key={l.label} label={l.label} url={l.url} />)}
+                        <div className="flex flex-wrap gap-1 mt-1.5">
+                          {links.map((l) => (
+                            <a key={l.label} href={l.url!} target="_blank" rel="noopener noreferrer"
+                              className="text-[10px] px-2 py-0.5 rounded bg-white border border-gray-200 text-gray-500 hover:text-primary hover:border-primary/30 transition-colors font-medium">
+                              {l.label}
+                            </a>
+                          ))}
                         </div>
                       )}
                     </div>
@@ -242,29 +389,10 @@ export default function IsletmeProfilPage() {
                 )
               })}
             </div>
-          </Section>
+          </Card>
         )}
 
-        {/* Pazarlama Detayları */}
-        <Section icon={BarChart2} title="Pazarlama Detayları">
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <Field label="Aylık Reklam Bütçesi" value={profile.monthly_ad_budget_range} />
-            <Field label="Marka Dili / Tonu" value={profile.brand_tone} />
-          </div>
-          <div className="mt-4 space-y-3">
-            <Tags label="Anahtar Kelimeler" items={profile.keywords} />
-            <Tags label="En Karlı Hizmetler" items={profile.most_profitable_services} />
-            {profile.forbidden_claims.length > 0 && <Tags label="Yasak İddialar" items={profile.forbidden_claims} />}
-            {profile.compliance_notes && <Field label="Mevzuat / Uyumluluk Notları" value={profile.compliance_notes} />}
-            {profile.extra_notes && <Field label="Ek Notlar" value={profile.extra_notes} />}
-          </div>
-        </Section>
-
-        {profile.last_scan_completed_at && (
-          <p className="text-center text-[11px] text-gray-400 pb-4">
-            Son tarama: {new Date(profile.last_scan_completed_at).toLocaleDateString('tr-TR', { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' })}
-          </p>
-        )}
+        <div className="pb-4" />
       </div>
 
       {showEdit && (
