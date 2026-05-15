@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useEffect } from 'react'
+import { useState, useCallback, useEffect, useRef } from 'react'
 import { X, Shield, Copy, Compass } from 'lucide-react'
 import type { AudienceType } from './wizard/types'
 import {
@@ -43,6 +43,11 @@ interface AudienceWizardModalProps {
 }
 
 type WizardPhase = 'select-type' | 'custom' | 'lookalike' | 'saved' | 'confirm'
+
+interface BizSeedHints {
+  declaredTargetAudience: string | null
+  sectorLabel: string | null
+}
 
 const TYPE_OPTIONS: { type: AudienceType; phase: WizardPhase; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
   {
@@ -108,16 +113,35 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
   const [pendingSubmitType, setPendingSubmitType] = useState<AudienceType | null>(null)
   const [prevPhase, setPrevPhase] = useState<WizardPhase>(typeToPhase(initialType))
 
-  // When modal opens, set phase based on initialType
+  // Faz 3: Business context prefill — ref avoids re-render race when modal opens
+  const seedHintsRef = useRef<BizSeedHints | null>(null)
+
+  useEffect(() => {
+    fetch('/api/audiences/business-context')
+      .then((r) => r.json())
+      .then((json) => {
+        if (json.ok && json.data?.businessContextLoaded) {
+          const h = json.data.audienceSeedHints
+          seedHintsRef.current = {
+            declaredTargetAudience: h?.declaredTargetAudience ?? null,
+            sectorLabel: json.data.sectorLabel ?? null,
+          }
+        }
+      })
+      .catch(() => {})
+  }, [])
+
+  // When modal opens, set phase based on initialType + apply business context prefill
   useEffect(() => {
     if (isOpen) {
       const p = typeToPhase(initialType)
       setPhase(p)
       setPrevPhase(p)
       setHasInitialType(!!initialType)
-      setCustomState(initialCustomAudienceState)
-      setLookalikeState(initialLookalikeState)
-      setSavedState(initialSavedAudienceState)
+      const desc = seedHintsRef.current?.declaredTargetAudience?.trim() ?? ''
+      setCustomState({ ...initialCustomAudienceState, description: desc })
+      setLookalikeState({ ...initialLookalikeState, description: desc })
+      setSavedState({ ...initialSavedAudienceState, description: desc })
       setIsSubmitting(false)
       setPendingSubmitType(null)
     }
@@ -128,9 +152,10 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
     setPhase(p)
     setPrevPhase(p)
     setHasInitialType(!!initialType)
-    setCustomState(initialCustomAudienceState)
-    setLookalikeState(initialLookalikeState)
-    setSavedState(initialSavedAudienceState)
+    const desc = seedHintsRef.current?.declaredTargetAudience?.trim() ?? ''
+    setCustomState({ ...initialCustomAudienceState, description: desc })
+    setLookalikeState({ ...initialLookalikeState, description: desc })
+    setSavedState({ ...initialSavedAudienceState, description: desc })
     setIsSubmitting(false)
     setPendingSubmitType(null)
   }, [initialType])

@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 3: Business Context Seed Prefill
+- **Sorun:** Wizard'ın tüm formlari (Custom/Lookalike/Saved) tamamen boş başlıyordu; kullanıcı onboarding'de girdiği hedef kitle açıklaması wizard'a taşınmıyordu.
+- **Çözüm:** `AudienceWizardModal` mount'ta `/api/audiences/business-context` çeker, `seedHintsRef` (useRef) ile saklar, modal her açılışında ve `reset()` çağrısında `declaredTargetAudience` değerini 3 wizard türünün `description` alanına prefill eder. İş profili yüklenmemişse veya fetch başarısız olursa sessizce boş string fallback — mevcut davranış korunur. Location/country alanları prefill edilmez (Meta key formatı uyumsuz). `audienceFaz3SeedPrefill.test.ts` (19 test) eklendi. Toplam 99 test, 0 hata.
+- **Dosyalar:** `components/hedef-kitle/AudienceWizardModal.tsx`, `src/tests/audienceFaz3SeedPrefill.test.ts` (yeni)
+
 ## 2026-05-15 — Hedef Kitle Faz 2: Lookalike Seed Güvenliği + Binding Testleri
 - **Sorun:** Lookalike seed lookup'ta `user_id` / `ad_account_id` filtresi yoktu — başka kullanıcının seed audience ID'si bilinirse kendi lookalike'ına referans olarak eklenebilirdi. Faz 2 binding kapsamı için test kanıtı da yoktu.
 - **Çözüm:** `[id]/create/route.ts` seed lookup'a `.eq('ad_account_id', ctx.accountId).eq('user_id', ctx.userId)` eklendi. `audienceUserIdBinding.test.ts` (21 test) eklendi: migration SQL kontrolü, MetaContext userId alanı, 5 route user_id filtresi, seed cross-user engeli, orphan NULL fallback yokluğu. Toplam 80 test, 0 hata, TypeScript sıfır hata.
