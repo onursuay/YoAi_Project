@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Kurumsal ve Gözetim Merkezi Sol Menüden Kaldırıldı
+- **Sorun:** Kurumsal (yasal linkler) ve Gözetim Merkezi ana sidebar nav'da görünüyordu; bu öğeler kullanıcı profil dropdown'ında olmalıydı.
+- **Çözüm:** `lib/nav.ts`'ten kurumsal accordion item'ı silindi. `SidebarNav.tsx`'te `gozetimMerkeziNavItem` enjeksiyonu kaldırıldı, `hasGozetimAccess` prop'u `UserProfileDropdown`'a geçildi. `UserProfileDropdown.tsx`'e iki yeni bölüm eklendi: admin için `ShieldCheck` ikonlu "Gözetim Merkezi" linki (yalnızca `hasGozetimAccess === true`) ve tüm kullanıcılar için "Kurumsal" bölümü (Gizlilik Politikası, Çerez Politikası, Kullanım Koşulları, Veri Silme).
+- **Dosyalar:** `lib/nav.ts`, `components/SidebarNav.tsx`, `components/UserProfileDropdown.tsx`
+
 ## 2026-05-16 — Strateji Migration Uygulama Script'i
 - **Sorun:** Strateji migration'larını uygulamak için Supabase Dashboard'a girip SQL Editor'a yapıştırmak gerekiyordu — manuel ve hata yapmaya açık.
 - **Çözüm:** `scripts/apply-strategy-migrations.mjs` script'i eklendi. Proje genelindeki `apply-google-ads-migration.mjs` pattern'ine uygun: `DATABASE_URL` `.env.local`'dan okunur, `pg` client ile direkt bağlanır, 2 migration sırasıyla uygulanır, `RAISE NOTICE` çıktıları terminale yansır. `npm run db:migrate:strategy` komutuyla çalışır. `DATABASE_URL` yoksa net hata mesajı ve Supabase Dashboard linki verir.
