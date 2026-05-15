@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Hedef Kitle Faz 2: Lookalike Seed Güvenliği + Binding Testleri
+- **Sorun:** Lookalike seed lookup'ta `user_id` / `ad_account_id` filtresi yoktu — başka kullanıcının seed audience ID'si bilinirse kendi lookalike'ına referans olarak eklenebilirdi. Faz 2 binding kapsamı için test kanıtı da yoktu.
+- **Çözüm:** `[id]/create/route.ts` seed lookup'a `.eq('ad_account_id', ctx.accountId).eq('user_id', ctx.userId)` eklendi. `audienceUserIdBinding.test.ts` (21 test) eklendi: migration SQL kontrolü, MetaContext userId alanı, 5 route user_id filtresi, seed cross-user engeli, orphan NULL fallback yokluğu. Toplam 80 test, 0 hata, TypeScript sıfır hata.
+- **Dosyalar:** `app/api/audiences/[id]/create/route.ts`, `src/tests/audienceUserIdBinding.test.ts` (yeni)
+
 ## 2026-05-15 — Hedef Kitle Faz 2: user_id Bağlama + RLS
 - **Sorun:** `audiences` tablosunda `user_id` kolonu yoktu; tüm sorgular yalnızca `ad_account_id` ile izole ediliyordu — aynı reklam hesabını kullanan farklı kullanıcılar birbirinin kitlesini görebilirdi.
 - **Çözüm:** `user_id TEXT` kolonu eklendi, DB indexi oluşturuldu, tablo RLS etkinleştirildi (SELECT/INSERT/UPDATE/DELETE policy). `MetaContext` arayüzüne `userId` alanı eklendi ve tüm audience API route'larında (list, create, get, patch, delete, sync, meta-create) `.eq('user_id', ctx.userId)` filtresi + INSERT'e `user_id` yazımı eklendi. 59 mevcut test geçti, TypeScript sıfır hata.

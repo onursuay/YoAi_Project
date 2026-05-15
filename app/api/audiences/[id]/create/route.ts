@@ -97,6 +97,8 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
           .from('audiences')
           .select('meta_audience_id')
           .eq('id', originAudienceId)
+          .eq('ad_account_id', ctx.accountId)
+          .eq('user_id', ctx.userId)
           .single()
         if (seedRow?.meta_audience_id) {
           originAudienceId = seedRow.meta_audience_id
