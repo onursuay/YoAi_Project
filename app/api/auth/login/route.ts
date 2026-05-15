@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 import bcrypt from 'bcryptjs'
+import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
 
 export async function POST(request: Request) {
   try {
@@ -21,7 +22,7 @@ export async function POST(request: Request) {
     // Find active user
     const { data: user, error } = await supabase
       .from('signups')
-      .select('id, name, email, password_hash, status')
+      .select('id, name, email, password_hash, status, approval_status')
       .eq('email', cleanEmail)
       .maybeSingle()
 
@@ -43,9 +44,23 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'invalid_credentials' }, { status: 401 })
     }
 
+    // Manuel onay akışı: owner allowlist'i değilse, approval_status='approved'
+    // değilse istemciye 'pending_approval' sinyali ver → client `/basvuru-durumu`'na
+    // yönlendirsin. Backend yine de oturumu açıyor ki kullanıcı başvuru
+    // durumunu görebilsin ve ön görüşmesini planlayabilsin.
+    const approvalStatus = ((user as any).approval_status as string | null) ?? 'pending'
+    const isOwner = isSuperAdminEmail(user.email as string | null)
+    const isApprovedForPanel = isOwner || approvalStatus === 'approved'
+
     // Create session
     const sessionId = randomUUID()
-    const response = NextResponse.json({ ok: true, name: user.name })
+    const response = NextResponse.json({
+      ok: true,
+      name: user.name,
+      approvalStatus,
+      isOwner,
+      redirectTo: isApprovedForPanel ? '/dashboard' : '/basvuru-durumu',
+    })
 
     response.cookies.set('session_id', sessionId, {
       httpOnly: true,

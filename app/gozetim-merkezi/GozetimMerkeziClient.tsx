@@ -17,6 +17,7 @@ import {
   X,
   Search,
 } from 'lucide-react'
+import SignupApprovalsPanel from '@/components/gozetim/SignupApprovalsPanel'
 
 interface ScanSummary {
   id: string
@@ -571,6 +572,9 @@ export default function GozetimMerkeziClient() {
           </table>
         </div>
       </section>
+
+      {/* Başvurular — manuel onay/red akışı */}
+      <SignupApprovalsPanel />
 
       {/* Son kayıt olan kullanıcılar */}
       {data && (

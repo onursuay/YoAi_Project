@@ -144,7 +144,10 @@ export default function LoginPage() {
         return
       }
 
-      router.push('/dashboard')
+      // Manuel onay akışı: backend onaylı/owner ise dashboard, değilse
+      // başvuru durumu sayfasına yönlendirir.
+      const target = typeof data?.redirectTo === 'string' ? data.redirectTo : '/dashboard'
+      router.push(target)
     } catch {
       setError(t.errorGeneric)
       setLoading(false)

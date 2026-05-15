@@ -1,4 +1,7 @@
+'use client'
+
 import SidebarNav from '@/components/SidebarNav'
+import AccountApprovalGuard from '@/components/auth/AccountApprovalGuard'
 
 export default function RaporlarLayout({
   children,
@@ -6,11 +9,11 @@ export default function RaporlarLayout({
   children: React.ReactNode
 }) {
   return (
-    <div className="flex h-screen bg-gray-50">
-      <SidebarNav />
-      <div className="flex-1 flex flex-col overflow-hidden">
-        {children}
+    <AccountApprovalGuard>
+      <div className="flex h-screen bg-gray-50">
+        <SidebarNav />
+        <div className="flex-1 flex flex-col overflow-hidden">{children}</div>
       </div>
-    </div>
+    </AccountApprovalGuard>
   )
 }

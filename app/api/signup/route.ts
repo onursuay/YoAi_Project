@@ -3,6 +3,7 @@ import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 import { Resend } from 'resend'
 import bcrypt from 'bcryptjs'
+import { notifyOwnersOfSignupEvent } from '@/lib/notifications/ownerNotifier'
 
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
@@ -70,7 +71,11 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok: false, error: 'already_verified' }, { status: 409 })
     }
 
-    // Upsert signup record
+    // Upsert signup record. Manuel onay akışında:
+    //   - status        → 'pending' (email doğrulamasını bekler; verify olunca 'active' olur)
+    //   - approval_status → 'pending' (owner manuel onayını bekler; verify olsa bile değişmez)
+    // Bu sayede email doğrulanmış ama onay verilmemiş kullanıcı iç panellere giremez.
+    let signupId: string | null = null
     if (existing) {
       // Re-send verification for pending signup
       await supabase
@@ -82,19 +87,32 @@ export async function POST(request: Request) {
           password_hash: passwordHash,
           verification_token: token,
           status: 'pending',
+          approval_status: 'pending',
+          premeeting_status: 'pending',
+          signup_source: 'web',
+          updated_at: new Date().toISOString(),
           created_at: new Date().toISOString(),
         })
         .eq('id', existing.id)
+      signupId = existing.id as string
     } else {
-      await supabase.from('signups').insert({
-        name: cleanName,
-        email: cleanEmail,
-        company: company?.trim() || null,
-        phone: phone?.trim() || null,
-        password_hash: passwordHash,
-        verification_token: token,
-        status: 'pending',
-      })
+      const { data: inserted } = await supabase
+        .from('signups')
+        .insert({
+          name: cleanName,
+          email: cleanEmail,
+          company: company?.trim() || null,
+          phone: phone?.trim() || null,
+          password_hash: passwordHash,
+          verification_token: token,
+          status: 'pending',
+          approval_status: 'pending',
+          premeeting_status: 'pending',
+          signup_source: 'web',
+        })
+        .select('id')
+        .maybeSingle()
+      signupId = (inserted?.id as string | undefined) ?? null
     }
 
     // Send verification email
@@ -134,6 +152,27 @@ export async function POST(request: Request) {
     } else {
       console.warn('[Signup] RESEND_API_KEY not set — verification email skipped')
       console.log('[Signup] Verify URL (dev):', verifyUrl)
+    }
+
+    // Owner bildirimi — fire-and-forget. Yeni başvuru için iki owner adresine
+    // mail gider. Gönderim hatası kayıt akışını kırmaz; notification_log'a
+    // 'failed' olarak düşer.
+    if (signupId) {
+      notifyOwnersOfSignupEvent('new_signup', {
+        id: signupId,
+        name: cleanName,
+        email: cleanEmail,
+        company: company?.trim() || null,
+        phone: phone?.trim() || null,
+        createdAt: new Date().toISOString(),
+        premeetingStatus: 'pending',
+        premeetingScheduledAt: null,
+      }).catch((e) => {
+        console.error(
+          '[Signup] Owner notification failed:',
+          e instanceof Error ? e.message : 'unknown',
+        )
+      })
     }
 
     return NextResponse.json({ ok: true })
