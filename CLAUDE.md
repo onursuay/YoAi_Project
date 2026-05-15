@@ -49,6 +49,38 @@ Projedeki **TÜM "Kitle Hedefleme" picker'ları** (Arama / Göz at sekmeli kitle
 - ✅ `components/google/wizard/pmax/steps/PMaxStepAssetGroup.tsx` (PMax wizard — `CollapsibleSection` içinde olsa bile dropdown davranışı uygulanır)
 - ✅ `components/google/detail/AudienceSegmentEditor.tsx` (modal içinde olsa bile dropdown davranışı uygulanır)
 
+## İşletme Profili Tarama Kuralları (Otomatik Tarama)
+
+### Tarama Ne Zaman Çalışır
+1. **İlk kurulum tamamlandığında**: `POST /api/yoai/business-profile` → onboarding bitince `runProfileScansAndIntelligence` fire-and-forget olarak tetiklenir.
+2. **Her revizyondan sonra**: Aynı POST endpoint'i edit modda da kullanılır → her kayıtta otomatik yeniden tarama başlar.
+
+### Manuel Tara Butonu — YOK
+UI'da "Tara", "Yeniden Tara" gibi bir buton **kesinlikle bulunmaz**. Tarama yalnızca otomatik tetiklenir.
+
+### Tarama Nasıl Çalışır
+- `businessSourceScanner.ts` + `socialSourceScanner.ts` ile HTTP scraping (LLM kullanılmaz)
+- Kendi marka URL'leri (website, instagram, facebook, linkedin, youtube, tiktok, google_business, marketplace) + her rakibin URL'leri taranır
+- Sonuçlar `user_business_source_scans` tablosuna yazılır — **her taramada eski kayıtlar silinir** (`deleteSourceScansForProfile` çağrılır), duplicate birikmez
+- `buildBusinessIntelligenceRow` ile deterministic intelligence üretilir, `user_business_intelligence` tablosuna kaydedilir
+
+### scan_status Değerleri (UI'da gösterim)
+| Değer | Gösterim |
+|-------|----------|
+| `pending` | "Tarama bekleniyor" |
+| `running` | "Taranıyor…" (spinner) |
+| `completed` | "Tarandı" (yeşil) |
+| `partial` | "Kısmi" (kaynak bir kısmı tarandı) |
+| `failed` | "Tarama başarısız" (kırmızı) |
+
+### Taramayı Etkileyen Dosyalar
+- `app/api/yoai/business-profile/route.ts` — POST: kayıt + `runProfileScansAndIntelligence` fire-and-forget
+- `app/api/yoai/business-profile/scan/route.ts` — programmatik tetikleyici (UI'a açık değil)
+- `lib/yoai/businessProfileStore.ts` — `deleteSourceScansForProfile` + `insertSourceScans`
+- `lib/yoai/businessSourceScanner.ts` — web/marketplace/google_business HTTP scraping
+- `lib/yoai/socialSourceScanner.ts` — Instagram/Facebook/LinkedIn/YouTube/TikTok scraping
+- `lib/yoai/businessIntelligenceBuilder.ts` — deterministic intelligence synthesis
+
 ## Kitle Segmenti Chip Renk Kuralı
 Tüm kategori (AFFINITY, IN_MARKET, DETAILED_DEMOGRAPHIC, LIFE_EVENT, USER_LIST, CUSTOM_AUDIENCE, COMBINED_AUDIENCE) chip'leri tek tip `bg-emerald-50` + `text-emerald-700` kullanır. Kategoriye göre değişen mor/turuncu/pembe/mavi/teal/indigo renkler **kullanılmaz**.
 

@@ -269,6 +269,19 @@ export async function insertSourceScans(
   }
 }
 
+export async function deleteSourceScansForProfile(profileId: string): Promise<void> {
+  if (!supabase || !profileId) return
+  try {
+    const { error } = await supabase
+      .from('user_business_source_scans')
+      .delete()
+      .eq('profile_id', profileId)
+    if (error) console.warn('[businessProfileStore] deleteSourceScansForProfile error:', error)
+  } catch (e) {
+    console.warn('[businessProfileStore] deleteSourceScansForProfile exception:', e)
+  }
+}
+
 export async function listSourceScansForProfile(profileId: string): Promise<BusinessSourceScanRow[]> {
   if (!supabase || !profileId) return []
   try {

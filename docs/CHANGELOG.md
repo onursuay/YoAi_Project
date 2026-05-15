@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — İşletme profili tarama pipeline'ı düzeltildi: otomatik tarama + duplicate önleme
+- **Sorun:** /scan route'u sahte çalışıyordu (sadece status flip), re-scan'da eski scan kayıtları birikerek duplicate oluşturuyordu, UI'da gereksiz manuel "Tara" butonu vardı
+- **Çözüm:** (1) `deleteSourceScansForProfile` fonksiyonu eklendi — her taramada eski kayıtlar temizlenir. (2) `/scan` route'u gerçek `runScan` pipeline'ını çalıştıracak şekilde yeniden yazıldı. (3) UI'dan "Tara" butonu kaldırıldı, ScanBadge tüm status değerlerini (pending/running/completed/partial/failed) gösteriyor. (4) CLAUDE.md'ye tarama kuralları eklendi.
+- **Dosyalar:** `lib/yoai/businessProfileStore.ts`, `app/api/yoai/business-profile/route.ts`, `app/api/yoai/business-profile/scan/route.ts`, `app/yoai/isletme-profili/page.tsx`, `CLAUDE.md`
+
 ## 2026-05-15 — İşletme Profili sayfası kart tasarımı ile yeniden tasarlandı
 - **Sorun:** Sayfa çok sıradan görünüyordu, bilgiler düz liste halinde sunuluyordu
 - **Çözüm:** Animasyonlu gradient hero kart, güven skoru ring'i, istatistik chip'leri, kart grid sistemi, hover animasyonları, "Tara" butonu eklendi. "Bekliyor" statüsü açıklandı: scan_status=pending → kaynak taraması henüz yapılmamış

@@ -3,9 +3,9 @@
 import { useEffect, useState, useCallback } from 'react'
 import {
   Loader2, Pencil, Building2, Target, Globe,
-  Users, BarChart2, CheckCircle2, AlertCircle, Zap,
+  Users, BarChart2, CheckCircle2, AlertCircle,
   MapPin, Phone, ExternalLink, TrendingUp, Shield,
-  Search, Clock,
+  Clock,
 } from 'lucide-react'
 import BusinessProfileOnboarding from '@/components/yoai/BusinessProfileOnboarding'
 
@@ -79,7 +79,7 @@ function ConfidenceRing({ value }: { value: number }) {
   )
 }
 
-function ScanBadge({ status, onScan, scanning }: { status: string; onScan: () => void; scanning: boolean }) {
+function ScanBadge({ status }: { status: string }) {
   if (status === 'completed') {
     return (
       <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-emerald-500/20 text-emerald-300 text-xs font-medium border border-emerald-400/30">
@@ -94,15 +94,25 @@ function ScanBadge({ status, onScan, scanning }: { status: string; onScan: () =>
       </span>
     )
   }
+  if (status === 'partial') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white/60 text-xs font-medium border border-white/20">
+        <AlertCircle className="w-3 h-3" /> Kısmi
+      </span>
+    )
+  }
+  if (status === 'failed') {
+    return (
+      <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-red-500/20 text-red-300 text-xs font-medium border border-red-400/30">
+        <AlertCircle className="w-3 h-3" /> Tarama başarısız
+      </span>
+    )
+  }
+  // pending
   return (
-    <button
-      onClick={onScan}
-      disabled={scanning}
-      className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 hover:bg-white/20 text-white text-xs font-medium border border-white/20 transition-all disabled:opacity-60"
-    >
-      {scanning ? <Loader2 className="w-3 h-3 animate-spin" /> : <Search className="w-3 h-3" />}
-      {scanning ? 'Başlatılıyor…' : 'Tara'}
-    </button>
+    <span className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-white/10 text-white/50 text-xs font-medium border border-white/20">
+      <Clock className="w-3 h-3" /> Tarama bekleniyor
+    </span>
   )
 }
 
@@ -169,7 +179,6 @@ export default function IsletmeProfilPage() {
   const [competitors, setCompetitors] = useState<Competitor[]>([])
   const [loading, setLoading] = useState(true)
   const [showEdit, setShowEdit] = useState(false)
-  const [scanning, setScanning] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -186,16 +195,6 @@ export default function IsletmeProfilPage() {
   }, [])
 
   useEffect(() => { load() }, [load])
-
-  const handleScan = async () => {
-    setScanning(true)
-    try {
-      await fetch('/api/yoai/business-profile/scan', { method: 'POST' })
-      await load()
-    } finally {
-      setScanning(false)
-    }
-  }
 
   if (loading) {
     return (
@@ -249,7 +248,7 @@ export default function IsletmeProfilPage() {
                   </p>
                 )}
                 <div className="flex items-center gap-2 mt-2.5 flex-wrap">
-                  <ScanBadge status={profile.scan_status} onScan={handleScan} scanning={scanning} />
+                  <ScanBadge status={profile.scan_status} />
                   {profile.last_scan_completed_at && (
                     <span className="inline-flex items-center gap-1 text-[11px] text-white/40">
                       <Clock className="w-3 h-3" />

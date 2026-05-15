@@ -7,6 +7,7 @@ import {
   replaceCompetitors,
   validateProfileForOnboarding,
   insertSourceScans,
+  deleteSourceScansForProfile,
   upsertIntelligence,
   type BusinessProfileRow,
   type BusinessCompetitorRow,
@@ -306,6 +307,8 @@ async function runProfileScansAndIntelligence(
     })
   })
 
+  // Delete previous scan records so re-scans don't accumulate duplicates
+  await deleteSourceScansForProfile(profile.id)
   await insertSourceScans(dbRows)
 
   // Intelligence build & save
