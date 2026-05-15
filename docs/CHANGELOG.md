@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-15 — Global Credit Required Modal Standard + UI owner bypass
+- **Sorun:** Faz 1 sonrası /optimizasyon sayfasında abonelik yoksa düz kırmızı inline yazı görünüyordu ("Optimizasyon için aktif bir abonelik gerekli."). Ayrıca owner hesabı (onursuay@hotmail.com) sidebar'da "Free" görünüyor ve "AI ile Tara Pro" butonu hâlâ abonelik uyarısı veriyordu — backend bypass'i client-side gating'i etkilemiyordu.
+- **Çözüm:** Yeni `components/billing/CreditRequiredModal.tsx` — Business Profile modal standardında, blur arkalıklı, kapatılamayan (X yok, ESC yutulur, dış tıklama yutulur, body scroll kilitli), CTA `/abonelik`'e yönlendiren premium modal. Optimizasyon sayfasında 403 score response'unda accessDenied state set ediliyor → inline kırmızı yazı yerine modal render ediliyor. `/api/billing/current` owner için enterprise/active subscription stub döndürüyor → sidebar plan label'ı + tüm UI gating (canUseOptimizationAI, AI Scan butonları) otomatik düzeliyor. CLAUDE.md'ye proje geneli kural eklendi. 18 unit test geçti.
+- **Dosyalar:** `CLAUDE.md`, `components/billing/CreditRequiredModal.tsx` (yeni), `app/api/billing/current/route.ts`, `app/optimizasyon/page.tsx`, `src/tests/creditRequiredModal.test.ts` (yeni)
+
 ## 2026-05-15 — Optimizasyon guard owner bypass (Faz 1 hotfix)
 - **Sorun:** Faz 1 backend guard production'da çalışıyor ancak owner hesabı (onursuay@hotmail.com) `subscriptions` tablosunda paid kayıt taşımadığı için "Optimizasyon için aktif bir abonelik gerekli." mesajıyla bloklanıyordu. Magic-scan tetiklenemediği için `yoai_recommendation_results` tablosuna kayıt düşmüyordu.
 - **Çözüm:** `requireOptimizationAccess()` içine super-admin bypass eklendi — `isSuperAdminEmail(user.email)` allowlist (default `onursuay@hotmail.com`, `SUPER_ADMIN_EMAILS` env ile override) eşleşirse subscription kontrolü atlanıp `enterprise/active` stub state ile erişim veriliyor. Gözetim Merkezi'nde kullanılan tutarlı pattern. Normal kullanıcılar için subscription guard değişmedi.

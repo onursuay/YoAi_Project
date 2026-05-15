@@ -10,6 +10,7 @@ import CampaignCard from '@/components/optimization/CampaignCard'
 import DetailPanel from '@/components/optimization/DetailPanel'
 import MagicScanResults from '@/components/optimization/MagicScanResults'
 import SubscriptionGateModal from '@/components/subscription/SubscriptionGateModal'
+import CreditRequiredModal from '@/components/billing/CreditRequiredModal'
 import { metaFetch, TOKEN_EXPIRED_EVENT } from '@/lib/meta/clientFetch'
 import type { OptimizationCampaign, MagicScanResult } from '@/lib/meta/optimization/types'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
@@ -46,6 +47,9 @@ export default function OptimizasyonPage() {
   // Connection state
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
   const [tokenExpired, setTokenExpired] = useState(false)
+  // True when the score endpoint returns 403 (no plan / no subscription).
+  // Triggers the global CreditRequiredModal instead of inline error text.
+  const [accessDenied, setAccessDenied] = useState(false)
 
   // ── Toast helpers ──────────────────────────────────────────────────────
   const addToast = useCallback((message: string, type: Toast['type']) => {
@@ -83,10 +87,17 @@ export default function OptimizasyonPage() {
           setTokenExpired(true)
           return
         }
+        // Subscription / plan / inactive — show the global access modal
+        // instead of leaking a raw error string into the page body.
+        if (response.status === 403) {
+          setAccessDenied(true)
+          return
+        }
         throw new Error(data.message || 'Failed to fetch')
       }
 
       if (data.ok) {
+        setAccessDenied(false)
         setCampaigns(data.data || [])
         lastGoodRef.current = data.data || []
       }
@@ -282,8 +293,8 @@ export default function OptimizasyonPage() {
             </div>
           )}
 
-          {/* Error state */}
-          {!loading && error && campaigns.length === 0 && (
+          {/* Error state — suppressed when the modal is taking over */}
+          {!loading && !accessDenied && error && campaigns.length === 0 && (
             <div className="text-center py-12">
               <p className="text-red-500 text-sm">{error}</p>
               <button
@@ -353,6 +364,12 @@ export default function OptimizasyonPage() {
         <SubscriptionGateModal
           type={gateType}
           onClose={() => setShowGateModal(false)}
+        />
+      )}
+      {accessDenied && (
+        <CreditRequiredModal
+          featureName="Optimizasyon"
+          reason="optimization_score_403"
         />
       )}
     </>

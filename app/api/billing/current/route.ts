@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/billing/user'
 import { getSubscription, getCreditBalance } from '@/lib/billing/db'
+import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -10,6 +11,31 @@ export async function GET() {
     const user = await getCurrentUser()
     if (!user) {
       return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 })
+    }
+
+    // Super-admin / owner override — allowlisted accounts always see an
+    // active enterprise plan so client-side gating (sidebar label, AI scan
+    // buttons, optimization access) treats them as fully-entitled users.
+    // Backend feature guards still re-check independently.
+    if (isSuperAdminEmail(user.email)) {
+      const credits = await getCreditBalance(user.id)
+      return NextResponse.json({
+        ok: true,
+        subscription: {
+          planId: 'enterprise',
+          status: 'active',
+          billingCycle: 'yearly',
+          adAccounts: 6,
+          trialEndDate: null,
+          currentPeriodEnd: new Date(Date.now() + 365 * 86_400_000).toISOString(),
+          startDate: new Date().toISOString(),
+        },
+        credits: {
+          balance: credits.balance,
+          totalEarned: credits.total_earned,
+          totalSpent: credits.total_spent,
+        },
+      })
     }
 
     const [sub, credits] = await Promise.all([

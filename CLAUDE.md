@@ -22,6 +22,26 @@ Her başarılı değişiklik sonrasında `docs/CHANGELOG.md` dosyasını güncel
 Sadece net olumlu sonuçları kaydet: düzeltilen buglar, tamamlanan özellikler, çözülen sorunlar.
 Başarısız denemeler, geçici fixler veya geri alınan değişiklikler eklenmez.
 
+## Kredi / Abonelik Erişim Bariyeri (Proje Geneli Standart)
+Kredi, abonelik veya plan erişimi gerektiren **hiçbir** YoAi alanında düz inline hata mesajı gösterilmez. Kullanıcıya **Business Profile onboarding modal standardında**, blur arkalıklı, kapatılamayan, premium tasarımlı bir erişim/kredi modalı gösterilir. Modalda net açıklama ve "Kredi Yükle / Plan Yükselt" CTA'sı bulunur.
+
+**Reusable component:** [components/billing/CreditRequiredModal.tsx](components/billing/CreditRequiredModal.tsx)
+
+**Kapsam (istisnasız):**
+- ✅ Optimizasyon
+- ✅ AI Strateji
+- ✅ YoAlgoritma AI reklam oluştur
+- ✅ Hedef Kitle AI generator
+- ✅ Rapor/analiz export
+- ✅ Krediyle çalışan tüm AI aksiyonları
+
+**Davranış:**
+- Blur backdrop (`backdrop-blur-md` + `bg-black/50`)
+- Kapatma X **yok**, ESC kapatmaz, dış tıklama kapatmaz
+- CTA → `ROUTES.SUBSCRIPTION` (`/abonelik`)
+- Owner allowlist (`SUPER_ADMIN_EMAILS`, default `onursuay@hotmail.com`) modalı görmez
+- Backend guard ayrıca korunur — modal sadece UX katmanı, güvenlik backend'de kalır
+
 ## UI Renk Kuralı (YASAK)
 Bu projede **amber / sarı / hardal / bej ton uyarı renkleri KESİNLİKLE kullanılmaz**.
 Şu Tailwind class'ları yasaktır:
