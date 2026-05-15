@@ -274,7 +274,7 @@ function VideoRuleForm({ state, onChange }: { state: CustomAudienceState; onChan
   )
 }
 
-function GenericSourceForm({ state, onChange, source }: { state: CustomAudienceState; onChange: StepRuleProps['onChange']; source: AudienceSource }) {
+function GenericSourceForm({ source }: { state: CustomAudienceState; onChange: StepRuleProps['onChange']; source: AudienceSource }) {
   const labels: Record<string, string> = {
     LEADFORM: 'Lead Formu',
     CATALOG: 'Katalog',
@@ -285,16 +285,12 @@ function GenericSourceForm({ state, onChange, source }: { state: CustomAudienceS
 
   return (
     <div className="space-y-5">
-      <div className="bg-blue-50 border border-blue-200 rounded-lg p-4">
-        <p className="text-sm text-blue-800">
-          {labels[source] ?? source} kaynağı için detaylı konfigürasyon Faz 2&apos;de Meta API entegrasyonuyla birlikte aktif olacak.
+      <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
+        <p className="text-sm font-medium text-gray-700">{labels[source] ?? source} — Desteklenmiyor</p>
+        <p className="text-sm text-gray-500 mt-1">
+          Bu kaynak türü mevcut akışta desteklenmiyor. Lütfen geri dönüp desteklenen bir kaynak seçin (Pixel, Instagram, Facebook Sayfası veya Video).
         </p>
       </div>
-
-      <RetentionSlider
-        value={state.rule.retention}
-        onChange={(v) => onChange(updateRule(state, { retention: v }))}
-      />
     </div>
   )
 }

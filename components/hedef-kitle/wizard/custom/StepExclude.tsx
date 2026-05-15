@@ -9,12 +9,19 @@ interface StepExcludeProps {
   onChange: (updates: Partial<CustomAudienceState>) => void
 }
 
-const EXCLUDE_SOURCES: AudienceSource[] = ['PIXEL', 'IG', 'PAGE', 'VIDEO', 'LEADFORM']
+const ALL_EXCLUDE_SOURCES: AudienceSource[] = ['PIXEL', 'IG', 'PAGE', 'VIDEO', 'LEADFORM']
 
 export default function StepExclude({ state, onChange }: StepExcludeProps) {
+  // Only allow same-source exclusions — cross-source exclusion requires IDs not captured in UI
+  const availableExcludeSources: AudienceSource[] =
+    state.source && ALL_EXCLUDE_SOURCES.includes(state.source as AudienceSource)
+      ? [state.source as AudienceSource]
+      : ALL_EXCLUDE_SOURCES
+
   const addExclude = () => {
+    const defaultSource = (availableExcludeSources[0] ?? 'PIXEL') as AudienceSource
     const newRule: ExcludeRule = {
-      source: 'PIXEL',
+      source: defaultSource,
       rule: { retention: 30 },
     }
     onChange({ excludeRules: [...state.excludeRules, newRule] })
@@ -44,8 +51,8 @@ export default function StepExclude({ state, onChange }: StepExcludeProps) {
       </p>
 
       {hasConflict && (
-        <div className="mb-4 bg-amber-50 border border-amber-200 rounded-lg p-3">
-          <p className="text-sm text-amber-800">
+        <div className="mb-4 bg-gray-50 border border-gray-200 rounded-lg p-3">
+          <p className="text-sm text-gray-700">
             Uyarı: Dahil etme kuralıyla aynı kaynaktan hariç tutma eklediniz. Bu, kitlenizi daraltabilir.
           </p>
         </div>
@@ -86,7 +93,7 @@ export default function StepExclude({ state, onChange }: StepExcludeProps) {
                     onChange={(e) => updateExclude(idx, { source: e.target.value as AudienceSource })}
                     className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
                   >
-                    {EXCLUDE_SOURCES.map((s) => (
+                    {availableExcludeSources.map((s) => (
                       <option key={s} value={s}>{SOURCE_LABELS[s].tr}</option>
                     ))}
                   </select>

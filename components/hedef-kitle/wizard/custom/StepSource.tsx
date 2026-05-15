@@ -26,7 +26,12 @@ const SOURCE_OPTIONS: { id: AudienceSource; icon: React.ComponentType<{ classNam
   { id: 'CUSTOMER_LIST', icon: Users },
 ]
 
+const UNSUPPORTED_SOURCES: AudienceSource[] = ['CATALOG', 'APP', 'OFFLINE', 'CUSTOMER_LIST']
+
 function isSourceAvailable(source: AudienceSource, assets: StepSourceProps['assets']): { available: boolean; reason?: string } {
+  if (UNSUPPORTED_SOURCES.includes(source)) {
+    return { available: false, reason: 'Bu kaynak türü henüz desteklenmiyor.' }
+  }
   switch (source) {
     case 'PIXEL':
       return assets.pixels.length > 0
@@ -80,7 +85,7 @@ export default function StepSource({ state, onChange, assets }: StepSourceProps)
                   {SOURCE_LABELS[id].tr}
                 </p>
                 {!available && reason && (
-                  <p className="text-caption text-amber-600 mt-0.5">{reason}</p>
+                  <p className="text-caption text-red-500 mt-0.5">{reason}</p>
                 )}
               </div>
               {isSelected && (

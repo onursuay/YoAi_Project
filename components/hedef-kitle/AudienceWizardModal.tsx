@@ -42,7 +42,7 @@ interface AudienceWizardModalProps {
   initialType?: AudienceType
 }
 
-type WizardPhase = 'select-type' | 'custom' | 'lookalike' | 'saved'
+type WizardPhase = 'select-type' | 'custom' | 'lookalike' | 'saved' | 'confirm'
 
 const TYPE_OPTIONS: { type: AudienceType; phase: WizardPhase; label: string; description: string; icon: React.ComponentType<{ className?: string }> }[] = [
   {
@@ -105,26 +105,34 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
   const [savedState, setSavedState] = useState<SavedAudienceState>(initialSavedAudienceState)
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [hasInitialType, setHasInitialType] = useState(!!initialType)
+  const [pendingSubmitType, setPendingSubmitType] = useState<AudienceType | null>(null)
+  const [prevPhase, setPrevPhase] = useState<WizardPhase>(typeToPhase(initialType))
 
   // When modal opens, set phase based on initialType
   useEffect(() => {
     if (isOpen) {
-      setPhase(typeToPhase(initialType))
+      const p = typeToPhase(initialType)
+      setPhase(p)
+      setPrevPhase(p)
       setHasInitialType(!!initialType)
       setCustomState(initialCustomAudienceState)
       setLookalikeState(initialLookalikeState)
       setSavedState(initialSavedAudienceState)
       setIsSubmitting(false)
+      setPendingSubmitType(null)
     }
   }, [isOpen, initialType])
 
   const reset = useCallback(() => {
-    setPhase(typeToPhase(initialType))
+    const p = typeToPhase(initialType)
+    setPhase(p)
+    setPrevPhase(p)
     setHasInitialType(!!initialType)
     setCustomState(initialCustomAudienceState)
     setLookalikeState(initialLookalikeState)
     setSavedState(initialSavedAudienceState)
     setIsSubmitting(false)
+    setPendingSubmitType(null)
   }, [initialType])
 
   const handleClose = () => {
@@ -289,7 +297,10 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
       setter(current - 1)
     } else {
       if (current === max) {
-        submitAudience(type)
+        // Show confirmation before sending to Meta
+        setPendingSubmitType(type)
+        setPrevPhase(phase)
+        setPhase('confirm')
         return
       }
       setter(current + 1)
@@ -312,6 +323,7 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
             {phase === 'custom' && 'Yeni Retargeting Kitlesi'}
             {phase === 'lookalike' && 'Yeni Benzer Kitle'}
             {phase === 'saved' && 'Yeni Detaylı Kitle'}
+            {phase === 'confirm' && 'Hedef Kitle Oluşturma Onayı'}
           </h2>
           <button
             type="button"
@@ -411,6 +423,67 @@ export default function AudienceWizardModal({ isOpen, onClose, onSuccess, onToas
                 canGoNext={savedCanGoNext()}
                 isSubmitting={isSubmitting}
               />
+            </div>
+          )}
+
+          {/* ── Confirmation Step ── */}
+          {phase === 'confirm' && pendingSubmitType && (
+            <div className="space-y-6">
+              <div className="bg-primary/5 border border-primary/20 rounded-xl p-5">
+                <p className="text-sm font-semibold text-primary mb-1">Gerçek Meta Hesabında Oluşturulacak</p>
+                <p className="text-sm text-primary/80">
+                  Aşağıdaki hedef kitle, bağlı Meta reklam hesabınızda gerçekten oluşturulacaktır. Bu işlem geri alınamaz.
+                </p>
+              </div>
+
+              <div className="bg-gray-50 rounded-xl border border-gray-200 divide-y divide-gray-200">
+                <div className="flex justify-between px-4 py-3">
+                  <span className="text-sm text-gray-500">Kitle Adı</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {pendingSubmitType === 'CUSTOM'
+                      ? customState.name
+                      : pendingSubmitType === 'LOOKALIKE'
+                      ? lookalikeState.name
+                      : savedState.name}
+                  </span>
+                </div>
+                <div className="flex justify-between px-4 py-3">
+                  <span className="text-sm text-gray-500">Tip</span>
+                  <span className="text-sm font-medium text-gray-900">
+                    {pendingSubmitType === 'CUSTOM'
+                      ? 'Özel Kitle (Retargeting)'
+                      : pendingSubmitType === 'LOOKALIKE'
+                      ? 'Benzer Kitle (Lookalike)'
+                      : 'Kayıtlı Kitle (Saved)'}
+                  </span>
+                </div>
+                <div className="flex justify-between px-4 py-3">
+                  <span className="text-sm text-gray-500">Hedef</span>
+                  <span className="text-sm font-medium text-gray-900">Meta Reklam Hesabı</span>
+                </div>
+              </div>
+
+              <div className="flex items-center justify-between pt-4 border-t border-gray-200">
+                <button
+                  type="button"
+                  onClick={() => {
+                    setPhase(prevPhase)
+                    setPendingSubmitType(null)
+                  }}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 rounded-lg text-sm font-medium text-gray-700 border border-gray-300 hover:bg-gray-50 transition-colors disabled:opacity-50"
+                >
+                  Geri Dön
+                </button>
+                <button
+                  type="button"
+                  onClick={() => submitAudience(pendingSubmitType)}
+                  disabled={isSubmitting}
+                  className="px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+                >
+                  {isSubmitting ? 'Oluşturuluyor...' : 'Oluştur ve Meta\'ya Gönder'}
+                </button>
+              </div>
             </div>
           )}
         </div>

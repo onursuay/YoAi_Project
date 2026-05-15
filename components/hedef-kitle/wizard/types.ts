@@ -210,7 +210,7 @@ export const TYPE_LABELS: Record<AudienceType, { tr: string; en: string }> = {
 
 export const STATUS_CONFIG: Record<AudienceStatus, { tr: string; en: string; color: string }> = {
   DRAFT: { tr: 'Taslak', en: 'Draft', color: 'bg-gray-100 text-gray-700' },
-  CREATING: { tr: 'Oluşturuluyor', en: 'Creating', color: 'bg-yellow-100 text-yellow-700' },
+  CREATING: { tr: 'Oluşturuluyor', en: 'Creating', color: 'bg-primary/10 text-primary' },
   POPULATING: { tr: 'Dolduruluyor', en: 'Populating', color: 'bg-blue-100 text-blue-700' },
   READY: { tr: 'Hazır', en: 'Ready', color: 'bg-green-100 text-green-700' },
   ERROR: { tr: 'Hata', en: 'Error', color: 'bg-red-100 text-red-700' },

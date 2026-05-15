@@ -69,13 +69,28 @@ export function buildCustomAudiencePayload(
         })
       }
 
-      // Add exclusions if present
+      // Add exclusions — PIXEL audiences only support same-source (PIXEL) exclusions
       const excludeRules = (spec.excludeRules ?? []) as Array<Record<string, unknown>>
       if (excludeRules.length > 0) {
         const exclusions = excludeRules.map((er) => {
+          const erSource = er.source as string | undefined
+          if (erSource && erSource !== 'PIXEL') {
+            throw new Error(
+              `PIXEL kitlesinde '${erSource}' kaynaklı hariç tutma desteklenmiyor. ` +
+              `Yalnızca PIXEL kaynağından hariç tutma ekleyebilirsiniz.`
+            )
+          }
           const erRule = er.rule as Record<string, unknown>
           const erRetention = ((erRule?.retention as number) ?? 30) * 86400
-          return { operator: 'or', rules: [{ retention_seconds: erRetention }] }
+          const exclusionRule: PixelRule = { retention_seconds: erRetention }
+          // Carry filter info from exclusion rule when present
+          if (erRule?.ruleType === 'SPECIFIC_PAGES' && erRule.urlValue) {
+            const op = erRule.urlOperator === 'equals' ? 'eq' : 'i_contains'
+            exclusionRule.filter = [{ field: 'url', operator: op, value: erRule.urlValue as string }]
+          } else if (erRule?.ruleType === 'EVENTS' && erRule.eventName) {
+            exclusionRule.filter = [{ field: 'event', operator: 'eq', value: erRule.eventName as string }]
+          }
+          return { operator: 'or', rules: [exclusionRule] }
         })
         ;(ruleObj as Record<string, unknown>).exclusions = exclusions
       }
@@ -87,8 +102,7 @@ export function buildCustomAudiencePayload(
       payload.subtype = 'ENGAGEMENT'
       payload.object_id = rule.igAccountId as string
       const igType = (rule.igEngagementType as string) ?? 'ig_business_profile_all'
-      // Map YoAi engagement type to Meta rule
-      const ruleObj = {
+      const igRuleObj: Record<string, unknown> = {
         inclusions: [{
           operator: 'or',
           rules: [{
@@ -98,14 +112,36 @@ export function buildCustomAudiencePayload(
           }],
         }],
       }
-      payload.rule = JSON.stringify(ruleObj)
+      const igExcludeRules = (spec.excludeRules ?? []) as Array<Record<string, unknown>>
+      if (igExcludeRules.length > 0) {
+        igRuleObj.exclusions = igExcludeRules.map((er) => {
+          const erSource = er.source as string | undefined
+          if (erSource && erSource !== 'IG') {
+            throw new Error(
+              `IG kitlesinde '${erSource}' kaynaklı hariç tutma desteklenmiyor. ` +
+              `Yalnızca IG kaynağından hariç tutma ekleyebilirsiniz.`
+            )
+          }
+          const erRule = er.rule as Record<string, unknown>
+          const erRetention = ((erRule?.retention as number) ?? 30) * 86400
+          const accountId = (erRule?.igAccountId as string) || (rule.igAccountId as string)
+          return {
+            operator: 'or',
+            rules: [{
+              event_sources: [{ id: accountId, type: 'ig_business' }],
+              retention_seconds: erRetention,
+            }],
+          }
+        })
+      }
+      payload.rule = JSON.stringify(igRuleObj)
       break
     }
     case 'PAGE': {
       payload.subtype = 'ENGAGEMENT'
       payload.object_id = rule.pageId as string
       const pageType = (rule.pageEngagementType as string) ?? 'page_engaged'
-      const ruleObj = {
+      const pageRuleObj: Record<string, unknown> = {
         inclusions: [{
           operator: 'or',
           rules: [{
@@ -115,13 +151,35 @@ export function buildCustomAudiencePayload(
           }],
         }],
       }
-      payload.rule = JSON.stringify(ruleObj)
+      const pageExcludeRules = (spec.excludeRules ?? []) as Array<Record<string, unknown>>
+      if (pageExcludeRules.length > 0) {
+        pageRuleObj.exclusions = pageExcludeRules.map((er) => {
+          const erSource = er.source as string | undefined
+          if (erSource && erSource !== 'PAGE') {
+            throw new Error(
+              `PAGE kitlesinde '${erSource}' kaynaklı hariç tutma desteklenmiyor. ` +
+              `Yalnızca PAGE kaynağından hariç tutma ekleyebilirsiniz.`
+            )
+          }
+          const erRule = er.rule as Record<string, unknown>
+          const erRetention = ((erRule?.retention as number) ?? 30) * 86400
+          const pageId = (erRule?.pageId as string) || (rule.pageId as string)
+          return {
+            operator: 'or',
+            rules: [{
+              event_sources: [{ id: pageId, type: 'page' }],
+              retention_seconds: erRetention,
+            }],
+          }
+        })
+      }
+      payload.rule = JSON.stringify(pageRuleObj)
       break
     }
     case 'VIDEO': {
       payload.subtype = 'ENGAGEMENT'
       const videoAction = (rule.videoRetentionType as string) ?? 'video_watched_3s'
-      const ruleObj = {
+      const videoRuleObj: Record<string, unknown> = {
         inclusions: [{
           operator: 'or',
           rules: [{
@@ -130,7 +188,29 @@ export function buildCustomAudiencePayload(
           }],
         }],
       }
-      payload.rule = JSON.stringify(ruleObj)
+      const videoExcludeRules = (spec.excludeRules ?? []) as Array<Record<string, unknown>>
+      if (videoExcludeRules.length > 0) {
+        videoRuleObj.exclusions = videoExcludeRules.map((er) => {
+          const erSource = er.source as string | undefined
+          if (erSource && erSource !== 'VIDEO') {
+            throw new Error(
+              `VIDEO kitlesinde '${erSource}' kaynaklı hariç tutma desteklenmiyor. ` +
+              `Yalnızca VIDEO kaynağından hariç tutma ekleyebilirsiniz.`
+            )
+          }
+          const erRule = er.rule as Record<string, unknown>
+          const erRetention = ((erRule?.retention as number) ?? 30) * 86400
+          const exVideoAction = (erRule?.videoRetentionType as string) || videoAction
+          return {
+            operator: 'or',
+            rules: [{
+              retention_seconds: erRetention,
+              filter: { field: 'event', operator: 'eq', value: exVideoAction },
+            }],
+          }
+        })
+      }
+      payload.rule = JSON.stringify(videoRuleObj)
       break
     }
     case 'LEADFORM': {
@@ -139,7 +219,7 @@ export function buildCustomAudiencePayload(
         payload.object_id = rule.leadFormId as string
       }
       const interaction = (rule.leadFormInteraction as string) ?? 'opened'
-      const ruleObj = {
+      const leadRuleObj: Record<string, unknown> = {
         inclusions: [{
           operator: 'or',
           rules: [{
@@ -148,20 +228,37 @@ export function buildCustomAudiencePayload(
           }],
         }],
       }
-      payload.rule = JSON.stringify(ruleObj)
+      const leadExcludeRules = (spec.excludeRules ?? []) as Array<Record<string, unknown>>
+      if (leadExcludeRules.length > 0) {
+        leadRuleObj.exclusions = leadExcludeRules.map((er) => {
+          const erSource = er.source as string | undefined
+          if (erSource && erSource !== 'LEADFORM') {
+            throw new Error(
+              `LEADFORM kitlesinde '${erSource}' kaynaklı hariç tutma desteklenmiyor. ` +
+              `Yalnızca LEADFORM kaynağından hariç tutma ekleyebilirsiniz.`
+            )
+          }
+          const erRule = er.rule as Record<string, unknown>
+          const erRetention = ((erRule?.retention as number) ?? 30) * 86400
+          const exInteraction = (erRule?.leadFormInteraction as string) ?? 'opened'
+          return {
+            operator: 'or',
+            rules: [{
+              retention_seconds: erRetention,
+              filter: { field: 'event', operator: 'eq', value: exInteraction === 'submitted' ? 'lead_submitted' : 'lead_opened' },
+            }],
+          }
+        })
+      }
+      payload.rule = JSON.stringify(leadRuleObj)
       break
     }
     default: {
-      // APP, OFFLINE, CATALOG, CUSTOMER_LIST — basic engagement subtype
-      payload.subtype = 'ENGAGEMENT'
-      const ruleObj = {
-        inclusions: [{
-          operator: 'or',
-          rules: [{ retention_seconds: retention }],
-        }],
-      }
-      payload.rule = JSON.stringify(ruleObj)
-      break
+      // CATALOG, APP, OFFLINE, CUSTOMER_LIST — not yet supported
+      throw new Error(
+        `'${source}' kaynak türü henüz Meta audience oluşturma akışında desteklenmiyor. ` +
+        `Desteklenen kaynaklar: PIXEL, IG, PAGE, VIDEO, LEADFORM.`
+      )
     }
   }
 

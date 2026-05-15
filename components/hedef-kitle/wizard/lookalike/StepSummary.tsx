@@ -62,9 +62,10 @@ export default function StepSummary({ state, onChange }: StepSummaryProps) {
           </div>
         </div>
 
-        <div className="bg-blue-50 border border-blue-200 rounded-lg p-3">
-          <p className="text-sm text-blue-800">
-            Kaydedildiğinde DRAFT olarak oluşturulacak. Meta&apos;ya gönderim Faz 2&apos;de aktif edilecek.
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3">
+          <p className="text-sm text-primary font-medium">Meta Reklam Hesabında Oluşturulacak</p>
+          <p className="text-sm text-primary/80 mt-0.5">
+            Onay verdikten sonra bu hedef kitle bağlı Meta reklam hesabınızda gerçekten oluşturulacaktır.
           </p>
         </div>
       </div>

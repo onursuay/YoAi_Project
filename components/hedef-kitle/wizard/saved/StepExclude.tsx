@@ -130,7 +130,7 @@ export default function StepExclude({ state, onChange }: StepExcludeProps) {
                   >
                     <span className="text-gray-900">{r.name}</span>
                     {alreadyIncluded && (
-                      <span className="text-caption text-amber-600 ml-2">(zaten dahil edilmiş)</span>
+                      <span className="text-caption text-gray-500 ml-2">(zaten dahil edilmiş)</span>
                     )}
                   </button>
                 )
