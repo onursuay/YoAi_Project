@@ -2,7 +2,6 @@ import { NextResponse } from 'next/server'
 import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
 import { isInngestReady, inngest } from '@/inngest/client'
-import { scanUserWithAiEngine } from '@/lib/yoai/ai/scanUser'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
 import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
@@ -236,19 +235,14 @@ export async function POST(request: Request) {
 
     // Faz 2: AI engine açıksa manuel bootstrap çağrısını AI engine'e yönlendir.
     if (isAiEngineEnabled() && isAnthropicReady()) {
-      if (isInngestReady()) {
-        await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
-        return NextResponse.json({ ok: true, mode: 'ai_engine_inngest', userId })
-      }
-      try {
-        const result = await scanUserWithAiEngine(userId)
-        return NextResponse.json({ ok: true, mode: 'ai_engine_inline', result })
-      } catch (e) {
+      if (!isInngestReady()) {
         return NextResponse.json(
-          { ok: false, error: e instanceof Error ? e.message : String(e) },
-          { status: 500 },
+          { ok: false, error: 'Inngest yapılandırılmamış — INNGEST_EVENT_KEY gerekli' },
+          { status: 503 },
         )
       }
+      await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
+      return NextResponse.json({ ok: true, mode: 'ai_engine_inngest', userId })
     }
 
     const today = getTurkeyDate()
