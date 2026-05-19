@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-19 — Inngest sync fix (concurrency 10→5)
+- **Sorun:** Cron `yoalgoritma/scan.user` event'ini yolluyordu ama Inngest function tetiklenmiyordu (`ai_engine_runs` boş). Inngest REST API ile sync denendiğinde `POST /v2/apps/yoai-ai-engine/syncs` `422 concurrency_limit` döndü — "function concurrency 10 > plan limit 5". Bu yüzden Vercel integration her sync denemesinde reddediliyor, function kayıt edilemiyor; queue'daki event (`01KS12K…`) işleme alınamıyordu.
+- **Çözüm:** `inngest/functions/yoalgoritmaScan.ts` içindeki `concurrency: { limit: 10 }` → `5` indirildi (Inngest Free plan tavanı). Header yorumu da güncellendi. Deploy sonrası `POST /v2/apps/yoai-ai-engine/syncs` ile manuel sync tetiklendi, bekleyen event işlenmeye başladı.
+- **Dosyalar:** `inngest/functions/yoalgoritmaScan.ts`, `docs/CHANGELOG.md`
+
 ## 2026-05-19 — YoAlgoritma AI Engine Test Planı
 - **Sorun:** Faz 2 kod ve migration prod'a alındı (USE_AI_ENGINE=false ile dormant). Açma öncesi sistematik doğrulama için bir test prosedürü yazılı kaynak olarak gerekiyordu.
 - **Çözüm:** `docs/yoalgoritma_test_plan.md` yazıldı. İçerik: ön koşul tablosu, Preview test prosedürü (3 manuel tetikleme yöntemi — UI bootstrap / cron simulation / single-user POST — `CRON_SECRET` Authorization header kullanımı dahil), 5 SQL doğrulama sorgusu (`ai_engine_runs` token aralıkları 20K-80K input normal kabul edildi, `ai_suggestions` confidence varyansı `STDDEV>=10`, `ai_alerts` severity dağılımı, reasoning kalite check, günlük token bütçe + USD tahmini Sonnet 4.6 fiyatlamasıyla), 6 red flag eşiği (süre>5dk, token>200K, STDDEV<5, hata oranı>%20, generic reasoning, tutarsız öneri) ve her biri için tek-komut rollback talimatı, production'a açma 8-maddelik final checklist. Setup adımları: Vercel env pull yapıldı + Vercel Development env'inde olmayan local-only key'ler (SUPABASE_SERVICE_KEY, APIFY_*, vd.) yedekten merge edildi. Supabase migration kullanıcı tarafından Dashboard SQL Editor üzerinden uygulandı (4 tablo: `ai_engine_runs`, `ai_alerts`, `ai_opportunities`, `ai_suggestions`).

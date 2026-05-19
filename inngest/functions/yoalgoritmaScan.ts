@@ -12,8 +12,9 @@
      4. retrieve  — batch results stream'i topla
      5. persist   — ai_engine_runs + child tablolar + daily-run
 
-   Concurrency: 10 — aynı anda en fazla 10 user batch yönetilir
-                     (Anthropic rate limit koruması + DB write basıncı).
+   Concurrency: 5  — aynı anda en fazla 5 user batch yönetilir.
+                     (Inngest Free plan eşzamanlılık tavanı 5; plan yükseltilirse
+                      bu değer artırılabilir.)
    Retries: 2  — Inngest-level retry; idempotent persist (upsert).
    ────────────────────────────────────────────────────────── */
 
@@ -35,7 +36,7 @@ export const yoalgoritmaScanUser = inngest.createFunction(
   {
     id: 'yoalgoritma-scan-user',
     name: 'YoAlgoritma — Per-User AI Scan (Batch)',
-    concurrency: { limit: 10 },
+    concurrency: { limit: 5 },
     retries: 2,
     triggers: [{ event: 'yoalgoritma/scan.user' }],
   },
