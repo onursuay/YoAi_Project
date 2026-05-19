@@ -61,14 +61,22 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: 'Database yok' }, { status: 500 })
   }
 
-  const userIds = new Set<string>()
-  const { data: metaConns } = await supabase
-    .from('meta_connections').select('user_id').eq('status', 'active')
-  const { data: googleConns } = await supabase
-    .from('google_ads_connections').select('user_id').eq('status', 'active')
+  // SMOKE TEST: ?onlyUser= ile tek kullanıcı tetiklenebilir (test branch artefaktı)
+  const url = new URL(request.url)
+  const onlyUser = url.searchParams.get('onlyUser')
 
-  metaConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
-  googleConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
+  const userIds = new Set<string>()
+  if (onlyUser) {
+    userIds.add(onlyUser)
+  } else {
+    const { data: metaConns } = await supabase
+      .from('meta_connections').select('user_id').eq('status', 'active')
+    const { data: googleConns } = await supabase
+      .from('google_ads_connections').select('user_id').eq('status', 'active')
+
+    metaConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
+    googleConns?.forEach((c: any) => { if (c.user_id) userIds.add(c.user_id) })
+  }
 
   if (userIds.size === 0) {
     return NextResponse.json({ ok: true, message: 'Aktif kullanıcı yok', users: 0 })
