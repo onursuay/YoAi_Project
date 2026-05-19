@@ -63,7 +63,9 @@ export const yoalgoritmaScanUser = inngest.createFunction(
 
     for (const ctx of [metaCtx, googleCtx]) {
       if (!ctx) continue
-      const customId = `${userId}|${ctx.platform}|${ctx.accountId}`.slice(0, 64)
+      // Anthropic Batch API custom_id pattern: ^[a-zA-Z0-9_-]{1,64}$ — pipe/dot/colon yasak
+      const rawCustomId = `${userId}_${ctx.platform}_${ctx.accountId}`.replace(/[^a-zA-Z0-9_-]/g, '_')
+      const customId = rawCustomId.slice(0, 64)
       const params = buildBatchRequestParams({ ctx, industry: scanInputs.industry, businessContext: scanInputs.businessContext })
       requestEntries.push({ custom_id: customId, platform: ctx.platform, accountId: ctx.accountId })
       batchRequests.push({ custom_id: customId, params })

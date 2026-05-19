@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-19 — submit-batch fix (custom_id pattern violation)
+- **Sorun:** Sync düzeldikten sonra ilk run `submit-batch` adımında `400 invalid_request_error — requests.0.custom_id: String should match pattern '^[a-zA-Z0-9_-]{1,64}$'` ile düştü. custom_id `${userId}|${platform}|${accountId}` şeklinde üretiliyor, `|` karakteri Anthropic Batch API pattern'inde yasak.
+- **Çözüm:** [inngest/functions/yoalgoritmaScan.ts](inngest/functions/yoalgoritmaScan.ts) içinde separator `|` → `_` ve emniyet için izinli set dışındaki karakterleri `_` ile değiştiren regex eklendi; sonra 64 char slice. Hatanın gerçek mesajı Inngest REST API `GET /v2/runs/{runId}/trace?includeOutput=true` ile çekildi.
+- **Dosyalar:** `inngest/functions/yoalgoritmaScan.ts`, `docs/CHANGELOG.md`
+
 ## 2026-05-19 — Inngest sync fix (concurrency 10→5)
 - **Sorun:** Cron `yoalgoritma/scan.user` event'ini yolluyordu ama Inngest function tetiklenmiyordu (`ai_engine_runs` boş). Inngest REST API ile sync denendiğinde `POST /v2/apps/yoai-ai-engine/syncs` `422 concurrency_limit` döndü — "function concurrency 10 > plan limit 5". Bu yüzden Vercel integration her sync denemesinde reddediliyor, function kayıt edilemiyor; queue'daki event (`01KS12K…`) işleme alınamıyordu.
 - **Çözüm:** `inngest/functions/yoalgoritmaScan.ts` içindeki `concurrency: { limit: 10 }` → `5` indirildi (Inngest Free plan tavanı). Header yorumu da güncellendi. Deploy sonrası `POST /v2/apps/yoai-ai-engine/syncs` ile manuel sync tetiklendi, bekleyen event işlenmeye başladı.
