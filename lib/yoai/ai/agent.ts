@@ -272,7 +272,8 @@ export async function runAiEngineSinglePass(args: RunAiEngineArgs): Promise<AiEn
   const startedAt = Date.now()
   const trace: AiEngineTraceEntry[] = []
 
-  const response = await client.messages.create({
+  // Streaming zorunlu (max_tokens > ~16K, "long request" guard). Final message ile aynı shape.
+  const stream = client.messages.stream({
     model,
     max_tokens: SINGLE_PASS_MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: SINGLE_PASS_THINKING_BUDGET },
@@ -285,6 +286,7 @@ export async function runAiEngineSinglePass(args: RunAiEngineArgs): Promise<AiEn
     ],
     messages: [{ role: 'user', content: userMessage }],
   })
+  const response = await stream.finalMessage()
 
   const inputTokens = response.usage.input_tokens
   const outputTokens = response.usage.output_tokens
