@@ -99,6 +99,7 @@ export async function GET(request: Request) {
           cacheRead: aiResult.meta.cache_read_tokens,
           cacheCreate: aiResult.meta.cache_creation_tokens,
         },
+        trace: aiResult.meta.trace,
         output: aiResult.output,
       })
     } catch (e) {

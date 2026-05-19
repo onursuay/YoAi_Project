@@ -303,7 +303,19 @@ export async function runAiEngineSinglePass(args: RunAiEngineArgs): Promise<AiEn
   }
 
   const output = parseFinalOutput(finalText)
-  trace.push({ iteration: 1, type: 'final_json', preview: output ? 'parsed' : 'parse_failed' })
+  trace.push({
+    iteration: 1,
+    type: 'final_json',
+    preview: output
+      ? 'parsed'
+      : `parse_failed stop=${response.stop_reason} finalText_len=${finalText?.length ?? 0}`,
+  })
+
+  // Debug: parse fail ise finalText'in başını ve sonunu trace'e koy
+  if (!output && finalText) {
+    trace.push({ iteration: 1, type: 'text', preview: 'HEAD:' + finalText.slice(0, 400) })
+    trace.push({ iteration: 1, type: 'text', preview: 'TAIL:' + finalText.slice(-400) })
+  }
 
   const meta: AiEngineRunMeta = {
     model,
