@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-19 — YoAlgoritma AI Engine Upgrade Faz 1: Audit Raporu
+- **Sorun:** YoAlgoritma "Kural Motoru" generic, template-driven öneriler üretiyor — verim alınamıyor. Claude API + tool use + agentic loop ile rebuild gerekiyor; önce mevcut sistemin tam haritası ve teşhisi lazım.
+- **Çözüm:** Kapsamlı audit yapıldı. Sayfa & UI haritası, 13 API rotasının tablosu, Meta + Google rule engine derin incelemesi, confidence skorlarının sahte olduğu kanıtlandı ([adCreator.ts:474](lib/yoai/adCreator.ts#L474)), kullanılan/kullanılmayan metrikler, 10 Supabase tablosu durumu, Anthropic / Inngest / Vercel cron altyapısı incelendi. 6 kök neden tespit edildi (kopuk confidence, dar metrik whitelist, per-account context yok, generic template, tek-AI decision desk, teşhis-aksiyon kopuklugu). Korunacak / yenilenecek / deprecate edilecek liste ile Faz 2 mimarisi belgelendi. Faz 2 (rebuild) onay bekliyor — kod değişikliği yok.
+- **Dosyalar:** `docs/yoalgoritma_audit.md`
+
 ## 2026-05-15 — Kurumsal ve Gözetim Merkezi Sol Menüden Kaldırıldı
 - **Sorun:** Kurumsal (yasal linkler) ve Gözetim Merkezi ana sidebar nav'da görünüyordu; bu öğeler kullanıcı profil dropdown'ında olmalıydı.
 - **Çözüm:** `lib/nav.ts`'ten kurumsal accordion item'ı silindi. `SidebarNav.tsx`'te `gozetimMerkeziNavItem` enjeksiyonu kaldırıldı, `hasGozetimAccess` prop'u `UserProfileDropdown`'a geçildi. `UserProfileDropdown.tsx`'e iki yeni bölüm eklendi: admin için `ShieldCheck` ikonlu "Gözetim Merkezi" linki (yalnızca `hasGozetimAccess === true`) ve tüm kullanıcılar için "Kurumsal" bölümü (Gizlilik Politikası, Çerez Politikası, Kullanım Koşulları, Veri Silme).
