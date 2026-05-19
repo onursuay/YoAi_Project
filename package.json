@@ -10,11 +10,13 @@
     "verify:budget": "node scripts/verify-budget-conversion.mjs",
     "db:migrate:google-ads": "node scripts/apply-google-ads-migration.mjs",
     "db:migrate:strategy": "node scripts/apply-strategy-migrations.mjs",
+    "db:migrate:ai-engine": "node scripts/apply-ai-engine-migration.mjs",
     "verify:google-ads": "node scripts/verify-google-ads-prod.mjs",
     "pmax:smoke": "node scripts/pmax-smoke-test.mjs",
     "search:isolation": "node scripts/search-isolation-check.mjs"
   },
   "dependencies": {
+    "@anthropic-ai/sdk": "^0.97.1",
     "@fal-ai/client": "^1.9.4",
     "@supabase/supabase-js": "^2.99.0",
     "@types/bcryptjs": "^2.4.6",
@@ -22,6 +24,7 @@
     "@vercel/edge-config": "^1.4.3",
     "bcryptjs": "^3.0.3",
     "cheerio": "^1.2.0",
+    "inngest": "^4.4.0",
     "iyzipay": "^2.0.67",
     "leaflet": "^1.9.4",
     "libphonenumber-js": "^1.12.40",

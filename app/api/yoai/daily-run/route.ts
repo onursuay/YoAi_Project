@@ -1,4 +1,8 @@
 import { NextResponse } from 'next/server'
+import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
+import { isAnthropicReady } from '@/lib/anthropic/client'
+import { isInngestReady, inngest } from '@/inngest/client'
+import { scanUserWithAiEngine } from '@/lib/yoai/ai/scanUser'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
 import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
@@ -41,6 +45,16 @@ export async function GET(request: Request) {
   }
   if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
     return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
+  }
+
+  // Faz 2: AI engine açıksa eski rule-engine cron'u no-op'a düşer.
+  // Aynı işi /api/cron/yoalgoritma-scan yapıyor — çakışmayı önle.
+  if (isAiEngineEnabled() && isAnthropicReady()) {
+    return NextResponse.json({
+      ok: true,
+      skipped: true,
+      reason: 'USE_AI_ENGINE=true — AI engine handles via /api/cron/yoalgoritma-scan',
+    })
   }
 
   try {
@@ -218,6 +232,23 @@ export async function POST(request: Request) {
 
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
+    }
+
+    // Faz 2: AI engine açıksa manuel bootstrap çağrısını AI engine'e yönlendir.
+    if (isAiEngineEnabled() && isAnthropicReady()) {
+      if (isInngestReady()) {
+        await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
+        return NextResponse.json({ ok: true, mode: 'ai_engine_inngest', userId })
+      }
+      try {
+        const result = await scanUserWithAiEngine(userId)
+        return NextResponse.json({ ok: true, mode: 'ai_engine_inline', result })
+      } catch (e) {
+        return NextResponse.json(
+          { ok: false, error: e instanceof Error ? e.message : String(e) },
+          { status: 500 },
+        )
+      }
     }
 
     const today = getTurkeyDate()
