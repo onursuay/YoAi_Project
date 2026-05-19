@@ -1,26 +1,24 @@
 /* ──────────────────────────────────────────────────────────
-   POST /api/cron/yoalgoritma-scan
+   GET /api/cron/yoalgoritma-scan
 
-   Vercel cron tarafından günlük tetiklenir. Bağlı her kullanıcı için
-   yoalgoritma/scan.user Inngest event'i fırlatır.
+   Vercel cron tarafından haftalık tetiklenir (Pazar 03:00 UTC).
+   Aktif Meta/Google bağlantısı olan her kullanıcı için
+   `yoalgoritma/scan.user` Inngest event'i fırlatır. Inngest
+   function tarafı durable batch akışını (submit → poll → persist)
+   yönetir.
 
-   Inngest yoksa (INNGEST_EVENT_KEY tanımlı değil) inline mod'a düşer
-   ve Vercel max 300s içinde olabildiği kadar kullanıcıyı tarar.
-
-   Feature flag: USE_AI_ENGINE=true olmadıkça hiçbir şey yapmaz —
-   eski /api/yoai/daily-run flow'u çalışmaya devam eder.
-
-   Auth: CRON_SECRET (Vercel cron için) veya cookie-based admin.
+   Feature flag: USE_AI_ENGINE=true olmadıkça hiçbir şey yapmaz.
+   Inngest entegrasyonu zorunludur (inline fallback yoktur).
+   Auth: CRON_SECRET (Bearer header).
    ────────────────────────────────────────────────────────── */
 
 import { NextResponse } from 'next/server'
 import { inngest, isInngestReady } from '@/inngest/client'
 import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
-import { scanUserWithAiEngine } from '@/lib/yoai/ai/scanUser'
 
 export const dynamic = 'force-dynamic'
-export const maxDuration = 300
+export const maxDuration = 60  // Sadece event fan-out — saniyeler sürer
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -50,6 +48,13 @@ export async function GET(request: Request) {
     }, { status: 503 })
   }
 
+  if (!isInngestReady()) {
+    return NextResponse.json({
+      ok: false,
+      error: 'Inngest yapılandırılmamış — INNGEST_EVENT_KEY gerekli',
+    }, { status: 503 })
+  }
+
   // Aktif bağlantısı olan tüm kullanıcıları topla
   const { supabase } = await import('@/lib/supabase/client')
   if (!supabase) {
@@ -69,56 +74,33 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: true, message: 'Aktif kullanıcı yok', users: 0 })
   }
 
-  // Inngest varsa fan-out — durable, paralel, retry'lı
-  if (isInngestReady()) {
-    const events = Array.from(userIds).map(userId => ({
-      name: 'yoalgoritma/scan.user' as const,
-      data: { userId },
-    }))
-    await inngest.send(events)
-    return NextResponse.json({
-      ok: true,
-      mode: 'inngest',
-      users: userIds.size,
-      message: `${userIds.size} kullanıcı için scan event'i gönderildi`,
-    })
-  }
+  const events = Array.from(userIds).map(userId => ({
+    name: 'yoalgoritma/scan.user' as const,
+    data: { userId },
+  }))
+  await inngest.send(events)
 
-  // Inline mode — Vercel 300s içinde sıralı tara (dev/staging için yeterli)
-  console.warn('[Cron][yoalgoritma-scan] Inngest yok — inline mod')
-  let completed = 0, failed = 0
-  const errors: string[] = []
-  for (const userId of userIds) {
-    try {
-      await scanUserWithAiEngine(userId)
-      completed++
-    } catch (e) {
-      failed++
-      const msg = e instanceof Error ? e.message : String(e)
-      console.error(`[Cron][inline] User ${userId} failed:`, msg)
-      errors.push(`User ${userId}: ${msg}`)
-    }
-  }
   return NextResponse.json({
     ok: true,
-    mode: 'inline',
+    mode: 'inngest',
     users: userIds.size,
-    completed,
-    failed,
-    errors: errors.slice(0, 10),
+    message: `${userIds.size} kullanıcı için scan event'i gönderildi`,
   })
 }
 
 /**
- * POST: manual tetikleme (UI veya admin için).
- * Cookie'den user_id alır, tek kullanıcı için scan başlatır.
+ * POST: manual tetikleme (admin tarafından).
+ * Cookie'den user_id alır, tek kullanıcı için scan event fırlatır.
  */
-export async function POST(request: Request) {
+export async function POST() {
   if (!isAiEngineEnabled()) {
     return NextResponse.json({ ok: false, error: 'USE_AI_ENGINE=false' }, { status: 503 })
   }
   if (!isAnthropicReady()) {
     return NextResponse.json({ ok: false, error: 'ANTHROPIC_API_KEY tanımlı değil' }, { status: 503 })
+  }
+  if (!isInngestReady()) {
+    return NextResponse.json({ ok: false, error: 'Inngest yapılandırılmamış' }, { status: 503 })
   }
 
   const { cookies } = await import('next/headers')
@@ -128,18 +110,6 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
   }
 
-  if (isInngestReady()) {
-    await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
-    return NextResponse.json({ ok: true, mode: 'inngest', userId })
-  }
-
-  try {
-    const result = await scanUserWithAiEngine(userId)
-    return NextResponse.json({ ok: true, mode: 'inline', result })
-  } catch (e) {
-    return NextResponse.json(
-      { ok: false, error: e instanceof Error ? e.message : String(e) },
-      { status: 500 },
-    )
-  }
+  await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
+  return NextResponse.json({ ok: true, mode: 'inngest', userId })
 }

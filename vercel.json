@@ -6,7 +6,7 @@
     },
     {
       "path": "/api/cron/yoalgoritma-scan",
-      "schedule": "0 5 * * *"
+      "schedule": "0 3 * * 0"
     },
     {
       "path": "/api/cron/official-ads-refresh",

@@ -1,9 +1,19 @@
 /* ──────────────────────────────────────────────────────────
    YoAlgoritma AI Engine — Output Types (Faz 2)
-   Claude'un agentic loop sonunda dönmesini beklediğimiz final JSON.
+   Claude single-pass çağrısının döndüreceği final JSON.
    ────────────────────────────────────────────────────────── */
 
+import type { DeepCampaignInsight } from '@/lib/yoai/analysisTypes'
+
 export type AiPlatform = 'Meta' | 'Google'
+
+/** Hesap başına AI engine context — kampanya snapshot + sektör. */
+export interface AiScanContext {
+  platform: AiPlatform
+  accountId: string
+  campaigns: DeepCampaignInsight[]
+  industry?: string
+}
 export type AiSeverity = 'critical' | 'high' | 'medium'
 export type AiPriority = 'high' | 'medium' | 'low'
 export type AiTargetType = 'account' | 'campaign' | 'adset' | 'ad' | 'ad_group'

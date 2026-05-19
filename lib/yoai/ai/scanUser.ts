@@ -1,38 +1,39 @@
 /* ──────────────────────────────────────────────────────────
-   YoAlgoritma AI Engine — Per-User Scan Orchestrator (Faz 2)
+   YoAlgoritma AI Engine — Per-User Scan Helpers
 
-   Tek bir kullanıcı için:
-   1. fetchMetaDeep + fetchGoogleDeep (mevcut fetcher'lar; modifiye yok)
-   2. Bağlı her hesap için runAiEngineForAccount() çağır
-   3. Sonuçları ai_engine_runs/ai_alerts/ai_opportunities/ai_suggestions'a yaz
-   4. Birleşik DeepAnalysisResult'ı yoai_daily_runs.command_center_data'ya yaz
-
-   Bu fonksiyon hem Inngest function'dan hem inline cron handler'dan
-   çağrılabilir. Inngest setup yoksa cron inline çalıştırır.
+   Inngest function tarafından (yoalgoritmaScanUser) kullanılır.
+   Batch API + step-aware durable execution mantığına uygun olacak
+   şekilde fetcher + persist arasındaki adımlar küçük parçalara
+   bölünmüştür. AI engine çağrısı artık Inngest function içinden
+   Anthropic Messages Batch API ile yapılır.
    ────────────────────────────────────────────────────────── */
 
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
-import { runAiEngineForAccount } from './agent'
 import { persistAiEngineResult, persistDailyRunWithAi, buildDeepAnalysisFromAi } from './persist'
-import type { AiPlatform, AiEngineOutput } from './types'
+import type { AiEngineOutput, AiEngineResult, AiPlatform, AiScanContext } from './types'
 import type { DeepCampaignInsight, Platform } from '@/lib/yoai/analysisTypes'
 import { supabase } from '@/lib/supabase/client'
 
-export interface ScanResult {
-  userId: string
-  meta: { ranAi: boolean; accountId?: string; campaignCount: number; aiRunId?: string | null; error?: string }
-  google: { ranAi: boolean; accountId?: string; campaignCount: number; aiRunId?: string | null; error?: string }
-  totalAiAlerts: number
-  totalAiOpportunities: number
-  totalAiSuggestions: number
+export interface FetchedPlatformData {
+  platform: AiPlatform
+  connected: boolean
+  campaigns: DeepCampaignInsight[]
+  accountId: string | null
+  errors: string[]
 }
 
-export async function scanUserWithAiEngine(userId: string): Promise<ScanResult> {
-  // 1) Business profile'dan industry/context oku — opsiyonel ama Claude'a kalite katar
-  const { industry, businessContext } = await loadBusinessContext(userId)
+export interface UserScanInputs {
+  userId: string
+  industry?: string
+  businessContext?: string
+  meta: FetchedPlatformData
+  google: FetchedPlatformData
+}
 
-  // 2) Her iki platform'dan paralel fetch — fetcher'lar dokunulmadı
+/** Tek user için Meta + Google deep fetch + business context. */
+export async function gatherUserScanInputs(userId: string): Promise<UserScanInputs> {
+  const { industry, businessContext } = await loadBusinessContext(userId)
   const [metaResult, googleResult] = await Promise.all([
     fetchMetaDeep(userId).catch(e => {
       console.error('[AI Scan] Meta fetch failed:', e)
@@ -44,123 +45,108 @@ export async function scanUserWithAiEngine(userId: string): Promise<ScanResult> 
     }),
   ])
 
-  const result: ScanResult = {
+  return {
     userId,
-    meta:   { ranAi: false, campaignCount: 0 },
-    google: { ranAi: false, campaignCount: 0 },
-    totalAiAlerts: 0,
-    totalAiOpportunities: 0,
-    totalAiSuggestions: 0,
+    industry,
+    businessContext,
+    meta: {
+      platform: 'Meta',
+      connected: metaResult.connected,
+      campaigns: metaResult.campaigns,
+      accountId: inferAccountId(metaResult.campaigns),
+      errors: metaResult.errors,
+    },
+    google: {
+      platform: 'Google',
+      connected: googleResult.connected,
+      campaigns: googleResult.campaigns,
+      accountId: inferAccountId(googleResult.campaigns),
+      errors: googleResult.errors,
+    },
   }
+}
+
+/** Bir scan context'i AI engine'e gönderilecek hale gelmiş mi? */
+export function scanContextFromFetched(data: FetchedPlatformData, industry?: string): AiScanContext | null {
+  if (!data.connected || data.campaigns.length === 0 || !data.accountId) return null
+  return {
+    platform: data.platform,
+    accountId: data.accountId,
+    campaigns: data.campaigns,
+    industry,
+  }
+}
+
+/** AI sonucu DB'ye yazar ve birleşik daily-run ile UI'yı tetikler. */
+export async function persistAccountAndDailyRun(args: {
+  userId: string
+  scanInputs: UserScanInputs
+  results: Array<{ platform: AiPlatform; accountId: string; aiResult: AiEngineResult }>
+}): Promise<{ totalAlerts: number; totalOpportunities: number; totalSuggestions: number }> {
+  let totalAlerts = 0, totalOpportunities = 0, totalSuggestions = 0
+  const connectedPlatforms: Platform[] = []
+  if (args.scanInputs.meta.connected) connectedPlatforms.push('Meta')
+  if (args.scanInputs.google.connected) connectedPlatforms.push('Google')
+  const errors = [...args.scanInputs.meta.errors, ...args.scanInputs.google.errors]
 
   const aiOutputs: Array<{ platform: AiPlatform; accountId: string; output: AiEngineOutput }> = []
-  const connectedPlatforms: Platform[] = []
-  const errors: string[] = [...metaResult.errors, ...googleResult.errors]
 
-  // 3) Meta tarama
-  if (metaResult.connected && metaResult.campaigns.length > 0) {
-    connectedPlatforms.push('Meta')
-    result.meta.campaignCount = metaResult.campaigns.length
-    const accountId = inferAccountId(metaResult.campaigns)
-    result.meta.accountId = accountId
+  for (const r of args.results) {
+    aiOutputs.push({ platform: r.platform, accountId: r.accountId, output: r.aiResult.output })
+    totalAlerts += r.aiResult.output.critical_alerts.length
+    totalOpportunities += r.aiResult.output.opportunities.length
+    totalSuggestions += r.aiResult.output.recommended_actions.length
 
-    try {
-      const aiResult = await runAiEngineForAccount({
-        ctx: { platform: 'Meta', accountId, campaigns: metaResult.campaigns, industry },
-        industry,
-        businessContext,
-      })
-      result.meta.ranAi = true
-      result.totalAiAlerts += aiResult.output.critical_alerts.length
-      result.totalAiOpportunities += aiResult.output.opportunities.length
-      result.totalAiSuggestions += aiResult.output.recommended_actions.length
-
-      aiOutputs.push({ platform: 'Meta', accountId, output: aiResult.output })
-
-      const persisted = await persistAiEngineResult({
-        userId,
-        platform: 'Meta',
-        accountId,
-        result: aiResult,
-        campaigns: metaResult.campaigns,
-        connectedPlatforms,
-        errors,
-      })
-      result.meta.aiRunId = persisted.runId
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      console.error(`[AI Scan][Meta] User ${userId} AI run failed:`, msg)
-      result.meta.error = msg
-      errors.push(`Meta AI tarama hatası: ${msg}`)
-      await writeFailedRun(userId, 'Meta', metaResult.campaigns[0]?.id ?? 'unknown', msg)
-    }
-  } else if (metaResult.connected) {
-    connectedPlatforms.push('Meta')  // hesap var ama kampanya yok — boş scan
+    const camps = r.platform === 'Meta' ? args.scanInputs.meta.campaigns : args.scanInputs.google.campaigns
+    await persistAiEngineResult({
+      userId: args.userId,
+      platform: r.platform,
+      accountId: r.accountId,
+      result: r.aiResult,
+      campaigns: camps,
+      connectedPlatforms,
+      errors,
+    })
   }
 
-  // 4) Google tarama
-  if (googleResult.connected && googleResult.campaigns.length > 0) {
-    connectedPlatforms.push('Google')
-    result.google.campaignCount = googleResult.campaigns.length
-    const accountId = inferAccountId(googleResult.campaigns)
-    result.google.accountId = accountId
-
-    try {
-      const aiResult = await runAiEngineForAccount({
-        ctx: { platform: 'Google', accountId, campaigns: googleResult.campaigns, industry },
-        industry,
-        businessContext,
-      })
-      result.google.ranAi = true
-      result.totalAiAlerts += aiResult.output.critical_alerts.length
-      result.totalAiOpportunities += aiResult.output.opportunities.length
-      result.totalAiSuggestions += aiResult.output.recommended_actions.length
-
-      aiOutputs.push({ platform: 'Google', accountId, output: aiResult.output })
-
-      const persisted = await persistAiEngineResult({
-        userId,
-        platform: 'Google',
-        accountId,
-        result: aiResult,
-        campaigns: googleResult.campaigns,
-        connectedPlatforms,
-        errors,
-      })
-      result.google.aiRunId = persisted.runId
-    } catch (e) {
-      const msg = e instanceof Error ? e.message : String(e)
-      console.error(`[AI Scan][Google] User ${userId} AI run failed:`, msg)
-      result.google.error = msg
-      errors.push(`Google AI tarama hatası: ${msg}`)
-      await writeFailedRun(userId, 'Google', googleResult.campaigns[0]?.id ?? 'unknown', msg)
-    }
-  } else if (googleResult.connected) {
-    connectedPlatforms.push('Google')
-  }
-
-  // 5) Birleşik DeepAnalysisResult'ı yaz — frontend mevcut UI'ı bozmadan
-  //    yeni veriyi (gerçek confidence + reasoning) render eder.
-  const allCampaigns = [...metaResult.campaigns, ...googleResult.campaigns]
+  const allCampaigns = [...args.scanInputs.meta.campaigns, ...args.scanInputs.google.campaigns]
   const deepResult = buildDeepAnalysisFromAi({
     campaigns: allCampaigns,
     connectedPlatforms,
     errors,
     aiOutputs,
   })
-  await persistDailyRunWithAi({ userId, deepResult })
+  await persistDailyRunWithAi({ userId: args.userId, deepResult })
 
-  return result
+  return { totalAlerts, totalOpportunities, totalSuggestions }
+}
+
+/** Hata durumunda ai_engine_runs'a failed satır yazar. */
+export async function writeFailedRun(userId: string, platform: AiPlatform, accountId: string, errorMsg: string): Promise<void> {
+  if (!supabase) return
+  try {
+    const { getTurkeyDate } = await import('@/lib/yoai/dailyRunStore')
+    await supabase.from('ai_engine_runs').upsert(
+      {
+        user_id: userId,
+        platform,
+        account_id: accountId,
+        run_date: getTurkeyDate(),
+        status: 'failed',
+        error_message: errorMsg.slice(0, 4000),
+      },
+      { onConflict: 'user_id,platform,account_id,run_date' },
+    )
+  } catch (e) {
+    console.error('[AI Scan][writeFailedRun] insert error:', e)
+  }
 }
 
 /* ── helpers ──────────────────────────────────────────────── */
 
-function inferAccountId(campaigns: DeepCampaignInsight[]): string {
-  if (campaigns.length === 0) return 'unknown'
-  // ID'lerden hesap ID'sini çıkarmak platform-spesifik. Şimdilik ilk
-  // kampanya ID'sinin prefix'ini veya direkt ID'sini kullanıyoruz.
-  // (UI bu account_id'yi gösterir, persist için sadece unique olması yeterli.)
-  return campaigns[0]?.id ?? 'unknown'
+function inferAccountId(campaigns: DeepCampaignInsight[]): string | null {
+  if (campaigns.length === 0) return null
+  return campaigns[0]?.id ?? null
 }
 
 async function loadBusinessContext(userId: string): Promise<{ industry?: string; businessContext?: string }> {
@@ -187,25 +173,5 @@ async function loadBusinessContext(userId: string): Promise<{ industry?: string;
     }
   } catch {
     return {}
-  }
-}
-
-async function writeFailedRun(userId: string, platform: AiPlatform, accountId: string, errorMsg: string): Promise<void> {
-  if (!supabase) return
-  try {
-    const { getTurkeyDate } = await import('@/lib/yoai/dailyRunStore')
-    await supabase.from('ai_engine_runs').upsert(
-      {
-        user_id: userId,
-        platform,
-        account_id: accountId,
-        run_date: getTurkeyDate(),
-        status: 'failed',
-        error_message: errorMsg.slice(0, 4000),
-      },
-      { onConflict: 'user_id,platform,account_id,run_date' },
-    )
-  } catch (e) {
-    console.error('[AI Scan][writeFailedRun] insert error:', e)
   }
 }
