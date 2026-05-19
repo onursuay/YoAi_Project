@@ -17,8 +17,14 @@
 
 import Anthropic from '@anthropic-ai/sdk'
 import { getAnthropicClient, getAiEngineModel } from '@/lib/anthropic/client'
-import { AI_ENGINE_SYSTEM_PROMPT, buildUserBrief } from './systemPrompt'
+import {
+  AI_ENGINE_SYSTEM_PROMPT,
+  AI_ENGINE_SYSTEM_PROMPT_SINGLE_PASS,
+  buildUserBrief,
+  buildUserBriefSinglePass,
+} from './systemPrompt'
 import { buildTools, dispatchTool, type ToolContext } from './tools'
+import { BENCHMARKS, buildAccountOverview, buildCampaignsDetail } from './accountSerializer'
 import type {
   AiEngineOutput,
   AiEngineResult,
@@ -28,6 +34,7 @@ import type {
 
 const MAX_ITERATIONS = 15
 const MAX_TOKENS_PER_TURN = 16000
+const SINGLE_PASS_MAX_TOKENS = 16000
 
 export interface RunAiEngineArgs {
   ctx: ToolContext
@@ -227,4 +234,88 @@ function validateOutput(raw: unknown): AiEngineOutput {
 
 function emptyOutput(): AiEngineOutput {
   return { critical_alerts: [], opportunities: [], recommended_actions: [] }
+}
+
+/* ──────────────────────────────────────────────────────────
+   Single-Pass Runner (Batch API uyumlu)
+
+   Tool kullanılmaz; tüm campaign verisi user message içinde
+   structured JSON olarak Claude'a sunulur. Tek messages.create
+   çağrısı yapılır, response içindeki text bloğundan final JSON
+   parse edilir.
+
+   Bu fonksiyon hem normal API ile (smoke testing) hem ileride
+   Batch API request'i olarak (build edip messageBatches.create'a
+   gönderilecek) kullanılabilir. Aynı output shape'i (AiEngineResult)
+   döndürdüğü için persist.ts'i bozmaz.
+   ────────────────────────────────────────────────────────── */
+export async function runAiEngineSinglePass(args: RunAiEngineArgs): Promise<AiEngineResult> {
+  const client = getAnthropicClient()
+  const model = getAiEngineModel()
+
+  const accountSnapshot = buildAccountOverview(args.ctx.platform, args.ctx.accountId, args.ctx.campaigns, args.industry)
+  const campaignsDetail = buildCampaignsDetail(args.ctx.campaigns)
+
+  const userMessage = buildUserBriefSinglePass({
+    platform: args.ctx.platform,
+    accountId: args.ctx.accountId,
+    industry: args.industry,
+    businessContext: args.businessContext,
+    accountSnapshot,
+    campaignsDetail,
+    benchmarks: BENCHMARKS,
+  })
+
+  const startedAt = Date.now()
+  const trace: AiEngineTraceEntry[] = []
+
+  const response = await client.messages.create({
+    model,
+    max_tokens: SINGLE_PASS_MAX_TOKENS,
+    thinking: { type: 'adaptive' },
+    system: [
+      {
+        type: 'text',
+        text: AI_ENGINE_SYSTEM_PROMPT_SINGLE_PASS,
+        cache_control: { type: 'ephemeral' },
+      },
+    ],
+    messages: [{ role: 'user', content: userMessage }],
+  })
+
+  const inputTokens = response.usage.input_tokens
+  const outputTokens = response.usage.output_tokens
+  const cacheReadTokens = response.usage.cache_read_input_tokens ?? 0
+  const cacheCreationTokens = response.usage.cache_creation_input_tokens ?? 0
+
+  let finalText: string | null = null
+  for (const block of response.content) {
+    if (block.type === 'text') {
+      finalText = block.text
+      trace.push({ iteration: 1, type: 'text', preview: block.text.slice(0, 200) })
+    } else if (block.type === 'thinking') {
+      trace.push({ iteration: 1, type: 'thinking', preview: block.thinking?.slice(0, 200) })
+    }
+  }
+
+  if (response.stop_reason === 'refusal') {
+    throw new Error('Model refused (single-pass).')
+  }
+
+  const output = parseFinalOutput(finalText)
+  trace.push({ iteration: 1, type: 'final_json', preview: output ? 'parsed' : 'parse_failed' })
+
+  const meta: AiEngineRunMeta = {
+    model,
+    input_tokens: inputTokens,
+    output_tokens: outputTokens,
+    cache_read_tokens: cacheReadTokens,
+    cache_creation_tokens: cacheCreationTokens,
+    tool_calls_count: 0,
+    iterations: 1,
+    duration_ms: Date.now() - startedAt,
+    trace,
+  }
+
+  return { output: output ?? emptyOutput(), meta }
 }
