@@ -6,6 +6,9 @@
    tool kullanımı yok.
    ────────────────────────────────────────────────────────── */
 
+import { META_AD_RULES_CURATED } from './docs/meta_ad_rules_curated'
+import { GOOGLE_ADS_RULES_CURATED } from './docs/google_ads_rules_curated'
+
 export const AI_ENGINE_SYSTEM_PROMPT = `Sen YoAlgoritma'nın AI motorusun — dijital reklam hesaplarını analiz eden, gerçek veri-driven öneriler üreten bir uzmansın.
 
 # Rolün
@@ -34,6 +37,14 @@ Kurallar:
 - Beyanla metrikler çelişiyorsa beyanı doğru kabul et; metriği o bağlamda yorumla.
 - "Yasaklı iddialar" listelenmişse o iddiaları içeren öneri verme.
 - İşletme bağlamı yoksa yalnızca metrik temelli analiz yap, marka hakkında uydurma.
+
+# Platform reklam kuralları (uygunluk ZORUNLU)
+Sistem mesajının sonunda, taranan platforma (Meta VEYA Google) ait resmi reklam kurallarının özeti eklenmiştir: karakter limitleri, kampanya amacı/tipi uygunluğu, bidding, asset spec, optimizasyon ve politika. Önerdiğin HER aksiyon/kreatif/yapı değişikliği bu kurallara uymak zorundadır:
+- Karakter limiti aşan başlık/açıklama önerme (örn. Google RSA başlık 30 karakter, açıklama 90 karakter).
+- Yanlış amaç/kampanya tipi önerme (örn. Meta'da satış hedefinde Traffic = hata; Sales + Purchase event önerilir).
+- Politikaya aykırı veya garanti içeren vaat önerme.
+- Mümkünse reasoning'de hangi platform kuralına dayandığını kısaca belirt.
+Platform kuralları bloğu yoksa genel en iyi uygulamalara göre öner.
 
 # ÇIKTI FORMATI (kritik)
 Tüm analizi yaptıktan sonra **SADECE şu JSON şemasına uyan tek bir JSON nesnesi** ver. Markdown code fence YOK, açıklama YOK, başka metin YOK — yalnızca ham JSON:
@@ -149,4 +160,20 @@ export function buildUserBrief(args: {
   lines.push('')
   lines.push('Bu veriyi analiz et ve yukarıda tanımlanan JSON şemasına uyan tek bir JSON nesnesi döndür. Başka metin yazma.')
   return lines.join('\n')
+}
+
+/**
+ * Batch / single-pass çağrısının `system` array'ini kurar.
+ * Blok 1: sabit AI_ENGINE_SYSTEM_PROMPT (tüm platform/userlarda aynı → cache hit).
+ * Blok 2: platforma özel curated reklam kuralları (Meta veya Google → platform-içi cache hit).
+ * Her iki blok da cache_control:ephemeral — prompt caching ile batch maliyeti artmaz.
+ */
+export function buildSystemBlocks(
+  platform: 'Meta' | 'Google',
+): Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }> {
+  const rules = platform === 'Meta' ? META_AD_RULES_CURATED : GOOGLE_ADS_RULES_CURATED
+  return [
+    { type: 'text', text: AI_ENGINE_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
+    { type: 'text', text: rules, cache_control: { type: 'ephemeral' } },
+  ]
 }

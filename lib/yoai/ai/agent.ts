@@ -15,7 +15,7 @@
 
 import { getAnthropicClient, getAiEngineModel } from '@/lib/anthropic/client'
 import {
-  AI_ENGINE_SYSTEM_PROMPT,
+  buildSystemBlocks,
   buildUserBrief,
 } from './systemPrompt'
 import { BENCHMARKS, buildAccountOverview, buildCampaignsDetail } from './accountSerializer'
@@ -62,13 +62,7 @@ export async function runAiEngineForAccount(args: RunAiEngineArgs): Promise<AiEn
     model,
     max_tokens: MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGET },
-    system: [
-      {
-        type: 'text',
-        text: AI_ENGINE_SYSTEM_PROMPT,
-        cache_control: { type: 'ephemeral' },
-      },
-    ],
+    system: buildSystemBlocks(args.ctx.platform),
     messages: [{ role: 'user', content: userMessage }],
   })
   const response = await stream.finalMessage()
@@ -142,13 +136,7 @@ export function buildBatchRequestParams(args: RunAiEngineArgs): {
     model,
     max_tokens: MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGET },
-    system: [
-      {
-        type: 'text',
-        text: AI_ENGINE_SYSTEM_PROMPT,
-        cache_control: { type: 'ephemeral' },
-      },
-    ],
+    system: buildSystemBlocks(args.ctx.platform),
     messages: [{ role: 'user', content: userMessage }],
   }
 }
