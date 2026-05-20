@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-20 — Off-brand reasoning fix (sektör listesi örnekleyici)
+- **Sorun:** AI motoru, profilde deklare edilen sektör listesini "tam ve eksiksiz liste" sanıyordu. MYK belgelendirme firması (Belgemod) örneğinde profilde "Aşçılık" listelenmediği için Aşçı MYK belgesi kampanyasını `pause_campaign` ile durdurmayı öneriyordu — oysa ürün (MYK belgesi) aynı, sadece meslek farklı = on-brand.
+- **Çözüm:** `systemPrompt.ts` içinde kullanıcı beyanı bloğundan sonra "Sektör listesi yorumu (off-brand kararı)" direktifi eklendi: sektör listesi ÖRNEKLEYİCİDİR; önce ürün/hizmet uyumu kontrol edilir; belirsizlikte `pause_campaign` yerine yeni `flag_for_review` action type'ı + "ürün listesiyle uyumlu ama sektör listesinde yok, manuel inceleme" gerekçesi. `recommended_actions[].action_type` enum'una `flag_for_review` eklendi (persist katmanı zaten serbest string kabul ediyor). Değişiklik tamamen prompt metni + enum literal içinde — kod yolu değişmedi. Smoke testi Pazar gece cron'unda gerçek scan ile doğrulanacak.
+- **Dosyalar:** `lib/yoai/ai/systemPrompt.ts`, `docs/CHANGELOG.md`
+
 ## 2026-05-20 — GA4 + GTM entegrasyon planı (planlama fazı, kod yok)
 - **Sorun:** Google Analytics 4 ve Google Tag Manager entegrasyonu için Aşama 2'de referans alınacak, mevcut Meta/Google pattern'lerini birebir izleyen executable bir plan dokümanı gerekiyordu.
 - **Çözüm:** Mevcut Google yapısı tam haritalandı — kritik bulgu: GA4 sunucu-taraflı OAuth + salt-okunur raporlama (`analytics.readonly`) ZATEN VAR (`google_analytics_connections` + 7 route + connectionStore/service), GTM ise greenfield (sıfır kod), client-side ölçüm tag'i yok. Meta DB-first migration recipe (cookie fallback'siz, `fbece82` güvenlik düzeltmesi) referans alındı. Plan dokümanı 10 bölüm + açık sorular ile yazıldı: tablo şeması (ayrı tablo önerisi — birleşik tablo refactor riski reddedildi), OAuth scope/incremental authorization, helper imzaları (resolveGAContext/resolveGTMContext), API route haritası, wizard UI, i18n parity, fazlı rollout (Faz 1 salt-okunur additive → Faz 2 yazma flag-gated), verification/demo video test stratejisi.

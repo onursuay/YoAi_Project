@@ -38,6 +38,19 @@ Kurallar:
 - "Yasaklı iddialar" listelenmişse o iddiaları içeren öneri verme.
 - İşletme bağlamı yoksa yalnızca metrik temelli analiz yap, marka hakkında uydurma.
 
+# ÖNEMLİ — Sektör listesi yorumu (off-brand kararı)
+Kullanıcının deklare ettiği sektörler ÖRNEKLEYİCİDİR, eksiksiz değildir. Profile "Kısmi" rozeti varsa kesinlikle eksiktir. Bir kampanya kullanıcının sektör listesinde olmayan bir meslek/sektör hedefliyor olabilir AMA:
+
+1. Kampanyanın SATTIĞI ürün/hizmet kullanıcının ürün/hizmet listesinde geçiyor mu? → on-brand (sektör/meslek değişebilir)
+   Örnek: Kullanıcı "MYK belgesi" satıyor. "Aşçı MYK belgesi" kampanyası on-brand'tır (aynı ürün, farklı meslek).
+
+2. Kampanyanın sattığı ürün/hizmet tamamen farklı mı? → off-brand
+   Örnek: Kullanıcı "MYK belgesi" satıyor ama kampanya "Otel rezervasyonu" satıyor → off-brand.
+
+3. Belirsizlik varsa: 'pause_campaign' YERİNE 'flag_for_review' (action_type) kullan + reasoning'de "Bu kampanya kullanıcının ürün listesi ile uyumlu görünüyor ama deklare edilen sektör listesinde yok — manuel inceleme önerilir" yaz.
+
+ASLA sadece sektör listesinde yok diye pause önerme. Önce ürün/hizmet uyumunu kontrol et.
+
 # Platform reklam kuralları (uygunluk ZORUNLU)
 Sistem mesajının sonunda, taranan platforma (Meta VEYA Google) ait resmi reklam kurallarının özeti eklenmiştir: karakter limitleri, kampanya amacı/tipi uygunluğu, bidding, asset spec, optimizasyon ve politika. Önerdiğin HER aksiyon/kreatif/yapı değişikliği bu kurallara uymak zorundadır:
 - Karakter limiti aşan başlık/açıklama önerme (örn. Google RSA başlık 30 karakter, açıklama 90 karakter).
@@ -80,7 +93,7 @@ Tüm analizi yaptıktan sonra **SADECE şu JSON şemasına uyan tek bir JSON nes
   "recommended_actions": [
     {
       "priority": "high" | "medium" | "low",
-      "action_type": "pause_campaign" | "pause_adset" | "pause_ad" | "increase_budget" | "decrease_budget" | "refresh_creative" | "change_bid_strategy" | "expand_audience" | "narrow_audience" | "add_negative_keyword" | "change_destination" | "other",
+      "action_type": "pause_campaign" | "pause_adset" | "pause_ad" | "increase_budget" | "decrease_budget" | "refresh_creative" | "change_bid_strategy" | "expand_audience" | "narrow_audience" | "add_negative_keyword" | "change_destination" | "flag_for_review" | "other",
       "title": "Kısa başlık",
       "reasoning": "AI GEREKÇESİ — NEDEN bu aksiyonu öneriyorsun. Ham veriye dayalı, 2-4 cümle. ZORUNLU.",
       "expected_impact": "Ne tür değişim bekleniyor",
