@@ -1,6 +1,7 @@
 'use client'
 
 import { Activity, Sparkles, Clock, Monitor, Megaphone, AlertOctagon, Lightbulb, ClipboardCheck, Layers } from 'lucide-react'
+import { useTranslations, useLocale } from 'next-intl'
 import type { DeepHealthOverview } from '@/lib/yoai/analysisTypes'
 
 interface Props {
@@ -24,18 +25,20 @@ export default function CommandCenterHeader({
   onCreateAd,
   approvalsPendingCount,
 }: Props) {
+  const t = useTranslations('dashboard.yoai.commandCenter')
+  const locale = useLocale()
   const formattedTime = lastAnalysis
-    ? new Date(lastAnalysis).toLocaleString('tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
+    ? new Date(lastAnalysis).toLocaleString(locale === 'en' ? 'en-US' : 'tr-TR', { day: '2-digit', month: 'short', hour: '2-digit', minute: '2-digit' })
     : '—'
 
   // Combined stats: her durumda 6 kutu göster — health yoksa "—" placeholder
   const stats = [
-    { label: 'Bağlı Platformlar', value: health?.connectedAccounts.platforms.join(', ') || '—', icon: Monitor, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
-    { label: 'Aktif Kampanya', value: health ? `${health.activeCampaigns} kampanya` : '—', icon: Megaphone, color: 'text-violet-400', bgColor: 'bg-violet-500/10' },
-    { label: 'Kritik Uyarılar', value: health ? health.criticalAlerts : '—', icon: AlertOctagon, color: (health?.criticalAlerts ?? 0) > 0 ? 'text-red-400' : 'text-gray-500', bgColor: (health?.criticalAlerts ?? 0) > 0 ? 'bg-red-500/10' : 'bg-gray-500/10' },
-    { label: 'İyileştirme Fırsatları', value: health ? health.opportunities : '—', icon: Lightbulb, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
+    { label: t('connectedPlatforms'), value: health?.connectedAccounts.platforms.join(', ') || '—', icon: Monitor, color: 'text-blue-400', bgColor: 'bg-blue-500/10' },
+    { label: t('activeCampaigns'), value: health ? `${health.activeCampaigns} ${t('campaignsUnit')}` : '—', icon: Megaphone, color: 'text-violet-400', bgColor: 'bg-violet-500/10' },
+    { label: t('criticalAlerts'), value: health ? health.criticalAlerts : '—', icon: AlertOctagon, color: (health?.criticalAlerts ?? 0) > 0 ? 'text-red-400' : 'text-gray-500', bgColor: (health?.criticalAlerts ?? 0) > 0 ? 'bg-red-500/10' : 'bg-gray-500/10' },
+    { label: t('opportunities'), value: health ? health.opportunities : '—', icon: Lightbulb, color: 'text-gray-400', bgColor: 'bg-gray-500/10' },
     {
-      label: 'Bekleyen Onaylar',
+      label: t('pendingApprovals'),
       value:
         typeof approvalsPendingCount === 'number'
           ? approvalsPendingCount
@@ -46,7 +49,7 @@ export default function CommandCenterHeader({
       color: 'text-primary',
       bgColor: 'bg-primary/10',
     },
-    { label: 'Önerilen Aksiyonlar', value: health ? health.draftActions : '—', icon: Layers, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
+    { label: t('recommendedActions'), value: health ? health.draftActions : '—', icon: Layers, color: 'text-indigo-400', bgColor: 'bg-indigo-500/10' },
   ]
 
   return (
@@ -61,7 +64,7 @@ export default function CommandCenterHeader({
             <div className="yoai-icon-glow w-9 h-9 rounded-xl bg-primary/20 flex items-center justify-center relative overflow-hidden">
               <Activity className="w-4.5 h-4.5 text-primary relative z-10" />
             </div>
-            <h1 className="text-2xl font-bold text-white tracking-tight">YoAlgoritma Merkezi</h1>
+            <h1 className="text-2xl font-bold text-white tracking-tight">{t('title')}</h1>
           </div>
 
           <div className="flex items-center gap-2">
@@ -70,19 +73,19 @@ export default function CommandCenterHeader({
                 : health ? 'text-blue-300 bg-blue-500/10 border border-blue-500/20'
                 : 'text-gray-500 bg-gray-800 border border-gray-700/50'
             }`}>
-              {aiGenerated ? 'AI Analiz' : health ? 'Kural Motoru' : 'Hazır'}
+              {aiGenerated ? t('aiAnalysis') : health ? t('ruleEngine') : t('ready')}
             </span>
 
             <span className="text-xs text-gray-500 inline-flex items-center gap-1.5">
               <Clock className="w-3.5 h-3.5" />
-              Son: {formattedTime}
+              {t('last')}: {formattedTime}
               <span className="w-1.5 h-1.5 rounded-full bg-primary animate-pulse" />
             </span>
 
             {onCreateAd && (
               <button onClick={onCreateAd} className="inline-flex items-center gap-1.5 px-4 py-2 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors">
                 <Sparkles className="w-3.5 h-3.5" />
-                AI Reklam Oluştur
+                {t('createAd')}
               </button>
             )}
           </div>
@@ -90,7 +93,7 @@ export default function CommandCenterHeader({
 
         {/* Row 2: Description */}
         <p className="text-gray-400 text-sm ml-12 mb-6">
-          Reklam hesaplarınızı AI ile izleyin, riskleri tespit edin, fırsatları değerlendirin.
+          {t('description')}
         </p>
 
         {/* Row 3: 6 Stats in grid — her zaman göster, health yoksa "—" */}

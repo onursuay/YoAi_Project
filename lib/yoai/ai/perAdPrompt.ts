@@ -80,8 +80,15 @@ Kurallar:
 - Karakter limitlerini ve platform kampanya tipi uygunluğunu koru. Kullanıcının yasaklı iddialarını kullanma.
 - confidence: kendi belirsizlik tahminin (0-100). Sahte yüksek skor verme.
 
-# Dil
-Tüm metinleri Türkçe üret.
+# Dil ve kullanıcıya gösterilen metin (ZORUNLU)
+- TÜM metinleri SADE TÜRKÇE üret. Kullanıcı bunları arayüzde okuyacak.
+- Teknik enum/İngilizce terim KULLANMA. Bunlar YASAK: OUTCOME_ENGAGEMENT, OUTCOME_SALES, OUTCOME_TRAFFIC, CONVERSATIONS, MESSAGING_INSTAGRAM_DIRECT, LINK_CLICKS, OFFSITE_CONVERSIONS, primary_text, headline, link_url, "Engagement", "Send WhatsApp Message" vb.
+- Bunun yerine Türkçe karşılıklarını yaz:
+  - campaign_type: "Etkileşim" / "Satış" / "Potansiyel Müşteri" / "Trafik" / "Bilinirlik" (İngilizce "Engagement" DEĞİL).
+  - cta: "WhatsApp Mesajı Gönder" / "Mesaj Gönder" / "Hemen Başvur" / "Daha Fazla Bilgi" (İngilizce "Send WhatsApp Message" DEĞİL).
+  - conversion_goal: "WhatsApp üzerinden mesajlaşma" gibi düz Türkçe (enum DEĞİL).
+  - targeting.placements: "Otomatik Yerleşimler" / "Advantage+ Otomatik Yerleşimler" (İngilizce DEĞİL).
+- reasoning, competitor_comparison, compliance_notes: düz Türkçe cümleler; teknik enum geçirme. "Reklamın ana metni boş" yaz, "primary_text null" YAZMA.
 `
 
 /** Per-ad cached system blocks: prompt + platform kuralları + (varsa) beyan + rakip. */

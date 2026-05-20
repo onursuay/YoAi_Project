@@ -5,6 +5,7 @@ import { useTranslations } from 'next-intl'
 import { ChevronDown, ChevronUp, Loader2 } from 'lucide-react'
 import type { AdImprovementRow } from '@/lib/yoai/ai/improvementStore'
 import type { AdSpec } from '@/lib/yoai/ai/types'
+import { humanizeCampaignType, humanizeCta, humanizePlacement, cleanEnumsInText } from '@/lib/yoai/ai/humanizeTr'
 
 interface Props {
   improvement: AdImprovementRow
@@ -70,7 +71,7 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
       {payload?.reasoning && (
         <div className="mx-4 mb-3">
           <p className="text-[9px] text-indigo-300 uppercase tracking-wider font-medium mb-1">{t('reasoning')}</p>
-          <p className="text-[11px] text-slate-300 leading-relaxed">{payload.reasoning}</p>
+          <p className="text-[11px] text-slate-300 leading-relaxed">{cleanEnumsInText(payload.reasoning)}</p>
         </div>
       )}
 
@@ -78,7 +79,7 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
       {payload?.competitor_comparison && (
         <div className="mx-4 mb-3 bg-slate-800/50 border border-slate-700/40 rounded-lg px-3 py-2">
           <p className="text-[9px] text-slate-400 font-medium mb-0.5">{t('competitorComparison')}</p>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{payload.competitor_comparison}</p>
+          <p className="text-[10px] text-slate-200 leading-relaxed">{cleanEnumsInText(payload.competitor_comparison)}</p>
         </div>
       )}
 
@@ -95,12 +96,12 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
 
           {expanded && (
             <div className="space-y-2 pt-1 text-[11px]">
-              <Row label={t('campaignType')} value={spec.campaign_type} />
-              <Row label={t('cta')} value={spec.cta} />
+              <Row label={t('campaignType')} value={humanizeCampaignType(spec.campaign_type)} />
+              <Row label={t('cta')} value={humanizeCta(spec.cta)} />
               {spec.budget?.daily != null && (
                 <Row label={t('budget')} value={`${spec.budget.daily} ${spec.budget.currency || 'TRY'}${t('perDay')}`} />
               )}
-              {spec.conversion_goal && <Row label={t('conversionGoal')} value={spec.conversion_goal} />}
+              {spec.conversion_goal && <Row label={t('conversionGoal')} value={cleanEnumsInText(spec.conversion_goal)} />}
               {spec.targeting && (
                 <Row
                   label={t('targeting')}
@@ -111,7 +112,7 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
                 />
               )}
               {spec.targeting?.placements?.length ? (
-                <Row label={t('placements')} value={spec.targeting.placements.join(', ')} />
+                <Row label={t('placements')} value={spec.targeting.placements.map(humanizePlacement).filter(Boolean).join(', ')} />
               ) : null}
 
               {spec.creative?.headlines?.length ? (
@@ -132,7 +133,7 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
                   <div className="flex flex-wrap gap-1">
                     {(payload?.compliance_notes ?? spec.compliance_notes ?? []).slice(0, 4).map((n, i) => (
                       <span key={i} className="text-[9px] bg-emerald-950/40 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/20">
-                        {n}
+                        {cleanEnumsInText(n)}
                       </span>
                     ))}
                   </div>
@@ -177,17 +178,40 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
             </div>
           </div>
         )}
-        {status === 'approved' && (
+        {status === 'approved' && !confirmReject && (
           <div>
             {improvement.publish_error && (
               <p className="text-[10px] text-red-300 px-3 pt-2">{t('publishFailed')}: {improvement.publish_error}</p>
             )}
-            <button
-              onClick={onApprove}
-              className="w-full py-3 bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold text-[12px] tracking-wider uppercase transition-colors"
-            >
-              {improvement.publish_error ? t('retry') : t('publish')}
-            </button>
+            <div className="flex overflow-hidden rounded-b-2xl">
+              <button
+                onClick={onApprove}
+                className="flex-1 py-3 bg-emerald-600/80 hover:bg-emerald-500 text-white font-bold text-[12px] tracking-wider uppercase transition-colors"
+              >
+                {improvement.publish_error ? t('retry') : t('publish')}
+              </button>
+              <button
+                onClick={() => setConfirmReject(true)}
+                disabled={busy}
+                style={{ clipPath: 'polygon(16px 0%, 100% 0%, 100% 100%, 0% 100%)', marginLeft: '-16px' }}
+                className="flex-1 py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40"
+              >
+                {t('reject')}
+              </button>
+            </div>
+          </div>
+        )}
+        {status === 'approved' && confirmReject && (
+          <div className="bg-red-950/20">
+            <p className="text-[11px] text-red-300 text-center py-2.5 px-3 font-medium">{t('rejectConfirm')}</p>
+            <div className="flex overflow-hidden rounded-b-2xl border-t border-red-500/20">
+              <button onClick={onReject} disabled={busy} className="flex-1 py-2.5 bg-red-600 hover:bg-red-500 text-white font-bold text-[11px] tracking-wider uppercase disabled:opacity-40">
+                {busy ? '…' : t('rejectYes')}
+              </button>
+              <button onClick={() => setConfirmReject(false)} disabled={busy} style={{ clipPath: 'polygon(16px 0%, 100% 0%, 100% 100%, 0% 100%)', marginLeft: '-16px' }} className="flex-1 py-2.5 bg-slate-800 hover:bg-slate-700 text-slate-200 text-[11px] tracking-wider uppercase disabled:opacity-40">
+                {t('rejectCancel')}
+              </button>
+            </div>
           </div>
         )}
         {(status === 'applied' || status === 'rejected' || status === 'cancelled' || status === 'superseded') && (

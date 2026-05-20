@@ -1978,6 +1978,22 @@
           "applied": "Yayında",
           "superseded": "Güncellendi"
         }
+      },
+      "commandCenter": {
+        "title": "YoAlgoritma Merkezi",
+        "description": "Reklam hesaplarınızı AI ile izleyin, riskleri tespit edin, fırsatları değerlendirin.",
+        "connectedPlatforms": "Bağlı Platformlar",
+        "activeCampaigns": "Aktif Kampanya",
+        "campaignsUnit": "kampanya",
+        "criticalAlerts": "Kritik Uyarılar",
+        "opportunities": "İyileştirme Fırsatları",
+        "pendingApprovals": "Bekleyen Onaylar",
+        "recommendedActions": "Önerilen Aksiyonlar",
+        "aiAnalysis": "AI Analiz",
+        "ruleEngine": "Kural Motoru",
+        "ready": "Hazır",
+        "last": "Son",
+        "createAd": "AI Reklam Oluştur"
       }
     },
     "strateji": {

@@ -1978,6 +1978,22 @@
           "applied": "Live",
           "superseded": "Updated"
         }
+      },
+      "commandCenter": {
+        "title": "YoAlgorithm Center",
+        "description": "Monitor your ad accounts with AI, detect risks, evaluate opportunities.",
+        "connectedPlatforms": "Connected Platforms",
+        "activeCampaigns": "Active Campaigns",
+        "campaignsUnit": "campaigns",
+        "criticalAlerts": "Critical Alerts",
+        "opportunities": "Improvement Opportunities",
+        "pendingApprovals": "Pending Approvals",
+        "recommendedActions": "Recommended Actions",
+        "aiAnalysis": "AI Analysis",
+        "ruleEngine": "Rule Engine",
+        "ready": "Ready",
+        "last": "Last",
+        "createAd": "Create AI Ad"
       }
     },
     "strateji": {

@@ -12,6 +12,32 @@ import type { Platform } from '@/lib/yoai/analysisTypes'
 import type { AdImprovementRow } from './improvementStore'
 import type { AdSpec } from './types'
 
+// ad_spec'in insan etiketli campaign_type'ını ('Engagement') geçerli Meta
+// objective enum'una ('OUTCOME_ENGAGEMENT') çevirir — preflight aksi halde
+// "uyumlu değil" der (issue 4). Google için campaign_type olduğu gibi kalır.
+function toMetaObjective(campaignType: string, conversionGoal: string): string {
+  const s = `${campaignType} ${conversionGoal}`.toLowerCase()
+  if (/sale|satış|purchase|satın|conversion|dönüşüm/.test(s)) return 'OUTCOME_SALES'
+  if (/lead|potansiyel|form/.test(s)) return 'OUTCOME_LEADS'
+  if (/engagement|etkileşim|mesaj|messag|whatsapp|conversation|sohbet|instagram direct/.test(s)) return 'OUTCOME_ENGAGEMENT'
+  if (/awareness|bilinirlik|reach|erişim/.test(s)) return 'OUTCOME_AWARENESS'
+  if (/app|uygulama/.test(s)) return 'OUTCOME_APP_PROMOTION'
+  return 'OUTCOME_TRAFFIC'
+}
+
+function toMetaDestination(objective: string, conversionGoal: string): string | undefined {
+  const s = (conversionGoal || '').toLowerCase()
+  if (objective === 'OUTCOME_ENGAGEMENT') {
+    if (/whatsapp/.test(s)) return 'WHATSAPP'
+    if (/instagram|direct/.test(s)) return 'INSTAGRAM_DIRECT'
+    if (/messenger/.test(s)) return 'MESSENGER'
+    if (/mesaj|messag|sohbet|conversation/.test(s)) return 'MESSENGER'
+    return 'ON_PAGE'
+  }
+  if (objective === 'OUTCOME_LEADS') return /form/.test(s) ? 'ON_AD' : 'WEBSITE'
+  return 'WEBSITE'
+}
+
 function buildTargetingDescription(t: AdSpec['targeting'] | undefined): string {
   if (!t) return '—'
   const parts: string[] = []
@@ -41,6 +67,16 @@ export function improvementToProposal(row: AdImprovementRow): FullAdProposal | n
   const headlines = spec.creative?.headlines ?? []
   const descriptions = spec.creative?.descriptions ?? []
 
+  // Meta için geçerli objective+destination enum'una eşle (preflight uyumu).
+  // Google için campaign_type olduğu gibi (Google publish yolu farklı).
+  const isMeta = platform === 'Meta'
+  const campaignObjective = isMeta
+    ? toMetaObjective(spec.campaign_type || '', spec.conversion_goal || '')
+    : (spec.campaign_type || '')
+  const destinationType = isMeta
+    ? toMetaDestination(campaignObjective, spec.conversion_goal || '')
+    : undefined
+
   return {
     id: `imp_${row.id}`,
     platform,
@@ -48,12 +84,13 @@ export function improvementToProposal(row: AdImprovementRow): FullAdProposal | n
     sourceCampaignName: row.source_campaign_name ?? undefined,
     proposalType: 'optimization',
     campaignName: row.source_campaign_name || spec.campaign_type || 'Kampanya',
-    campaignObjective: spec.campaign_type || '',
+    campaignObjective,
     objectiveLabel: spec.campaign_type || '',
     dailyBudget: spec.budget?.daily ?? 0,
     adsetName: row.source_ad_name ? `${row.source_ad_name} — iyileştirme` : 'Reklam Seti',
     targetingDescription: buildTargetingDescription(spec.targeting),
     optimizationGoal: spec.conversion_goal || undefined,
+    destinationType,
     adName: row.source_ad_name ? `${row.source_ad_name} v2` : 'Yeni Reklam',
     primaryText: spec.creative?.primary_text || descriptions[0] || '',
     headline: headlines[0] || '',

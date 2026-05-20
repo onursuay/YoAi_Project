@@ -147,7 +147,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
 
   return (
     <div className="fixed inset-0 z-50 flex items-start justify-center pt-12 px-4 overflow-y-auto">
-      <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose} />
       <div className="relative bg-[#0f172a] border border-[#1e2d45] rounded-2xl shadow-2xl w-full max-w-3xl mb-12 animate-popup-scale">
 
         {/* Header */}
