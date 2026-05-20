@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-20 — GA4 + GTM entegrasyon planı (planlama fazı, kod yok)
+- **Sorun:** Google Analytics 4 ve Google Tag Manager entegrasyonu için Aşama 2'de referans alınacak, mevcut Meta/Google pattern'lerini birebir izleyen executable bir plan dokümanı gerekiyordu.
+- **Çözüm:** Mevcut Google yapısı tam haritalandı — kritik bulgu: GA4 sunucu-taraflı OAuth + salt-okunur raporlama (`analytics.readonly`) ZATEN VAR (`google_analytics_connections` + 7 route + connectionStore/service), GTM ise greenfield (sıfır kod), client-side ölçüm tag'i yok. Meta DB-first migration recipe (cookie fallback'siz, `fbece82` güvenlik düzeltmesi) referans alındı. Plan dokümanı 10 bölüm + açık sorular ile yazıldı: tablo şeması (ayrı tablo önerisi — birleşik tablo refactor riski reddedildi), OAuth scope/incremental authorization, helper imzaları (resolveGAContext/resolveGTMContext), API route haritası, wizard UI, i18n parity, fazlı rollout (Faz 1 salt-okunur additive → Faz 2 yazma flag-gated), verification/demo video test stratejisi.
+- **Dosyalar:** `docs/google_ga_gtm_entegrasyon_plani.md` (yeni), `docs/CHANGELOG.md`
+
 ## 2026-05-20 — Privacy Policy EN sayfası eski içerik gösteriyordu (stale cache fix)
 - **Sorun:** Production'da TR (`/gizlilik-politikasi`) yeni GA4/GTM içeriğini gösteriyordu ama EN (`/en/privacy-policy`) eski deployment cache'inde takılı kalmıştı (eski dpl ID). Kaynak doğru: `en.json` + `tr.json` + paylaşılan `PrivacyPolicyContent` aynı commit'te güncellenmişti. Kök neden: `/en/privacy-policy` middleware rewrite ile `/privacy-policy` filesystem route'una düşüyor; bu sayfada `revalidate`/`dynamic` olmadığı için SSG (full route cache) idi → rewrite edilen EN path Vercel CDN'inde eski static HTML'e takılıyordu (TR route deploy'da invalidate edilirken rewrite hedefi edilmiyordu).
 - **Çözüm:** Her iki gizlilik sayfasına `export const dynamic = 'force-dynamic'` eklendi → static cache devre dışı, EN rewrite path bir daha eski HTML servis edemez. Build sonrası iki route da `ƒ` (Dynamic) oldu. İçerik kaynağına dokunulmadı.
