@@ -319,10 +319,69 @@ function normalizeAdDate(value: unknown): string | null {
 }
 
 /* ──────────────────────────────────────────────────────────
+   Text extraction helpers (nested actor şemaları için)
+   Meta Ad Library actor metni snapshot.body.text gibi iç içe
+   verebilir; bu helper'lar string / {text} / {markup.__html} /
+   array gibi farklı şekilleri tek string'e indirger.
+   ────────────────────────────────────────────────────────── */
+
+function stripHtml(s: string): string | null {
+  const t = s
+    .replace(/<[^>]*>/g, ' ')
+    .replace(/&nbsp;/gi, ' ')
+    .replace(/&amp;/gi, '&')
+    .replace(/&[a-z]+;/gi, ' ')
+    .replace(/\s+/g, ' ')
+    .trim()
+  return t || null
+}
+
+/** string | {text} | {markup:{__html}} | {__html} → düz metin | null */
+function extractText(v: unknown): string | null {
+  if (v === null || v === undefined) return null
+  if (typeof v === 'string') return v.trim() || null
+  if (typeof v === 'object') {
+    const o = v as Record<string, unknown>
+    if (typeof o.text === 'string') return o.text.trim() || null
+    const markup = o.markup
+    if (markup && typeof markup === 'object' && typeof (markup as Record<string, unknown>).__html === 'string') {
+      return stripHtml((markup as Record<string, unknown>).__html as string)
+    }
+    if (typeof o.__html === 'string') return stripHtml(o.__html)
+  }
+  return null
+}
+
+/** Array ise ilk dolu elemanı, değilse kendisini extractText'ten geçirir. */
+function pickFirstText(v: unknown): string | null {
+  if (Array.isArray(v)) {
+    for (const item of v) {
+      const s = extractText(item)
+      if (s) return s
+    }
+    return null
+  }
+  return extractText(v)
+}
+
+function firstPresent(obj: Record<string, unknown> | null | undefined, keys: string[]): unknown {
+  if (!obj) return undefined
+  for (const k of keys) {
+    if (obj[k] !== undefined && obj[k] !== null) return obj[k]
+  }
+  return undefined
+}
+
+/* ──────────────────────────────────────────────────────────
    normalizeApifyMetaAd
    curious_coder/facebook-ads-library-scraper çıktısını
    NormalizedCompetitorAd formatına dönüştürür.
-   Actor output schema değişebilir — toleranslı normalize.
+
+   Actor güncel şeması reklam metnini snapshot altında nested
+   verir: snapshot.{ body.text, title, caption, cta_text,
+   link_url, link_description, cards[], images[], videos[] }.
+   Düz üst-seviye anahtarlar (eski şema / başka actor) FALLBACK
+   olarak korunur — toleranslı normalize.
    ────────────────────────────────────────────────────────── */
 
 export function normalizeApifyMetaAd(
@@ -330,9 +389,18 @@ export function normalizeApifyMetaAd(
   context: { query_keyword?: string | null; campaign_type_context?: string | null },
 ): NormalizedCompetitorAd {
   const r = raw || {}
-  const get = (...keys: string[]): unknown => {
-    for (const k of keys) {
-      if (r[k] !== undefined && r[k] !== null) return r[k]
+  const get = (...keys: string[]): unknown => firstPresent(r, keys)
+
+  const snapshot =
+    r.snapshot && typeof r.snapshot === 'object' ? (r.snapshot as Record<string, unknown>) : {}
+  const snap = (...keys: string[]): unknown => firstPresent(snapshot, keys)
+  const cards = Array.isArray(snapshot.cards) ? (snapshot.cards as Record<string, unknown>[]) : []
+  const card = (...keys: string[]): unknown => {
+    for (const c of cards) {
+      if (c && typeof c === 'object') {
+        const v = firstPresent(c as Record<string, unknown>, keys)
+        if (v !== undefined && v !== null) return v
+      }
     }
     return undefined
   }
@@ -340,35 +408,48 @@ export function normalizeApifyMetaAd(
   const sourceAdId =
     (get('adArchiveID', 'ad_archive_id', 'id', 'adId', 'ad_id') as string | null) ?? null
   const pageName =
-    (get('pageName', 'page_name', 'advertiserName', 'advertiser_name') as string | null) ?? null
+    (get('pageName', 'page_name', 'advertiserName', 'advertiser_name') as string | null) ??
+    extractText(snap('page_name')) ??
+    null
   const pageId = (get('pageID', 'page_id', 'pageId') as string | null) ?? null
 
-  const bodiesRaw = get('adCreativeBodies', 'ad_creative_bodies', 'bodies', 'body')
-  const adBody = Array.isArray(bodiesRaw)
-    ? ((bodiesRaw[0] as string | null) ?? null)
-    : typeof bodiesRaw === 'string'
-      ? bodiesRaw
-      : ((get('ad_body', 'adBody', 'text', 'description') as string | null) ?? null)
+  // Ad body: top-level array/string → snapshot.body(.text) → ilk kart body
+  const adBody =
+    pickFirstText(get('adCreativeBodies', 'ad_creative_bodies', 'bodies', 'body')) ??
+    extractText(snap('body')) ??
+    extractText(card('body')) ??
+    pickFirstText(get('ad_body', 'adBody', 'text', 'description')) ??
+    null
 
-  const titlesRaw = get('adCreativeLinkTitles', 'ad_creative_link_titles', 'titles', 'title')
-  const adTitle = Array.isArray(titlesRaw)
-    ? ((titlesRaw[0] as string | null) ?? null)
-    : typeof titlesRaw === 'string'
-      ? titlesRaw
-      : ((get('ad_title', 'adTitle', 'headline') as string | null) ?? null)
+  // Ad title: top-level → snapshot.title → ilk kart title
+  const adTitle =
+    pickFirstText(get('adCreativeLinkTitles', 'ad_creative_link_titles', 'titles', 'title')) ??
+    extractText(snap('title')) ??
+    extractText(card('title')) ??
+    pickFirstText(get('ad_title', 'adTitle', 'headline')) ??
+    null
 
-  const descsRaw = get('adCreativeLinkDescriptions', 'ad_creative_link_descriptions', 'descriptions')
-  const adDesc = Array.isArray(descsRaw)
-    ? ((descsRaw[0] as string | null) ?? null)
-    : typeof descsRaw === 'string'
-      ? descsRaw
-      : ((get('ad_description', 'adDescription') as string | null) ?? null)
+  // Ad description: top-level → snapshot.link_description/caption → kart
+  const adDesc =
+    pickFirstText(get('adCreativeLinkDescriptions', 'ad_creative_link_descriptions', 'descriptions')) ??
+    extractText(snap('link_description', 'caption')) ??
+    extractText(card('link_description', 'caption')) ??
+    pickFirstText(get('ad_description', 'adDescription')) ??
+    null
 
-  const cta = (get('callToAction', 'call_to_action', 'cta') as string | null) ?? null
+  const cta =
+    (get('callToAction', 'call_to_action', 'cta') as string | null) ??
+    extractText(snap('cta_text', 'cta_type')) ??
+    extractText(card('cta_text', 'cta_type')) ??
+    null
+
   const destinationUrl =
-    (get('targetUrl', 'target_url', 'link_url', 'destination_url', 'url') as string | null) ?? null
+    (get('targetUrl', 'target_url', 'link_url', 'destination_url', 'url') as string | null) ??
+    extractText(snap('link_url')) ??
+    extractText(card('link_url')) ??
+    null
 
-  const platformsRaw = get('publisherPlatforms', 'publisher_platforms', 'platforms')
+  const platformsRaw = get('publisherPlatforms', 'publisher_platforms', 'platforms') ?? snap('publisher_platforms')
   const publisherPlatforms = Array.isArray(platformsRaw)
     ? (platformsRaw as string[])
     : typeof platformsRaw === 'string'
@@ -376,11 +457,37 @@ export function normalizeApifyMetaAd(
       : ['facebook']
 
   const startTime = normalizeAdDate(
-    get('adDeliveryStartTime', 'ad_delivery_start_time', 'adStartDate', 'startDate', 'start_date'),
+    get('adDeliveryStartTime', 'ad_delivery_start_time', 'adStartDate', 'startDate', 'start_date') ??
+      snap('start_date'),
   )
   const stopTime = normalizeAdDate(
-    get('adDeliveryStopTime', 'ad_delivery_stop_time', 'adEndDate', 'endDate', 'end_date'),
+    get('adDeliveryStopTime', 'ad_delivery_stop_time', 'adEndDate', 'endDate', 'end_date') ??
+      snap('end_date'),
   )
+
+  // Creative assets: snapshot.images[] + snapshot.videos[]
+  const creativeAssets: CompetitorCreativeAsset[] = []
+  const images = Array.isArray(snapshot.images) ? (snapshot.images as Record<string, unknown>[]) : []
+  for (const img of images.slice(0, 5)) {
+    const u = firstPresent(img, ['original_image_url', 'resized_image_url', 'image_url', 'url'])
+    if (typeof u === 'string') creativeAssets.push({ type: 'image', image_url: u })
+  }
+  const videos = Array.isArray(snapshot.videos) ? (snapshot.videos as Record<string, unknown>[]) : []
+  for (const vid of videos.slice(0, 3)) {
+    const vu = firstPresent(vid, ['video_hd_url', 'video_sd_url', 'video_url'])
+    const thumb = firstPresent(vid, ['video_preview_image_url', 'thumbnail_url'])
+    if (typeof vu === 'string') {
+      creativeAssets.push({
+        type: 'video',
+        video_url: vu,
+        thumbnail_url: typeof thumb === 'string' ? thumb : null,
+      })
+    }
+  }
+
+  // is_active: actor açık boolean verirse onu kullan, yoksa stopTime'dan türet
+  const explicitActive = get('is_active', 'isActive') ?? snap('is_active')
+  const isActive = typeof explicitActive === 'boolean' ? explicitActive : !stopTime
 
   return {
     platform: 'meta',
@@ -402,10 +509,10 @@ export function normalizeApifyMetaAd(
     publisher_platforms: publisherPlatforms,
     ad_delivery_start_time: startTime,
     ad_delivery_stop_time: stopTime,
-    creative_assets: [],
+    creative_assets: creativeAssets,
     raw_payload: raw,
     extracted_signals: {},
-    is_active: !stopTime,
+    is_active: isActive,
   }
 }
 
@@ -467,6 +574,13 @@ export function normalizeApifyGoogleAd(
     )
   }
 
+  // Google Ads Transparency actor'ı (solidcode/ads-transparency-scraper)
+  // çoğu durumda reklam METNİNİ döndürmez — yalnızca advertiser + creativeId +
+  // format + tarih + URL. Bu bir actor sınırıdır, bizim hatamız değil.
+  // text_available bayrağı downstream'in (A4 payload) metni olmayan kayıtları
+  // "metin yok — advertiser/format/URL sinyali" olarak dürüstçe sunmasını sağlar.
+  const textAvailable = !!(adTitle || adBody || adDesc)
+
   return {
     platform: 'google',
     source: 'apify_google_ads_transparency',
@@ -489,7 +603,7 @@ export function normalizeApifyGoogleAd(
     ad_delivery_stop_time: endDate,
     creative_assets: creativeAssets,
     raw_payload: raw,
-    extracted_signals: { region, format: adFormat },
+    extracted_signals: { region, format: adFormat, text_available: textAvailable },
     is_active: !endDate,
   }
 }

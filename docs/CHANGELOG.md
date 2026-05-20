@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-20 — A3: Apify rakip normalizer veri kalitesi düzeltildi
+- **Sorun:** Meta Ad Library actor'ı (curious_coder) reklam metnini `snapshot.{body.text, title, cta_text, link_url, cards[]}` altında nested veriyordu ama normalizer düz üst-seviye anahtarları okuyordu → ad_body/ad_title/cta hep null dönüyordu (rakip akışı bağlansa bile metin kaybolurdu). Google Transparency actor'ı (solidcode) ise hiç reklam metni döndürmüyordu, normalizer bunu sessizce null'lıyordu.
+- **Çözüm:** `normalizeApifyMetaAd` nested snapshot okuyacak şekilde yeniden yazıldı: body.text / {markup.__html} HTML temizleme / cards[] carousel fallback / snapshot.images+videos → creative_assets / açık `is_active` boolean. Eski düz şema FALLBACK olarak korundu (backward compat). `normalizeApifyGoogleAd` dürüst `text_available` bayrağı ekledi (actor metin döndürmediğinde downstream "metin yok — advertiser/format/URL sinyali" olarak sunabilir). 9 birim testi (audit'in gerçek Trendyol payload şekliyle) eklendi, hepsi geçti. NOT: Google actor metin sınırı bir actor kısıtı; relevance sorunu A4'te tam-isim aramasıyla hafifletilecek.
+- **Dosyalar:** `lib/yoai/apifyCompetitorProvider.ts`, `src/tests/apifyCompetitorNormalizer.test.ts` (yeni), `docs/CHANGELOG.md`
+
 ## 2026-05-20 — A2: Platform resmi reklam kuralları AI motoruna bağlandı (curated, cache'li)
 - **Sorun:** Resmi Meta/Google reklam dokümanları (~140KB) AI tarama motorunun system prompt'una hiç bağlı değildi; öneriler karakter limiti, kampanya tipi uygunluğu, asset spec ve politikaya karşı doğrulanmıyordu (üç ayaklı analizin 2. ayağı eksik).
 - **Çözüm:** Onur onayıyla Seçenek A (curated snippet) uygulandı. `docs/*.md`'den distile edilen `meta_ad_rules_curated.ts` (~1.45K tok) ve `google_ads_rules_curated.ts` (~1.62K tok) eklendi (karakter limitleri, objective/kampanya tipi matrisi, bidding, optimizasyon müdahale kuralları, politika kırmızı çizgileri). `buildSystemBlocks(platform)` taranan platforma göre ilgili kuralı system array'ine 2. cache'li blok olarak ekliyor (Meta scan'de Meta, Google scan'de Google — platform izolasyonu testle doğrulandı). System prompt'a "Platform reklam kuralları (uygunluk ZORUNLU)" direktifi eklendi. agent.ts hem streaming hem batch yolunda helper'ı kullanıyor. 7/7 smoke testi geçti.
