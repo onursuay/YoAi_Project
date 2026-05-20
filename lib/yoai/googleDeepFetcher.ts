@@ -7,6 +7,7 @@ import { computeDerivedMetrics } from '@/lib/google-ads/helpers'
 import { runGoogleRuleEngine, type GoogleRuleContext } from './googleRuleEngine'
 import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, GoogleProblemTag } from './analysisTypes'
 import type { ProblemTag } from '@/lib/meta/optimization/types'
+import { computeCreativeHash } from './creativeHash'
 
 const MAX_CAMPAIGNS = 15
 
@@ -78,9 +79,20 @@ type AdGroupRow = {
   metrics?: Record<string, string | number | undefined>
 }
 
+// RSA creative: GAQL response camelCase (responsiveSearchAd) veya snake (responsive_search_ad)
+type RsaAsset = { text?: string; pinnedField?: string; pinned_field?: string }
+type GAdObj = {
+  id?: string
+  name?: string
+  type?: string
+  finalUrls?: string[]
+  final_urls?: string[]
+  responsiveSearchAd?: { headlines?: RsaAsset[]; descriptions?: RsaAsset[] }
+  responsive_search_ad?: { headlines?: RsaAsset[]; descriptions?: RsaAsset[] }
+}
 type AdRow = {
-  adGroupAd?: { ad?: { id?: string; name?: string; type?: string }; status?: string }
-  ad_group_ad?: { ad?: { id?: string; name?: string; type?: string }; status?: string }
+  adGroupAd?: { ad?: GAdObj; status?: string }
+  ad_group_ad?: { ad?: GAdObj; status?: string }
   adGroup?: { id?: string }
   ad_group?: { id?: string }
   campaign?: { id?: string }
@@ -263,9 +275,12 @@ export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: Dee
       }
     }
 
-    // 3. Fetch ads
+    // 3. Fetch ads — per-ad improvement için RSA full creative (additive alanlar)
     const adQuery = `
       SELECT ad_group_ad.ad.id, ad_group_ad.ad.name, ad_group_ad.ad.type,
+        ad_group_ad.ad.final_urls,
+        ad_group_ad.ad.responsive_search_ad.headlines,
+        ad_group_ad.ad.responsive_search_ad.descriptions,
         ad_group_ad.status, ad_group.id, campaign.id,
         metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
         metrics.average_cpc, metrics.conversions, metrics.conversions_value
@@ -292,12 +307,27 @@ export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: Dee
       const clicks = num(m?.clicks)
       const impressions = num(m?.impressions)
 
+      // RSA full creative (per-ad improvement) — camelCase veya snake_case
+      const rsa = ad.responsiveSearchAd ?? ad.responsive_search_ad
+      const headlines = Array.isArray(rsa?.headlines)
+        ? rsa!.headlines.map((h) => (h?.text ?? '').trim()).filter(Boolean)
+        : []
+      const descriptions = Array.isArray(rsa?.descriptions)
+        ? rsa!.descriptions.map((d) => (d?.text ?? '').trim()).filter(Boolean)
+        : []
+      const finalUrls = ad.finalUrls ?? ad.final_urls ?? []
+      const finalUrl = Array.isArray(finalUrls) && finalUrls.length ? String(finalUrls[0]) : undefined
+
       const adInsight: AdInsight = {
         id: ad.id,
         name: ad.name || `Ad ${ad.id}`,
         status: adGroupAd?.status ?? 'UNKNOWN',
         platform: 'Google',
         format: ad.type || undefined,
+        creativeHeadlines: headlines.length ? headlines : undefined,
+        creativeDescriptions: descriptions.length ? descriptions : undefined,
+        linkUrl: finalUrl,
+        creativeHash: computeCreativeHash([...headlines, ...descriptions, finalUrl, ad.name]) || undefined,
         metrics: {
           spend: amountSpent,
           impressions,

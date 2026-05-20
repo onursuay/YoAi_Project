@@ -53,6 +53,11 @@ export interface AdInsight {
   creativeTitle?: string
   callToActionType?: string  // SHOP_NOW, LEARN_MORE, SIGN_UP, etc.
   linkUrl?: string
+  // Google RSA creative (Faz 2 — per-ad improvement için full creative)
+  creativeHeadlines?: string[]      // RSA başlıkları (Google) / Meta'da tek başlık
+  creativeDescriptions?: string[]   // RSA açıklamaları (Google)
+  // Creative değişim tespiti (refresh policy) — deterministic hash
+  creativeHash?: string
 }
 
 /* ── Adset / Ad Group Level Insight ── */

@@ -11,6 +11,7 @@ import { scoreCampaign } from '@/lib/meta/optimization/scoring'
 import { resolveKpiTemplate } from '@/lib/meta/optimization/kpiRegistry'
 import type { CampaignTriple, OptimizationAdset } from '@/lib/meta/optimization/types'
 import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics } from './analysisTypes'
+import { computeCreativeHash } from './creativeHash'
 
 const MAX_CAMPAIGNS = 15
 
@@ -213,6 +214,13 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
             creativeTitle: (creative.title || ossTitle || '').trim() || undefined,
             callToActionType: (creative.call_to_action_type || ossCTA || '').trim() || undefined,
             linkUrl: (creative.link_url || ossLink || '').trim() || undefined,
+            // Per-ad improvement: creative değişimi tespiti (refresh policy)
+            creativeHash: computeCreativeHash([
+              (creative.body || ossBody || '').trim(),
+              (creative.title || ossTitle || '').trim(),
+              (creative.call_to_action_type || ossCTA || '').trim(),
+              (creative.link_url || ossLink || '').trim(),
+            ]) || undefined,
           }
         })
 
