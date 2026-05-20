@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-20 — YoAlgoritma proje amacı + Google resmi dokümanlar + index
+- **Sorun:** YoAlgoritma'nın iş kuralları (üç ayaklı analiz, aktif-only, business profile zorunluluğu, tam ad spec çıktısı) ve resmi platform dokümanlarının AI engine'e nasıl bağlanacağı yazılı referans olarak yoktu.
+- **Çözüm:** `docs/yoalgoritma_proje_amaci.md` (sistem amacı + 7 değişmez iş kuralı + DoD) yazıldı. Google Ads 2026 PDF'leri (Temel/Orta + İleri Seviye + kaynakça) sadık transkripsiyonla Markdown'a aktarıldı. `docs/resmi_dokumanlar_index.md` ile her dokümanın hangi AI görevinde referans alınacağı + system prompt'a bağlama stratejisi (Seçenek A cache'li gömme / Seçenek B RAG-lite) tanımlandı.
+- **Dosyalar:** `docs/yoalgoritma_proje_amaci.md` (yeni), `docs/google_ads_resmi_dokumanlari.md` (yeni, ~51KB), `docs/resmi_dokumanlar_index.md` (yeni), `docs/CHANGELOG.md`
+
 ## 2026-05-20 — Meta resmi reklam dokümanları konsolidasyonu
 - **Sorun:** Resmi Meta Ads 2026 eğitim PDF'leri (Temel/Orta + İleri Seviye Mühendislik + kaynak listeleri) proje bilgi tabanında yapılandırılmış tek bir Markdown dosyası olarak yoktu.
 - **Çözüm:** Üç PDF ve iki kaynak `.txt` dosyası birebir (özet değil, sadık transkripsiyon) Markdown'a aktarıldı; tüm spec/limit tabloları Markdown tablosuna çevrildi, karakter limitleri, asset oranları, event parametreleri, kampanya tipleri ve politika kuralları korundu. Türkçe içerik çevrilmedi.
