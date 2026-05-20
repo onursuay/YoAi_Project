@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-20 — A1: Kullanıcı beyanı + iş zekası AI motoruna tam bağlandı
+- **Sorun:** Haftalık AI tarama motoru kullanıcının kendi marka beyanından yalnızca 6 alan gönderiyordu (sektör, iş tanımı, ton, hedef kitle, dönüşüm hedefi) ve bunu 1500 karaktere kırpıyordu. Marka adı, ürün/hizmetler, anahtar kelimeler, lokasyon, yasaklı iddialar, rakipler ve hazır `user_business_intelligence` Claude'a hiç gitmiyordu — "aşçılık sertifikası → aşçı iş ilanı" tipi alakasız öneri riski.
+- **Çözüm:** Yeni pure builder `lib/yoai/ai/scanBusinessBrief.ts` eklendi; `getBusinessContextForUser` (profil + rakipler + intelligence tek noktada) sonucunu Claude payload'ına gidecek tam markdown'a çeviriyor. Kullanıcı beyanı = birincil/kırpılmaz (iş tanımı tam metin), intelligence = ikincil/kapatılabilir enrichment. `loadBusinessContext` minimal sorgu yerine bu builder'ı kullanıyor; `buildUserBrief` 1500 char clamp'i kaldırıldı; system prompt'a "marka uygunluğu (ZORUNLU)" direktifi eklendi. Token etkisi: Belgemod örneğinde ~150 → ~920 token (+770, 50K bütçenin çok altında — sıkıştırma gereksiz). 10/10 builder smoke testi geçti.
+- **Dosyalar:** `lib/yoai/ai/scanBusinessBrief.ts` (yeni), `lib/yoai/ai/scanUser.ts`, `lib/yoai/ai/systemPrompt.ts`, `src/tests/yoalgoritmaScanBusinessBrief.test.ts` (yeni), `docs/CHANGELOG.md`
+
 ## 2026-05-20 — YoAlgoritma bağlam audit raporu
 - **Sorun:** Haftalık AI tarama motorunun, proje amacındaki üç ayaklı analiz prensibine (aktif reklamlar + platform kuralları + rakip analizi) ve business profile zorunluluğuna uyumu denetlenmemişti.
 - **Çözüm:** Salt okuma + kod izleme + canlı Apify testiyle audit yapıldı. Bulgular: aktif filtre Meta/Google ✅; platform docs entegrasyonu ❌ (system prompt'ta yok); Apify altyapısı var ama AI motoruna bağlı değil ❌ (lib/yoai/ai/* içinde sıfır competitor referansı); business profile context kısmi ⚠ (6 alan gidiyor; marka adı/ürünler/rakipler/intelligence gitmiyor); tam ad spec üretilmiyor ❌. Canlı test: iki actor da SUCCEEDED (<$0.01), ama Meta normalizer nested snapshot'ı kaçırıyor + Google actor reklam metni döndürmüyor. 6 öncelikli aksiyon (A1-A6) listelendi; en yüksek getiri A3 (mevcut user_business_intelligence'ı payload'a eklemek).

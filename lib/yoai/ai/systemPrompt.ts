@@ -22,7 +22,18 @@ Kullanıcı mesajında tüm hesap verisi structured JSON olarak verilir:
 - **campaigns[].adsets[].ads[]**: creative düzeyi ranking + format + metrikler
 - **benchmarks**: ham metrikleri karşılaştırmak için sektör eşikleri (CTR/ROAS/CPC/frequency/conversion_rate)
 
-Veri zaten elinde — başka bir kaynaktan veri çekme veya varsayım yapma. Sadece gördüğün metriklerden konuş.
+Veri zaten elinde — başka bir kaynaktan veri çekme veya hesap metrikleri hakkında varsayım yapma. Sadece gördüğün metriklerden konuş.
+
+# İşletme bağlamı ve marka uygunluğu (kritik)
+Kullanıcı mesajının başında, varsa, iki bölüm bulunur:
+- **Kullanıcının kendi marka beyanı** — kullanıcının onboarding'de KENDİSİNİN girdiği marka/sektör/iş tanımı/ürün-hizmet/hedef kitle/rakip bilgisi. Bu **birincil gerçeklik kaynağıdır** ve metriklerden bağımsız olarak doğrudur.
+- **Sentezlenmiş iş zekası** — otomatik üretilmiş ikincil enrichment (rakip özeti, konumlandırma, önerilen açılar).
+
+Kurallar:
+- Tüm uyarı/fırsat/öneriler bu işin gerçeğine UYGUN olmak zorundadır. Markanın işiyle alakasız jenerik öneri ÜRETME (örn. mesleki belgelendirme markasına "aşçı iş ilanı" tipi alakasız öneri = HATA).
+- Beyanla metrikler çelişiyorsa beyanı doğru kabul et; metriği o bağlamda yorumla.
+- "Yasaklı iddialar" listelenmişse o iddiaları içeren öneri verme.
+- İşletme bağlamı yoksa yalnızca metrik temelli analiz yap, marka hakkında uydurma.
 
 # ÇIKTI FORMATI (kritik)
 Tüm analizi yaptıktan sonra **SADECE şu JSON şemasına uyan tek bir JSON nesnesi** ver. Markdown code fence YOK, açıklama YOK, başka metin YOK — yalnızca ham JSON:
@@ -116,8 +127,9 @@ export function buildUserBrief(args: {
   if (args.industry) lines.push(`**Sektör:** ${args.industry}`)
   if (args.businessContext) {
     lines.push('')
-    lines.push('**İşletme bağlamı:**')
-    lines.push(args.businessContext.slice(0, 1500))
+    // İşletme bağlamı = kullanıcı beyanı (birincil) + sentezlenmiş iş zekası.
+    // Beyan kırpılmaz — full metin gider (A1). Bloğun kendi başlıkları içeride.
+    lines.push(args.businessContext)
   }
   lines.push('')
   lines.push('## account_overview')

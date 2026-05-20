@@ -11,6 +11,7 @@
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
 import { fetchGoogleDeep } from '@/lib/yoai/googleDeepFetcher'
 import { persistAiEngineResult, persistDailyRunWithAi, buildDeepAnalysisFromAi } from './persist'
+import { buildScanBusinessBrief } from './scanBusinessBrief'
 import type { AiEngineOutput, AiEngineResult, AiPlatform, AiScanContext } from './types'
 import type { DeepCampaignInsight, Platform } from '@/lib/yoai/analysisTypes'
 import { supabase } from '@/lib/supabase/client'
@@ -149,29 +150,22 @@ function inferAccountId(campaigns: DeepCampaignInsight[]): string | null {
   return campaigns[0]?.id ?? null
 }
 
+/**
+ * Kullanıcının KENDİ beyanı (profil + rakipler) + sentezlenmiş iş
+ * zekasını (intelligence) tek bir business brief'e dönüştürür.
+ * getBusinessContextForUser tüm tabloları (profil + competitors +
+ * source_scans + intelligence) tek noktada birleştirir; buildScanBusinessBrief
+ * bunu Claude payload'ına gidecek markdown'a çevirir.
+ */
 async function loadBusinessContext(userId: string): Promise<{ industry?: string; businessContext?: string }> {
-  if (!supabase) return {}
   try {
-    const { data } = await supabase
-      .from('user_business_profiles')
-      .select('sector_main, sector_sub, business_description, brand_tone, target_audience, main_conversion_goal')
-      .eq('user_id', userId)
-      .limit(1)
-      .single()
-    if (!data) return {}
-    const ctxParts: string[] = []
-    if (data.business_description) ctxParts.push(`İşletme: ${data.business_description}`)
-    if (data.target_audience) ctxParts.push(`Hedef kitle: ${data.target_audience}`)
-    if (data.brand_tone) ctxParts.push(`Marka tonu: ${data.brand_tone}`)
-    if (data.main_conversion_goal) ctxParts.push(`Ana dönüşüm hedefi: ${data.main_conversion_goal}`)
-    const industry = data.sector_main
-      ? (data.sector_sub ? `${data.sector_main} / ${data.sector_sub}` : data.sector_main)
-      : undefined
-    return {
-      industry,
-      businessContext: ctxParts.length > 0 ? ctxParts.join('\n') : undefined,
-    }
-  } catch {
+    const { getBusinessContextForUser } = await import('@/lib/yoai/businessContextStore')
+    const ctx = await getBusinessContextForUser(userId)
+    const brief = buildScanBusinessBrief(ctx)
+    if (!brief.hasProfile) return {}
+    return { industry: brief.industry, businessContext: brief.businessContext }
+  } catch (e) {
+    console.warn('[AI Scan] loadBusinessContext failed:', e)
     return {}
   }
 }
