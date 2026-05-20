@@ -116,6 +116,24 @@ APIFY_GOOGLE_ADS_TRANSPARENCY_ACTOR_ID=solidcode/ads-transparency-scraper
 ```
 Token eksikse `isApifyReady()` false döner, sistem public metadata fallback'e geçer — hiç crash olmaz.
 
+## YoAlgoritma Geliştirme Kartları — Hiyerarşik Mimari (Faz 3)
+YoAlgoritma artık "düz per-ad öneri listesi" yerine **hesap → kampanya → ad set → reklam** hiyerarşik kart modeli kullanır.
+
+**Tablolar (omddq — eski `ai_ad_improvements` PARALEL, birkaç hafta sonra silinecek):**
+- `account_alerts` (SEVİYE 0 — Pixel/CAPI/dönüşüm takibi/bütçe dağılımı/eksik kampanya türü)
+- `campaign_improvements` (SEVİYE 1 — kampanya türü doğrulama + öneriler) — `user_id + campaign_id`
+- `adset_improvements` (SEVİYE 2) — FK `campaign_improvement_id`
+- `ad_improvements` (SEVİYE 3 — `ad_spec`) — FK `adset_improvement_id`
+- Status enum (7): `pending | approved | applied | rejected | rejected_by_user | cancelled | superseded`. Reddet → `rejected_by_user` (soft-delete), "Geri Al" → `pending`.
+
+**Motor:** [perCampaignPrompt.ts](lib/yoai/ai/perCampaignPrompt.ts) + [perCampaignAgent.ts](lib/yoai/ai/perCampaignAgent.ts) — kampanya başına 1 Batch API isteği, 4 seviyeli JSON çıktı. `account_alerts` yalnız platformun ilk kampanya isteğinde üretilir. Direktifler: kampanya türü uyumsuzluğu en üstte; İngilizce enum YASAK; "kaynak belirtme" yasağı; off-brand ürün/hizmet kontrolü; three-pillar.
+
+**Inngest:** `yoalgoritma/campaign-improvements.user` → [perCampaignImprovements.ts](inngest/functions/perCampaignImprovements.ts) (fetch → reconcile → batch → poll → FK zinciri persist; concurrency 5). Lifecycle: **freeze-on-decision** (karar verilmiş kampanya dondurulur), kararsız kampanyanın pending alt-ağacı haftalık supersede, pasif kampanya cancel. Eski `yoalgoritma/improvements.user` (per-ad) function rollback için kayıtlı ama cron artık tetiklemez.
+
+**Enum çeviri katmanı:** [lib/yoai/translations/](lib/yoai/translations/) — `translateEnum(value, locale, platform?)` her Meta/Google enum'unu TR+EN'e çevirir; UI'da ham enum **ASLA** görünmez. `humanizeTr.ts` bu katmana delege eder.
+
+**UI:** [components/yoai/hierarchy/](components/yoai/hierarchy/) — drill-down (breadcrumb), tüm detaylar AÇIK (collapse yok), durum bazlı butonlar (pending: Onayla+Reddet; approved: Yayınla[ad]/Uygulandı[advisory]+Reddet; applied: Reddet; rejected_by_user: gri+Geri Al). Endpoint'ler: `GET /api/yoai/improvements/hierarchy`, `POST .../hierarchy/decision`. Ad onayı → mevcut `AdCreationWizard` (Meta/Google entegrasyonuna **dokunulmaz**).
+
 ## İşletme Profili Tarama Kuralları (Otomatik Tarama)
 
 ### Tarama Ne Zaman Çalışır
@@ -123,7 +141,7 @@ Token eksikse `isApifyReady()` false döner, sistem public metadata fallback'e g
 2. **Her revizyondan sonra**: Aynı POST endpoint'i edit modda da kullanılır → her kayıtta otomatik yeniden tarama başlar.
 
 ### Manuel Tara Butonu — kapsam netleştirmesi
-Bu kural **yalnızca haftalık YoAlgoritma AI scan** (reklam hesabı taraması — `yoalgoritma/scan.user` + per-ad improvements) için geçerlidir: o akışta UI'da "Tara"/"Yeniden Tara" butonu **bulunmaz**, yalnızca otomatik (cron + on-demand event) tetiklenir.
+Bu kural **yalnızca haftalık YoAlgoritma AI scan** (reklam hesabı taraması — `yoalgoritma/scan.user` hesap-geneli + `yoalgoritma/campaign-improvements.user` hiyerarşik geliştirme kartları) için geçerlidir: o akışlarda UI'da "Tara"/"Yeniden Tara" butonu **bulunmaz**, yalnızca otomatik (Pazar gece cron + admin on-demand event) tetiklenir. (Faz 3'te per-ad akışı hiyerarşik per-campaign akışına geçti — manuel tara butonu yine **yok**.)
 
 **İstisna — Brand Intelligence Refresh (ayrı akış):** İşletme Profili sayfasındaki **"Marka Bilgilerini Yenile"** butonu bu kuralın dışındadır. Bu buton reklam hesabını değil, kullanıcının KENDİ marka kaynaklarını (website + Instagram + Facebook …) yeniden tarayıp Claude marka sentezini günceller (`brand/ingest.user`). Manuel buton burada **kasıtlı olarak vardır**.
 - Endpoint: `POST /api/yoai/business-profile/brand-refresh`
