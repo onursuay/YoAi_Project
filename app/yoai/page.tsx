@@ -7,7 +7,6 @@ import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 // HealthOverviewCards removed — stats moved into CommandCenterHeader
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
-import AiAdSuggestions from '@/components/yoai/AiAdSuggestions'
 import ImprovementCardGrid from '@/components/yoai/ImprovementCardGrid'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
@@ -67,10 +66,6 @@ export default function YoAiPage() {
       console.warn('[YoAi] approvals count fetch failed (non-fatal):', e)
     }
   }, [])
-
-  const handleApprovalChanged = useCallback(() => {
-    refreshApprovalsPendingCount()
-  }, [refreshApprovalsPendingCount])
 
   useEffect(() => {
     refreshApprovalsPendingCount()
@@ -514,14 +509,6 @@ export default function YoAiPage() {
               approvalsPendingCount={approvalsPendingCount}
             />
 
-            {!ccLoading && ccData && (
-              <AiAdSuggestions
-                connectedPlatforms={ccData.connectedPlatforms}
-                onOpenWizard={(proposal) => { setWizardProposal(proposal || null); setShowAdWizard(true) }}
-                onApprovalChanged={handleApprovalChanged}
-              />
-            )}
-
             {/* Per-Ad Geliştirme Kartları (Faz 2) — generate-ad akışından bağımsız, paralel */}
             <ImprovementCardGrid
               refreshKey={improvementRefreshKey}
@@ -531,12 +518,6 @@ export default function YoAiPage() {
                 setShowAdWizard(true)
               }}
             />
-
-            {!ccLoading && ccRunDate && (
-              <p className="text-center text-[10px] text-gray-400 pb-4">
-                Analiz tarihi: {ccRunDate} · Haftalık analiz Pazar gece otomatik güncellenir
-              </p>
-            )}
           </div>
         ) : (
           <div className="max-w-4xl mx-auto p-6 pb-12">
