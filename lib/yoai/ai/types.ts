@@ -52,7 +52,80 @@ export interface AiRecommendedAction {
   target_entity_type: AiTargetType
   target_entity_id: string
   target_entity_name?: string
-  payload?: Record<string, unknown>
+  payload?: AdSpecPayload | Record<string, unknown>
+}
+
+/* ──────────────────────────────────────────────────────────
+   A5 — Tam Ad Spec (ai_suggestions.payload JSONB şeması)
+
+   Migration yok: spec mevcut payload kolonuna yazılır. Şema oturunca
+   (1-2 ay) en çok kullanılan alanlar tipli kolonlara terfi edilebilir.
+   kind ile "optimizasyon önerisi" vs "sıfırdan ad spec önerisi" ayrılır.
+   ────────────────────────────────────────────────────────── */
+
+export type AdSpecKind = 'optimization' | 'new_ad_proposal'
+
+export interface AdSpecCurrentMetric {
+  name: string
+  value: number
+  benchmark?: number
+}
+
+export interface AdSpecAction {
+  type: string
+  target_id: string
+  current_metric?: AdSpecCurrentMetric
+}
+
+export interface AdSpecBudget {
+  daily?: number
+  lifetime?: number
+  currency: string
+}
+
+export interface AdSpecDemographics {
+  age_min: number
+  age_max: number
+  genders: Array<'male' | 'female' | 'all'>
+}
+
+export interface AdSpecTargeting {
+  locations: string[]
+  demographics: AdSpecDemographics
+  placements: string[]
+  interests?: string[]
+}
+
+export interface AdSpecAssetRequirements {
+  format: 'image' | 'video' | 'carousel' | 'collection'
+  dimensions?: string
+  duration_seconds?: number
+  notes?: string
+}
+
+export interface AdSpecCreative {
+  brief: string
+  headlines: string[]
+  descriptions: string[]
+  primary_text?: string
+  asset_requirements: AdSpecAssetRequirements
+}
+
+export interface AdSpec {
+  platform: 'meta' | 'google'
+  campaign_type: string
+  conversion_goal: string
+  cta: string
+  budget: AdSpecBudget
+  targeting: AdSpecTargeting
+  creative: AdSpecCreative
+  compliance_notes: string[]
+}
+
+export interface AdSpecPayload {
+  kind: AdSpecKind
+  action?: AdSpecAction
+  ad_spec?: AdSpec | null
 }
 
 export interface AiEngineOutput {

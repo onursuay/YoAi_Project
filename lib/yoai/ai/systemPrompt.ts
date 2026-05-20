@@ -88,12 +88,58 @@ Tüm analizi yaptıktan sonra **SADECE şu JSON şemasına uyan tek bir JSON nes
       "target_entity_type": "campaign" | "adset" | "ad" | "ad_group",
       "target_entity_id": "...",
       "target_entity_name": "...",
-      "payload": { ... }
+      "payload": { /* AdSpecPayload — aşağıdaki "Tam Ad Spec" bölümüne bak */ }
     }
   ],
   "summary": "Hesabın 2-3 cümlelik özet durumu (opsiyonel)"
 }
 \`\`\`
+
+# Tam Ad Spec (recommended_actions[].payload şeması)
+Her recommended_action için \`payload\` alanını doldur. İki tür var:
+
+**(a) Optimizasyon aksiyonu** (pause/budget/bid/negative gibi mevcut reklamı düzenleme):
+\`\`\`
+"payload": {
+  "kind": "optimization",
+  "action": { "type": "<action_type>", "target_id": "<entity_id>",
+              "current_metric": { "name": "ROAS", "value": 1.2, "benchmark": 3.0 } }
+}
+\`\`\`
+
+**(b) Yeni reklam önerisi** (refresh_creative, expand_audience veya sıfırdan kreatif gibi YENİ reklam üretmeyi gerektiren major aksiyonlar): mümkünse TAM ad_spec üret. Platform kurallarına (yukarıdaki curated reklam kuralları — karakter limitleri, kampanya tipi, CTA, politika) UYGUN olmak zorunda:
+\`\`\`
+"payload": {
+  "kind": "new_ad_proposal",
+  "ad_spec": {
+    "platform": "meta" | "google",
+    "campaign_type": "Sales" | "Leads" | "Search" | "Performance Max" | ...,
+    "conversion_goal": "<dönüşüm hedefi>",
+    "cta": "<platform-uygun CTA>",
+    "budget": { "daily": 250, "currency": "TRY" },
+    "targeting": {
+      "locations": ["Ankara", "Türkiye"],
+      "demographics": { "age_min": 18, "age_max": 50, "genders": ["male"] },
+      "placements": ["Advantage+ Placements"],
+      "interests": ["..."]
+    },
+    "creative": {
+      "brief": "Kreatif yönlendirmesi (Türkçe, 1-2 cümle)",
+      "headlines": ["...", "...", "..."],
+      "descriptions": ["...", "..."],
+      "primary_text": "Meta için ana metin (opsiyonel)",
+      "asset_requirements": { "format": "image" | "video" | "carousel" | "collection",
+                              "dimensions": "1080x1080", "notes": "..." }
+    },
+    "compliance_notes": ["Yasaklı iddia kullanılmadı", "RSA başlık 30 karakter altında"]
+  }
+}
+\`\`\`
+
+Kurallar:
+- ad_spec ZORUNLU değil; üretemiyorsan kind="optimization" kullan. Uydurma/yarım spec verme.
+- ad_spec üretirken kullanıcının marka beyanına (ürün/hizmet, hedef kitle, lokasyon) ve yasaklı iddialara sadık kal; karakter limitlerini ve platform kampanya tipi uygunluğunu koru.
+- headlines ve brief boş olmamalı; asset_requirements.format geçerli olmalı — yoksa spec geçersiz sayılır ve optimization'a düşülür.
 
 # Confidence skoru
 Sen kendi belirsizlik tahminini ver. Sahte yüksek skor verme.

@@ -19,6 +19,7 @@ import {
   buildUserBrief,
 } from './systemPrompt'
 import { BENCHMARKS, buildAccountOverview, buildCampaignsDetail } from './accountSerializer'
+import { validateAdSpecPayload } from './adSpecPayload'
 import type {
   AiEngineOutput,
   AiEngineResult,
@@ -207,10 +208,17 @@ function parseFinalOutput(text: string | null): AiEngineOutput | null {
 
 function validateOutput(raw: unknown): AiEngineOutput {
   const r = raw as Record<string, unknown>
+  // recommended_actions[].payload → AdSpecPayload'a normalize et (A5).
+  const actions = Array.isArray(r.recommended_actions)
+    ? (r.recommended_actions as AiEngineOutput['recommended_actions']).map((a) => ({
+        ...a,
+        payload: validateAdSpecPayload(a?.payload),
+      }))
+    : []
   return {
     critical_alerts: Array.isArray(r.critical_alerts) ? (r.critical_alerts as AiEngineOutput['critical_alerts']) : [],
     opportunities: Array.isArray(r.opportunities) ? (r.opportunities as AiEngineOutput['opportunities']) : [],
-    recommended_actions: Array.isArray(r.recommended_actions) ? (r.recommended_actions as AiEngineOutput['recommended_actions']) : [],
+    recommended_actions: actions,
     summary: typeof r.summary === 'string' ? r.summary : undefined,
   }
 }
