@@ -1,12 +1,12 @@
 'use client'
 
-/* SEVİYE 0 — Hesap Sağlık Durumu (account_alerts).
-   Animasyonlu dikdörtgen kartlar + başlık ikonu. Light tema.
-   Renk kuralı: critical/high → kırmızı; medium → primary; info → gri. AMBER YOK
-   (Google logosundaki sarı marka rengidir, uyarı değil — istisna). */
+/* SEVİYE 0 — Hesap Sağlık Durumu (account_alerts) — FLIP-BOX kartlar (Faz 3 UI).
+   Ön yüz: başlık + "üzerine gel" tıklama ikonu. Hover → 180° döner, detay görünür.
+   Etrafında soldan-sağa sonsuz shimmer (dönen konik gradyan) ışık.
+   Açık yeşil zemin, koyu yazı. Severity yalnız ikon rengiyle belli olur. */
 
 import { useTranslations } from 'next-intl'
-import { Activity, AlertOctagon, AlertTriangle, Info } from 'lucide-react'
+import { Activity, AlertOctagon, AlertTriangle, Info, MousePointerClick } from 'lucide-react'
 import type { AccountAlertRow } from '@/lib/yoai/ai/hierarchicalStore'
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, info: 3 }
@@ -20,44 +20,57 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
   return (
     <div>
       <style>{`
-        @keyframes yoaiAlertIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
-        @media (prefers-reduced-motion: reduce) { [data-yoai-alert] { animation: none !important; } }
+        @keyframes yoaiShimmerSpin { to { transform: rotate(360deg); } }
+        .yoai-flip { perspective: 1300px; }
+        .yoai-flip-inner { position: relative; height: 100%; width: 100%; transition: transform .6s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
+        .yoai-flip:hover .yoai-flip-inner { transform: rotateY(180deg); }
+        .yoai-face { position: absolute; inset: 0; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1rem; overflow: hidden; }
+        .yoai-back { transform: rotateY(180deg); }
+        .yoai-shimmer { position: absolute; inset: -2px; border-radius: 1.1rem; overflow: hidden; }
+        .yoai-shimmer::before {
+          content: ''; position: absolute; inset: -60%;
+          background: conic-gradient(from 0deg, transparent 0 68%, rgba(110,231,183,.55) 78%, rgba(16,185,129,.95) 88%, rgba(110,231,183,.55) 95%, transparent 100%);
+          animation: yoaiShimmerSpin 3.4s linear infinite;
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .yoai-shimmer::before { animation: none; }
+          .yoai-flip-inner { transition: none; }
+        }
       `}</style>
 
       <div className="flex items-center gap-2 mb-3">
-        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-primary/10">
-          <Activity className="w-4 h-4 text-primary" />
+        <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10">
+          <Activity className="w-4 h-4 text-emerald-600" />
         </span>
         <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">{t('alertsTitle')}</h3>
       </div>
 
-      <div className="space-y-3">
-        {sorted.map((a, i) => {
+      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3">
+        {sorted.map((a) => {
           const isCritical = a.severity === 'critical' || a.severity === 'high'
-          const wrap = isCritical
-            ? 'bg-red-50 border-red-200 border-l-red-500'
-            : a.severity === 'medium'
-              ? 'bg-primary/5 border-primary/20 border-l-primary'
-              : 'bg-gray-50 border-gray-200 border-l-gray-400'
           const Icon = isCritical ? AlertOctagon : a.severity === 'medium' ? AlertTriangle : Info
-          const iconCls = isCritical ? 'text-red-600' : a.severity === 'medium' ? 'text-primary' : 'text-gray-500'
-          const titleCls = isCritical ? 'text-red-800' : 'text-gray-900'
-          const bodyCls = isCritical ? 'text-red-700' : 'text-gray-600'
-          const actCls = isCritical ? 'text-red-800' : 'text-primary'
+          const iconCls = isCritical ? 'text-red-600' : a.severity === 'medium' ? 'text-emerald-700' : 'text-slate-500'
           return (
-            <div
-              key={a.id}
-              data-yoai-alert
-              style={{ animation: 'yoaiAlertIn .45s ease-out both', animationDelay: `${i * 70}ms` }}
-              className={`flex items-start gap-3 border border-l-4 rounded-lg px-4 py-3.5 shadow-sm transition-all duration-200 hover:shadow-md hover:-translate-y-0.5 ${wrap}`}
-            >
-              <Icon className={`w-5 h-5 mt-0.5 shrink-0 ${iconCls}`} />
-              <div className="flex-1 min-w-0">
-                <p className={`text-[15px] font-semibold leading-snug ${titleCls}`}>{a.title}</p>
-                {a.body ? <p className={`text-[13px] mt-1 leading-relaxed ${bodyCls}`}>{a.body}</p> : null}
-                {a.recommended_action ? (
-                  <p className={`text-[13px] mt-1.5 font-medium leading-relaxed ${actCls}`}>→ {a.recommended_action}</p>
-                ) : null}
+            <div key={a.id} className="yoai-flip h-52 relative">
+              {/* shimmer ışık halkası (kartın arkasında, 2px taşar) */}
+              <div className="yoai-shimmer" aria-hidden="true" />
+              <div className="yoai-flip-inner">
+                {/* ÖN YÜZ — başlık + tıklama ipucu */}
+                <div className="yoai-face bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 border border-emerald-200 p-4 flex flex-col">
+                  <Icon className={`w-6 h-6 ${iconCls}`} />
+                  <p className="text-[15px] font-bold text-slate-900 leading-snug mt-2 flex-1">{a.title}</p>
+                  <div className="flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium">
+                    <MousePointerClick className="w-4 h-4 animate-pulse" />
+                    {t('flipHint')}
+                  </div>
+                </div>
+                {/* ARKA YÜZ — detay (hover) */}
+                <div className="yoai-face yoai-back bg-gradient-to-br from-emerald-100 via-green-50 to-emerald-50 border border-emerald-200 p-4 flex flex-col">
+                  <p className="text-[12px] text-slate-800 leading-relaxed overflow-y-auto flex-1">{a.body}</p>
+                  {a.recommended_action ? (
+                    <p className="text-[12px] text-emerald-900 font-semibold leading-relaxed mt-2 shrink-0">→ {a.recommended_action}</p>
+                  ) : null}
+                </div>
               </div>
             </div>
           )

@@ -46,10 +46,10 @@ export default function HierCardActions({ kind, status, busy, publishError, onAp
     <div className="border-t border-slate-700/40 mt-auto">
       {status === 'pending' && (confirmReject ? rejectConfirmBlock : (
         <div className="grid grid-cols-2 gap-px rounded-b-2xl overflow-hidden">
-          <button onClick={onApprove} disabled={busy} className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[13px] tracking-wider uppercase transition-colors disabled:opacity-40">
+          <button onClick={onApprove} disabled={busy} className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40">
             {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('approve')}
           </button>
-          <button onClick={() => setConfirmReject(true)} disabled={busy} className="py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[13px] tracking-wider uppercase transition-colors disabled:opacity-40">
+          <button onClick={() => setConfirmReject(true)} disabled={busy} className="py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40">
             {t('reject')}
           </button>
         </div>
@@ -61,10 +61,10 @@ export default function HierCardActions({ kind, status, busy, publishError, onAp
             <p className="text-[10px] text-red-300 px-3 pt-2">{t('publishFailed')}: {publishError}</p>
           ) : null}
           <div className="grid grid-cols-2 gap-px rounded-b-2xl overflow-hidden">
-            <button onClick={onPublishOrApply} disabled={busy} className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[13px] tracking-wider uppercase transition-colors disabled:opacity-40">
+            <button onClick={onPublishOrApply} disabled={busy} className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40">
               {busy ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : (kind === 'ad' ? (publishError ? t('retry') : t('publish')) : t('markApplied'))}
             </button>
-            <button onClick={() => setConfirmReject(true)} disabled={busy} className="py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[13px] tracking-wider uppercase transition-colors disabled:opacity-40">
+            <button onClick={() => setConfirmReject(true)} disabled={busy} className="py-3 bg-red-600 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors disabled:opacity-40">
               {t('reject')}
             </button>
           </div>
@@ -72,7 +72,7 @@ export default function HierCardActions({ kind, status, busy, publishError, onAp
       ))}
 
       {status === 'applied' && (confirmReject ? rejectConfirmBlock : (
-        <button onClick={() => setConfirmReject(true)} disabled={busy} className="w-full py-3 bg-red-600/90 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[13px] tracking-wider uppercase transition-colors rounded-b-2xl disabled:opacity-40">
+        <button onClick={() => setConfirmReject(true)} disabled={busy} className="w-full py-3 bg-red-600/90 hover:bg-red-500 active:bg-red-700 text-white font-bold text-[12px] tracking-wider uppercase transition-colors rounded-b-2xl disabled:opacity-40">
           {t('reject')}
         </button>
       ))}

@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 2: flip-box sağlık kartları + yatay modal + font −1
+- **Sorun:** Canlı incelemede 3 talep — (1) modal içinde ad set **dik/uzun değil yatay**; (2) yazılar **bir punto küçük**; (3) Hesap Sağlık kartları **flip-box** (ön: başlık + tıklama ikonu; hover → 180° dönüp detay; etrafında soldan-sağa sonsuz **shimmer ışık**; açık yeşil zemin + koyu yazı).
+- **Çözüm:** `AccountAlertsBanner` → 3D **flip kartlar** (CSS `rotateY` hover), dönen konik-gradyan **shimmer halka**, `MousePointerClick` ipucu (`flipHint`), emerald gradient zemin + koyu metin, severity yalnız ikon renginde. `DrilldownModal` → kartlar **tam genişlik tek kolon** + `horizontal` prop. `AdsetCard`/`AdCard` horizontal: öneriler 2-kolon / `ad_spec` 2-kolon grid (yatay). Tüm hiyerarşi kartlarında **font −1** (16→15, 13→12). `flipHint` i18n (tr/en). `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/{shared,AccountAlertsBanner,AdsetCard,AdCard,CampaignCard,DrilldownModal,HierCardActions}.tsx`, `locales/{tr,en}.json`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila: hesap sağlık kartları + popup drill-down + logo ikonlar + büyük yazı
 - **Sorun:** Canlı /yoai incelemesinde 5 talep: (1) "Hesap Sağlık Uyarıları" → "Hesap Sağlık Durumu" + animasyonlu dikdörtgen kartlar + başlık ikonu, (2) Geliştirme Kartları başlığına ikon, (3) kart sol üstünde Meta/Google **yazı yerine logo**, (4) yazılar çok küçük (okunmuyor), (5) "Ad Set'leri Gör" inline yerine **popup** + net Kampanya→Tür→Reklam Seti→Reklam hiyerarşisi.
 - **Çözüm:** `AccountAlertsBanner` — `Activity` ikonu + "Hesap Sağlık Durumu" + sol-aksanlı, gölgeli, **staggered fade-in animasyonlu** kartlar. `shared.tsx` `PlatformBadge` artık Meta (mavi "f") / Google (çok-renkli "G") **logo SVG'si** (AdPreviewCard'dan). Tüm hiyerarşi kartlarında **yazı boyutları büyütüldü** (9–11px → 12–16px). `HierarchicalImprovements` başlığına `Sparkles` ikonu; **in-place drill-down kaldırıldı → yeni `DrilldownModal` popup'ı** (Kampanya + tür header → Reklam Seti grid → Reklam grid; breadcrumb + geri). Ad onayı → modal kapanır + wizard açılır. `tr/en.json` `alertsTitle` güncellendi. `build` ✓.

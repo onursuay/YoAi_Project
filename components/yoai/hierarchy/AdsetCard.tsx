@@ -1,7 +1,7 @@
 'use client'
 
-/* SEVİYE 2 — Ad set / ad group kartı (Faz 3). Modal içinde gösterilir.
-   Hedef kitle/lokasyon/dil/yayın yeri/bütçe önerileri. Tüm detaylar AÇIK. */
+/* SEVİYE 2 — Ad set / ad group kartı (Faz 3). Modal içinde YATAY (horizontal):
+   tam genişlik + öneriler çok-kolonlu → dik/uzun değil. Tüm detaylar AÇIK. */
 
 import { useTranslations } from 'next-intl'
 import { ChevronRight } from 'lucide-react'
@@ -14,6 +14,7 @@ interface Suggestion { title: string; detail: string }
 interface Props {
   adset: AdsetWithAds
   busy?: boolean
+  horizontal?: boolean
   onApprove: () => void
   onReject: () => void
   onUndo: () => void
@@ -21,7 +22,7 @@ interface Props {
   onDrillDown: () => void
 }
 
-export default function AdsetCard({ adset, busy, onApprove, onReject, onUndo, onMarkApplied, onDrillDown }: Props) {
+export default function AdsetCard({ adset, busy, horizontal, onApprove, onReject, onUndo, onMarkApplied, onDrillDown }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
   const payload = (adset.improvement_payload ?? {}) as { suggestions?: Suggestion[] }
   const confidence = adset.confidence ?? 0
@@ -41,24 +42,24 @@ export default function AdsetCard({ adset, busy, onApprove, onReject, onUndo, on
 
       <div className="px-4 pb-1.5 relative">
         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('adsetLevel')}</p>
-        <p className="text-[16px] text-slate-50 font-semibold leading-snug mt-0.5">{adset.adset_name || '—'}</p>
+        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{adset.adset_name || '—'}</p>
       </div>
 
       {adset.reasoning ? (
         <div className="mx-4 mb-2.5 relative">
           <p className="text-[11px] text-indigo-300 uppercase tracking-wider font-semibold mb-1">{t('reasoning')}</p>
-          <p className="text-[13px] text-slate-200 leading-relaxed">{adset.reasoning}</p>
+          <p className="text-[12px] text-slate-200 leading-relaxed">{adset.reasoning}</p>
         </div>
       ) : null}
 
       <div className="mx-4 mb-3 flex-1 relative">
-        <SuggestionList label={t('suggestions')} suggestions={payload.suggestions ?? []} />
+        <SuggestionList label={t('suggestions')} suggestions={payload.suggestions ?? []} columns={horizontal ? 2 : 1} />
       </div>
 
       {adCount > 0 && (
         <button
           onClick={onDrillDown}
-          className="mx-4 mb-3 flex items-center justify-between rounded-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 px-3.5 py-2.5 text-[13px] text-emerald-300 font-semibold transition-colors relative"
+          className="mx-4 mb-3 flex items-center justify-between rounded-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 px-3.5 py-2.5 text-[12px] text-emerald-300 font-semibold transition-colors relative"
         >
           <span>{t('viewAds', { count: adCount })}</span>
           <ChevronRight className="w-4 h-4" />

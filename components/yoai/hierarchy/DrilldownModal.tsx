@@ -70,11 +70,12 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
               {campaign.adsets.length === 0 ? (
                 <p className="text-center py-8 text-[13px] text-slate-400">{t('emptyDrilldown')}</p>
               ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1">
                   {campaign.adsets.map((as) => (
                     <AdsetCard
                       key={as.id}
                       adset={as}
+                      horizontal
                       busy={busyId === as.id}
                       onApprove={() => onDecide('adset', as.id, 'approve')}
                       onMarkApplied={() => onDecide('adset', as.id, 'applied')}
@@ -95,11 +96,12 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
               {adset.ads.length === 0 ? (
                 <p className="text-center py-8 text-[13px] text-slate-400">{t('emptyDrilldown')}</p>
               ) : (
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2">
+                <div className="grid gap-4 grid-cols-1">
                   {adset.ads.map((ad) => (
                     <AdCard
                       key={ad.id}
                       ad={ad}
+                      horizontal
                       busy={busyId === ad.id}
                       onApprove={() => onDecide('ad', ad.id, 'approve')}
                       onPublish={() => onDecide('ad', ad.id, 'approve')}

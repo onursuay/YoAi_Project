@@ -52,7 +52,7 @@ export default function CampaignCard({ campaign, busy, onApprove, onReject, onUn
 
       <div className="px-4 pb-1.5 relative">
         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('campaignLevel')}</p>
-        <p className="text-[16px] text-slate-50 font-semibold leading-snug mt-0.5">{campaign.campaign_name || '—'}</p>
+        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{campaign.campaign_name || '—'}</p>
         <p className="text-[12px] text-slate-400 mt-1">{t('currentType')}: <span className="text-slate-200">{currentType}</span></p>
       </div>
 
@@ -61,9 +61,9 @@ export default function CampaignCard({ campaign, busy, onApprove, onReject, onUn
         <div className="mx-4 my-2 rounded-xl border border-red-500/50 bg-red-950/40 px-3.5 py-3 relative">
           <div className="flex items-center gap-1.5 mb-1.5">
             <AlertOctagon className="w-4.5 h-4.5 text-red-400" />
-            <p className="text-[13px] font-bold text-red-300 uppercase tracking-wide">{t('typeMismatchTitle')}</p>
+            <p className="text-[12px] font-bold text-red-300 uppercase tracking-wide">{t('typeMismatchTitle')}</p>
           </div>
-          <p className="text-[13px] text-red-100/90 leading-relaxed">{mismatch.reason}</p>
+          <p className="text-[12px] text-red-100/90 leading-relaxed">{mismatch.reason}</p>
           {mismatch.recommended_type ? (
             <p className="text-[12px] text-red-200 mt-2">{t('recommendedType')}: <span className="font-semibold">{mismatch.recommended_type}</span></p>
           ) : null}
@@ -76,7 +76,7 @@ export default function CampaignCard({ campaign, busy, onApprove, onReject, onUn
       {campaign.reasoning ? (
         <div className="mx-4 mb-2.5 relative">
           <p className="text-[11px] text-indigo-300 uppercase tracking-wider font-semibold mb-1">{t('reasoning')}</p>
-          <p className="text-[13px] text-slate-200 leading-relaxed">{campaign.reasoning}</p>
+          <p className="text-[12px] text-slate-200 leading-relaxed">{campaign.reasoning}</p>
         </div>
       ) : null}
 
@@ -87,7 +87,7 @@ export default function CampaignCard({ campaign, busy, onApprove, onReject, onUn
       {adsetCount > 0 && (
         <button
           onClick={onDrillDown}
-          className="mx-4 mb-3 flex items-center justify-between rounded-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 px-3.5 py-2.5 text-[13px] text-emerald-300 font-semibold transition-colors relative"
+          className="mx-4 mb-3 flex items-center justify-between rounded-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 px-3.5 py-2.5 text-[12px] text-emerald-300 font-semibold transition-colors relative"
         >
           <span>{t('viewAdsets', { count: adsetCount })}</span>
           <ChevronRight className="w-4 h-4" />

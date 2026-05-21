@@ -1983,6 +1983,7 @@
         "title": "YoAlgorithm Improvement Cards",
         "subtitle": "AI suggestions across account → campaign → ad set → ad",
         "alertsTitle": "Account Health Status",
+        "flipHint": "hover for details",
         "breadcrumbAll": "All",
         "campaignLevel": "Campaign",
         "adsetLevel": "Ad Set",

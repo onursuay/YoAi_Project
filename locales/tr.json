@@ -1983,6 +1983,7 @@
         "title": "YoAlgoritma Geliştirme Kartları",
         "subtitle": "Hesap → kampanya → ad set → reklam hiyerarşisinde AI önerileri",
         "alertsTitle": "Hesap Sağlık Durumu",
+        "flipHint": "detay için üzerine gelin",
         "breadcrumbAll": "Tümü",
         "campaignLevel": "Kampanya",
         "adsetLevel": "Ad Set",

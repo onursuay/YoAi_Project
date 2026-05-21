@@ -1,8 +1,8 @@
 'use client'
 
-/* YoAlgoritma hiyerarşik kartlar — paylaşılan görsel primitifler (Faz 3).
-   Dark/emerald tema. Yazı boyutları okunabilirlik için büyütüldü;
-   platform rozeti yazı yerine logo ikonu gösterir. */
+/* YoAlgoritma hiyerarşik kartlar — paylaşılan primitifler (Faz 3).
+   Platform rozeti = logo ikonu. Yazılar bir punto küçültüldü.
+   SuggestionList çok-kolonlu (yatay) düzeni destekler. */
 
 import { useTranslations } from 'next-intl'
 
@@ -54,7 +54,7 @@ export function StatusBadge({ status }: { status: string }) {
 export function Row({ label, value }: { label: string; value?: string | null }) {
   if (!value) return null
   return (
-    <div className="flex justify-between gap-3 text-[13px]">
+    <div className="flex justify-between gap-3 text-[12px]">
       <span className="text-slate-400 shrink-0">{label}</span>
       <span className="text-slate-100 text-right">{value}</span>
     </div>
@@ -68,23 +68,24 @@ export function ListBlock({ label, items, tone = 'slate' }: { label: string; ite
       <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{label}</p>
       <div className="space-y-1">
         {items.map((it, i) => (
-          <p key={i} className={tone === 'blue' ? 'text-[13px] text-blue-200 leading-snug' : 'text-[13px] text-slate-200 leading-relaxed'}>• {it}</p>
+          <p key={i} className={tone === 'blue' ? 'text-[12px] text-blue-200 leading-snug' : 'text-[12px] text-slate-200 leading-relaxed'}>• {it}</p>
         ))}
       </div>
     </div>
   )
 }
 
-export function SuggestionList({ label, suggestions }: { label: string; suggestions: Array<{ title: string; detail: string }> }) {
+export function SuggestionList({ label, suggestions, columns = 1 }: { label: string; suggestions: Array<{ title: string; detail: string }>; columns?: number }) {
   if (!suggestions?.length) return null
+  const grid = columns >= 3 ? 'md:grid-cols-3' : columns === 2 ? 'md:grid-cols-2' : ''
   return (
     <div>
       <p className="text-[11px] text-emerald-300/90 font-semibold uppercase tracking-wider mb-1.5">{label}</p>
-      <div className="space-y-2">
+      <div className={`grid grid-cols-1 ${grid} gap-2`}>
         {suggestions.map((s, i) => (
           <div key={i} className="bg-slate-800/40 border border-slate-700/40 rounded-lg px-3 py-2">
-            <p className="text-[13px] text-slate-50 font-semibold leading-snug">{s.title}</p>
-            {s.detail ? <p className="text-[12px] text-slate-300 leading-relaxed mt-1">{s.detail}</p> : null}
+            <p className="text-[12px] text-slate-50 font-semibold leading-snug">{s.title}</p>
+            {s.detail ? <p className="text-[11px] text-slate-300 leading-relaxed mt-1">{s.detail}</p> : null}
           </div>
         ))}
       </div>
