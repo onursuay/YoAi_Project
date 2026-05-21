@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 9: flip kart yazı kesilmesi düzeltildi (auto-height)
+- **Sorun:** Hesap Sağlık flip kartlarında sabit `h-52` yükseklik uzun metni **kesiyordu** (özellikle arka yüz body + önerilen aksiyon üst üste binip görünmüyordu).
+- **Çözüm:** Sabit yükseklik kaldırıldı; ön/arka yüz **aynı grid hücresinde** (grid-overlay: `face { grid-area: 1/1 }`, `flip-inner { display: grid }`) → kart **en uzun içeriğe göre büyür**, kesilme yok. Outer grid `auto-rows-fr` ile satırdaki kartlar **eşit yükseklikte**. `min-h-[13rem]` taban. Flip + shimmer + tap korundu. `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/AccountAlertsBanner.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 8: sağlık flip kartları koyu tema
 - **Sorun:** Hesap Sağlık Durumu flip kartları açık yeşil zeminliydi; Geliştirme Kartları gibi koyu tema + beyaz yazı istendi.
 - **Çözüm:** `AccountAlertsBanner` flip yüzleri (ön+arka) → `#0f172a` + emerald radial gradient + `#23314d` border (Geliştirme Kartları ile birebir). Yazılar beyaz (`slate-50`/`slate-200`), önerilen aksiyon `emerald-300`, ikonlar koyu temaya uygun (`red-400`/`emerald-400`/`slate-400`), tap ikonu `emerald-400`. Flip + shimmer + tap animasyonu korundu. `build` ✓.
