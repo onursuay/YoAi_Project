@@ -41,8 +41,8 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
 
   const IntegrationDot = ({ status }: { status: 'green' | 'yellow' | 'red' }) => {
     const icons = {
-      green: <CheckCircle className="w-4 h-4 text-green-500" />,
-      yellow: <AlertCircle className="w-4 h-4 text-amber-500" />,
+      green: <CheckCircle className="w-4 h-4 text-emerald-500" />,
+      yellow: <AlertCircle className="w-4 h-4 text-gray-400" />,
       red: <XCircle className="w-4 h-4 text-red-500" />,
     }
     const labels = { green: 'Bağlı', yellow: 'Kısmen', red: 'Bağlı değil' }
@@ -55,9 +55,9 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
 
   return (
     <div className="space-y-6">
-      <div className="bg-green-50 border border-green-200 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-green-800 mb-1">Aşama 1: Keşif & Veri Toplama</h3>
-        <p className="text-xs text-green-700">İşletme bilgilerinizi girin. Bu veriler strateji planının kalitesini belirler.</p>
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-primary mb-1">Aşama 1: Keşif & Veri Toplama</h3>
+        <p className="text-xs text-gray-600">İşletme bilgilerinizi girin. Bu veriler strateji planının kalitesini belirler.</p>
       </div>
 
       {/* İş Hedefi — Meta Kampanya Hedefleri */}
@@ -72,7 +72,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
               onClick={() => update('goal_type', g.value as GoalType)}
               className={`px-3 py-2.5 rounded-lg text-left border transition-colors ${
                 form.goal_type === g.value
-                  ? 'bg-green-50 border-green-300 text-green-700'
+                  ? 'bg-primary/10 border-primary text-primary'
                   : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -91,7 +91,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
           value={form.product}
           onChange={(e) => update('product', e.target.value)}
           placeholder="Örn: Organik cilt bakım ürünleri"
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
         />
       </div>
 
@@ -101,7 +101,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
         <select
           value={form.industry}
           onChange={(e) => update('industry', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent bg-white"
+          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
         >
           <option value="">Sektör seçin</option>
           {INDUSTRIES.map((ind) => (
@@ -114,7 +114,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
             value={form.industry_custom || ''}
             onChange={(e) => update('industry_custom', e.target.value)}
             placeholder="Sektörünüzü yazın"
-            className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+            className="w-full mt-2 px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         )}
       </div>
@@ -128,7 +128,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
             value={form.avg_basket || ''}
             onChange={(e) => update('avg_basket', e.target.value ? Number(e.target.value) : undefined)}
             placeholder="Opsiyonel"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <div>
@@ -138,7 +138,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
             value={form.margin_pct || ''}
             onChange={(e) => update('margin_pct', e.target.value ? Number(e.target.value) : undefined)}
             placeholder="Opsiyonel"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <div>
@@ -148,7 +148,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
             value={form.ltv || ''}
             onChange={(e) => update('ltv', e.target.value ? Number(e.target.value) : undefined)}
             placeholder="Opsiyonel"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
       </div>
@@ -171,7 +171,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
               }}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
                 form.geographies.includes(geo)
-                  ? 'bg-green-50 border-green-300 text-green-700'
+                  ? 'bg-primary/10 border-primary text-primary'
                   : 'bg-white border-gray-200 text-gray-500 hover:border-gray-300'
               }`}
             >
@@ -190,7 +190,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
             value={form.monthly_budget_try || ''}
             onChange={(e) => update('monthly_budget_try', Number(e.target.value))}
             placeholder="Örn: 15000"
-            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-400 focus:border-transparent"
+            className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent"
           />
         </div>
         <div>
@@ -203,7 +203,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
                 onClick={() => update('time_horizon_days', t.value)}
                 className={`flex-1 px-3 py-2 rounded-lg text-sm font-medium border transition-colors ${
                   form.time_horizon_days === t.value
-                    ? 'bg-green-50 border-green-300 text-green-700'
+                    ? 'bg-primary/10 border-primary text-primary'
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
                 }`}
               >
@@ -235,7 +235,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
                 !ch.enabled
                   ? 'bg-gray-50 border-gray-100 text-gray-300 cursor-not-allowed'
                   : form.channels[ch.key]
-                    ? 'bg-green-50 border-green-300 text-green-700'
+                    ? 'bg-primary/10 border-primary text-primary'
                     : 'bg-white border-gray-200 text-gray-600 hover:border-gray-300'
               }`}
             >
@@ -281,7 +281,7 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
         <button
           onClick={() => onSaveAndAnalyze(form)}
           disabled={saving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           <Zap className="w-4 h-4" />
           {saving ? 'İşleniyor...' : 'Kaydet ve Analiz Başlat'}

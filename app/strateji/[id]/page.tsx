@@ -317,7 +317,7 @@ export default function StratejiDetailPage() {
                 <button
                   onClick={handleRefreshMetrics}
                   disabled={refreshingMetrics}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-purple-700 bg-purple-50 border border-purple-200 rounded-lg hover:bg-purple-100 transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${refreshingMetrics ? 'animate-spin' : ''}`} />
                   {refreshingMetrics ? 'Güncelleniyor...' : 'Metrikleri Güncelle & Optimize Et'}
@@ -332,7 +332,7 @@ export default function StratejiDetailPage() {
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-[10px] text-gray-400 uppercase tracking-wider">ROAS</p>
-                    <p className={`text-lg font-bold ${(metrics[0].roas ?? 0) >= 2 ? 'text-green-600' : 'text-amber-600'}`}>{metrics[0].roas}x</p>
+                    <p className={`text-lg font-bold ${(metrics[0].roas ?? 0) >= 2 ? 'text-emerald-600' : 'text-red-600'}`}>{metrics[0].roas}x</p>
                     <p className="text-[10px] text-gray-400">Reklam getirisi</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">

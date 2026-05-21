@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — Strateji · Çift kredi düşme fix (K2) + renk paleti temizliği (K3)
+- **Sorun:** (K2) Aylık limit aşan (overage) kullanıcı strateji oluştururken kredi **iki kez** düşüyordu: client `spendCredits` → `/api/credits/spend` (10 kredi) + backend `deduct_strategy_credit` RPC (10 kredi) → toplam 20. (K3) Strateji alanı CLAUDE.md onaylı paletin dışında **amber/yellow/purple/green** tonları kullanıyordu (özellikle `app/strateji/page.tsx`'te yasaklı `bg-amber-*`).
+- **Çözüm:** (K2) Client tarafı `spendCredits` çağrısı kaldırıldı; kredi düşümü **tek nokta = backend RPC**. Başarılı oluşturmadan sonra `refreshCredits()` ile gerçek bakiye UI'a yansıtılıyor; salt-okunur `hasEnoughCredits` modal kontrolü korundu. (K3) Strateji alanındaki tüm amber/yellow/purple/green ihlalleri onaylı palete taşındı: marka/aksiyon → `primary`, başarı/durum → `emerald`, "med" rozet → `gray`, negatif (düşük ROAS) → `red`; üç faz başlık bandı (yeşil/purple/amber) tek tip `primary` bandına birleştirildi. Strateji akışı, AI üretim, billing RPC, tablolar ve job motoru **değiştirilmedi**. `tsc` ✓.
+- **Dosyalar:** `app/strateji/page.tsx`, `app/strateji/[id]/page.tsx`, `components/strateji/{KPIBar,JobPanel,StrategyRow,PhaseIndicator,ScanAnimation,TaskPanel,WizardPhase1,BlueprintView}.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 10: reklam yayından önce düzenlenebilir (kart-içi edit)
 - **Sorun:** Öneri (özellikle reklam) **yayınlanmadan önce kullanıcı tarafından düzenlenebilir** olmalı. Mevcut durumda yalnız Meta kreatifi wizard'da düzenleniyordu; Google'da yoktu; kart seviyesinde hiç yoktu.
 - **Çözüm:** Reklam (ad) kartına **"Düzenle" modu** — başlıklar / açıklamalar / ana metin / CTA / günlük bütçe kart üzerinde düzenlenir, **"Kaydet"** → `improvement_payload.ad_spec` güncellenir (`updateAdImprovementSpec`, yalnız `pending`/`approved`; decision endpoint `action: 'edit'`). Onayla/Yayınla artık **düzenlenmiş** ad_spec ile sihirbaza gider → hem Meta hem Google. Düzenleme **bizim katmanda** (Meta/Google entegrasyonuna dokunulmadı). `edit`/`save`/`cancel` i18n. `build` ✓.

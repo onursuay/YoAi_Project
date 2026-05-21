@@ -59,7 +59,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           {canRetry && (
             <button
               onClick={(e) => { e.stopPropagation(); onRetry(instance.id) }}
-              className="p-1.5 text-amber-600 hover:bg-amber-50 rounded-lg transition-colors"
+              className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
               title="Tekrar dene"
             >
               <RotateCcw className="w-4 h-4" />
@@ -86,7 +86,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           {canContinue && (
             <button
               onClick={(e) => { e.stopPropagation(); router.push(`/strateji/${instance.id}`) }}
-              className="p-1.5 text-green-600 hover:bg-green-50 rounded-lg transition-colors"
+              className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
               title="Devam et"
             >
               <Play className="w-4 h-4" />
@@ -113,7 +113,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
             <div
               className={`h-full rounded-full transition-all ${
-                instance.data_quality_score >= 70 ? 'bg-green-500' : instance.data_quality_score >= 40 ? 'bg-amber-500' : 'bg-red-400'
+                instance.data_quality_score >= 70 ? 'bg-emerald-500' : instance.data_quality_score >= 40 ? 'bg-gray-400' : 'bg-red-400'
               }`}
               style={{ width: `${instance.data_quality_score}%` }}
             />

@@ -26,14 +26,14 @@ export default function PhaseIndicator({ status }: PhaseIndicatorProps) {
         return (
           <div key={phase.num} className="flex items-center">
             {i > 0 && (
-              <div className={`w-6 h-0.5 mx-0.5 ${isCompleted ? 'bg-green-400' : 'bg-gray-200'}`} />
+              <div className={`w-6 h-0.5 mx-0.5 ${isCompleted ? 'bg-emerald-400' : 'bg-gray-200'}`} />
             )}
             <div
               className={`flex items-center justify-center w-6 h-6 rounded-full text-xs font-semibold transition-colors ${
                 isCompleted
-                  ? 'bg-green-500 text-white'
+                  ? 'bg-emerald-500 text-white'
                   : isActive
-                    ? 'bg-green-100 text-green-700 ring-2 ring-green-400'
+                    ? 'bg-emerald-100 text-emerald-700 ring-2 ring-emerald-400'
                     : 'bg-gray-100 text-gray-400'
               }`}
               title={phase.label}

@@ -16,7 +16,7 @@ export default function ScanAnimation({ active, children }: ScanAnimationProps) 
         className="absolute inset-0 pointer-events-none motion-safe:animate-scan-sweep"
         aria-hidden="true"
       >
-        <div className="w-full h-1 bg-gradient-to-r from-transparent via-green-400/60 to-transparent blur-sm" />
+        <div className="w-full h-1 bg-gradient-to-r from-transparent via-primary/60 to-transparent blur-sm" />
       </div>
       {/* Skeleton overlay */}
       <div className="absolute inset-0 bg-white/40 pointer-events-none motion-safe:animate-pulse" />

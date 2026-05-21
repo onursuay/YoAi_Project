@@ -18,7 +18,7 @@ const JOB_TYPE_LABELS: Record<string, string> = {
 const STATUS_CONFIG: Record<string, { icon: React.ReactNode; color: string; label: string }> = {
   queued: { icon: <Clock className="w-3.5 h-3.5" />, color: 'text-gray-500', label: 'Kuyrukta' },
   running: { icon: <Loader2 className="w-3.5 h-3.5 animate-spin" />, color: 'text-blue-600', label: 'Çalışıyor' },
-  success: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'text-green-600', label: 'Başarılı' },
+  success: { icon: <CheckCircle className="w-3.5 h-3.5" />, color: 'text-emerald-600', label: 'Başarılı' },
   failed: { icon: <XCircle className="w-3.5 h-3.5" />, color: 'text-red-600', label: 'Hata' },
 }
 
@@ -71,7 +71,7 @@ export default function JobPanel({ jobs }: JobPanelProps) {
               <div className="text-right flex-shrink-0">
                 <span className="text-[10px] text-gray-400">{formatDate(job.created_at)}</span>
                 {job.attempts > 1 && (
-                  <div className="text-[10px] text-amber-500 mt-0.5">Deneme: {job.attempts}/{job.max_attempts}</div>
+                  <div className="text-[10px] text-gray-500 mt-0.5">Deneme: {job.attempts}/{job.max_attempts}</div>
                 )}
               </div>
             </div>

@@ -23,7 +23,7 @@ export default function StratejiPage() {
   const [gateFeatureKey, setGateFeatureKey] = useState<string>('strategy')
 
   const { needsCreditsForStrategy, strategyUsedThisMonth, strategyMonthlyLimit, recordStrategyUsage, hasSubscription } = useSubscription()
-  const { credits, hasEnoughCredits, spendCredits } = useCredits()
+  const { hasEnoughCredits, refresh: refreshCredits } = useCredits()
 
   const addToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     const id = crypto.randomUUID()
@@ -56,16 +56,13 @@ export default function StratejiPage() {
       setGateFeatureKey('strategy')
       return
     }
-    // Limit kontrolü: Plan limiti aşıldıysa kredi gerekir (overage)
-    if (needsCreditsForStrategy) {
-      if (!hasEnoughCredits(COST_PER_STRATEGY)) {
-        setGateAccessType('credit')
-        setGateFeatureKey('strategy_overage')
-        return
-      }
-      // Kredi düş
-      spendCredits(COST_PER_STRATEGY)
-      addToast(`${COST_PER_STRATEGY} kredi kullanıldı (Kalan: ${credits - COST_PER_STRATEGY})`, 'info')
+    // Limit kontrolü: Plan limiti aşıldıysa kredi gerekir (overage).
+    // Kredi düşümü TEK NOKTADAN backend RPC'sinde (deduct_strategy_credit) yapılır;
+    // çift düşmeyi önlemek için client tarafında spendCredits ÇAĞRILMAZ.
+    if (needsCreditsForStrategy && !hasEnoughCredits(COST_PER_STRATEGY)) {
+      setGateAccessType('credit')
+      setGateFeatureKey('strategy_overage')
+      return
     }
 
     setCreating(true)
@@ -78,6 +75,11 @@ export default function StratejiPage() {
       const json = await res.json()
       if (json.ok && json.instance) {
         recordStrategyUsage()
+        // Backend RPC'sinin düştüğü gerçek kredi bakiyesini UI'a yansıt
+        await refreshCredits()
+        if (needsCreditsForStrategy) {
+          addToast(`${COST_PER_STRATEGY} kredi kullanıldı`, 'info')
+        }
         router.push(`/strateji/${json.instance.id}`)
       } else {
         addToast(json.message || 'Strateji oluşturulamadı', 'error')
@@ -144,7 +146,7 @@ export default function StratejiPage() {
           {/* Modül açıklaması + kullanım bilgisi */}
           <div className="bg-white rounded-xl border border-gray-200 p-5">
             <div className="flex items-start gap-4">
-              <div className="w-10 h-10 bg-green-100 rounded-xl flex items-center justify-center flex-shrink-0">
+              <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <span className="text-lg">🎯</span>
               </div>
               <div className="flex-1">
@@ -152,8 +154,8 @@ export default function StratejiPage() {
                   <h3 className="text-sm font-semibold text-gray-900">Strateji Motoru</h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     needsCreditsForStrategy
-                      ? 'bg-amber-100 text-amber-700'
-                      : 'bg-green-100 text-green-700'
+                      ? 'bg-primary/10 text-primary'
+                      : 'bg-emerald-50 text-emerald-700'
                   }`}>
                     AI Strateji: {limitText}
                     {needsCreditsForStrategy && ` · ${COST_PER_STRATEGY} kredi/plan`}

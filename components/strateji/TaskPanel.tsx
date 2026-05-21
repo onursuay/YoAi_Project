@@ -13,7 +13,7 @@ interface TaskPanelProps {
 const STATUS_ICONS: Record<TaskStatus, React.ReactNode> = {
   todo: <Circle className="w-4 h-4 text-gray-300" />,
   in_progress: <Clock className="w-4 h-4 text-blue-500" />,
-  done: <CheckCircle className="w-4 h-4 text-green-500" />,
+  done: <CheckCircle className="w-4 h-4 text-emerald-500" />,
   blocked: <AlertCircle className="w-4 h-4 text-red-500" />,
 }
 
@@ -44,9 +44,9 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
 
   return (
     <div className="space-y-4">
-      <div className="bg-amber-50 border border-amber-200 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-amber-800 mb-1">Aşama 3: Uygulama & Görevler</h3>
-        <p className="text-xs text-amber-700">Stratejinin hayata geçmesi için görevleri takip edin.</p>
+      <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
+        <h3 className="text-sm font-semibold text-primary mb-1">Aşama 3: Uygulama & Görevler</h3>
+        <p className="text-xs text-gray-600">Stratejinin hayata geçmesi için görevleri takip edin.</p>
       </div>
 
       {/* İlerleme */}
@@ -58,7 +58,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
-              className="h-full bg-green-500 rounded-full transition-all"
+              className="h-full bg-emerald-500 rounded-full transition-all"
               style={{ width: `${stats.total ? (stats.done / stats.total) * 100 : 0}%` }}
             />
           </div>
@@ -104,9 +104,9 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
               key={task.id}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
                 task.category === 'optimization' && task.status !== 'done'
-                  ? 'bg-purple-50/50 border-purple-200 hover:border-purple-300'
+                  ? 'bg-primary/5 border-primary/20 hover:border-primary/40'
                   : task.status === 'done'
-                    ? 'bg-green-50/50 border-green-100'
+                    ? 'bg-emerald-50/50 border-emerald-100'
                     : task.status === 'blocked'
                       ? 'bg-red-50/50 border-red-100'
                       : 'bg-white border-gray-200 hover:border-gray-300'
@@ -118,7 +118,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
                 title={`Durum: ${STATUS_LABELS[task.status]} — tıklayın`}
               >
                 {task.category === 'optimization' && task.status !== 'done'
-                  ? <Sparkles className="w-4 h-4 text-purple-500" />
+                  ? <Sparkles className="w-4 h-4 text-primary" />
                   : STATUS_ICONS[task.status]}
               </button>
               <div className="flex-1 min-w-0">
@@ -128,7 +128,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
               </div>
               <span className={`text-[10px] px-1.5 py-0.5 rounded flex-shrink-0 ${
                 task.category === 'optimization'
-                  ? 'bg-purple-100 text-purple-600'
+                  ? 'bg-primary/10 text-primary'
                   : 'bg-gray-100 text-gray-500'
               }`}>
                 {categoryMap.get(task.category) || task.category}

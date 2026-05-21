@@ -43,9 +43,9 @@ export default function KPIBar() {
 
   const cards = [
     { label: 'Toplam Bütçe', value: formatCurrency(kpi?.total_budget ?? 0), icon: Wallet, color: 'text-blue-600' },
-    { label: 'Kalan Bütçe', value: formatCurrency(kpi?.remaining_budget ?? 0), icon: PiggyBank, color: 'text-green-600' },
-    { label: 'Harcanan', value: formatCurrency(kpi?.spend ?? 0), icon: DollarSign, color: 'text-amber-600', hasFilter: true },
-    { label: 'Tıklama', value: formatNumber(kpi?.clicks ?? 0), icon: MousePointerClick, color: 'text-purple-600', hasFilter: true },
+    { label: 'Kalan Bütçe', value: formatCurrency(kpi?.remaining_budget ?? 0), icon: PiggyBank, color: 'text-emerald-600' },
+    { label: 'Harcanan', value: formatCurrency(kpi?.spend ?? 0), icon: DollarSign, color: 'text-primary', hasFilter: true },
+    { label: 'Tıklama', value: formatNumber(kpi?.clicks ?? 0), icon: MousePointerClick, color: 'text-primary', hasFilter: true },
     { label: 'ROAS', value: kpi?.roas ? `${kpi.roas}x` : '—', icon: TrendingUp, color: 'text-emerald-600' },
   ]
 
@@ -56,7 +56,7 @@ export default function KPIBar() {
         <select
           value={range}
           onChange={(e) => setRange(Number(e.target.value))}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-green-400"
+          className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
         >
           {RANGE_OPTIONS.map((o) => (
             <option key={o.value} value={o.value}>{o.label}</option>

@@ -53,7 +53,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
       id: 'experiments', icon: Beaker, title: 'Deney Backlog',
       summary: `${blueprint.experiment_backlog.filter(e => e.priority === 'high').length} yüksek öncelikli`,
       count: blueprint.experiment_backlog.length,
-      color: 'bg-amber-50', borderColor: 'border-amber-200 hover:border-amber-300', iconColor: 'text-amber-600',
+      color: 'bg-primary/5', borderColor: 'border-primary/20 hover:border-primary/40', iconColor: 'text-primary',
     },
     ...(blueprint.risks?.length > 0 ? [{
       id: 'risks' as CardId, icon: AlertTriangle, title: 'Riskler',
@@ -72,15 +72,15 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
   return (
     <div className="space-y-4">
       {/* Başlık */}
-      <div className="bg-purple-50 border border-purple-200 rounded-xl shadow-sm p-4">
+      <div className="bg-primary/5 border border-primary/20 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-purple-800 mb-1">Strateji Blueprint</h3>
-            <p className="text-xs text-purple-700">Kartlara tıklayarak detayları görüntüleyin.</p>
+            <h3 className="text-sm font-semibold text-primary mb-1">Strateji Blueprint</h3>
+            <p className="text-xs text-gray-600">Kartlara tıklayarak detayları görüntüleyin.</p>
           </div>
           {aiGenerated !== undefined && (
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${
-              aiGenerated ? 'bg-purple-100 text-purple-700' : 'bg-gray-100 text-gray-600'
+              aiGenerated ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
             }`}>
               {aiGenerated ? <Sparkles className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
               {aiGenerated ? 'AI ile üretildi' : 'Şablon bazlı'}
@@ -88,7 +88,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           )}
         </div>
         {!aiGenerated && aiGenerated !== undefined && (
-          <p className="text-[10px] text-purple-600 mt-2 bg-purple-100/50 rounded-lg px-2 py-1">
+          <p className="text-[10px] text-gray-600 mt-2 bg-gray-100 rounded-lg px-2 py-1">
             OpenAI API key tanımlı değil — şablon kullanıldı. AI ile daha detaylı strateji için .env dosyasına OPENAI_API_KEY ekleyin.
           </p>
         )}
@@ -136,8 +136,8 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                 {[
                   { label: 'CPA (TRY)', range: blueprint.kpi_targets.cpa_range, color: 'bg-emerald-50 border-emerald-100' },
                   { label: 'ROAS', range: blueprint.kpi_targets.roas_range, color: 'bg-blue-50 border-blue-100' },
-                  { label: 'CTR (%)', range: blueprint.kpi_targets.ctr_range, color: 'bg-purple-50 border-purple-100' },
-                  { label: 'CVR (%)', range: blueprint.kpi_targets.cvr_range, color: 'bg-amber-50 border-amber-100' },
+                  { label: 'CTR (%)', range: blueprint.kpi_targets.ctr_range, color: 'bg-primary/5 border-primary/20' },
+                  { label: 'CVR (%)', range: blueprint.kpi_targets.cvr_range, color: 'bg-gray-50 border-gray-200' },
                 ].map((kpi) => (
                   <div key={kpi.label} className={`${kpi.color} border rounded-lg p-3 text-center`}>
                     <div className="text-xs text-gray-500 mb-1">{kpi.label}</div>
@@ -155,8 +155,8 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
               <div className="p-4 space-y-3">
                 {[
                   { label: 'TOFU', desc: 'Farkındalık', pct: blueprint.funnel_split.tofu, color: 'bg-blue-500', bg: 'bg-blue-50 text-blue-700' },
-                  { label: 'MOFU', desc: 'Değerlendirme', pct: blueprint.funnel_split.mofu, color: 'bg-purple-500', bg: 'bg-purple-50 text-purple-700' },
-                  { label: 'BOFU', desc: 'Dönüşüm', pct: blueprint.funnel_split.bofu, color: 'bg-green-500', bg: 'bg-green-50 text-green-700' },
+                  { label: 'MOFU', desc: 'Değerlendirme', pct: blueprint.funnel_split.mofu, color: 'bg-primary', bg: 'bg-primary/10 text-primary' },
+                  { label: 'BOFU', desc: 'Dönüşüm', pct: blueprint.funnel_split.bofu, color: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
                 ].map((f) => (
                   <div key={f.label} className="flex items-center gap-3">
                     <div className={`text-xs font-bold w-12 text-center py-1 rounded-md ${f.bg}`}>{f.label}</div>
@@ -188,10 +188,10 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   </div>
                 )}
                 {blueprint.channel_mix.google > 0 && (
-                  <div className="flex-1 bg-amber-50 border border-amber-100 rounded-xl p-5 text-center">
-                    <div className="text-sm font-medium text-amber-600 mb-1">Google</div>
-                    <div className="text-3xl font-bold text-amber-700">%{blueprint.channel_mix.google}</div>
-                    <div className="text-[10px] text-amber-500 mt-1">Search & Display</div>
+                  <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-xl p-5 text-center">
+                    <div className="text-sm font-medium text-emerald-600 mb-1">Google</div>
+                    <div className="text-3xl font-bold text-emerald-700">%{blueprint.channel_mix.google}</div>
+                    <div className="text-[10px] text-emerald-500 mt-1">Search & Display</div>
                   </div>
                 )}
               </div>
@@ -228,7 +228,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                       <span className="text-sm font-semibold text-gray-900">{ct.theme}</span>
                       <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
                         ct.format === 'video' ? 'bg-blue-100 text-blue-700' :
-                        ct.format === 'ugc' ? 'bg-green-100 text-green-700' :
+                        ct.format === 'ugc' ? 'bg-emerald-100 text-emerald-700' :
                         'bg-gray-200 text-gray-600'
                       }`}>{ct.format}</span>
                     </div>
@@ -243,12 +243,12 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Deneyler */}
           {openCard === 'experiments' && (
             <>
-              <CardHeader icon={Beaker} title={`Deney Backlog (${blueprint.experiment_backlog.length})`} color="text-amber-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={Beaker} title={`Deney Backlog (${blueprint.experiment_backlog.length})`} color="text-primary" onClose={() => setOpenCard(null)} />
               <div className="p-4 space-y-2">
                 {blueprint.experiment_backlog.map((exp, i) => (
-                  <div key={i} className="flex items-start gap-2 bg-amber-50/50 border border-amber-100 rounded-lg p-3">
+                  <div key={i} className="flex items-start gap-2 bg-primary/5 border border-primary/20 rounded-lg p-3">
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5 ${
-                      exp.priority === 'high' ? 'bg-red-100 text-red-700' : exp.priority === 'med' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                      exp.priority === 'high' ? 'bg-red-100 text-red-700' : exp.priority === 'med' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-600'
                     }`}>
                       {exp.priority.toUpperCase()}
                     </span>
@@ -285,16 +285,16 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                 {blueprint.tasks_seed.map((t, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-teal-50/50 transition-colors">
                     <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
-                      t.priority === 'high' ? 'bg-red-100 text-red-700' : t.priority === 'med' ? 'bg-amber-100 text-amber-700' : 'bg-gray-100 text-gray-600'
+                      t.priority === 'high' ? 'bg-red-100 text-red-700' : t.priority === 'med' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-600'
                     }`}>
                       {t.priority.toUpperCase()}
                     </span>
                     <span className="text-gray-900 text-xs flex-1">{t.title}</span>
                     <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
-                      t.category === 'measurement' ? 'bg-purple-50 text-purple-600' :
+                      t.category === 'measurement' ? 'bg-primary/10 text-primary' :
                       t.category === 'creative' ? 'bg-pink-50 text-pink-600' :
                       t.category === 'audience' ? 'bg-blue-50 text-blue-600' :
-                      t.category === 'campaign' ? 'bg-green-50 text-green-600' :
+                      t.category === 'campaign' ? 'bg-emerald-50 text-emerald-700' :
                       'bg-gray-50 text-gray-500'
                     }`}>{t.category}</span>
                   </div>
@@ -318,14 +318,14 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
         <button
           onClick={() => onApprove('suggest_only')}
           disabled={approving}
-          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-purple-200 text-purple-700 rounded-lg text-sm font-medium hover:bg-purple-50 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-primary/30 text-primary rounded-lg text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-50"
         >
           Sadece Öneri Üret
         </button>
         <button
           onClick={() => onApprove('apply')}
           disabled={approving}
-          className="inline-flex items-center gap-2 px-5 py-2.5 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition-colors disabled:opacity-50"
+          className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           <CheckCircle className="w-4 h-4" />
           {approving ? 'Uygulanıyor...' : 'Onayla ve Uygula'}
