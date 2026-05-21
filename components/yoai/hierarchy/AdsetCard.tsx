@@ -1,11 +1,12 @@
 'use client'
 
 /* SEVİYE 2 — Ad set / ad group kartı (Faz 3). Popup içinde YATAY.
-   Onayla/Reddet YOK — yayın/karar FİNALDE reklam (ad) kartında yapılır.
-   "Reklamları Gör" → o ad set'in reklamları. Tüm detaylar AÇIK. */
+   Onayla/Reddet YOK — yayın/karar FİNALDE reklam (ad) kartında.
+   Kart altı navigasyon: sol "Geri" (popup'ı kapat → kampanya), sağ "İleri"
+   (bu ad set'in reklamları). Tüm detaylar AÇIK. */
 
 import { useTranslations } from 'next-intl'
-import { ChevronRight } from 'lucide-react'
+import { ChevronLeft, ChevronRight } from 'lucide-react'
 import { PlatformBadge, StatusBadge, SuggestionList, titleCaseTr } from './shared'
 import type { AdsetWithAds } from '@/lib/yoai/ai/hierarchicalStore'
 
@@ -15,9 +16,10 @@ interface Props {
   adset: AdsetWithAds
   horizontal?: boolean
   onDrillDown: () => void
+  onBack: () => void
 }
 
-export default function AdsetCard({ adset, horizontal, onDrillDown }: Props) {
+export default function AdsetCard({ adset, horizontal, onDrillDown, onBack }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
   const payload = (adset.improvement_payload ?? {}) as { suggestions?: Suggestion[] }
   const confidence = adset.confidence ?? 0
@@ -51,15 +53,22 @@ export default function AdsetCard({ adset, horizontal, onDrillDown }: Props) {
         <SuggestionList label={t('suggestions')} suggestions={payload.suggestions ?? []} columns={horizontal ? 2 : 1} />
       </div>
 
-      {adCount > 0 && (
+      {/* Kart altı navigasyon: sol Geri · sağ İleri (reklamlar) */}
+      <div className="grid grid-cols-2 gap-px border-t border-slate-700/40 mt-auto rounded-b-2xl overflow-hidden">
+        <button
+          onClick={onBack}
+          className="py-3 bg-slate-800 hover:bg-slate-700 text-slate-200 font-semibold text-[12px] uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors"
+        >
+          <ChevronLeft className="w-4 h-4" /> {t('back')}
+        </button>
         <button
           onClick={onDrillDown}
-          className="m-3 mt-0 flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 px-3.5 py-3 text-[13px] text-white font-semibold transition-colors relative"
+          disabled={adCount === 0}
+          className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-[12px] uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
         >
-          <span>{t('viewAds', { count: adCount })}</span>
-          <ChevronRight className="w-4 h-4" />
+          {t('next')}{adCount > 0 ? ` (${adCount})` : ''} <ChevronRight className="w-4 h-4" />
         </button>
-      )}
+      </div>
     </div>
   )
 }

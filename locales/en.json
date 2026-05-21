@@ -1985,6 +1985,8 @@
         "alertsTitle": "Account Health Status",
         "flipHint": "hover for details",
         "breadcrumbAll": "All",
+        "back": "Back",
+        "next": "Next",
         "campaignLevel": "Campaign",
         "adsetLevel": "Ad Set",
         "adLevel": "Ad",

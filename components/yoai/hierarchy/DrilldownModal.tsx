@@ -78,6 +78,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
                       adset={as}
                       horizontal
                       onDrillDown={() => setAdsetId(as.id)}
+                      onBack={onClose}
                     />
                   ))}
                 </div>
@@ -85,8 +86,8 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
             </>
           ) : (
             <>
-              <button onClick={() => setAdsetId(null)} className="inline-flex items-center gap-1 mb-3 text-[13px] text-emerald-300 hover:text-emerald-200">
-                <ChevronLeft className="w-4 h-4" /> {t('adsetLevel')}
+              <button onClick={() => setAdsetId(null)} className="inline-flex items-center gap-1.5 mb-3 rounded-lg bg-slate-800 hover:bg-slate-700 px-3 py-2 text-[12px] text-slate-200 font-semibold uppercase tracking-wide transition-colors">
+                <ChevronLeft className="w-4 h-4" /> {t('back')}
               </button>
               <p className="text-[15px] text-slate-50 font-semibold mb-3">{titleCaseTr(adset.adset_name)} <span className="text-slate-400 font-normal">— {t('adLevel')} ({adset.ads.length})</span></p>
               {adset.ads.length === 0 ? (

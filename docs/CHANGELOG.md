@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 7: ad set kart altı Geri/İleri navigasyonu
+- **Sorun:** Ad set'ten reklamlara nasıl geçileceği net değildi ("Reklamları Gör" yeterince belirgin değil).
+- **Çözüm:** `AdsetCard` kart altı iki butonlu nav — sol **"Geri"** (popup'ı kapat → kampanya), sağ **"İleri (N)"** (bu ad set'in reklamları; reklam yoksa disabled). Ad görünümü geri butonu da "Geri" olarak netleştirildi. `back`/`next` i18n. `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/{AdsetCard,DrilldownModal}.tsx`, `locales/{tr,en}.json`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 6: butonlar yalnız reklamda + modal başlık sabit değil + objective adı + rakip vurgu
 - **Sorun:** (1) Ad set'te buton olmamalı — yayın finalde **reklam (ad) kartından**; Onayla/Reddet yalnız reklamda. (2) Modal başlığı `sticky` → kaydırınca sabit kalıp UI bozuyordu; yukarıda kalmalı. (3) AI `recommended_type` = **"Müşteri Adayı Hedefi"** üretmiş; Meta'da böyle hedef yok, doğrusu **"Potansiyel Müşteri"**. (4) "Rakip analizi nerede?" — aslında **reklam kartında dolu** (ad set'te değil).
 - **Çözüm:** `AdsetCard` → Onayla/Reddet **kaldırıldı** (yalnız "Reklamları Gör"); karar/yayın butonları **yalnız `AdCard`'da**. `DrilldownModal` başlığı **sticky değil** (içerikle kayar). `meta-enums.ts` + `perCampaignPrompt.ts`: "Müşteri Adayı" → **"Potansiyel Müşteri"** (Meta gerçek hedef adı) + prompt'a **geçerli kampanya türü adları** direktifi (uydurma yasağı). `CampaignCard` `fixObjectiveTerm` ile mevcut veriyi de gösterimde düzeltir. `AdCard` rakip karşılaştırması bloğu **belirginleştirildi** (indigo + `Swords` ikonu). `build` ✓.
