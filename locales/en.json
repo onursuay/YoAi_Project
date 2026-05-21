@@ -2029,6 +2029,7 @@
         "loading": "Loading cards…",
         "empty": "No improvement cards yet. Weekly analysis runs automatically Sunday night.",
         "emptyDrilldown": "No cards at this level.",
+        "emptyAds": "No separate ad suggestion for this ad set — applying the ad set suggestions above is enough.",
         "status": {
           "pending": "Under Review",
           "approved": "Approved",

@@ -92,7 +92,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onEditAd, o
               </button>
               <p className="text-[15px] text-slate-50 font-semibold mb-3">{titleCaseTr(adset.adset_name)} <span className="text-slate-400 font-normal">— {t('adLevel')} ({adset.ads.length})</span></p>
               {adset.ads.length === 0 ? (
-                <p className="text-center py-8 text-[13px] text-slate-400">{t('emptyDrilldown')}</p>
+                <p className="text-center py-10 px-6 text-[13px] text-slate-300 leading-relaxed">{t('emptyAds')}</p>
               ) : (
                 <div className="grid gap-4 grid-cols-1">
                   {adset.ads.map((ad) => (

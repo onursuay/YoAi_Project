@@ -2029,6 +2029,7 @@
         "loading": "Kartlar yükleniyor…",
         "empty": "Henüz geliştirme kartı yok. Haftalık analiz Pazar gece otomatik çalışır.",
         "emptyDrilldown": "Bu seviyede kart yok.",
+        "emptyAds": "Bu ad set için ayrı reklam önerisi üretilmedi — yukarıdaki ad set önerilerini uygulamanız yeterli.",
         "status": {
           "pending": "İncelemede",
           "approved": "Onaylandı",

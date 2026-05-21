@@ -63,8 +63,7 @@ export default function AdsetCard({ adset, horizontal, onDrillDown, onBack }: Pr
         </button>
         <button
           onClick={onDrillDown}
-          disabled={adCount === 0}
-          className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-[12px] uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors disabled:opacity-40 disabled:cursor-not-allowed"
+          className="py-3 bg-emerald-600 hover:bg-emerald-500 active:bg-emerald-700 text-white font-semibold text-[12px] uppercase tracking-wide flex items-center justify-center gap-1.5 transition-colors"
         >
           {t('next')}{adCount > 0 ? ` (${adCount})` : ''} <ChevronRight className="w-4 h-4" />
         </button>
