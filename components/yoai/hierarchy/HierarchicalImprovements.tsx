@@ -75,13 +75,12 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey 
       )}
 
       {/* Başlık + ikon */}
-      <div className="flex items-center gap-2 mb-1">
+      <div className="flex items-center gap-2 mb-4">
         <span className="inline-flex items-center justify-center w-7 h-7 rounded-lg bg-emerald-500/10">
           <Sparkles className="w-4 h-4 text-emerald-600" />
         </span>
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
       </div>
-      <p className="text-[13px] text-gray-500 mb-4 ml-9">{t('subtitle')}</p>
 
       {loading ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
@@ -94,16 +93,11 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey 
           <p className="text-sm text-gray-500">{t('empty')}</p>
         </div>
       ) : (
-        <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+        <div className="grid gap-4 grid-cols-1">
           {data.campaigns.map((c) => (
             <CampaignCard
               key={c.id}
               campaign={c}
-              busy={busyId === c.id}
-              onApprove={() => decide('campaign', c.id, 'approve')}
-              onMarkApplied={() => decide('campaign', c.id, 'applied')}
-              onReject={() => decide('campaign', c.id, 'reject')}
-              onUndo={() => decide('campaign', c.id, 'unreject')}
               onDrillDown={() => setModalCampaignId(c.id)}
             />
           ))}

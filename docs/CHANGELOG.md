@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 3: yatay kampanya kartı + buton sadeleştirme + ortalı flip başlık
+- **Sorun:** (a) flip kart başlıkları sola yaslı + içinde "—" çizgisi; (b) Onayla/Reddet **hem kampanya kartında hem drill-down'da** (çift) ve kampanya Onayla'sı yayınlamıyordu; (c) alt başlık metni gereksiz; (d) kampanya kartları **çok uzun (dik)**, buton "Ad Set'leri Gör" yerine **"UYGULA"** istendi.
+- **Çözüm:** `AccountAlertsBanner` ön yüz **simetrik** (ikon üst · başlık merkez · ipucu alt) + başlıktaki "—" cümle ayırıcıya çevrildi (`tidyTitle`). Onayla/Reddet/Yayınla **yalnız reklam (ad) kartında** — kampanya + ad set kartlarından kaldırıldı (çift buton + "yayınlamıyor" şikayeti giderildi; yayın doğrudan reklam kartından). Kampanya kartı **yatay tam-genişlik** (üstte kimlik + **UYGULA** butonu; altında gerekçe | öneriler yan yana 2-kolon; tür uyumsuzluğu tam-genişlik şerit) → çok daha kısa. Grid tek kolon. Alt başlık metni kaldırıldı. `apply` (UYGULA/APPLY) i18n. Popup (drill-down) **aynı**. `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/{AccountAlertsBanner,CampaignCard,AdsetCard,HierarchicalImprovements,DrilldownModal}.tsx`, `locales/{tr,en}.json`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 2: flip-box sağlık kartları + yatay modal + font −1
 - **Sorun:** Canlı incelemede 3 talep — (1) modal içinde ad set **dik/uzun değil yatay**; (2) yazılar **bir punto küçük**; (3) Hesap Sağlık kartları **flip-box** (ön: başlık + tıklama ikonu; hover → 180° dönüp detay; etrafında soldan-sağa sonsuz **shimmer ışık**; açık yeşil zemin + koyu yazı).
 - **Çözüm:** `AccountAlertsBanner` → 3D **flip kartlar** (CSS `rotateY` hover), dönen konik-gradyan **shimmer halka**, `MousePointerClick` ipucu (`flipHint`), emerald gradient zemin + koyu metin, severity yalnız ikon renginde. `DrilldownModal` → kartlar **tam genişlik tek kolon** + `horizontal` prop. `AdsetCard`/`AdCard` horizontal: öneriler 2-kolon / `ad_spec` 2-kolon grid (yatay). Tüm hiyerarşi kartlarında **font −1** (16→15, 13→12). `flipHint` i18n (tr/en). `build` ✓.

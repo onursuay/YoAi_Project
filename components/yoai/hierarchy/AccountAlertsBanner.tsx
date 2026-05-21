@@ -1,15 +1,23 @@
 'use client'
 
 /* SEVİYE 0 — Hesap Sağlık Durumu (account_alerts) — FLIP-BOX kartlar (Faz 3 UI).
-   Ön yüz: başlık + "üzerine gel" tıklama ikonu. Hover → 180° döner, detay görünür.
-   Etrafında soldan-sağa sonsuz shimmer (dönen konik gradyan) ışık.
-   Açık yeşil zemin, koyu yazı. Severity yalnız ikon rengiyle belli olur. */
+   Ön yüz SİMETRİK: ikon üstte, başlık ortada (merkeze ortalı), ipucu altta.
+   Başlıktaki "—" çizgisi cümle ayırıcıya (". ") çevrilir.
+   Hover → 180° döner, detay görünür. Etrafında dönen shimmer ışık.
+   Açık yeşil zemin, koyu yazı. Severity yalnız ikon rengiyle. */
 
 import { useTranslations } from 'next-intl'
 import { Activity, AlertOctagon, AlertTriangle, Info, MousePointerClick } from 'lucide-react'
 import type { AccountAlertRow } from '@/lib/yoai/ai/hierarchicalStore'
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, info: 3 }
+
+/** Başlıktaki ayırıcı "—"/"–" tireyi cümleye çevir; sonuna nokta koy. */
+function tidyTitle(s: string): string {
+  let out = (s || '').replace(/\s*[—–]\s*/g, '. ').replace(/\s{2,}/g, ' ').trim()
+  if (out && !/[.!?]$/.test(out)) out += '.'
+  return out
+}
 
 export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRow[] }) {
   const t = useTranslations('dashboard.yoai.hierarchy')
@@ -52,13 +60,12 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
           const iconCls = isCritical ? 'text-red-600' : a.severity === 'medium' ? 'text-emerald-700' : 'text-slate-500'
           return (
             <div key={a.id} className="yoai-flip h-52 relative">
-              {/* shimmer ışık halkası (kartın arkasında, 2px taşar) */}
               <div className="yoai-shimmer" aria-hidden="true" />
               <div className="yoai-flip-inner">
-                {/* ÖN YÜZ — başlık + tıklama ipucu */}
-                <div className="yoai-face bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 border border-emerald-200 p-4 flex flex-col">
+                {/* ÖN YÜZ — simetrik: ikon üst · başlık merkez · ipucu alt */}
+                <div className="yoai-face bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 border border-emerald-200 p-4 flex flex-col items-center text-center">
                   <Icon className={`w-6 h-6 ${iconCls}`} />
-                  <p className="text-[15px] font-bold text-slate-900 leading-snug mt-2 flex-1">{a.title}</p>
+                  <p className="text-[15px] font-bold text-slate-900 leading-snug flex-1 flex items-center justify-center px-1">{tidyTitle(a.title)}</p>
                   <div className="flex items-center gap-1.5 text-emerald-700 text-[11px] font-medium">
                     <MousePointerClick className="w-4 h-4 animate-pulse" />
                     {t('flipHint')}

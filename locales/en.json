@@ -2010,6 +2010,7 @@
         "complianceNotes": "Compliance Notes",
         "viewAdsets": "View Ad Sets ({count})",
         "viewAds": "View Ads ({count})",
+        "apply": "APPLY",
         "approve": "Approve",
         "reject": "Reject",
         "publish": "Publish",

@@ -1,11 +1,11 @@
 'use client'
 
-/* SEVİYE 2 — Ad set / ad group kartı (Faz 3). Modal içinde YATAY (horizontal):
-   tam genişlik + öneriler çok-kolonlu → dik/uzun değil. Tüm detaylar AÇIK. */
+/* SEVİYE 2 — Ad set / ad group kartı (Faz 3). Modal içinde YATAY.
+   Onayla/Reddet YOK — karar/yayın yalnız reklam kartında.
+   "Reklamları Gör" → o ad set'in reklamları. Tüm detaylar AÇIK. */
 
 import { useTranslations } from 'next-intl'
 import { ChevronRight } from 'lucide-react'
-import HierCardActions from './HierCardActions'
 import { PlatformBadge, StatusBadge, SuggestionList } from './shared'
 import type { AdsetWithAds } from '@/lib/yoai/ai/hierarchicalStore'
 
@@ -13,16 +13,11 @@ interface Suggestion { title: string; detail: string }
 
 interface Props {
   adset: AdsetWithAds
-  busy?: boolean
   horizontal?: boolean
-  onApprove: () => void
-  onReject: () => void
-  onUndo: () => void
-  onMarkApplied: () => void
   onDrillDown: () => void
 }
 
-export default function AdsetCard({ adset, busy, horizontal, onApprove, onReject, onUndo, onMarkApplied, onDrillDown }: Props) {
+export default function AdsetCard({ adset, horizontal, onDrillDown }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
   const payload = (adset.improvement_payload ?? {}) as { suggestions?: Suggestion[] }
   const confidence = adset.confidence ?? 0
@@ -59,22 +54,12 @@ export default function AdsetCard({ adset, busy, horizontal, onApprove, onReject
       {adCount > 0 && (
         <button
           onClick={onDrillDown}
-          className="mx-4 mb-3 flex items-center justify-between rounded-lg bg-slate-800/60 hover:bg-slate-700/60 border border-slate-700/50 px-3.5 py-2.5 text-[12px] text-emerald-300 font-semibold transition-colors relative"
+          className="m-3 mt-0 flex items-center justify-center gap-2 rounded-lg bg-emerald-600 hover:bg-emerald-500 px-3.5 py-3 text-[13px] text-white font-semibold transition-colors relative"
         >
           <span>{t('viewAds', { count: adCount })}</span>
           <ChevronRight className="w-4 h-4" />
         </button>
       )}
-
-      <HierCardActions
-        kind="advisory"
-        status={adset.status}
-        busy={busy}
-        onApprove={onApprove}
-        onPublishOrApply={onMarkApplied}
-        onReject={onReject}
-        onUndo={onUndo}
-      />
     </div>
   )
 }
