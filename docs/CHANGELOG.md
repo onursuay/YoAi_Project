@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 10: reklam yayından önce düzenlenebilir (kart-içi edit)
+- **Sorun:** Öneri (özellikle reklam) **yayınlanmadan önce kullanıcı tarafından düzenlenebilir** olmalı. Mevcut durumda yalnız Meta kreatifi wizard'da düzenleniyordu; Google'da yoktu; kart seviyesinde hiç yoktu.
+- **Çözüm:** Reklam (ad) kartına **"Düzenle" modu** — başlıklar / açıklamalar / ana metin / CTA / günlük bütçe kart üzerinde düzenlenir, **"Kaydet"** → `improvement_payload.ad_spec` güncellenir (`updateAdImprovementSpec`, yalnız `pending`/`approved`; decision endpoint `action: 'edit'`). Onayla/Yayınla artık **düzenlenmiş** ad_spec ile sihirbaza gider → hem Meta hem Google. Düzenleme **bizim katmanda** (Meta/Google entegrasyonuna dokunulmadı). `edit`/`save`/`cancel` i18n. `build` ✓.
+- **Dosyalar:** `lib/yoai/ai/hierarchicalStore.ts`, `app/api/yoai/improvements/hierarchy/decision/route.ts`, `components/yoai/hierarchy/{AdCard,DrilldownModal,HierarchicalImprovements}.tsx`, `locales/{tr,en}.json`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 9: flip kart yazı kesilmesi düzeltildi (auto-height)
 - **Sorun:** Hesap Sağlık flip kartlarında sabit `h-52` yükseklik uzun metni **kesiyordu** (özellikle arka yüz body + önerilen aksiyon üst üste binip görünmüyordu).
 - **Çözüm:** Sabit yükseklik kaldırıldı; ön/arka yüz **aynı grid hücresinde** (grid-overlay: `face { grid-area: 1/1 }`, `flip-inner { display: grid }`) → kart **en uzun içeriğe göre büyür**, kesilme yok. Outer grid `auto-rows-fr` ile satırdaki kartlar **eşit yükseklikte**. `min-h-[13rem]` taban. Flip + shimmer + tap korundu. `build` ✓.

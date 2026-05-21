@@ -8,7 +8,7 @@ import { useState } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { X, ChevronLeft, ChevronRight, Megaphone, Layers } from 'lucide-react'
 import AdsetCard from './AdsetCard'
-import AdCard from './AdCard'
+import AdCard, { type AdSpecEdit } from './AdCard'
 import { titleCaseTr } from './shared'
 import { translateEnum } from '@/lib/yoai/translations'
 import type { CampaignWithChildren, HierLevel } from '@/lib/yoai/ai/hierarchicalStore'
@@ -17,10 +17,11 @@ interface Props {
   campaign: CampaignWithChildren
   busyId: string | null
   onDecide: (level: HierLevel, id: string, action: 'approve' | 'reject' | 'unreject' | 'applied') => void
+  onEditAd: (adId: string, edit: AdSpecEdit) => void | Promise<void>
   onClose: () => void
 }
 
-export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: Props) {
+export default function DrilldownModal({ campaign, busyId, onDecide, onEditAd, onClose }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
   const locale = useLocale() as 'tr' | 'en'
   const [adsetId, setAdsetId] = useState<string | null>(null)
@@ -104,6 +105,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
                       onPublish={() => onDecide('ad', ad.id, 'approve')}
                       onReject={() => onDecide('ad', ad.id, 'reject')}
                       onUndo={() => onDecide('ad', ad.id, 'unreject')}
+                      onEdit={(edit) => onEditAd(ad.id, edit)}
                     />
                   ))}
                 </div>

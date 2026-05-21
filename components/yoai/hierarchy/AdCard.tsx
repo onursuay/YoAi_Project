@@ -1,10 +1,12 @@
 'use client'
 
-/* SEVİYE 3 — Reklam kartı (Faz 3). Modal içinde YATAY: ad_spec alanları
-   iki kolona yayılır (dik/uzun değil). Tüm detaylar AÇIK. Onayla/Yayınla → sihirbaz. */
+/* SEVİYE 3 — Reklam kartı (Faz 3). Modal içinde YATAY. Onayla/Yayınla → sihirbaz.
+   DÜZENLE: yayından önce ad_spec (başlık/açıklama/ana metin/CTA/bütçe) kart
+   üzerinde düzenlenir; kaydedilince yayın bu hâliyle gider. */
 
+import { useState, type ReactNode } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { Swords } from 'lucide-react'
+import { Swords, Pencil, Loader2 } from 'lucide-react'
 import HierCardActions from './HierCardActions'
 import { PlatformBadge, StatusBadge, Row, ListBlock, titleCaseTr } from './shared'
 import { translateEnum, translateEnumList } from '@/lib/yoai/translations'
@@ -18,6 +20,14 @@ interface AdPayload {
   compliance_notes?: string[]
 }
 
+export interface AdSpecEdit {
+  headlines: string[]
+  descriptions: string[]
+  primary_text: string
+  cta: string
+  daily_budget: number | null
+}
+
 interface Props {
   ad: AdImprovementRow
   busy?: boolean
@@ -26,16 +36,51 @@ interface Props {
   onPublish: () => void
   onReject: () => void
   onUndo: () => void
+  onEdit: (edit: AdSpecEdit) => void | Promise<void>
 }
 
-export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onReject, onUndo }: Props) {
+export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onReject, onUndo, onEdit }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
   const locale = useLocale() as 'tr' | 'en'
   const payload = (ad.improvement_payload ?? {}) as AdPayload
   const spec = payload.ad_spec ?? null
   const confidence = ad.confidence ?? 0
   const plat = ad.source_platform
+  const canEdit = ad.status === 'pending' || ad.status === 'approved'
   const specLayout = horizontal ? 'grid grid-cols-1 md:grid-cols-2 gap-x-6 gap-y-2.5 items-start' : 'space-y-2.5'
+
+  const [editing, setEditing] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [draft, setDraft] = useState({ headlines: '', descriptions: '', primaryText: '', cta: '', daily: '' })
+
+  const startEdit = () => {
+    setDraft({
+      headlines: (spec?.creative?.headlines ?? []).join('\n'),
+      descriptions: (spec?.creative?.descriptions ?? []).join('\n'),
+      primaryText: spec?.creative?.primary_text ?? '',
+      cta: spec?.cta ?? '',
+      daily: spec?.budget?.daily != null ? String(spec.budget.daily) : '',
+    })
+    setEditing(true)
+  }
+
+  const save = async () => {
+    setSaving(true)
+    try {
+      await onEdit({
+        headlines: draft.headlines.split('\n').map((s) => s.trim()).filter(Boolean),
+        descriptions: draft.descriptions.split('\n').map((s) => s.trim()).filter(Boolean),
+        primary_text: draft.primaryText,
+        cta: draft.cta,
+        daily_budget: draft.daily.trim() ? Number(draft.daily) : null,
+      })
+      setEditing(false)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const inputCls = 'w-full bg-slate-800 border border-slate-700 rounded-md px-2.5 py-1.5 text-[12px] text-slate-100 focus:outline-none focus:border-emerald-500/60'
 
   return (
     <div className="relative text-left w-full rounded-2xl overflow-hidden border bg-[#0f172a] border-[#23314d] shadow-md flex flex-col h-full transition-all duration-200 hover:border-emerald-400/40">
@@ -70,59 +115,97 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
         </div>
       ) : null}
 
-      {/* Önerilen reklam — TÜM detaylar AÇIK; modalda iki kolon (yatay) */}
+      {/* Önerilen reklam — görüntü veya DÜZENLE formu */}
       {spec ? (
         <div className="px-4 pb-2 flex-1 relative">
-          <p className="text-[12px] text-emerald-300 font-semibold mb-2 uppercase tracking-wider">{t('improvedAd')}</p>
-          <div className={specLayout}>
-            <Row label={t('campaignType')} value={translateEnum(spec.campaign_type, locale, plat)} />
-            <Row label={t('cta')} value={translateEnum(spec.cta, locale, plat)} />
-            {spec.budget?.daily != null ? (
-              <Row label={t('budget')} value={`${spec.budget.daily} ${spec.budget.currency || 'TRY'}${t('perDay')}`} />
-            ) : null}
-            {spec.conversion_goal ? <Row label={t('conversionGoal')} value={spec.conversion_goal} /> : null}
-            {spec.targeting ? (
-              <Row
-                label={t('targeting')}
-                value={[
-                  spec.targeting.locations?.join(', '),
-                  spec.targeting.demographics ? `${spec.targeting.demographics.age_min}-${spec.targeting.demographics.age_max}` : '',
-                  spec.targeting.interests?.slice(0, 3).join(', '),
-                ].filter(Boolean).join(' · ')}
-              />
-            ) : null}
-            {spec.targeting?.placements?.length ? (
-              <Row label={t('placements')} value={translateEnumList(spec.targeting.placements, locale, plat).join(', ')} />
-            ) : null}
-            {spec.creative?.primary_text ? (
-              <div>
-                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{t('primaryText')}</p>
-                <p className="text-[12px] text-slate-200 leading-relaxed">{spec.creative.primary_text}</p>
-              </div>
-            ) : null}
-            {spec.creative?.headlines?.length ? (
-              <ListBlock label={t('headlines')} items={spec.creative.headlines} tone="blue" />
-            ) : null}
-            {spec.creative?.descriptions?.length ? (
-              <ListBlock label={t('descriptions')} items={spec.creative.descriptions} tone="slate" />
-            ) : null}
-            {spec.creative?.asset_requirements?.format ? (
-              <Row
-                label={t('assetRequirements')}
-                value={[spec.creative.asset_requirements.format, spec.creative.asset_requirements.dimensions, spec.creative.asset_requirements.notes].filter(Boolean).join(' · ')}
-              />
-            ) : null}
-            {(payload.compliance_notes?.length || spec.compliance_notes?.length) ? (
-              <div className="pt-1 md:col-span-2">
-                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">{t('complianceNotes')}</p>
-                <div className="flex flex-wrap gap-1.5">
-                  {(payload.compliance_notes ?? spec.compliance_notes ?? []).map((n, i) => (
-                    <span key={i} className="text-[11px] bg-emerald-950/40 text-emerald-300 px-2 py-1 rounded border border-emerald-500/20">{n}</span>
-                  ))}
-                </div>
-              </div>
+          <div className="flex items-center justify-between mb-2">
+            <p className="text-[12px] text-emerald-300 font-semibold uppercase tracking-wider">{t('improvedAd')}</p>
+            {canEdit && !editing ? (
+              <button onClick={startEdit} className="inline-flex items-center gap-1 text-[11px] text-slate-300 hover:text-emerald-300 transition-colors">
+                <Pencil className="w-3.5 h-3.5" /> {t('edit')}
+              </button>
             ) : null}
           </div>
+
+          {editing ? (
+            <div className="space-y-2.5">
+              <EditField label={t('headlines')}>
+                <textarea rows={3} className={inputCls} value={draft.headlines} onChange={(e) => setDraft((d) => ({ ...d, headlines: e.target.value }))} placeholder="Her satır bir başlık" />
+              </EditField>
+              <EditField label={t('descriptions')}>
+                <textarea rows={2} className={inputCls} value={draft.descriptions} onChange={(e) => setDraft((d) => ({ ...d, descriptions: e.target.value }))} placeholder="Her satır bir açıklama" />
+              </EditField>
+              <EditField label={t('primaryText')}>
+                <textarea rows={2} className={inputCls} value={draft.primaryText} onChange={(e) => setDraft((d) => ({ ...d, primaryText: e.target.value }))} />
+              </EditField>
+              <div className="grid grid-cols-2 gap-2.5">
+                <EditField label={t('cta')}>
+                  <input className={inputCls} value={draft.cta} onChange={(e) => setDraft((d) => ({ ...d, cta: e.target.value }))} />
+                </EditField>
+                <EditField label={`${t('budget')} (${t('perDay').replace('/', '')})`}>
+                  <input type="number" min={0} className={inputCls} value={draft.daily} onChange={(e) => setDraft((d) => ({ ...d, daily: e.target.value }))} />
+                </EditField>
+              </div>
+              <div className="flex gap-2 pt-1">
+                <button onClick={save} disabled={saving} className="flex-1 py-2 rounded-md bg-emerald-600 hover:bg-emerald-500 text-white text-[12px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-40">
+                  {saving ? <Loader2 className="w-4 h-4 animate-spin mx-auto" /> : t('save')}
+                </button>
+                <button onClick={() => setEditing(false)} disabled={saving} className="flex-1 py-2 rounded-md bg-slate-800 hover:bg-slate-700 text-slate-200 text-[12px] font-semibold uppercase tracking-wide transition-colors disabled:opacity-40">
+                  {t('cancel')}
+                </button>
+              </div>
+            </div>
+          ) : (
+            <div className={specLayout}>
+              <Row label={t('campaignType')} value={translateEnum(spec.campaign_type, locale, plat)} />
+              <Row label={t('cta')} value={translateEnum(spec.cta, locale, plat)} />
+              {spec.budget?.daily != null ? (
+                <Row label={t('budget')} value={`${spec.budget.daily} ${spec.budget.currency || 'TRY'}${t('perDay')}`} />
+              ) : null}
+              {spec.conversion_goal ? <Row label={t('conversionGoal')} value={spec.conversion_goal} /> : null}
+              {spec.targeting ? (
+                <Row
+                  label={t('targeting')}
+                  value={[
+                    spec.targeting.locations?.join(', '),
+                    spec.targeting.demographics ? `${spec.targeting.demographics.age_min}-${spec.targeting.demographics.age_max}` : '',
+                    spec.targeting.interests?.slice(0, 3).join(', '),
+                  ].filter(Boolean).join(' · ')}
+                />
+              ) : null}
+              {spec.targeting?.placements?.length ? (
+                <Row label={t('placements')} value={translateEnumList(spec.targeting.placements, locale, plat).join(', ')} />
+              ) : null}
+              {spec.creative?.primary_text ? (
+                <div>
+                  <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{t('primaryText')}</p>
+                  <p className="text-[12px] text-slate-200 leading-relaxed">{spec.creative.primary_text}</p>
+                </div>
+              ) : null}
+              {spec.creative?.headlines?.length ? (
+                <ListBlock label={t('headlines')} items={spec.creative.headlines} tone="blue" />
+              ) : null}
+              {spec.creative?.descriptions?.length ? (
+                <ListBlock label={t('descriptions')} items={spec.creative.descriptions} tone="slate" />
+              ) : null}
+              {spec.creative?.asset_requirements?.format ? (
+                <Row
+                  label={t('assetRequirements')}
+                  value={[spec.creative.asset_requirements.format, spec.creative.asset_requirements.dimensions, spec.creative.asset_requirements.notes].filter(Boolean).join(' · ')}
+                />
+              ) : null}
+              {(payload.compliance_notes?.length || spec.compliance_notes?.length) ? (
+                <div className="pt-1 md:col-span-2">
+                  <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">{t('complianceNotes')}</p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {(payload.compliance_notes ?? spec.compliance_notes ?? []).map((n, i) => (
+                      <span key={i} className="text-[11px] bg-emerald-950/40 text-emerald-300 px-2 py-1 rounded border border-emerald-500/20">{n}</span>
+                    ))}
+                  </div>
+                </div>
+              ) : null}
+            </div>
+          )}
         </div>
       ) : null}
 
@@ -136,6 +219,15 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
         onReject={onReject}
         onUndo={onUndo}
       />
+    </div>
+  )
+}
+
+function EditField({ label, children }: { label: string; children: ReactNode }) {
+  return (
+    <div>
+      <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{label}</p>
+      {children}
     </div>
   )
 }

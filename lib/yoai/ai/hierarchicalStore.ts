@@ -515,6 +515,37 @@ export async function markImprovementPublishError(level: HierLevel, id: string, 
   if (error) console.error(`[HierStore] markPublishError ${level} error:`, error)
 }
 
+/** Reklam ad_spec'ini yayından ÖNCE düzenle (yalnız pending/approved). Kullanıcı düzenlemesi. */
+export async function updateAdImprovementSpec(
+  userId: string,
+  id: string,
+  edit: { headlines?: string[]; descriptions?: string[]; primary_text?: string; cta?: string; daily_budget?: number | null },
+): Promise<boolean> {
+  if (!supabase) return false
+  const { data, error: selErr } = await supabase
+    .from('ad_improvements').select('improvement_payload,status').eq('user_id', userId).eq('id', id).maybeSingle()
+  if (selErr || !data) { if (selErr) console.error('[HierStore] edit select error:', selErr); return false }
+  const row = data as { improvement_payload: Record<string, unknown> | null; status: string }
+  if (row.status !== 'pending' && row.status !== 'approved') return false
+  const payload = { ...((row.improvement_payload ?? {}) as Record<string, unknown>) }
+  const spec = { ...((payload.ad_spec ?? {}) as Record<string, unknown>) }
+  const creative = { ...((spec.creative ?? {}) as Record<string, unknown>) }
+  const budget = { ...((spec.budget ?? {}) as Record<string, unknown>) }
+  if (Array.isArray(edit.headlines)) creative.headlines = edit.headlines.filter((h) => h && h.trim()).map((h) => h.trim())
+  if (Array.isArray(edit.descriptions)) creative.descriptions = edit.descriptions.filter((d) => d && d.trim()).map((d) => d.trim())
+  if (typeof edit.primary_text === 'string') creative.primary_text = edit.primary_text.trim()
+  if (typeof edit.cta === 'string' && edit.cta.trim()) spec.cta = edit.cta.trim()
+  if (edit.daily_budget != null && Number.isFinite(edit.daily_budget)) budget.daily = edit.daily_budget
+  spec.creative = creative
+  spec.budget = budget
+  payload.ad_spec = spec
+  const { error } = await supabase
+    .from('ad_improvements').update({ improvement_payload: payload })
+    .eq('user_id', userId).eq('id', id).in('status', ['pending', 'approved'])
+  if (error) { console.error('[HierStore] edit update error:', error); return false }
+  return true
+}
+
 /* ── UI: hiyerarşik okuma ── */
 export interface AdsetWithAds extends AdsetImprovementRow {
   ads: AdImprovementRow[]

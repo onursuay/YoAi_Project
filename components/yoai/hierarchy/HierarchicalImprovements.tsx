@@ -10,6 +10,7 @@ import { Loader2, Inbox, Sparkles } from 'lucide-react'
 import AccountAlertsBanner from './AccountAlertsBanner'
 import CampaignCard from './CampaignCard'
 import DrilldownModal from './DrilldownModal'
+import type { AdSpecEdit } from './AdCard'
 import type { ImprovementHierarchy, HierLevel } from '@/lib/yoai/ai/hierarchicalStore'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 
@@ -65,6 +66,23 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey 
     }
   }, [fetchData, onApprovePublish])
 
+  const editAd = useCallback(async (id: string, edit: AdSpecEdit) => {
+    setBusyId(id)
+    try {
+      await fetch('/api/yoai/improvements/hierarchy/decision', {
+        method: 'POST',
+        credentials: 'include',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ level: 'ad', id, action: 'edit', edit }),
+      })
+      await fetchData()
+    } catch (e) {
+      console.warn('[HierarchicalImprovements] edit failed:', e)
+    } finally {
+      setBusyId(null)
+    }
+  }, [fetchData])
+
   const modalCampaign = modalCampaignId ? data.campaigns.find((c) => c.id === modalCampaignId) : undefined
 
   return (
@@ -110,6 +128,7 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey 
           campaign={modalCampaign}
           busyId={busyId}
           onDecide={decide}
+          onEditAd={editAd}
           onClose={() => setModalCampaignId(null)}
         />
       )}

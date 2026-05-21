@@ -5,6 +5,7 @@ import {
   rejectImprovement,
   unrejectImprovement,
   markImprovementApplied,
+  updateAdImprovementSpec,
   getImprovementRow,
   type HierLevel,
   type AdImprovementRow,
@@ -50,6 +51,7 @@ export async function POST(request: Request) {
 
     const body = (await request.json().catch(() => ({}))) as {
       level?: string; id?: string; action?: string; reason?: string; publishAuditId?: string
+      edit?: { headlines?: string[]; descriptions?: string[]; primary_text?: string; cta?: string; daily_budget?: number | null }
     }
     const level = body.level as HierLevel
     const { id, action } = body
@@ -81,6 +83,11 @@ export async function POST(request: Request) {
     if (action === 'applied') {
       await markImprovementApplied(level, id, body.publishAuditId ?? null)
       return NextResponse.json({ ok: true })
+    }
+    if (action === 'edit') {
+      if (level !== 'ad') return NextResponse.json({ ok: false, error: 'Düzenleme yalnız reklam için' }, { status: 400 })
+      const ok = await updateAdImprovementSpec(userId, id, body.edit ?? {})
+      return NextResponse.json({ ok })
     }
 
     return NextResponse.json({ ok: false, error: 'Geçersiz action' }, { status: 400 })
