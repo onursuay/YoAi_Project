@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 8: sağlık flip kartları koyu tema
+- **Sorun:** Hesap Sağlık Durumu flip kartları açık yeşil zeminliydi; Geliştirme Kartları gibi koyu tema + beyaz yazı istendi.
+- **Çözüm:** `AccountAlertsBanner` flip yüzleri (ön+arka) → `#0f172a` + emerald radial gradient + `#23314d` border (Geliştirme Kartları ile birebir). Yazılar beyaz (`slate-50`/`slate-200`), önerilen aksiyon `emerald-300`, ikonlar koyu temaya uygun (`red-400`/`emerald-400`/`slate-400`), tap ikonu `emerald-400`. Flip + shimmer + tap animasyonu korundu. `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/AccountAlertsBanner.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 7: ad set kart altı Geri/İleri navigasyonu
 - **Sorun:** Ad set'ten reklamlara nasıl geçileceği net değildi ("Reklamları Gör" yeterince belirgin değil).
 - **Çözüm:** `AdsetCard` kart altı iki butonlu nav — sol **"Geri"** (popup'ı kapat → kampanya), sağ **"İleri (N)"** (bu ad set'in reklamları; reklam yoksa disabled). Ad görünümü geri butonu da "Geri" olarak netleştirildi. `back`/`next` i18n. `build` ✓.
