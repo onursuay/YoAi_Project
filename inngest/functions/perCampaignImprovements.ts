@@ -1,0 +1,364 @@
+/* ──────────────────────────────────────────────────────────
+   Inngest Function: yoalgoritma/campaign-improvements.user (Faz 3)
+
+   Hiyerarşik geliştirme kartları. Tek kullanıcı için:
+     1. fetch      — aktif Meta + Google kampanya ağacı (campaign→adset→ad)
+     2. reconcile  — lifecycle:
+                     • karar verilmiş (approved/applied/rejected) kartı olan
+                       kampanya DONDURULUR (regenerate yok, karar korunur)
+                     • aktif + dondurulmamış kampanyanın pending alt-ağacı
+                       superseded → yeniden üretilir (haftalık tazeleme)
+                     • pasif kampanyanın pending alt-ağacı cancelled
+     3. submit     — kampanya başına 1 Batch API isteği (a kararı)
+     4. poll       — batch ended olana kadar bekle
+     5. persist    — account_alerts + campaign→adset→ad (FK zinciri) yaz
+
+   account_alerts SADECE platformun ilk kampanya isteğinde üretilir.
+   Eski per-ad (ai_ad_improvements) + ai_suggestions akışları ETKİLENMEZ.
+   ────────────────────────────────────────────────────────── */
+
+import { inngest } from '../client'
+import { getAnthropicClient } from '@/lib/anthropic/client'
+import { gatherUserScanInputs, type UserScanInputs } from '@/lib/yoai/ai/scanUser'
+import { buildPerCampaignBatchRequestParams, parsePerCampaignBatchResult } from '@/lib/yoai/ai/perCampaignAgent'
+import type { PerCampaignContext, AccountCampaignSummary } from '@/lib/yoai/ai/perCampaignPrompt'
+import {
+  listRecentCampaignImprovements,
+  listRecentAdsetImprovements,
+  listRecentAdImprovements,
+  supersedePendingCampaignSubtree,
+  cancelPendingCampaignSubtree,
+  supersedePendingAccountAlerts,
+  insertAccountAlert,
+  insertCampaignImprovement,
+  insertAdsetImprovement,
+  insertAdImprovement,
+} from '@/lib/yoai/ai/hierarchicalStore'
+import { translateEnum } from '@/lib/yoai/translations'
+import type { AiPlatform } from '@/lib/yoai/ai/types'
+import type { DeepCampaignInsight } from '@/lib/yoai/analysisTypes'
+
+const POLL_INTERVAL = '60s'
+const MAX_POLLS = 1440 // ~24h (Anthropic batch SLA)
+
+interface ActiveCampaign {
+  platform: 'meta' | 'google'
+  aiPlatform: AiPlatform
+  accountId: string
+  campaign: DeepCampaignInsight
+  key: string
+}
+
+function flattenActiveCampaigns(scanInputs: UserScanInputs): ActiveCampaign[] {
+  const out: ActiveCampaign[] = []
+  for (const data of [scanInputs.meta, scanInputs.google]) {
+    if (!data.connected) continue
+    const platform: 'meta' | 'google' = data.platform === 'Meta' ? 'meta' : 'google'
+    for (const c of data.campaigns) {
+      if (!c.id) continue
+      out.push({
+        platform,
+        aiPlatform: data.platform,
+        accountId: data.accountId ?? '',
+        campaign: c,
+        key: `${platform}:${c.id}`,
+      })
+    }
+  }
+  return out
+}
+
+function sanitizeCustomId(platform: string, campaignId: string): string {
+  return `c_${platform}_${campaignId}`.replace(/[^a-zA-Z0-9_-]/g, '_').slice(0, 64)
+}
+
+export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
+  {
+    id: 'yoalgoritma-per-campaign-improvements',
+    name: 'YoAlgoritma — Hiyerarşik Geliştirme Kartları',
+    concurrency: { limit: 5 },
+    retries: 2,
+    triggers: [{ event: 'yoalgoritma/campaign-improvements.user' }],
+  },
+  async ({ event, step, logger }) => {
+    const userId = String(event.data?.userId ?? '')
+    if (!userId) throw new Error('userId zorunlu')
+
+    // 1) Fetch aktif kampanya ağacı + bağlam
+    const scanInputs = await step.run('fetch-user-data', async () => gatherUserScanInputs(userId))
+    const allCampaigns = flattenActiveCampaigns(scanInputs)
+
+    if (allCampaigns.length === 0) {
+      return { userId, generated: 0, reason: 'no-active-campaigns' }
+    }
+
+    // 2) Reconcile (lifecycle): freeze-on-decision, else weekly refresh
+    const plan = await step.run('reconcile-lifecycle', async () => {
+      const [recentCamp, recentAdset, recentAd] = await Promise.all([
+        listRecentCampaignImprovements(userId, 300),
+        listRecentAdsetImprovements(userId, 1000),
+        listRecentAdImprovements(userId, 1000),
+      ])
+      const decided = new Set(['approved', 'applied', 'rejected_by_user'])
+      const frozen = new Set<string>()
+      const seenCampaignKeys = new Set<string>()
+      const note = (platform: string | null, campaignId: string | null, status: string) => {
+        if (!platform || !campaignId) return
+        const key = `${platform}:${campaignId}`
+        seenCampaignKeys.add(key)
+        if (decided.has(status)) frozen.add(key)
+      }
+      for (const r of recentCamp) note(r.source_platform, r.campaign_id, r.status)
+      for (const r of recentAdset) note(r.source_platform, r.campaign_id, r.status)
+      for (const r of recentAd) note(r.source_platform, r.campaign_id, r.status)
+
+      const activeKeys = new Set(allCampaigns.map((c) => c.key))
+
+      // pasif kampanyaların pending alt-ağacını iptal et
+      let cancelled = 0
+      for (const key of seenCampaignKeys) {
+        if (activeKeys.has(key) || frozen.has(key)) continue
+        const idx = key.indexOf(':')
+        const platform = key.slice(0, idx) as 'meta' | 'google'
+        const campaignId = key.slice(idx + 1)
+        await cancelPendingCampaignSubtree(userId, platform, campaignId, 'Otomatik iptal: kampanya aktif değil')
+        cancelled++
+      }
+
+      // üretilecekler: aktif + dondurulmamış; varsa pending alt-ağacı supersede
+      const generateKeys: string[] = []
+      let superseded = 0
+      for (const c of allCampaigns) {
+        if (frozen.has(c.key)) continue // karar verilmiş kampanya — dokunma
+        if (seenCampaignKeys.has(c.key)) {
+          await supersedePendingCampaignSubtree(userId, c.platform, c.campaign.id)
+          superseded++
+        }
+        generateKeys.push(c.key)
+      }
+      return { cancelled, superseded, generateKeys }
+    })
+
+    const toGenerate = allCampaigns.filter((c) => plan.generateKeys.includes(c.key))
+    logger.info(`[campaign-improvements] ${userId}: aktif=${allCampaigns.length} üretilecek=${toGenerate.length} iptal=${plan.cancelled} superseded=${plan.superseded}`)
+
+    if (toGenerate.length === 0) {
+      return { userId, generated: 0, cancelled: plan.cancelled, superseded: plan.superseded, reason: 'all-frozen' }
+    }
+
+    // Eski hesap uyarılarını supersede (yenileri ilk-kampanya isteğinde gelecek)
+    await step.run('supersede-account-alerts', async () => {
+      await supersedePendingAccountAlerts(userId)
+      return { ok: true }
+    })
+
+    // 3) Kampanya başına 1 batch request; ilk-per-platform → account_alerts üret
+    const summaryByPlatform: Record<'meta' | 'google', AccountCampaignSummary[]> = { meta: [], google: [] }
+    for (const c of allCampaigns) {
+      summaryByPlatform[c.platform].push({
+        name: c.campaign.campaignName,
+        objective_label: translateEnum(c.campaign.objective || c.campaign.channelType, 'tr', c.platform),
+        daily_budget: c.campaign.dailyBudget,
+        spend: c.campaign.metrics.spend,
+        conversions: c.campaign.metrics.conversions,
+      })
+    }
+
+    const customToCampaign = new Map<string, ActiveCampaign>()
+    const firstPerPlatform = new Set<'meta' | 'google'>()
+    const batchRequests: Array<{ custom_id: string; params: ReturnType<typeof buildPerCampaignBatchRequestParams> }> = []
+    for (const c of toGenerate) {
+      const customId = sanitizeCustomId(c.platform, c.campaign.id)
+      if (customToCampaign.has(customId)) continue
+      customToCampaign.set(customId, c)
+      const includeAccountAlerts = !firstPerPlatform.has(c.platform)
+      if (includeAccountAlerts) firstPerPlatform.add(c.platform)
+      const ctx: PerCampaignContext = {
+        platform: c.aiPlatform,
+        accountId: c.accountId,
+        campaign: c.campaign,
+        industry: scanInputs.industry,
+        includeAccountAlerts,
+        accountCampaignsSummary: includeAccountAlerts ? summaryByPlatform[c.platform] : undefined,
+      }
+      const competitorContext = c.aiPlatform === 'Meta' ? scanInputs.competitorContext.meta : scanInputs.competitorContext.google
+      batchRequests.push({
+        custom_id: customId,
+        params: buildPerCampaignBatchRequestParams({ ctx, businessContext: scanInputs.businessContext, competitorContext }),
+      })
+    }
+
+    // 4) Submit batch
+    const batch = await step.run('submit-batch', async () => {
+      const client = getAnthropicClient()
+      const b = await client.messages.batches.create({ requests: batchRequests as any })
+      return { id: b.id }
+    })
+    logger.info(`[campaign-improvements] ${userId}: batch submitted id=${batch.id} requests=${batchRequests.length}`)
+
+    // 5) Poll until ended
+    let ended = false
+    for (let i = 0; i < MAX_POLLS; i++) {
+      await step.sleep(`wait-poll-${i}`, POLL_INTERVAL)
+      const status = await step.run(`poll-${i}`, async () => {
+        const client = getAnthropicClient()
+        const b = await client.messages.batches.retrieve(batch.id)
+        return b.processing_status
+      })
+      if (status === 'ended') { ended = true; break }
+    }
+    if (!ended) throw new Error(`Batch ${batch.id} 24h içinde tamamlanmadı`)
+
+    // 6) Retrieve + persist hiyerarşik (campaign → adset → ad, FK zinciri)
+    const persisted = await step.run('retrieve-and-persist', async () => {
+      const client = getAnthropicClient()
+      const stream = await client.messages.batches.results(batch.id)
+      let alertCount = 0, campaignCount = 0, adsetCount = 0, adCount = 0, alreadyStrong = 0, failed = 0
+      for await (const r of stream) {
+        const c = customToCampaign.get(r.custom_id)
+        if (!c) continue
+        if (r.result?.type !== 'succeeded') { failed++; continue }
+        const model = batchRequests.find((b) => b.custom_id === r.custom_id)?.params.model ?? 'unknown'
+        const { result } = parsePerCampaignBatchResult(r.result.message as any, model, 0, c.campaign.id)
+
+        // account_alerts (yalnızca ilk-per-platform isteğinden gelir)
+        for (const al of result.account_alerts) {
+          const res = await insertAccountAlert({
+            user_id: userId,
+            source_platform: c.platform,
+            alert_type: al.alert_type,
+            severity: al.severity,
+            title: al.title,
+            body: al.body,
+            recommended_action: al.recommended_action,
+            confidence: al.confidence,
+            model,
+            run_id: null,
+          })
+          if (res.ok) alertCount++
+        }
+
+        // campaign improvement
+        const ci = result.campaign_improvement
+        if (!ci) continue
+        const { id: campImpId } = await insertCampaignImprovement({
+          user_id: userId,
+          source_platform: c.platform,
+          campaign_id: c.campaign.id,
+          campaign_name: c.campaign.campaignName,
+          source_campaign_status_snapshot: c.campaign.effectiveStatus || c.campaign.status,
+          current_objective: c.campaign.objective || c.campaign.channelType || null,
+          type_mismatch: ci.type_mismatch,
+          reasoning: ci.reasoning,
+          improvement_payload: {
+            suggestions: ci.suggestions,
+            type_mismatch_alert: ci.type_mismatch_alert,
+            current_objective_label: ci.current_objective_label,
+            recommended_objective_label: ci.recommended_objective_label,
+          },
+          confidence: ci.confidence,
+          publish_mode: 'manual_publish',
+          model,
+        })
+        if (!campImpId) continue
+        campaignCount++
+
+        // ad → adset eşlemesi (AI ad_id döner; ağaçtan adset'i buluruz)
+        const adToAdset = new Map<string, string>()
+        const adsetMetaById = new Map(c.campaign.adsets.map((as) => [as.id, as]))
+        for (const as of c.campaign.adsets) for (const ad of as.ads) adToAdset.set(ad.id, as.id)
+
+        // adset improvements
+        const adsetImpIdByAdsetId = new Map<string, string>()
+        for (const ai of result.adset_improvements) {
+          const asMeta = adsetMetaById.get(ai.adset_id)
+          const { id } = await insertAdsetImprovement({
+            user_id: userId,
+            campaign_improvement_id: campImpId,
+            source_platform: c.platform,
+            campaign_id: c.campaign.id,
+            adset_id: ai.adset_id,
+            adset_name: asMeta?.name ?? null,
+            source_adset_status_snapshot: asMeta?.status ?? null,
+            reasoning: ai.reasoning,
+            improvement_payload: { suggestions: ai.suggestions },
+            confidence: ai.confidence,
+            publish_mode: 'manual_publish',
+            model,
+          })
+          if (id) { adsetImpIdByAdsetId.set(ai.adset_id, id); adsetCount++ }
+        }
+
+        // ad improvements (improve + ad_spec olanlar)
+        for (const adi of result.ad_improvements) {
+          if (adi.keep_or_improve !== 'improve' || !adi.ad_spec) { alreadyStrong++; continue }
+          const adsetId = adToAdset.get(adi.ad_id)
+          let adsetImpId = adsetId ? adsetImpIdByAdsetId.get(adsetId) : undefined
+          // AI bu ad set için öneri vermediyse, FK için minimal bir adset kartı oluştur
+          if (!adsetImpId && adsetId) {
+            const asMeta = adsetMetaById.get(adsetId)
+            const { id } = await insertAdsetImprovement({
+              user_id: userId,
+              campaign_improvement_id: campImpId,
+              source_platform: c.platform,
+              campaign_id: c.campaign.id,
+              adset_id: adsetId,
+              adset_name: asMeta?.name ?? null,
+              source_adset_status_snapshot: asMeta?.status ?? null,
+              reasoning: '',
+              improvement_payload: { suggestions: [] },
+              confidence: 0,
+              publish_mode: 'manual_publish',
+              model,
+            })
+            if (id) { adsetImpId = id; adsetImpIdByAdsetId.set(adsetId, id); adsetCount++ }
+          }
+          if (!adsetImpId) continue // parent yoksa bağlanamaz
+
+          let adMeta: DeepCampaignInsight['adsets'][number]['ads'][number] | undefined
+          for (const as of c.campaign.adsets) {
+            const f = as.ads.find((a) => a.id === adi.ad_id)
+            if (f) { adMeta = f; break }
+          }
+          const res = await insertAdImprovement({
+            user_id: userId,
+            adset_improvement_id: adsetImpId,
+            source_platform: c.platform,
+            campaign_id: c.campaign.id,
+            adset_id: adsetId ?? null,
+            ad_id: adi.ad_id,
+            ad_name: adMeta?.name ?? null,
+            source_ad_status_snapshot: adMeta?.status ?? null,
+            source_creative_hash: adMeta?.creativeHash ?? null,
+            reasoning: adi.reasoning,
+            improvement_payload: {
+              ad_spec: adi.ad_spec,
+              reasoning: adi.reasoning,
+              competitor_comparison: adi.competitor_comparison,
+              compliance_notes: adi.compliance_notes,
+              confidence: adi.confidence,
+            },
+            confidence: adi.confidence,
+            publish_mode: c.platform === 'meta' ? 'auto' : 'manual_publish',
+            model,
+          })
+          if (res.ok) adCount++
+        }
+      }
+      return { alertCount, campaignCount, adsetCount, adCount, alreadyStrong, failed }
+    })
+
+    return {
+      userId,
+      batchId: batch.id,
+      accountAlerts: persisted.alertCount,
+      campaigns: persisted.campaignCount,
+      adsets: persisted.adsetCount,
+      ads: persisted.adCount,
+      alreadyStrong: persisted.alreadyStrong,
+      failed: persisted.failed,
+      cancelled: plan.cancelled,
+      superseded: plan.superseded,
+    }
+  },
+)

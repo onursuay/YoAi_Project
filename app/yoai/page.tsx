@@ -7,7 +7,7 @@ import OptionsCard from '@/components/yoai/OptionsCard'
 import CommandCenterHeader from '@/components/yoai/CommandCenterHeader'
 // HealthOverviewCards removed — stats moved into CommandCenterHeader
 import AdCreationWizard from '@/components/yoai/AdCreationWizard'
-import ImprovementCardGrid from '@/components/yoai/ImprovementCardGrid'
+import HierarchicalImprovements from '@/components/yoai/hierarchy/HierarchicalImprovements'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
@@ -509,8 +509,8 @@ export default function YoAiPage() {
               approvalsPendingCount={approvalsPendingCount}
             />
 
-            {/* Per-Ad Geliştirme Kartları (Faz 2) — generate-ad akışından bağımsız, paralel */}
-            <ImprovementCardGrid
+            {/* YoAlgoritma Geliştirme Kartları (Faz 3) — hiyerarşik drill-down */}
+            <HierarchicalImprovements
               refreshKey={improvementRefreshKey}
               onApprovePublish={(proposal, id) => {
                 setWizardProposal(proposal)
@@ -574,13 +574,16 @@ export default function YoAiPage() {
           connectedPlatforms={ccData?.connectedPlatforms ?? []}
           initialProposal={wizardProposal}
           onPublished={(success) => {
-            if (approvingImprovementId) {
-              fetch(`/api/yoai/improvements/${approvingImprovementId}/applied`, {
+            if (approvingImprovementId && success) {
+              // Faz 3: yayın başarılı → ad improvement kartını applied işaretle
+              fetch('/api/yoai/improvements/hierarchy/decision', {
                 method: 'POST',
                 credentials: 'include',
                 headers: { 'Content-Type': 'application/json' },
-                body: JSON.stringify({ success }),
+                body: JSON.stringify({ level: 'ad', id: approvingImprovementId, action: 'applied' }),
               }).catch(() => {}).finally(() => setImprovementRefreshKey((k) => k + 1))
+            } else {
+              setImprovementRefreshKey((k) => k + 1)
             }
           }}
         />

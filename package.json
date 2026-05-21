@@ -12,6 +12,7 @@
     "db:migrate:strategy": "node scripts/apply-strategy-migrations.mjs",
     "db:migrate:ai-engine": "node scripts/apply-ai-engine-migration.mjs",
     "db:migrate:per-ad": "node scripts/apply-per-ad-improvements-migration.mjs",
+    "db:migrate:hierarchical": "node scripts/apply-hierarchical-improvements-migration.mjs",
     "verify:google-ads": "node scripts/verify-google-ads-prod.mjs",
     "pmax:smoke": "node scripts/pmax-smoke-test.mjs",
     "search:isolation": "node scripts/search-isolation-check.mjs"

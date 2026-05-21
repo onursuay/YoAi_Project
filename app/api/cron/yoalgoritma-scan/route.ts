@@ -91,15 +91,16 @@ export async function GET(request: Request) {
   const ids = Array.from(userIds)
   // Hesap-geneli scan (ai_suggestions — paralel korunur)
   const scanEvents = ids.map(userId => ({ name: 'yoalgoritma/scan.user' as const, data: { userId } }))
-  // Per-ad improvement cards (Faz 2 — ai_ad_improvements)
-  const improvementEvents = ids.map(userId => ({ name: 'yoalgoritma/improvements.user' as const, data: { userId } }))
-  await inngest.send([...scanEvents, ...improvementEvents])
+  // Faz 3: hiyerarşik geliştirme kartları (per-ad yerine — çift maliyet olmasın).
+  // Eski per-ad function kayıtlı kalır (rollback) ama cron artık onu tetiklemez.
+  const campaignEvents = ids.map(userId => ({ name: 'yoalgoritma/campaign-improvements.user' as const, data: { userId } }))
+  await inngest.send([...scanEvents, ...campaignEvents])
 
   return NextResponse.json({
     ok: true,
     mode: 'inngest',
     users: userIds.size,
-    message: `${userIds.size} kullanıcı için scan + per-ad improvement event'i gönderildi`,
+    message: `${userIds.size} kullanıcı için scan + hiyerarşik geliştirme event'i gönderildi`,
   })
 }
 
@@ -125,6 +126,9 @@ export async function POST() {
     return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
   }
 
-  await inngest.send({ name: 'yoalgoritma/scan.user', data: { userId } })
+  await inngest.send([
+    { name: 'yoalgoritma/scan.user', data: { userId } },
+    { name: 'yoalgoritma/campaign-improvements.user', data: { userId } },
+  ])
   return NextResponse.json({ ok: true, mode: 'inngest', userId })
 }

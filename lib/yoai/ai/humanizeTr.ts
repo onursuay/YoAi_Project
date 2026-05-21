@@ -1,61 +1,31 @@
 /* ──────────────────────────────────────────────────────────
-   YoAlgoritma — Türkçe humanize katmanı (Faz 2)
+   YoAlgoritma — Türkçe humanize katmanı (Faz 2 → Faz 3)
 
-   AI ad_spec değerleri + serbest metin bazen İngilizce/teknik enum
-   içerebiliyor (Engagement, Send WhatsApp Message, OUTCOME_ENGAGEMENT…).
-   Bu katman kullanıcıya gösterilmeden önce Türkçeleştirir.
-   (Asıl çözüm prompt'ta — bu mevcut kartlar için güvenlik ağı.)
+   Faz 3'te enum çevirisi tek merkeze taşındı:
+   lib/yoai/translations (bilingual: tr + en). Bu dosya geriye dönük
+   uyumluluk için korunur — aynı export imzaları, ama artık merkezi
+   translateEnum'a delege eder (her zaman 'tr' döner).
+
+   Locale-aware gösterim için doğrudan translateEnum(value, locale)
+   kullan. cleanEnumsInText, serbest metindeki ham token'lar için
+   güvenlik ağı olarak burada kalır.
    ────────────────────────────────────────────────────────── */
 
-function norm(v: string): string {
-  return v.replace(/^OUTCOME_/i, '').replace(/_/g, ' ').trim().toLowerCase()
-}
-
-const CAMPAIGN_TYPE_TR: Record<string, string> = {
-  engagement: 'Etkileşim', etkileşim: 'Etkileşim',
-  sales: 'Satış', satış: 'Satış', conversions: 'Dönüşüm', conversion: 'Dönüşüm', 'dönüşüm': 'Dönüşüm',
-  leads: 'Potansiyel Müşteri', lead: 'Potansiyel Müşteri', potansiyel: 'Potansiyel Müşteri', 'lead generation': 'Potansiyel Müşteri',
-  traffic: 'Trafik', trafik: 'Trafik',
-  awareness: 'Bilinirlik', bilinirlik: 'Bilinirlik', reach: 'Erişim', 'erişim': 'Erişim',
-  'app promotion': 'Uygulama Tanıtımı', app: 'Uygulama Tanıtımı',
-  messages: 'Mesajlaşma', messaging: 'Mesajlaşma',
-}
+import { translateEnum } from '@/lib/yoai/translations'
 
 export function humanizeCampaignType(v?: string | null): string {
   if (!v) return '—'
-  const key = norm(v)
-  if (CAMPAIGN_TYPE_TR[key]) return CAMPAIGN_TYPE_TR[key]
-  // Google türleri + bilinmeyenler — olduğu gibi (Performance Max, Search…)
-  return v.trim()
-}
-
-const CTA_TR: Record<string, string> = {
-  'send whatsapp message': 'WhatsApp Mesajı Gönder', 'whatsapp message': 'WhatsApp Mesajı Gönder', whatsapp: 'WhatsApp Mesajı Gönder',
-  'send message': 'Mesaj Gönder', message: 'Mesaj Gönder', messages: 'Mesaj Gönder',
-  'learn more': 'Daha Fazla Bilgi', 'shop now': 'Hemen Alışveriş Yap', 'sign up': 'Kayıt Ol', subscribe: 'Abone Ol',
-  'contact us': 'Bize Ulaşın', 'get quote': 'Teklif Al', 'apply now': 'Hemen Başvur',
-  'book now': 'Rezervasyon Yap', 'book travel': 'Rezervasyon Yap', download: 'İndir',
-  'call now': 'Hemen Ara', 'get offer': 'Teklifi Gör', 'order now': 'Hemen Sipariş Ver',
-  'get directions': 'Yol Tarifi Al', 'see menu': 'Menüyü Gör', 'buy now': 'Hemen Satın Al',
-  'request time': 'Randevu Al', 'get showtimes': 'Seans Saatlerini Gör',
+  return translateEnum(v, 'tr')
 }
 
 export function humanizeCta(v?: string | null): string {
   if (!v) return '—'
-  const key = norm(v)
-  return CTA_TR[key] ?? v.trim()
-}
-
-const PLACEMENT_TR: Record<string, string> = {
-  'advantage+ placements': 'Advantage+ Otomatik Yerleşimler',
-  'advantage placements': 'Advantage+ Otomatik Yerleşimler',
-  'automatic placements': 'Otomatik Yerleşimler',
-  'manual placements': 'Manuel Yerleşimler',
+  return translateEnum(v, 'tr')
 }
 
 export function humanizePlacement(v?: string | null): string {
   if (!v) return ''
-  return PLACEMENT_TR[v.trim().toLowerCase()] ?? v.trim()
+  return translateEnum(v, 'tr')
 }
 
 // Serbest metinde geçen ham teknik token'ları Türkçeleştir (gerekçe, uygunluk, rakip)
