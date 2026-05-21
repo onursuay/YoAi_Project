@@ -16,6 +16,16 @@ export const STATUS_CLS: Record<string, string> = {
   superseded: 'bg-slate-700/50 text-slate-400',
 }
 
+/** Adları Title Case'e çevir (Türkçe duyarlı). "6 SET // 28 EKİM 2025" → "6 Set // 28 Ekim 2025". */
+export function titleCaseTr(s?: string | null): string {
+  if (!s || !s.trim()) return '—'
+  return s
+    .trim()
+    .split(/\s+/)
+    .map((w) => (w ? w.slice(0, 1).toLocaleUpperCase('tr-TR') + w.slice(1).toLocaleLowerCase('tr-TR') : w))
+    .join(' ')
+}
+
 /** Platform logosu (yazı değil ikon). Meta = mavi "f", Google = çok-renkli "G". */
 export function PlatformBadge({ platform }: { platform: 'meta' | 'google' | null }) {
   if (platform === 'meta') {
@@ -77,7 +87,7 @@ export function ListBlock({ label, items, tone = 'slate' }: { label: string; ite
 
 export function SuggestionList({ label, suggestions, columns = 1 }: { label: string; suggestions: Array<{ title: string; detail: string }>; columns?: number }) {
   if (!suggestions?.length) return null
-  const grid = columns >= 3 ? 'md:grid-cols-3' : columns === 2 ? 'md:grid-cols-2' : ''
+  const grid = columns >= 3 ? 'sm:grid-cols-2 xl:grid-cols-3' : columns === 2 ? 'sm:grid-cols-2' : ''
   return (
     <div>
       <p className="text-[11px] text-emerald-300/90 font-semibold uppercase tracking-wider mb-1.5">{label}</p>

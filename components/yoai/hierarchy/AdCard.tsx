@@ -5,7 +5,7 @@
 
 import { useTranslations, useLocale } from 'next-intl'
 import HierCardActions from './HierCardActions'
-import { PlatformBadge, StatusBadge, Row, ListBlock } from './shared'
+import { PlatformBadge, StatusBadge, Row, ListBlock, titleCaseTr } from './shared'
 import { translateEnum, translateEnumList } from '@/lib/yoai/translations'
 import type { AdImprovementRow } from '@/lib/yoai/ai/hierarchicalStore'
 import type { AdSpec } from '@/lib/yoai/ai/types'
@@ -50,7 +50,7 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
 
       <div className="px-4 pb-1.5 relative">
         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('adLevel')}</p>
-        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{ad.ad_name || '—'}</p>
+        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{titleCaseTr(ad.ad_name)}</p>
       </div>
 
       {payload.reasoning ? (

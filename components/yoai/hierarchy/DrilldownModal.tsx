@@ -9,6 +9,7 @@ import { useTranslations, useLocale } from 'next-intl'
 import { X, ChevronLeft, ChevronRight, Megaphone, Layers } from 'lucide-react'
 import AdsetCard from './AdsetCard'
 import AdCard from './AdCard'
+import { titleCaseTr } from './shared'
 import { translateEnum } from '@/lib/yoai/translations'
 import type { CampaignWithChildren, HierLevel } from '@/lib/yoai/ai/hierarchicalStore'
 
@@ -51,7 +52,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
                 </>
               )}
             </div>
-            <h3 className="text-[17px] font-semibold text-slate-50 leading-snug mt-1.5 truncate">{campaign.campaign_name || '—'}</h3>
+            <h3 className="text-[17px] font-semibold text-slate-50 leading-snug mt-1.5 truncate">{titleCaseTr(campaign.campaign_name)}</h3>
             <p className="text-[12px] text-slate-400 mt-0.5">{t('currentType')}: <span className="text-slate-200">{curType}</span></p>
           </div>
           <button onClick={onClose} className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors" aria-label="Kapat">
@@ -87,7 +88,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onClose }: 
               <button onClick={() => setAdsetId(null)} className="inline-flex items-center gap-1 mb-3 text-[13px] text-emerald-300 hover:text-emerald-200">
                 <ChevronLeft className="w-4 h-4" /> {t('adsetLevel')}
               </button>
-              <p className="text-[15px] text-slate-50 font-semibold mb-3">{adset.adset_name} <span className="text-slate-400 font-normal">— {t('adLevel')} ({adset.ads.length})</span></p>
+              <p className="text-[15px] text-slate-50 font-semibold mb-3">{titleCaseTr(adset.adset_name)} <span className="text-slate-400 font-normal">— {t('adLevel')} ({adset.ads.length})</span></p>
               {adset.ads.length === 0 ? (
                 <p className="text-center py-8 text-[13px] text-slate-400">{t('emptyDrilldown')}</p>
               ) : (

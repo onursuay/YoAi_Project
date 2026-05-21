@@ -6,7 +6,7 @@
 
 import { useTranslations } from 'next-intl'
 import { ChevronRight } from 'lucide-react'
-import { PlatformBadge, StatusBadge, SuggestionList } from './shared'
+import { PlatformBadge, StatusBadge, SuggestionList, titleCaseTr } from './shared'
 import type { AdsetWithAds } from '@/lib/yoai/ai/hierarchicalStore'
 
 interface Suggestion { title: string; detail: string }
@@ -37,7 +37,7 @@ export default function AdsetCard({ adset, horizontal, onDrillDown }: Props) {
 
       <div className="px-4 pb-1.5 relative">
         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('adsetLevel')}</p>
-        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{adset.adset_name || '—'}</p>
+        <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{titleCaseTr(adset.adset_name)}</p>
       </div>
 
       {adset.reasoning ? (

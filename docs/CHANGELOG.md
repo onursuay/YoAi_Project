@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 4: simetrik kampanya kartı + Title Case adlar
+- **Sorun:** Kampanya kartı simetrik değildi (gerekçe solda / öneriler sağda yan yana); kimlik dağınık; UYGULA butonu büyük; adlar tamamı BÜYÜK harf ("TRAFFİK").
+- **Çözüm:** Üst **hafif kutu** tek satır → `logo+durum | Kampanya: … | Kampanya Türü: … | Güven Skoru: %… | UYGULA` (buton küçültüldü: `px-4 py-1.5`). Gövde simetrik dik akış: **AI Gerekçesi tam genişlik üstte**, altında **Öneriler yan yana kart grid'i** (responsive 1/2/3 kolon). `titleCaseTr` (Türkçe duyarlı, `tr-TR` locale) → tüm adlar **Title Case**: "6 SET // 28 EKİM 2025 // TRAFFİK" → "6 Set // 28 Ekim 2025 // Traffik" (kampanya/ad set/reklam + modal başlıkları). `build` ✓.
+- **Dosyalar:** `components/yoai/hierarchy/{shared,CampaignCard,AdsetCard,AdCard,DrilldownModal}.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — YoAlgoritma Faz 3 · UI cila 3: yatay kampanya kartı + buton sadeleştirme + ortalı flip başlık
 - **Sorun:** (a) flip kart başlıkları sola yaslı + içinde "—" çizgisi; (b) Onayla/Reddet **hem kampanya kartında hem drill-down'da** (çift) ve kampanya Onayla'sı yayınlamıyordu; (c) alt başlık metni gereksiz; (d) kampanya kartları **çok uzun (dik)**, buton "Ad Set'leri Gör" yerine **"UYGULA"** istendi.
 - **Çözüm:** `AccountAlertsBanner` ön yüz **simetrik** (ikon üst · başlık merkez · ipucu alt) + başlıktaki "—" cümle ayırıcıya çevrildi (`tidyTitle`). Onayla/Reddet/Yayınla **yalnız reklam (ad) kartında** — kampanya + ad set kartlarından kaldırıldı (çift buton + "yayınlamıyor" şikayeti giderildi; yayın doğrudan reklam kartından). Kampanya kartı **yatay tam-genişlik** (üstte kimlik + **UYGULA** butonu; altında gerekçe | öneriler yan yana 2-kolon; tür uyumsuzluğu tam-genişlik şerit) → çok daha kısa. Grid tek kolon. Alt başlık metni kaldırıldı. `apply` (UYGULA/APPLY) i18n. Popup (drill-down) **aynı**. `build` ✓.
