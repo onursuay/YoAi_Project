@@ -1982,7 +1982,7 @@
       "hierarchy": {
         "title": "YoAlgorithm Improvement Cards",
         "subtitle": "AI suggestions across account → campaign → ad set → ad",
-        "alertsTitle": "Account Health Alerts",
+        "alertsTitle": "Account Health Status",
         "breadcrumbAll": "All",
         "campaignLevel": "Campaign",
         "adsetLevel": "Ad Set",

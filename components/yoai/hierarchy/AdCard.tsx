@@ -1,8 +1,8 @@
 'use client'
 
-/* SEVİYE 3 — Reklam kartı (Faz 3).
-   Önerilen reklam (ad_spec) TÜM detaylarıyla AÇIK gelir (collapse YOK).
-   Onayla/Yayınla → mevcut AdCreationWizard. Enum'lar locale'e çevrilir. */
+/* SEVİYE 3 — Reklam kartı (Faz 3). Modal içinde gösterilir.
+   Önerilen reklam (ad_spec) TÜM detaylarıyla AÇIK. Onayla/Yayınla → sihirbaz.
+   Platform logosu (ikon), büyütülmüş yazılar, enum'lar locale'e çevrilir. */
 
 import { useTranslations, useLocale } from 'next-intl'
 import HierCardActions from './HierCardActions'
@@ -39,38 +39,38 @@ export default function AdCard({ ad, busy, onApprove, onPublish, onReject, onUnd
     <div className="relative text-left w-full rounded-2xl overflow-hidden border bg-[#0f172a] border-[#23314d] shadow-md flex flex-col h-full transition-all duration-200 hover:border-emerald-400/40">
       <div className="absolute inset-0 pointer-events-none rounded-2xl bg-[radial-gradient(circle_at_20%_20%,rgba(16,185,129,0.07),transparent_60%)]" />
 
-      <div className="flex items-center justify-between px-4 pt-3 pb-1 relative">
+      <div className="flex items-center justify-between px-4 pt-3.5 pb-1.5 relative">
         <div className="flex items-center gap-2">
           <PlatformBadge platform={plat} />
           <StatusBadge status={ad.status} />
         </div>
-        <span className="text-[11px] text-slate-300">%{confidence} {t('confidence').toLowerCase()}</span>
+        <span className="text-[12px] text-slate-300">%{confidence} {t('confidence').toLowerCase()}</span>
       </div>
 
-      <div className="px-4 pb-1 relative">
-        <p className="text-[9px] text-slate-400 uppercase tracking-wider">{t('adLevel')}</p>
-        <p className="text-sm text-slate-100 font-semibold leading-snug">{ad.ad_name || '—'}</p>
+      <div className="px-4 pb-1.5 relative">
+        <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('adLevel')}</p>
+        <p className="text-[16px] text-slate-50 font-semibold leading-snug mt-0.5">{ad.ad_name || '—'}</p>
       </div>
 
       {payload.reasoning ? (
-        <div className="mx-4 mb-2 relative">
-          <p className="text-[9px] text-indigo-300 uppercase tracking-wider font-medium mb-1">{t('reasoning')}</p>
-          <p className="text-[11px] text-slate-300 leading-relaxed">{payload.reasoning}</p>
+        <div className="mx-4 mb-2.5 relative">
+          <p className="text-[11px] text-indigo-300 uppercase tracking-wider font-semibold mb-1">{t('reasoning')}</p>
+          <p className="text-[13px] text-slate-200 leading-relaxed">{payload.reasoning}</p>
         </div>
       ) : null}
 
       {payload.competitor_comparison ? (
-        <div className="mx-4 mb-3 bg-slate-800/50 border border-slate-700/40 rounded-lg px-3 py-2 relative">
-          <p className="text-[9px] text-slate-400 font-medium mb-0.5">{t('competitorComparison')}</p>
-          <p className="text-[10px] text-slate-200 leading-relaxed">{payload.competitor_comparison}</p>
+        <div className="mx-4 mb-3 bg-slate-800/50 border border-slate-700/40 rounded-lg px-3 py-2.5 relative">
+          <p className="text-[11px] text-slate-400 font-semibold mb-1 uppercase tracking-wider">{t('competitorComparison')}</p>
+          <p className="text-[12px] text-slate-200 leading-relaxed">{payload.competitor_comparison}</p>
         </div>
       ) : null}
 
       {/* Önerilen reklam — TÜM detaylar AÇIK (collapse yok) */}
       {spec ? (
         <div className="px-4 pb-2 flex-1 relative">
-          <p className="text-[10px] text-emerald-300 font-medium mb-1.5">{t('improvedAd')}</p>
-          <div className="space-y-2 text-[11px]">
+          <p className="text-[12px] text-emerald-300 font-semibold mb-2 uppercase tracking-wider">{t('improvedAd')}</p>
+          <div className="space-y-2.5">
             <Row label={t('campaignType')} value={translateEnum(spec.campaign_type, locale, plat)} />
             <Row label={t('cta')} value={translateEnum(spec.cta, locale, plat)} />
             {spec.budget?.daily != null ? (
@@ -92,8 +92,8 @@ export default function AdCard({ ad, busy, onApprove, onPublish, onReject, onUnd
             ) : null}
             {spec.creative?.primary_text ? (
               <div>
-                <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-1">{t('primaryText')}</p>
-                <p className="text-[11px] text-slate-200 leading-relaxed">{spec.creative.primary_text}</p>
+                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{t('primaryText')}</p>
+                <p className="text-[13px] text-slate-200 leading-relaxed">{spec.creative.primary_text}</p>
               </div>
             ) : null}
             {spec.creative?.headlines?.length ? (
@@ -110,10 +110,10 @@ export default function AdCard({ ad, busy, onApprove, onPublish, onReject, onUnd
             ) : null}
             {(payload.compliance_notes?.length || spec.compliance_notes?.length) ? (
               <div className="pt-1">
-                <p className="text-[9px] text-slate-400 font-medium uppercase tracking-wider mb-1">{t('complianceNotes')}</p>
-                <div className="flex flex-wrap gap-1">
+                <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1.5">{t('complianceNotes')}</p>
+                <div className="flex flex-wrap gap-1.5">
                   {(payload.compliance_notes ?? spec.compliance_notes ?? []).map((n, i) => (
-                    <span key={i} className="text-[9px] bg-emerald-950/40 text-emerald-300 px-1.5 py-0.5 rounded border border-emerald-500/20">{n}</span>
+                    <span key={i} className="text-[11px] bg-emerald-950/40 text-emerald-300 px-2 py-1 rounded border border-emerald-500/20">{n}</span>
                   ))}
                 </div>
               </div>
