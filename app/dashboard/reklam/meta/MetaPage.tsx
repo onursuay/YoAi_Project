@@ -2515,7 +2515,6 @@ export default function MetaPage() {
     { id: 'reklamlar', label: t('tabs.ads') },
   ]
 
-  const mockChartData = useMemo(() => Array.from({ length: 10 }, () => Math.random() * 100 + 50), [])
   // Single source of truth: account status. metaLoaded = hydrated (account selection ready to evaluate).
   const metaLoaded = hydrated
   const hasSelectedAccount = !!selectedAdAccountId

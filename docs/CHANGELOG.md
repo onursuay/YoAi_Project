@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-21 — Sahte-veri temizliği: Meta ölü mock grafik + Tasarım/Görsel mock sayfası
+- **Sorun:** Proje genelinde "hiçbir alan sahte olamaz" ilkesi gereği tarama yapıldı. İki gerçek sahte-veri noktası bulundu: (1) `MetaPage.tsx`'te `mockChartData = Math.random()*100+50` — kullanılmayan ölü kod ama yine de uydurma; (2) `app/dashboard/tasarim/gorsel/page.tsx` baştan sona **mock sayfa** (sabit Unsplash stok foto galerisi + `setTimeout` ile sahte üretim + rastgele Unsplash URL + sahte `useState(100)` kredi).
+- **Çözüm:** (1) MetaPage'teki kullanılmayan `mockChartData` satırı kaldırıldı (Meta entegrasyon mantığına dokunulmadı). (2) Orphan mock gorsel sayfası — hiçbir menüden linkli değildi; gerçek tasarım stüdyosu zaten `/tasarim`'de (gerçek fal.ai üretimi + gerçek kredi + AccessRequiredModal) ve ana menü oraya linkliyor — gerçek `/tasarim`'e **redirect** ile değiştirildi. `tsc` ✓.
+- **Dosyalar:** `app/dashboard/reklam/meta/MetaPage.tsx`, `app/dashboard/tasarim/gorsel/page.tsx`, `docs/CHANGELOG.md`
+
 ## 2026-05-21 — Strateji · SAHTE metrikler kaldırıldı, GERÇEK Meta verisine bağlandı (K1)
 - **Sorun:** Strateji `runPullMetricsJob` performans metriklerini (spend, clicks, impressions, conversions, roas, cpa, ctr) `Math.random()` ile **uyduruyordu**. Aylık abonelik olarak satılan üründe sahte metrik kabul edilemez.
 - **Çözüm:** Job artık bağlı Meta hesabının **gerçek son-7-gün hesap-geneli insights**'ını çekiyor (`metaGraphFetch('/{account}/insights', date_preset=last_7d)` + `normalizeInsights`; Meta entegrasyon kodu değiştirilmedi). Token **instance'ın kendi `user_id`'sinden** çözülür (`getMetaConnection`) — ambient cookie'ye bakılmaz, çapraz-kullanıcı sızıntısı engellenir. Gerçek veri yoksa (Meta bağlantısı yok / son 7 günde aktivite yok) **snapshot yazılmaz**, uydurma yapılmaz — UI boş durum gösterir. Gerçek veri çekilince optimize job zincirlenir. Kullanılmayan `getInstanceBudget` ölü kodu kaldırıldı. `tsc` ✓.
