@@ -1,15 +1,21 @@
 'use client'
 
 /* SEVİYE 0 — Hesap Sağlık Durumu (account_alerts) — FLIP-BOX kartlar (Faz 3 UI).
-   Ön yüz SİMETRİK: ikon üstte, başlık ortada, altta tıklama animasyonlu tap ikonu (yazı yok).
-   Başlıktaki "—" cümleye çevrilir. Hover → 180° döner, detay görünür.
-   Etrafında dönen shimmer ışık. Açık yeşil zemin, koyu yazı. */
+   Koyu tema (Geliştirme Kartları ile aynı: #0f172a + emerald radial + #23314d),
+   BEYAZ yazı, koyu temaya uygun ikon renkleri.
+   Ön yüz simetrik: ikon üst · başlık ortada · animasyonlu tap ikonu alt (yazı yok).
+   Hover → 180° döner, detay görünür. Etrafında dönen shimmer ışık. */
 
 import { useTranslations } from 'next-intl'
 import { Activity, AlertOctagon, AlertTriangle, Info, Pointer } from 'lucide-react'
 import type { AccountAlertRow } from '@/lib/yoai/ai/hierarchicalStore'
 
 const SEVERITY_ORDER: Record<string, number> = { critical: 0, high: 1, medium: 2, info: 3 }
+
+const FACE_STYLE = {
+  backgroundColor: '#0f172a',
+  backgroundImage: 'radial-gradient(circle at 20% 20%, rgba(16,185,129,0.10), transparent 60%)',
+}
 
 /** Başlıktaki ayırıcı "—"/"–" tireyi cümleye çevir; sonuna nokta koy. */
 function tidyTitle(s: string): string {
@@ -58,22 +64,22 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
         {sorted.map((a) => {
           const isCritical = a.severity === 'critical' || a.severity === 'high'
           const Icon = isCritical ? AlertOctagon : a.severity === 'medium' ? AlertTriangle : Info
-          const iconCls = isCritical ? 'text-red-600' : a.severity === 'medium' ? 'text-emerald-700' : 'text-slate-500'
+          const iconCls = isCritical ? 'text-red-400' : a.severity === 'medium' ? 'text-emerald-400' : 'text-slate-400'
           return (
             <div key={a.id} className="yoai-flip h-52 relative">
               <div className="yoai-shimmer" aria-hidden="true" />
               <div className="yoai-flip-inner">
                 {/* ÖN YÜZ — ikon üst · başlık merkez · animasyonlu tap ikonu alt */}
-                <div className="yoai-face bg-gradient-to-br from-emerald-50 via-green-50 to-emerald-100 border border-emerald-200 p-4 flex flex-col items-center text-center">
+                <div className="yoai-face border border-[#23314d] p-4 flex flex-col items-center text-center" style={FACE_STYLE}>
                   <Icon className={`w-6 h-6 ${iconCls}`} />
-                  <p className="text-[15px] font-bold text-slate-900 leading-snug flex-1 flex items-center justify-center px-1">{tidyTitle(a.title)}</p>
-                  <Pointer className="yoai-tap w-7 h-7 text-emerald-600" aria-label={t('flipHint')} />
+                  <p className="text-[15px] font-bold text-slate-50 leading-snug flex-1 flex items-center justify-center px-1">{tidyTitle(a.title)}</p>
+                  <Pointer className="yoai-tap w-7 h-7 text-emerald-400" aria-label={t('flipHint')} />
                 </div>
                 {/* ARKA YÜZ — detay (hover) */}
-                <div className="yoai-face yoai-back bg-gradient-to-br from-emerald-100 via-green-50 to-emerald-50 border border-emerald-200 p-4 flex flex-col">
-                  <p className="text-[12px] text-slate-800 leading-relaxed overflow-y-auto flex-1">{a.body}</p>
+                <div className="yoai-face yoai-back border border-[#23314d] p-4 flex flex-col" style={FACE_STYLE}>
+                  <p className="text-[12px] text-slate-200 leading-relaxed overflow-y-auto flex-1">{a.body}</p>
                   {a.recommended_action ? (
-                    <p className="text-[12px] text-emerald-900 font-semibold leading-relaxed mt-2 shrink-0">→ {a.recommended_action}</p>
+                    <p className="text-[12px] text-emerald-300 font-semibold leading-relaxed mt-2 shrink-0">→ {a.recommended_action}</p>
                   ) : null}
                 </div>
               </div>
