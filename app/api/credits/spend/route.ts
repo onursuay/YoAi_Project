@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getCurrentUser } from '@/lib/billing/user'
-import { spendCreditsServer } from '@/lib/billing/db'
+import { spendCreditsServer, getCreditBalance } from '@/lib/billing/db'
+import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -12,6 +13,16 @@ export async function POST(request: Request) {
   const body = await request.json().catch(() => ({}))
   const amount = Math.max(1, Math.floor(Number(body?.amount) || 0))
   if (!amount) return NextResponse.json({ ok: false, error: 'invalid_amount' }, { status: 400 })
+
+  // Owner / süper admin: kredi DÜŞÜLMEZ (proje geneli bypass kuralı). Mevcut
+  // bakiye değişmeden döner — tüm ücretli alanlarda tutarlı owner davranışı.
+  if (isSuperAdminEmail(user.email)) {
+    const owner = await getCreditBalance(user.id)
+    return NextResponse.json({
+      ok: true,
+      credits: { balance: owner.balance, totalEarned: owner.total_earned, totalSpent: owner.total_spent },
+    })
+  }
 
   const row = await spendCreditsServer(user.id, amount)
   if (!row) return NextResponse.json({ ok: false, error: 'insufficient_credits' }, { status: 402 })

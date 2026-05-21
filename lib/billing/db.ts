@@ -35,7 +35,28 @@ export interface CreditRow {
 export async function getSubscription(userId: string): Promise<SubscriptionRow | null> {
   const db = requireClient()
   const { data } = await db.from('subscriptions').select('*').eq('user_id', userId).maybeSingle()
-  return (data as SubscriptionRow) ?? null
+  if (!data) return null
+  const sub = data as SubscriptionRow
+
+  // Lazy expiry: süresi/denemesi geçmiş abonelik 'expired'a çevrilir (kalıcı).
+  // Tüm okuyucular (billing/current, serverGuard) buradan geçtiği için erişim
+  // kontrolü tek noktadan doğru olur. Otomatik yenileme devreye girdiğinde
+  // renewal current_period_end'i ileri taşıyacağı için bu tetiklenmez.
+  const now = Date.now()
+  const periodEnded = !!sub.current_period_end && new Date(sub.current_period_end).getTime() < now
+  const trialEnded = !!sub.trial_end_date && new Date(sub.trial_end_date).getTime() < now
+  const shouldExpire =
+    (sub.status === 'active' && periodEnded) ||
+    (sub.status === 'trial' && (trialEnded || periodEnded))
+
+  if (shouldExpire) {
+    await db.from('subscriptions')
+      .update({ status: 'expired', updated_at: new Date().toISOString() })
+      .eq('user_id', userId)
+      .in('status', ['active', 'trial'])
+    return { ...sub, status: 'expired' }
+  }
+  return sub
 }
 
 export async function getCreditBalance(userId: string): Promise<CreditRow> {
@@ -61,7 +82,21 @@ export async function getCreditBalance(userId: string): Promise<CreditRow> {
 export async function applySubscriptionPurchase(userId: string, priced: PricedSubscription): Promise<void> {
   const db = requireClient()
   const now = new Date()
-  const periodEnd = new Date(now.getTime() + priced.periodDays * 86_400_000).toISOString()
+
+  // Yenilemede kalan günleri kaybetme: hâlâ aktif ve süresi dolmamışsa yeni
+  // dönemi mevcut dönem sonundan uzat; aksi halde şimdiden başlat.
+  const { data: existing } = await db
+    .from('subscriptions')
+    .select('status, current_period_end')
+    .eq('user_id', userId)
+    .maybeSingle()
+
+  let baseMs = now.getTime()
+  if (existing?.status === 'active' && existing.current_period_end) {
+    const end = new Date(existing.current_period_end).getTime()
+    if (end > baseMs) baseMs = end
+  }
+  const periodEnd = new Date(baseMs + priced.periodDays * 86_400_000).toISOString()
 
   await db.from('subscriptions').upsert({
     user_id: userId,
@@ -76,60 +111,43 @@ export async function applySubscriptionPurchase(userId: string, priced: PricedSu
   }, { onConflict: 'user_id' })
 
   if (priced.bundledCredits > 0) {
-    await addCreditsServer(userId, priced.bundledCredits)
+    await addCreditsServer(userId, priced.bundledCredits, 'bundled')
   }
 }
 
-export async function addCreditsServer(userId: string, amount: number): Promise<CreditRow> {
-  const current = await getCreditBalance(userId)
+// Kredi mutasyonları DB tarafında ATOMİKtir (RPC). JS'te oku-değiştir-yaz
+// YASAK — eşzamanlı işlemde lost update / çift harcamaya yol açar.
+// getCreditBalance önce çağrılır: yeni kullanıcı için 100-hoşgeldin satırını
+// idempotent garanti eder (RPC'ler satır varlığına güvenir).
+
+export async function addCreditsServer(userId: string, amount: number, reason = 'grant'): Promise<CreditRow> {
   const db = requireClient()
-  const { data, error } = await db
-    .from('credit_balances')
-    .update({
-      balance: current.balance + amount,
-      total_earned: current.total_earned + amount,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .select('*')
-    .single()
+  await getCreditBalance(userId)
+  const { data, error } = await db.rpc('add_credits', { p_user_id: userId, p_amount: amount, p_reason: reason })
   if (error) throw error
-  return data as CreditRow
+  const row = (Array.isArray(data) ? data[0] : data) as CreditRow | undefined
+  if (!row) throw new Error('ADD_CREDITS_FAILED')
+  return row
 }
 
-export async function spendCreditsServer(userId: string, amount: number): Promise<CreditRow | null> {
-  const current = await getCreditBalance(userId)
-  if (current.balance < amount) return null
+export async function spendCreditsServer(userId: string, amount: number, reason = 'spend'): Promise<CreditRow | null> {
   const db = requireClient()
-  const { data, error } = await db
-    .from('credit_balances')
-    .update({
-      balance: current.balance - amount,
-      total_spent: current.total_spent + amount,
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .select('*')
-    .single()
+  await getCreditBalance(userId)
+  const { data, error } = await db.rpc('spend_credits', { p_user_id: userId, p_amount: amount, p_reason: reason })
   if (error) throw error
-  return data as CreditRow
+  // 0 satır → yetersiz bakiye (atomik WHERE balance >= amount eşleşmedi)
+  const row = (Array.isArray(data) ? data[0] : data) as CreditRow | undefined
+  return row ?? null
 }
 
-export async function refundCreditsServer(userId: string, amount: number): Promise<CreditRow> {
-  const current = await getCreditBalance(userId)
+export async function refundCreditsServer(userId: string, amount: number, reason = 'refund'): Promise<CreditRow> {
   const db = requireClient()
-  const { data, error } = await db
-    .from('credit_balances')
-    .update({
-      balance: current.balance + amount,
-      total_spent: Math.max(0, current.total_spent - amount),
-      updated_at: new Date().toISOString(),
-    })
-    .eq('user_id', userId)
-    .select('*')
-    .single()
+  await getCreditBalance(userId)
+  const { data, error } = await db.rpc('refund_credits', { p_user_id: userId, p_amount: amount, p_reason: reason })
   if (error) throw error
-  return data as CreditRow
+  const row = (Array.isArray(data) ? data[0] : data) as CreditRow | undefined
+  if (!row) throw new Error('REFUND_CREDITS_FAILED')
+  return row
 }
 
 export interface CreateTxInput {
@@ -176,15 +194,23 @@ export async function findTransactionByToken(token: string) {
   return data
 }
 
-export async function markTransactionSucceeded(txId: string, paymentId: string, rawCallback: unknown) {
+/**
+ * pending → succeeded geçişini atomik yapar ve BU çağrının geçişi KAZANIP
+ * kazanmadığını döner. Eşzamanlı callback'lerde (İyzico server POST + tarayıcı
+ * redirect / İyzico retry) yalnız `.eq('status','pending')` filtresine takılan
+ * TEK çağrı 1 satır günceller. Çağıran, entitlement'ı yalnız `true` dönerse
+ * verir → çift kredi / çift abonelik dönemi engellenir.
+ */
+export async function markTransactionSucceeded(txId: string, paymentId: string, rawCallback: unknown): Promise<boolean> {
   const db = requireClient()
-  const { error } = await db.from('payment_transactions').update({
+  const { data, error } = await db.from('payment_transactions').update({
     status: 'succeeded',
     iyzico_payment_id: paymentId,
     raw_callback: rawCallback as any,
     processed_at: new Date().toISOString(),
-  }).eq('id', txId).eq('status', 'pending')
+  }).eq('id', txId).eq('status', 'pending').select('id')
   if (error) throw error
+  return (data?.length ?? 0) > 0
 }
 
 export async function markTransactionFailed(txId: string, rawCallback: unknown) {

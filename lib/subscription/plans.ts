@@ -2,7 +2,7 @@ import type { SubscriptionPlan, CreditPackage } from './types'
 
 /**
  * Monthly prices indexed by ad account count.
- * Prices are in USD.
+ * Prices are in TRY (₺) — İyzico TRY ile tahsil eder; bu rakamlar nihai TL fiyatlarıdır.
  */
 const ACCOUNT_PRICES: Record<string, Record<number, number>> = {
   basic:   { 2: 49, 3: 69, 4: 89, 5: 109 },

@@ -22,22 +22,29 @@ async function isOwner(userId: string): Promise<boolean> {
 // Plan limitini DB'deki subscriptions satırından çözümle.
 // Satır yoksa ya da plan bilinmiyorsa güvenli default: 3/ay.
 async function resolveMonthlyStrategyLimit(userId: string): Promise<number> {
-  if (!supabase) return 3
+  if (!supabase) return 0
   const { data } = await supabase
     .from('subscriptions')
-    .select('plan_id, status, trial_end_date')
+    .select('plan_id, status, trial_end_date, current_period_end')
     .eq('user_id', userId)
     .single()
 
-  if (!data) return 3
+  // Strateji abonelik-zorunlu bir alandır: abonelik satırı yoksa erişim yok.
+  if (!data) return 0
 
   const plan = SUBSCRIPTION_PLANS.find(p => p.id === data.plan_id)
-  if (!plan) return 3
+  if (!plan) return 0
 
-  // Trial süresi dolmuşsa ve aktif değilse erişim yok
-  if (data.status === 'trial' && data.trial_end_date) {
-    if (new Date(data.trial_end_date) < new Date()) return 0
-  } else if (data.status !== 'trial' && data.status !== 'active') {
+  const now = new Date()
+
+  if (data.status === 'trial') {
+    // Deneme bitmişse erişim yok
+    if (data.trial_end_date && new Date(data.trial_end_date) < now) return 0
+  } else if (data.status === 'active') {
+    // Aktif ama dönem süresi dolmuşsa erişim yok (yenileme yapılmamış)
+    if (data.current_period_end && new Date(data.current_period_end) < now) return 0
+  } else {
+    // cancelled / expired vb.
     return 0
   }
 

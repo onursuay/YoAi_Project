@@ -78,17 +78,20 @@ async function handle(request: Request): Promise<Response> {
       return redirect(base, 'failed', 'amount_mismatch')
     }
 
-    // Mark succeeded first (atomic: only one caller wins the pending→succeeded
-    // transition because of the `.eq('status', 'pending')` guard).
-    await markTransactionSucceeded(tx.id, String(retrieved.paymentId), retrieved.raw)
+    // Atomik pending→succeeded geçişi. Yalnız bu çağrı geçişi KAZANIRSA
+    // entitlement verilir. Eşzamanlı callback'te (İyzico server POST + tarayıcı
+    // redirect / retry) ikinci çağrı `won=false` alır ve grant'ı ATLAR →
+    // çift kredi / çift abonelik dönemi engellenir.
+    const won = await markTransactionSucceeded(tx.id, String(retrieved.paymentId), retrieved.raw)
 
-    // Grant entitlements
-    if (tx.item_type === 'subscription') {
-      const priced = priceSubscription(tx.plan_id ?? '', tx.billing_cycle ?? '', tx.ad_accounts ?? undefined)
-      if (priced) await applySubscriptionPurchase(tx.user_id, priced)
-    } else if (tx.item_type === 'credit_pack') {
-      const priced = priceCreditPack(tx.package_id ?? '')
-      if (priced) await addCreditsServer(tx.user_id, priced.credits)
+    if (won) {
+      if (tx.item_type === 'subscription') {
+        const priced = priceSubscription(tx.plan_id ?? '', tx.billing_cycle ?? '', tx.ad_accounts ?? undefined)
+        if (priced) await applySubscriptionPurchase(tx.user_id, priced)
+      } else if (tx.item_type === 'credit_pack') {
+        const priced = priceCreditPack(tx.package_id ?? '')
+        if (priced) await addCreditsServer(tx.user_id, priced.credits, 'purchase')
+      }
     }
 
     return redirect(base, 'success')
