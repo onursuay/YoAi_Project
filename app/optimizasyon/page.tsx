@@ -52,6 +52,12 @@ export default function OptimizasyonPage() {
 
   // ── Kaynak seçici (Meta / Google / TikTok) + harici (non-Meta) veri ──
   const [source, setSource] = useState<'meta' | 'google' | 'tiktok'>('meta')
+  // Birleşik hesap seçicisinden gelen ?platform sinyaliyle başlangıç sekmesini aç
+  // (örn. Google hesabı seçilince Optimizasyon'da kalıp Google sekmesi açılır)
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('platform')
+    if (p === 'google' || p === 'tiktok') setSource(p)
+  }, [])
   const [extCampaigns, setExtCampaigns] = useState<GoogleOptimizationCampaign[]>([])
   const [extLoading, setExtLoading] = useState(false)
   const [extLoadedFor, setExtLoadedFor] = useState<string | null>(null)

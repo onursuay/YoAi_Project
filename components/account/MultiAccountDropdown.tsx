@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { useRouter } from 'next/navigation'
+import { useRouter, usePathname } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, Plus, Trash2, Loader2, ArrowUpRight } from 'lucide-react'
 import type { RegisteredAccount, AddAccountInput, AddAccountResult } from '@/hooks/useRegisteredAccounts'
@@ -21,7 +21,6 @@ interface Props {
   count: number
   limit: number | null
   remaining: number | null
-  onSwitch: (accountId: string) => void
   onDisconnect: () => void
   addAccount: (input: AddAccountInput) => Promise<AddAccountResult>
   removeAccount: (platform: 'meta' | 'google', accountId: string) => Promise<boolean>
@@ -31,10 +30,12 @@ interface Props {
 
 /**
  * Birleşik Reklam Hesabı switcher (Madde 2 — Faz 3) — Meta + Google.
- * Tüm kayıtlı hesapları (her iki platform) tek dropdown'da listeler; bir hesabı
- * seçince o platformun aktif hesabı olur (Meta → select-adaccount, Google →
- * select-account) ve sayfa reload ile veriye bağlanır. Meta ekleme inline;
- * Google ekleme hiyerarşik olduğu için Google sayfasına yönlendirir.
+ * Tüm kayıtlı hesapları tek dropdown'da listeler. Bir hesabı seçince o platformun
+ * aktif hesabı olur ve BAĞLAM-DUYARLI yönlendirir:
+ *   - Çok-platformlu modül (/optimizasyon, /hedef-kitle): aynı sayfa + ?platform=X
+ *     (o platformun sekmesi açılır, modülden çıkmaz)
+ *   - /yoai: reload (birleşik analiz)
+ *   - Sadece-Meta modül (/strateji, /meta-ads): Meta → reload; Google → /google-ads
  */
 export default function MultiAccountDropdown({
   adAccounts,
@@ -43,7 +44,6 @@ export default function MultiAccountDropdown({
   count,
   limit,
   remaining,
-  onSwitch,
   onDisconnect,
   addAccount,
   removeAccount,
@@ -52,12 +52,12 @@ export default function MultiAccountDropdown({
 }: Props) {
   const t = useTranslations('dashboard.meta.accounts')
   const router = useRouter()
+  const pathname = usePathname()
   const [search, setSearch] = useState('')
   const [showAdd, setShowAdd] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [activeGoogle, setActiveGoogle] = useState<{ customerId: string; customerName?: string } | null>(null)
 
-  // Aktif Google hesabını çek (vurgulama + isim için)
   useEffect(() => {
     fetch('/api/integrations/google-ads/selected', { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
@@ -70,12 +70,10 @@ export default function MultiAccountDropdown({
   const matches = (name: string, id: string) =>
     name.toLowerCase().includes(search.toLowerCase()) || (id ?? '').toString().includes(search)
 
-  // Meta: kayıtlı set, canlı adAccounts'tan ad eşleştir (DB/cookie/adaccounts hepsi act_ formunda)
   const registeredMetaIds = new Set(registered.filter(r => r.platform === 'meta').map(r => r.account_id))
   const metaSwitchable = adAccounts.filter(a => registeredMetaIds.has(a.id) && matches(a.name, a.account_id))
   const metaAddable = adAccounts.filter(a => !registeredMetaIds.has(a.id) && matches(a.name, a.account_id))
 
-  // Google: kayıtlı set (canlı liste yok — ad kayıttan/aktiften)
   const googleRegistered = registered.filter(r => r.platform === 'google')
   const googleName = (acc: RegisteredAccount) =>
     (activeGoogle?.customerId === acc.account_id && activeGoogle?.customerName) ? activeGoogle.customerName
@@ -84,6 +82,73 @@ export default function MultiAccountDropdown({
 
   const atLimit = limit !== null && remaining !== null && remaining <= 0
   const usedLabel = limit === null ? t('accountsUsedUnlimited', { count }) : t('accountsUsed', { count, limit })
+
+  // Hesap seçilince nereye gidilecek (bağlam-duyarlı). Çok-platformlu modülde
+  // modülden çıkmadan ilgili sekme açılır; sadece-Meta modülde Google → Google sayfası.
+  const navigateAfterSwitch = (platform: 'meta' | 'google') => {
+    const inlineMulti = ['/optimizasyon', '/hedef-kitle']
+    if (inlineMulti.some(p => pathname?.startsWith(p))) {
+      window.location.href = `${pathname}?platform=${platform}`
+    } else if (pathname?.startsWith('/yoai')) {
+      window.location.reload()
+    } else if (platform === 'google') {
+      window.location.href = '/google-ads'
+    } else {
+      window.location.reload()
+    }
+  }
+
+  // Meta geçiş: select-adaccount + active-account + cache temizliği + bağlam-duyarlı yönlendirme
+  const switchMeta = async (a: AdAccount) => {
+    if (selectedAccount === a.id) return
+    setBusyId(a.id)
+    try {
+      const res = await fetch('/api/meta/select-adaccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ adAccountId: a.id }),
+      })
+      if (!res.ok) {
+        const d = await res.json().catch(() => ({}))
+        if (res.status === 400 && d?.message) alert(d.message)
+        setBusyId(null)
+        return
+      }
+      await fetch('/api/active-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({ platform: 'meta', account_id: a.id, account_name: a.name }),
+      }).catch(() => {})
+      clearYoAlgoritmaClientCache()
+      navigateAfterSwitch('meta')
+    } catch {
+      setBusyId(null)
+    }
+  }
+
+  // Google geçiş: select-account + cache temizliği + bağlam-duyarlı yönlendirme
+  const switchGoogle = async (acc: RegisteredAccount) => {
+    if (activeGoogle?.customerId === acc.account_id) return
+    setBusyId(acc.account_id)
+    try {
+      await fetch('/api/integrations/google-ads/select-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          loginCustomerId: acc.login_customer_id || acc.account_id,
+          customerId: acc.account_id,
+          customerName: acc.account_name || acc.account_id,
+        }),
+      })
+      clearYoAlgoritmaClientCache()
+      navigateAfterSwitch('google')
+    } catch {
+      setBusyId(null)
+    }
+  }
 
   const handleAddMeta = async (a: AdAccount) => {
     if (atLimit) { onLimitReached(); return }
@@ -107,30 +172,6 @@ export default function MultiAccountDropdown({
     setBusyId(acc.account_id)
     await removeAccount('google', acc.account_id)
     setBusyId(null)
-  }
-
-  // Google geçiş: mevcut select-account endpoint + Google sayfasına git (o hesabın
-  // verisini orada gör). Mevcut sayfa Meta verisi gösteriyorsa reload kafa
-  // karıştırırdı (Google seçince aktif Meta hesabı görünüyordu).
-  const switchGoogle = async (acc: RegisteredAccount) => {
-    if (activeGoogle?.customerId === acc.account_id) return
-    setBusyId(acc.account_id)
-    try {
-      await fetch('/api/integrations/google-ads/select-account', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        credentials: 'include',
-        body: JSON.stringify({
-          loginCustomerId: acc.login_customer_id || acc.account_id,
-          customerId: acc.account_id,
-          customerName: acc.account_name || acc.account_id,
-        }),
-      })
-      clearYoAlgoritmaClientCache()
-      window.location.href = '/google-ads'
-    } catch {
-      setBusyId(null)
-    }
   }
 
   return (
@@ -167,7 +208,8 @@ export default function MultiAccountDropdown({
             <button
               key={a.id}
               type="button"
-              onClick={() => onSwitch(a.id)}
+              onClick={() => switchMeta(a)}
+              disabled={busyId === a.id}
               className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between ${active ? 'bg-green-50' : ''}`}
             >
               <div className="min-w-0">
@@ -176,9 +218,10 @@ export default function MultiAccountDropdown({
               </div>
               <div className="flex items-center gap-2 shrink-0">
                 {active && <div className="w-2 h-2 bg-green-500 rounded-full" />}
-                {!active && (
+                {busyId === a.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
+                {!active && busyId !== a.id && (
                   <span onClick={e => handleRemoveMeta(e, a)} title="Çıkar" className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 cursor-pointer">
-                    {busyId === a.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Trash2 className="w-3.5 h-3.5" />}
+                    <Trash2 className="w-3.5 h-3.5" />
                   </span>
                 )}
               </div>
@@ -200,6 +243,7 @@ export default function MultiAccountDropdown({
                   key={acc.account_id}
                   type="button"
                   onClick={() => switchGoogle(acc)}
+                  disabled={busyId === acc.account_id}
                   className={`w-full text-left px-4 py-2.5 hover:bg-gray-50 transition-colors flex items-center justify-between ${active ? 'bg-green-50' : ''}`}
                 >
                   <div className="min-w-0">
@@ -245,7 +289,6 @@ export default function MultiAccountDropdown({
 
         {!atLimit && showAdd && (
           <div className="max-h-40 overflow-y-auto pb-1">
-            {/* Meta ekle (inline) */}
             {metaAddable.map(a => (
               <button key={a.id} type="button" onClick={() => handleAddMeta(a)} disabled={busyId === a.id} className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between">
                 <div className="min-w-0">
@@ -256,7 +299,6 @@ export default function MultiAccountDropdown({
               </button>
             ))}
             {metaAddable.length === 0 && <p className="px-4 py-2 text-sm text-gray-400">{t('noMoreToAdd')}</p>}
-            {/* Google ekle → hiyerarşik, Google sayfası */}
             <button type="button" onClick={() => router.push('/google-ads')} className="w-full text-left px-4 py-2 hover:bg-gray-50 transition-colors flex items-center justify-between border-t border-gray-100 mt-1 pt-2">
               <span className="text-sm text-gray-700">{t('addGoogleAccount')}</span>
               <ArrowUpRight className="w-4 h-4 text-primary shrink-0" />

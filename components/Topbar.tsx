@@ -329,7 +329,6 @@ export default function Topbar({
                   count={reg.count}
                   limit={reg.limit}
                   remaining={reg.remaining}
-                  onSwitch={handleSelectAccount}
                   onDisconnect={handleDisconnect}
                   addAccount={reg.addAccount}
                   removeAccount={reg.removeAccount}

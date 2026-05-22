@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Düzeltme: Birleşik seçici bağlam-duyarlı (sekmeli modülde sekmeyi aç, çıkma)
+- **Sorun:** Optimizasyon (Meta/Google/TikTok sekmeli) birleşik dropdown'ında Google hesabı seçilince `/google-ads`'e atıyor, modülden çıkarıyordu. Doğrusu: Optimizasyon'da kal + Google sekmesini aç.
+- **Çözüm:** Hesap seçimi artık bağlam-duyarlı (`navigateAfterSwitch`): çok-platformlu modülde (`/optimizasyon`, `/hedef-kitle`) aynı sayfa + `?platform=X` (ilgili sekme açılır, modülden çıkılmaz); `/yoai` reload; sadece-Meta modülde (Strateji/Meta sayfası) Meta → reload, Google → `/google-ads`. Optimizasyon `?platform` okuyup `source` sekmesini ayarlar. Meta seçimi de aynı mantıkla yönlendirir (stale `?platform` sorunu olmaz). `tsc` ✓.
+- **Dosyalar:** `components/account/MultiAccountDropdown.tsx`, `app/optimizasyon/page.tsx`, `components/Topbar.tsx`
+
 ## 2026-05-22 — Düzeltme: Birleşik seçicide Google hesabı seçince Google sayfasına git
 - **Sorun:** Strateji/Optimizasyon (Meta verisi gösteren sayfalar) birleşik dropdown'ında bir Google hesabı seçilince sayfa reload oluyor ve hâlâ aktif Meta hesabını gösteriyordu (örn. Metropol seçilince Elysium Garden görünüyordu) — "yanlış hesap açıldı" izlenimi.
 - **Çözüm:** Google hesabı seçilince mevcut Meta sayfasını reload etmek yerine `/google-ads`'e yönlendirilir; o Google hesabının verisi orada görünür. Meta seçimi olduğu gibi kalır (Meta sayfası zaten Meta'yı gösterir). YoAlgoritma cache de temizlenir. `tsc` ✓.
