@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
+import { getBestAvailableRun, buildAccountScope } from '@/lib/yoai/dailyRunStore'
+import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 10
@@ -25,6 +26,20 @@ export async function GET() {
     const run = await getBestAvailableRun(userId)
 
     if (run && run.command_center_data) {
+      // Per-account: çalışmanın seçim imzası aktif seçimle eşleşmiyorsa gösterme
+      // (yeni hesaba geçince o hesap için yeniden analiz tetiklenir). Damgasız/eski
+      // çalışmalar geriye-uyum için gösterilmeye devam eder.
+      if (isPerAccountScopeEnabled() && run.account_scope) {
+        const metaCookie = cookieStore.get('meta_selected_ad_account_id')?.value || null
+        const googleCookie = cookieStore.get('google_ads_customer_id')?.value || null
+        const currentScope = buildAccountScope(metaCookie, googleCookie)
+        if (run.account_scope !== currentScope) {
+          return NextResponse.json(
+            { ok: true, data: null, persisted: false, run_date: null, scope_mismatch: true },
+            { headers: { 'Cache-Control': 'no-store' } },
+          )
+        }
+      }
       return NextResponse.json(
         {
           ok: true,

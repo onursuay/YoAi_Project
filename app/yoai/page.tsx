@@ -151,7 +151,7 @@ export default function YoAiPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [])
 
-  const fetchCommandCenter = useCallback(async (): Promise<'ok' | 'empty' | 'error'> => {
+  const fetchCommandCenter = useCallback(async (skipRefresh = false): Promise<'ok' | 'empty' | 'error'> => {
     const hasCache = !!ccData
     if (!hasCache) setCcLoading(true)
     setCcError(null)
@@ -169,6 +169,21 @@ export default function YoAiPage() {
           )
         } catch {}
         return 'ok'
+      } else if (json.ok && json.scope_mismatch && !skipRefresh) {
+        // Per-account (Faz 3.3b): aktif hesap için analiz yok — bayat snapshot'ı
+        // temizle, o hesap için yeniden üret, sonra tekrar çek (artık eşleşir).
+        try { localStorage.removeItem(CC_CACHE_KEY) } catch {}
+        setCcData(null)
+        setBootstrapping(true)
+        try {
+          const rf = await fetch('/api/yoai/command-center/refresh', { method: 'POST' })
+          const rd = rf.ok ? await rf.json() : null
+          if (rd?.ok) { setBootstrapping(false); return await fetchCommandCenter(true) }
+        } catch {}
+        setBootstrapping(false)
+        setCcData(null)
+        setCcRunDate(null)
+        return 'empty'
       } else if (json.ok && !json.data) {
         if (!hasCache) {
           setCcData(null)
@@ -441,7 +456,7 @@ export default function YoAiPage() {
             {ccError && !ccLoading && (
               <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 <p className="text-sm text-red-700">{ccError}</p>
-                <button onClick={fetchCommandCenter} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">
+                <button onClick={() => fetchCommandCenter()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">
                   <RefreshCcw className="w-3 h-3" />
                   Tekrar Dene
                 </button>

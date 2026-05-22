@@ -16,8 +16,37 @@ export interface DailyRun {
   command_center_data: any    // DeepAnalysisResult
   ad_proposals_data: any      // { proposals, summary, fitAnalyses }
   error_message?: string | null
+  account_scope?: string | null // hangi (Meta+Google) seçim için üretildi — per-account
   created_at?: string
   updated_at?: string
+}
+
+/**
+ * Aktif seçim imzası: çalışmanın hangi (Meta hesabı + Google müşterisi) için
+ * üretildiğini temsil eder. command-center, bu imza aktif seçimle eşleşmezse
+ * çalışmayı göstermez (yeni hesaba geçince yeniden analiz). Google dash'siz normalize.
+ */
+export function buildAccountScope(
+  metaAccountId: string | null | undefined,
+  googleCustomerId: string | null | undefined,
+): string {
+  const m = (metaAccountId || '').trim() || '-'
+  const g = (googleCustomerId || '').replace(/-/g, '').trim() || '-'
+  return `m:${m}|g:${g}`
+}
+
+/**
+ * Kullanıcının DB'deki seçili Meta + Google hesabından aktif seçim imzasını üretir.
+ * cookie'siz (cron/inngest) ve cookie'li (route) bağlamlar aynı sonucu verir çünkü
+ * seçim DB + cookie birlikte güncellenir.
+ */
+export async function resolveAccountScopeForUser(userId: string): Promise<string> {
+  if (!supabase) return buildAccountScope(null, null)
+  const [meta, google] = await Promise.all([
+    supabase.from('meta_connections').select('selected_ad_account_id').eq('user_id', userId).maybeSingle(),
+    supabase.from('google_ads_connections').select('google_ads_customer_id').eq('user_id', userId).maybeSingle(),
+  ])
+  return buildAccountScope(meta.data?.selected_ad_account_id ?? null, google.data?.google_ads_customer_id ?? null)
 }
 
 /* ── Timezone helper ── */
@@ -91,6 +120,13 @@ export async function upsertDailyRun(run: DailyRun): Promise<DailyRun | null> {
 
   const now = new Date().toISOString()
 
+  // Per-account: tamamlanan + command_center_data taşıyan çalışmaya aktif seçim
+  // imzası damgala. Cron, POST ve inngest yazıcılarının HEPSİ buradan geçer → tek nokta.
+  let accountScope = run.account_scope ?? null
+  if (accountScope == null && run.status === 'completed' && run.command_center_data != null) {
+    accountScope = await resolveAccountScopeForUser(run.user_id)
+  }
+
   // Check if run exists for this user + date
   const { data: existing } = await supabase
     .from('yoai_daily_runs')
@@ -114,6 +150,7 @@ export async function upsertDailyRun(run: DailyRun): Promise<DailyRun | null> {
     }
     if (run.command_center_data != null) updatePayload.command_center_data = run.command_center_data
     if (run.ad_proposals_data != null) updatePayload.ad_proposals_data = run.ad_proposals_data
+    if (accountScope != null) updatePayload.account_scope = accountScope
 
     const { data, error } = await supabase
       .from('yoai_daily_runs')
@@ -136,6 +173,7 @@ export async function upsertDailyRun(run: DailyRun): Promise<DailyRun | null> {
       command_center_data: run.command_center_data,
       ad_proposals_data: run.ad_proposals_data,
       error_message: run.error_message || null,
+      account_scope: accountScope,
       created_at: now,
       updated_at: now,
     })

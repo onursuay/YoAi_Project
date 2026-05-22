@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.3b: YoAlgoritma per-account analiz (belgemod fix, flag arkasında)
+- **Sorun:** YoAlgoritma command-center, kullanıcının seçili Meta+Google hesaplarının birleşik günlük analizini (per-user, günde 1) gösteriyordu; başka hesaba geçince hâlâ önceki seçimin verisi görünüyordu (belgemod).
+- **Çözüm:** `yoai_daily_runs.account_scope` (aktif seçim imzası) eklendi; tamamlanan analiz `upsertDailyRun`'da DB seçiminden otomatik damgalanır (cron/POST/inngest tek noktadan, pipeline'a dağıtık dokunuş yok). command-center, çalışmanın imzası aktif seçimle eşleşmezse `scope_mismatch` döner; YoAlgoritma sayfası yeni `/api/yoai/command-center/refresh` ile o hesap için analizi yeniden üretip gösterir (AI engine açıkken bootstrap command_center_data üretmediği için gerekli). Hepsi **`YOAI_PER_ACCOUNT_SCOPE` flag'i arkasında (default KAPALI)** — kapalıyken mevcut per-user davranış birebir korunur, sıfır regresyon. `tsc` ✓.
+- **Dosyalar:** `lib/yoai/dailyRunStore.ts`, `app/api/yoai/command-center/route.ts`, `app/api/yoai/command-center/refresh/route.ts` (yeni), `app/yoai/page.tsx`, `lib/yoai/featureFlag.ts`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.3a: YoAlgoritma'ya birleşik seçici
 - **Sorun:** YoAlgoritma özel header (Topbar değil) kullandığı için hesap seçici hiç yoktu.
 - **Çözüm:** Kendi kendine yeten `UnifiedAccountSwitcher` (tetikleyici buton + birleşik dropdown + veri çekimi tek bileşende) `YoAlgoritmaHeader`'a eklendi. Flag kapalıyken render etmez. Switcher ile hesap değiştirme global aktif hesabı değiştirir (tüm modülleri etkiler). **NOT:** YoAlgoritma'nın KENDİ command-center verisinin aktif hesaba göre değişmesi (belgemod fix) Faz 3.3b'de — `account_scope` migration gerektirir. `tsc` ✓.
