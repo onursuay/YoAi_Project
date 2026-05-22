@@ -870,6 +870,8 @@ export default function GooglePage() {
         onManagerOrAccountClick={connection.onManagerOrAccountClick}
         onChildClick={connection.onChildClick}
         backToManagers={connection.backToManagers}
+        selectedManagerId={connection.selectedManagerId}
+        activeCustomerId={connection.selected?.customerId ?? null}
       />
       {editingCampaignId && (
         <CampaignEditPanel

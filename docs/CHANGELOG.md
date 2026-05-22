@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 2.2b: Google çoklu-hesap modalı (flag arkasında)
+- **Sorun:** Google sayfasındaki hesap modalı tek-seçimdi; Meta'daki gibi birden fazla hesap kaydetme + aralarında geçiş + limit (toplam Meta+Google) yoktu.
+- **Çözüm:** `GoogleAccountModal` geliştirildi (flag açıkken): üstte **"Kayıtlı Hesaplar (X/Y)"** bölümü (geçiş = mevcut `select-account` endpoint + reload; çıkar), browse listesinde **"seçince kaydet"** akışı (yöneticide derinleş, hesapta önce `addAccount` ile kaydet → limit kontrol → sonra mevcut select). Limit dolunca **AccessRequiredModal** (`ad_account_slot`, dismissible). Limit toplam (Meta+Google) `/api/account/registered` üzerinden. **Hook/entegrasyon mantığına dokunulmadı** (mevcut handler'lar + endpoint çağrıldı). Bonus: modaldaki yasak amber yönetici rozeti `primary`'ye çekildi. Flag kapalıyken modal birebir eski davranış. `tsc` ✓.
+- **Dosyalar:** `components/google/GoogleAccountModal.tsx`, `app/dashboard/reklam/google/GooglePage.tsx`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 2.2: Meta switcher UI + limit modal (flag arkasında)
 - **Sorun:** Kullanıcı Topbar'dan tek hesap seçebiliyordu; plan limitine kadar birden fazla hesap kaydedip aralarında geçiş yapabilmeli, limit dolunca premium upsell görmeli.
 - **Çözüm:** `useRegisteredAccounts` hook'u (`/api/account/registered` ile konuşur) + `MultiAccountDropdown` bileşeni (kayıtlı hesaplar arası geçiş + "Hesap Ekle" + "X/Y hesap" göstergesi + çıkar). Topbar Meta dropdown'ı `reg.enabled` ise yeni bileşeni render eder; **flag kapalıyken bugünkü tek-hesap UI birebir korunur**. Limit dolunca `AccessRequiredModal` (`featureKey="ad_account_slot"`). Geçiş mevcut `handleSelectAccount` (select-adaccount + reload) ile yapılır — **Meta seçim route'una dokunulmadı**. `AccessRequiredModal`'a opsiyonel `dismissible`/`onClose` eklendi (additive; alan erişim bariyerlerinde default katı davranış aynen) çünkü hesap-ekleme soft limiti kullanıcıyı hapsetmemeli. Yeni i18n anahtarları (tr+en). `tsc` ✓.
