@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.2: Hedef Kitle'ye birleşik seçici
+- **Sorun:** Hedef Kitle'de hesap seçici görünmüyordu.
+- **Çözüm:** Hedef Kitle `/api/meta/status`'tan aktif Meta hesabını çekip Topbar'a `adAccountName` geçiriyor → birleşik seçici (Meta + Google) görünür. `?platform` okunup `PlatformTabs` sekmesi ayarlanır (Google seçince Hedef Kitle'de kalıp Google sekmesi açılır — Optimizasyon ile aynı). `tsc` ✓.
+- **Dosyalar:** `app/hedef-kitle/page.tsx`
+
 ## 2026-05-22 — Düzeltme: Yalnız-Meta modüllerde (Strateji) Google hesapları gizlenir
 - **Sorun:** Strateji yalnız Meta reklam hesabı altında strateji oluşturur (Google-hesap kavramı yok), ama birleşik dropdown Google hesaplarını da gösteriyor ve seçilince `/google-ads`'e yönlendiriyordu (istenmeyen). Ayrıca rozet toplam (9) gösterip yalnız Meta listeliyordu.
 - **Çözüm:** Dropdown artık modülün platformuna göre kapsamlı: `/strateji` ve `/meta-ads` yalnız-Meta → Google bölümü + "Google hesabı ekle" gizlenir; rozet o sayfada görünen hesap sayısını gösterir. `/optimizasyon`, `/hedef-kitle`, `/yoai` (iki platformu da kullanan) hepsini gösterir. Böylece Strateji'de Google seçimi/yönlendirmesi olmaz. `tsc` ✓.

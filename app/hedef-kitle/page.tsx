@@ -83,6 +83,22 @@ export default function HedefKitlePage() {
   const [platform, setPlatform] = useState<Platform>('meta')
   const [activeTab, setActiveTab] = useState('SAVED')
   const [showAudienceAiGate, setShowAudienceAiGate] = useState(false)
+  // Aktif Meta hesabı — Topbar'da birleşik hesap seçici göstermek için
+  const [adAccountName, setAdAccountName] = useState<string | null>(null)
+
+  // Birleşik seçiciden gelen ?platform sinyaliyle başlangıç platformunu ayarla
+  useEffect(() => {
+    const p = new URLSearchParams(window.location.search).get('platform')
+    if (p === 'google' || p === 'meta') setPlatform(p)
+  }, [])
+
+  // Aktif Meta hesabını çek (seçici görünürlüğü). Geçişte reload ile veriye bağlanır.
+  useEffect(() => {
+    fetch('/api/meta/status', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.connected && d?.adAccountName) setAdAccountName(d.adAccountName) })
+      .catch(() => {})
+  }, [])
 
   const audienceTabs = platform === 'google' ? GOOGLE_AUDIENCE_TABS : META_AUDIENCE_TABS
 
@@ -224,6 +240,7 @@ export default function HedefKitlePage() {
       <Topbar
         title={t('title')}
         description={t('description')}
+        adAccountName={adAccountName || undefined}
       />
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-6xl mx-auto space-y-4">
