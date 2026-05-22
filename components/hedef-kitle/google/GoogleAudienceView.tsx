@@ -103,6 +103,32 @@ function userListTypeLabel(type: string): string {
   return USER_LIST_TYPE_LABELS[type] ?? 'Kullanıcı Listesi'
 }
 
+// Google UserListSizeRange enum'u UI'da asla ham görünmez — sade TR aralığa çevrilir.
+const SIZE_RANGE_LABELS: Record<string, string> = {
+  LESS_THAN_FIVE_HUNDRED: "500'den az",
+  LESS_THAN_ONE_THOUSAND: "1.000'den az",
+  ONE_THOUSAND_TO_TEN_THOUSAND: '1.000 – 10.000',
+  TEN_THOUSAND_TO_FIFTY_THOUSAND: '10.000 – 50.000',
+  FIFTY_THOUSAND_TO_ONE_HUNDRED_THOUSAND: '50.000 – 100.000',
+  ONE_HUNDRED_THOUSAND_TO_THREE_HUNDRED_THOUSAND: '100.000 – 300.000',
+  THREE_HUNDRED_THOUSAND_TO_FIVE_HUNDRED_THOUSAND: '300.000 – 500.000',
+  FIVE_HUNDRED_THOUSAND_TO_ONE_MILLION: '500.000 – 1 milyon',
+  ONE_MILLION_TO_TWO_MILLION: '1 – 2 milyon',
+  TWO_MILLION_TO_THREE_MILLION: '2 – 3 milyon',
+  THREE_MILLION_TO_FIVE_MILLION: '3 – 5 milyon',
+  FIVE_MILLION_TO_TEN_MILLION: '5 – 10 milyon',
+  TEN_MILLION_TO_TWENTY_MILLION: '10 – 20 milyon',
+  TWENTY_MILLION_TO_THIRTY_MILLION: '20 – 30 milyon',
+  THIRTY_MILLION_TO_FIFTY_MILLION: '30 – 50 milyon',
+  OVER_FIFTY_MILLION: '50 milyon+',
+}
+
+// Bilinmeyen / UNKNOWN / UNSPECIFIED → boş döner (ham enum hiç gösterilmez).
+function sizeRangeLabel(raw?: string): string {
+  if (!raw) return ''
+  return SIZE_RANGE_LABELS[raw] ?? ''
+}
+
 type BrowseSectionKey = 'inMarket' | 'affinity' | 'detailedDemographics' | 'lifeEvents'
 const BROWSE_SECTIONS: Array<{
   key: BrowseSectionKey
@@ -362,8 +388,8 @@ function SegmentRow({ item }: { item: SegmentItem }) {
           <span className="text-[10px] px-1.5 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
             {CATEGORY_LABELS[item.category]}
           </span>
-          {item.sizeRange && (
-            <span className="text-[10px] text-gray-400">{item.sizeRange}</span>
+          {sizeRangeLabel(item.sizeRange) && (
+            <span className="text-[10px] text-gray-400">{sizeRangeLabel(item.sizeRange)}</span>
           )}
         </div>
       </div>
@@ -466,9 +492,9 @@ function UserListCard({ list }: { list: GoogleUserList }) {
             <p className="text-xs text-gray-500 mt-0.5 line-clamp-2">{list.description}</p>
           )}
           <div className="flex items-center gap-x-4 gap-y-1 mt-2 flex-wrap text-xs text-gray-500">
-            {list.sizeRangeForDisplay && (
+            {sizeRangeLabel(list.sizeRangeForDisplay) && (
               <span>
-                Boyut: <span className="text-gray-700 font-medium">{list.sizeRangeForDisplay}</span>
+                Boyut: <span className="text-gray-700 font-medium">{sizeRangeLabel(list.sizeRangeForDisplay)}</span>
               </span>
             )}
             <span>

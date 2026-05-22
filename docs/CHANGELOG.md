@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Düzeltme: Google tarama dropdown'ı kesiliyordu + Hedef Kitle'de ham boyut enum'u
+- **Sorun:** (1) Google optimizasyon kartında dropdown menü kartın `overflow-hidden` container'ı yüzünden kesiliyordu (yarısı görünmüyordu) ve Meta kartıyla görsel olarak eşleşmiyordu — Meta kartında `overflow-hidden` yok. (2) Hedef Kitle > Google'da kullanıcı listelerinin **Boyut** alanı ham Google enum'u olarak gösteriliyordu (`ONE_THOUSAND_TO_TEN_THOUSAND`, `LESS_THAN_FIVE_HUNDRED`) — ham teknik terim yasağı ihlali.
+- **Çözüm:** (1) `GoogleCampaignCard` container'ından `overflow-hidden` kaldırıldı, Meta `CampaignCard` ile birebir aynı class'a getirildi (`relative … transition-shadow hover:shadow-md`); dropdown artık tam görünür. Tarama animasyonu (`ScanOverlay`) köşelerden taşmaz çünkü overlay kendi içinde `rounded-2xl overflow-hidden` yapar. (2) `GoogleAudienceView`'a `SIZE_RANGE_LABELS` haritası + `sizeRangeLabel()` helper eklendi; tüm Google `UserListSizeRange` enum'ları sade TR aralığa çevrilir ("1.000 – 10.000", "500'den az" …). Bilinmeyen/UNKNOWN değerlerde boş döner — ham enum hiç görünmez. `tsc` ✓.
+- **Dosyalar:** `components/optimization/GoogleCampaignCard.tsx`, `components/hedef-kitle/google/GoogleAudienceView.tsx`
+
 ## 2026-05-22 — Optimizasyon: Google "Sihirli Tarama" butonu/dropdown/animasyonu Meta ile birebir
 - **Sorun:** Google sekmesindeki tarama butonu Meta'dan farklıydı — "Tara" + Sparkles ikonu (Meta'da "Sihirli Tarama" + 🪄), dropdown sadeydi (PRO rozeti ve açıklama yok), ve tarama tetiklenince Meta'daki sweep-line + faz etiketli `ScanOverlay` animasyonu Google'da hiç çıkmıyordu (yalnız buton spinner'ı vardı).
 - **Çözüm:** `GoogleCampaignCard` tarama butonu/dropdown'ı Meta `CampaignCard` ile **birebir** eşitlendi: aynı yeşil buton stili + 🪄 emoji + "Sihirli Tarama" etiketi, aynı `w-52` dropdown (Hızlı Tara = Zap + "Kural tabanlı analiz" açıklaması; AI ile Tara = Sparkles + **PRO** rozeti + açıklama), tüm metinler `t('magicScan.*')` çeviri anahtarlarından. Tarama tetiklenince Meta'daki `ScanOverlay` (yeşil sweep-line + dönen faz etiketleri) Google kartında da gösterilir; `page.tsx`'e `extScanPhase` faz döngüsü (800ms/4 faz) eklendi. Entegrasyon/API mantığı (`handleExtScan` fetch akışı, score/apply endpoint'leri) değiştirilmedi — yalnız UI/animasyon paritesi. `tsc` ✓.

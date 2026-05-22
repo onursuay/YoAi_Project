@@ -74,7 +74,7 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   ]
 
   return (
-    <div className="relative bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="relative bg-white rounded-2xl border border-gray-200 transition-shadow hover:shadow-md">
       {scanning && <ScanOverlay phase={scanPhase} />}
       <div className="flex items-center gap-4 p-4">
         <ScoreBadge score={campaign.score} status={status} size={56} />
