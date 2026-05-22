@@ -3,6 +3,7 @@
 import { useState, useEffect } from 'react'
 import { Sparkles, AlertTriangle, TrendingUp, Zap } from 'lucide-react'
 import type { DeepAction } from '@/lib/yoai/analysisTypes'
+import UnifiedAccountSwitcher from '@/components/account/UnifiedAccountSwitcher'
 
 interface Props {
   actions?: DeepAction[]
@@ -37,9 +38,10 @@ export default function YoAlgoritmaHeader({ actions }: Props) {
           <h1 className="text-sm font-semibold text-gray-900">YoAlgoritma</h1>
         </div>
 
-        {/* Right: recommendations ticker */}
-        {tickerItems.length > 0 && (
-          <div className="flex items-center gap-2 overflow-hidden max-w-[65%]">
+        {/* Right: ticker + birleşik hesap seçici */}
+        <div className="flex items-center gap-3 min-w-0">
+          {tickerItems.length > 0 && (
+          <div className="flex items-center gap-2 overflow-hidden max-w-[360px]">
             {(() => {
               const item = tickerItems[activeIndex]
               if (!item) return null
@@ -53,7 +55,9 @@ export default function YoAlgoritmaHeader({ actions }: Props) {
               )
             })()}
           </div>
-        )}
+          )}
+          <UnifiedAccountSwitcher />
+        </div>
       </div>
     </div>
   )

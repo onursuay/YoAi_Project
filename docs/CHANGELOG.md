@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.3a: YoAlgoritma'ya birleşik seçici
+- **Sorun:** YoAlgoritma özel header (Topbar değil) kullandığı için hesap seçici hiç yoktu.
+- **Çözüm:** Kendi kendine yeten `UnifiedAccountSwitcher` (tetikleyici buton + birleşik dropdown + veri çekimi tek bileşende) `YoAlgoritmaHeader`'a eklendi. Flag kapalıyken render etmez. Switcher ile hesap değiştirme global aktif hesabı değiştirir (tüm modülleri etkiler). **NOT:** YoAlgoritma'nın KENDİ command-center verisinin aktif hesaba göre değişmesi (belgemod fix) Faz 3.3b'de — `account_scope` migration gerektirir. `tsc` ✓.
+- **Dosyalar:** `components/account/UnifiedAccountSwitcher.tsx` (yeni), `components/yoai/YoAlgoritmaHeader.tsx`
+
 ## 2026-05-22 — Düzeltme: Seçici butonu aktif platformun hesabını gösterir (Google sekmesi)
 - **Sorun:** Hedef Kitle/Optimizasyon'da Google sekmesindeyken üstteki seçici butonu hâlâ aktif **Meta** hesabını (örn. "Fikret Petrol") gösteriyordu; aktif Google hesabı görünmüyordu.
 - **Çözüm:** Sayfa, aktif platforma göre doğru hesap adını Topbar'a veriyor: Meta sekmesi → Meta hesabı, Google sekmesi → aktif Google hesabı (`/api/integrations/google-ads/selected`'tan çekilir). Dropdown açılınca her iki bölüm + doğru vurgular zaten görünüyordu; bu yalnız buton etiketini düzeltir. `tsc` ✓.
