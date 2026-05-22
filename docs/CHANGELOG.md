@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 3: Birleşik hesap seçici (Meta + Google)
+- **Sorun:** Strateji/Optimizasyon'daki hesap seçici yalnız Meta hesaplarını listeliyordu; kayıtlı Google hesapları (toplam 9'un bir kısmı) görünmüyordu. Kullanıcı tüm hesapların tek filtrede görünmesini istedi (birleşik model).
+- **Çözüm:** `MultiAccountDropdown` birleşik hale getirildi — "Meta Hesapları" + "Google Hesapları" bölümleri tüm kayıtlı hesapları listeler. Bir hesabı seçince o platformun aktif hesabı olur (Meta → select-adaccount, Google → select-account) + reload ile veri bağlanır. Google ekleme hiyerarşik olduğundan Google sayfasına yönlendirir; Meta ekleme inline. Aktif Google `/selected`'tan çekilip vurgulanır + ismi zenginleşir. Toplam limit rozeti artık listeyle tutarlı. `tsc` ✓.
+- **Not:** Hedef Kitle + YoAlgoritma'da seçici görünürlüğü ve YoAlgoritma per-account sonraki adımlarda.
+- **Dosyalar:** `components/account/MultiAccountDropdown.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.1: Strateji'ye hesap seçici
 - **Sorun:** Reklam hesabı seçici yalnızca Optimizasyon'da görünüyordu; Strateji'de yoktu.
 - **Çözüm:** Strateji `/api/meta/status`'tan aktif Meta hesabını çekip Topbar'a `adAccountName` geçiriyor → Meta çoklu-hesap seçici görünür (Optimizasyon ile aynı desen). Strateji instances zaten `ad_account_id`'ye bağlı; geçiş reload → yeni hesabın verisine bağlanır. `tsc` ✓.

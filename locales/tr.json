@@ -274,7 +274,10 @@
         "upgradeForMore": "Daha fazla reklam hesabı için planını yükselt.",
         "viewPlans": "Planları İncele",
         "noMoreToAdd": "Eklenecek başka hesap yok.",
-        "searchAccounts": "Hesap ara..."
+        "searchAccounts": "Hesap ara...",
+        "metaAccounts": "Meta Hesapları",
+        "googleAccounts": "Google Hesapları",
+        "addGoogleAccount": "Google hesabı ekle"
       },
       "performanceRecommendations": {
         "unavailable": "Optimizasyon önerileri şu anda alınamadı. Daha sonra tekrar denenecek."

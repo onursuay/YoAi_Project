@@ -274,7 +274,10 @@
         "upgradeForMore": "Upgrade your plan to add more ad accounts.",
         "viewPlans": "View Plans",
         "noMoreToAdd": "No more accounts to add.",
-        "searchAccounts": "Search accounts..."
+        "searchAccounts": "Search accounts...",
+        "metaAccounts": "Meta Accounts",
+        "googleAccounts": "Google Accounts",
+        "addGoogleAccount": "Add Google account"
       },
       "performanceRecommendations": {
         "unavailable": "Optimization recommendations are temporarily unavailable. We'll retry later."
