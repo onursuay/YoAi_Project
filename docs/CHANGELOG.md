@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Düzeltme: Birleşik seçicide Google hesabı seçince Google sayfasına git
+- **Sorun:** Strateji/Optimizasyon (Meta verisi gösteren sayfalar) birleşik dropdown'ında bir Google hesabı seçilince sayfa reload oluyor ve hâlâ aktif Meta hesabını gösteriyordu (örn. Metropol seçilince Elysium Garden görünüyordu) — "yanlış hesap açıldı" izlenimi.
+- **Çözüm:** Google hesabı seçilince mevcut Meta sayfasını reload etmek yerine `/google-ads`'e yönlendirilir; o Google hesabının verisi orada görünür. Meta seçimi olduğu gibi kalır (Meta sayfası zaten Meta'yı gösterir). YoAlgoritma cache de temizlenir. `tsc` ✓.
+- **Dosyalar:** `components/account/MultiAccountDropdown.tsx`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 3: Birleşik hesap seçici (Meta + Google)
 - **Sorun:** Strateji/Optimizasyon'daki hesap seçici yalnız Meta hesaplarını listeliyordu; kayıtlı Google hesapları (toplam 9'un bir kısmı) görünmüyordu. Kullanıcı tüm hesapların tek filtrede görünmesini istedi (birleşik model).
 - **Çözüm:** `MultiAccountDropdown` birleşik hale getirildi — "Meta Hesapları" + "Google Hesapları" bölümleri tüm kayıtlı hesapları listeler. Bir hesabı seçince o platformun aktif hesabı olur (Meta → select-adaccount, Google → select-account) + reload ile veri bağlanır. Google ekleme hiyerarşik olduğundan Google sayfasına yönlendirir; Meta ekleme inline. Aktif Google `/selected`'tan çekilip vurgulanır + ismi zenginleşir. Toplam limit rozeti artık listeyle tutarlı. `tsc` ✓.

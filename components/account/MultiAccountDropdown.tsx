@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ChevronDown, Plus, Trash2, Loader2, ArrowUpRight } from 'lucide-react'
 import type { RegisteredAccount, AddAccountInput, AddAccountResult } from '@/hooks/useRegisteredAccounts'
+import { clearYoAlgoritmaClientCache } from '@/lib/yoai/clientCache'
 
 interface AdAccount {
   id: string
@@ -108,7 +109,9 @@ export default function MultiAccountDropdown({
     setBusyId(null)
   }
 
-  // Google geçiş: mevcut select-account endpoint + reload (Meta deseniyle aynı)
+  // Google geçiş: mevcut select-account endpoint + Google sayfasına git (o hesabın
+  // verisini orada gör). Mevcut sayfa Meta verisi gösteriyorsa reload kafa
+  // karıştırırdı (Google seçince aktif Meta hesabı görünüyordu).
   const switchGoogle = async (acc: RegisteredAccount) => {
     if (activeGoogle?.customerId === acc.account_id) return
     setBusyId(acc.account_id)
@@ -123,7 +126,8 @@ export default function MultiAccountDropdown({
           customerName: acc.account_name || acc.account_id,
         }),
       })
-      window.location.reload()
+      clearYoAlgoritmaClientCache()
+      window.location.href = '/google-ads'
     } catch {
       setBusyId(null)
     }
