@@ -49,10 +49,10 @@ Marka sahibi reklam vermek istiyor ama bütçeyi funnel'a (TOFU/MOFU/BOFU) nası
 ## 2. OPTİMİZASYON MODÜLÜ
 
 ### 2.1 Amaç
-Bağlı **Meta reklam hesabını canlı tarayıp** her kampanyaya **performans skoru (0-100)** veren ve **somut düzeltme aksiyonları** (bütçe artır/azalt, duraklat, kitle yenile, ad set dengele) öneren **taktik optimizasyon** katmanı. Strateji "planı kur", Optimizasyon "çalışanı düzelt" katmanıdır.
+Bağlı **Meta / Google / TikTok reklam hesaplarını canlı tarayıp** her kampanyaya **performans skoru (0-100)** veren ve **somut düzeltme aksiyonlarını** (bütçe kıs, duraklat, kreatif yenile vb.) **tek tıkla canlıya uygulatan** **taktik optimizasyon** katmanı. Strateji "planı kur", Optimizasyon "çalışanı düzelt" katmanıdır. Üç platform da aynı derinlikte çalışır (4 kapılı skor + detay paneli + tarama + canlı apply/geri al).
 
 ### 2.2 Çözdüğü problem
-Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gerektiğini** bilmiyor. Optimizasyon, Meta Ads Manager metriklerini benchmark'larla karşılaştırıp 4 kapıda (Delivery / Efficiency / Quality / Saturation) skorlar ve tek tıkla uygulanabilir aksiyonlar verir.
+Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gerektiğini** bilmiyor. Optimizasyon, platform (Meta/Google/TikTok) metriklerini benchmark'larla karşılaştırıp 4 kapıda (Teslimat / Verim / Kalite / Doygunluk) skorlar ve tek tıkla uygulanabilir aksiyonlar verir.
 
 ### 2.3 Nasıl çalışır
 - **Skor:** `app/api/meta/optimization/score/route.ts` → Meta insights çek → normalize → `lib/meta/optimization/ruleEngine.ts` + `scoring.ts` → kampanya başına 0-100 skor + 4 gate + problem etiketleri.
@@ -61,7 +61,7 @@ Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gere
   - **"AI ile Tara"** = `lib/meta/optimization/aiRecommender.ts` (LLM destekli öneri; kredi + günlük limit). API: `app/api/meta/optimization/magic-scan/route.ts`.
 - **Aksiyon türleri:** `AUTO_APPLY_SAFE` (Onayla → anında uygula), `REVIEW_REQUIRED` (Onayla/Reddet), `TASK` (manuel görev).
 - **Uygula/Geri al (GERÇEK):** `lib/meta/optimization/changeSetManager.ts` → `executeChangeSet` Meta API'ye **canlı** PATCH/POST (kampanya pause, bütçe değişimi, ad set duplicate). `rollbackChangeSet` ile geri alınabilir (duplicate hariç). Audit: `optimization_recommendation_results` (`resultTrackingStore`).
-- **Kapsam:** Yalnız **Meta** (Google optimization route'u yok).
+- **Kapsam:** **Meta + Google + TikTok** — üçü de skor + tarama + canlı apply, aynı 4 kapılı skor + `GoogleDetailPanel`. Meta: `app/api/meta/optimization/*` (kpiRegistry/scoring). Google: `app/api/google/optimization/*` (`fetchGoogleDeep`). TikTok: `app/api/tiktok/optimization/*` (`lib/tiktok/optimization/score.ts`, TikTok report API). Skor: Google/TikTok ortak `lib/google/optimization/gates.ts`.
 
 ### 2.4 Kredi / Abonelik
 - `featureAccessMap.ts`: `optimization → subscription_required` (modül erişimi); `optimization_ai_scan_pro → credit_required` ("AI ile Tara Pro").
@@ -74,10 +74,10 @@ Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gere
 | **Soru** | Nasıl bir plan kurmalıyım? | Çalışanı nasıl düzeltirim? | Hesabım sistematik olarak ne durumda? |
 | **Zamanlama** | Kullanıcı tetikler (yeni strateji) | Kullanıcı tetikler ("Tara"/"AI ile Tara") | **Otomatik** (Pazar gece cron), manuel buton yok |
 | **Çıktı** | Blueprint (funnel, persona, KPI) → görevler | Kampanya skoru + tek-tık aksiyon | Hiyerarşik kartlar (hesap→kampanya→adset→reklam) |
-| **AI** | **Claude** (yeni) | OpenAI gpt-4o-mini | **Claude Batch API** (async) |
-| **Kalıcılık** | `strategy_*` tabloları | Transient + audit | `account_alerts` / `*_improvements` (lifecycle) |
+| **AI** | **Claude** | **Claude** | **Claude Batch API** (async) |
+| **Kalıcılık** | `strategy_*` tabloları | Transient + audit + `ai_scan_usage` | `account_alerts` / `*_improvements` (lifecycle) |
 | **Apply** | Görev üretir (canlı basmaz) | **Canlıya basar** (pause/bütçe) + rollback | Reklam onayı → AdCreationWizard |
-| **Kanal** | Meta + Google (plan) | Yalnız Meta | Meta + Google |
+| **Kanal** | Meta + Google (plan) | **Meta + Google + TikTok** | Meta + Google |
 
 **İlişki:** Çakışmazlar, tamamlayıcıdırlar. Strateji = stratejik plan, Optimizasyon = anlık taktik düzeltme, YoAlgoritma = haftalık sistematik denetim. (#6 iyileştirmesiyle Strateji optimize'ı artık YoAlgoritma uyarılarını da dikkate alır.)
 
@@ -88,3 +88,5 @@ Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gere
 4. ✅ **Meta score route para birimi** (2026-05-22) — sabit `'TRY'` yerine `account.currency`.
 5. ✅ **ScoreBadge renk kuralı** (2026-05-22) — amber/turuncu → gri/kırmızı (onaylı palet).
 6. ✅ **Ad set sayfalama** (2026-05-22) — 5 → 15 sayfa (büyük hesaplar).
+7. ✅ **Google + TikTok Meta seviyesine çıkarıldı** (2026-05-22) — `lib/google/optimization/gates.ts` ile 4 kapılı skor (Teslimat %40 / Verim %30 / Kalite %15 / Doygunluk %15, Meta ağırlıkları) Google+TikTok'a da hesaplanır (skor metodolojisi 3 platformda aynı); `GoogleDetailPanel` = skor kırılımı + tüm metrikler + kanal/teklif/bütçe + sorunlar + ad grupları. **Üç platform artık aynı derinlik.** Veri olmayan kapılar "veri yok" notuyla işaretlenir (sahte üretilmez); kalite kapısı sıralama yoksa CTR vekiliyle çalışır.
+8. ⏳ **Açık (Faz sonrası):** Meta/Google/TikTok'tan yalnız birine sahip kullanıcı için sayfa girişi (şu an Meta bağlantı kapısına bağlı); TikTok ad-grup sayısı çekilmediğinden bazı yapısal kurallar atlanır.
