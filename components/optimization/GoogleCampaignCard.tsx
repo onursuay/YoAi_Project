@@ -6,8 +6,10 @@
    Renk paleti proje kuralına uyar (amber/sarı YOK). */
 
 import { useState, useRef, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronDown, Loader2, Sparkles, Zap, AlertTriangle } from 'lucide-react'
 import ScoreBadge from './ScoreBadge'
+import ScanOverlay from './ScanOverlay'
 import { translateEnum } from '@/lib/yoai/translations'
 import type { ScoreStatus } from '@/lib/meta/optimization/types'
 import type { GoogleOptimizationCampaign } from '@/lib/google/optimization/types'
@@ -18,6 +20,7 @@ interface Props {
   onToggle: () => void
   onMagicScan: (useAI: boolean) => void
   scanning?: boolean
+  scanPhase?: number
 }
 
 function statusFromScore(score: number, hasData: boolean): ScoreStatus {
@@ -36,7 +39,8 @@ function fmtNum(v: number): string {
   return new Intl.NumberFormat('tr-TR').format(Math.round(v))
 }
 
-export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMagicScan, scanning }: Props) {
+export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMagicScan, scanning, scanPhase = 0 }: Props) {
+  const t = useTranslations('dashboard.optimizasyon')
   const [showScanMenu, setShowScanMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -56,6 +60,11 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   const problemCount = campaign.problemTags.length
   const isActive = (campaign.effectiveStatus || campaign.status).toUpperCase() === 'ENABLED'
 
+  const handleScan = (useAI: boolean) => {
+    setShowScanMenu(false)
+    onMagicScan(useAI)
+  }
+
   const metrics = [
     { label: 'Harcama', value: fmtCurrency(m.spend, campaign.currency) },
     { label: 'Tıklama', value: fmtNum(m.clicks) },
@@ -65,7 +74,8 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   ]
 
   return (
-    <div className="bg-white rounded-2xl border border-gray-200 overflow-hidden">
+    <div className="relative bg-white rounded-2xl border border-gray-200 overflow-hidden">
+      {scanning && <ScanOverlay phase={scanPhase} />}
       <div className="flex items-center gap-4 p-4">
         <ScoreBadge score={campaign.score} status={status} size={56} />
 
@@ -96,30 +106,48 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
           ))}
         </div>
 
-        {/* Tara menüsü */}
+        {/* Sihirli Tarama menüsü — Meta ile birebir */}
         <div className="relative shrink-0" ref={menuRef}>
           <button
-            onClick={() => setShowScanMenu((s) => !s)}
+            onClick={() => !scanning && setShowScanMenu((s) => !s)}
             disabled={scanning}
-            className="inline-flex items-center gap-1.5 px-3 py-2 rounded-lg bg-primary/10 text-primary text-xs font-semibold hover:bg-primary/15 transition-colors disabled:opacity-50"
+            className="flex items-center gap-1 px-2.5 py-1 text-caption font-medium text-green-700 bg-green-50 hover:bg-green-100 border border-green-200 rounded-lg transition disabled:opacity-50"
+            title={t('magicScan.button')}
           >
-            {scanning ? <Loader2 className="w-4 h-4 animate-spin" /> : <Sparkles className="w-4 h-4" />}
-            Tara
-            <ChevronDown className="w-3.5 h-3.5" />
+            {scanning ? (
+              <Loader2 className="w-3.5 h-3.5 animate-spin" />
+            ) : (
+              <span className="text-sm leading-none">{'\u{1FA84}'}</span>
+            )}
+            <span className="hidden sm:inline">{t('magicScan.button')}</span>
+            {!scanning && <ChevronDown className="w-3 h-3 ml-0.5" />}
           </button>
+
+          {/* Dropdown menu */}
           {showScanMenu && !scanning && (
-            <div className="absolute right-0 mt-1 w-44 bg-white rounded-xl border border-gray-200 shadow-lg z-10 overflow-hidden">
+            <div className="absolute right-0 top-full mt-1 w-52 bg-white rounded-lg shadow-lg border border-gray-200 py-1 z-30">
               <button
-                onClick={() => { setShowScanMenu(false); onMagicScan(false) }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-gray-700 hover:bg-gray-50 transition-colors"
+                onClick={() => handleScan(false)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-gray-50 transition"
               >
-                <Sparkles className="w-4 h-4 text-gray-500" /> Hızlı Tara (kural)
+                <Zap className="w-4 h-4 text-green-600 shrink-0" />
+                <div>
+                  <p className="text-caption font-medium text-gray-900">{t('magicScan.quickScan')}</p>
+                  <p className="text-xs text-gray-500">{t('magicScan.quickScanDesc')}</p>
+                </div>
               </button>
               <button
-                onClick={() => { setShowScanMenu(false); onMagicScan(true) }}
-                className="w-full flex items-center gap-2 px-3 py-2.5 text-xs text-primary font-medium hover:bg-primary/5 transition-colors border-t border-gray-100"
+                onClick={() => handleScan(true)}
+                className="w-full flex items-center gap-2.5 px-3 py-2 text-left hover:bg-purple-50 transition"
               >
-                <Zap className="w-4 h-4" /> AI ile Tara
+                <Sparkles className="w-4 h-4 text-purple-600 shrink-0" />
+                <div>
+                  <p className="text-caption font-medium text-gray-900">
+                    {t('magicScan.aiScan')}
+                    <span className="ml-1 px-1 py-0.5 text-[9px] font-bold bg-purple-100 text-purple-700 rounded">PRO</span>
+                  </p>
+                  <p className="text-caption text-gray-500">{t('magicScan.aiScanDesc')}</p>
+                </div>
               </button>
             </div>
           )}

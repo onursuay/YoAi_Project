@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Optimizasyon: Google "Sihirli Tarama" butonu/dropdown/animasyonu Meta ile birebir
+- **Sorun:** Google sekmesindeki tarama butonu Meta'dan farklıydı — "Tara" + Sparkles ikonu (Meta'da "Sihirli Tarama" + 🪄), dropdown sadeydi (PRO rozeti ve açıklama yok), ve tarama tetiklenince Meta'daki sweep-line + faz etiketli `ScanOverlay` animasyonu Google'da hiç çıkmıyordu (yalnız buton spinner'ı vardı).
+- **Çözüm:** `GoogleCampaignCard` tarama butonu/dropdown'ı Meta `CampaignCard` ile **birebir** eşitlendi: aynı yeşil buton stili + 🪄 emoji + "Sihirli Tarama" etiketi, aynı `w-52` dropdown (Hızlı Tara = Zap + "Kural tabanlı analiz" açıklaması; AI ile Tara = Sparkles + **PRO** rozeti + açıklama), tüm metinler `t('magicScan.*')` çeviri anahtarlarından. Tarama tetiklenince Meta'daki `ScanOverlay` (yeşil sweep-line + dönen faz etiketleri) Google kartında da gösterilir; `page.tsx`'e `extScanPhase` faz döngüsü (800ms/4 faz) eklendi. Entegrasyon/API mantığı (`handleExtScan` fetch akışı, score/apply endpoint'leri) değiştirilmedi — yalnız UI/animasyon paritesi. `tsc` ✓.
+- **Dosyalar:** `components/optimization/GoogleCampaignCard.tsx`, `app/optimizasyon/page.tsx`
+
 ## 2026-05-22 — Optimizasyon: Google + TikTok'u Meta seviyesine çıkar (4 kapılı skor + detay paneli)
 - **Sorun:** Meta'da zengin detay (4 kapılı skor kırılımı + detay paneli) varken Google/TikTok yalnız sade kart gösteriyordu — üç platform aynı deneyimi sunmuyordu.
 - **Çözüm:** Google ve TikTok'a da Meta'nın derinliği eklendi: (1) Yeni `lib/google/optimization/gates.ts` → `computeGates(metrics, currency)` 4 kapı (Teslimat %40 / Verim %30 / Kalite %15 / Doygunluk %15) hesaplar; skor artık Meta'yla **aynı gate-ağırlıklı metodoloji**. Sıralama/sıklık verisi olmayan kapılar "veri yok" notuyla işaretlenir, ceza verilmez (sahte veri yok). (2) `GoogleDetailPanel` (Meta DetailPanel muadili) — 4 kapı bar'ı + tüm metrikler + kanal/teklif/bütçe + sorunlar + ad grupları; Google ve TikTok için ortak. (3) Google score route + TikTok score katmanı `computeGates` kullanıyor; `GoogleOptimizationCampaign.gates` eklendi. (4) `GoogleCampaignCard` sadeleştirildi (inline detay → panele taşındı); sayfada kart genişletilince detay paneli, tarama yapılınca öneri paneli gösterilir (Meta deseni). Renkler onaylı palet (pass=emerald, warn=gri, fail=kırmızı). Meta yolu değişmedi. `tsc` ✓.

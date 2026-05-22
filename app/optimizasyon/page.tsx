@@ -57,6 +57,7 @@ export default function OptimizasyonPage() {
   const [extLoadedFor, setExtLoadedFor] = useState<string | null>(null)
   const [extError, setExtError] = useState<string | null>(null)
   const [extScanningId, setExtScanningId] = useState<string | null>(null)
+  const [extScanPhase, setExtScanPhase] = useState(0)
   const [extScanResults, setExtScanResults] = useState<Record<string, MagicScanResult>>({})
   const [extExpandedId, setExtExpandedId] = useState<string | null>(null)
 
@@ -280,6 +281,12 @@ export default function OptimizasyonPage() {
     if (useAI) recordAiScan()
     const src = source === 'tiktok' ? 'tiktok' : 'google'
     setExtScanningId(campaign.id)
+    setExtScanPhase(0)
+
+    const phaseInterval = setInterval(() => {
+      setExtScanPhase(prev => (prev + 1) % 4)
+    }, 800)
+
     try {
       const locale = document.cookie.match(/NEXT_LOCALE=(\w+)/)?.[1] || 'tr'
       const res = await fetch(`/api/${src}/optimization/magic-scan`, {
@@ -299,7 +306,9 @@ export default function OptimizasyonPage() {
     } catch {
       addToast('Tarama başarısız', 'error')
     } finally {
+      clearInterval(phaseInterval)
       setExtScanningId(null)
+      setExtScanPhase(0)
     }
   }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan, source])
 
@@ -499,6 +508,7 @@ export default function OptimizasyonPage() {
                       onToggle={() => setExtExpandedId(extExpandedId === c.id ? null : c.id)}
                       onMagicScan={(useAI) => handleExtScan(c, useAI)}
                       scanning={extScanningId === c.id}
+                      scanPhase={extScanPhase}
                     />
                     {extScanResults[c.id] ? (
                       <GoogleScanResults
