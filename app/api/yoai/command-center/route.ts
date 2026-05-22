@@ -29,7 +29,9 @@ export async function GET() {
       // Per-account: çalışmanın seçim imzası aktif seçimle eşleşmiyorsa gösterme
       // (yeni hesaba geçince o hesap için yeniden analiz tetiklenir). Damgasız/eski
       // çalışmalar geriye-uyum için gösterilmeye devam eder.
-      if (isPerAccountScopeEnabled() && run.account_scope) {
+      if (isPerAccountScopeEnabled()) {
+        // Damgasız (null) çalışmalar da aktif seçimle eşleşmez sayılır → yeniden
+        // üretilip damgalanır (flag öncesi üretilmiş eski çalışmalar bu sayede güncellenir).
         const metaCookie = cookieStore.get('meta_selected_ad_account_id')?.value || null
         const googleCookie = cookieStore.get('google_ads_customer_id')?.value || null
         const currentScope = buildAccountScope(metaCookie, googleCookie)

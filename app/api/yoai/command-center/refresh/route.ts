@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
-import { upsertDailyRun, getTurkeyDate } from '@/lib/yoai/dailyRunStore'
+import { upsertDailyRun, getTurkeyDate, buildAccountScope } from '@/lib/yoai/dailyRunStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 
 export const runtime = 'nodejs'
@@ -34,13 +34,19 @@ export async function POST() {
       return NextResponse.json({ ok: false, error: 'Analiz üretilemedi' }, { status: 500 })
     }
 
-    // upsert command_center_data → account_scope otomatik damgalanır (DB seçimi)
+    // Damgayı cookie (anlık) seçiminden ver — command-center kapısı da cookie okur,
+    // böylece DB fire-and-forget gecikmesinden kaynaklı uyuşmazlık olmaz.
+    const metaCookie = cookieStore.get('meta_selected_ad_account_id')?.value || null
+    const googleCookie = cookieStore.get('google_ads_customer_id')?.value || null
+    const accountScope = buildAccountScope(metaCookie, googleCookie)
+
     await upsertDailyRun({
       user_id: userId,
       run_date: getTurkeyDate(),
       status: 'completed',
       command_center_data: commandCenterData,
       ad_proposals_data: null, // null → mevcut öneriler korunur (update-if-provided)
+      account_scope: accountScope,
     })
 
     return NextResponse.json({ ok: true }, { headers: { 'Cache-Control': 'no-store' } })

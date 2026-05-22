@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Düzeltme: Per-account — damgasız (eski) analizler de yeniden üretilir
+- **Sorun:** `YOAI_PER_ACCOUNT_SCOPE` açıkken YoAlgoritma'da hesap değiştirince veri değişmiyordu — mevcut günlük analizler flag öncesi üretildiği için `account_scope=null`'dı; kapı null'ı "geriye-uyum" sayıp eski (birleşik) veriyi gösteriyordu.
+- **Çözüm:** Kapı artık null damgayı da "uyuşmazlık" sayar → o hesap için `/refresh` ile yeniden üretir + damgalar (ilk yüklemede bir kez; sonra eşleşir). `/refresh` damgayı **cookie** (anlık) seçiminden verir; command-center kapısı da cookie okuduğu için DB fire-and-forget gecikmesi kaynaklı yanlış uyuşmazlık olmaz. `tsc` ✓.
+- **Dosyalar:** `app/api/yoai/command-center/route.ts`, `app/api/yoai/command-center/refresh/route.ts`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.3b: YoAlgoritma per-account analiz (belgemod fix, flag arkasında)
 - **Sorun:** YoAlgoritma command-center, kullanıcının seçili Meta+Google hesaplarının birleşik günlük analizini (per-user, günde 1) gösteriyordu; başka hesaba geçince hâlâ önceki seçimin verisi görünüyordu (belgemod).
 - **Çözüm:** `yoai_daily_runs.account_scope` (aktif seçim imzası) eklendi; tamamlanan analiz `upsertDailyRun`'da DB seçiminden otomatik damgalanır (cron/POST/inngest tek noktadan, pipeline'a dağıtık dokunuş yok). command-center, çalışmanın imzası aktif seçimle eşleşmezse `scope_mismatch` döner; YoAlgoritma sayfası yeni `/api/yoai/command-center/refresh` ile o hesap için analizi yeniden üretip gösterir (AI engine açıkken bootstrap command_center_data üretmediği için gerekli). Hepsi **`YOAI_PER_ACCOUNT_SCOPE` flag'i arkasında (default KAPALI)** — kapalıyken mevcut per-user davranış birebir korunur, sıfır regresyon. `tsc` ✓.
