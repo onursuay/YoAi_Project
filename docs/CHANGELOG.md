@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-22 — Optimizasyon: Google Ads kanadı Faz 2 (tek-tık canlı apply + rollback)
+- **Sorun:** Google önerileri Faz 1'de yalnız advisory'di — kullanıcı tek tıkla uygulayamıyordu.
+- **Çözüm:** Mevcut Google mutate helper'ları (`updateCampaignStatus`/`updateCampaignBudget`) ile canlı apply: (1) recommender net kararlara `changeSet` ekliyor — NEGATIVE_ROAS → kampanya duraklat, LOW_ROAS/HIGH_CPA → günlük bütçe %20 kıs (hepsi REVIEW_REQUIRED, açık onay; AUTO_APPLY yok). (2) `POST /api/google/optimization/apply` → status için resourceName türetir, bütçe için budget resourceName'i GAQL ile çözer, mutate eder. (3) `GoogleScanResults` "Uygula" + uygulandıktan sonra "Geri Al" (rollback = ters newValue). Apply sonrası sayfa Google verisini tazeler. Entegrasyon koduna dokunulmadı (helper'lar yalnız çağrıldı). `tsc` ✓.
+- **Açık (Faz 3):** Google-only kullanıcı için sayfa girişi (şu an Meta bağlantı kapısına bağlı).
+- **Dosyalar:** `app/api/google/optimization/apply/route.ts` (yeni), `lib/google/optimization/recommender.ts`, `components/optimization/GoogleScanResults.tsx`, `app/optimizasyon/page.tsx`
+
 ## 2026-05-22 — Optimizasyon: Google Ads kanadı Faz 1 (score + tarama + UI)
 - **Sorun:** Optimizasyon modülü en baştan beri yalnız Meta'yı kapsıyordu — Google Ads veren markalar hesaplarını skorlayamıyor/öneri alamıyordu.
 - **Çözüm:** Meta'dan ayrı, paralel bir Google motoru eklendi (mevcut Google read/mutate helper'ları kullanıldı, entegrasyon koduna dokunulmadı): (1) `GET /api/google/optimization/score` → `fetchGoogleDeep` ile gerçek GAQL insights → kampanya skoru + Meta-format ProblemTag + riskLevel. (2) `POST /api/google/optimization/magic-scan` → `lib/google/optimization/recommender` (deterministik şablon + Claude); AI taraması Meta ile **aynı sunucu-otoriter günlük kotayı** (`consume_ai_scan`) tüketir, aşımda 402. (3) UI: Optimizasyon sayfasına **Meta/Google kaynak seçici** + `GoogleCampaignCard` (skor, kanal türü, teklif stratejisi, opt. skoru, metrikler, sorunlar) + `GoogleScanResults` (advisory öneriler). Meta yolu hiç değişmedi. Sahte veri yok (Google bağlı değilse 401 + "Entegrasyon" yönlendirmesi). `tsc` ✓.

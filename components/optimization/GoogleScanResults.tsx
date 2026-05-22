@@ -1,22 +1,19 @@
 'use client'
 
-/* Google Ads Optimizasyon — tarama sonuçları (Faz 1, advisory).
-   Meta MagicScanResults'tan ayrı: Google Faz 1'de canlı apply YOK
-   (öneriler tavsiye niteliğinde). Canlı uygulama Faz 2'de eklenecek.
-   Renk paleti proje kuralına uyar (amber/sarı YOK). */
+/* Google Ads Optimizasyon — tarama sonuçları + tek-tık canlı apply (Faz 2).
+   changeSet taşıyan öneriler (kampanya duraklatma / bütçe değişimi) açık
+   onayla canlıya uygulanır; uygulanınca "Geri Al" ile rollback edilir.
+   changeSet'siz öneriler advisory kalır. Renk paleti proje kuralına uyar. */
 
-import { X, Sparkles, Zap } from 'lucide-react'
+import { useState } from 'react'
+import { X, Sparkles, Zap, Loader2, Check, Undo2 } from 'lucide-react'
 import type { MagicScanResult, Recommendation } from '@/lib/meta/optimization/types'
 
 interface Props {
   result: MagicScanResult
   onClose: () => void
-}
-
-const CATEGORY_LABEL: Record<Recommendation['category'], string> = {
-  AUTO_APPLY_SAFE: 'Güvenli',
-  REVIEW_REQUIRED: 'İnceleme gerekli',
-  TASK: 'Görev',
+  onSuccess?: (message: string) => void
+  onError?: (message: string) => void
 }
 
 const RISK_LABEL: Record<Recommendation['risk'], string> = {
@@ -25,8 +22,70 @@ const RISK_LABEL: Record<Recommendation['risk'], string> = {
   high: 'Yüksek risk',
 }
 
-export default function GoogleScanResults({ result, onClose }: Props) {
+function fmtBudget(v: number): string {
+  return new Intl.NumberFormat('tr-TR', { maximumFractionDigits: 0 }).format(v)
+}
+
+function changeLabel(rec: Recommendation): string | null {
+  const cs = rec.changeSet
+  if (!cs) return null
+  if (cs.changeType === 'status') return cs.newValue === 'PAUSED' ? 'Kampanyayı Duraklat' : 'Kampanyayı Aç'
+  if (cs.changeType === 'budget') return `Günlük bütçe: ${fmtBudget(Number(cs.oldValue))}₺ → ${fmtBudget(Number(cs.newValue))}₺`
+  return null
+}
+
+export default function GoogleScanResults({ result, onClose, onSuccess, onError }: Props) {
   const recs = result.recommendations ?? []
+  const [busyId, setBusyId] = useState<string | null>(null)
+  const [applied, setApplied] = useState<Record<string, boolean>>({})
+
+  async function callApply(rec: Recommendation, newValue: string | number): Promise<boolean> {
+    const cs = rec.changeSet
+    if (!cs) return false
+    const res = await fetch('/api/google/optimization/apply', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ campaignId: result.campaignId, changeType: cs.changeType, newValue }),
+    })
+    const data = await res.json().catch(() => ({}))
+    return res.ok && data.ok
+  }
+
+  async function apply(rec: Recommendation) {
+    if (!rec.changeSet) return
+    setBusyId(rec.id)
+    try {
+      const ok = await callApply(rec, rec.changeSet.newValue)
+      if (ok) {
+        setApplied((p) => ({ ...p, [rec.id]: true }))
+        onSuccess?.('Değişiklik Google Ads hesabına uygulandı.')
+      } else {
+        onError?.('Uygulama başarısız oldu.')
+      }
+    } catch {
+      onError?.('Uygulama başarısız oldu.')
+    } finally {
+      setBusyId(null)
+    }
+  }
+
+  async function rollback(rec: Recommendation) {
+    if (!rec.changeSet) return
+    setBusyId(rec.id)
+    try {
+      const ok = await callApply(rec, rec.changeSet.oldValue)
+      if (ok) {
+        setApplied((p) => ({ ...p, [rec.id]: false }))
+        onSuccess?.('Değişiklik geri alındı.')
+      } else {
+        onError?.('Geri alma başarısız oldu.')
+      }
+    } catch {
+      onError?.('Geri alma başarısız oldu.')
+    } finally {
+      setBusyId(null)
+    }
+  }
 
   return (
     <div className="mt-2 bg-white rounded-2xl border border-gray-200 overflow-hidden">
@@ -50,31 +109,56 @@ export default function GoogleScanResults({ result, onClose }: Props) {
         <p className="px-4 py-6 text-center text-sm text-emerald-700">Bu kampanya için öneri üretilmedi — belirgin bir sorun yok.</p>
       ) : (
         <div className="divide-y divide-gray-100">
-          {recs.map((r) => (
-            <div key={r.id} className="px-4 py-3">
-              <div className="flex items-start justify-between gap-3">
-                <p className="text-sm font-semibold text-gray-900">{r.title}</p>
-                <div className="flex items-center gap-1.5 shrink-0">
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                    r.category === 'REVIEW_REQUIRED' ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {CATEGORY_LABEL[r.category]}
-                  </span>
-                  <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+          {recs.map((r) => {
+            const action = changeLabel(r)
+            const isApplied = applied[r.id]
+            const busy = busyId === r.id
+            return (
+              <div key={r.id} className="px-4 py-3">
+                <div className="flex items-start justify-between gap-3">
+                  <p className="text-sm font-semibold text-gray-900">{r.title}</p>
+                  <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${
                     r.risk === 'high' ? 'bg-red-50 text-red-700' : r.risk === 'medium' ? 'bg-primary/5 text-primary' : 'bg-gray-100 text-gray-600'
                   }`}>
                     {RISK_LABEL[r.risk]}
                   </span>
                 </div>
+                {r.rootCause && <p className="text-xs text-gray-500 mt-1">{r.rootCause}</p>}
+                <p className="text-sm text-gray-700 mt-1.5"><span className="font-medium text-gray-900">Aksiyon:</span> {r.action}</p>
+                {r.expectedImpact && <p className="text-xs text-emerald-700 mt-1">Beklenen etki: {r.expectedImpact}</p>}
+
+                {/* Tek-tık canlı apply (yalnız changeSet'li öneriler) */}
+                {action && (
+                  <div className="mt-2.5 flex items-center gap-2">
+                    {!isApplied ? (
+                      <button
+                        onClick={() => apply(r)}
+                        disabled={busy}
+                        className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-primary text-white text-xs font-semibold hover:bg-primary/90 transition-colors disabled:opacity-50"
+                      >
+                        {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Check className="w-3.5 h-3.5" />}
+                        {action}
+                      </button>
+                    ) : (
+                      <>
+                        <span className="inline-flex items-center gap-1.5 text-xs text-emerald-700 font-medium">
+                          <Check className="w-3.5 h-3.5" /> Uygulandı
+                        </span>
+                        <button
+                          onClick={() => rollback(r)}
+                          disabled={busy}
+                          className="inline-flex items-center gap-1.5 px-2.5 py-1 rounded-lg bg-gray-100 text-gray-600 text-xs font-medium hover:bg-gray-200 transition-colors disabled:opacity-50"
+                        >
+                          {busy ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Undo2 className="w-3.5 h-3.5" />}
+                          Geri Al
+                        </button>
+                      </>
+                    )}
+                  </div>
+                )}
               </div>
-              {r.rootCause && <p className="text-xs text-gray-500 mt-1">{r.rootCause}</p>}
-              <p className="text-sm text-gray-700 mt-1.5"><span className="font-medium text-gray-900">Aksiyon:</span> {r.action}</p>
-              {r.expectedImpact && <p className="text-xs text-emerald-700 mt-1">Beklenen etki: {r.expectedImpact}</p>}
-            </div>
-          ))}
-          <p className="px-4 py-2.5 text-[11px] text-gray-400 bg-gray-50">
-            Google için öneriler şu an tavsiye niteliğindedir; kampanya panelinden uygulayabilirsiniz. (Tek-tık uygulama yakında.)
-          </p>
+            )
+          })}
         </div>
       )}
     </div>

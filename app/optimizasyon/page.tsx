@@ -494,6 +494,8 @@ export default function OptimizasyonPage() {
                     {googleScanResults[c.id] && (
                       <GoogleScanResults
                         result={googleScanResults[c.id]}
+                        onSuccess={(msg) => { addToast(msg, 'success'); setTimeout(() => fetchGoogleCampaigns(), 1500) }}
+                        onError={(msg) => addToast(msg, 'error')}
                         onClose={() => setGoogleScanResults(prev => { const n = { ...prev }; delete n[c.id]; return n })}
                       />
                     )}

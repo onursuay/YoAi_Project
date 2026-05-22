@@ -18,6 +18,7 @@ import type {
   ProblemTag,
   ProblemTagId,
   MetricEvidence,
+  ChangeSet,
 } from '@/lib/meta/optimization/types'
 import type { StandardMetrics } from '@/lib/yoai/analysisTypes'
 
@@ -130,9 +131,30 @@ function genericTemplate(tag: ProblemTag): Template {
   }
 }
 
+// Faz 2: uygulanabilir aksiyon → ChangeSet (canlı apply). Yalnız net/güvenli
+// kararlar: zarar eden kampanyayı duraklat, düşük getiride bütçeyi kıs.
+function changeSetFor(campaign: GoogleScanCampaign, tagId: ProblemTagId): ChangeSet | undefined {
+  const base = {
+    id: `cs_g_${campaign.id}_${tagId}_${Date.now()}`,
+    entityType: 'campaign' as const,
+    entityId: campaign.id,
+    entityName: campaign.name,
+    status: 'pending' as const,
+    timestamp: Date.now(),
+  }
+  if (tagId === 'NEGATIVE_ROAS') {
+    return { ...base, changeType: 'status', oldValue: 'ENABLED', newValue: 'PAUSED', riskLevel: 'high' }
+  }
+  if ((tagId === 'LOW_ROAS' || tagId === 'HIGH_CPA') && campaign.dailyBudget && campaign.dailyBudget > 0) {
+    return { ...base, changeType: 'budget', oldValue: campaign.dailyBudget, newValue: Math.round(campaign.dailyBudget * 0.8 * 100) / 100, riskLevel: 'medium' }
+  }
+  return undefined
+}
+
 function buildFallback(campaign: GoogleScanCampaign): Recommendation[] {
   return campaign.problemTags.map((tag, i) => {
     const t = TEMPLATES[tag.id] ?? genericTemplate(tag)
+    const changeSet = changeSetFor(campaign, tag.id)
     return {
       id: `rec_g_${Date.now()}_${i}`,
       title: t.title,
@@ -143,7 +165,9 @@ function buildFallback(campaign: GoogleScanCampaign): Recommendation[] {
       risk: t.risk,
       expectedImpact: t.expectedImpact,
       confidence: 0.7,
-      category: t.category,
+      // changeSet varsa tek-tık uygulanabilir → REVIEW_REQUIRED (açık onay)
+      category: changeSet ? 'REVIEW_REQUIRED' : t.category,
+      changeSet,
     }
   })
 }
@@ -205,6 +229,7 @@ ${campaign.problemTags.map((t) => `- ${t.id} (${t.severity}): ${JSON.stringify(t
   return parsed.map((item, i) => {
     const tagId = (item.problemTag || 'INSUFFICIENT_DATA') as ProblemTagId
     const evidence: MetricEvidence[] = tagById.get(tagId) ?? []
+    const changeSet = changeSetFor(campaign, tagId)
     return {
       id: `rec_gai_${Date.now()}_${i}`,
       title: item.title,
@@ -215,8 +240,10 @@ ${campaign.problemTags.map((t) => `- ${t.id} (${t.severity}): ${JSON.stringify(t
       risk: (['low', 'medium', 'high'].includes(item.risk) ? item.risk : 'medium') as Recommendation['risk'],
       expectedImpact: item.expectedImpact,
       confidence: Math.max(0, Math.min(1, item.confidence || 0.7)),
-      // Google Faz 1: canlı apply yok → AUTO_APPLY_SAFE üretme, en fazla REVIEW/TASK.
-      category: (item.category === 'REVIEW_REQUIRED' ? 'REVIEW_REQUIRED' : 'TASK') as RecommendationCategory,
+      // changeSet (pause/bütçe) varsa tek-tık uygulanabilir → REVIEW_REQUIRED.
+      // AUTO_APPLY_SAFE üretmeyiz (Google'da otomatik uygulama yok, açık onay şart).
+      category: (changeSet ? 'REVIEW_REQUIRED' : 'TASK') as RecommendationCategory,
+      changeSet,
     }
   })
 }
