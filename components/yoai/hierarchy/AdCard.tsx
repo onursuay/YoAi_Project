@@ -176,6 +176,9 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
               {spec.targeting?.placements?.length ? (
                 <Row label={t('placements')} value={translateEnumList(spec.targeting.placements, locale, plat).join(', ')} />
               ) : null}
+              {spec.targeting?.keywords?.length ? (
+                <ListBlock label={t('keywords')} items={spec.targeting.keywords} tone="emerald" />
+              ) : null}
               {spec.creative?.primary_text ? (
                 <div>
                   <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{t('primaryText')}</p>
@@ -191,7 +194,7 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
               {spec.creative?.asset_requirements?.format ? (
                 <Row
                   label={t('assetRequirements')}
-                  value={[spec.creative.asset_requirements.format, spec.creative.asset_requirements.dimensions, spec.creative.asset_requirements.notes].filter(Boolean).join(' · ')}
+                  value={[spec.creative?.asset_requirements?.format, spec.creative?.asset_requirements?.dimensions, spec.creative?.asset_requirements?.notes].filter(Boolean).join(' · ')}
                 />
               ) : null}
               {(payload.compliance_notes?.length || spec.compliance_notes?.length) ? (

@@ -124,7 +124,8 @@ SADECE şu şemaya uyan TEK bir JSON nesnesi ver. Markdown fence YOK, açıklama
           "locations": ["Ankara", "Türkiye"],
           "demographics": { "age_min": 18, "age_max": 50, "genders": ["all"] },
           "placements": ["Akıllı Yayın Yerleri"],
-          "interests": ["..."]
+          "interests": ["..."],
+          "keywords": ["Google Arama Ağı için anahtar kelimeler — diğer türlerde boş"]
         },
         "creative": {
           "brief": "Kreatif yönlendirmesi (Türkçe, 1-2 cümle)",
@@ -142,8 +143,16 @@ SADECE şu şemaya uyan TEK bir JSON nesnesi ver. Markdown fence YOK, açıklama
 
 Kurallar:
 - "account_alerts" SADECE sana açıkça "hesap uyarılarını da üret" dendiğinde dolu olur; aksi halde boş dizi [].
-- ad_improvements: keep_or_improve="improve" ise ad_spec ZORUNLU ve TAM (en az brief + 1 başlık + geçerli asset format). "already_strong" ise ad_spec=null.
+- ad_improvements: keep_or_improve="improve" ise ad_spec ZORUNLU ve TAM (en az brief + 1 başlık). "already_strong" ise ad_spec=null.
 - ad_spec.platform sana verilen platformla aynı olmalı.
+
+# Reklam türüne göre ad_spec (KRİTİK — platform/kampanya türüne uy)
+- **Google Arama Ağı (RSA — metin reklam):** Görsel/video YOKTUR. \`asset_requirements\` ALANI YAZMA (boş bırak/atla). Onun yerine:
+  - \`creative.headlines\`: 3-15 adet, her biri ≤30 karakter.
+  - \`creative.descriptions\`: 2-4 adet, her biri ≤90 karakter.
+  - \`creative.primary_text\` YAZMA (Arama Ağı'nda yok).
+  - \`targeting.keywords\`: önerilen anahtar kelimeler (Arama Ağı'nın kalbi). \`targeting.demographics\` opsiyonel — yaş yerine anahtar kelime/lokasyonla hedeflenir.
+- **Meta + Google PMax/Görüntülü/Video:** \`asset_requirements\` ZORUNLU (format=image/video/carousel/collection) + \`targeting.demographics\` doldur. \`keywords\` boş bırak.
 - Karakter limitlerini ve platform kampanya tipi uygunluğunu koru. Yasaklı iddiaları kullanma.
 - confidence: kendi belirsizlik tahminin (0-100). Sahte yüksek skor verme.
 - Sana verilen kampanya/ad set/reklam ID'lerini AYNEN kopyala — uydurma.

@@ -91,9 +91,12 @@ export interface AdSpecDemographics {
 
 export interface AdSpecTargeting {
   locations: string[]
-  demographics: AdSpecDemographics
+  /** Meta'da zorunlu. Google Arama Ağı anahtar kelimeyle hedeflendiği için opsiyonel. */
+  demographics?: AdSpecDemographics
   placements: string[]
   interests?: string[]
+  /** Google Arama Ağı (RSA) için anahtar kelime hedefleme. */
+  keywords?: string[]
 }
 
 export interface AdSpecAssetRequirements {
@@ -108,7 +111,8 @@ export interface AdSpecCreative {
   headlines: string[]
   descriptions: string[]
   primary_text?: string
-  asset_requirements: AdSpecAssetRequirements
+  /** Meta/PMax/Display/Video görsel-video reklamlarında zorunlu. Metin tabanlı RSA'da yok. */
+  asset_requirements?: AdSpecAssetRequirements
 }
 
 export interface AdSpec {

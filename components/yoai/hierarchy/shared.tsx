@@ -76,14 +76,18 @@ export function Row({ label, value }: { label: string; value?: string | null }) 
   )
 }
 
-export function ListBlock({ label, items, tone = 'slate' }: { label: string; items: string[]; tone?: 'blue' | 'slate' }) {
+export function ListBlock({ label, items, tone = 'slate' }: { label: string; items: string[]; tone?: 'blue' | 'slate' | 'emerald' }) {
   if (!items.length) return null
+  const itemCls =
+    tone === 'blue' ? 'text-[12px] text-blue-200 leading-snug'
+    : tone === 'emerald' ? 'text-[12px] text-emerald-200 leading-snug'
+    : 'text-[12px] text-slate-200 leading-relaxed'
   return (
     <div>
       <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{label}</p>
       <div className="space-y-1">
         {items.map((it, i) => (
-          <p key={i} className={tone === 'blue' ? 'text-[12px] text-blue-200 leading-snug' : 'text-[12px] text-slate-200 leading-relaxed'}>• {it}</p>
+          <p key={i} className={itemCls}>• {it}</p>
         ))}
       </div>
     </div>

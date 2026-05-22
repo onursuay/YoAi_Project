@@ -65,7 +65,7 @@ test('Geçerli new_ad_proposal korunuyor', () => {
   assert.strictEqual(p.ad_spec!.platform, 'meta')
   assert.strictEqual(p.ad_spec!.campaign_type, 'Leads')
   assert.strictEqual(p.ad_spec!.budget.currency, 'TRY')
-  assert.deepStrictEqual(p.ad_spec!.targeting.demographics.genders, ['male'])
+  assert.deepStrictEqual(p.ad_spec!.targeting.demographics!.genders, ['male'])
   assert.strictEqual(p.ad_spec!.creative.headlines.length, 2)
 })
 
@@ -123,23 +123,62 @@ test('genders eksikse default ["all"]', () => {
   const raw = validNewAdProposal() as any
   delete raw.ad_spec.targeting.demographics.genders
   const p = validateAdSpecPayload(raw)
-  assert.deepStrictEqual(p.ad_spec!.targeting.demographics.genders, ['all'])
+  assert.deepStrictEqual(p.ad_spec!.targeting.demographics!.genders, ['all'])
+})
+
+test('Google Arama Ağı: asset_requirements + demographics olmadan GEÇERLİ', () => {
+  const raw: unknown = {
+    kind: 'new_ad_proposal',
+    ad_spec: {
+      platform: 'google', campaign_type: 'Arama Ağı', conversion_goal: 'Potansiyel müşteri', cta: 'Teklif Al',
+      budget: { daily: 300, currency: 'TRY' },
+      targeting: { locations: ['Ankara'], placements: ['Google Arama Ağı'], keywords: ['myk belgesi', 'belgelendirme'] },
+      creative: {
+        brief: 'Aktif niyetli aramalara MYK belgesi cevabı.',
+        headlines: ['MYK Belgesi Ankara', 'Hızlı Belgelendirme'],
+        descriptions: ['Resmi süreç, uzman danışmanlık.'],
+      },
+    },
+  }
+  const p = validateAdSpecPayload(raw)
+  assert.strictEqual(p.kind, 'new_ad_proposal')
+  assert.ok(p.ad_spec, 'Google Search ad_spec geçerli olmalı')
+  assert.strictEqual(p.ad_spec!.creative.asset_requirements, undefined)
+  assert.strictEqual(p.ad_spec!.targeting.demographics, undefined)
+  assert.deepStrictEqual(p.ad_spec!.targeting.keywords, ['myk belgesi', 'belgelendirme'])
+})
+
+test('Meta: asset_requirements eksikse hâlâ optimization fallback', () => {
+  const raw = validNewAdProposal() as any
+  delete raw.ad_spec.creative.asset_requirements
+  const p = validateAdSpecPayload(raw)
+  assert.strictEqual(p.kind, 'optimization')
+  assert.strictEqual(p.ad_spec, null)
+})
+
+test('Meta: demographics eksikse hâlâ optimization fallback', () => {
+  const raw = validNewAdProposal() as any
+  delete raw.ad_spec.targeting.demographics
+  const p = validateAdSpecPayload(raw)
+  assert.strictEqual(p.kind, 'optimization')
+  assert.strictEqual(p.ad_spec, null)
 })
 
 /* ── Örnek çıktı raporu (3 temsili ad_spec) ── */
 
 function exampleSpecs(): AdSpecPayload[] {
+  // Google Arama Ağı (RSA) — metin tabanlı: görsel asset YOK, anahtar kelimeyle
+  // hedefleme. asset_requirements/demographics bilerek atlanır.
   const search: unknown = {
     kind: 'new_ad_proposal',
     ad_spec: {
-      platform: 'google', campaign_type: 'Search', conversion_goal: 'Lead (form)', cta: 'Teklif Al',
+      platform: 'google', campaign_type: 'Arama Ağı', conversion_goal: 'Potansiyel müşteri (form)', cta: 'Teklif Al',
       budget: { daily: 300, currency: 'TRY' },
-      targeting: { locations: ['Ankara'], demographics: { age_min: 22, age_max: 55, genders: ['all'] }, placements: ['Google Search'] },
+      targeting: { locations: ['Ankara'], placements: ['Google Arama Ağı'], keywords: ['myk belgesi', 'mesleki yeterlilik belgesi', 'belgelendirme ankara'] },
       creative: {
         brief: 'Aktif niyetli aramalara MYK belgesi cevabı; QS için landing uyumu vurgulu.',
         headlines: ['MYK Belgesi Ankara', 'Mesleki Yeterlilik Belgesi', 'Hızlı Belgelendirme'],
         descriptions: ['Resmi süreç, uzman danışmanlık.', 'Tehlikeli işler için zorunlu belge.'],
-        asset_requirements: { format: 'image', notes: 'RSA — görsel yok, metin asset' },
       },
       compliance_notes: ['RSA başlık 30 karakter altında', 'Garanti vaadi yok'],
     },
@@ -192,9 +231,15 @@ async function runAll(): Promise<void> {
     const a = s.ad_spec!
     console.log(`\n[${i + 1}] kind=${s.kind} · ${a.platform} · ${a.campaign_type}`)
     console.log(`    hedef: ${a.conversion_goal} · CTA: ${a.cta} · bütçe: ${a.budget.daily} ${a.budget.currency}/gün`)
-    console.log(`    lokasyon: ${a.targeting.locations.join(', ')} · yaş: ${a.targeting.demographics.age_min}-${a.targeting.demographics.age_max} · cinsiyet: ${a.targeting.demographics.genders.join('/')}`)
+    const hedefleme = a.targeting.demographics
+      ? `yaş: ${a.targeting.demographics.age_min}-${a.targeting.demographics.age_max} · cinsiyet: ${a.targeting.demographics.genders.join('/')}`
+      : `anahtar kelime: ${(a.targeting.keywords ?? []).join(', ')}`
+    console.log(`    lokasyon: ${a.targeting.locations.join(', ')} · ${hedefleme}`)
     console.log(`    başlıklar: ${a.creative.headlines.join(' | ')}`)
-    console.log(`    asset: ${a.creative.asset_requirements.format}${a.creative.asset_requirements.dimensions ? ' ' + a.creative.asset_requirements.dimensions : ''}`)
+    const asset = a.creative.asset_requirements
+      ? `${a.creative.asset_requirements.format}${a.creative.asset_requirements.dimensions ? ' ' + a.creative.asset_requirements.dimensions : ''}`
+      : 'metin (RSA — görsel yok)'
+    console.log(`    asset: ${asset}`)
     console.log(`    uyum: ${a.compliance_notes.join('; ')}`)
   })
   console.log('─'.repeat(64))

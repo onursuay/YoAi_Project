@@ -124,7 +124,7 @@ export default function ImprovementCard({ improvement, onApprove, onReject, busy
               {spec.creative?.asset_requirements?.format && (
                 <Row
                   label={t('assetRequirements')}
-                  value={[spec.creative.asset_requirements.format, spec.creative.asset_requirements.dimensions].filter(Boolean).join(' · ')}
+                  value={[spec.creative?.asset_requirements?.format, spec.creative?.asset_requirements?.dimensions].filter(Boolean).join(' · ')}
                 />
               )}
               {(payload?.compliance_notes?.length || spec.compliance_notes?.length) ? (

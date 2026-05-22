@@ -85,18 +85,22 @@ function validateDemographics(raw: unknown): AdSpecDemographics | null {
   return { age_min: ageMin, age_max: ageMax, genders: genders.length ? genders : ['all'] }
 }
 
-function validateTargeting(raw: unknown): AdSpecTargeting | null {
+function validateTargeting(raw: unknown, platform: 'meta' | 'google'): AdSpecTargeting | null {
   const o = obj(raw)
   if (!o) return null
   const demographics = validateDemographics(o.demographics)
-  if (!demographics) return null
+  // Meta'da demografik hedefleme zorunlu. Google Arama Ağı anahtar kelimeyle
+  // hedeflenir → demografik opsiyonel.
+  if (platform === 'meta' && !demographics) return null
   const targeting: AdSpecTargeting = {
     locations: strArr(o.locations),
-    demographics,
     placements: strArr(o.placements),
   }
+  if (demographics) targeting.demographics = demographics
   const interests = strArr(o.interests)
   if (interests.length) targeting.interests = interests
+  const keywords = strArr(o.keywords)
+  if (keywords.length) targeting.keywords = keywords
   return targeting
 }
 
@@ -115,21 +119,24 @@ function validateAssetRequirements(raw: unknown): AdSpecAssetRequirements | null
   return req
 }
 
-function validateCreative(raw: unknown): AdSpecCreative | null {
+function validateCreative(raw: unknown, platform: 'meta' | 'google'): AdSpecCreative | null {
   const o = obj(raw)
   if (!o) return null
   const brief = asStr(o.brief)
   const headlines = strArr(o.headlines)
   const descriptions = strArr(o.descriptions)
   const assetReq = validateAssetRequirements(o.asset_requirements)
-  // En az brief + 1 başlık + asset format zorunlu — yoksa kreatif geçersiz.
-  if (!brief || headlines.length === 0 || !assetReq) return null
+  // En az brief + 1 başlık her platformda zorunlu.
+  if (!brief || headlines.length === 0) return null
+  // Görsel/video asset formatı SADECE Meta'da zorunlu. Google Arama Ağı (RSA)
+  // metin tabanlıdır — görsel asset'i yoktur, başlık+açıklama yeterli.
+  if (platform === 'meta' && !assetReq) return null
   const creative: AdSpecCreative = {
     brief,
     headlines,
     descriptions,
-    asset_requirements: assetReq,
   }
+  if (assetReq) creative.asset_requirements = assetReq
   const primary = asStr(o.primary_text)
   if (primary) creative.primary_text = primary
   return creative
@@ -145,8 +152,8 @@ function validateAdSpec(raw: unknown): AdSpec | null {
   const cta = asStr(o.cta)
   if (!campaignType || !conversionGoal || !cta) return null
   const budget = validateBudget(o.budget)
-  const targeting = validateTargeting(o.targeting)
-  const creative = validateCreative(o.creative)
+  const targeting = validateTargeting(o.targeting, platform)
+  const creative = validateCreative(o.creative, platform)
   if (!budget || !targeting || !creative) return null
   return {
     platform,
