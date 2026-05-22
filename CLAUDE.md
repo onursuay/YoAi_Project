@@ -78,6 +78,23 @@ Uyarı / bilgi bantları için bunları kullan:
 
 Tüm butonlar ve ikonlar için de aynı kural geçerli (no amber, no yellow).
 
+## UI Dil / Terminoloji Kuralı (YASAK: ham teknik terim) — Proje Geneli
+Kullanıcıya gösterilen **HİÇBİR yerde** ham teknik terim / İngilizce enum / `UNDERSCORE_LU_KOD` / iç parametre adı görünmez. **Kullanıcı bu terimleri anlamaz** — her zaman **sade, kullanıcı dostu Türkçe** etiket gösterilir. Bu kural tüm modüller için geçerlidir (Optimizasyon, YoAlgoritma, Strateji, Hedef Kitle, Tasarım, …).
+
+**Yasak örnekler (UI'da ASLA):**
+- Optimizasyon/analiz sinyalleri: `LOW_ROAS`, `SINGLE_ADSET_RISK`, `QUALITY_BELOW_AVERAGE`, `HIGH_CPC`, `NO_DELIVERY` …
+- Platform enum'ları: `OUTCOME_SALES`, `MAXIMIZE_CONVERSIONS`, `TARGET_ROAS`, `RESPONSIVE_SEARCH_AD`, `SEARCH`, `primary_text` …
+- Teklif stratejisi / kampanya türü / hedef / yayın yeri ham kodları.
+
+**Doğru karşılıklar:**
+- `LOW_ROAS` → "Düşük getiri", `SINGLE_ADSET_RISK` → "Tek grup riski", `QUALITY_BELOW_AVERAGE` → "Reklam kalitesi düşük"
+- `MAXIMIZE_CONVERSIONS` → "Dönüşümleri En Üst Düzeye Çıkar", `SEARCH` → "Arama Ağı"
+
+**Çeviri kaynakları (yeni UI eklerken KULLAN):**
+- Platform enum'ları (Meta/Google objective, bidding, channel, CTA, placement, ad format): [lib/yoai/translations/](lib/yoai/translations/) → `translateEnum(value, 'tr', platform)`.
+- Optimizasyon sorun etiketleri (ProblemTagId): [lib/google/optimization/labels.ts](lib/google/optimization/labels.ts) → `problemLabel(id)`.
+- Yeni bir enum/parametre türü UI'a girecekse önce çeviri katmanına ekle, sonra göster. Ham değeri doğrudan `{value}` ile basmak YASAK.
+
 ## Kitle Hedefleme Picker UX (Dropdown davranışı) — Proje Geneli
 Projedeki **TÜM "Kitle Hedefleme" picker'ları** (Arama / Göz at sekmeli kitle segmenti UI'ı) — kampanya türünden ve bağlamdan bağımsız olarak — aynı dropdown davranışına sahiptir:
 

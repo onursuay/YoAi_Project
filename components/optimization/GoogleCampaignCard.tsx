@@ -8,6 +8,8 @@
 import { useState, useRef, useEffect } from 'react'
 import { ChevronDown, Loader2, Sparkles, Zap, AlertTriangle } from 'lucide-react'
 import ScoreBadge from './ScoreBadge'
+import { translateEnum } from '@/lib/yoai/translations'
+import { problemLabel } from '@/lib/google/optimization/labels'
 import type { ScoreStatus } from '@/lib/meta/optimization/types'
 import type { GoogleOptimizationCampaign } from '@/lib/google/optimization/types'
 
@@ -17,18 +19,6 @@ interface Props {
   onToggle: () => void
   onMagicScan: (useAI: boolean) => void
   scanning?: boolean
-}
-
-const CHANNEL_LABELS: Record<string, string> = {
-  SEARCH: 'Arama Ağı',
-  PERFORMANCE_MAX: 'Performance Max',
-  DISPLAY: 'Görüntülü Reklam',
-  VIDEO: 'Video',
-  SHOPPING: 'Alışveriş',
-  DEMAND_GEN: 'Demand Gen',
-  MULTI_CHANNEL: 'Çok Kanallı',
-  LOCAL: 'Yerel',
-  SMART: 'Akıllı',
 }
 
 function statusFromScore(score: number, hasData: boolean): ScoreStatus {
@@ -63,7 +53,8 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   const m = campaign.metrics
   const hasData = m.impressions > 0
   const status = statusFromScore(campaign.score, hasData)
-  const channel = campaign.channelType ? (CHANNEL_LABELS[campaign.channelType] ?? campaign.channelType) : '—'
+  const channel = campaign.channelType ? translateEnum(campaign.channelType, 'tr', 'google') : '—'
+  const bidding = campaign.biddingStrategy ? translateEnum(campaign.biddingStrategy, 'tr', 'google') : '—'
   const problemCount = campaign.problemTags.length
   const isActive = (campaign.effectiveStatus || campaign.status).toUpperCase() === 'ENABLED'
 
@@ -155,7 +146,7 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
           </div>
 
           <div className="flex flex-wrap gap-3 text-xs text-gray-600">
-            <span>Teklif: <span className="font-medium text-gray-800">{campaign.biddingStrategy ?? '—'}</span></span>
+            <span>Teklif: <span className="font-medium text-gray-800">{bidding}</span></span>
             {campaign.optimizationScore != null && (
               <span>Optimizasyon skoru: <span className="font-medium text-gray-800">%{Math.round(campaign.optimizationScore)}</span></span>
             )}
@@ -179,7 +170,7 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
                           : 'bg-gray-50 text-gray-600 border-gray-200'
                     }`}
                   >
-                    {tag.id}
+                    {problemLabel(tag.id)}
                   </span>
                 ))}
               </div>
