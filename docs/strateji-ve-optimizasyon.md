@@ -81,9 +81,7 @@ Reklam veren, hesabında neyin iyi/kötü gittiğini ve **hemen ne yapması gere
 
 **İlişki:** Çakışmazlar, tamamlayıcıdırlar. Strateji = stratejik plan, Optimizasyon = anlık taktik düzeltme, YoAlgoritma = haftalık sistematik denetim. (#6 iyileştirmesiyle Strateji optimize'ı artık YoAlgoritma uyarılarını da dikkate alır.)
 
-### 2.6 Optimizasyon — gözlemlenen iyileştirme fırsatları (henüz uygulanmadı)
-1. **AI motoru OpenAI gpt-4o-mini** (`aiRecommender.ts:331-333`) — Strateji'de yaptığımız gibi Claude'a taşınabilir (tutarlılık + kalite). `lib/strategy/claude.ts` deseni doğrudan örnek alınabilir.
-2. **Günlük AI scan limiti client-side** — `SubscriptionProvider` sayacı `localStorage` tabanlı (`getAiScanUsage`/`incrementAiScanUsage`). Sunucu-otoriter değil → teknik kullanıcı bypass edebilir. Limit sunucuya taşınmalı (Strateji'deki atomik `deduct_strategy_credit` deseni gibi).
-3. **Yalnız Meta** — Google Ads için optimizasyon skoru/aksiyonu yok; çok-kanallı markalar Google tarafını göremiyor.
-
-> Not: Bu üç madde bu turda **kasıtlı olarak uygulanmadı** (kullanıcı yalnız analiz istedi). Strateji'nin #1 ve #5 çözümleri burada da birebir uygulanabilir referans niteliğindedir.
+### 2.6 Optimizasyon — iyileştirmeler
+1. ✅ **AI motoru Claude'a taşındı** (2026-05-22) — `aiRecommender.ts` artık OpenAI gpt-4o-mini yerine `getAnthropicClient` + `getAiEngineModel` kullanır (prompt-cache'li system bloğu). Deterministik rule-engine fallback korundu; gate `isAnthropicReady()`.
+2. ✅ **Günlük AI scan limiti sunucuya alındı** (2026-05-22) — yeni `ai_scan_usage` tablosu + atomik `consume_ai_scan` RPC. `magic-scan` route'u `useAI` istendiğinde sunucuda kotayı tüketir; kota dolunca `COST_PER_AI_SCAN` (5) kredi düşer, yetersizse 402 ile bloklanır. Client localStorage sayacı yalnız ön-UX; **otorite artık sunucuda**. (Migration: `npm run db:migrate:aiscan` — deploy öncesi omddq'ya uygulanmalı.)
+3. ⏳ **Yalnız Meta** (henüz açık) — Google Ads için optimizasyon skoru/aksiyonu yok; çok-kanallı markalar Google tarafını göremiyor. Sıradaki aday.

@@ -15,6 +15,8 @@ export const CREDIT_DEFAULTS: CreditState = {
 
 export const COST_PER_GENERATION = 20
 export const COST_PER_STRATEGY = 10
+// Günlük ücretsiz AI scan kotası aşıldığında her ek "AI ile Tara" için düşülen kredi.
+export const COST_PER_AI_SCAN = 5
 export const FREE_CREDITS = 100
 
 // ── Credit Packages ────────────────────────────────────────────

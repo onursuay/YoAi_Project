@@ -8,6 +8,7 @@ import type {
   ChangeSet,
 } from './types'
 import { createChangeSet } from './changeSetManager'
+import { getAnthropicClient, getAiEngineModel, isAnthropicReady } from '@/lib/anthropic/client'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Fallback Recommendation Templates (deterministic, always available)
@@ -320,7 +321,7 @@ function generateFallback(
 }
 
 // ═══════════════════════════════════════════════════════════════════════════
-// AI-Powered Generator (when OPENAI_API_KEY is set)
+// AI-Powered Generator (Claude — ANTHROPIC_API_KEY varsa)
 // ═══════════════════════════════════════════════════════════════════════════
 
 async function generateWithAI(
@@ -328,11 +329,7 @@ async function generateWithAI(
   problemTags: ProblemTag[],
   locale: string,
 ): Promise<Recommendation[]> {
-  const apiKey = process.env.OPENAI_API_KEY
-  const baseUrl = process.env.OPENAI_BASE_URL || 'https://api.openai.com/v1'
-  const model = process.env.OPENAI_MODEL || 'gpt-4o-mini'
-
-  if (!apiKey) throw new Error('No API key')
+  if (!isAnthropicReady()) throw new Error('ANTHROPIC_API_KEY yok')
 
   const lang = locale === 'en' ? 'English' : 'Turkish'
 
@@ -377,34 +374,21 @@ Key Metrics:
 Detected Problems:
 ${problemTags.map(t => `- ${t.id} (${t.severity}): ${JSON.stringify(t.evidence)}`).join('\n')}`
 
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), 10000)
-
   try {
-    const response = await fetch(`${baseUrl}/chat/completions`, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Authorization': `Bearer ${apiKey}`,
-      },
-      body: JSON.stringify({
-        model,
-        messages: [
-          { role: 'system', content: systemPrompt },
-          { role: 'user', content: userPrompt },
-        ],
-        temperature: 0.3,
+    const client = getAnthropicClient()
+    const res = await client.messages.create(
+      {
+        model: getAiEngineModel(),
         max_tokens: 2000,
-      }),
-      signal: controller.signal,
-    })
-
-    clearTimeout(timeout)
-
-    if (!response.ok) throw new Error(`AI API error: ${response.status}`)
-
-    const data = await response.json()
-    const content = data.choices?.[0]?.message?.content || '[]'
+        temperature: 0.3,
+        system: [{ type: 'text', text: systemPrompt, cache_control: { type: 'ephemeral' } }],
+        messages: [{ role: 'user', content: userPrompt }],
+      },
+      { timeout: 10000 },
+    )
+    let content = ''
+    for (const block of res.content) if (block.type === 'text') content += block.text
+    if (!content) content = '[]'
 
     // Parse JSON (handle markdown code blocks)
     const jsonStr = content.replace(/```json?\n?/g, '').replace(/```/g, '').trim()
@@ -454,7 +438,7 @@ ${problemTags.map(t => `- ${t.id} (${t.severity}): ${JSON.stringify(t.evidence)}
       }
     })
   } catch (err) {
-    clearTimeout(timeout)
+    console.error('[Magic Scan AI] Claude hatası:', err)
     throw err
   }
 }
@@ -473,8 +457,8 @@ export async function generateRecommendations(
     return { recommendations: [], aiGenerated: false }
   }
 
-  // Try AI path only when user explicitly chose it AND API key is configured
-  if (useAI && process.env.OPENAI_API_KEY) {
+  // Try AI path only when user explicitly chose it AND Claude is configured
+  if (useAI && isAnthropicReady()) {
     try {
       const recs = await generateWithAI(campaign, problemTags, locale)
       if (recs.length > 0) {

@@ -201,6 +201,11 @@ export default function OptimizasyonPage() {
       if (data.ok) {
         setScanResults(prev => ({ ...prev, [campaign.id]: data.data }))
         setExpandedId(campaign.id)
+      } else if (response.status === 402 || data.code === 'AI_SCAN_LIMIT') {
+        // Sunucu kotayı reddetti (client sayacı senkron değilse) → kredi modalı (otoriter kapı)
+        setGateAccessType('credit')
+        setGateFeatureKey('optimization_ai_scan_pro')
+        setShowGateModal(true)
       } else {
         addToast(data.message || 'Scan failed', 'error')
       }

@@ -3,6 +3,11 @@ import { resolveMetaContext } from '@/lib/meta/context'
 import { runRuleEngine } from '@/lib/meta/optimization/ruleEngine'
 import { generateRecommendations } from '@/lib/meta/optimization/aiRecommender'
 import { requireOptimizationAccess } from '@/lib/meta/optimization/serverGuard'
+import { isAnthropicReady } from '@/lib/anthropic/client'
+import { consumeAiScan } from '@/lib/billing/aiScanUsage'
+import { getCreditBalance } from '@/lib/billing/db'
+import { getPlanById } from '@/lib/subscription/helpers'
+import { COST_PER_AI_SCAN } from '@/lib/subscription/types'
 import type { OptimizationCampaign, MagicScanResult } from '@/lib/meta/optimization/types'
 
 export const dynamic = 'force-dynamic'
@@ -34,6 +39,29 @@ export async function POST(request: Request) {
         { ok: false, error: 'invalid_payload', message: 'Campaign data is required' },
         { status: 400 },
       )
+    }
+
+    // Sunucu-otoriter günlük AI scan kotası — client localStorage sayacının
+    // yerini alan gerçek kapı. Yalnız AI gerçekten çalışacaksa (useAI + Claude
+    // hazır) tüketilir; kota dolu + yeterli kredi yoksa 402 ile bloklanır.
+    if (useAI && isAnthropicReady()) {
+      const plan = getPlanById(gate.subscription.planId)
+      const dailyLimit = plan?.aiScanDailyLimit ?? 0
+      // RPC satır varlığına güvenir: yeni kullanıcının 100-hoşgeldin kredisini garanti et.
+      await getCreditBalance(gate.user.id)
+      const consume = await consumeAiScan(gate.user.id, dailyLimit, COST_PER_AI_SCAN)
+      if (!consume.allowed) {
+        return NextResponse.json(
+          {
+            ok: false,
+            error: 'ai_scan_limit',
+            code: 'AI_SCAN_LIMIT',
+            message: 'Günlük AI tarama limitiniz doldu ve yeterli krediniz yok.',
+            balance: consume.balance,
+          },
+          { status: 402 },
+        )
+      }
     }
 
     // Step 1: Run deterministic rule engine
