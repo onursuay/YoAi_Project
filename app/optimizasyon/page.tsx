@@ -9,9 +9,12 @@ import { ToastContainer, type Toast } from '@/components/Toast'
 import CampaignCard from '@/components/optimization/CampaignCard'
 import DetailPanel from '@/components/optimization/DetailPanel'
 import MagicScanResults from '@/components/optimization/MagicScanResults'
+import GoogleCampaignCard from '@/components/optimization/GoogleCampaignCard'
+import GoogleScanResults from '@/components/optimization/GoogleScanResults'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import { metaFetch, TOKEN_EXPIRED_EVENT } from '@/lib/meta/clientFetch'
 import type { OptimizationCampaign, MagicScanResult } from '@/lib/meta/optimization/types'
+import type { GoogleOptimizationCampaign } from '@/lib/google/optimization/types'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export default function OptimizasyonPage() {
@@ -45,6 +48,16 @@ export default function OptimizasyonPage() {
   const [scanningId, setScanningId] = useState<string | null>(null)
   const [scanPhase, setScanPhase] = useState(0)
   const [scanResults, setScanResults] = useState<Record<string, MagicScanResult>>({})
+
+  // ── Kaynak seçici (Meta / Google) + Google verisi ──
+  const [source, setSource] = useState<'meta' | 'google'>('meta')
+  const [googleCampaigns, setGoogleCampaigns] = useState<GoogleOptimizationCampaign[]>([])
+  const [googleLoading, setGoogleLoading] = useState(false)
+  const [googleLoaded, setGoogleLoaded] = useState(false)
+  const [googleError, setGoogleError] = useState<string | null>(null)
+  const [googleScanningId, setGoogleScanningId] = useState<string | null>(null)
+  const [googleScanResults, setGoogleScanResults] = useState<Record<string, MagicScanResult>>({})
+  const [googleExpandedId, setGoogleExpandedId] = useState<string | null>(null)
 
   // Connection state
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
@@ -218,6 +231,69 @@ export default function OptimizasyonPage() {
     }
   }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan])
 
+  // ── Google: skorlu kampanyaları çek ────────────────────────────────────
+  const fetchGoogleCampaigns = useCallback(async () => {
+    setGoogleLoading(true)
+    setGoogleError(null)
+    try {
+      const res = await fetch('/api/google/optimization/score')
+      const data = await res.json()
+      if (res.status === 401) {
+        setGoogleError('Google Ads bağlantısı bulunamadı. Entegrasyon sayfasından bağlayın.')
+        setGoogleCampaigns([])
+        return
+      }
+      if (!res.ok || !data.ok) {
+        setGoogleError(data.message || 'Google verileri alınamadı')
+        return
+      }
+      setGoogleCampaigns(data.data?.campaigns ?? [])
+    } catch {
+      setGoogleError('Google verileri alınamadı')
+    } finally {
+      setGoogleLoading(false)
+      setGoogleLoaded(true)
+    }
+  }, [])
+
+  // Google kaynağına ilk geçişte yükle
+  useEffect(() => {
+    if (source === 'google' && !googleLoaded && !googleLoading) fetchGoogleCampaigns()
+  }, [source, googleLoaded, googleLoading, fetchGoogleCampaigns])
+
+  // ── Google Magic Scan ──────────────────────────────────────────────────
+  const handleGoogleScan = useCallback(async (campaign: GoogleOptimizationCampaign, useAI: boolean) => {
+    if (useAI && !canUseOptimizationAI) {
+      setGateAccessType('subscription'); setGateFeatureKey('optimization'); setShowGateModal(true); return
+    }
+    if (useAI && !canDoAiScan) {
+      setGateAccessType('credit'); setGateFeatureKey('optimization_ai_scan_pro'); setShowGateModal(true); return
+    }
+    if (useAI) recordAiScan()
+    setGoogleScanningId(campaign.id)
+    try {
+      const locale = document.cookie.match(/NEXT_LOCALE=(\w+)/)?.[1] || 'tr'
+      const res = await fetch('/api/google/optimization/magic-scan', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ campaign, locale, useAI }),
+      })
+      const data = await res.json()
+      if (data.ok) {
+        setGoogleScanResults(prev => ({ ...prev, [campaign.id]: data.data }))
+        setGoogleExpandedId(campaign.id)
+      } else if (res.status === 402 || data.code === 'AI_SCAN_LIMIT') {
+        setGateAccessType('credit'); setGateFeatureKey('optimization_ai_scan_pro'); setShowGateModal(true)
+      } else {
+        addToast(data.message || 'Tarama başarısız', 'error')
+      }
+    } catch {
+      addToast('Tarama başarısız', 'error')
+    } finally {
+      setGoogleScanningId(null)
+    }
+  }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan])
+
   // ── Filter campaigns by search ─────────────────────────────────────────
   const filteredCampaigns = searchQuery
     ? campaigns.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase()))
@@ -274,6 +350,20 @@ export default function OptimizasyonPage() {
       />
 
       <div className="flex-1 overflow-auto p-6">
+        {/* Kaynak seçici: Meta / Google */}
+        <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
+          {(['meta', 'google'] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setSource(s)}
+              className={`px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${source === s ? 'bg-white text-gray-900 shadow-sm' : 'text-gray-500 hover:text-gray-700'}`}
+            >
+              {s === 'meta' ? 'Meta' : 'Google'}
+            </button>
+          ))}
+        </div>
+
+        {source === 'meta' && (
         <TableShimmer isRefreshing={refreshing}>
           {/* Loading state */}
           {loading && (
@@ -366,6 +456,53 @@ export default function OptimizasyonPage() {
             </div>
           )}
         </TableShimmer>
+        )}
+
+        {source === 'google' && (
+          <div>
+            {googleLoading && (
+              <div className="space-y-4">
+                {[1, 2, 3].map(i => (
+                  <div key={i} className="bg-white rounded-2xl border border-gray-200 p-4 animate-pulse h-20" />
+                ))}
+              </div>
+            )}
+            {!googleLoading && googleError && (
+              <div className="text-center py-12">
+                <p className="text-gray-500 text-sm">{googleError}</p>
+                <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
+                  Entegrasyon
+                </a>
+              </div>
+            )}
+            {!googleLoading && !googleError && googleCampaigns.length === 0 && (
+              <div className="text-center py-12">
+                <p className="text-gray-400 text-sm">Aktif Google kampanyası bulunamadı.</p>
+              </div>
+            )}
+            {!googleLoading && !googleError && googleCampaigns.length > 0 && (
+              <div className="space-y-3">
+                {(searchQuery ? googleCampaigns.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())) : googleCampaigns).map(c => (
+                  <div key={c.id}>
+                    <GoogleCampaignCard
+                      campaign={c}
+                      expanded={googleExpandedId === c.id}
+                      onToggle={() => setGoogleExpandedId(googleExpandedId === c.id ? null : c.id)}
+                      onMagicScan={(useAI) => handleGoogleScan(c, useAI)}
+                      scanning={googleScanningId === c.id}
+                    />
+                    {googleScanResults[c.id] && (
+                      <GoogleScanResults
+                        result={googleScanResults[c.id]}
+                        onClose={() => setGoogleScanResults(prev => { const n = { ...prev }; delete n[c.id]; return n })}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
+            )}
+          </div>
+        )}
       </div>
 
       <ToastContainer toasts={toasts} onClose={removeToast} />
