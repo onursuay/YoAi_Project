@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-22 — Çoklu Reklam Hesabı Faz 2.2: Meta switcher UI + limit modal (flag arkasında)
+- **Sorun:** Kullanıcı Topbar'dan tek hesap seçebiliyordu; plan limitine kadar birden fazla hesap kaydedip aralarında geçiş yapabilmeli, limit dolunca premium upsell görmeli.
+- **Çözüm:** `useRegisteredAccounts` hook'u (`/api/account/registered` ile konuşur) + `MultiAccountDropdown` bileşeni (kayıtlı hesaplar arası geçiş + "Hesap Ekle" + "X/Y hesap" göstergesi + çıkar). Topbar Meta dropdown'ı `reg.enabled` ise yeni bileşeni render eder; **flag kapalıyken bugünkü tek-hesap UI birebir korunur**. Limit dolunca `AccessRequiredModal` (`featureKey="ad_account_slot"`). Geçiş mevcut `handleSelectAccount` (select-adaccount + reload) ile yapılır — **Meta seçim route'una dokunulmadı**. `AccessRequiredModal`'a opsiyonel `dismissible`/`onClose` eklendi (additive; alan erişim bariyerlerinde default katı davranış aynen) çünkü hesap-ekleme soft limiti kullanıcıyı hapsetmemeli. Yeni i18n anahtarları (tr+en). `tsc` ✓.
+- **Not:** Google çoklu-seçim + /entegrasyon yönetim görünümü Faz 2.2b'de.
+- **Dosyalar:** `hooks/useRegisteredAccounts.ts` (yeni), `components/account/MultiAccountDropdown.tsx` (yeni), `components/Topbar.tsx`, `components/billing/AccessRequiredModal.tsx`, `lib/billing/featureAccessMap.ts`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 2.1: Kayıt API + limit gate (default-off flag)
 - **Sorun:** Faz 2.0 veri modeli vardı ama kayıt/limit zorlamasını yapan bir uç nokta yoktu; ayrıca özellik canlıya açılmadan önce mevcut davranışı etkilememeli.
 - **Çözüm:** `GET/POST/DELETE /api/account/registered` — kayıtlı hesapları listeler (limit + kalan), ekler (plan limitini zorlar → `limit_reached` 403, UI AccessRequiredModal için yapısal yanıt), çıkarır. Limit gate yalnız burada; Meta/Google **seçim route'larına dokunulmadı** (UI "önce kaydet → sonra seç" akışıyla çağıracak). `MULTI_ACCOUNT_ENABLED` flag'i **default kapalı** — kapalıyken GET `enabled:false`, POST/DELETE `feature_disabled` döner, hiçbir prod davranışı değişmez. `ensureBackfilled`: set boşsa mevcut seçili Meta+Google hesabını seed eder (geriye uyum, idempotent). Owner sınırsız. `tsc` ✓.

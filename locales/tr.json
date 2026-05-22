@@ -265,7 +265,16 @@
         "disconnect": "Bağlantıyı Kes",
         "confirmDisconnect": "Meta bağlantısını kesmek istediğinize emin misiniz?",
         "connected": "Bağlı",
-        "notConnected": "Bağlı Değil"
+        "notConnected": "Bağlı Değil",
+        "registered": "Kayıtlı Hesaplar",
+        "addAccount": "Hesap Ekle",
+        "accountsUsed": "{count}/{limit} hesap",
+        "accountsUsedUnlimited": "{count} hesap",
+        "limitReachedTitle": "Plan limitin doldu",
+        "upgradeForMore": "Daha fazla reklam hesabı için planını yükselt.",
+        "viewPlans": "Planları İncele",
+        "noMoreToAdd": "Eklenecek başka hesap yok.",
+        "searchAccounts": "Hesap ara..."
       },
       "performanceRecommendations": {
         "unavailable": "Optimizasyon önerileri şu anda alınamadı. Daha sonra tekrar denenecek."

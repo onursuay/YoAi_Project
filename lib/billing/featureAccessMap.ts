@@ -73,6 +73,13 @@ export const FEATURE_ACCESS: Record<string, FeatureAccessRule> = {
     description:
       'AI tabanlı hedef kitle üretimi için aktif bir abonelik planına sahip olmanız gerekir.',
   },
+  ad_account_slot: {
+    key: 'ad_account_slot',
+    label: 'Reklam Hesabı',
+    tier: 'subscription_required',
+    description:
+      'Planınızın reklam hesabı limitine ulaştınız. Daha fazla reklam hesabı eklemek için planınızı yükseltin.',
+  },
 
   // ─── Kredi gerektiren AI aksiyonları ─────────────────────────────
   optimization_ai_scan_pro: {

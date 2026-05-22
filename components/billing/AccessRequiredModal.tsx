@@ -2,7 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
-import { Sparkles, Zap, ShieldCheck, Lock } from 'lucide-react'
+import { Sparkles, Zap, ShieldCheck, Lock, X } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 import {
   getFeatureRule,
@@ -38,6 +38,13 @@ export interface AccessRequiredModalProps {
   ctaHref?: string
   /** Telemetri/log için kısa sebep (UI'da gösterilmez) */
   reason?: string
+  /**
+   * Yumuşak (soft) limit/upsell senaryoları için kapatılabilirlik. Default
+   * KAPALI → alan erişim bariyerlerinde modal kapatılamaz (mevcut davranış).
+   * `dismissible` + `onClose` verilirse X / ESC / dış tıklama ile kapanır.
+   */
+  dismissible?: boolean
+  onClose?: () => void
 }
 
 const SUBSCRIPTION_DEFAULTS = {
@@ -80,8 +87,11 @@ export default function AccessRequiredModal({
   ctaHref,
   // eslint-disable-next-line @typescript-eslint/no-unused-vars
   reason,
+  dismissible = false,
+  onClose,
 }: AccessRequiredModalProps) {
   const router = useRouter()
+  const canDismiss = dismissible && typeof onClose === 'function'
 
   // Body scroll lock — modal kapatılamadığı sürece arkadaki sayfada
   // gezilemez. unmount'ta restore edilir.
@@ -93,17 +103,18 @@ export default function AccessRequiredModal({
     }
   }, [])
 
-  // ESC tuşunu yutuyoruz — kullanıcı kazara kapatamasın.
+  // ESC: kapatılabilir modda kapatır; aksi halde yutulur (kazara kapanma yok).
   useEffect(() => {
     const handler = (e: KeyboardEvent) => {
       if (e.key === 'Escape') {
         e.preventDefault()
         e.stopPropagation()
+        if (canDismiss) onClose!()
       }
     }
     document.addEventListener('keydown', handler, true)
     return () => document.removeEventListener('keydown', handler, true)
-  }, [])
+  }, [canDismiss, onClose])
 
   const rule: FeatureAccessRule | null = featureKey
     ? getFeatureRule(featureKey)
@@ -155,6 +166,7 @@ export default function AccessRequiredModal({
         onClick={(e) => {
           e.preventDefault()
           e.stopPropagation()
+          if (canDismiss) onClose!()
         }}
       />
 
@@ -162,6 +174,18 @@ export default function AccessRequiredModal({
       <div className="relative w-full max-w-md overflow-hidden rounded-3xl bg-white shadow-2xl ring-1 ring-black/5">
         {/* Top gradient accent */}
         <div className={`h-1.5 bg-gradient-to-r ${accentClass}`} />
+
+        {/* Kapatma — yalnız soft/upsell modunda (dismissible) */}
+        {canDismiss && (
+          <button
+            type="button"
+            onClick={onClose}
+            aria-label="Kapat"
+            className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
+          >
+            <X className="h-4 w-4" />
+          </button>
+        )}
 
         <div className="px-8 pt-8 pb-7 text-center">
           <div className="relative mx-auto mb-5 flex h-16 w-16 items-center justify-center rounded-2xl bg-primary/10 ring-1 ring-primary/15">

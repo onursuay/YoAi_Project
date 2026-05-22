@@ -5,6 +5,9 @@ import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
 import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, type LucideIcon } from 'lucide-react'
 import { clearYoAlgoritmaClientCache } from '@/lib/yoai/clientCache'
+import { useRegisteredAccounts } from '@/hooks/useRegisteredAccounts'
+import MultiAccountDropdown from '@/components/account/MultiAccountDropdown'
+import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 
 const ICON_MAP: Record<string, LucideIcon> = {
   TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle,
@@ -58,6 +61,10 @@ export default function Topbar({
   const [accountSearch, setAccountSearch] = useState('')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
   const locale = useLocale()
+
+  // Çoklu reklam hesabı (Madde 2) — flag kapalıyken enabled=false → mevcut UI korunur
+  const reg = useRegisteredAccounts()
+  const [showLimitModal, setShowLimitModal] = useState(false)
 
   // Notification ticker — real data from API
   const [notifications, setNotifications] = useState<{ icon: string; text: string; textEn: string; color: string }[]>([])
@@ -314,7 +321,22 @@ export default function Topbar({
                 </div>
               )}
 
-              {adAccountName && showDropdown && (
+              {adAccountName && showDropdown && (reg.enabled ? (
+                <MultiAccountDropdown
+                  adAccounts={adAccounts}
+                  selectedAccount={selectedAccount}
+                  registered={reg.accounts}
+                  count={reg.count}
+                  limit={reg.limit}
+                  remaining={reg.remaining}
+                  onSwitch={handleSelectAccount}
+                  onDisconnect={handleDisconnect}
+                  addAccount={reg.addAccount}
+                  removeAccount={reg.removeAccount}
+                  onLimitReached={() => setShowLimitModal(true)}
+                  isAppReview={isAppReview}
+                />
+              ) : (
                 <div className="absolute right-0 mt-2 w-72 bg-white rounded-lg shadow-xl border border-gray-200 z-50">
                   <div className="p-3 border-b border-gray-200">
                     <p className="text-ui font-medium text-gray-500">
@@ -361,7 +383,7 @@ export default function Topbar({
                     </button>
                   </div>
                 </div>
-              )}
+              ))}
             </div>
           )}
 
@@ -384,6 +406,15 @@ export default function Topbar({
         </div>
       </div>
     </div>
+    {showLimitModal && (
+      <AccessRequiredModal
+        type="subscription"
+        featureKey="ad_account_slot"
+        dismissible
+        onClose={() => setShowLimitModal(false)}
+        reason="multi_account_limit"
+      />
+    )}
     </>
   )
 }
