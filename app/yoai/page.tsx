@@ -13,6 +13,7 @@ import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import { CATEGORIES } from '@/lib/yoai/categories'
 import { OFF_TOPIC_MESSAGE } from '@/lib/yoai/prompts'
+import { YOAI_CC_CACHE_KEY, YOAI_CC_DEEP_CACHE_KEY } from '@/lib/yoai/clientCache'
 import {
   COST_PER_CHAT,
   type ChatMessage,
@@ -77,14 +78,14 @@ export default function YoAiPage() {
 
   const handleActionSuccess = useCallback(() => {
     // Invalidate cache + re-fetch after successful action
-    try { sessionStorage.removeItem('yoai_cc_deep_cache') } catch {}
+    try { sessionStorage.removeItem(YOAI_CC_DEEP_CACHE_KEY) } catch {}
     setPendingAction(null)
   }, [])
 
   // ── Command Center Data ──
   // localStorage önbelleğinden anında yükle — sayfa yenilemede "Taranıyor" gösterme.
   // Backend'den sessizce arka planda yenile, state'i güncelle.
-  const CC_CACHE_KEY = 'yoai_cc_cache_v1'
+  const CC_CACHE_KEY = YOAI_CC_CACHE_KEY
   const readCachedCc = (): { data: DeepAnalysisResult | null; runDate: string | null } => {
     if (typeof window === 'undefined') return { data: null, runDate: null }
     try {

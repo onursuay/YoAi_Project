@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-05-22 — YoAlgoritma: Hesap değişiminde bayat client cache temizliği (Madde 1 ön hazırlık)
+- **Sorun:** Aktif reklam hesabı değiştiğinde YoAlgoritma'nın `localStorage`/`sessionStorage` snapshot'ı önceki hesaba aitti ve sayfa yenilemede eski hesabın kartları kısa süre "yanıp sönüyordu". (Optimizasyon, Strateji, Hedef Kitle zaten sunucuda `ad_account_id`'ye göre filtreli/önbellekli olduğu için hesap değişiminde doğru yeniden bağlanıyor — onlarda değişiklik gerekmedi.)
+- **Çözüm:** Cache anahtarlarını ve geçersiz kılmayı tek kaynakta toplayan `lib/yoai/clientCache.ts` (`clearYoAlgoritmaClientCache()`, SSR-güvenli). Meta hesap geçişinde (`Topbar.handleSelectAccount`) `window.location.reload()` öncesi çağrılıyor; YoAlgoritma sayfası anahtarları artık bu modülden alıyor (drift yok). Tarama pipeline'ına ve şemaya dokunulmadı. `tsc` ✓.
+- **Not:** YoAlgoritma'nın aktif-hesaba göre sunucu tarafı analizi (`yoai_daily_runs` Meta+Google birleşik toplam, `UNIQUE(user_id,run_date)`) çoklu-hesap tarama orkestrasyonu gerektirdiğinden Madde 2 kapsamında ele alınacak.
+- **Dosyalar:** `lib/yoai/clientCache.ts` (yeni), `components/Topbar.tsx`, `app/yoai/page.tsx`
+
 ## 2026-05-22 — Abonelik: Bağımsız reklam hesabı sayaçları + Enterprise (7+) seçilebilir
 - **Sorun:** Abonelik sayfasında (1) tek bir `adAccountCount` state'i 4 plan kartına birden veriliyordu → bir kartın reklam hesabı sayacını değiştirince diğer tüm kartlar (ve hem Aylık hem Yıllık görünüm) eş zamanlı değişiyordu; (2) Basic/Starter/Premium sayaçlarının üst sınırı yoktu (2→10); (3) Enterprise kartı hiç seçilemiyordu (`if (planId === 'enterprise') return` + sunucu katalogundan hariç) ve sayacı 6'da kilitliydi.
 - **Çözüm:** (1) Sayaç state'i plan başına bağımsız bir haritaya çevrildi (`Record<planId, number>`); her kart kendi sayısıyla fiyatını ayrı hesaplar, kartlar artık birbirini etkilemez. (2) Sınırlar `plans.ts`'de sabit olarak tanımlandı: self-servis planlar 2→6, 6'da `+` kapanır ve "7+ hesap için Enterprise" ipucu çıkar (eşit kart yüksekliği için rezerve slot). (3) Enterprise sayacı 7'den başlar (7→50, aktif +/-), kart "İletişime Geç" ile gerçek satış adresine (`info@yodijital.com`) seçili hesap sayısını içeren ön-doldurulmuş `mailto` açar — self-servis ödeme almaz, sunucu katalogu değişmedi. Ayrıca bu dosyadaki yasak amber renkler (deneme rozeti/not) onaylı palete (primary) çekildi. `tsc` ✓.
