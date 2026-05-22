@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-22 — Düzeltme: Seçici butonu aktif platformun hesabını gösterir (Google sekmesi)
+- **Sorun:** Hedef Kitle/Optimizasyon'da Google sekmesindeyken üstteki seçici butonu hâlâ aktif **Meta** hesabını (örn. "Fikret Petrol") gösteriyordu; aktif Google hesabı görünmüyordu.
+- **Çözüm:** Sayfa, aktif platforma göre doğru hesap adını Topbar'a veriyor: Meta sekmesi → Meta hesabı, Google sekmesi → aktif Google hesabı (`/api/integrations/google-ads/selected`'tan çekilir). Dropdown açılınca her iki bölüm + doğru vurgular zaten görünüyordu; bu yalnız buton etiketini düzeltir. `tsc` ✓.
+- **Dosyalar:** `app/hedef-kitle/page.tsx`, `app/optimizasyon/page.tsx`
+
 ## 2026-05-22 — Çoklu Reklam Hesabı Faz 3.2: Hedef Kitle'ye birleşik seçici
 - **Sorun:** Hedef Kitle'de hesap seçici görünmüyordu.
 - **Çözüm:** Hedef Kitle `/api/meta/status`'tan aktif Meta hesabını çekip Topbar'a `adAccountName` geçiriyor → birleşik seçici (Meta + Google) görünür. `?platform` okunup `PlatformTabs` sekmesi ayarlanır (Google seçince Hedef Kitle'de kalıp Google sekmesi açılır — Optimizasyon ile aynı). `tsc` ✓.

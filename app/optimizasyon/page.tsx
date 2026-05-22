@@ -58,6 +58,14 @@ export default function OptimizasyonPage() {
     const p = new URLSearchParams(window.location.search).get('platform')
     if (p === 'google' || p === 'tiktok') setSource(p)
   }, [])
+
+  // Aktif Google hesabı adını çek (Google sekmesinde buton etiketi için)
+  useEffect(() => {
+    fetch('/api/integrations/google-ads/selected', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.selected?.customerName) setGoogleName(d.selected.customerName) })
+      .catch(() => {})
+  }, [])
   const [extCampaigns, setExtCampaigns] = useState<GoogleOptimizationCampaign[]>([])
   const [extLoading, setExtLoading] = useState(false)
   const [extLoadedFor, setExtLoadedFor] = useState<string | null>(null)
@@ -69,6 +77,7 @@ export default function OptimizasyonPage() {
 
   // Connection state
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
+  const [googleName, setGoogleName] = useState<string | null>(null)
   const [tokenExpired, setTokenExpired] = useState(false)
   // True when the score endpoint returns 403 (no plan / no subscription).
   // Triggers the global CreditRequiredModal instead of inline error text.
@@ -362,7 +371,7 @@ export default function OptimizasyonPage() {
       <Topbar
         title={t('title')}
         description={t('description')}
-        adAccountName={adAccountName || undefined}
+        adAccountName={(source === 'google' ? googleName : adAccountName) || undefined}
       />
 
       <Toolbar

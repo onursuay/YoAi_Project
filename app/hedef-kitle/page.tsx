@@ -85,6 +85,8 @@ export default function HedefKitlePage() {
   const [showAudienceAiGate, setShowAudienceAiGate] = useState(false)
   // Aktif Meta hesabı — Topbar'da birleşik hesap seçici göstermek için
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
+  // Aktif Google hesabı adı — Google sekmesinde seçici butonunda göstermek için
+  const [googleName, setGoogleName] = useState<string | null>(null)
 
   // Birleşik seçiciden gelen ?platform sinyaliyle başlangıç platformunu ayarla
   useEffect(() => {
@@ -97,6 +99,14 @@ export default function HedefKitlePage() {
     fetch('/api/meta/status', { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
       .then(d => { if (d?.connected && d?.adAccountName) setAdAccountName(d.adAccountName) })
+      .catch(() => {})
+  }, [])
+
+  // Aktif Google hesabı adını çek (Google sekmesinde buton etiketi için)
+  useEffect(() => {
+    fetch('/api/integrations/google-ads/selected', { cache: 'no-store' })
+      .then(r => (r.ok ? r.json() : null))
+      .then(d => { if (d?.selected?.customerName) setGoogleName(d.selected.customerName) })
       .catch(() => {})
   }, [])
 
@@ -240,7 +250,7 @@ export default function HedefKitlePage() {
       <Topbar
         title={t('title')}
         description={t('description')}
-        adAccountName={adAccountName || undefined}
+        adAccountName={(platform === 'google' ? googleName : adAccountName) || undefined}
       />
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-6xl mx-auto space-y-4">
