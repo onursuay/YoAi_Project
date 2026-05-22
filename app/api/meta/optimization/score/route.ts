@@ -102,7 +102,9 @@ export async function GET(request: Request) {
 
     let adsetsAfter: string | undefined
     let adsetPageCount = 0
-    const MAX_ADSET_PAGES = 5
+    // Büyük hesaplarda ad set'lerin eksik kalmaması için sayfa limiti yükseltildi
+    // (200/sayfa × 15 = ~3000 ad set). Vercel süre limitine karşı üst sınır korunur.
+    const MAX_ADSET_PAGES = 15
 
     do {
       const adsetParams: Record<string, string> = {
@@ -216,6 +218,14 @@ export async function GET(request: Request) {
       console.log(`[Optimization Score] Ad-level rankings: ${Object.keys(rankingsByCampaign).length} campaigns, ${withRankings} with valid rankings`)
     }
 
+    // ── Hesabın gerçek para birimi (USD/EUR/TRY…) — sabit 'TRY' yanlış gösterim/
+    // benchmark üretiyordu; hesaptan çekilir. ──────────────────────────────
+    const accountInfoRes = await ctx.client.get<{ currency?: string }>(
+      `/${ctx.accountId}`,
+      { fields: 'currency' },
+    )
+    const accountCurrency = (accountInfoRes.ok && accountInfoRes.data?.currency) ? accountInfoRes.data.currency : 'TRY'
+
     // ── Step 5: Assemble scored campaigns ────────────────────────────────
     const result: OptimizationCampaign[] = []
 
@@ -297,7 +307,7 @@ export async function GET(request: Request) {
         scoreResult,
         dailyBudget: campaign.daily_budget ? parseFloat(campaign.daily_budget) / 100 : null,
         lifetimeBudget: campaign.lifetime_budget ? parseFloat(campaign.lifetime_budget) / 100 : null,
-        currency: 'TRY', // Will be resolved from account if needed
+        currency: accountCurrency,
       })
     }
 

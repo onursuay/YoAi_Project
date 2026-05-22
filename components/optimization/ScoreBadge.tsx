@@ -2,13 +2,14 @@
 
 import type { ScoreStatus } from '@/lib/meta/optimization/types'
 
+// Onaylı palet: emerald / gri / kırmızı (amber-sarı-turuncu YASAK — CLAUDE.md).
 const STATUS_COLORS: Record<ScoreStatus, string> = {
-  excellent: '#10B981',
-  good: '#2BB673',
-  average: '#F59E0B',
-  poor: '#F97316',
-  critical: '#EF4444',
-  insufficient_data: '#9CA3AF',
+  excellent: '#10B981', // emerald-500
+  good: '#34D399',      // emerald-400
+  average: '#6B7280',   // gray-500 (orta — nötr)
+  poor: '#F87171',      // red-400
+  critical: '#EF4444',  // red-500
+  insufficient_data: '#9CA3AF', // gray-400
 }
 
 interface ScoreBadgeProps {
