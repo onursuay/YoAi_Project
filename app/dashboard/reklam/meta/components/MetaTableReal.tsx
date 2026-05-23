@@ -84,6 +84,8 @@ export default function MetaTableReal({
       case 'purchase': return t('table.resultTypePurchase')
       case 'link_click': return t('table.resultTypeLinkClick')
       case 'landing_page_view': return t('table.resultTypeLandingPage')
+      case 'initiate_checkout': return t('table.resultTypeInitiateCheckout')
+      case 'add_to_cart': return t('table.resultTypeAddToCart')
       case 'post_engagement': return t('table.resultTypeEngagement')
       case 'page_like': return t('table.resultTypePageLike')
       case 'mobile_app_install': return t('table.resultTypeAppInstall')

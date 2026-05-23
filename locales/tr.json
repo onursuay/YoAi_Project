@@ -186,6 +186,8 @@
         "resultTypePurchase": "Satış",
         "resultTypeLinkClick": "Tıklama",
         "resultTypeLandingPage": "Görüntüleme",
+        "resultTypeInitiateCheckout": "Alışveriş Başlatma",
+        "resultTypeAddToCart": "Sepete Ekleme",
         "resultTypeEngagement": "Etkileşim",
         "resultTypePageLike": "Beğeni",
         "resultTypeAppInstall": "Yükleme",

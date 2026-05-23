@@ -10,7 +10,7 @@ import {
   isRateLimitError,
   extractFbTraceId,
 } from '@/lib/meta/listFetch'
-import { getResultTypeFromOptimizationGoal, extractResultsCount } from '@/lib/meta/resultExtraction'
+import { extractGoalResults } from '@/lib/meta/resultExtraction'
 
 // No cache - always fresh data
 export const dynamic = 'force-dynamic'
@@ -314,8 +314,7 @@ export async function GET(request: Request) {
         }
 
         const optimizationGoal = adset?.optimization_goal || ''
-        const resultType = getResultTypeFromOptimizationGoal(optimizationGoal)
-        const results = extractResultsCount(resultType, insight)
+        const { resultType, results } = extractGoalResults(optimizationGoal, insight)
 
         return {
           id: adset?.id || '',

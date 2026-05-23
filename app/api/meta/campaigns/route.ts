@@ -10,7 +10,7 @@ import {
   isRateLimitError,
   extractFbTraceId,
 } from '@/lib/meta/listFetch'
-import { getResultTypeFromObjective, extractResultsCount } from '@/lib/meta/resultExtraction'
+import { extractObjectiveResults } from '@/lib/meta/resultExtraction'
 
 const DEBUG = process.env.NODE_ENV !== 'production'
 // No cache - always fresh data
@@ -170,8 +170,7 @@ export async function GET(request: Request) {
       }
 
       const objective = campaign.objective || ''
-      const resultType = getResultTypeFromObjective(objective)
-      const results = extractResultsCount(resultType, insight)
+      const { resultType, results } = extractObjectiveResults(objective, insight)
 
       return {
         id: campaign.id,
@@ -183,8 +182,6 @@ export async function GET(request: Request) {
         objective,
         resultType,
         results,
-        // TEMP DEBUG — SONUÇLAR teşhisi için ham action_type listesi (düzeltme sonrası kaldırılacak)
-        _debugActions: insight?.actions || null,
         budget,
         daily_budget: dailyBudget,
         lifetime_budget: lifetimeBudget,

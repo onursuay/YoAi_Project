@@ -186,6 +186,8 @@
         "resultTypePurchase": "Sales",
         "resultTypeLinkClick": "Clicks",
         "resultTypeLandingPage": "Views",
+        "resultTypeInitiateCheckout": "Checkouts",
+        "resultTypeAddToCart": "Add to Cart",
         "resultTypeEngagement": "Engagement",
         "resultTypePageLike": "Likes",
         "resultTypeAppInstall": "Installs",

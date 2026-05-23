@@ -7,6 +7,8 @@
 export type ResultType =
   | 'lead'
   | 'purchase'
+  | 'initiate_checkout'
+  | 'add_to_cart'
   | 'link_click'
   | 'landing_page_view'
   | 'post_engagement'
@@ -95,7 +97,11 @@ export function extractResultsCount(resultType: ResultType, insight: any): numbe
     case 'lead':
       return findActionValue(insight.actions, ['lead', 'onsite_conversion.lead_grouped', 'leadgen_grouped'])
     case 'purchase':
-      return findActionValue(insight.actions, ['purchase', 'omni_purchase'])
+      return findActionValue(insight.actions, ['purchase', 'omni_purchase', 'offsite_conversion.fb_pixel_purchase'])
+    case 'initiate_checkout':
+      return findActionValue(insight.actions, ['initiate_checkout', 'omni_initiated_checkout', 'offsite_conversion.fb_pixel_initiate_checkout', 'onsite_web_initiate_checkout'])
+    case 'add_to_cart':
+      return findActionValue(insight.actions, ['add_to_cart', 'omni_add_to_cart', 'offsite_conversion.fb_pixel_add_to_cart', 'onsite_web_add_to_cart'])
     case 'link_click':
       return findActionValue(insight.actions, ['link_click'])
     case 'landing_page_view':
@@ -118,12 +124,42 @@ export function extractResultsCount(resultType: ResultType, insight: any): numbe
   }
 }
 
+/**
+ * Resolve "Results" the way Meta Ads Manager does: a sales-optimized row reports
+ * whatever conversion event it actually drove, not always "purchase". If the
+ * primary event has 0 results, fall back down the conversion funnel (checkout →
+ * add to cart → lead) to the event Meta actually recorded. This is not a guess —
+ * it mirrors Meta's own result hierarchy.
+ */
+function withFunnelFallback(primary: ResultType, insight: any): { resultType: ResultType; results: number } {
+  const primaryCount = extractResultsCount(primary, insight)
+  if (primaryCount > 0) return { resultType: primary, results: primaryCount }
+  if (primary === 'purchase') {
+    const funnel: ResultType[] = ['initiate_checkout', 'add_to_cart', 'lead']
+    for (const ft of funnel) {
+      const count = extractResultsCount(ft, insight)
+      if (count > 0) return { resultType: ft, results: count }
+    }
+  }
+  return { resultType: primary, results: primaryCount }
+}
+
+/** Campaign row: derive results from the campaign objective. */
+export function extractObjectiveResults(objective: string, insight: any): { resultType: ResultType; results: number } {
+  return withFunnelFallback(getResultTypeFromObjective(objective), insight)
+}
+
+/** Ad set row: derive results from the ad set optimization goal. */
+export function extractGoalResults(goal: string, insight: any): { resultType: ResultType; results: number } {
+  return withFunnelFallback(getResultTypeFromOptimizationGoal(goal), insight)
+}
+
 /** Best-effort: pick the most meaningful action when no objective/goal is known (e.g. ads tab). */
 export function extractResultsFallback(insight: any): { resultType: ResultType; results: number } {
   if (!insight?.actions) return { resultType: 'unknown', results: 0 }
   const priority: ResultType[] = [
-    'purchase', 'lead', 'messaging_conversation_started', 'mobile_app_install',
-    'landing_page_view', 'link_click', 'video_view', 'post_engagement',
+    'purchase', 'initiate_checkout', 'add_to_cart', 'lead', 'messaging_conversation_started',
+    'mobile_app_install', 'landing_page_view', 'link_click', 'video_view', 'post_engagement',
   ]
   for (const rt of priority) {
     const count = extractResultsCount(rt, insight)
