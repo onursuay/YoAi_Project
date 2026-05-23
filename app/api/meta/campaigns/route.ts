@@ -183,6 +183,8 @@ export async function GET(request: Request) {
         objective,
         resultType,
         results,
+        // TEMP DEBUG — SONUÇLAR teşhisi için ham action_type listesi (düzeltme sonrası kaldırılacak)
+        _debugActions: insight?.actions || null,
         budget,
         daily_budget: dailyBudget,
         lifetime_budget: lifetimeBudget,
