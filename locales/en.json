@@ -367,10 +367,12 @@
         "budgetSuccess": "Campaign budget updated."
       },
       "labels": {
-        "campaignBudgetCbo": "Campaign budget (CBO)"
+        "campaignBudgetCbo": "Campaign budget (CBO)",
+        "adsetBudget": "Ad Set"
       },
       "tooltips": {
-        "campaignBudgetCbo": "This campaign's budget is managed at the campaign level."
+        "campaignBudgetCbo": "This campaign's budget is managed at the campaign level.",
+        "adsetBudget": "This campaign's budget is managed at the ad set level."
       },
       "create": {
         "specialAd": {

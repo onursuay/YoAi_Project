@@ -367,10 +367,12 @@
         "budgetSuccess": "Kampanya bütçesi güncellendi."
       },
       "labels": {
-        "campaignBudgetCbo": "Kampanya bütçesi (CBO)"
+        "campaignBudgetCbo": "Kampanya bütçesi (CBO)",
+        "adsetBudget": "Reklam Seti"
       },
       "tooltips": {
-        "campaignBudgetCbo": "Bu kampanyada bütçe kampanya seviyesinden yönetiliyor."
+        "campaignBudgetCbo": "Bu kampanyada bütçe kampanya seviyesinden yönetiliyor.",
+        "adsetBudget": "Bu kampanyada bütçe reklam seti seviyesinden yönetiliyor."
       },
       "create": {
         "specialAd": {

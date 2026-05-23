@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-23 — Kampanyalar BÜTÇE sütunu: reklam seti bütçesinde "Reklam Seti" etiketi
+- **Sorun:** Kampanyalar sekmesinde, bütçesi kampanya seviyesinde olmayan (reklam seti / ABO bütçeli) kampanyalarda BÜTÇE sütunu boş bir "-" gösteriyordu; kullanıcı bütçenin nerede yönetildiğini anlamıyordu.
+- **Çözüm:** Kampanya bütçesi yokken "-" yerine "Reklam Seti" etiketi + bilgi tooltip'i ("Bu kampanyada bütçe reklam seti seviyesinden yönetiliyor") gösteriliyor — Reklam Setleri sekmesindeki "Kampanya bütçesi (CBO)" bloğuyla simetrik. EN/TR: `labels.adsetBudget` / `tooltips.adsetBudget` `tr.json`+`en.json`'a eklendi. `tsc` ✓.
+- **Dosyalar:** `app/dashboard/reklam/meta/components/MetaTableReal.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-23 — Meta Ads "Sonuçlar" kolonu boş görünme düzeltmesi (satış-funnel)
 - **Sorun:** Reklam Yöneticisi'nde aktif satış kampanyalarının SONUÇLAR kolonu "—" görünüyordu, oysa Meta Ads Manager 11/120 sonuç gösteriyordu. Canlı veri doğrulaması (geçici debug) ile kök neden bulundu: kod, kampanya hedefi `OUTCOME_SALES` olduğu için `actions` dizisinde yalnızca `purchase`/`omni_purchase` arıyordu; ama bu kampanyalar **ödeme başlatmaya** optimize olduğundan Meta'nın gerçek sonucu `initiate_checkout` (11/120) idi ve `purchase` action'ı hiç dönmüyordu → 0 → "—".
 - **Çözüm:** `initiate_checkout` ve `add_to_cart` sonuç türleri eklendi (gerçek veriden doğrulanmış action_type varyantlarıyla). Yeni `withFunnelFallback` mantığı: satışa-optimize bir satırda `purchase` sonucu 0 ise Meta'nın yaptığı gibi conversion funnel'da bir alt adıma (ödeme başlatma → sepete ekleme → form) düşülür — tahmin değil, Meta'nın kendi sonuç hiyerarşisi. Kampanya (`extractObjectiveResults`), reklam seti (`extractGoalResults`) ve reklam (`extractResultsFallback`) seviyelerinin üçü de kapsandı. Riskli `results` Meta alanı **kullanılmadı** (tek-call inline insights'ı bozma riski). EN/TR: `resultTypeInitiateCheckout`/`resultTypeAddToCart` `tr.json`+`en.json`'a eklendi. `tsc` ✓.

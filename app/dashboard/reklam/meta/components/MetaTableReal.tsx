@@ -374,15 +374,29 @@ export default function MetaTableReal({
                       }
                       if (activeTab === 'kampanyalar') {
                         const hasBudget = item.budget !== null && item.budget !== undefined && item.budget > 0
+                        if (!hasBudget) {
+                          // Kampanya bütçesi yok → bütçe reklam seti seviyesinde yönetiliyor
+                          return (
+                            <td key={col.key} className="px-4 py-4 text-sm text-right text-gray-500">
+                              <div className="flex items-center justify-end gap-1.5">
+                                <span>{t('labels.adsetBudget')}</span>
+                                <div className="group relative">
+                                  <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
+                                  <div className="absolute right-0 top-6 w-48 p-2 bg-gray-900 text-white text-caption rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
+                                    {t('tooltips.adsetBudget')}
+                                  </div>
+                                </div>
+                              </div>
+                            </td>
+                          )
+                        }
                         return (
                           <td key={col.key} className="px-4 py-4 text-sm">
                             <div className="flex items-center justify-end gap-2">
-                              <span className="text-gray-900">{hasBudget ? `${num(item.budget).toLocaleString(localeString, { minimumFractionDigits: 2 })} TRY` : '-'}</span>
-                              {hasBudget && (
-                                <button onClick={(e) => { e.stopPropagation(); onEditCampaignBudgetClick(item) }} className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title={t('actions.editBudget')}>
-                                  <Edit className="w-3.5 h-3.5" />
-                                </button>
-                              )}
+                              <span className="text-gray-900">{`${num(item.budget).toLocaleString(localeString, { minimumFractionDigits: 2 })} TRY`}</span>
+                              <button onClick={(e) => { e.stopPropagation(); onEditCampaignBudgetClick(item) }} className="p-1 text-gray-400 hover:text-blue-600 transition-colors" title={t('actions.editBudget')}>
+                                <Edit className="w-3.5 h-3.5" />
+                              </button>
                             </div>
                           </td>
                         )
