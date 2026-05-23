@@ -367,7 +367,7 @@
         "budgetSuccess": "Campaign budget updated."
       },
       "labels": {
-        "campaignBudgetCbo": "Campaign budget (CBO)",
+        "campaignBudgetCbo": "Campaign Budget",
         "adsetBudget": "Ad Set"
       },
       "tooltips": {
