@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-23 — Proje standardı: tüm değişiklikler EN/TR uyumlu zorunlu
+- **Sorun:** Kullanıcı, projede yapılan her değişikliğin iki dilde (EN/TR) çalışmasını ve bu kuralın kalıcı kayda geçmesini istedi.
+- **Çözüm:** `CLAUDE.md`'ye **"EN/TR İki Dil Uyumu (ZORUNLU)"** bölümü eklendi: kullanıcı-yüzlü hiçbir metin hardcoded olamaz; her yeni anahtar HEM `tr.json` HEM `en.json`'a aynı key path ile eklenir; `next-intl` (`useTranslations`/`getTranslations`), default locale `tr`. Bir iş iki dil dosyası da güncellenmeden bitmiş sayılmaz.
+- **Dosyalar:** `CLAUDE.md`
+
+## 2026-05-23 — YoAlgoritma per-account Faz 3.4: İşletme bazlı scope (otomatik isim eşleştirme)
+- **Sorun:** YoAlgoritma seçili Meta + seçili Google'ı körlemesine **birleştiriyordu**. Meta "Fikret Petrol" seçiliyken Google hâlâ "belgemod" aktif olduğundan kartlarda belgemod verisi karışıyordu (Faz 3.3b scope kapısı tek başına çözmedi — iki platform bağımsız seçiliyordu).
+- **Çözüm:** Kullanıcının kayıtlı Meta + Google hesapları **otomatik isim eşleştirmesiyle** "işletme"lere gruplanır (`groupIntoBusinesses`: Türkçe-duyarlı normalize + TLD/yasal-ek temizliği + içerik eşleşmesi). YoAlgoritma seçici **işletme moduna** geçer; bir işletme seçilince yalnız **o işletmenin** Meta+Google'ı çekilir — eşi olmayan platform (örn. yalnız-Meta işletmesi) için diğer platform hiç çağrılmaz, başka hesabın verisi karışmaz. Seçim `yoai_business_scope` cookie'sinde tutulur; `runDeepAnalysis` opsiyonel scope override ile yalnız o hesapları fetch'ler; command-center / refresh / daily-run scope imzasını tek kaynaktan (`resolveYoaiScope`) hesaplar → uyuşmazlık/gereksiz yeniden-analiz yok. Tümü **`YOAI_PER_ACCOUNT_SCOPE` flag'i arkasında (default KAPALI)** — kapalıyken mevcut birleşik davranış birebir korunur, sıfır regresyon. Yeni UI tamamen EN/TR. `tsc` ✓.
+- **Dosyalar:** `lib/account/businessGroups.ts` (yeni), `lib/yoai/businessScope.ts` (yeni), `app/api/yoai/business-scope/route.ts` (yeni), `components/account/BusinessSwitcherDropdown.tsx` (yeni), `components/account/UnifiedAccountSwitcher.tsx`, `lib/yoai/deepAnalysis.ts`, `lib/yoai/metaDeepFetcher.ts`, `lib/yoai/googleDeepFetcher.ts`, `app/api/yoai/command-center/route.ts`, `app/api/yoai/command-center/refresh/route.ts`, `app/api/yoai/daily-run/route.ts`, `app/api/account/registered/route.ts`, `hooks/useRegisteredAccounts.ts`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-22 — Optimizasyon: TikTok sekmesi "Yakında" (devre dışı) + Meta Genel Bakış'tan tekrar eden Ana Metrik kaldırıldı
 - **Sorun:** (1) TikTok kaynak sekmesi tıklanabilirdi ama henüz tam hazır değildi. (2) Meta detay panelinde **Genel Bakış** sekmesindeki "Ana Metrik" bloğu (örn. Tıklama) ile **Metrikler** sekmesindeki aynı metrik tekrar ediyordu.
 - **Çözüm:** (1) `OptimizasyonPage` kaynak seçicisinde TikTok sekmesi `disabled` + gri "Yakında" rozetiyle işaretlendi (onaylı palet, amber yok); `?platform=tiktok` derin linki de artık TikTok'u zorla açmaz. (2) `DetailPanel` Genel Bakış sekmesinden tekrar eden North Star (Ana Metrik) `KpiDisplay` kaldırıldı — aynı metrik Metrikler sekmesinde duruyor. `tsc` ✓.

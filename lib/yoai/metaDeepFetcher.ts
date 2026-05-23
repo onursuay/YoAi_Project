@@ -52,10 +52,21 @@ function scoreToRisk(score: number): 'low' | 'medium' | 'high' | 'critical' {
   return 'critical'
 }
 
-/* ── Main Fetch ── */
-export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
+/* ── Main Fetch ──
+   override (YoAlgoritma işletme scope'u): hangi Meta hesabının çekileceğini
+   açıkça belirler. adAccountId === null → bu işletmenin Meta'sı yok, hiç çekme
+   (disconnected). adAccountId string → token aynı kalır, yalnız hesap değişir. */
+export async function fetchMetaDeep(
+  userId?: string,
+  override?: { adAccountId: string | null },
+): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
+
+  // İşletmede Meta hesabı yoksa hiç bağlanma (örn. yalnız-Google işletmesi).
+  if (override && override.adAccountId === null) {
+    return { campaigns, errors: [], connected: false }
+  }
 
   // 1) Try cookie-based context first (works in browser)
   let ctx = await resolveMetaContext()
@@ -112,6 +123,12 @@ export async function fetchMetaDeep(userId?: string): Promise<{ campaigns: DeepC
 
   if (!ctx) {
     return { campaigns, errors: ['Meta bağlantısı bulunamadı'], connected: false }
+  }
+
+  // İşletme scope'u: token korunur, yalnız hangi reklam hesabının çekileceği değişir.
+  if (override?.adAccountId) {
+    const overrideId = override.adAccountId.startsWith('act_') ? override.adAccountId : `act_${override.adAccountId}`
+    ctx = { ...ctx, accountId: overrideId }
   }
 
   try {

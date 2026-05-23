@@ -22,6 +22,7 @@ import {
   normalizeCampaignType,
   scoreDoctrineFit,
 } from './campaignTypeIntelligence'
+import { resolveYoaiScope, type YoaiScope } from './businessScope'
 
 /* ── Aggregate KPIs across all campaigns ── */
 function aggregateKpis(campaigns: DeepCampaignInsight[]): AggregatedKpis {
@@ -79,18 +80,28 @@ function aggregateKpis(campaigns: DeepCampaignInsight[]): AggregatedKpis {
 }
 
 /* ── Main Orchestrator ── */
-export async function runDeepAnalysis(userId?: string): Promise<DeepAnalysisResult> {
+export async function runDeepAnalysis(userId?: string, explicitScope?: YoaiScope): Promise<DeepAnalysisResult> {
   const errors: string[] = []
   const connectedPlatforms: Platform[] = []
+
+  // İşletme scope'u (YoAlgoritma per-account): seçili işletme varsa yalnız onun
+  // Meta+Google hesabını çek; null platform → o platform hiç çekilmez (örn. yalnız-Meta
+  // işletmesinde Google atlanır, başka hesabın verisi karışmaz). scoped=false → mevcut
+  // birleşik davranış (zero regresyon). Flag kapalıyken resolveYoaiScope hep scoped:false.
+  const scope = explicitScope ?? await resolveYoaiScope()
+  const metaOverride = scope.scoped ? { adAccountId: scope.metaId } : undefined
+  const googleOverride = scope.scoped
+    ? { customerId: scope.googleCustomerId, loginCustomerId: scope.googleLoginCustomerId }
+    : undefined
 
   // 1. Fetch data from both platforms in parallel
   // userId allows headless/cron context to bypass cookies
   const [metaResult, googleResult] = await Promise.all([
-    fetchMetaDeep(userId).catch(e => {
+    fetchMetaDeep(userId, metaOverride).catch(e => {
       console.error('[DeepAnalysis] Meta fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Meta veri çekme hatası'], connected: false }
     }),
-    fetchGoogleDeep(userId).catch(e => {
+    fetchGoogleDeep(userId, googleOverride).catch(e => {
       console.error('[DeepAnalysis] Google fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Google Ads veri çekme hatası'], connected: false }
     }),

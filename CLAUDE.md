@@ -95,6 +95,25 @@ Kullanıcıya gösterilen **HİÇBİR yerde** ham teknik terim / İngilizce enum
 - Optimizasyon sorun etiketleri (ProblemTagId): [lib/google/optimization/labels.ts](lib/google/optimization/labels.ts) → `problemLabel(id)`.
 - Yeni bir enum/parametre türü UI'a girecekse önce çeviri katmanına ekle, sonra göster. Ham değeri doğrudan `{value}` ile basmak YASAK.
 
+## EN/TR İki Dil Uyumu (ZORUNLU — Proje Geneli)
+Bu projede yapılan **her değişiklik EN/TR uyumlu olmak zorundadır.** Kullanıcıya gösterilen **hiçbir** metin tek dile gömülü (hardcoded) bırakılamaz. Tüm kullanıcı-yüzlü string'ler `next-intl` üzerinden çeviri dosyalarından okunur.
+
+**Altyapı:**
+- `next-intl` (^4.7.0). Çeviri dosyaları: [locales/tr.json](locales/tr.json) ve [locales/en.json](locales/en.json).
+- Locale `NEXT_LOCALE` cookie'sinden okunur, **default `tr`** ([i18n.ts](i18n.ts)).
+- Client component: `const t = useTranslations('namespace.path')` → `t('key')`.
+- Server component / route: `const t = await getTranslations('namespace.path')`.
+
+**Kurallar (istisnasız):**
+1. Yeni bir UI metni eklenince anahtarı **HEM `tr.json` HEM `en.json`** dosyasına, **aynı key path** ile ekle. Birini eklemek diğerini unutmak = eksik iş.
+2. JSX/TSX içinde düz string yazma (`<span>Reklam Hesapları</span>` YASAK) → `t('...')` kullan. Tek istisna: marka adı ("YoAi") ve teknik olmayan sembol/sayı.
+3. Toast/alert/hata mesajları, buton etiketleri, placeholder, aria-label, başlık, boş-durum metinleri — **hepsi** çeviriden gelir.
+4. Dinamik değerler `t('key', { count, name })` ile interpolasyon; string concat ile cümle kurma YASAK (dil bilgisi sırası dile göre değişir).
+5. Var olan bir alanın yakınında değişiklik yapıyorsan ve orada hardcoded string görürsen, dokunduğun kısmı çeviriye taşı (boy scout kuralı).
+6. Çeviri anahtarı isimleri açıklayıcı ve namespace'li olmalı (örn. `account.switcher.selectBusiness`), magic literal değil.
+
+**Tamamlanmış sayılma koşulu:** Bir iş, hem `tr.json` hem `en.json` güncellenmeden ve dil değiştirince (NEXT_LOCALE) tüm yeni metinler doğru dilde görünmeden **bitmiş sayılmaz.**
+
 ## Kitle Hedefleme Picker UX (Dropdown davranışı) — Proje Geneli
 Projedeki **TÜM "Kitle Hedefleme" picker'ları** (Arama / Göz at sekmeli kitle segmenti UI'ı) — kampanya türünden ve bağlamdan bağımsız olarak — aynı dropdown davranışına sahiptir:
 

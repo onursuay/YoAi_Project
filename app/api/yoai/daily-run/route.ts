@@ -13,8 +13,10 @@ import {
   isTodayCompleted,
   isRunning,
   getTurkeyDate,
+  buildAccountScope,
   type DailyRun,
 } from '@/lib/yoai/dailyRunStore'
+import { resolveYoaiScope } from '@/lib/yoai/businessScope'
 import { diagnoseCampaigns } from '@/lib/yoai/meta/diagnosis'
 import { decideForDiagnoses } from '@/lib/yoai/meta/decision'
 import {
@@ -270,9 +272,12 @@ export async function POST(request: Request) {
     const baseUrl = process.env.NEXTAUTH_URL || process.env.NEXT_PUBLIC_BASE_URL || 'http://localhost:3000'
 
     // ── 1. Run command center analysis ──
+    // İşletme scope'u TEK kez çöz; fetch ve damgalama aynı imzayı kullansın
+    // (flag açık + işletme seçiliyse o işletmeye sınırlanır; değilse mevcut davranış).
+    const scope = await resolveYoaiScope()
     let commandCenterData = null
     try {
-      commandCenterData = await runDeepAnalysis()
+      commandCenterData = await runDeepAnalysis(undefined, scope)
     } catch (e) {
       console.error('[DailyRun] Command center error:', e)
     }
@@ -357,12 +362,15 @@ export async function POST(request: Request) {
     }
 
     // ── 3. Persist completed run ──
+    // İşletme scope'lu ise imzayı ondan ver (command-center kapısıyla birebir eşleşir,
+    // gereksiz yeniden-analiz olmaz). Aksi halde null → DB global seçiminden damgalanır.
     await upsertDailyRun({
       user_id: userId,
       run_date: today,
       status: 'completed',
       command_center_data: commandCenterData,
       ad_proposals_data: adProposalsData,
+      account_scope: scope.scoped ? buildAccountScope(scope.metaId, scope.googleCustomerId) : null,
     })
 
     return NextResponse.json({

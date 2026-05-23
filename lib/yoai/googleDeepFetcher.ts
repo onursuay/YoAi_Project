@@ -99,10 +99,21 @@ type AdRow = {
   metrics?: Record<string, string | number | undefined>
 }
 
-/* ── Main Fetch ── */
-export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
+/* ── Main Fetch ──
+   override (YoAlgoritma işletme scope'u): hangi Google müşterisinin çekileceğini
+   açıkça belirler. customerId === null → bu işletmenin Google'ı yok, hiç çekme
+   (disconnected). customerId string → refreshToken aynı kalır, yalnız müşteri değişir. */
+export async function fetchGoogleDeep(
+  userId?: string,
+  override?: { customerId: string | null; loginCustomerId?: string | null },
+): Promise<{ campaigns: DeepCampaignInsight[]; errors: string[]; connected: boolean }> {
   const errors: string[] = []
   const campaigns: DeepCampaignInsight[] = []
+
+  // İşletmede Google hesabı yoksa hiç bağlanma (örn. yalnız-Meta işletmesi).
+  if (override && override.customerId === null) {
+    return { campaigns, errors: [], connected: false }
+  }
 
   // Resolve Google Ads credentials — same approach as working management endpoints.
   // Bypass getGoogleAdsContext() which has proven unreliable in this context.
@@ -133,6 +144,12 @@ export async function fetchGoogleDeep(userId?: string): Promise<{ campaigns: Dee
     } catch (e) {
       console.error('[GoogleDeepFetcher] DB lookup error:', e)
     }
+  }
+
+  // İşletme scope'u: refreshToken korunur, yalnız hangi müşterinin çekileceği değişir.
+  if (override?.customerId) {
+    customerId = override.customerId
+    loginCustomerId = override.loginCustomerId || override.customerId
   }
 
   if (!refreshToken || !customerId) {

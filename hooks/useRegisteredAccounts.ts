@@ -32,6 +32,8 @@ export interface AddAccountResult {
 
 interface State {
   enabled: boolean
+  /** YoAlgoritma işletme-scope modu açık mı (YOAI_PER_ACCOUNT_SCOPE). */
+  perAccountScope: boolean
   accounts: RegisteredAccount[]
   count: number
   limit: number | null // null = sınırsız (owner)
@@ -47,6 +49,7 @@ interface State {
 export function useRegisteredAccounts() {
   const [state, setState] = useState<State>({
     enabled: false,
+    perAccountScope: false,
     accounts: [],
     count: 0,
     limit: 0,
@@ -61,6 +64,7 @@ export function useRegisteredAccounts() {
       if (data?.ok) {
         setState({
           enabled: !!data.enabled,
+          perAccountScope: !!data.perAccountScope,
           accounts: Array.isArray(data.accounts) ? data.accounts : [],
           count: data.count ?? 0,
           limit: data.limit ?? null,

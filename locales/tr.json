@@ -2848,6 +2848,17 @@
       "earningsDesc": "Sizin referansınızla kayıt olan kullanıcılar.",
       "referrals": "Referanslar",
       "discount": "Kazanılan İndirim"
+    },
+    "businessSwitcher": {
+      "title": "İşletme",
+      "count": "{count} işletme",
+      "empty": "Kayıtlı işletme yok",
+      "selectBusiness": "İşletme seç",
+      "adAccountsFallback": "Reklam Hesapları",
+      "bothPlatforms": "Meta + Google",
+      "metaOnly": "Yalnızca Meta",
+      "googleOnly": "Yalnızca Google",
+      "manageAccounts": "Hesapları yönet"
     }
   },
   "subscription": {

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 import { upsertDailyRun, getTurkeyDate, buildAccountScope } from '@/lib/yoai/dailyRunStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
+import { resolveYoaiScope } from '@/lib/yoai/businessScope'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -28,17 +29,15 @@ export async function POST() {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
     }
 
-    // Aktif seçimin (cookie) verisini çek — runDeepAnalysis cookie'den çözer
-    const commandCenterData = await runDeepAnalysis().catch(() => null)
+    // Scope'u TEK kez çöz; hem fetch'i sınırlamak hem imzayı damgalamak için aynı
+    // değeri kullan → fetch edilen ile damgalanan birebir aynı (uyuşmazlık olmaz).
+    const scope = await resolveYoaiScope()
+    const commandCenterData = await runDeepAnalysis(undefined, scope).catch(() => null)
     if (!commandCenterData) {
       return NextResponse.json({ ok: false, error: 'Analiz üretilemedi' }, { status: 500 })
     }
 
-    // Damgayı cookie (anlık) seçiminden ver — command-center kapısı da cookie okur,
-    // böylece DB fire-and-forget gecikmesinden kaynaklı uyuşmazlık olmaz.
-    const metaCookie = cookieStore.get('meta_selected_ad_account_id')?.value || null
-    const googleCookie = cookieStore.get('google_ads_customer_id')?.value || null
-    const accountScope = buildAccountScope(metaCookie, googleCookie)
+    const accountScope = buildAccountScope(scope.metaId, scope.googleCustomerId)
 
     await upsertDailyRun({
       user_id: userId,

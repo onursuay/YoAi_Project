@@ -9,6 +9,7 @@ import {
   removeRegisteredAccount,
   type AdPlatform,
 } from '@/lib/account/registeredAccounts'
+import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -31,7 +32,7 @@ export async function GET() {
   if (!user) return NextResponse.json({ ok: false, error: 'unauthenticated' }, { status: 401 })
 
   if (!isMultiAccountEnabled()) {
-    return NextResponse.json({ ok: true, enabled: false, accounts: [], count: 0, limit: 0, remaining: 0 })
+    return NextResponse.json({ ok: true, enabled: false, perAccountScope: false, accounts: [], count: 0, limit: 0, remaining: 0 })
   }
 
   await ensureBackfilled(user.id)
@@ -44,6 +45,8 @@ export async function GET() {
   return NextResponse.json({
     ok: true,
     enabled: true,
+    // YoAlgoritma işletme-scope modu açık mı (UI seçiciyi işletme moduna alır)
+    perAccountScope: isPerAccountScopeEnabled(),
     accounts,
     count,
     limit: limitNum,

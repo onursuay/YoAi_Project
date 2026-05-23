@@ -2848,6 +2848,17 @@
       "earningsDesc": "Users who registered with your referral.",
       "referrals": "Referrals",
       "discount": "Earned Discount"
+    },
+    "businessSwitcher": {
+      "title": "Business",
+      "count": "{count, plural, one {# business} other {# businesses}}",
+      "empty": "No registered businesses",
+      "selectBusiness": "Select business",
+      "adAccountsFallback": "Ad Accounts",
+      "bothPlatforms": "Meta + Google",
+      "metaOnly": "Meta only",
+      "googleOnly": "Google only",
+      "manageAccounts": "Manage accounts"
     }
   },
   "subscription": {

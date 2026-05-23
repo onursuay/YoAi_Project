@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { getBestAvailableRun, buildAccountScope } from '@/lib/yoai/dailyRunStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
+import { resolveYoaiScope } from '@/lib/yoai/businessScope'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 10
@@ -32,9 +33,9 @@ export async function GET() {
       if (isPerAccountScopeEnabled()) {
         // Damgasız (null) çalışmalar da aktif seçimle eşleşmez sayılır → yeniden
         // üretilip damgalanır (flag öncesi üretilmiş eski çalışmalar bu sayede güncellenir).
-        const metaCookie = cookieStore.get('meta_selected_ad_account_id')?.value || null
-        const googleCookie = cookieStore.get('google_ads_customer_id')?.value || null
-        const currentScope = buildAccountScope(metaCookie, googleCookie)
+        // Scope, seçili işletme (yoai_business_scope) varsa ondan, yoksa global seçimden.
+        const sc = await resolveYoaiScope()
+        const currentScope = buildAccountScope(sc.metaId, sc.googleCustomerId)
         if (run.account_scope !== currentScope) {
           return NextResponse.json(
             { ok: true, data: null, persisted: false, run_date: null, scope_mismatch: true },
