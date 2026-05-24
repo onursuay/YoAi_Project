@@ -252,7 +252,7 @@ export default function HedefKitlePage() {
         description={t('description')}
         adAccountName={(platform === 'google' ? googleName : adAccountName) || undefined}
       />
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-y-auto app-content-surface p-6">
         <div className="max-w-6xl mx-auto space-y-4">
           {/* Platform Switcher: Meta / Google */}
           <PlatformTabs activePlatform={platform} onPlatformChange={handlePlatformChange} />

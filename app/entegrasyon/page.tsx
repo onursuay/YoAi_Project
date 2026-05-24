@@ -1064,7 +1064,7 @@ export default function EntegrasyonPage() {
           title="Entegrasyon" 
           description="Reklam ve raporlama platformlarınızı bağlayın"
         />
-        <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+        <div className="flex-1 overflow-y-auto app-content-surface p-6">
           <div className="max-w-6xl mx-auto">
             <div className="text-center py-12">
               <p className="text-gray-600">Yükleniyor...</p>

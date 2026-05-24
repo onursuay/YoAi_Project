@@ -60,7 +60,12 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
         <h3 className="text-sm font-semibold text-gray-800 uppercase tracking-wide">{t('alertsTitle')}</h3>
       </div>
 
-      <div className="grid gap-4 grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 auto-rows-fr">
+      {/* Kart sayısı kadar eşit sütun → kaç kart olursa olsun TEK SATIR; ekrana
+          sığacak şekilde otomatik daralır (minmax(0,1fr) → taşma yok). */}
+      <div
+        className="grid gap-4 auto-rows-fr"
+        style={{ gridTemplateColumns: `repeat(${sorted.length}, minmax(0, 1fr))` }}
+      >
         {sorted.map((a) => {
           const isCritical = a.severity === 'critical' || a.severity === 'high'
           const Icon = isCritical ? AlertOctagon : a.severity === 'medium' ? AlertTriangle : Info

@@ -150,7 +150,7 @@ export default function StratejiPage() {
           disabled: creating,
         }}
       />
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-y-auto app-content-surface p-6">
         <div className="max-w-6xl mx-auto space-y-6">
           {/* KPI Bar */}
           <KPIBar />

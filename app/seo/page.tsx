@@ -583,7 +583,7 @@ export default function SEOPage() {
   return (
     <>
       <Topbar title={t('title')} description={t('description')} />
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-6 print:bg-white print:p-0">
+      <div className="flex-1 overflow-y-auto app-content-surface p-6 print:bg-white print:p-0">
         <div className="max-w-5xl mx-auto space-y-6" ref={printRef}>
 
           {/* Tab Navigation */}

@@ -382,7 +382,7 @@ export default function OptimizasyonPage() {
         searchQuery={searchQuery}
       />
 
-      <div className="flex-1 overflow-auto p-6">
+      <div className="flex-1 overflow-auto app-content-surface p-6">
         {/* Kaynak seçici: Meta / Google / TikTok (TikTok yakında) */}
         <div className="flex items-center gap-1 mb-4 bg-gray-100 rounded-lg p-1 w-fit">
           {(['meta', 'google', 'tiktok'] as const).map((s) => {

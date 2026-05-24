@@ -1,5 +1,11 @@
 # YoAi Project — Claude Code Instructions
 
+## Meta & Google Ads API / Altyapı Koruması (KRİTİK — Proje Geneli)
+Bu projede yapılan **HİÇBİR değişiklik** (UI, layout, stil, sütun, refactor dahil) Meta Ads ve Google Ads **API entegrasyonunu veya altyapısını bozmamalı / sorun yaşatmamalı.** Reklam Yöneticisi, kampanya çekme / oluşturma / yayınlama akışları her zaman çalışır kalır.
+- Bir tablo/stil/sütun/arka plan değişikliği yaparken bile veri çeken API çağrıları, fetcher'lar (`lib/meta/*`, `lib/google/*`) ve publish akışları **KORUNUR** — yalnız sunum (presentation) katmanı değişir.
+- Şüphe varsa entegrasyon koduna **dokunma**; sadece görünüm katmanını düzenle.
+- İlgili: [feedback_no_touch_meta_google](memory).
+
 ## Otomatik Commit + Push
 Her değişiklik tamamlandıktan sonra otomatik olarak:
 1. Değiştirilen dosyaları stage et

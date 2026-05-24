@@ -2,7 +2,7 @@
 
 import { useState, useRef, useCallback } from 'react'
 import ToggleSwitch from '@/components/ToggleSwitch'
-import { Lightbulb, Info, Edit } from 'lucide-react'
+import { Lightbulb, Edit } from 'lucide-react'
 
 export interface MetaTableRealProps {
   columns: { key: string; label: string }[]
@@ -360,15 +360,7 @@ export default function MetaTableReal({
                         }
                         return (
                           <td key={col.key} className="px-4 py-4 text-sm text-center text-gray-500">
-                            <div className="flex items-center justify-center gap-1.5">
-                              <span>{t('labels.campaignBudgetCbo')}</span>
-                              <div className="group relative">
-                                <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
-                                <div className="absolute right-0 top-6 w-48 p-2 bg-gray-900 text-white text-caption rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                  {t('tooltips.campaignBudgetCbo')}
-                                </div>
-                              </div>
-                            </div>
+                            {t('labels.campaignBudgetCbo')}
                           </td>
                         )
                       }
@@ -378,15 +370,7 @@ export default function MetaTableReal({
                           // Kampanya bütçesi yok → bütçe reklam seti seviyesinde yönetiliyor
                           return (
                             <td key={col.key} className="px-4 py-4 text-sm text-center text-gray-500">
-                              <div className="flex items-center justify-center gap-1.5">
-                                <span>{t('labels.adsetBudget')}</span>
-                                <div className="group relative">
-                                  <Info className="w-3.5 h-3.5 text-gray-400 cursor-help" />
-                                  <div className="absolute right-0 top-6 w-48 p-2 bg-gray-900 text-white text-caption rounded-lg opacity-0 invisible group-hover:opacity-100 group-hover:visible transition-all z-10">
-                                    {t('tooltips.adsetBudget')}
-                                  </div>
-                                </div>
-                              </div>
+                              {t('labels.adsetBudget')}
                             </td>
                           )
                         }

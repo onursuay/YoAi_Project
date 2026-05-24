@@ -352,7 +352,7 @@ function RaporlarContent() {
   return (
     <>
       <Topbar title={t('title')} description={t('description')} />
-      <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+      <div className="flex-1 overflow-y-auto app-content-surface p-6">
         <div className="max-w-6xl mx-auto">
 
           {/* Provider Tabs */}
@@ -990,7 +990,7 @@ export default function RaporlarPage() {
       fallback={
         <>
           <Topbar title="..." description="" />
-          <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
+          <div className="flex-1 overflow-y-auto app-content-surface p-6">
             <div className="max-w-6xl mx-auto">
               <ReportSkeleton />
             </div>

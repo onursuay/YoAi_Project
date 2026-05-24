@@ -12,6 +12,14 @@
   }
 }
 
+@layer components {
+  /* Uygulama içerik yüzeyi — hafif yeşilimsi, modern arka plan (YoAlgoritma ile
+     tutarlı). Tüm modül sayfalarının sağ içerik alanında bg-gray-50 yerine kullanılır. */
+  .app-content-surface {
+    @apply bg-gradient-to-b from-emerald-50/40 via-white to-emerald-50/20;
+  }
+}
+
 /* Global scale: 85% of browser default (16px → 13.6px) */
 html {
   font-size: 85%;

@@ -438,7 +438,7 @@ export default function TasarimPage() {
         }
       `}</style>
       <Topbar title={t('title')} description={t('description')} />
-      <div className="flex-1 overflow-y-auto bg-gray-50">
+      <div className="flex-1 overflow-y-auto app-content-surface">
         <div className="flex h-full">
           {/* Left Panel */}
           <div className="w-[320px] shrink-0 border-r border-gray-200 bg-white flex flex-col overflow-y-auto">
