@@ -4,6 +4,7 @@ import { getImprovementHierarchy, type HierStatus, type ImprovementHierarchy } f
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 import { resolveYoaiScope } from '@/lib/yoai/businessScope'
 import { buildAccountScope, getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
+import { normalizeMetaAccountId, normalizeGoogleCustomerId } from '@/lib/yoai/businessKey'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 15
@@ -60,12 +61,21 @@ export async function GET(request: Request) {
         )
         const hasMeta = !!scope.metaId
         const hasGoogle = !!scope.googleCustomerId
+        const metaAcc = normalizeMetaAccountId(scope.metaId)
+        const googleAcc = normalizeGoogleCustomerId(scope.googleCustomerId)
 
         const filtered: ImprovementHierarchy = {
-          // Hesap uyarıları kampanya bazlı olmayabilir → işletmenin platformlarına göre süz
-          accountAlerts: data.accountAlerts.filter(
-            (a) => (a.source_platform === 'meta' && hasMeta) || (a.source_platform === 'google' && hasGoogle),
-          ),
+          // Hesap uyarıları: hesap boyutlu (account_id dolu) ise O hesaba göre süz
+          // (başka işletmenin — örn. Belgemod — uyarısı sızmasın); legacy (account_id
+          // NULL) uyarı için platform bazlı geriye uyumlu süzme.
+          accountAlerts: data.accountAlerts.filter((a) => {
+            if (a.account_id != null) {
+              if (a.source_platform === 'meta') return metaAcc != null && normalizeMetaAccountId(a.account_id) === metaAcc
+              if (a.source_platform === 'google') return googleAcc != null && normalizeGoogleCustomerId(a.account_id) === googleAcc
+              return false
+            }
+            return (a.source_platform === 'meta' && hasMeta) || (a.source_platform === 'google' && hasGoogle) || a.source_platform == null
+          }),
           campaigns: data.campaigns.filter((c) =>
             allowed.has(`${String(c.source_platform)}:${String(c.campaign_id)}`),
           ),

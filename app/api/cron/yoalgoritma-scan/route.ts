@@ -14,11 +14,47 @@
 
 import { NextResponse } from 'next/server'
 import { inngest, isInngestReady } from '@/inngest/client'
-import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
+import { isAiEngineEnabled, isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
+import { listRegisteredAccounts } from '@/lib/account/registeredAccounts'
+import { groupIntoBusinesses } from '@/lib/account/businessGroups'
+import type { YoaiScope } from '@/lib/yoai/businessScope'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60  // Sadece event fan-out — saniyeler sürer
+
+/**
+ * Bir kullanıcı için tarama scope'larını çözer (çoklu işletme — Faz 1).
+ *   • Flag KAPALI → [undefined] (tek legacy event, birleşik davranış).
+ *   • Flag AÇIK   → kayıtlı hesapları işletmelere grupla; her işletme için 1 scope.
+ *     Kayıt yoksa / gruplama boşsa → [undefined] (legacy fallback, sistem çalışır).
+ * Headless (cron, cookie yok) bağlamda DB'den çözülür → her işletme ayrı event alır.
+ */
+async function resolveUserScopesForCron(userId: string): Promise<(YoaiScope | undefined)[]> {
+  if (!isPerAccountScopeEnabled()) return [undefined]
+  try {
+    const regs = await listRegisteredAccounts(userId)
+    if (!regs || regs.length === 0) return [undefined]
+    const metaAccts = regs
+      .filter((r) => r.platform === 'meta')
+      .map((r) => ({ accountId: r.account_id, accountName: r.account_name }))
+    const googleAccts = regs
+      .filter((r) => r.platform === 'google')
+      .map((r) => ({ customerId: r.account_id, loginCustomerId: r.login_customer_id, accountName: r.account_name }))
+    const businesses = groupIntoBusinesses(metaAccts, googleAccts)
+    if (businesses.length === 0) return [undefined]
+    return businesses.map((b) => ({
+      scoped: true as const,
+      metaId: b.meta?.accountId ?? null,
+      googleCustomerId: b.google?.customerId ?? null,
+      googleLoginCustomerId: b.google?.loginCustomerId ?? null,
+      businessId: b.id,
+    }))
+  } catch (e) {
+    console.error('[Cron][yoalgoritma-scan] resolveUserScopes hata, legacy fallback:', e)
+    return [undefined]
+  }
+}
 
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -89,18 +125,28 @@ export async function GET(request: Request) {
   }
 
   const ids = Array.from(userIds)
-  // Hesap-geneli scan (ai_suggestions — paralel korunur)
-  const scanEvents = ids.map(userId => ({ name: 'yoalgoritma/scan.user' as const, data: { userId } }))
-  // Faz 3: hiyerarşik geliştirme kartları (per-ad yerine — çift maliyet olmasın).
-  // Eski per-ad function kayıtlı kalır (rollback) ama cron artık onu tetiklemez.
-  const campaignEvents = ids.map(userId => ({ name: 'yoalgoritma/campaign-improvements.user' as const, data: { userId } }))
-  await inngest.send([...scanEvents, ...campaignEvents])
+  // Çoklu işletme (Faz 1): flag açıkken her kullanıcının her işletmesi için ayrı
+  // scope'lu event; kapalıyken kullanıcı başına tek legacy event (sıfır regresyon).
+  // scan.user → hesap-geneli (ai_suggestions); campaign-improvements.user → hiyerarşik kartlar.
+  type ScanData = { userId: string; scope?: YoaiScope }
+  const events: Array<{ name: 'yoalgoritma/scan.user' | 'yoalgoritma/campaign-improvements.user'; data: ScanData }> = []
+  for (const userId of ids) {
+    const scopes = await resolveUserScopesForCron(userId)
+    for (const scope of scopes) {
+      const data: ScanData = scope ? { userId, scope } : { userId }
+      events.push({ name: 'yoalgoritma/scan.user', data })
+      events.push({ name: 'yoalgoritma/campaign-improvements.user', data })
+    }
+  }
+  await inngest.send(events)
 
   return NextResponse.json({
     ok: true,
     mode: 'inngest',
     users: userIds.size,
-    message: `${userIds.size} kullanıcı için scan + hiyerarşik geliştirme event'i gönderildi`,
+    events: events.length,
+    scoped: isPerAccountScopeEnabled(),
+    message: `${userIds.size} kullanıcı için ${events.length} scan/geliştirme event'i gönderildi`,
   })
 }
 
@@ -126,9 +172,15 @@ export async function POST() {
     return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
   }
 
+  // Manuel tetikleme cookie bağlamında → seçili işletmenin scope'u (flag açıksa).
+  // Flag kapalı / scope yok → scoped:false → legacy tek event (sıfır regresyon).
+  const { resolveYoaiScope } = await import('@/lib/yoai/businessScope')
+  const scope = await resolveYoaiScope()
+  const data: { userId: string; scope?: YoaiScope } = scope.scoped ? { userId, scope } : { userId }
+
   await inngest.send([
-    { name: 'yoalgoritma/scan.user', data: { userId } },
-    { name: 'yoalgoritma/campaign-improvements.user', data: { userId } },
+    { name: 'yoalgoritma/scan.user', data },
+    { name: 'yoalgoritma/campaign-improvements.user', data },
   ])
-  return NextResponse.json({ ok: true, mode: 'inngest', userId })
+  return NextResponse.json({ ok: true, mode: 'inngest', userId, scoped: scope.scoped })
 }

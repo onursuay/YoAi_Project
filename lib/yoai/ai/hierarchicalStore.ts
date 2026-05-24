@@ -29,6 +29,8 @@ export interface AccountAlertRow {
   id: string
   user_id: string
   source_platform: 'meta' | 'google' | null
+  account_id: string | null
+  business_key: string | null
   alert_type: string
   severity: HierAlertSeverity
   title: string
@@ -136,6 +138,8 @@ export interface AdImprovementRow {
 export interface InsertAccountAlertInput {
   user_id: string
   source_platform?: 'meta' | 'google' | null
+  account_id?: string | null
+  business_key?: string | null
   alert_type: string
   severity: HierAlertSeverity
   title: string
@@ -199,14 +203,21 @@ export interface InsertAdImprovementInput {
 
 /* ── account_alerts ── */
 
-/** Rescan öncesi: kullanıcının açık (pending) hesap uyarılarını superseded yap. */
-export async function supersedePendingAccountAlerts(userId: string): Promise<void> {
+/**
+ * Rescan öncesi: kullanıcının açık (pending) hesap uyarılarını superseded yap.
+ * accountId verilirse YALNIZ o hesabın uyarıları (çoklu işletme — Faz 1):
+ * Antso taraması Belgemod'un pending uyarılarını silmesin. accountId yoksa
+ * (legacy/flag kapalı) kullanıcının tüm pending uyarıları (mevcut davranış).
+ */
+export async function supersedePendingAccountAlerts(userId: string, accountId?: string | null): Promise<void> {
   if (!supabase) return
-  const { error } = await supabase
+  let q = supabase
     .from('account_alerts')
     .update({ status: 'superseded', decided_by: 'system', decided_at: new Date().toISOString() })
     .eq('user_id', userId)
     .eq('status', 'pending')
+  if (accountId) q = q.eq('account_id', accountId)
+  const { error } = await q
   if (error) console.error('[HierStore] supersede account_alerts error:', error)
 }
 
@@ -215,6 +226,8 @@ export async function insertAccountAlert(input: InsertAccountAlertInput): Promis
   const { error } = await supabase.from('account_alerts').insert({
     user_id: input.user_id,
     source_platform: input.source_platform ?? null,
+    account_id: input.account_id ?? null,
+    business_key: input.business_key ?? null,
     alert_type: input.alert_type,
     severity: input.severity,
     title: input.title,

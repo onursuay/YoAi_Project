@@ -13,6 +13,11 @@
    ────────────────────────────────────────────────────────── */
 
 import { supabase } from '@/lib/supabase/client'
+import {
+  buildBusinessKey,
+  normalizeMetaAccountId,
+  normalizeGoogleCustomerId,
+} from './businessKey'
 
 export {
   MIN_COMPETITORS_REQUIRED,
@@ -55,6 +60,10 @@ export interface BusinessProfileRow {
   intelligence_status: 'pending' | 'running' | 'completed' | 'failed' | 'stale'
   last_scan_started_at?: string | null
   last_scan_completed_at?: string | null
+  // Çoklu işletme (Faz 1) — hesap-ayırt-edici anahtarlar; legacy satırlarda null
+  business_key?: string | null
+  meta_account_id?: string | null
+  google_customer_id?: string | null
   created_at?: string
   updated_at?: string
 }
@@ -134,6 +143,7 @@ export interface BusinessIntelligenceRow {
   source_coverage: Record<string, unknown> | null
   confidence: number
   missing_data: string[]
+  business_key?: string | null
   last_generated_at?: string
   created_at?: string
   updated_at?: string
@@ -158,6 +168,67 @@ export async function getProfileByUserId(userId: string): Promise<BusinessProfil
   } catch (e) {
     console.warn('[businessProfileStore] getProfileByUserId exception:', e)
     return null
+  }
+}
+
+/**
+ * Aktif işletme scope'una (Meta/Google hesap kimliği) eşleşen profili döndürür.
+ * Çoklu işletme (Faz 1): her reklam hesabının kendi profili olabilir.
+ *   • meta_account_id / google_customer_id eşleşen profil → onu döndür
+ *   • eşleşme yoksa → null. Legacy/global profile fallback YAPILMAZ: o profil
+ *     başka bir hesaba ait olabilir; tarama profilsiz çalışsın (off-brand
+ *     yanlış uyarısı üretmesin) — "Antso kampanyaları Belgemod ile uyumsuz" fix'i.
+ * Flag kapalı / scope yoksa çağıran taraf getProfileByUserId kullanmalı (legacy).
+ */
+export async function getProfileForScope(
+  userId: string,
+  scope: { metaAccountId?: string | null; googleCustomerId?: string | null },
+): Promise<BusinessProfileRow | null> {
+  if (!supabase || !userId) return null
+  const meta = normalizeMetaAccountId(scope.metaAccountId)
+  const google = normalizeGoogleCustomerId(scope.googleCustomerId)
+  const conds: string[] = []
+  if (meta) conds.push(`meta_account_id.eq.${meta}`)
+  if (google) conds.push(`google_customer_id.eq.${google}`)
+  if (conds.length === 0) return null
+  try {
+    const { data, error } = await supabase
+      .from('user_business_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .or(conds.join(','))
+      .order('updated_at', { ascending: false })
+      .limit(1)
+    if (error) {
+      if (error.code === '42P01' || error.code === '42703') return null
+      console.warn('[businessProfileStore] getProfileForScope error:', error)
+      return null
+    }
+    return ((data as BusinessProfileRow[])?.[0]) ?? null
+  } catch (e) {
+    console.warn('[businessProfileStore] getProfileForScope exception:', e)
+    return null
+  }
+}
+
+/** Kullanıcının TÜM işletme profilleri (UI seçici + headless fan-out için). */
+export async function listProfiles(userId: string): Promise<BusinessProfileRow[]> {
+  if (!supabase || !userId) return []
+  try {
+    const { data, error } = await supabase
+      .from('user_business_profiles')
+      .select('*')
+      .eq('user_id', userId)
+      .order('created_at', { ascending: true })
+    if (error) {
+      if (error.code === '42P01') return []
+      console.warn('[businessProfileStore] listProfiles error:', error)
+      return []
+    }
+    return (data as BusinessProfileRow[]) || []
+  } catch (e) {
+    console.warn('[businessProfileStore] listProfiles exception:', e)
+    return []
   }
 }
 
@@ -210,6 +281,27 @@ export async function listCompetitors(userId: string): Promise<BusinessCompetito
     return (data as BusinessCompetitorRow[]) || []
   } catch (e) {
     console.warn('[businessProfileStore] listCompetitors exception:', e)
+    return []
+  }
+}
+
+/** Belirli bir profilin rakipleri (çoklu profil — user_id yerine profile_id bazlı). */
+export async function listCompetitorsForProfile(profileId: string): Promise<BusinessCompetitorRow[]> {
+  if (!supabase || !profileId) return []
+  try {
+    const { data, error } = await supabase
+      .from('user_business_competitors')
+      .select('*')
+      .eq('profile_id', profileId)
+      .order('created_at', { ascending: true })
+    if (error) {
+      if (error.code === '42P01') return []
+      console.warn('[businessProfileStore] listCompetitorsForProfile error:', error)
+      return []
+    }
+    return (data as BusinessCompetitorRow[]) || []
+  } catch (e) {
+    console.warn('[businessProfileStore] listCompetitorsForProfile exception:', e)
     return []
   }
 }
@@ -309,6 +401,25 @@ export async function getIntelligenceByUserId(userId: string): Promise<BusinessI
       .from('user_business_intelligence')
       .select('*')
       .eq('user_id', userId)
+      .maybeSingle()
+    if (error) {
+      if (error.code === '42P01') return null
+      return null
+    }
+    return (data as BusinessIntelligenceRow) || null
+  } catch {
+    return null
+  }
+}
+
+/** Belirli bir profilin intelligence kaydı (çoklu profil — profile_id bazlı). */
+export async function getIntelligenceForProfile(profileId: string): Promise<BusinessIntelligenceRow | null> {
+  if (!supabase || !profileId) return null
+  try {
+    const { data, error } = await supabase
+      .from('user_business_intelligence')
+      .select('*')
+      .eq('profile_id', profileId)
       .maybeSingle()
     if (error) {
       if (error.code === '42P01') return null

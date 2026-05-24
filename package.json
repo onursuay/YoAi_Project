@@ -16,6 +16,7 @@
     "db:migrate:billing": "node scripts/apply-billing-atomic-migration.mjs",
     "db:migrate:aiscan": "node scripts/apply-ai-scan-usage-migration.mjs",
     "db:migrate:registered-accounts": "node scripts/apply-registered-accounts-migration.mjs",
+    "db:migrate:per-account": "node scripts/apply-per-account-business-profiles-migration.mjs",
     "verify:google-ads": "node scripts/verify-google-ads-prod.mjs",
     "verify:registered-accounts": "node scripts/verify-registered-accounts.mjs",
     "pmax:smoke": "node scripts/pmax-smoke-test.mjs",

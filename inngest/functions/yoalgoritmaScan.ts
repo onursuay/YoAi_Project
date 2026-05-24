@@ -29,6 +29,7 @@ import {
 } from '@/lib/yoai/ai/scanUser'
 import { scrapeDeclaredCompetitors } from '@/lib/yoai/ai/competitorScanStep'
 import type { AiEngineResult, AiPlatform } from '@/lib/yoai/ai/types'
+import type { YoaiScope } from '@/lib/yoai/businessScope'
 
 const POLL_INTERVAL = '60s'
 const MAX_POLLS = 1440  // 60s × 1440 ≈ 24h (Anthropic batch SLA üst sınırı)
@@ -44,6 +45,9 @@ export const yoalgoritmaScanUser = inngest.createFunction(
   async ({ event, step, logger }) => {
     const userId = String(event.data?.userId ?? '')
     if (!userId) throw new Error('userId zorunlu')
+    // Çoklu işletme (Faz 1): cron fan-out scope'u event.data'ya gömer (headless).
+    // scope yoksa → mevcut birleşik davranış (sıfır regresyon).
+    const scope = (event.data?.scope ?? undefined) as YoaiScope | undefined
 
     // 0) Rakip scrape (A4) — YOALGORITMA_SCRAPE_COMPETITORS=true ise beyan
     //    edilen rakipleri Apify ile tarar (7g cache, max 3 rakip). Flag kapalıysa
@@ -62,8 +66,9 @@ export const yoalgoritmaScanUser = inngest.createFunction(
     }
 
     // 1) Fetch user campaign data (+ business context + rakip analizi)
+    //    scope varsa yalnız o işletmenin Meta+Google hesabı/profili
     const scanInputs = await step.run('fetch-user-data', async () => {
-      return await gatherUserScanInputs(userId)
+      return await gatherUserScanInputs(userId, scope)
     })
 
     const metaCtx = scanContextFromFetched(scanInputs.meta, scanInputs.industry)

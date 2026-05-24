@@ -15,6 +15,7 @@ import { buildScanBusinessBrief } from './scanBusinessBrief'
 import { loadCompetitorBrief } from './competitorScanStep'
 import type { AiEngineOutput, AiEngineResult, AiPlatform, AiScanContext } from './types'
 import type { DeepCampaignInsight, Platform } from '@/lib/yoai/analysisTypes'
+import type { YoaiScope } from '@/lib/yoai/businessScope'
 import { supabase } from '@/lib/supabase/client'
 
 export interface FetchedPlatformData {
@@ -35,15 +36,30 @@ export interface UserScanInputs {
   google: FetchedPlatformData
 }
 
-/** Tek user için Meta + Google deep fetch + business context + rakip analizi. */
-export async function gatherUserScanInputs(userId: string): Promise<UserScanInputs> {
-  const { industry, businessContext } = await loadBusinessContext(userId)
+/**
+ * Tek user için Meta + Google deep fetch + business context + rakip analizi.
+ *
+ * scope (çoklu işletme — Faz 1): verilip scoped=true ise yalnız o işletmenin
+ * Meta+Google hesabı çekilir (fetch override) ve o işletmenin profili kullanılır.
+ * null platform → o platform atlanır (örn. yalnız-Google işletmesinde Meta çekilmez).
+ * scope yok / scoped=false → mevcut birleşik davranış (cookie/DB default), sıfır regresyon.
+ * NOT: fetchMetaDeep/fetchGoogleDeep entegrasyon koduna dokunulmaz — yalnız mevcut
+ * override parametresi geçilir (runDeepAnalysis ile aynı kanıtlı pattern).
+ */
+export async function gatherUserScanInputs(userId: string, scope?: YoaiScope): Promise<UserScanInputs> {
+  const scoped = scope?.scoped === true
+  const metaOverride = scoped ? { adAccountId: scope!.metaId } : undefined
+  const googleOverride = scoped
+    ? { customerId: scope!.googleCustomerId, loginCustomerId: scope!.googleLoginCustomerId }
+    : undefined
+
+  const { industry, businessContext } = await loadBusinessContext(userId, scoped ? scope : undefined)
   const [metaResult, googleResult, competitorMeta, competitorGoogle] = await Promise.all([
-    fetchMetaDeep(userId).catch(e => {
+    fetchMetaDeep(userId, metaOverride).catch(e => {
       console.error('[AI Scan] Meta fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Meta veri çekme hatası'], connected: false }
     }),
-    fetchGoogleDeep(userId).catch(e => {
+    fetchGoogleDeep(userId, googleOverride).catch(e => {
       console.error('[AI Scan] Google fetch failed:', e)
       return { campaigns: [] as DeepCampaignInsight[], errors: ['Google Ads veri çekme hatası'], connected: false }
     }),
@@ -163,10 +179,18 @@ function inferAccountId(campaigns: DeepCampaignInsight[]): string | null {
  * source_scans + intelligence) tek noktada birleştirir; buildScanBusinessBrief
  * bunu Claude payload'ına gidecek markdown'a çevirir.
  */
-async function loadBusinessContext(userId: string): Promise<{ industry?: string; businessContext?: string }> {
+async function loadBusinessContext(
+  userId: string,
+  scope?: YoaiScope,
+): Promise<{ industry?: string; businessContext?: string }> {
   try {
-    const { getBusinessContextForUser } = await import('@/lib/yoai/businessContextStore')
-    const ctx = await getBusinessContextForUser(userId)
+    const mod = await import('@/lib/yoai/businessContextStore')
+    const ctx = scope?.scoped === true
+      ? await mod.getBusinessContextForScope(userId, {
+          metaAccountId: scope.metaId,
+          googleCustomerId: scope.googleCustomerId,
+        })
+      : await mod.getBusinessContextForUser(userId)
     const brief = buildScanBusinessBrief(ctx)
     if (!brief.hasProfile) return {}
     return { industry: brief.industry, businessContext: brief.businessContext }

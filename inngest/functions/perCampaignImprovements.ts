@@ -37,6 +37,8 @@ import {
 import { translateEnum } from '@/lib/yoai/translations'
 import type { AiPlatform } from '@/lib/yoai/ai/types'
 import type { DeepCampaignInsight } from '@/lib/yoai/analysisTypes'
+import type { YoaiScope } from '@/lib/yoai/businessScope'
+import { buildBusinessKey, normalizeMetaAccountId, normalizeGoogleCustomerId } from '@/lib/yoai/businessKey'
 
 const POLL_INTERVAL = '60s'
 const MAX_POLLS = 1440 // ~24h (Anthropic batch SLA)
@@ -83,9 +85,13 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
   async ({ event, step, logger }) => {
     const userId = String(event.data?.userId ?? '')
     if (!userId) throw new Error('userId zorunlu')
+    // Çoklu işletme (Faz 1): cron fan-out scope'u event.data'ya gömer (headless,
+    // cookie yok). scope yoksa/scoped=false → mevcut birleşik davranış (sıfır regresyon).
+    const scope = (event.data?.scope ?? undefined) as YoaiScope | undefined
+    const scoped = scope?.scoped === true
 
-    // 1) Fetch aktif kampanya ağacı + bağlam
-    const scanInputs = await step.run('fetch-user-data', async () => gatherUserScanInputs(userId))
+    // 1) Fetch aktif kampanya ağacı + bağlam (scope varsa yalnız o işletmenin hesabı/profili)
+    const scanInputs = await step.run('fetch-user-data', async () => gatherUserScanInputs(userId, scope))
     const allCampaigns = flattenActiveCampaigns(scanInputs)
 
     if (allCampaigns.length === 0) {
@@ -146,9 +152,18 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       return { userId, generated: 0, cancelled: plan.cancelled, superseded: plan.superseded, reason: 'all-frozen' }
     }
 
-    // Eski hesap uyarılarını supersede (yenileri ilk-kampanya isteğinde gelecek)
+    // Eski hesap uyarılarını supersede (yenileri ilk-kampanya isteğinde gelecek).
+    // Scoped: yalnız bu işletmenin hesap(lar)ı — başka işletmenin (örn. Belgemod)
+    // pending uyarısını silme. scoped değil → legacy (tüm pending).
     await step.run('supersede-account-alerts', async () => {
-      await supersedePendingAccountAlerts(userId)
+      if (scoped) {
+        const metaAcc = normalizeMetaAccountId(scope!.metaId)
+        const googleAcc = normalizeGoogleCustomerId(scope!.googleCustomerId)
+        if (metaAcc) await supersedePendingAccountAlerts(userId, metaAcc)
+        if (googleAcc) await supersedePendingAccountAlerts(userId, googleAcc)
+      } else {
+        await supersedePendingAccountAlerts(userId)
+      }
       return { ok: true }
     })
 
@@ -221,11 +236,19 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
         const model = batchRequests.find((b) => b.custom_id === r.custom_id)?.params.model ?? 'unknown'
         const { result } = parsePerCampaignBatchResult(r.result.message as any, model, 0, c.campaign.id)
 
-        // account_alerts (yalnızca ilk-per-platform isteğinden gelir)
+        // account_alerts (yalnızca ilk-per-platform isteğinden gelir).
+        // Hesap boyutu (çoklu işletme): Meta alert → meta hesap id, Google → google customer id;
+        // business_key işletme geneli. scope yoksa null (legacy).
+        const alertAccountId = c.platform === 'meta'
+          ? normalizeMetaAccountId(scope?.metaId)
+          : normalizeGoogleCustomerId(scope?.googleCustomerId)
+        const alertBusinessKey = buildBusinessKey(scope?.metaId, scope?.googleCustomerId)
         for (const al of result.account_alerts) {
           const res = await insertAccountAlert({
             user_id: userId,
             source_platform: c.platform,
+            account_id: alertAccountId,
+            business_key: alertBusinessKey,
             alert_type: al.alert_type,
             severity: al.severity,
             title: al.title,

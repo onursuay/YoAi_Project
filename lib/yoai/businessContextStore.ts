@@ -14,9 +14,12 @@
 
 import {
   getProfileByUserId,
+  getProfileForScope,
   listCompetitors,
+  listCompetitorsForProfile,
   listSourceScansForProfile,
   getIntelligenceByUserId,
+  getIntelligenceForProfile,
   type BusinessProfileRow,
   type BusinessCompetitorRow,
   type BusinessSourceScanRow,
@@ -170,6 +173,97 @@ export async function getBusinessContextForUser(
     listCompetitors(userId),
     profile.id ? listSourceScansForProfile(profile.id) : Promise.resolve<BusinessSourceScanRow[]>([]),
     getIntelligenceByUserId(userId),
+  ])
+
+  const sectorInsight = buildSectorLocationInsight({
+    sector_main_id: profile.sector_main,
+    sector_sub_id: profile.sector_sub,
+    target_locations: profile.target_locations,
+  })
+
+  const sourceCoverage = computeSourceCoverage(sourceScans)
+  const missingData = buildMissingData(profile, competitors, intelligence)
+
+  const baseConfidence = profile.profile_confidence || 0
+  const intelConfidence = intelligence?.confidence || 0
+  const confidence = Math.min(100, Math.max(baseConfidence, Math.round((baseConfidence + intelConfidence) / 2)))
+
+  const locked = !profile.onboarding_completed
+  const lockedReason = locked ? 'onboarding_incomplete' : null
+
+  return {
+    userId,
+    locked,
+    lockedReason,
+    profile,
+    competitors,
+    sourceScans,
+    intelligenceMemory: intelligence,
+    sectorInsight,
+    companyName: profile.company_name,
+    sectorLabel: profile.sector_main ? getSectorLabel(profile.sector_main, profile.sector_sub) : null,
+    targetLocations: profile.target_locations || [],
+    brandTone: profile.brand_tone,
+    forbiddenClaims: profile.forbidden_claims || [],
+    keywords: profile.keywords || [],
+    productsOrServices: profile.products_or_services || [],
+    mainConversionGoal: profile.main_conversion_goal,
+    diagnostic: {
+      hasProfile: true,
+      onboardingCompleted: profile.onboarding_completed,
+      hasIntelligence: !!intelligence,
+      intelligenceStale: profile.intelligence_status === 'stale',
+      sourceCoverage,
+      competitorCount: competitors.length,
+      missingData,
+      confidence,
+      source: intelligence ? 'profile_with_intelligence' : 'profile_only',
+    },
+  }
+}
+
+/**
+ * Aktif işletme scope'una göre business context (çoklu işletme — Faz 1).
+ *   • Profil scope'a göre seçilir (getProfileForScope). Eşleşen profil yoksa
+ *     locked 'no_scoped_profile' → tarama profilsiz çalışır; AI off-brand
+ *     ("X kampanyaları Y ile uyumsuz") yanlış uyarısı ÜRETMEZ.
+ *   • Rakipler + kaynak taramaları + intelligence o profile (profile_id) bağlı.
+ * Scope yoksa / flag kapalıysa çağıran taraf getBusinessContextForUser kullanır.
+ */
+export async function getBusinessContextForScope(
+  userId: string | null | undefined,
+  scope: { metaAccountId?: string | null; googleCustomerId?: string | null },
+): Promise<BusinessContext> {
+  if (!userId) return getBusinessContextForUser(userId)
+
+  const profile = await getProfileForScope(userId, scope)
+
+  if (!profile) {
+    return {
+      userId,
+      locked: true,
+      lockedReason: 'no_scoped_profile',
+      profile: null,
+      competitors: [],
+      sourceScans: [],
+      intelligenceMemory: null,
+      sectorInsight: null,
+      companyName: null,
+      sectorLabel: null,
+      targetLocations: [],
+      brandTone: null,
+      forbiddenClaims: [],
+      keywords: [],
+      productsOrServices: [],
+      mainConversionGoal: null,
+      diagnostic: { ...EMPTY_DIAG, missingData: ['no_scoped_business_profile'] },
+    }
+  }
+
+  const [competitors, sourceScans, intelligence] = await Promise.all([
+    profile.id ? listCompetitorsForProfile(profile.id) : Promise.resolve<BusinessCompetitorRow[]>([]),
+    profile.id ? listSourceScansForProfile(profile.id) : Promise.resolve<BusinessSourceScanRow[]>([]),
+    profile.id ? getIntelligenceForProfile(profile.id) : Promise.resolve<BusinessIntelligenceRow | null>(null),
   ])
 
   const sectorInsight = buildSectorLocationInsight({
