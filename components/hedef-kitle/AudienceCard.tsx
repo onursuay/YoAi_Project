@@ -71,11 +71,11 @@ function subtypeLabel(s?: string | null): string {
   return SUBTYPE_LABELS[s] ?? s.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
 }
 
-/** Geçersiz/boş tarihte "Invalid Date" yerine "—" gösterir. */
-function formatCreatedAt(v?: string | null): string {
-  if (!v) return '—'
-  const d = new Date(v)
-  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('tr-TR')
+/** Tarihi güvenle çözer; çözemezse null (UI alanı gizler). Meta unix(saniye) + ISO destekli. */
+function formatCreatedAt(v?: string | null): string | null {
+  if (!v) return null
+  const d = /^\d{9,}$/.test(v.trim()) ? new Date(Number(v) * 1000) : new Date(v)
+  return isNaN(d.getTime()) ? null : d.toLocaleDateString('tr-TR')
 }
 
 export default function AudienceCard({
@@ -198,10 +198,12 @@ export default function AudienceCard({
                 <p className="text-sm text-gray-700 font-mono truncate">{audience.metaAudienceId}</p>
               </div>
             )}
-            <div className="space-y-0.5">
-              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Oluşturulma</p>
-              <p className="text-sm text-gray-800 font-medium">{formatCreatedAt(audience.createdAt)}</p>
-            </div>
+            {formatCreatedAt(audience.createdAt) && (
+              <div className="space-y-0.5">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Oluşturulma</p>
+                <p className="text-sm text-gray-800 font-medium">{formatCreatedAt(audience.createdAt)}</p>
+              </div>
+            )}
           </div>
 
           {/* Actions */}
