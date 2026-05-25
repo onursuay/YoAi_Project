@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-25 — Raporlar: Google Ads bağlantısı + dinamik veri
+- **Sorun:** Raporlar sayfasında Google Ads sekmesi "Bağlı değil" olarak gri/kilitli kalıyordu. Sebep iki katmanlıydı: (1) `/api/google/status` yalnızca cookie okuyordu, oysa gerçek Google Ads bağlantısı `google_ads_connections` tablosunda (DB-first) tutuluyor — DB'deki bağlantı görülmüyordu; (2) sekme açılsa bile `normalizeGoogleAdsReport` top-level `data.cost`/`dailySeries` okuyordu ama `dashboard-kpis` endpoint'i `{ totals, changes, dates, series }` döndürüyor — KPI kartları ve grafik boş kalırdı.
+- **Çözüm:** `/api/google/status` DB-first + cookie fallback yapısına çevrildi (`getGoogleAdsContext` ile aynı sıralama; Google API çağrısı yok, hızlı). Response şekli (`connected`/`accountId`/`accountName`/`hasSelectedAccount`) Raporlar ve Entegrasyon sayfalarıyla uyumlu korundu. `normalizeGoogleAdsReport` gerçek `dashboard-kpis` şekline göre yeniden yazıldı: `totals`'dan 6 KPI (Maliyet/Gösterim/Tıklama/TO/Dönüşümler/Dönüşüm Değeri) + `changes`'tan yüzde değişim, `dates`+`series` zip'lenerek günlük trend grafiği. Veri çeken endpoint'ler (`dashboard-kpis`, `campaign-comparison`) zaten DB-aware — entegrasyon koduna dokunulmadı.
+- **Dosyalar:** `app/api/google/status/route.ts`, `app/raporlar/page.tsx`
+
+---
+
 ## 2026-05-25 — Kullanıcı menüsünden "Kurumsal" kaldırıldı + Ana sayfa footer'ına dil seçici
 - **Sorun:** Kullanıcı hesabı dropdown'ında "Kurumsal" (Gizlilik/Çerez/Kullanım Koşulları/Veri Silme) bölümü vardı; bu linkler zaten ana sayfa footer'ında olduğu için gereksiz tekrar. Ayrıca footer'da dil seçici yoktu.
 - **Çözüm:** `UserProfileDropdown`'dan "Kurumsal" bloğu (ve kullanılmayan `Lock` import'u) kaldırıldı. Ana sayfa footer'ına referans tasarımındaki dark dropdown dil seçici (Globe ikon + bayrak + chevron, 🇹🇷 Türkçe / 🇬🇧 English) eklendi — YoAi'nin gerçek i18n mekanizmasıyla (`NEXT_LOCALE` cookie + `mapPathToLocale`), dışarı tıklayınca kapanır, aktif dil emerald ile işaretli.

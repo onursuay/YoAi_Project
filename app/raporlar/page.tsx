@@ -936,50 +936,46 @@ function normalizeMetaReport(data: Record<string, unknown>): ReportPayload {
 }
 
 function normalizeGoogleAdsReport(data: Record<string, unknown>): ReportPayload {
+  // dashboard-kpis shape: { totals, changes, dates, series }
   const kpis: KpiItem[] = []
 
-  const metricKeys = ['cost', 'impressions', 'clicks', 'ctr', 'averageCpc', 'conversions', 'conversionRate', 'costPerConversion']
-  const formatMap: Record<string, string> = {
-    cost: 'currency', ctr: 'percent', averageCpc: 'currency', conversionRate: 'percent', costPerConversion: 'currency',
-    impressions: 'number', clicks: 'number', conversions: 'number',
-  }
+  const totals = (data.totals && typeof data.totals === 'object' ? data.totals : {}) as Record<string, unknown>
+  const changes = (data.changes && typeof data.changes === 'object' ? data.changes : {}) as Record<string, unknown>
 
-  for (const key of metricKeys) {
-    const val = (data as Record<string, unknown>)[key]
-    if (val !== undefined && val !== null) {
-      kpis.push({
-        key,
-        value: typeof val === 'number' ? val : parseFloat(String(val)) || 0,
-        format: formatMap[key] || 'number',
-      })
-    }
-  }
+  // Map totals → KPI cards (avgCtr surfaced under the shared 'ctr' label)
+  const kpiDefs: { key: string; source: string; changeKey: string; format: string }[] = [
+    { key: 'cost', source: 'cost', changeKey: 'cost', format: 'currency' },
+    { key: 'impressions', source: 'impressions', changeKey: 'impressions', format: 'number' },
+    { key: 'clicks', source: 'clicks', changeKey: 'clicks', format: 'number' },
+    { key: 'ctr', source: 'avgCtr', changeKey: 'ctr', format: 'percent' },
+    { key: 'conversions', source: 'conversions', changeKey: 'conversions', format: 'number' },
+    { key: 'conversionsValue', source: 'conversionsValue', changeKey: 'conversionsValue', format: 'currency' },
+  ]
 
-  const dailySeries = Array.isArray((data as Record<string, unknown>).dailySeries)
-    ? (data as Record<string, unknown>).dailySeries as Record<string, string | number>[]
-    : []
-
-  const campaigns = Array.isArray((data as Record<string, unknown>).campaigns)
-    ? (data as Record<string, unknown>).campaigns as Record<string, string | number>[]
-    : []
-
-  const tables: TableDef[] = []
-  if (campaigns.length > 0) {
-    tables.push({
-      key: 'campaigns',
-      columns: [
-        { key: 'name', label: 'campaign' },
-        { key: 'cost', label: 'cost', format: 'currency' },
-        { key: 'impressions', label: 'impressions', format: 'number' },
-        { key: 'clicks', label: 'clicks', format: 'number' },
-        { key: 'ctr', label: 'ctr', format: 'percent' },
-        { key: 'conversions', label: 'conversions', format: 'number' },
-      ],
-      rows: campaigns,
+  for (const def of kpiDefs) {
+    const raw = totals[def.source]
+    if (raw === undefined || raw === null) continue
+    const changeRaw = changes[def.changeKey]
+    kpis.push({
+      key: def.key,
+      value: typeof raw === 'number' ? raw : parseFloat(String(raw)) || 0,
+      changePercent: typeof changeRaw === 'number' ? changeRaw : undefined,
+      format: def.format,
     })
   }
 
-  return { kpis, dailySeries, tables, fetchedAt: new Date().toISOString() }
+  // Build daily series by zipping dates with parallel series arrays
+  const dates = Array.isArray(data.dates) ? (data.dates as string[]) : []
+  const series = (data.series && typeof data.series === 'object' ? data.series : {}) as Record<string, number[]>
+  const dailySeries: Record<string, string | number>[] = dates.map((date, i) => ({
+    date,
+    cost: series.cost?.[i] ?? 0,
+    clicks: series.clicks?.[i] ?? 0,
+    impressions: series.impressions?.[i] ?? 0,
+    conversions: series.conversions?.[i] ?? 0,
+  }))
+
+  return { kpis, dailySeries, tables: [], fetchedAt: new Date().toISOString() }
 }
 
 /* ────── Page export ────── */
