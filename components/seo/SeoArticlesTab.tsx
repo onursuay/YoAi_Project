@@ -356,7 +356,8 @@ export default function SeoArticlesTab() {
   }
 
   /* ═══════ Render ═══════ */
-  if (loading) {
+  // Site durumu netleşene kadar (siteCount null) makale görünümünü ASLA gösterme.
+  if (loading || siteCount === null) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-400">
         <Loader2 className="w-6 h-6 animate-spin" />
@@ -374,13 +375,16 @@ export default function SeoArticlesTab() {
     )
   }
 
-  /* ═══════ Onboarding: hiç bağlı site yok → sadece site bağlama ═══════ */
+  /* ═══════ Site bağlama ZORUNLU: site yokken makale üretimi gösterilmez ═══════ */
   if (siteCount === 0) {
     return (
       <div className="space-y-4">
-        <div>
-          <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
-          <p className="text-sm text-gray-500 mt-1">{t('onboardingHint')}</p>
+        <div className="bg-primary/5 border border-primary/20 rounded-xl p-4 flex items-start gap-3">
+          <Globe className="w-5 h-5 text-primary mt-0.5 shrink-0" />
+          <div>
+            <h3 className="text-sm font-semibold text-gray-900">{t('connectFirstTitle')}</h3>
+            <p className="text-sm text-gray-600 mt-0.5">{t('onboardingHint')}</p>
+          </div>
         </div>
         <SeoSitesPanel banner={siteBanner} onConnectionsChange={setSiteCount} autoOpenConnect />
       </div>
@@ -500,16 +504,12 @@ export default function SeoArticlesTab() {
         </div>
       )}
 
-      {/* Empty State */}
+      {/* Empty State — tek 'Yeni Makale' butonu header'da; burada sadece yönlendirme */}
       {!articles.length && !showGenerator && (
         <div className="text-center py-16">
           <FileText className="w-12 h-12 text-gray-200 mx-auto mb-4" />
           <h3 className="text-base font-semibold text-gray-700 mb-1">{t('empty')}</h3>
-          <p className="text-sm text-gray-500 mb-4">{t('emptyDescription')}</p>
-          <button onClick={() => setShowGenerator(true)}
-            className="inline-flex items-center gap-2 px-4 py-2 bg-purple-600 text-white text-sm font-medium rounded-lg hover:bg-purple-700 transition-colors">
-            <Sparkles className="w-4 h-4" /> {t('newArticle')}
-          </button>
+          <p className="text-sm text-gray-500">{t('emptyDescription')}</p>
         </div>
       )}
 
