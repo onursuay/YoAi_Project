@@ -53,9 +53,9 @@ export default function SeoArticlesTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // Panels
-  const [showSites, setShowSites] = useState(false)
-  const [showAutomation, setShowAutomation] = useState(false)
+  // View machine + site durumu
+  const [view, setView] = useState<'articles' | 'sites' | 'automation'>('articles')
+  const [siteCount, setSiteCount] = useState<number | null>(null)
   const [siteBanner, setSiteBanner] = useState<{ kind: 'connected' | 'rejected' | 'error'; reason?: string } | null>(null)
 
   // Generator form
@@ -97,10 +97,24 @@ export default function SeoArticlesTab() {
     if (siteParam === 'connected') setSiteBanner({ kind: 'connected' })
     else if (siteParam === 'rejected') setSiteBanner({ kind: 'rejected' })
     else if (siteParam === 'error') setSiteBanner({ kind: 'error', reason: searchParams.get('reason') || undefined })
-    setShowSites(true)
+    setView('sites')
     // URL'i temizle
     router.replace('/seo', { scroll: false })
   }, [searchParams, router])
+
+  /* ═══════ Site sayısı (onboarding kararı) ═══════ */
+  const fetchSiteCount = useCallback(async () => {
+    try {
+      const res = await fetch('/api/seo/sites', { cache: 'no-store' })
+      const data = await res.json()
+      if (data.ok) setSiteCount(data.connections.length)
+      else setSiteCount(0)
+    } catch {
+      setSiteCount(0)
+    }
+  }, [])
+
+  useEffect(() => { fetchSiteCount() }, [fetchSiteCount])
 
   /* ═══════ Fetch Articles ═══════ */
   const fetchArticles = useCallback(async () => {
@@ -360,6 +374,19 @@ export default function SeoArticlesTab() {
     )
   }
 
+  /* ═══════ Onboarding: hiç bağlı site yok → sadece site bağlama ═══════ */
+  if (siteCount === 0) {
+    return (
+      <div className="space-y-4">
+        <div>
+          <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
+          <p className="text-sm text-gray-500 mt-1">{t('onboardingHint')}</p>
+        </div>
+        <SeoSitesPanel banner={siteBanner} onConnectionsChange={setSiteCount} autoOpenConnect />
+      </div>
+    )
+  }
+
   return (
     <div className="space-y-4">
       {/* Header */}
@@ -367,34 +394,41 @@ export default function SeoArticlesTab() {
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
         <div className="flex items-center gap-2">
           <button
-            onClick={() => { setShowSites((v) => !v); setShowAutomation(false) }}
+            onClick={() => setView((v) => (v === 'sites' ? 'articles' : 'sites'))}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
-              showSites ? 'bg-gray-100 text-gray-900 border-gray-300' : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+              view === 'sites' ? 'bg-gray-100 text-gray-900 border-gray-300' : 'text-gray-600 border-gray-200 hover:bg-gray-50'
             }`}
           >
             <Globe className="w-3.5 h-3.5" /> {t('sites.title')}
           </button>
           <button
-            onClick={() => { setShowAutomation((v) => !v); setShowSites(false) }}
+            onClick={() => setView((v) => (v === 'automation' ? 'articles' : 'automation'))}
             className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
-              showAutomation ? 'bg-gray-100 text-gray-900 border-gray-300' : 'text-gray-600 border-gray-200 hover:bg-gray-50'
+              view === 'automation' ? 'bg-gray-100 text-gray-900 border-gray-300' : 'text-gray-600 border-gray-200 hover:bg-gray-50'
             }`}
           >
             <Zap className="w-3.5 h-3.5" /> {t('automation.title')}
           </button>
-          <button
-            onClick={() => setShowGenerator((v) => !v)}
-            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
-          >
-            <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
-          </button>
+          {view === 'articles' && (
+            <button
+              onClick={() => setShowGenerator((v) => !v)}
+              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+            >
+              <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
+            </button>
+          )}
         </div>
       </div>
 
-      {/* Panels */}
-      {showSites && <SeoSitesPanel banner={siteBanner} />}
-      {showAutomation && <SeoAutomationPanel />}
+      {/* Sites view */}
+      {view === 'sites' && <SeoSitesPanel banner={siteBanner} onConnectionsChange={setSiteCount} />}
 
+      {/* Automation view */}
+      {view === 'automation' && <SeoAutomationPanel />}
+
+      {/* Articles view */}
+      {view === 'articles' && (
+      <>
       {/* Article Generator */}
       {showGenerator && (
         <div className="bg-white border border-purple-200 rounded-xl p-5 space-y-4">
@@ -568,6 +602,8 @@ export default function SeoArticlesTab() {
             </tbody>
           </table>
         </div>
+      )}
+      </>
       )}
 
       {/* Edit Modal */}

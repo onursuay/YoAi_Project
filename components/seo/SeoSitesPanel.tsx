@@ -25,17 +25,19 @@ interface Props {
   /** callback'ten dönen durum: 'connected' | 'rejected' | 'error', reason ile */
   banner?: { kind: 'connected' | 'rejected' | 'error'; reason?: string } | null
   onConnectionsChange?: (count: number) => void
+  /** onboarding'de bağlama formunu otomatik açık başlat */
+  autoOpenConnect?: boolean
 }
 
 /* ═══════ Component ═══════ */
 
-export default function SeoSitesPanel({ banner, onConnectionsChange }: Props) {
+export default function SeoSitesPanel({ banner, onConnectionsChange, autoOpenConnect }: Props) {
   const t = useTranslations('dashboard.seo.articles.sites')
 
   const [connections, setConnections] = useState<SiteConnection[]>([])
   const [loading, setLoading] = useState(true)
   const [siteUrl, setSiteUrl] = useState('')
-  const [showConnect, setShowConnect] = useState(false)
+  const [showConnect, setShowConnect] = useState(Boolean(autoOpenConnect))
   const [testingId, setTestingId] = useState<string | null>(null)
   const [testResult, setTestResult] = useState<Record<string, boolean>>({})
 

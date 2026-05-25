@@ -20,7 +20,7 @@ import crypto from 'node:crypto'
  */
 export const dynamic = 'force-dynamic'
 
-const APP_ID = '7b3f2c1a-9e44-4a21-8c2b-yoai0000seo1' // sabit YoAi uygulama kimliği (revoke için)
+const APP_ID = '7b3f2c1a-9e44-4a21-8c2b-0a1b2c3d4e5f' // sabit YoAi uygulama kimliği (geçerli UUID — WP şartı)
 
 function normalizeSite(raw: string): string | null {
   let url = raw.trim()

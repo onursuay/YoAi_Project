@@ -2748,6 +2748,7 @@
         "wpSettingsRequired": "Please configure WordPress settings first.",
         "wpPublishSuccess": "Article successfully sent to WordPress!",
         "publishing": "Publishing...",
+        "onboardingHint": "Connect your website first to get started. Article generation and automation appear once a site is connected.",
         "sourceAuto": "Automatic",
         "sourceManual": "Manual",
         "featuredImage": "Featured Image",
