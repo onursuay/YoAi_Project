@@ -44,6 +44,11 @@ function StatusBadge({ status }: { status: AudienceStatus }) {
   )
 }
 
+/** Meta gerçek boyut verdiyse true; vermediyse (lower < 0) gösterilmez. */
+function hasValidCount(count?: { lower: number; upper: number } | null): boolean {
+  return !!count && count.lower >= 0
+}
+
 function formatCount(count: { lower: number; upper: number }): string {
   const format = (n: number) => {
     if (n >= 1_000_000) return `${(n / 1_000_000).toFixed(1)}M`
@@ -52,6 +57,25 @@ function formatCount(count: { lower: number; upper: number }): string {
   }
   if (count.lower === count.upper || count.upper === 0) return format(count.lower)
   return `${format(count.lower)} – ${format(count.upper)}`
+}
+
+/** Meta custom/lookalike alt tür enum'unu sade Türkçe'ye çevirir (ham enum gösterilmez). */
+const SUBTYPE_LABELS: Record<string, string> = {
+  WEBSITE: 'Web Sitesi', APP: 'Uygulama', CUSTOMER_LIST: 'Müşteri Listesi',
+  ENGAGEMENT: 'Etkileşim', VIDEO: 'Video İzleyenler', IG_BUSINESS: 'Instagram',
+  PAGE: 'Sayfa Etkileşimi', LEAD: 'Form Dolduranlar', OFFLINE_CONVERSION: 'Çevrimdışı',
+  LOOKALIKE: 'Benzer Kitle', CUSTOM: 'Özel Kitle', SAVED: 'Kayıtlı Kitle',
+}
+function subtypeLabel(s?: string | null): string {
+  if (!s) return ''
+  return SUBTYPE_LABELS[s] ?? s.replace(/_/g, ' ').toLowerCase().replace(/^\w/, (c) => c.toUpperCase())
+}
+
+/** Geçersiz/boş tarihte "Invalid Date" yerine "—" gösterir. */
+function formatCreatedAt(v?: string | null): string {
+  if (!v) return '—'
+  const d = new Date(v)
+  return isNaN(d.getTime()) ? '—' : d.toLocaleDateString('tr-TR')
 }
 
 export default function AudienceCard({
@@ -115,11 +139,11 @@ export default function AudienceCard({
                 <StatusBadge status={audience.status} />
               </>
             )}
-            {audience.origin === 'meta' && audience.approximateCount && (
+            {audience.origin === 'meta' && hasValidCount(audience.approximateCount) && (
               <>
                 <span className="text-gray-300">·</span>
                 <span className="text-xs text-gray-500">
-                  ~{formatCount(audience.approximateCount)} kişi
+                  ~{formatCount(audience.approximateCount!)} kişi
                 </span>
               </>
             )}
@@ -148,35 +172,35 @@ export default function AudienceCard({
             </div>
           )}
 
-          {/* Meta info */}
-          <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-sm">
+          {/* Meta info — tutarlı etiket(üst, küçük-uppercase) / değer(alt, okunur) düzeni */}
+          <div className="grid grid-cols-2 gap-x-6 gap-y-3">
             {audience.origin === 'local' && audience.source && (
-              <div>
-                <span className="text-gray-500 text-caption">Kaynak</span>
-                <p className="text-gray-700">{SOURCE_LABELS[audience.source]?.tr ?? audience.source}</p>
+              <div className="space-y-0.5">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Kaynak</p>
+                <p className="text-sm text-gray-800 font-medium">{SOURCE_LABELS[audience.source]?.tr ?? audience.source}</p>
               </div>
             )}
             {audience.subtype && (
-              <div>
-                <span className="text-gray-500 text-caption">Alt Tür</span>
-                <p className="text-gray-700">{audience.subtype}</p>
+              <div className="space-y-0.5">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Alt Tür</p>
+                <p className="text-sm text-gray-800 font-medium">{subtypeLabel(audience.subtype)}</p>
               </div>
             )}
-            {audience.approximateCount && (
-              <div>
-                <span className="text-gray-500 text-caption">Tahmini Boyut</span>
-                <p className="text-gray-700">{formatCount(audience.approximateCount)} kişi</p>
+            {hasValidCount(audience.approximateCount) && (
+              <div className="space-y-0.5">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Tahmini Boyut</p>
+                <p className="text-sm text-gray-800 font-medium">{formatCount(audience.approximateCount!)} kişi</p>
               </div>
             )}
             {audience.origin === 'local' && audience.metaAudienceId && (
-              <div>
-                <span className="text-gray-500 text-caption">Meta ID</span>
-                <p className="text-gray-700 font-mono text-xs">{audience.metaAudienceId}</p>
+              <div className="space-y-0.5">
+                <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Meta ID</p>
+                <p className="text-sm text-gray-700 font-mono truncate">{audience.metaAudienceId}</p>
               </div>
             )}
-            <div>
-              <span className="text-gray-500 text-caption">Oluşturulma</span>
-              <p className="text-gray-700">{new Date(audience.createdAt).toLocaleDateString('tr-TR')}</p>
+            <div className="space-y-0.5">
+              <p className="text-[11px] uppercase tracking-wide text-gray-400 font-medium">Oluşturulma</p>
+              <p className="text-sm text-gray-800 font-medium">{formatCreatedAt(audience.createdAt)}</p>
             </div>
           </div>
 

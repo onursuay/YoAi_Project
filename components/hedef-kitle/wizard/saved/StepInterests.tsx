@@ -166,14 +166,16 @@ export default function StepInterests({ state, onChange }: StepInterestsProps) {
         </div>
         <button
           type="button"
+          role="switch"
+          aria-checked={state.advantageAudience}
           onClick={() => onChange({ advantageAudience: !state.advantageAudience })}
-          className={`relative w-11 h-6 rounded-full transition-colors ${
+          className={`relative w-11 h-6 shrink-0 rounded-full transition-colors ${
             state.advantageAudience ? 'bg-primary' : 'bg-gray-300'
           }`}
         >
           <span
-            className={`absolute top-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
-              state.advantageAudience ? 'translate-x-5' : 'translate-x-0.5'
+            className={`absolute top-0.5 left-0.5 w-5 h-5 bg-white rounded-full shadow transition-transform ${
+              state.advantageAudience ? 'translate-x-5' : 'translate-x-0'
             }`}
           />
         </button>

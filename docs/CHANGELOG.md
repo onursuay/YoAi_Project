@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-05-25 — Hedef Kitle kartı (Invalid Date / -1 kişi / ham enum / tipografi) + Advantage+ toggle
+- **Sorun:** (#2) Kitle kartında "Invalid Date" (`new Date(createdAt)` fallback'siz) ve "-1 kişi" (Meta boyut vermeyince `approximateCount=-1` yine gösteriliyordu). (#3) Etiketler `text-caption` (çok küçük), "Alt Tür" değeri **ham enum** (LOOKALIKE/WEBSITE) basılıyor, grid simetrisi bozuk, tipografi tutarsız. (#4) Advantage+ toggle knob'u asimetrik (`left` yok, kapalı `translate-x-0.5`/açık `translate-x-5`).
+- **Çözüm:** `AudienceCard`: `formatCreatedAt` (geçersiz/boş tarih → "—"), `hasValidCount` (boyut < 0 → satır hiç gösterilmez), `subtypeLabel` (ham enum → sade TR: WEBSITE→Web Sitesi, LOOKALIKE→Benzer Kitle, …). Etiket/değer tutarlı tipografi (etiket `11px uppercase gray-400`, değer `text-sm gray-800`), `grid-cols-2 gap-x-6 gap-y-3` simetrik hizalama. `StepInterests` Advantage+ toggle simetrik (`left-0.5` + `translate-x-0`/`translate-x-5`) + `role="switch"`/`aria-checked`. `tsc` ✓, `next build` ✓.
+- **Dosyalar:** `components/hedef-kitle/AudienceCard.tsx`, `components/hedef-kitle/wizard/saved/StepInterests.tsx`
+
+---
+
 ## 2026-05-24 — Reklam Yöneticisi: metrik filtresine yeni metrikler (Meta +6, Google +4 — fetch'e dokunmadan)
 - **Sorun:** Metrik filtresinde yalnız 7 metrik vardı (Sonuçlar/Bütçe/Harcanan/Gösterim/Tıklama/CTR/CPC); Meta & Google çok daha fazlasını sunuyor.
 - **Çözüm:** Keşifte bu metriklerin çoğunun API'den ZATEN çekildiği ama UI'da gösterilmediği tespit edildi → Meta/Google fetch koduna **DOKUNMADAN** (yalnız sunum katmanı) eklendi. **Meta:** ROAS, Erişim (reach — kampanya), CPM, Dönüşümler (purchases), Dönüşüm Oranı, Etkileşim (kampanya). **Google:** Dönüşümler, CPM, Dönüşüm Oranı, Dönüşüm Başına Maliyet (CPA). CPM / Dönüşüm Oranı / CPA, mevcut alanlardan hesaplanır (spent/impressions×1000, dönüşüm/tıklama×100, spent/dönüşüm) — render anında, 0'a bölme korumalı. `MetricFilterDropdown` + `getTableColumns` + tablo render genişletildi; localStorage `_v2` anahtarı (yeni metrikler varsayılan görünür, eski seçim sıfırlanır). EN/TR: `reach`/`cpm`/`conversions`/`conversionRate`/`engagement`/`cpa`. `tsc` ✓, `next build` ✓.
