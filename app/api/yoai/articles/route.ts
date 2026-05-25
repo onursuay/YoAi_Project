@@ -59,17 +59,24 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: false, error: 'content_required' }, { status: 400 })
   }
 
+  const insertRow: Record<string, unknown> = {
+    user_id: userId,
+    category: (body.category as string) || 'seo_article',
+    title,
+    content,
+    params: body.params || {},
+    word_count: typeof body.word_count === 'number' ? body.word_count : content.split(/\s+/).length,
+    status: 'draft',
+  }
+  // SEO/yayın alanları (opsiyonel)
+  if (typeof body.featured_image_url === 'string') insertRow.featured_image_url = body.featured_image_url
+  if (typeof body.featured_image_alt === 'string') insertRow.featured_image_alt = body.featured_image_alt
+  if (typeof body.meta_description === 'string') insertRow.meta_description = body.meta_description
+  if (typeof body.slug === 'string') insertRow.slug = body.slug
+
   const { data, error } = await supabase
     .from('yoai_articles')
-    .insert({
-      user_id: userId,
-      category: (body.category as string) || 'seo_article',
-      title,
-      content,
-      params: body.params || {},
-      word_count: typeof body.word_count === 'number' ? body.word_count : content.split(/\s+/).length,
-      status: 'draft',
-    })
+    .insert(insertRow)
     .select()
     .single()
 

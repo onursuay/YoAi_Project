@@ -65,6 +65,10 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
   if (body.status === 'draft' || body.status === 'published') updates.status = body.status
   if (typeof body.published_url === 'string') updates.published_url = body.published_url
+  if (typeof body.featured_image_url === 'string') updates.featured_image_url = body.featured_image_url
+  if (typeof body.featured_image_alt === 'string') updates.featured_image_alt = body.featured_image_alt
+  if (typeof body.meta_description === 'string') updates.meta_description = body.meta_description
+  if (typeof body.slug === 'string') updates.slug = body.slug
 
   const { data, error } = await supabase
     .from('yoai_articles')

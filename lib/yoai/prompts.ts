@@ -137,6 +137,58 @@ Gereksiz açıklama yapma, doğrudan içeriği üret.`
   return categoryPrompts[category]
 }
 
+// ── Yapılı (JSON) SEO Makale Prompt'u ───────────────────────────
+// Otomatik akış (inngest/seoArticleRun) + manuel üretim için. Tek JSON
+// objesi döndürür: title, metaDescription, slug, markdown, imageAltText,
+// imagePrompt. Mevcut streaming buildGenerationPrompt'tan bağımsızdır.
+
+export interface StructuredSeoInput {
+  keyword: string
+  wordCount: number
+  tone: string
+  language?: 'tr' | 'en'
+  businessContext?: string   // işletme/marka özeti (konu uyumu için)
+  recentTitles?: string[]    // son makaleler (çakışma engelleme)
+}
+
+export function buildStructuredSeoArticlePrompt(input: StructuredSeoInput): string {
+  const lang = input.language === 'en' ? 'English' : 'Türkçe'
+  const recent =
+    input.recentTitles && input.recentTitles.length
+      ? `\n\n## ZATEN YAYINLANMIŞ BAŞLIKLAR (bunlarla AYNI/ÇOK BENZER konu üretme):\n${input.recentTitles.map((t) => `- ${t}`).join('\n')}`
+      : ''
+  const brand = input.businessContext
+    ? `\n\n## İŞLETME/MARKA BAĞLAMI (içeriği buna uygun, off-brand olmayacak şekilde yaz):\n${input.businessContext}`
+    : ''
+
+  return `Sen YoAi — SEO ve içerik pazarlaması uzmanı bir AI asistansın.
+İçeriği ${lang} dilinde yaz. Profesyonel, özgün, kullanıma hazır olsun.
+
+## GÖREV: SEO Uyumlu Blog Makalesi (yapılı çıktı)
+- Ana anahtar kelime: ${input.keyword}
+- Hedef uzunluk: ~${input.wordCount} kelime
+- Ton: ${input.tone}${brand}${recent}
+
+## SEO KURALLARI
+- Anahtar kelimeyi başlıkta, ilk paragrafta ve içerikte DOĞAL şekilde kullan (keyword stuffing yapma).
+- İçeriği H2 (##) ve H3 (###) alt başlıklarla yapılandır. H1 KULLANMA (başlık ayrı alanda).
+- Giriş + bilgilendirici bölümler + sonuç. Madde listeleri uygun yerde kullan.
+- Meta açıklama: max 155 karakter, anahtar kelimeyi içersin, tıklamaya teşvik etsin.
+- Slug: küçük harf, tireli, Türkçe karakter içermeyen URL uyumlu (örn. "dijital-pazarlama-rehberi").
+- Görsel alt metni: makaleyi temsil eden, anahtar kelimeli kısa açıklama.
+
+## ÇIKTI FORMATI
+SADECE aşağıdaki JSON'u döndür, başka HİÇBİR şey yazma (markdown kod bloğu da kullanma):
+{
+  "title": "Makale başlığı (anahtar kelimeli, 60 karakteri geçmesin)",
+  "metaDescription": "max 155 karakter meta açıklama",
+  "slug": "url-uyumlu-slug",
+  "markdown": "## Alt başlık\\n\\nMakale içeriği markdown formatında (H1 yok)...",
+  "imageAltText": "öne çıkan görsel için alt metin",
+  "imagePrompt": "An English, photorealistic image generation prompt describing a professional blog header image for this article. No text/words in the image. Focus on subject, lighting, composition, color palette."
+}`
+}
+
 // ── Off-topic rejection message ─────────────────────────────────
 export const OFF_TOPIC_MESSAGE =
   'Bu konu YoAi\'nin uzmanlık alanı dışında kalıyor. Ben SEO makale, reklam metni, sosyal medya içeriği, e-posta pazarlama, ürün açıklaması, landing page metni ve slogan gibi dijital pazarlama konularında size yardımcı olabilirim. Nasıl bir içerik oluşturmamı istersiniz?'
