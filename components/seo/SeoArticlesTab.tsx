@@ -10,6 +10,7 @@ import {
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { useCredits } from '@/components/providers/CreditProvider'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import SeoSitesPanel from './SeoSitesPanel'
 import SeoAutomationPanel from './SeoAutomationPanel'
@@ -47,6 +48,7 @@ export default function SeoArticlesTab() {
   const searchParams = useSearchParams()
   const router = useRouter()
   const { spendCredits, refundCredits, hasEnoughCredits } = useCredits()
+  const { hasSubscription, isOwner, loading: subLoading } = useSubscription()
 
   // Article list
   const [articles, setArticles] = useState<Article[]>([])
@@ -355,11 +357,18 @@ export default function SeoArticlesTab() {
   }
 
   /* ═══════ Render ═══════ */
-  if (loading) {
+  if (loading || subLoading) {
     return (
       <div className="flex items-center justify-center py-16 text-gray-400">
         <Loader2 className="w-6 h-6 animate-spin" />
       </div>
+    )
+  }
+
+  // Görüntüleme/kullanım için abonelik şart (owner bypass). SEO modülü subscription tier.
+  if (!hasSubscription && !isOwner) {
+    return (
+      <AccessRequiredModal type="subscription" featureKey="seo" reason="seo_articles_subscription_required" />
     )
   }
 
