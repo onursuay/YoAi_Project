@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import type { CustomAudienceState, CustomAudienceRule, AudienceSource, IgEngagementType, PageEngagementType } from '../types'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface StepRuleProps {
   state: CustomAudienceState
@@ -73,16 +74,12 @@ function PixelRuleForm({ state, onChange, assets }: StepRuleProps) {
       {/* Pixel seçimi */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Pixel</label>
-        <select
+        <CustomSelect
           value={state.rule.pixelId ?? ''}
-          onChange={(e) => onChange(updateRule(state, { pixelId: e.target.value }))}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20 focus:border-primary"
-        >
-          <option value="">Pixel seçin</option>
-          {assets.pixels.map((p) => (
-            <option key={p.id} value={p.id}>{p.name} ({p.id})</option>
-          ))}
-        </select>
+          placeholder="Pixel seçin"
+          options={assets.pixels.map((p) => ({ value: p.id, label: `${p.name} (${p.id})` }))}
+          onChange={(val) => onChange(updateRule(state, { pixelId: String(val) }))}
+        />
       </div>
 
       {/* Kural tipi */}
@@ -107,14 +104,12 @@ function PixelRuleForm({ state, onChange, assets }: StepRuleProps) {
       {/* URL kuralı (SPECIFIC_PAGES) */}
       {state.rule.ruleType === 'SPECIFIC_PAGES' && (
         <div className="flex gap-3">
-          <select
+          <CustomSelect
+            className="w-44 shrink-0"
             value={state.rule.urlOperator ?? 'contains'}
-            onChange={(e) => onChange(updateRule(state, { urlOperator: e.target.value as 'contains' | 'equals' }))}
-            className="px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="contains">URL i\u00e7erir</option>
-            <option value="equals">URL e\u015fittir</option>
-          </select>
+            options={[{ value: 'contains', label: 'URL i\u00e7erir' }, { value: 'equals', label: 'URL e\u015fittir' }]}
+            onChange={(val) => onChange(updateRule(state, { urlOperator: val as 'contains' | 'equals' }))}
+          />
           <input
             type="text"
             value={state.rule.urlValue ?? ''}
@@ -129,16 +124,12 @@ function PixelRuleForm({ state, onChange, assets }: StepRuleProps) {
       {state.rule.ruleType === 'EVENTS' && (
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-1">Olay</label>
-          <select
+          <CustomSelect
             value={state.rule.eventName ?? ''}
-            onChange={(e) => onChange(updateRule(state, { eventName: e.target.value }))}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-          >
-            <option value="">Olay seçin</option>
-            {PIXEL_EVENT_OPTIONS.map((ev) => (
-              <option key={ev} value={ev}>{ev}</option>
-            ))}
-          </select>
+            placeholder="Olay seçin"
+            options={PIXEL_EVENT_OPTIONS.map((ev) => ({ value: ev, label: ev }))}
+            onChange={(val) => onChange(updateRule(state, { eventName: String(val) }))}
+          />
         </div>
       )}
 
@@ -155,16 +146,12 @@ function IgRuleForm({ state, onChange, assets }: StepRuleProps) {
     <div className="space-y-5">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Instagram Hesabı</label>
-        <select
+        <CustomSelect
           value={state.rule.igAccountId ?? ''}
-          onChange={(e) => onChange(updateRule(state, { igAccountId: e.target.value }))}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="">Hesap seçin</option>
-          {assets.instagramAccounts.map((a) => (
-            <option key={a.id} value={a.id}>@{a.username}</option>
-          ))}
-        </select>
+          placeholder="Hesap seçin"
+          options={assets.instagramAccounts.map((a) => ({ value: a.id, label: `@${a.username}` }))}
+          onChange={(val) => onChange(updateRule(state, { igAccountId: String(val) }))}
+        />
       </div>
 
       <div>
@@ -198,16 +185,12 @@ function PageRuleForm({ state, onChange, assets }: StepRuleProps) {
     <div className="space-y-5">
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Facebook Sayfası</label>
-        <select
+        <CustomSelect
           value={state.rule.pageId ?? ''}
-          onChange={(e) => onChange(updateRule(state, { pageId: e.target.value }))}
-          className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-        >
-          <option value="">Sayfa seçin</option>
-          {assets.pages.map((p) => (
-            <option key={p.id} value={p.id}>{p.name}</option>
-          ))}
-        </select>
+          placeholder="Sayfa seçin"
+          options={assets.pages.map((p) => ({ value: p.id, label: p.name }))}
+          onChange={(val) => onChange(updateRule(state, { pageId: String(val) }))}
+        />
       </div>
 
       <div>

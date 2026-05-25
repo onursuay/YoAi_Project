@@ -3,6 +3,7 @@
 import { Plus, Trash2 } from 'lucide-react'
 import type { CustomAudienceState, ExcludeRule, AudienceSource } from '../types'
 import { SOURCE_LABELS } from '../types'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface StepExcludeProps {
   state: CustomAudienceState
@@ -88,15 +89,11 @@ export default function StepExclude({ state, onChange }: StepExcludeProps) {
               <div className="space-y-3">
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-1">Kaynak</label>
-                  <select
+                  <CustomSelect
                     value={rule.source}
-                    onChange={(e) => updateExclude(idx, { source: e.target.value as AudienceSource })}
-                    className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-                  >
-                    {availableExcludeSources.map((s) => (
-                      <option key={s} value={s}>{SOURCE_LABELS[s].tr}</option>
-                    ))}
-                  </select>
+                    options={availableExcludeSources.map((s) => ({ value: s, label: SOURCE_LABELS[s].tr }))}
+                    onChange={(val) => updateExclude(idx, { source: val as AudienceSource })}
+                  />
                 </div>
 
                 <div>

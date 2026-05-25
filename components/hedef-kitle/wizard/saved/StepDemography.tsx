@@ -1,6 +1,7 @@
 'use client'
 
 import type { SavedAudienceState } from '../types'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 interface StepDemographyProps {
   state: SavedAudienceState
@@ -34,34 +35,28 @@ export default function StepDemography({ state, onChange }: StepDemographyProps)
           <div className="flex items-center gap-4">
             <div className="flex-1">
               <label className="block text-caption text-gray-500 mb-1">Min</label>
-              <select
+              <CustomSelect
+                ariaLabel="Minimum yaş"
                 value={Math.max(18, state.ageMin)}
-                onChange={(e) => {
-                  const v = Math.max(18, Number(e.target.value))
+                options={Array.from({ length: 48 }, (_, i) => i + 18).map((age) => ({ value: age, label: String(age) }))}
+                onChange={(val) => {
+                  const v = Math.max(18, Number(val))
                   onChange({ ageMin: v, ageMax: Math.max(v, state.ageMax) })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                {Array.from({ length: 48 }, (_, i) => i + 18).map((age) => (
-                  <option key={age} value={age}>{age}</option>
-                ))}
-              </select>
+              />
             </div>
             <span className="text-gray-400 pt-5">—</span>
             <div className="flex-1">
               <label className="block text-caption text-gray-500 mb-1">Max</label>
-              <select
+              <CustomSelect
+                ariaLabel="Maksimum yaş"
                 value={Math.max(18, state.ageMax)}
-                onChange={(e) => {
-                  const v = Math.max(18, Number(e.target.value))
+                options={Array.from({ length: 48 }, (_, i) => i + 18).map((age) => ({ value: age, label: age === 65 ? '65+' : String(age) }))}
+                onChange={(val) => {
+                  const v = Math.max(18, Number(val))
                   onChange({ ageMax: v, ageMin: Math.min(state.ageMin, v) })
                 }}
-                className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                {Array.from({ length: 48 }, (_, i) => i + 18).map((age) => (
-                  <option key={age} value={age}>{age === 65 ? '65+' : age}</option>
-                ))}
-              </select>
+              />
             </div>
           </div>
         </div>
