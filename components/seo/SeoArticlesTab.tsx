@@ -6,10 +6,11 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import {
   Loader2, FileText, Pencil, Trash2, Eye, EyeOff,
   AlertCircle, X, Save, Plus, Sparkles, Send,
-  Globe, ChevronDown, ChevronUp, Image as ImageIcon, Settings, Copy, Download, Check,
+  Globe, ChevronDown, ChevronUp, Image as ImageIcon, Copy, Download, Check,
 } from 'lucide-react'
 import ReactMarkdown from 'react-markdown'
 import { marked } from 'marked'
+import CustomSelect from '@/components/ui/CustomSelect'
 import { useCredits } from '@/components/providers/CreditProvider'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
@@ -56,8 +57,7 @@ export default function SeoArticlesTab() {
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
 
-  // View machine + site durumu
-  const [view, setView] = useState<'articles' | 'setup'>('articles')
+  // Site durumu
   const [profileUrl, setProfileUrl] = useState<string | null>(null) // işletme profilindeki web sitesi
   const [siteBanner, setSiteBanner] = useState<{ kind: 'connected' | 'rejected' | 'error'; reason?: string } | null>(null)
 
@@ -101,9 +101,8 @@ export default function SeoArticlesTab() {
     if (siteParam === 'connected') setSiteBanner({ kind: 'connected' })
     else if (siteParam === 'rejected') setSiteBanner({ kind: 'rejected' })
     else if (siteParam === 'error') setSiteBanner({ kind: 'error', reason: searchParams.get('reason') || undefined })
-    setView('setup')
     // URL'i temizle
-    router.replace('/seo', { scroll: false })
+    router.replace('/seo?tab=articles', { scroll: false })
   }, [searchParams, router])
 
   /* ═══════ İşletme profilindeki web sitesi (SEO bu URL'den beslenir) ═══════ */
@@ -118,18 +117,6 @@ export default function SeoArticlesTab() {
   }, [])
 
   useEffect(() => { fetchProfileUrl() }, [fetchProfileUrl])
-
-  /* ═══════ Yayın hedefi yoksa varsayılan görünüm = Kurulum ═══════ */
-  const checkInitialView = useCallback(async () => {
-    try {
-      const res = await fetch('/api/seo/sites', { cache: 'no-store' })
-      const data = await res.json()
-      // Henüz yayın hedefi yetkilendirilmemişse kullanıcıyı doğrudan kuruluma al
-      if (data.ok && data.connections.length === 0) setView('setup')
-    } catch { /* ignore */ }
-  }, [])
-
-  useEffect(() => { checkInitialView() }, [checkInitialView])
 
   /* ═══════ Fetch Articles ═══════ */
   const fetchArticles = useCallback(async () => {
@@ -430,38 +417,19 @@ export default function SeoArticlesTab() {
       {/* Header */}
       <div className="flex items-center justify-between flex-wrap gap-2">
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
-        <div className="flex items-center gap-2">
-          <button
-            onClick={() => setView((v) => (v === 'setup' ? 'articles' : 'setup'))}
-            className={`inline-flex items-center gap-1.5 px-3 py-1.5 text-sm border rounded-lg transition-colors ${
-              view === 'setup' ? 'bg-gray-100 text-gray-900 border-gray-300' : 'text-gray-600 border-gray-200 hover:bg-gray-50'
-            }`}
-          >
-            <Settings className="w-3.5 h-3.5" /> {t('setup')}
-          </button>
-          {view === 'articles' && (
-            <button
-              onClick={() => setShowGenerator((v) => !v)}
-              className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
-            >
-              <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
-            </button>
-          )}
-        </div>
+        <button
+          onClick={() => setShowGenerator((v) => !v)}
+          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
+        >
+          <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
+        </button>
       </div>
 
-      {/* Setup view: yayın hedefi (profil URL'inden) + üretim ayarları */}
-      {view === 'setup' && (
-        <div className="space-y-4">
-          <SeoSitesPanel banner={siteBanner} profileUrl={profileUrl} />
-          <SeoAutomationPanel />
-        </div>
-      )}
+      {/* Yayın Hedefi (profil URL'inden) + Üretim Ayarları — tek akış */}
+      <SeoSitesPanel banner={siteBanner} profileUrl={profileUrl} />
+      <SeoAutomationPanel />
 
-      {/* Articles view */}
-      {view === 'articles' && (
-      <>
-      {/* Article Generator */}
+      {/* İçerik üretici */}
       {showGenerator && (
         <div className="bg-white border border-purple-200 rounded-xl p-5 space-y-4">
           <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
@@ -478,21 +446,31 @@ export default function SeoArticlesTab() {
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('wordCount')}</label>
-              <select value={wordCount} onChange={(e) => setWordCount(e.target.value)} disabled={generating}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                <option value="300">300</option><option value="400">400</option>
-                <option value="500">500</option><option value="600">600</option>
-              </select>
+              <CustomSelect
+                value={wordCount}
+                onChange={(v) => setWordCount(String(v))}
+                ariaLabel={t('wordCount')}
+                options={[
+                  { value: '300', label: '300' },
+                  { value: '400', label: '400' },
+                  { value: '500', label: '500' },
+                  { value: '600', label: '600' },
+                ]}
+              />
             </div>
             <div>
               <label className="block text-xs font-medium text-gray-600 mb-1">{t('tone')}</label>
-              <select value={tone} onChange={(e) => setTone(e.target.value)} disabled={generating}
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                <option value="Resmi">{t('toneFormal')}</option>
-                <option value="Samimi">{t('toneFriendly')}</option>
-                <option value="Teknik">{t('toneTechnical')}</option>
-                <option value="Eğitici">{t('toneEducational')}</option>
-              </select>
+              <CustomSelect
+                value={tone}
+                onChange={(v) => setTone(String(v))}
+                ariaLabel={t('tone')}
+                options={[
+                  { value: 'Resmi', label: t('toneFormal') },
+                  { value: 'Samimi', label: t('toneFriendly') },
+                  { value: 'Teknik', label: t('toneTechnical') },
+                  { value: 'Eğitici', label: t('toneEducational') },
+                ]}
+              />
             </div>
           </div>
 
@@ -631,8 +609,6 @@ export default function SeoArticlesTab() {
           </table>
         </div>
       )}
-      </>
-      )}
 
       {/* Edit Modal */}
       {editingArticle && (
@@ -720,10 +696,12 @@ export default function SeoArticlesTab() {
             ) : (
               <div>
                 <label className="block text-xs font-medium text-gray-600 mb-1">{t('selectSite')}</label>
-                <select value={publishSiteId} onChange={(e) => setPublishSiteId(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500">
-                  {publishSites.map((s) => (<option key={s.id} value={s.id}>{s.label || s.baseUrl}</option>))}
-                </select>
+                <CustomSelect
+                  value={publishSiteId}
+                  onChange={(v) => setPublishSiteId(String(v))}
+                  ariaLabel={t('selectSite')}
+                  options={publishSites.map((s) => ({ value: s.id, label: s.label || s.baseUrl }))}
+                />
               </div>
             )}
 

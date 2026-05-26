@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { Loader2, Zap, Save, X, CheckCircle2, Clock } from 'lucide-react'
+import CustomSelect from '@/components/ui/CustomSelect'
 
 /* ═══════ Types ═══════ */
 
@@ -183,17 +184,13 @@ export default function SeoAutomationPanel() {
         {/* Site */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('site')}</label>
-          <select
+          <CustomSelect
             value={siteConnectionId}
-            onChange={(e) => setSiteConnectionId(e.target.value)}
-            disabled={noSites}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500 disabled:bg-gray-50"
-          >
-            {noSites && <option value="">—</option>}
-            {sites.map((s) => (
-              <option key={s.id} value={s.id}>{s.label || s.baseUrl}</option>
-            ))}
-          </select>
+            onChange={(v) => setSiteConnectionId(String(v))}
+            ariaLabel={t('site')}
+            placeholder="—"
+            options={sites.map((s) => ({ value: s.id, label: s.label || s.baseUrl }))}
+          />
         </div>
 
         {/* Time */}
@@ -203,63 +200,63 @@ export default function SeoAutomationPanel() {
             type="time"
             value={publishTime}
             onChange={(e) => setPublishTime(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/15 focus:border-primary"
           />
         </div>
 
         {/* Frequency */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('frequency')}</label>
-          <select
+          <CustomSelect
             value={frequency}
-            onChange={(e) => setFrequency(e.target.value as 'daily' | 'weekdays' | 'weekly')}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          >
-            <option value="daily">{t('freqDaily')}</option>
-            <option value="weekdays">{t('freqWeekdays')}</option>
-            <option value="weekly">{t('freqWeekly')}</option>
-          </select>
+            onChange={(v) => setFrequency(v as 'daily' | 'weekdays' | 'weekly')}
+            ariaLabel={t('frequency')}
+            options={[
+              { value: 'daily', label: t('freqDaily') },
+              { value: 'weekdays', label: t('freqWeekdays') },
+              { value: 'weekly', label: t('freqWeekly') },
+            ]}
+          />
         </div>
 
         {/* Weekday (weekly) */}
         {frequency === 'weekly' && (
           <div>
             <label className="block text-xs font-medium text-gray-600 mb-1">{t('weekday')}</label>
-            <select
+            <CustomSelect
               value={weekday}
-              onChange={(e) => setWeekday(Number(e.target.value))}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-            >
-              {weekdays.map((d, i) => (<option key={i} value={i}>{d}</option>))}
-            </select>
+              onChange={(v) => setWeekday(Number(v))}
+              ariaLabel={t('weekday')}
+              options={weekdays.map((d, i) => ({ value: i, label: d }))}
+            />
           </div>
         )}
 
         {/* Tone */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{tArt('tone')}</label>
-          <select
+          <CustomSelect
             value={tone}
-            onChange={(e) => setTone(e.target.value)}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          >
-            <option value="Resmi">{tArt('toneFormal')}</option>
-            <option value="Samimi">{tArt('toneFriendly')}</option>
-            <option value="Teknik">{tArt('toneTechnical')}</option>
-            <option value="Eğitici">{tArt('toneEducational')}</option>
-          </select>
+            onChange={(v) => setTone(String(v))}
+            ariaLabel={tArt('tone')}
+            options={[
+              { value: 'Resmi', label: tArt('toneFormal') },
+              { value: 'Samimi', label: tArt('toneFriendly') },
+              { value: 'Teknik', label: tArt('toneTechnical') },
+              { value: 'Eğitici', label: tArt('toneEducational') },
+            ]}
+          />
         </div>
 
         {/* Word count */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{tArt('wordCount')}</label>
-          <select
+          <CustomSelect
             value={wordCount}
-            onChange={(e) => setWordCount(Number(e.target.value))}
-            className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
-          >
-            {[300, 400, 500, 600, 800].map((w) => (<option key={w} value={w}>{w}</option>))}
-          </select>
+            onChange={(v) => setWordCount(Number(v))}
+            ariaLabel={tArt('wordCount')}
+            options={[300, 400, 500, 600, 800].map((w) => ({ value: w, label: String(w) }))}
+          />
         </div>
       </div>
 

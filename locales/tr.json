@@ -2627,7 +2627,7 @@
         "history": "Geçmiş",
         "bulk": "Toplu Tarama",
         "tools": "Araçlar",
-        "articles": "Makaleler"
+        "articles": "İçerikler"
       },
       "tools": {
         "title": "SEO Araçları",
@@ -2698,11 +2698,11 @@
         }
       },
       "articles": {
-        "title": "Makaleler",
-        "description": "SEO makalelerinizi oluşturun ve yönetin",
-        "empty": "Henüz makale yok",
-        "emptyDescription": "Yeni bir SEO makalesi oluşturmak için yukarıdaki butona tıklayın.",
-        "newArticle": "Yeni Makale",
+        "title": "İçerikler",
+        "description": "SEO içeriklerinizi oluşturun ve yönetin",
+        "empty": "Henüz içerik yok",
+        "emptyDescription": "Yeni bir SEO içeriği oluşturmak için yukarıdaki butona tıklayın.",
+        "newArticle": "Yeni İçerik",
         "generateTitle": "SEO Makale Oluştur",
         "keyword": "Anahtar Kelime",
         "keywordPlaceholder": "Örn: dijital pazarlama",

@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
+import { useSearchParams } from 'next/navigation'
 import Topbar from '@/components/Topbar'
 import CircularProgress from '@/components/CircularProgress'
 import {
@@ -440,6 +441,7 @@ function AnalysisSkeleton() {
 
 export default function SEOPage() {
   const t = useTranslations('dashboard.seo')
+  const searchParams = useSearchParams()
   const [url, setUrl] = useState('')
   const [competitorUrl, setCompetitorUrl] = useState('')
   const [showCompetitor, setShowCompetitor] = useState(false)
@@ -457,8 +459,9 @@ export default function SEOPage() {
   const printRef = useRef<HTMLDivElement>(null)
 
   // SEO modülü subscription tier — analiz aksiyonunda guard
-  const { hasSubscription } = useSubscription()
+  const { hasSubscription, loading: subLoading } = useSubscription()
   const [showSubscriptionGate, setShowSubscriptionGate] = useState(false)
+  const [autoAnalyzeTried, setAutoAnalyzeTried] = useState(false)
 
   // Restore state from localStorage on mount
   useEffect(() => {
@@ -473,6 +476,41 @@ export default function SEOPage() {
       if (hist) setHistory(JSON.parse(hist))
     } catch { /* ignore */ }
   }, [])
+
+  // Yayın yetkilendirme callback'i ?tab=articles (veya ?site=...) ile döner → İçerikler sekmesi
+  useEffect(() => {
+    if (searchParams.get('tab') === 'articles' || searchParams.get('site')) {
+      setActiveTab('articles')
+    }
+  }, [searchParams])
+
+  // Analiz: localStorage'da sonuç yoksa işletme profilindeki web sitesinden otomatik besle/analiz et
+  useEffect(() => {
+    if (autoAnalyzeTried || subLoading || result || loading) return
+    if (typeof window !== 'undefined' && localStorage.getItem('seo_last_result')) return
+    setAutoAnalyzeTried(true)
+    ;(async () => {
+      try {
+        const res = await fetch('/api/yoai/business-profile', { cache: 'no-store' })
+        const data = await res.json()
+        const pUrl = data?.data?.profile?.website_url
+        if (!pUrl) return
+        setUrl(pUrl)
+        if (!hasSubscription) return // abonelik yoksa sadece URL'i doldur, analiz etme
+        setLoading(true)
+        try {
+          const r = await analyzeUrl(pUrl)
+          if (r) {
+            setResult(r)
+            localStorage.setItem('seo_last_result', JSON.stringify({ result: r, url: pUrl }))
+            saveToHistory(r)
+          }
+        } catch { /* sessiz — kullanıcı manuel analiz edebilir */ }
+        finally { setLoading(false) }
+      } catch { /* ignore */ }
+    })()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [subLoading, hasSubscription, result, loading, autoAnalyzeTried])
 
   const saveToHistory = (data: SeoResult) => {
     const item: HistoryItem = { url: data.url, date: data.analyzedAt, score: data.overallScore }

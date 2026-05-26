@@ -2627,7 +2627,7 @@
         "history": "History",
         "bulk": "Bulk Scan",
         "tools": "Tools",
-        "articles": "Articles"
+        "articles": "Content"
       },
       "tools": {
         "title": "SEO Tools",
@@ -2698,11 +2698,11 @@
         }
       },
       "articles": {
-        "title": "Articles",
-        "description": "Create and manage your SEO articles",
-        "empty": "No articles yet",
-        "emptyDescription": "Click the button above to create a new SEO article.",
-        "newArticle": "New Article",
+        "title": "Content",
+        "description": "Create and manage your SEO content",
+        "empty": "No content yet",
+        "emptyDescription": "Click the button above to create new SEO content.",
+        "newArticle": "New Content",
         "generateTitle": "Generate SEO Article",
         "keyword": "Keyword",
         "keywordPlaceholder": "e.g. digital marketing",

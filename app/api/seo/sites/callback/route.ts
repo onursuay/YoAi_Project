@@ -20,7 +20,7 @@ export async function GET(request: Request) {
   const origin = url.origin
   const cookieStore = await cookies()
   const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
-  const seoUrl = (q: string) => (isEn ? `/en/seo?${q}` : `/seo?${q}`)
+  const seoUrl = (q: string) => (isEn ? `/en/seo?tab=articles&${q}` : `/seo?tab=articles&${q}`)
 
   const clearCookies = (res: NextResponse) => {
     res.cookies.set('seo_site_oauth_state', '', { maxAge: 0, path: '/' })
