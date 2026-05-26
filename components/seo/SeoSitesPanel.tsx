@@ -28,6 +28,9 @@ interface Props {
   profileUrl?: string | null
 }
 
+/** "Hata" değil de "bu site otomatik yayına uygun değil" anlamına gelen sebepler — kırmızı yerine nötr bilgi olarak gösterilir. */
+const SOFT_REASONS = new Set(['not_wordpress', 'rest_blocked', 'no_app_passwords'])
+
 /* ═══════ Component ═══════ */
 
 export default function SeoSitesPanel({ banner, profileUrl }: Props) {
@@ -117,9 +120,15 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
         </div>
       )}
       {banner?.kind === 'error' && (
-        <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-center gap-2">
-          <AlertCircle className="w-4 h-4" /> {reasonText(banner.reason)}
-        </div>
+        SOFT_REASONS.has(banner.reason || '') ? (
+          <div className="bg-gray-50 border border-gray-200 rounded-lg p-3 text-sm text-gray-700 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0 text-gray-400" /> {reasonText(banner.reason)}
+          </div>
+        ) : (
+          <div className="bg-red-50 border border-red-200 rounded-lg p-3 text-sm text-red-700 flex items-start gap-2">
+            <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" /> {reasonText(banner.reason)}
+          </div>
+        )
       )}
 
       {loading ? (
