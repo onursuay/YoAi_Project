@@ -3,6 +3,7 @@
 import { useState, useEffect, useCallback } from 'react'
 import { DollarSign, MousePointerClick, TrendingUp, Wallet, PiggyBank } from 'lucide-react'
 import type { KPIData } from '@/lib/strategy/types'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 const RANGE_OPTIONS = [
   { value: 7, label: '7 gün' },
@@ -54,15 +55,12 @@ export default function KPIBar() {
     <div className="space-y-2">
       <div className="flex items-center justify-between">
         <h3 className="text-sm font-medium text-gray-500">Genel Bakış</h3>
-        <select
-          value={range}
-          onChange={(e) => setRange(Number(e.target.value))}
-          className="text-xs border border-gray-200 rounded-lg px-2 py-1 text-gray-600 bg-white focus:outline-none focus:ring-1 focus:ring-primary"
-        >
-          {RANGE_OPTIONS.map((o) => (
-            <option key={o.value} value={o.value}>{o.label}</option>
-          ))}
-        </select>
+        <WizardSelect
+          value={String(range)}
+          onChange={(v) => setRange(Number(v))}
+          options={RANGE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label }))}
+          className="w-28"
+        />
       </div>
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-5 gap-3">
         {cards.map((card) => {

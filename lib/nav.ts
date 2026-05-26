@@ -51,6 +51,7 @@ export const navItems: NavItem[] = [
         href: ROUTES.TIKTOK_ADS,
         icon: LayoutDashboard,
         iconPath: '/platform-icons/tiktok.svg',
+        disabled: true,
       },
     ],
   },

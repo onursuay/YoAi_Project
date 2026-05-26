@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl'
 import { Save, Zap, CheckCircle, AlertCircle, XCircle } from 'lucide-react'
 import type { InputPayload, GoalType } from '@/lib/strategy/types'
 import { GOAL_TYPES, INDUSTRIES, TIME_HORIZONS, GEOGRAPHIES } from '@/lib/strategy/constants'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 interface WizardPhase1Props {
   instanceId: string
@@ -98,16 +99,12 @@ export default function WizardPhase1({ instanceId, initialData, onSave, onSaveAn
       {/* Sektör */}
       <div>
         <label className="block text-sm font-medium text-gray-700 mb-1">Sektör *</label>
-        <select
+        <WizardSelect
           value={form.industry}
-          onChange={(e) => update('industry', e.target.value)}
-          className="w-full px-3 py-2 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary focus:border-transparent bg-white"
-        >
-          <option value="">Sektör seçin</option>
-          {INDUSTRIES.map((ind) => (
-            <option key={ind} value={ind}>{ind}</option>
-          ))}
-        </select>
+          onChange={(v) => update('industry', v)}
+          options={INDUSTRIES.map((ind) => ({ value: ind, label: ind }))}
+          placeholder="Sektör seçin"
+        />
         {form.industry === 'Diğer' && (
           <input
             type="text"

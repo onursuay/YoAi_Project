@@ -203,13 +203,16 @@ export default function SidebarNav() {
                     {item.children.map((child) => (
                       <Link
                         key={child.id}
-                        href={child.href || '#'}
+                        href={child.disabled ? '#' : (child.href || '#')}
                         prefetch={false}
+                        aria-disabled={child.disabled || undefined}
+                        tabIndex={child.disabled ? -1 : undefined}
+                        onClick={child.disabled ? (e) => e.preventDefault() : undefined}
                         className={`flex items-center gap-2 px-3 py-2 text-sm rounded-lg transition-colors ${
                           isActive(child.href)
                             ? 'bg-primary/10 text-primary font-medium'
                             : child.disabled
-                            ? 'text-gray-400 cursor-not-allowed'
+                            ? 'text-gray-400 cursor-not-allowed pointer-events-none'
                             : 'text-gray-600 hover:bg-gray-50'
                         }`}
                       >
@@ -224,15 +227,15 @@ export default function SidebarNav() {
                             alt=""
                             width="18"
                             height="18"
-                            className="shrink-0"
+                            className={`shrink-0 ${child.disabled ? 'opacity-50 grayscale' : ''}`}
                           />
                         ) : (
                           <child.icon className="w-5 h-5 shrink-0" />
                         )}
                         <span>{child.label}</span>
                         {child.disabled && (
-                          <span className="ml-auto text-caption text-gray-400">
-                            {t('comingSoon')}
+                          <span className="text-caption text-gray-400">
+                            ({t('comingSoon')})
                           </span>
                         )}
                       </Link>

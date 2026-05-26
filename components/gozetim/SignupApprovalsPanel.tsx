@@ -29,6 +29,7 @@ import {
   Bell,
   BellOff,
 } from 'lucide-react'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 interface SignupRow {
   id: string
@@ -386,20 +387,21 @@ export default function SignupApprovalsPanel() {
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
         <h2 className="text-base font-semibold text-gray-900">Başvurular</h2>
         <div className="flex flex-wrap items-center gap-2">
-          <select
+          <WizardSelect
             value={filter}
-            onChange={(e) => setFilter(e.target.value as ApprovalFilter)}
-            className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
-          >
-            <option value="all">Onay · Tümü</option>
-            <option value="pending">Bekliyor</option>
-            <option value="call_scheduled">Görüşme planlı</option>
-            <option value="call_declined">Görüşme reddedildi</option>
-            <option value="manual_review">Manuel İnceleme</option>
-            <option value="approved">Onaylandı</option>
-            <option value="rejected">Reddedildi</option>
-            <option value="blocked">Engellendi</option>
-          </select>
+            onChange={(v) => setFilter(v as ApprovalFilter)}
+            options={[
+              { value: 'all', label: 'Onay · Tümü' },
+              { value: 'pending', label: 'Bekliyor' },
+              { value: 'call_scheduled', label: 'Görüşme planlı' },
+              { value: 'call_declined', label: 'Görüşme reddedildi' },
+              { value: 'manual_review', label: 'Manuel İnceleme' },
+              { value: 'approved', label: 'Onaylandı' },
+              { value: 'rejected', label: 'Reddedildi' },
+              { value: 'blocked', label: 'Engellendi' },
+            ]}
+            className="w-48"
+          />
           <div className="relative w-64 max-w-full">
             <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
             <input

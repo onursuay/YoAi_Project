@@ -2,6 +2,7 @@
 
 import { useTranslations } from 'next-intl'
 import { Upload, Trash2, Type, ImagePlus } from 'lucide-react'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 export type TextPosition =
   | 'top-left' | 'top-center' | 'top-right'
@@ -204,17 +205,11 @@ export default function TextOverlayControls({ config, onChange, mode, title, set
             {/* Font */}
             <div>
               <label className="block text-[11px] text-gray-500 mb-1">{t('overlay.font')}</label>
-              <select
+              <WizardSelect
                 value={config.font}
-                onChange={e => update('font', e.target.value)}
-                className="w-full px-2 py-1.5 border border-gray-200 rounded-lg text-sm bg-white focus:outline-none focus:ring-2 focus:ring-primary/20"
-              >
-                {FONTS.map(f => (
-                  <option key={f.value} value={f.value} style={{ fontFamily: f.value }}>
-                    {f.label}
-                  </option>
-                ))}
-              </select>
+                onChange={(v) => update('font', v)}
+                options={FONTS.map(f => ({ value: f.value, label: f.label, style: { fontFamily: f.value } }))}
+              />
             </div>
 
             {/* Font Size */}

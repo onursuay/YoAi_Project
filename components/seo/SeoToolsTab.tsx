@@ -7,6 +7,7 @@ import {
   ChevronDown, ChevronUp, RotateCcw,
   Bot, Globe, FileCode, Shield,
 } from 'lucide-react'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 /* ═══════ Types ═══════ */
 
@@ -159,14 +160,15 @@ function RobotsTxtGenerator({ t }: { t: (key: string) => string }) {
                   placeholder={t('robotsTxt.userAgent')}
                   className="w-32 px-2 py-1.5 border border-gray-300 rounded text-sm"
                 />
-                <select
+                <WizardSelect
                   value={rule.directive}
-                  onChange={e => updateRule(rule.id, 'directive', e.target.value as 'Allow' | 'Disallow')}
-                  className="px-2 py-1.5 border border-gray-300 rounded text-sm bg-white"
-                >
-                  <option value="Allow">{t('robotsTxt.allow')}</option>
-                  <option value="Disallow">{t('robotsTxt.disallow')}</option>
-                </select>
+                  onChange={(v) => updateRule(rule.id, 'directive', v as 'Allow' | 'Disallow')}
+                  options={[
+                    { value: 'Allow', label: t('robotsTxt.allow') },
+                    { value: 'Disallow', label: t('robotsTxt.disallow') },
+                  ]}
+                  className="w-36 shrink-0"
+                />
                 <input
                   type="text"
                   value={rule.path}
@@ -294,15 +296,11 @@ function SitemapGenerator({ t }: { t: (key: string) => string }) {
         <div className="grid grid-cols-2 gap-3">
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('sitemap.changefreq')} ({t('sitemap.defaultSettings')})</label>
-            <select
+            <WizardSelect
               value={defaultChangefreq}
-              onChange={e => setDefaultChangefreq(e.target.value)}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm bg-white"
-            >
-              {changefreqOptions.map(o => (
-                <option key={o} value={o}>{t(`sitemap.${o}`)}</option>
-              ))}
-            </select>
+              onChange={setDefaultChangefreq}
+              options={changefreqOptions.map(o => ({ value: o, label: t(`sitemap.${o}`) }))}
+            />
           </div>
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-1">{t('sitemap.priority')} ({t('sitemap.defaultSettings')})</label>
@@ -337,15 +335,12 @@ function SitemapGenerator({ t }: { t: (key: string) => string }) {
                   onChange={e => updateUrl(u.id, 'lastmod', e.target.value)}
                   className="w-36 px-2 py-1.5 border border-gray-300 rounded text-sm"
                 />
-                <select
+                <WizardSelect
                   value={u.changefreq}
-                  onChange={e => updateUrl(u.id, 'changefreq', e.target.value)}
-                  className="w-28 px-2 py-1.5 border border-gray-300 rounded text-sm bg-white"
-                >
-                  {changefreqOptions.map(o => (
-                    <option key={o} value={o}>{t(`sitemap.${o}`)}</option>
-                  ))}
-                </select>
+                  onChange={(v) => updateUrl(u.id, 'changefreq', v)}
+                  options={changefreqOptions.map(o => ({ value: o, label: t(`sitemap.${o}`) }))}
+                  className="w-32 shrink-0"
+                />
                 <input
                   type="number"
                   min="0"

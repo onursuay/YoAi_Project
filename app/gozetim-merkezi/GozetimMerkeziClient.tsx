@@ -18,6 +18,7 @@ import {
   Search,
 } from 'lucide-react'
 import SignupApprovalsPanel from '@/components/gozetim/SignupApprovalsPanel'
+import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
 interface ScanSummary {
   id: string
@@ -361,36 +362,39 @@ export default function GozetimMerkeziClient() {
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
           <h2 className="text-base font-semibold text-gray-900">Kullanıcı & Firma Listesi</h2>
           <div className="flex flex-wrap items-center gap-2">
-            <select
+            <WizardSelect
               value={filterOnboarding}
-              onChange={(e) => setFilterOnboarding(e.target.value as any)}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
-            >
-              <option value="all">Onboarding · Tümü</option>
-              <option value="complete">Onboarding tamam</option>
-              <option value="incomplete">Onboarding eksik</option>
-              <option value="no_profile">Profilsiz</option>
-            </select>
-            <select
+              onChange={(v) => setFilterOnboarding(v as any)}
+              options={[
+                { value: 'all', label: 'Onboarding · Tümü' },
+                { value: 'complete', label: 'Onboarding tamam' },
+                { value: 'incomplete', label: 'Onboarding eksik' },
+                { value: 'no_profile', label: 'Profilsiz' },
+              ]}
+              className="w-48"
+            />
+            <WizardSelect
               value={filterScan}
-              onChange={(e) => setFilterScan(e.target.value as any)}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
-            >
-              <option value="all">Tarama · Tümü</option>
-              <option value="completed">Tamamlandı</option>
-              <option value="failed">Hatalı</option>
-              <option value="running">Çalışıyor / Bekliyor</option>
-              <option value="none">Tarama yok</option>
-            </select>
-            <select
+              onChange={(v) => setFilterScan(v as any)}
+              options={[
+                { value: 'all', label: 'Tarama · Tümü' },
+                { value: 'completed', label: 'Tamamlandı' },
+                { value: 'failed', label: 'Hatalı' },
+                { value: 'running', label: 'Çalışıyor / Bekliyor' },
+                { value: 'none', label: 'Tarama yok' },
+              ]}
+              className="w-48"
+            />
+            <WizardSelect
               value={filterIntel}
-              onChange={(e) => setFilterIntel(e.target.value as any)}
-              className="rounded-lg border border-gray-200 bg-white px-2 py-2 text-xs text-gray-700 focus:border-primary focus:outline-none"
-            >
-              <option value="all">Intelligence · Tümü</option>
-              <option value="present">Var</option>
-              <option value="missing">Eksik</option>
-            </select>
+              onChange={(v) => setFilterIntel(v as any)}
+              options={[
+                { value: 'all', label: 'Intelligence · Tümü' },
+                { value: 'present', label: 'Var' },
+                { value: 'missing', label: 'Eksik' },
+              ]}
+              className="w-48"
+            />
             <div className="relative w-72 max-w-full">
               <Search className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-gray-400" />
               <input

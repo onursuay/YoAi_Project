@@ -7,6 +7,7 @@ export interface WizardSelectOption {
   value: string
   label: string
   disabled?: boolean
+  style?: React.CSSProperties
 }
 
 interface WizardSelectProps {
@@ -55,7 +56,10 @@ export default function WizardSelect({
           ${disabled ? 'bg-gray-50 opacity-60 cursor-not-allowed' : 'bg-white cursor-pointer'}
         `}
       >
-        <span className={selected && !placeholder ? 'text-gray-800 font-medium' : 'text-gray-400'}>
+        <span
+          style={selected?.style}
+          className={selected && !placeholder ? 'text-gray-800 font-medium truncate' : 'text-gray-400 truncate'}
+        >
           {selected?.label ?? placeholder ?? ''}
         </span>
         <ChevronDown
@@ -64,7 +68,7 @@ export default function WizardSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-y-auto max-h-72">
           {options.map((o) => {
             const isSel = o.value === value
             return (
@@ -83,7 +87,7 @@ export default function WizardSelect({
                   ${isSel ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}
                 `}
               >
-                <span>{o.label}</span>
+                <span style={o.style} className="truncate">{o.label}</span>
                 {isSel && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
               </button>
             )
