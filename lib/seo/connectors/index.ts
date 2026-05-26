@@ -1,19 +1,20 @@
 import type { SiteConnector, SiteCredentials, SitePlatform } from './types'
 import { WordPressConnector } from './wordpress'
+import { GenericWebhookConnector } from './genericWebhook'
 
 /**
  * Connector factory — platforma göre doğru implementasyonu döndürür.
  *
- * Faz 0/1: WordPress tam aktif.
- * Faz 2: Shopify, İdeaSoft, Generic eklenecek (PLATFORM_AVAILABILITY ile
- *        UI'da "yakında" gösterilir; getConnector çağrılırsa hata fırlatır).
+ * Aktif: WordPress (tek-tık) + Generic Webhook (özel yazılım / WP dışı siteler).
+ * Beklemede: Shopify, İdeaSoft (her biri ayrı API + iş ortağı kaydı gerektirir;
+ *            PLATFORM_AVAILABILITY ile UI'da "yakında", getConnector hata fırlatır).
  */
 
 export const PLATFORM_AVAILABILITY: Record<SitePlatform, boolean> = {
   wordpress: true,
+  generic: true,
   shopify: false,
   ideasoft: false,
-  generic: false,
 }
 
 export function isPlatformAvailable(platform: SitePlatform): boolean {
@@ -24,9 +25,10 @@ export function getConnector(platform: SitePlatform, creds: SiteCredentials): Si
   switch (platform) {
     case 'wordpress':
       return new WordPressConnector(creds)
+    case 'generic':
+      return new GenericWebhookConnector(creds)
     case 'shopify':
     case 'ideasoft':
-    case 'generic':
       throw new Error(`platform_not_yet_supported:${platform}`)
     default:
       throw new Error(`unknown_platform:${platform}`)

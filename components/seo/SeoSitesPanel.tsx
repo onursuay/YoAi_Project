@@ -6,6 +6,7 @@ import {
   Loader2, Globe, Trash2, CheckCircle2, AlertCircle,
   RefreshCw, ExternalLink, ArrowRight,
 } from 'lucide-react'
+import SeoWebhookConnect from './SeoWebhookConnect'
 
 /* ═══════ Types ═══════ */
 
@@ -99,6 +100,16 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
     fetchConnections()
   }
 
+  const platformLabel = (p: string): string => {
+    switch (p) {
+      case 'wordpress': return t('platformWordpress')
+      case 'shopify': return t('platformShopify')
+      case 'ideasoft': return t('platformIdeasoft')
+      case 'generic': return t('platformGeneric')
+      default: return p
+    }
+  }
+
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
       <div>
@@ -135,79 +146,93 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
         <div className="flex justify-center py-8 text-gray-400">
           <Loader2 className="w-5 h-5 animate-spin" />
         </div>
-      ) : !profileUrl ? (
-        /* İşletme profilinde web sitesi yok → profili tamamla */
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
-          <p className="text-sm text-gray-700">{t('noProfileUrl')}</p>
-          <a
-            href="/yoai"
-            className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700"
-          >
-            {t('openProfile')} <ArrowRight className="w-3.5 h-3.5" />
-          </a>
-        </div>
-      ) : connections.length === 0 ? (
-        /* Profil URL'i var ama yayın yetkisi yok → tek-tık yetkilendir */
-        <div className="border border-purple-200 rounded-xl p-4 bg-purple-50/30 space-y-3">
-          <div>
-            <p className="text-xs font-medium text-gray-500">{t('yourSiteFromProfile')}</p>
-            <p className="text-sm font-medium text-gray-900 mt-0.5 break-all">{profileUrl}</p>
-          </div>
-          <p className="text-sm text-gray-600">{t('notAuthorizedDesc')}</p>
-          <p className="text-xs text-gray-500">{t('authorizeHint')}</p>
-          <button
-            onClick={handleAuthorize}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700"
-          >
-            <ExternalLink className="w-3.5 h-3.5" /> {t('authorize')}
-          </button>
-        </div>
       ) : (
-        /* Yetkilendirilmiş yayın hedefleri */
-        <div className="space-y-2">
-          {connections.map((c) => (
-            <div key={c.id} className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg p-3">
-              <div className="min-w-0 flex-1">
-                <div className="flex items-center gap-2">
-                  <Globe className="w-4 h-4 text-gray-400 shrink-0" />
-                  <span className="text-sm font-medium text-gray-900 truncate">{c.label || c.baseUrl}</span>
-                  <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                    c.status === 'active' ? 'bg-emerald-50 text-emerald-700'
-                      : c.status === 'error' ? 'bg-red-50 text-red-700'
-                      : 'bg-gray-100 text-gray-600'
-                  }`}>
-                    {c.status === 'active' ? t('statusActive') : c.status === 'error' ? t('statusError') : t('statusRevoked')}
-                  </span>
+        <div className="space-y-3">
+          {/* Yetkilendirilmiş yayın hedefleri */}
+          {connections.length > 0 && (
+            <div className="space-y-2">
+              {connections.map((c) => (
+                <div key={c.id} className="flex items-center justify-between gap-3 border border-gray-200 rounded-lg p-3">
+                  <div className="min-w-0 flex-1">
+                    <div className="flex items-center gap-2 flex-wrap">
+                      <Globe className="w-4 h-4 text-gray-400 shrink-0" />
+                      <span className="text-sm font-medium text-gray-900 truncate">{c.label || c.baseUrl}</span>
+                      <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded bg-gray-100 text-gray-500">
+                        {platformLabel(c.platform)}
+                      </span>
+                      <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
+                        c.status === 'active' ? 'bg-emerald-50 text-emerald-700'
+                          : c.status === 'error' ? 'bg-red-50 text-red-700'
+                          : 'bg-gray-100 text-gray-600'
+                      }`}>
+                        {c.status === 'active' ? t('statusActive') : c.status === 'error' ? t('statusError') : t('statusRevoked')}
+                      </span>
+                    </div>
+                    <p className="text-xs text-gray-500 mt-0.5 truncate">
+                      {c.username ? `${c.username} · ` : ''}{c.baseUrl}
+                    </p>
+                    {testResult[c.id] !== undefined && (
+                      <p className={`text-xs mt-1 flex items-center gap-1 ${testResult[c.id] ? 'text-emerald-600' : 'text-red-600'}`}>
+                        {testResult[c.id] ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
+                        {testResult[c.id] ? t('testOk') : t('testFail')}
+                      </p>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-1 shrink-0">
+                    <button
+                      onClick={() => handleTest(c.id)}
+                      disabled={testingId === c.id}
+                      className="p-1.5 text-gray-400 hover:text-blue-600 rounded"
+                      title={t('test')}
+                    >
+                      {testingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
+                    </button>
+                    <button
+                      onClick={() => handleDelete(c.id)}
+                      className="p-1.5 text-gray-400 hover:text-red-500 rounded"
+                      title={t('remove')}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </div>
                 </div>
-                <p className="text-xs text-gray-500 mt-0.5 truncate">
-                  {c.username ? `${c.username} · ` : ''}{c.baseUrl}
-                </p>
-                {testResult[c.id] !== undefined && (
-                  <p className={`text-xs mt-1 flex items-center gap-1 ${testResult[c.id] ? 'text-emerald-600' : 'text-red-600'}`}>
-                    {testResult[c.id] ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                    {testResult[c.id] ? t('testOk') : t('testFail')}
-                  </p>
-                )}
-              </div>
-              <div className="flex items-center gap-1 shrink-0">
-                <button
-                  onClick={() => handleTest(c.id)}
-                  disabled={testingId === c.id}
-                  className="p-1.5 text-gray-400 hover:text-blue-600 rounded"
-                  title={t('test')}
-                >
-                  {testingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                </button>
-                <button
-                  onClick={() => handleDelete(c.id)}
-                  className="p-1.5 text-gray-400 hover:text-red-500 rounded"
-                  title={t('remove')}
-                >
-                  <Trash2 className="w-4 h-4" />
-                </button>
-              </div>
+              ))}
             </div>
-          ))}
+          )}
+
+          {/* WordPress tek-tık (işletme profilindeki site) — henüz hiç hedef yokken */}
+          {connections.length === 0 && profileUrl && (
+            <div className="border border-purple-200 rounded-xl p-4 bg-purple-50/30 space-y-3">
+              <div>
+                <p className="text-xs font-medium text-gray-500">{t('yourSiteFromProfile')}</p>
+                <p className="text-sm font-medium text-gray-900 mt-0.5 break-all">{profileUrl}</p>
+              </div>
+              <p className="text-sm text-gray-600">{t('notAuthorizedDesc')}</p>
+              <p className="text-xs text-gray-500">{t('authorizeHint')}</p>
+              <button
+                onClick={handleAuthorize}
+                className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              >
+                <ExternalLink className="w-3.5 h-3.5" /> {t('authorize')}
+              </button>
+            </div>
+          )}
+
+          {/* İşletme profilinde web sitesi yok + hiç hedef yok → profili tamamla */}
+          {connections.length === 0 && !profileUrl && (
+            <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+              <p className="text-sm text-gray-700">{t('noProfileUrl')}</p>
+              <a
+                href="/yoai"
+                className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700"
+              >
+                {t('openProfile')} <ArrowRight className="w-3.5 h-3.5" />
+              </a>
+            </div>
+          )}
+
+          {/* Her zaman: WordPress dışı / özel yazılım için webhook ile bağla */}
+          <SeoWebhookConnect onConnected={fetchConnections} />
         </div>
       )}
     </div>
