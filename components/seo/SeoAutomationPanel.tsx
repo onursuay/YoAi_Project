@@ -168,12 +168,12 @@ export default function SeoAutomationPanel() {
         <p className="text-xs text-gray-500 mt-0.5">{t('description')}</p>
       </div>
 
-      {noSites && (
-        <div className="bg-primary/5 border border-primary/20 rounded-lg p-3 text-sm text-primary">
+      {noSites ? (
+        <div className="bg-primary/5 border border-primary/20 rounded-lg p-4 text-sm text-primary leading-relaxed">
           {t('noSiteWarning')}
         </div>
-      )}
-
+      ) : (
+        <>
       {/* Enabled toggle */}
       <label className="flex items-center gap-2 cursor-pointer">
         <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="w-4 h-4 rounded accent-purple-600" />
@@ -314,7 +314,7 @@ export default function SeoAutomationPanel() {
           )}
           <button
             onClick={handleSave}
-            disabled={saving || noSites}
+            disabled={saving}
             className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
@@ -322,6 +322,8 @@ export default function SeoAutomationPanel() {
           </button>
         </div>
       </div>
+        </>
+      )}
     </div>
   )
 }

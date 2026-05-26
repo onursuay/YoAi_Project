@@ -415,8 +415,19 @@ export default function SeoArticlesTab() {
   return (
     <div className="space-y-4">
       {/* Header */}
-      <div className="flex items-center justify-between flex-wrap gap-2">
+      <div>
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
+      </div>
+
+      {/* Yayın Hedefi (profil URL'inden) + Üretim Ayarları — tek akış */}
+      <SeoSitesPanel banner={siteBanner} profileUrl={profileUrl} />
+      <SeoAutomationPanel />
+
+      {/* Makale yönetimi başlığı + Yeni İçerik (üretici form hemen altında açılır) */}
+      <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <FileText className="w-4 h-4 text-gray-400" /> {t('myArticles')}
+        </h3>
         <button
           onClick={() => setShowGenerator((v) => !v)}
           className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
@@ -424,10 +435,6 @@ export default function SeoArticlesTab() {
           <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
         </button>
       </div>
-
-      {/* Yayın Hedefi (profil URL'inden) + Üretim Ayarları — tek akış */}
-      <SeoSitesPanel banner={siteBanner} profileUrl={profileUrl} />
-      <SeoAutomationPanel />
 
       {/* İçerik üretici */}
       {showGenerator && (
