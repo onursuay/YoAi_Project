@@ -106,6 +106,11 @@ export const METRICS_PULL_INTERVAL_DAYS = 7
 // Polling interval (ms)
 export const POLL_INTERVAL = 3000
 
+// Bir job bu süreden uzun süredir "running/queued" ise terk edilmiş (orphan) kabul edilir:
+// polling'i sürekli açık tutmaz ve İş Geçmişi'nde "zaman aşımı" olarak gösterilir.
+// (Hiçbir strateji job'u meşru olarak bu kadar uzun çalışmaz — Vercel maxDuration ≤ 300s.)
+export const STALE_JOB_MS = 5 * 60 * 1000
+
 // Job runner concurrency limit
 export const JOB_CONCURRENCY = 3
 

@@ -103,7 +103,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
             <div
               key={task.id}
               className={`flex items-center gap-3 p-3 rounded-lg border transition-colors ${
-                task.category === 'optimization' && task.status !== 'done'
+                task.category === 'optimization' && task.status === 'todo'
                   ? 'bg-primary/5 border-primary/20 hover:border-primary/40'
                   : task.status === 'done'
                     ? 'bg-emerald-50/50 border-emerald-100'
@@ -117,7 +117,9 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
                 className="flex-shrink-0 hover:scale-110 transition-transform"
                 title={`Durum: ${STATUS_LABELS[task.status]} — tıklayın`}
               >
-                {task.category === 'optimization' && task.status !== 'done'
+                {/* Optimizasyon görevinde Sparkles yalnız "Yapılacak"ta (AI önerisi rozeti);
+                    tıklandıkça normal 3 durum görünür: ⭕→🕐 saat→✅ tik. */}
+                {task.category === 'optimization' && task.status === 'todo'
                   ? <Sparkles className="w-4 h-4 text-primary" />
                   : STATUS_ICONS[task.status]}
               </button>

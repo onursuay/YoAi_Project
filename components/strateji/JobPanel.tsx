@@ -1,7 +1,8 @@
 'use client'
 
-import { Clock, CheckCircle, XCircle, Loader2 } from 'lucide-react'
+import { Clock, CheckCircle, XCircle, Loader2, AlertTriangle } from 'lucide-react'
 import type { SyncJob } from '@/lib/strategy/types'
+import { STALE_JOB_MS } from '@/lib/strategy/constants'
 
 interface JobPanelProps {
   jobs: SyncJob[]
@@ -40,7 +41,17 @@ export default function JobPanel({ jobs }: JobPanelProps) {
       <h4 className="text-sm font-medium text-gray-700">İş Geçmişi</h4>
       <div className="space-y-1.5">
         {jobs.map((job) => {
-          const config = STATUS_CONFIG[job.status] || STATUS_CONFIG.queued
+          // Terk edilmiş job: uzun süredir "running/queued" → gerçekte ölü.
+          // "Çalışıyor %40" yerine dürüstçe "Zaman aşımı" göster.
+          const isStale =
+            (job.status === 'running' || job.status === 'queued') &&
+            Date.now() - new Date(job.updated_at || job.created_at).getTime() > STALE_JOB_MS
+          const config = isStale
+            ? { icon: <AlertTriangle className="w-3.5 h-3.5" />, color: 'text-red-600', label: 'Zaman aşımı' }
+            : STATUS_CONFIG[job.status] || STATUS_CONFIG.queued
+          // Optimize işi AI yerine şablon öneriye düştüyse dürüstçe belirt.
+          const usedFallback =
+            job.job_type === 'optimize' && job.status === 'success' && job.result?.ai_generated === false
           return (
             <div key={job.id} className="flex items-center gap-3 p-3 bg-white rounded-lg border border-gray-200">
               <span className={config.color}>{config.icon}</span>
@@ -51,7 +62,7 @@ export default function JobPanel({ jobs }: JobPanelProps) {
                   </span>
                   <span className={`text-xs ${config.color}`}>{config.label}</span>
                 </div>
-                {job.status === 'running' && (
+                {job.status === 'running' && !isStale && (
                   <div className="mt-1.5">
                     <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">
                       <div
@@ -61,6 +72,11 @@ export default function JobPanel({ jobs }: JobPanelProps) {
                     </div>
                     <span className="text-[10px] text-gray-400 mt-0.5">%{job.progress}</span>
                   </div>
+                )}
+                {usedFallback && (
+                  <p className="text-[11px] text-gray-500 mt-1">
+                    Şablon öneri kullanıldı — AI önerisi alınamadı
+                  </p>
                 )}
                 {job.last_error && (
                   <p className="text-xs text-red-500 mt-1 truncate">

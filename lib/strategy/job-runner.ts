@@ -580,14 +580,28 @@ Son Metrikler:
 ${metrics.map(m => `- Harcama: ${m.spend_try}₺, Tıklama: ${m.clicks}, Dönüşüm: ${m.conversions}, ROAS: ${m.roas}, CPA: ${m.cpa_try}₺, CTR: ${m.ctr}%`).join('\n')}
 
 Huni Dağılımı: TOFU %${blueprint.funnel_split.tofu}, MOFU %${blueprint.funnel_split.mofu}, BOFU %${blueprint.funnel_split.bofu}${yoalgoritmaAlerts ? `\n\nYoAlgoritma Hesap Uyarıları (önceliklendir):\n${yoalgoritmaAlerts}` : ''}`,
-        maxTokens: 1000,
+        maxTokens: 1500,
         temperature: 0.3,
-        timeoutMs: 15000,
+        // 15s çok kısaydı → Claude çağrısı abort olup şablona düşüyordu
+        // (blueprint üretiminde de aynı sorun timeout artırılarak çözülmüştü).
+        timeoutMs: 40000,
       })
-      const parsed = JSON.parse(extractJsonText(content))
+      // Robust parse: önce fence/temiz JSON; olmazsa metindeki ilk [ ... ] dizisini ayıkla.
+      let parsed: unknown = null
+      try {
+        parsed = JSON.parse(extractJsonText(content))
+      } catch {
+        const arr = content.match(/\[[\s\S]*\]/)
+        if (arr) {
+          try { parsed = JSON.parse(arr[0]) } catch { parsed = null }
+        }
+      }
       if (Array.isArray(parsed) && parsed.length >= 2) {
-        suggestions = parsed.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
-        aiGenerated = true
+        const clean = parsed.filter((s): s is string => typeof s === 'string' && s.trim().length > 0)
+        if (clean.length >= 2) {
+          suggestions = clean
+          aiGenerated = true
+        }
       }
     } catch (err) {
       console.error('[Optimize AI] Fallback kullanılıyor:', err)

@@ -8,7 +8,7 @@ import Tabs from '@/components/Tabs'
 import { ToastContainer } from '@/components/Toast'
 import type { Toast } from '@/components/Toast'
 import type { StrategyInstance, StrategyOutput, StrategyTask, SyncJob, InputPayload, TaskStatus, MetricsSnapshot } from '@/lib/strategy/types'
-import { POLL_INTERVAL } from '@/lib/strategy/constants'
+import { POLL_INTERVAL, STALE_JOB_MS } from '@/lib/strategy/constants'
 import StatusBadge from '@/components/strateji/StatusBadge'
 import PhaseIndicator from '@/components/strateji/PhaseIndicator'
 import WizardPhase1 from '@/components/strateji/WizardPhase1'
@@ -48,6 +48,9 @@ export default function StratejiDetailPage() {
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null)
+  // Otomatik sekme yalnızca ilk yüklemede çalışsın; sonraki polling'ler manuel
+  // sekme seçimini ezmesin (aksi halde İş Geçmişi'ne tıklayınca Görevler'e geri atar).
+  const autoTabbedRef = useRef(false)
 
   const addToast = useCallback((message: string, type: 'success' | 'error' | 'info') => {
     const tid = crypto.randomUUID()
@@ -74,9 +77,11 @@ export default function StratejiDetailPage() {
       setAiGenerated(!!json.aiGenerated)
       setAiFallbackReason(json.aiFallbackReason ?? null)
 
-      // Auto-tab based on phase
+      // Auto-tab based on phase — SADECE ilk yüklemede; sonradan kullanıcının
+      // seçtiği sekmeyi ezmemek için autoTabbedRef ile bir kez çalışır.
       const status = json.instance?.status
-      if (status && !searchParams.get('tab')) {
+      if (status && !searchParams.get('tab') && !autoTabbedRef.current) {
+        autoTabbedRef.current = true
         if (['DRAFT', 'COLLECTING'].includes(status)) setActiveTab('wizard')
         else if (['ANALYZING', 'GENERATING_PLAN', 'READY_FOR_REVIEW'].includes(status)) setActiveTab('plan')
         else if (['APPLYING', 'RUNNING', 'NEEDS_ACTION'].includes(status)) setActiveTab('tasks')
@@ -94,7 +99,13 @@ export default function StratejiDetailPage() {
 
   // Polling: aktif job varsa düzenli güncelle
   useEffect(() => {
-    const hasActiveJob = jobs.some((j) => j.status === 'queued' || j.status === 'running')
+    // Terk edilmiş (orphan) job'lar polling'i sonsuza dek açık tutmasın:
+    // STALE_JOB_MS'ten eski "running/queued" job'lar aktif sayılmaz.
+    const hasActiveJob = jobs.some(
+      (j) =>
+        (j.status === 'queued' || j.status === 'running') &&
+        Date.now() - new Date(j.updated_at || j.created_at).getTime() < STALE_JOB_MS,
+    )
     const isProcessing = instance && ['ANALYZING', 'GENERATING_PLAN', 'APPLYING', 'COLLECTING'].includes(instance.status)
 
     if (hasActiveJob || isProcessing) {

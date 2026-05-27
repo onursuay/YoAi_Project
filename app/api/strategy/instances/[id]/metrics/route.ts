@@ -4,6 +4,9 @@ import { resolveMetaContext } from '@/lib/meta/context'
 import { createJob, runQueuedJobs } from '@/lib/strategy/job-runner'
 
 export const dynamic = 'force-dynamic'
+// pull_metrics + optimize (Claude ~40s) tek istekte zincirlenir; varsayılan
+// fonksiyon süresi yetmiyordu → optimize abort olup şablon öneriye düşüyordu.
+export const maxDuration = 60
 
 // POST /api/strategy/instances/:id/metrics — Manuel metrik çekme + optimizasyon tetikle
 export async function POST(_request: Request, { params }: { params: Promise<{ id: string }> }) {
