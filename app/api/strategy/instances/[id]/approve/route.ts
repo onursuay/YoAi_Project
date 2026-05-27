@@ -2,8 +2,10 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { createJob, runQueuedJobs } from '@/lib/strategy/job-runner'
+import { isInngestReady, inngest } from '@/inngest/client'
 
 export const dynamic = 'force-dynamic'
+export const maxDuration = 60
 
 // POST /api/strategy/instances/:id/approve — Planı onayla ve uygula (Aşama 3'e geç)
 export async function POST(request: Request, { params }: { params: Promise<{ id: string }> }) {
@@ -53,7 +55,18 @@ export async function POST(request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: false, error: 'job_create_failed' }, { status: 500 })
   }
 
-  const result = await runQueuedJobs()
+  // Durumu hemen APPLYING yap → UI spinner + polling
+  await supabase
+    .from('strategy_instances')
+    .update({ status: 'APPLYING', updated_at: new Date().toISOString() })
+    .eq('id', id)
 
-  return NextResponse.json({ ok: true, jobId, message: 'Uygulama tamamlandı', ...result })
+  // Uygulamayı arka planda çalıştır (audience + görev oluşturma; canlı push YOK)
+  if (isInngestReady()) {
+    await inngest.send({ name: 'strategy/run-jobs', data: { instanceId: id } })
+    return NextResponse.json({ ok: true, jobId, mode: 'inngest', message: 'Uygulama başlatıldı' })
+  }
+
+  const result = await runQueuedJobs()
+  return NextResponse.json({ ok: true, jobId, mode: 'inline', message: 'Uygulama tamamlandı', ...result })
 }

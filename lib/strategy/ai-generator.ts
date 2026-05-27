@@ -138,7 +138,9 @@ export async function generateBlueprintWithAI(
       // her seferinde şablona düşüyordu. 8000'e çıkarıldı.
       maxTokens: 8000,
       temperature: 0.4,
-      timeoutMs: 55000,
+      // Artık Inngest arka planında çalışıyor (serve maxDuration=120) — senkron
+      // 60s limiti yok, tam üretime izin ver.
+      timeoutMs: 100000,
     })
 
     stage = 'parse'

@@ -4,6 +4,7 @@ import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { createJob, runQueuedJobs } from '@/lib/strategy/job-runner'
 import { getBusinessContextForUser, buildBusinessContextPromptBlock } from '@/lib/yoai/businessContextStore'
+import { isInngestReady, inngest } from '@/inngest/client'
 
 export const dynamic = 'force-dynamic'
 // AI blueprint üretimi senkron çalışır (Claude + Meta fetch); platformun
@@ -64,7 +65,19 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ ok: false, error: 'job_create_failed' }, { status: 500 })
   }
 
-  const result = await runQueuedJobs()
+  // Durumu hemen GENERATING_PLAN yap → UI spinner + polling devreye girer
+  await supabase
+    .from('strategy_instances')
+    .update({ status: 'GENERATING_PLAN', updated_at: new Date().toISOString() })
+    .eq('id', id)
 
-  return NextResponse.json({ ok: true, jobId, message: 'Plan üretimi tamamlandı', ...result })
+  // Üretimi ARKA PLANDA çalıştır — Claude blueprint (8000 token) senkron
+  // HTTP'de 60s limitini aşıyordu. Inngest hazırsa event; değilse (dev) inline.
+  if (isInngestReady()) {
+    await inngest.send({ name: 'strategy/run-jobs', data: { instanceId: id } })
+    return NextResponse.json({ ok: true, jobId, mode: 'inngest', message: 'Plan üretimi başlatıldı' })
+  }
+
+  const result = await runQueuedJobs()
+  return NextResponse.json({ ok: true, jobId, mode: 'inline', message: 'Plan üretimi tamamlandı', ...result })
 }

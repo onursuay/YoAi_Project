@@ -3,10 +3,9 @@ import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { createJob } from '@/lib/strategy/job-runner'
 import { runQueuedJobs } from '@/lib/strategy/job-runner'
+import { isInngestReady, inngest } from '@/inngest/client'
 
 export const dynamic = 'force-dynamic'
-// Analiz + zincirlenen plan üretimi senkron çalışır; platformun fonksiyonu
-// erken kesmemesi için süre bütçesi tanı (yoksa AI yerine şablona düşer).
 export const maxDuration = 60
 
 // POST /api/strategy/instances/:id/analyze — Analiz job'u başlat
@@ -46,14 +45,24 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ ok: false, error: 'no_input', message: 'Önce Aşama 1 verilerini kaydedin' }, { status: 400 })
   }
 
-  // Analyze job oluştur
+  // Analyze job oluştur (runAnalyzeJob içeride generate_plan'i de zincirler)
   const jobId = await createJob(id, 'analyze')
   if (!jobId) {
     return NextResponse.json({ ok: false, error: 'job_create_failed' }, { status: 500 })
   }
 
-  // Job'ları senkron çalıştır (Vercel serverless'ta fire-and-forget çalışmaz)
-  const result = await runQueuedJobs()
+  // Durumu hemen ANALYZING yap → UI spinner + polling
+  await supabase
+    .from('strategy_instances')
+    .update({ status: 'ANALYZING', updated_at: new Date().toISOString() })
+    .eq('id', id)
 
-  return NextResponse.json({ ok: true, jobId, message: 'Analiz tamamlandı', ...result })
+  // Arka planda çalıştır (Claude blueprint senkron HTTP'de 60s'i aşıyordu)
+  if (isInngestReady()) {
+    await inngest.send({ name: 'strategy/run-jobs', data: { instanceId: id } })
+    return NextResponse.json({ ok: true, jobId, mode: 'inngest', message: 'Analiz başlatıldı' })
+  }
+
+  const result = await runQueuedJobs()
+  return NextResponse.json({ ok: true, jobId, mode: 'inline', message: 'Analiz tamamlandı', ...result })
 }
