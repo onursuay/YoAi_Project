@@ -4,6 +4,35 @@ import { useState } from 'react'
 import { RefreshCw, CheckCircle, BookOpen, Users, Palette, Beaker, AlertTriangle, ListTodo, Sparkles, FileText, ChevronDown, BarChart3, Layers } from 'lucide-react'
 import type { Blueprint } from '@/lib/strategy/types'
 
+// Ham teknik etiketleri kullanıcı dostu Türkçe'ye çevir (UI'da ham enum YASAK)
+const TASK_CATEGORY_LABELS: Record<string, string> = {
+  measurement: 'Ölçümleme',
+  campaign: 'Kampanya',
+  creative: 'Kreatif',
+  audience: 'Hedef Kitle',
+  setup: 'Kurulum',
+  budget: 'Bütçe',
+  targeting: 'Hedefleme',
+  bid: 'Teklif',
+  status: 'Durum',
+}
+const PRIORITY_LABELS: Record<string, string> = {
+  high: 'Yüksek',
+  med: 'Orta',
+  medium: 'Orta',
+  low: 'Düşük',
+}
+const FORMAT_LABELS: Record<string, string> = {
+  video: 'Video',
+  ugc: 'Kullanıcı İçeriği',
+  image: 'Görsel',
+  carousel: 'Karusel',
+  static: 'Görsel',
+}
+const catLabel = (c?: string) => (c ? TASK_CATEGORY_LABELS[c.toLowerCase()] ?? c : '')
+const prioLabel = (p?: string) => (p ? PRIORITY_LABELS[p.toLowerCase()] ?? p : '')
+const fmtLabel = (f?: string) => (f ? FORMAT_LABELS[f.toLowerCase()] ?? f : '')
+
 interface BlueprintViewProps {
   blueprint: Blueprint
   onRegenerate: () => void
@@ -77,10 +106,10 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
         <div className="flex items-center justify-between">
           <div>
             <h3 className="text-sm font-semibold text-primary mb-1">Strateji Blueprint</h3>
-            <p className="text-xs text-gray-600">Kartlara tıklayarak detayları görüntüleyin.</p>
+            <p className="text-sm text-gray-600">Kartlara tıklayarak detayları görüntüleyin.</p>
           </div>
           {aiGenerated !== undefined && (
-            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium shrink-0 ${
+            <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium shrink-0 ${
               aiGenerated ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
             }`}>
               {aiGenerated ? <Sparkles className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
@@ -89,7 +118,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           )}
         </div>
         {!aiGenerated && aiGenerated !== undefined && (
-          <p className="text-[10px] text-gray-600 mt-2 bg-gray-100 rounded-lg px-2 py-1">
+          <p className="text-xs text-gray-600 mt-2 bg-gray-100 rounded-lg px-2 py-1">
             AI motoru şu an kullanılamadı — şablon tabanlı strateji üretildi. Birazdan tekrar deneyebilirsiniz.
             {aiFallbackReason && (
               <span className="block mt-1 font-mono text-gray-500">Teşhis: {aiFallbackReason}</span>
@@ -116,13 +145,13 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   <Icon className={`w-4 h-4 ${card.iconColor}`} />
                 </div>
                 {card.count !== undefined && (
-                  <span className={`text-[10px] font-bold px-1.5 py-0.5 rounded-full ${card.color} ${card.iconColor}`}>
+                  <span className={`text-xs font-bold px-1.5 py-0.5 rounded-full ${card.color} ${card.iconColor}`}>
                     {card.count}
                   </span>
                 )}
               </div>
-              <div className="text-xs font-semibold text-gray-900 mb-0.5">{card.title}</div>
-              <div className="text-[10px] text-gray-500 line-clamp-2 leading-relaxed">{card.summary}</div>
+              <div className="text-sm font-semibold text-gray-900 mb-0.5">{card.title}</div>
+              <div className="text-xs text-gray-500 line-clamp-2 leading-relaxed">{card.summary}</div>
               <ChevronDown className={`absolute bottom-2 right-2 w-3 h-3 text-gray-300 transition-transform ${isOpen ? 'rotate-180' : ''}`} />
             </button>
           )
@@ -144,7 +173,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   { label: 'CVR (%)', range: blueprint.kpi_targets.cvr_range, color: 'bg-gray-50 border-gray-200' },
                 ].map((kpi) => (
                   <div key={kpi.label} className={`${kpi.color} border rounded-lg p-3 text-center`}>
-                    <div className="text-xs text-gray-500 mb-1">{kpi.label}</div>
+                    <div className="text-sm text-gray-500 mb-1">{kpi.label}</div>
                     <div className="text-lg font-bold text-gray-900">{kpi.range[0]} — {kpi.range[1]}</div>
                   </div>
                 ))}
@@ -163,11 +192,11 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   { label: 'BOFU', desc: 'Dönüşüm', pct: blueprint.funnel_split.bofu, color: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
                 ].map((f) => (
                   <div key={f.label} className="flex items-center gap-3">
-                    <div className={`text-xs font-bold w-12 text-center py-1 rounded-md ${f.bg}`}>{f.label}</div>
+                    <div className={`text-sm font-bold w-12 text-center py-1 rounded-md ${f.bg}`}>{f.label}</div>
                     <div className="flex-1">
                       <div className="flex items-center justify-between mb-1">
-                        <span className="text-[10px] text-gray-500">{f.desc}</span>
-                        <span className="text-xs font-bold text-gray-800">%{f.pct}</span>
+                        <span className="text-xs text-gray-500">{f.desc}</span>
+                        <span className="text-sm font-bold text-gray-800">%{f.pct}</span>
                       </div>
                       <div className="h-3 rounded-full overflow-hidden bg-gray-100">
                         <div className={`h-full ${f.color} rounded-full transition-all`} style={{ width: `${f.pct}%` }} />
@@ -188,14 +217,14 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   <div className="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-5 text-center">
                     <div className="text-sm font-medium text-blue-600 mb-1">Meta</div>
                     <div className="text-3xl font-bold text-blue-700">%{blueprint.channel_mix.meta}</div>
-                    <div className="text-[10px] text-blue-500 mt-1">Facebook & Instagram</div>
+                    <div className="text-xs text-blue-500 mt-1">Facebook & Instagram</div>
                   </div>
                 )}
                 {blueprint.channel_mix.google > 0 && (
                   <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-xl p-5 text-center">
                     <div className="text-sm font-medium text-emerald-600 mb-1">Google</div>
                     <div className="text-3xl font-bold text-emerald-700">%{blueprint.channel_mix.google}</div>
-                    <div className="text-[10px] text-emerald-500 mt-1">Search & Display</div>
+                    <div className="text-xs text-emerald-500 mt-1">Search & Display</div>
                   </div>
                 )}
               </div>
@@ -210,7 +239,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                 {blueprint.personas.map((p, i) => (
                   <div key={i} className="bg-violet-50/50 border border-violet-100 rounded-lg p-3">
                     <div className="text-sm font-semibold text-gray-900 mb-2">{p.name}</div>
-                    <div className="space-y-1.5 text-xs">
+                    <div className="space-y-1.5 text-sm">
                       <div><span className="text-violet-400 font-medium">Acı:</span> <span className="text-gray-700">{p.pain}</span></div>
                       <div><span className="text-violet-400 font-medium">Vaat:</span> <span className="text-gray-700">{p.promise}</span></div>
                       <div><span className="text-violet-400 font-medium">Kanıt:</span> <span className="text-gray-700">{p.proof}</span></div>
@@ -230,14 +259,14 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   <div key={i} className="bg-pink-50/50 border border-pink-100 rounded-lg p-3">
                     <div className="flex items-center justify-between mb-2">
                       <span className="text-sm font-semibold text-gray-900">{ct.theme}</span>
-                      <span className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
+                      <span className={`text-xs px-2 py-0.5 rounded-full font-medium ${
                         ct.format === 'video' ? 'bg-blue-100 text-blue-700' :
                         ct.format === 'ugc' ? 'bg-emerald-100 text-emerald-700' :
                         'bg-gray-200 text-gray-600'
-                      }`}>{ct.format}</span>
+                      }`}>{fmtLabel(ct.format)}</span>
                     </div>
-                    <p className="text-xs text-gray-600"><span className="text-pink-400">Hook:</span> {ct.hook}</p>
-                    <p className="text-xs text-gray-600 mt-1"><span className="text-pink-400">Teklif:</span> {ct.offer}</p>
+                    <p className="text-sm text-gray-600"><span className="text-pink-400">Hook:</span> {ct.hook}</p>
+                    <p className="text-sm text-gray-600 mt-1"><span className="text-pink-400">Teklif:</span> {ct.offer}</p>
                   </div>
                 ))}
               </div>
@@ -251,14 +280,14 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
               <div className="p-4 space-y-2">
                 {blueprint.experiment_backlog.map((exp, i) => (
                   <div key={i} className="flex items-start gap-2 bg-primary/5 border border-primary/20 rounded-lg p-3">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5 ${
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 mt-0.5 ${
                       exp.priority === 'high' ? 'bg-red-100 text-red-700' : exp.priority === 'med' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {exp.priority.toUpperCase()}
+                      {prioLabel(exp.priority)}
                     </span>
                     <div className="flex-1 min-w-0">
-                      <p className="text-xs font-medium text-gray-900">{exp.hypothesis}</p>
-                      <p className="text-[10px] text-gray-500 mt-0.5">Test: {exp.test} | Metrik: {exp.metric}</p>
+                      <p className="text-sm font-medium text-gray-900">{exp.hypothesis}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">Test: {exp.test} | Metrik: {exp.metric}</p>
                     </div>
                   </div>
                 ))}
@@ -273,8 +302,8 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
               <div className="p-4 space-y-2">
                 {blueprint.risks.map((r, i) => (
                   <div key={i} className="bg-red-50 border border-red-100 rounded-lg p-3">
-                    <p className="text-xs font-medium text-red-800">{r.risk}</p>
-                    <p className="text-[10px] text-red-600 mt-1">Aksiyon: {r.mitigation}</p>
+                    <p className="text-sm font-medium text-red-800">{r.risk}</p>
+                    <p className="text-xs text-red-600 mt-1">Aksiyon: {r.mitigation}</p>
                   </div>
                 ))}
               </div>
@@ -288,19 +317,19 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
               <div className="p-4 space-y-1">
                 {blueprint.tasks_seed.map((t, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-teal-50/50 transition-colors">
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded font-medium shrink-0 ${
+                    <span className={`text-xs px-1.5 py-0.5 rounded font-medium shrink-0 ${
                       t.priority === 'high' ? 'bg-red-100 text-red-700' : t.priority === 'med' ? 'bg-gray-200 text-gray-700' : 'bg-gray-100 text-gray-600'
                     }`}>
-                      {t.priority.toUpperCase()}
+                      {prioLabel(t.priority)}
                     </span>
-                    <span className="text-gray-900 text-xs flex-1">{t.title}</span>
-                    <span className={`text-[10px] px-1.5 py-0.5 rounded-full shrink-0 ${
+                    <span className="text-gray-900 text-sm flex-1">{t.title}</span>
+                    <span className={`text-xs px-1.5 py-0.5 rounded-full shrink-0 ${
                       t.category === 'measurement' ? 'bg-primary/10 text-primary' :
                       t.category === 'creative' ? 'bg-pink-50 text-pink-600' :
                       t.category === 'audience' ? 'bg-blue-50 text-blue-600' :
                       t.category === 'campaign' ? 'bg-emerald-50 text-emerald-700' :
                       'bg-gray-50 text-gray-500'
-                    }`}>{t.category}</span>
+                    }`}>{catLabel(t.category)}</span>
                   </div>
                 ))}
               </div>
@@ -347,7 +376,7 @@ function CardHeader({ icon: Icon, title, color, onClose }: { icon: React.Compone
         <Icon className={`w-4 h-4 ${color}`} />
         <span className="text-sm font-medium text-gray-900">{title}</span>
       </div>
-      <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors text-xs">
+      <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors text-sm">
         Kapat
       </button>
     </div>

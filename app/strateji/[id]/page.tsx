@@ -281,10 +281,6 @@ export default function StratejiDetailPage() {
 
   return (
     <>
-      <Topbar
-        title={instance.title}
-        description="Strateji detayı"
-      />
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
         <div className="max-w-5xl mx-auto space-y-4">
           {/* Geri + Durum */}
