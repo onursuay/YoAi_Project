@@ -6,6 +6,7 @@ import Topbar from '@/components/Topbar'
 import { ToastContainer } from '@/components/Toast'
 import type { Toast } from '@/components/Toast'
 import type { StrategyInstance } from '@/lib/strategy/types'
+import { strategyPath } from '@/lib/strategy/url'
 import { COST_PER_STRATEGY } from '@/lib/subscription/types'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 import { useCredits } from '@/components/providers/CreditProvider'
@@ -91,7 +92,7 @@ export default function StratejiPage() {
         if (needsCreditsForStrategy) {
           addToast(`${COST_PER_STRATEGY} kredi kullanıldı`, 'info')
         }
-        router.push(`/strateji/${json.instance.id}`)
+        router.push(strategyPath(json.instance))
       } else {
         addToast(json.message || 'Strateji oluşturulamadı', 'error')
       }

@@ -2,6 +2,7 @@ import { NextResponse } from 'next/server'
 import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { runQueuedJobs, checkPeriodicJobs } from '@/lib/strategy/job-runner'
+import { isFullUuid } from '@/lib/strategy/url'
 
 export const dynamic = 'force-dynamic'
 
@@ -19,29 +20,47 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
     return NextResponse.json({ ok: false, error: 'missing_token', message: 'Meta bağlantısı gerekli' }, { status: 401 })
   }
 
-  const { id } = await params
+  const { id: idParam } = await params
 
-  // Instance
-  const { data: instance, error } = await supabase
-    .from('strategy_instances')
-    .select('*')
-    .eq('id', id)
-    .eq('ad_account_id', ctx.accountId)
-    .single()
+  // Okunabilir URL desteği: param tam UUID olabilir (eski link) veya UUID'nin
+  // ilk 8 hanesi olabilir (yeni '<slug>--<id8>' linki). Kısa kimlik → bu hesabın
+  // stratejileri arasından prefix eşleştir (uuid kolonunda ilike çalışmaz; strateji
+  // sayısı az olduğu için JS tarafı eşleştirme güvenli ve ucuz).
+  let instance: Record<string, unknown> | null = null
+  if (isFullUuid(idParam)) {
+    const r = await supabase
+      .from('strategy_instances')
+      .select('*')
+      .eq('id', idParam)
+      .eq('ad_account_id', ctx.accountId)
+      .single()
+    instance = r.data ?? null
+  } else {
+    const prefix = idParam.toLowerCase()
+    const r = await supabase
+      .from('strategy_instances')
+      .select('*')
+      .eq('ad_account_id', ctx.accountId)
+    const matches = (r.data ?? []).filter((row: { id: string }) => row.id.toLowerCase().startsWith(prefix))
+    instance = matches.length === 1 ? matches[0] : null
+  }
 
-  if (error || !instance) {
+  if (!instance) {
     return NextResponse.json({ ok: false, error: 'not_found', message: 'Strateji bulunamadı' }, { status: 404 })
   }
 
+  // Çözülmüş tam UUID — tüm alt sorgular bununla yapılır
+  const realId = instance.id as string
+
   // Processing durumundaysa kuyrukta bekleyen job'ları otomatik çalıştır
-  if (PROCESSING_STATUSES.includes(instance.status)) {
+  if (PROCESSING_STATUSES.includes(instance.status as string)) {
     await runQueuedJobs()
 
     // Instance'ı yeniden oku (status değişmiş olabilir)
     const { data: fresh } = await supabase
       .from('strategy_instances')
       .select('*')
-      .eq('id', id)
+      .eq('id', realId)
       .single()
 
     if (fresh) Object.assign(instance, fresh)
@@ -49,7 +68,7 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   // RUNNING durumda periyodik metrik çekme kontrolü
   if (instance.status === 'RUNNING') {
-    const jobCreated = await checkPeriodicJobs(id)
+    const jobCreated = await checkPeriodicJobs(realId)
     if (jobCreated) {
       // Yeni oluşturulan job'ları hemen çalıştır
       await runQueuedJobs()
@@ -58,11 +77,11 @@ export async function GET(_request: Request, { params }: { params: Promise<{ id:
 
   // Paralel sorgular
   const [inputsRes, outputsRes, tasksRes, jobsRes, metricsRes] = await Promise.all([
-    supabase.from('strategy_inputs').select('*').eq('strategy_instance_id', id).order('created_at', { ascending: false }).limit(1),
-    supabase.from('strategy_outputs').select('*').eq('strategy_instance_id', id).order('version', { ascending: false }).limit(1),
-    supabase.from('strategy_tasks').select('*').eq('strategy_instance_id', id).order('created_at', { ascending: true }),
-    supabase.from('sync_jobs').select('*').eq('strategy_instance_id', id).order('created_at', { ascending: false }).limit(20),
-    supabase.from('metrics_snapshots').select('*').eq('strategy_instance_id', id).order('created_at', { ascending: false }).limit(5),
+    supabase.from('strategy_inputs').select('*').eq('strategy_instance_id', realId).order('created_at', { ascending: false }).limit(1),
+    supabase.from('strategy_outputs').select('*').eq('strategy_instance_id', realId).order('version', { ascending: false }).limit(1),
+    supabase.from('strategy_tasks').select('*').eq('strategy_instance_id', realId).order('created_at', { ascending: true }),
+    supabase.from('sync_jobs').select('*').eq('strategy_instance_id', realId).order('created_at', { ascending: false }).limit(20),
+    supabase.from('metrics_snapshots').select('*').eq('strategy_instance_id', realId).order('created_at', { ascending: false }).limit(5),
   ])
 
   // AI mi template mi kullanıldığını belirle (generate_plan job result'tan)

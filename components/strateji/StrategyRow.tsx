@@ -5,6 +5,7 @@ import { useLocale } from 'next-intl'
 import { ChevronRight, RotateCcw, AlertTriangle, Eye, Play, Trash2 } from 'lucide-react'
 import type { StrategyInstance } from '@/lib/strategy/types'
 import { GOAL_TYPES } from '@/lib/strategy/constants'
+import { strategyPath } from '@/lib/strategy/url'
 import StatusBadge from './StatusBadge'
 import PhaseIndicator from './PhaseIndicator'
 
@@ -30,7 +31,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
   return (
     <div
       className="bg-white rounded-xl border border-gray-200 p-4 hover:border-gray-300 hover:shadow-sm transition-all cursor-pointer"
-      onClick={() => router.push(`/strateji/${instance.id}`)}
+      onClick={() => router.push(strategyPath(instance))}
     >
       <div className="flex items-center justify-between gap-4">
         {/* Sol: Bilgi */}
@@ -67,7 +68,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {instance.status === 'FAILED' && instance.last_error && (
             <button
-              onClick={(e) => { e.stopPropagation(); router.push(`/strateji/${instance.id}?tab=jobs`) }}
+              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, '?tab=jobs')) }}
               className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Hata detayı"
             >
@@ -76,7 +77,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {canViewPlan && (
             <button
-              onClick={(e) => { e.stopPropagation(); router.push(`/strateji/${instance.id}?tab=plan`) }}
+              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, '?tab=plan')) }}
               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Planı gör"
             >
@@ -85,7 +86,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {canContinue && (
             <button
-              onClick={(e) => { e.stopPropagation(); router.push(`/strateji/${instance.id}`) }}
+              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance)) }}
               className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
               title="Devam et"
             >

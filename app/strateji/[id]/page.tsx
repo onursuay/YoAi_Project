@@ -9,6 +9,7 @@ import { ToastContainer } from '@/components/Toast'
 import type { Toast } from '@/components/Toast'
 import type { StrategyInstance, StrategyOutput, StrategyTask, SyncJob, InputPayload, TaskStatus, MetricsSnapshot } from '@/lib/strategy/types'
 import { POLL_INTERVAL, STALE_JOB_MS } from '@/lib/strategy/constants'
+import { extractStrategyIdSegment } from '@/lib/strategy/url'
 import StatusBadge from '@/components/strateji/StatusBadge'
 import PhaseIndicator from '@/components/strateji/PhaseIndicator'
 import WizardPhase1 from '@/components/strateji/WizardPhase1'
@@ -25,7 +26,11 @@ const TABS = [
 ]
 
 export default function StratejiDetailPage() {
-  const { id } = useParams<{ id: string }>()
+  const { id: idParam } = useParams<{ id: string }>()
+  // Okunabilir URL: param '<slug>--<id8>' veya eski tam UUID olabilir.
+  // GET route bu kısa kimliği tam UUID'ye çözer; çözülen tam id (instance.id)
+  // diğer mutasyon çağrılarında kullanılır.
+  const lookupId = extractStrategyIdSegment(idParam)
   const router = useRouter()
   const searchParams = useSearchParams()
   const initialTab = searchParams.get('tab') || 'wizard'
@@ -63,7 +68,7 @@ export default function StratejiDetailPage() {
 
   const fetchDetail = useCallback(async () => {
     try {
-      const res = await fetch(`/api/strategy/instances/${id}`)
+      const res = await fetch(`/api/strategy/instances/${lookupId}`)
       if (!res.ok) { router.push('/strateji'); return }
       const json = await res.json()
       if (!json.ok) { router.push('/strateji'); return }
@@ -92,7 +97,7 @@ export default function StratejiDetailPage() {
     } finally {
       setLoading(false)
     }
-  }, [id, router, searchParams])
+  }, [lookupId, router, searchParams])
 
   // İlk yükleme
   useEffect(() => { fetchDetail() }, [fetchDetail])
@@ -122,7 +127,7 @@ export default function StratejiDetailPage() {
   const handleSaveInputs = async (payload: InputPayload) => {
     setSaving(true)
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/inputs`, {
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/inputs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload }),
@@ -145,7 +150,7 @@ export default function StratejiDetailPage() {
     setSaving(true)
     try {
       // Önce kaydet
-      const saveRes = await fetch(`/api/strategy/instances/${id}/inputs`, {
+      const saveRes = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/inputs`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ payload }),
@@ -157,7 +162,7 @@ export default function StratejiDetailPage() {
       }
 
       // Sonra analiz başlat
-      const analyzeRes = await fetch(`/api/strategy/instances/${id}/analyze`, { method: 'POST' })
+      const analyzeRes = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/analyze`, { method: 'POST' })
       const analyzeJson = await analyzeRes.json()
       if (analyzeJson.ok) {
         addToast('Analiz başlatıldı', 'success')
@@ -176,7 +181,7 @@ export default function StratejiDetailPage() {
   const handleRegenerate = async () => {
     setRegenerating(true)
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/generate-plan`, { method: 'POST' })
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/generate-plan`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
         addToast('Plan yeniden üretiliyor', 'info')
@@ -194,7 +199,7 @@ export default function StratejiDetailPage() {
   const handleApprove = async (mode: 'apply' | 'suggest_only') => {
     setApproving(true)
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/approve`, {
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/approve`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ mode }),
@@ -217,7 +222,7 @@ export default function StratejiDetailPage() {
   const handleRetry = async () => {
     setRetrying(true)
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/retry`, { method: 'POST' })
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/retry`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
         addToast('Tekrar deneniyor', 'info')
@@ -235,7 +240,7 @@ export default function StratejiDetailPage() {
   const handleRefreshMetrics = async () => {
     setRefreshingMetrics(true)
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/metrics`, { method: 'POST' })
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/metrics`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
         addToast('Metrikler güncelleniyor, optimizasyon önerileri hazırlanıyor...', 'info')
@@ -256,7 +261,7 @@ export default function StratejiDetailPage() {
     setTasks((prev) => prev.map((t) => t.id === taskId ? { ...t, status: newStatus } : t))
 
     try {
-      const res = await fetch(`/api/strategy/instances/${id}/tasks`, {
+      const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/tasks`, {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ taskId, status: newStatus }),
@@ -385,7 +390,7 @@ export default function StratejiDetailPage() {
           <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 p-5">
             {activeTab === 'wizard' && (
               <WizardPhase1
-                instanceId={id}
+                instanceId={instance.id}
                 initialData={input?.payload}
                 onSave={handleSaveInputs}
                 onSaveAndAnalyze={handleSaveAndAnalyze}
