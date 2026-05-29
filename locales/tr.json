@@ -3181,6 +3181,7 @@
       "capiNotVerified": "CAPI doğrulanamadı",
       "eventsReceived": "Alınan olay: {count}",
       "gscPendingVerification": "Eklendi — doğrulama bekliyor",
+      "ga4AdsLinked": "Google Ads'e bağlandı",
       "summaryRemarketingLists": "{count} yeniden pazarlama listesi",
       "matchScore": "Eşleşme kalitesi: {score}",
       "conversionsMarked": "{count} dönüşüm işaretlendi",

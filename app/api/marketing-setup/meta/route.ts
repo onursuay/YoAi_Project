@@ -3,7 +3,13 @@ import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { META_GRAPH_VERSION } from '@/lib/metaConfig'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
-import { sendCapiEvent, createCustomConversions, generateEventId } from '@/lib/marketing-setup/metaCapiClient'
+import {
+  sendCapiEvent,
+  createCustomConversions,
+  generateEventId,
+  ensureWebsiteAudience,
+  ensureLookalikeAudience,
+} from '@/lib/marketing-setup/metaCapiClient'
 import type { DeployStepResult } from '@/lib/marketing-setup/types'
 import type { StandardEventKey } from '@/lib/marketing-setup/constants'
 
@@ -62,11 +68,12 @@ export async function POST() {
       return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error: 'no_pixel' }, { status: 200 })
     }
 
-    // ── Verify CAPI with a single test event ──
+    // ── Verify CAPI with a single REAL event (no test_event_code) ──
+    // Kullanıcı isteği: "test" yok. Gerçek bir doğrulama olayı gönderilir;
+    // events_received>0 → CAPI fiilen çalışıyor demektir.
     let capiVerified = false
     let matchQuality: number | null = null
     let capiError: string | null = null
-    const testEventCode = process.env.META_CAPI_TEST_EVENT_CODE || undefined
     try {
       const verifyEventId = generateEventId('PageView')
       const capi = await sendCapiEvent({
@@ -77,10 +84,9 @@ export async function POST() {
         eventId: verifyEventId,
         eventSourceUrl: setup.site_url || undefined,
         actionSource: 'website',
-        testEventCode,
       })
       capiVerified = capi.eventsReceived > 0
-      // events_received doubles as the integration-level match-quality signal here.
+      // events_received, entegrasyon düzeyinde "olay alındı" sinyalidir.
       matchQuality = capi.eventsReceived
     } catch (e) {
       capiError = e instanceof Error ? e.message : 'capi_verify_failed'
@@ -116,18 +122,66 @@ export async function POST() {
       return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error, result: { pixelId } }, { status: 200 })
     }
 
+    // ── Website yeniden-pazarlama kitlesi + benzer (lookalike) kitle ──
+    // GERÇEKTEN oluşturulur (idempotent + additive). Hata olursa NON-FATAL:
+    // pixel+CAPI+dönüşümler başarılı kaldığından adım yine "done" döner; mevcut
+    // kitle/kampanya altyapısına dokunulmaz.
+    let audiencesCreated = 0
+    let lookalikesCreated = 0
+    let audienceWarning: string | null = null
+    try {
+      const wa = await ensureWebsiteAudience({
+        accessToken: token,
+        adAccountId,
+        graphVersion,
+        pixelId,
+        name: `${siteName} — Website Ziyaretçileri`,
+        retentionDays: 180,
+      })
+      if (wa.created) audiencesCreated += 1
+      if (wa.audienceId) {
+        // Lookalike için reklam hesabının ülkesi zorunlu — hesaptan çöz.
+        let country = ''
+        try {
+          const acc = await ctx.client.get<{ business_country_code?: string }>(
+            `/${adAccountId}`,
+            { fields: 'business_country_code' },
+          )
+          country = acc.ok ? (acc.data?.business_country_code ?? '') : ''
+        } catch {
+          /* ülke çözülemedi → lookalike atlanır (non-fatal) */
+        }
+        if (country) {
+          const la = await ensureLookalikeAudience({
+            accessToken: token,
+            adAccountId,
+            graphVersion,
+            sourceAudienceId: wa.audienceId,
+            country,
+            name: `${siteName} — Benzer Kitle (${country.toUpperCase()})`,
+            ratio: 0.01,
+          })
+          if (la.created) lookalikesCreated += 1
+        } else {
+          audienceWarning = 'lookalike_no_country'
+        }
+      }
+    } catch (e) {
+      audienceWarning = e instanceof Error ? e.message : 'audience_failed'
+    }
+
     const result: Record<string, unknown> = {
       pixelId,
       adAccountId,
       capiVerified,
       customConversions,
       matchQuality,
-      // Audiences/lookalikes are created via the existing
-      // /api/meta/audiences/create route (see integration notes); not duplicated here.
-      audiences: null,
+      audiencesCreated,
+      lookalikesCreated,
     }
     if (capiError) result.capiWarning = capiError
     if (conversionsError) result.conversionsWarning = conversionsError
+    if (audienceWarning) result.audienceWarning = audienceWarning
 
     await logStep(setup.id, STEP, 'done', result)
     return NextResponse.json<DeployStepResult>({ step: STEP, status: 'done', result }, { status: 200 })

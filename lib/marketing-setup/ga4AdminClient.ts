@@ -69,6 +69,39 @@ async function adminPost(
   return (await res.json()) as Record<string, unknown>
 }
 
+/**
+ * GA4 property'sini bir Google Ads hesabına bağlar (dönüşüm/kitle içe aktarma).
+ * GA4 Admin v1beta `googleAdsLinks`; idempotent (mevcut link varsa atlar).
+ * `analytics.edit` scope'u yeterlidir. Google Ads tarafında ek onay gerekirse API
+ * gerçek bir hata döndürür (sahte başarı ÜRETİLMEZ) — çağıran non-fatal ele alır.
+ */
+export async function ensureGoogleAdsLink(
+  accessToken: string,
+  propertyId: string,
+  googleAdsCustomerId: string,
+): Promise<{ created: boolean; linked: boolean }> {
+  const customerId = googleAdsCustomerId.replace(/-/g, '').trim()
+  if (!customerId) return { created: false, linked: false }
+  const prop = propertyId.startsWith('properties/') ? propertyId : `properties/${propertyId}`
+
+  // Idempotent: zaten bağlıysa yeniden oluşturma.
+  try {
+    const list = await adminGet(GA4_ADMIN_API_BASE, accessToken, `/${prop}/googleAdsLinks`)
+    const links = (list.googleAdsLinks as Array<{ customerId?: string }> | undefined) ?? []
+    if (links.some((l) => (l.customerId ?? '').replace(/-/g, '') === customerId)) {
+      return { created: false, linked: true }
+    }
+  } catch {
+    /* listeleme başarısız → create'i yine de dene */
+  }
+
+  await adminPost(GA4_ADMIN_API_BASE, accessToken, `/${prop}/googleAdsLinks`, {
+    customerId,
+    adsPersonalizationEnabled: true,
+  })
+  return { created: true, linked: true }
+}
+
 async function adminPatch(
   base: string,
   accessToken: string,

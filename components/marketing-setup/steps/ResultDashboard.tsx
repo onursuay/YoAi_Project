@@ -90,12 +90,17 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
 
   // Özet sayıları YALNIZCA deploy'un gerçekten ürettiği alanlardan okunur.
   // Üretilmeyen/başarısız adım için "seçili event sayısı"na uydurma fallback YOK.
+  const metaDone = steps.meta?.status === 'done'
   const adsDone = steps.google_ads?.status === 'done'
-  const audiencesCount = num(ga4Result?.audiencesCreated) ?? 0
+  // Kitleler: GA4 (audiencesCreated) + Meta website kitlesi (audiencesCreated) toplamı.
+  const audiencesCount =
+    (num(ga4Result?.audiencesCreated) ?? 0) + (metaDone ? (num(metaResult?.audiencesCreated) ?? 0) : 0)
+  const lookalikesCount = metaDone ? (num(metaResult?.lookalikesCreated) ?? 0) : 0
   const adsConversionsCount = adsDone ? (num(adsResult?.conversionActionsCreated) ?? 0) : 0
   const remarketingListsCount = adsDone ? (num(adsResult?.remarketingListsCreated) ?? 0) : 0
+  const ga4AdsLinked = ga4Result?.ga4AdsLinked === true
 
-  // CAPI test sonucu Meta'nın kabul ettiği olay sayısıdır (events_received) —
+  // CAPI doğrulama sonucu Meta'nın kabul ettiği olay sayısıdır (events_received) —
   // gerçek "eşleşme kalitesi" skoru değil; etiket buna göre dürüst gösterilir.
   const eventsReceived =
     num(metaResult?.matchQuality) ?? (typeof metaResult?.matchQuality === 'string' ? metaResult.matchQuality : null)
@@ -127,6 +132,9 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
         <Card icon={<BarChart3 className="w-5 h-5" />} title={t('preview.ga4')} step="ga4" statusLabel={t('result.statusConnected')}>
           {conversionCount > 0 && (
             <p className="text-xs text-gray-500">{t('result.conversionsMarked', { count: conversionCount })}</p>
+          )}
+          {ga4AdsLinked && (
+            <p className="text-xs text-gray-500">{t('result.ga4AdsLinked')}</p>
           )}
         </Card>
 
@@ -163,10 +171,14 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
       {/* Remarketing summary */}
       <div className="mt-5 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
         <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('result.remarketingTitle')}</h3>
-        <div className="grid grid-cols-3 gap-3">
+        <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{audiencesCount}</p>
             <p className="text-xs text-emerald-700/80">{t('result.summaryAudiences', { count: audiencesCount })}</p>
+          </div>
+          <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
+            <p className="text-lg font-semibold text-emerald-700">{lookalikesCount}</p>
+            <p className="text-xs text-emerald-700/80">{t('result.summaryLookalikes', { count: lookalikesCount })}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{adsConversionsCount}</p>

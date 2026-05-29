@@ -3181,6 +3181,7 @@
       "capiNotVerified": "CAPI not verified",
       "eventsReceived": "Events received: {count}",
       "gscPendingVerification": "Added — verification pending",
+      "ga4AdsLinked": "Linked to Google Ads",
       "summaryRemarketingLists": "{count} remarketing lists",
       "matchScore": "Match quality: {score}",
       "conversionsMarked": "{count} conversions marked",

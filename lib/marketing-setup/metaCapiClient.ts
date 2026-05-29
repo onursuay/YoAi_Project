@@ -277,3 +277,155 @@ function metaCustomEventType(metaEvent: string): string {
 export function generateEventId(eventName: string): string {
   return `${eventName}.${Date.now()}.${randomUUID()}`
 }
+
+// ─── Custom audiences (website remarketing + lookalike) ──────────────────────
+// Deploy step "meta" GERÇEKTEN bir website yeniden-pazarlama kitlesi + benzer
+// (lookalike) kitle oluşturur. Mevcut /api/meta/audiences/create ile aynı Graph
+// çağrıları; idempotent (aynı isim varsa yeniden oluşturmaz) ve additive — var
+// olan kitle/kampanya altyapısına DOKUNMAZ.
+
+function normalizeAdAccount(adAccountId: string): string {
+  return adAccountId.startsWith('act_') ? adAccountId : `act_${adAccountId.replace('act_', '')}`
+}
+
+interface ExistingAudience {
+  id: string
+  name: string
+}
+
+/** Mevcut custom audience'ları isimle eşleştirmek için listeler (idempotency). */
+async function listCustomAudiences(
+  accessToken: string,
+  normalizedAccount: string,
+  graphVersion: string,
+): Promise<ExistingAudience[]> {
+  const out: ExistingAudience[] = []
+  let url: string | null =
+    `${GRAPH_BASE}/${graphVersion}/${normalizedAccount}/customaudiences` +
+    `?fields=id,name&limit=200&access_token=${encodeURIComponent(accessToken)}`
+  for (let page = 0; url && page < 10; page++) {
+    const res = await fetch(url)
+    if (!res.ok) break
+    let json: { data?: ExistingAudience[]; paging?: { next?: string } } = {}
+    try {
+      json = JSON.parse(await res.text())
+    } catch {
+      break
+    }
+    for (const a of json.data ?? []) if (a?.id && a?.name) out.push(a)
+    url = json.paging?.next ?? null
+  }
+  return out
+}
+
+export interface EnsureWebsiteAudienceOptions {
+  accessToken: string
+  adAccountId: string
+  graphVersion: string
+  pixelId: string
+  name: string
+  /** Yeniden-pazarlama penceresi (gün). Meta üst sınırı 180. */
+  retentionDays?: number
+}
+
+/**
+ * Website (pixel tabanlı, tüm ziyaretçiler) yeniden-pazarlama kitlesini oluşturur.
+ * Aynı isimde kitle varsa yeniden oluşturmaz (idempotent).
+ */
+export async function ensureWebsiteAudience(
+  opts: EnsureWebsiteAudienceOptions,
+): Promise<{ created: boolean; audienceId: string | null }> {
+  const { accessToken, graphVersion, pixelId, name } = opts
+  if (!accessToken) throw new Error('missing_access_token')
+  if (!pixelId) throw new Error('missing_pixel_id')
+  const retentionDays = Math.min(Math.max(opts.retentionDays ?? 180, 1), 180)
+  const account = normalizeAdAccount(opts.adAccountId)
+
+  const existing = await listCustomAudiences(accessToken, account, graphVersion)
+  const found = existing.find((a) => a.name === name)
+  if (found) return { created: false, audienceId: found.id }
+
+  const rule = JSON.stringify({
+    inclusions: {
+      operator: 'or',
+      rules: [
+        {
+          event_sources: [{ id: pixelId, type: 'pixel' }],
+          retention_seconds: retentionDays * 86400,
+          filter: { operator: 'and', filters: [{ field: 'url', operator: 'i_contains', value: '' }] },
+        },
+      ],
+    },
+  })
+  const form = new URLSearchParams()
+  form.set('name', name)
+  form.set('subtype', 'WEBSITE')
+  form.set('rule', rule)
+  form.set('retention_days', String(retentionDays))
+  form.set('prefill', 'true')
+
+  const res = await fetch(
+    `${GRAPH_BASE}/${graphVersion}/${account}/customaudiences?access_token=${encodeURIComponent(accessToken)}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form.toString() },
+  )
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`website_audience_failed: ${body.slice(0, 160)}`)
+  }
+  const json = (await res.json().catch(() => ({}))) as { id?: string }
+  return { created: true, audienceId: json.id ?? null }
+}
+
+export interface EnsureLookalikeOptions {
+  accessToken: string
+  adAccountId: string
+  graphVersion: string
+  sourceAudienceId: string
+  /** ISO 2-harfli ülke kodu (ör. TR). */
+  country: string
+  name: string
+  /** Benzerlik oranı 0..1 (ör. 0.01 = %1). */
+  ratio?: number
+}
+
+/**
+ * Bir kaynak kitleden benzer (lookalike) kitle oluşturur. Ülke kodu zorunlu —
+ * çağıran reklam hesabının ülkesini çözer. Aynı isim varsa atlar (idempotent).
+ */
+export async function ensureLookalikeAudience(
+  opts: EnsureLookalikeOptions,
+): Promise<{ created: boolean; audienceId: string | null }> {
+  const { accessToken, graphVersion, sourceAudienceId, country, name } = opts
+  if (!accessToken) throw new Error('missing_access_token')
+  if (!sourceAudienceId) throw new Error('missing_source_audience')
+  if (!country || country.length < 2) throw new Error('missing_country')
+  const ratio = Math.min(Math.max(opts.ratio ?? 0.01, 0.01), 0.1)
+  const account = normalizeAdAccount(opts.adAccountId)
+
+  const existing = await listCustomAudiences(accessToken, account, graphVersion)
+  const found = existing.find((a) => a.name === name)
+  if (found) return { created: false, audienceId: found.id }
+
+  const lookalikeSpec = JSON.stringify({
+    type: 'similarity',
+    country: country.toUpperCase(),
+    ratio,
+    starting_ratio: 0,
+  })
+  const form = new URLSearchParams()
+  form.set('name', name)
+  form.set('subtype', 'LOOKALIKE')
+  form.set('origin_audience_id', sourceAudienceId)
+  form.set('lookalike_spec', lookalikeSpec)
+
+  const res = await fetch(
+    `${GRAPH_BASE}/${graphVersion}/${account}/customaudiences?access_token=${encodeURIComponent(accessToken)}`,
+    { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: form.toString() },
+  )
+  if (!res.ok) {
+    const body = await res.text().catch(() => '')
+    throw new Error(`lookalike_failed: ${body.slice(0, 160)}`)
+  }
+  const json = (await res.json().catch(() => ({}))) as { id?: string }
+  return { created: true, audienceId: json.id ?? null }
+}

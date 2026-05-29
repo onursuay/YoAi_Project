@@ -78,8 +78,9 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
         ...(conversionDefs.length
           ? [{ label: t('preview.metaCustomConversions'), detail: conversionList }]
           : []),
-        // Not: Website kitleleri / benzer kitleler bu akışta deploy edilmediği için
-        // burada "oluşturulacak" diye listelenmez (yanıltıcı vaat olmamalı).
+        // Bu akışta GERÇEKTEN oluşturuluyor (meta deploy → website + benzer kitle).
+        { label: t('preview.metaCustomAudiences') },
+        { label: t('preview.metaLookalikes') },
       ],
     },
     {
@@ -92,7 +93,8 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
           ? [{ label: t('preview.googleAdsConversions'), detail: conversionList }]
           : []),
         { label: t('preview.googleAdsRemarketing') },
-        // Not: GA4 içe aktarma bağlantısı deploy'da kurulmaz (manuel) → vaat edilmez.
+        // GA4 → Ads içe aktarma bağlantısı GA4 deploy adımında gerçekten kurulur.
+        { label: t('preview.googleAdsGa4Import') },
       ],
     },
     {

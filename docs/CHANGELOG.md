@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Marketing Kurulumu: test kaldırıldı + reklam bağlantıları (kitle/lookalike/GA4→Ads) GERÇEKTEN kuruluyor
+- **İstek:** "Test istemiyorum, her şey fiilen çalışsın; gerekirse Meta/Google reklam tarafının içinden geçip bağlantıları gerçekten kur — ama mevcut reklam altyapımı bozma." + Abonelik penceresi TR/EN uyumlu olsun.
+- **Çözüm:**
+  - **Test kaldırma:** Sonuç ekranındaki "Meta'yı Test Et"/"GA4 test"/GTM önizleme test araçları bölümü tamamen kaldırıldı. CAPI doğrulaması artık sahte `TEST` kodu olmadan **gerçek olay** ile yapılıyor (`meta/route.ts` — `events_received>0` → CAPI fiilen çalışıyor).
+  - **Meta website kitlesi + benzer (lookalike) kitle GERÇEKTEN oluşturuluyor:** `metaCapiClient.ensureWebsiteAudience` / `ensureLookalikeAudience` (Meta Marketing API `customaudiences`; idempotent — aynı isim varsa atlar; non-fatal — hata ana adımı bozmaz). Lookalike için reklam hesabının ülkesi `business_country_code`'dan çözülür.
+  - **GA4 → Google Ads içe aktarma bağlantısı GERÇEKTEN kuruluyor:** `ga4AdminClient.ensureGoogleAdsLink` (GA4 Admin v1beta `googleAdsLinks`, mevcut `analytics.edit` scope; idempotent + non-fatal). Google Ads tarafı ek onay isterse dürüst not düşülür (sahte başarı yok). Reklam hesabı bağlı değilse atlanır.
+  - **UI:** ConfigPreview'da gerçekten kurulan 3 kalem geri eklendi (artık dürüst vaat). ResultDashboard'da 4 gerçek metrik: kitleler (GA4+Meta), benzer kitleler, dönüşümler, yeniden pazarlama listeleri + GA4→Ads bağlantı durumu.
+  - **Abonelik penceresi (AccessRequiredModal)** gömülü TR metinlerden `next-intl`'e taşındı (`billing.accessRequired`; 11 feature etiketi + açıklaması iki dilli; featureAccessMap geriye-uyum fallback).
+  - Tümü **additive + idempotent**; mevcut kitle/kampanya/pixel altyapısına dokunulmadı. tsc 0 hata; tr/en parity 2990=2990.
+- **Dosyalar:** `lib/marketing-setup/{metaCapiClient.ts,ga4AdminClient.ts}`, `app/api/marketing-setup/{meta,ga4}/route.ts`, `components/marketing-setup/steps/{ConfigPreview,ResultDashboard}.tsx`, `components/billing/AccessRequiredModal.tsx`, `locales/{tr,en}.json`
+
 ## 2026-05-29 — Marketing Kurulumu sihirbazı denetim düzeltmeleri (sahte sunum + güvenlik + akış) + çoklu hesap limit bug'ı
 - **Sorun:** 20 ajanlı uçtan uca denetim (38 doğrulanmış bulgu, 0 yanlış pozitif) sihirbazın çekirdeğinin gerçek/çalışır olduğunu ama **sunum katmanının yer yer yanıltıcı** olduğunu, ayrıca **backend erişim guard'ının olmadığını** gösterdi. Ek olarak çoklu reklam hesabı limitinde çifte sayım bug'ı (Vercel flag açık → canlıda etkili).
 - **Çözüm:**

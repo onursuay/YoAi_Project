@@ -2,7 +2,7 @@ import { NextResponse } from 'next/server'
 import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
 import { getSetupAccessToken } from '@/lib/marketing-setup/setupGoogleToken'
-import { deployGa4 } from '@/lib/marketing-setup/ga4AdminClient'
+import { deployGa4, ensureGoogleAdsLink } from '@/lib/marketing-setup/ga4AdminClient'
 import type { DeployStepResult } from '@/lib/marketing-setup/types'
 import type { StandardEventKey } from '@/lib/marketing-setup/constants'
 
@@ -67,12 +67,38 @@ export async function POST() {
       ga4_data_stream_id: result.dataStreamId,
     })
 
-    await logStep(setup.id, STEP, 'done', result as unknown as Record<string, unknown>)
+    // ── GA4 → Google Ads içe aktarma bağlantısı ──
+    // Reklam hesabı (Adım 2'de Entegrasyon'dan beslenen google_ads_customer_id)
+    // mevcutsa GERÇEKTEN kurulur. Idempotent + NON-FATAL: link kurulamazsa
+    // (ör. Google Ads tarafı ek onay isterse) GA4 kurulumu yine "done" kalır.
+    let ga4AdsLinkCreated = false
+    let ga4AdsLinked = false
+    let ga4AdsLinkNote: string | null = null
+    if (setup.google_ads_customer_id) {
+      try {
+        const link = await ensureGoogleAdsLink(accessToken, result.propertyId, setup.google_ads_customer_id)
+        ga4AdsLinkCreated = link.created
+        ga4AdsLinked = link.linked
+      } catch (e) {
+        ga4AdsLinkNote = e instanceof Error ? e.message : 'ga4_ads_link_failed'
+      }
+    } else {
+      ga4AdsLinkNote = 'no_google_ads_account'
+    }
+
+    const resultBody: Record<string, unknown> = {
+      ...(result as unknown as Record<string, unknown>),
+      ga4AdsLinkCreated,
+      ga4AdsLinked,
+      ...(ga4AdsLinkNote ? { ga4AdsLinkNote } : {}),
+    }
+
+    await logStep(setup.id, STEP, 'done', resultBody)
 
     return NextResponse.json<DeployStepResult>({
       step: STEP,
       status: 'done',
-      result: result as unknown as Record<string, unknown>,
+      result: resultBody,
     })
   } catch (e) {
     const error = (e as Error).message || 'deploy_failed'
