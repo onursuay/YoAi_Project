@@ -323,5 +323,6 @@ export async function scanSite(siteUrl: string): Promise<SiteScanResult> {
     detectedActions,
     recommendedEvents,
     scannedAt: new Date().toISOString(),
+    truncated,
   }
 }

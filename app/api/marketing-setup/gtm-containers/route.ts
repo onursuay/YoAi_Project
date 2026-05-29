@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getSetupAccessToken } from '@/lib/marketing-setup/setupGoogleToken'
 import { listContainers, type GtmContainerSummary } from '@/lib/marketing-setup/gtmClient'
 
@@ -15,10 +15,11 @@ export const dynamic = 'force-dynamic'
 export async function GET(): Promise<
   NextResponse<{ ok: boolean; containers: GtmContainerSummary[]; reason?: string }>
 > {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ ok: false, containers: [], reason: 'unauthorized' }, { status: 401 })
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) {
+    return NextResponse.json({ ok: false, containers: [], reason: access.error }, { status: access.status })
   }
+  const user = access.user
 
   const token = await getSetupAccessToken(user.id)
   if (!token) {

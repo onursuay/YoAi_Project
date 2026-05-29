@@ -468,6 +468,11 @@ export async function deployGa4(accessToken: string, opts: DeployGa4Opts): Promi
   // 2) Web data stream — capture measurement id + stream id.
   const stream = await ensureWebStream(accessToken, propertyId, origin)
   if (!stream.streamId) throw new Error('GA4 web data stream has no id')
+  // measurementId boşsa GTM, GA4 config + tüm GA4 tag'lerini sessizce atlardı —
+  // bunu net bir hata olarak yüzeye çıkar (sahte "kuruldu" görünümünü önler).
+  if (!stream.measurementId || !stream.measurementId.trim()) {
+    throw new Error('GA4 web data stream has no measurement id')
+  }
 
   // 3) Enhanced measurement + data retention (best-effort, non-fatal).
   await enableEnhancedMeasurement(accessToken, propertyId, stream.streamId)

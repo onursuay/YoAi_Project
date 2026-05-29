@@ -183,6 +183,11 @@ export default function MetaConnectWizard() {
 
   // Hesap seçimini değiştir. Flag kapalı → tek seçim (radio). Flag açık → çoklu
   // toggle; limit dolunca yeni seçim engellenir ve abonelik modalı açılır.
+  // Hesap kullanıcının kayıtlı kümesinde mi? (Zaten kayıtlı hesap slot tüketmez —
+  // backend addRegisteredAccount idempotent. Limit yalnız YENİ hesaplara uygulanır.)
+  const isRegistered = (id: string) =>
+    reg.accounts.some((a) => a.platform === 'meta' && a.account_id === id)
+
   const toggleAccount = (id: string) => {
     if (!reg.enabled) {
       setSelectedIds([id])
@@ -190,7 +195,9 @@ export default function MetaConnectWizard() {
     }
     setSelectedIds((prev) => {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
-      if (reg.remaining !== null && prev.length >= reg.remaining) {
+      // Yalnız henüz kayıtlı OLMAYAN seçimler limite sayılır (çifte sayımı önler).
+      const newlyAdded = [...prev, id].filter((x) => !isRegistered(x))
+      if (reg.remaining !== null && newlyAdded.length > reg.remaining) {
         setShowLimitModal(true)
         return prev
       }
@@ -441,8 +448,12 @@ export default function MetaConnectWizard() {
                   <div className="space-y-3 mb-4">
                     {adAccounts.map((account) => {
                       const checked = selectedIds.includes(account.id)
+                      // Zaten kayıtlı hesap (idempotent, bedava) asla "limit doldu" görünmez;
+                      // limit yalnız yeni eklenecek seçimlere uygulanır.
+                      const newlyAddedCount = selectedIds.filter((x) => !isRegistered(x)).length
                       const limitReached =
-                        reg.enabled && reg.remaining !== null && !checked && selectedIds.length >= reg.remaining
+                        reg.enabled && reg.remaining !== null && !checked && !isRegistered(account.id) &&
+                        newlyAddedCount >= reg.remaining
                       return (
                         <label
                           key={account.id}

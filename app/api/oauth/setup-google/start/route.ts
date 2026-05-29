@@ -3,7 +3,7 @@ import { randomBytes } from 'node:crypto'
 import { cookies } from 'next/headers'
 import { GOOGLE_AUTH_URL } from '@/lib/integrations/constants'
 import { SETUP_GOOGLE_SCOPES } from '@/lib/marketing-setup/constants'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -11,9 +11,12 @@ export const dynamic = 'force-dynamic'
 export async function GET(request: Request) {
   const origin = new URL(request.url).origin
 
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.redirect(new URL('/login', origin), { status: 302 })
+  // Yazma-scope'lu (tagmanager.edit/publish, analytics.edit, webmasters) consent —
+  // yalnız yetkili (flag/owner) kullanıcı başlatabilir; aksi halde sızdırmadan geri yönlendir.
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) {
+    const dest = access.status === 401 ? '/login' : '/marketing-kurulumu?setup=error'
+    return NextResponse.redirect(new URL(dest, origin), { status: 302 })
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID

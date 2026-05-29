@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { META_GRAPH_VERSION } from '@/lib/metaConfig'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
@@ -25,10 +25,11 @@ const STEP = 'meta' as const
  *    failure is reported as status:'error' (no fabricated success).
  */
 export async function POST() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error: 'not_authenticated' }, { status: 200 })
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) {
+    return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error: access.error }, { status: 200 })
   }
+  const user = access.user
 
   const setup = await getSetup(user.id)
   if (!setup) {

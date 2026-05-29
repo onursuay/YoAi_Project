@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { resolveMetaContext } from '@/lib/meta/context'
 import { getConnectionStatus as getGoogleAdsConnectionStatus } from '@/lib/googleAdsConnectionStore'
 import { getGoogleAdsContext, searchGAds } from '@/lib/googleAdsAuth'
@@ -20,10 +20,9 @@ export const dynamic = 'force-dynamic'
  * connected:false for that platform rather than failing the whole route.
  */
 export async function GET() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ error: 'unauthorized' }, { status: 401 })
-  }
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return NextResponse.json({ error: access.error }, { status: access.status })
+  const user = access.user
 
   const status: ConnectionStatus = {
     meta: { connected: false, adAccountId: null, adAccountName: null, pixelId: null },

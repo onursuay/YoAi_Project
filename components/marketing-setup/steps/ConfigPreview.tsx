@@ -32,6 +32,9 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
   const setupReady = !!conn?.setupConsent.connected
   const metaReady = !!conn?.meta.connected
   const adsReady = !!conn?.googleAds.connected
+  // Kurulum (deploy) yalnızca en az bir platform bağlıyken anlamlı — aksi halde
+  // "Onayla" otomatik dağıtımı tetikler ama hiçbir adım çalışmaz.
+  const anyReady = setupReady || metaReady || adsReady
 
   const cards: {
     key: string
@@ -75,8 +78,8 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
         ...(conversionDefs.length
           ? [{ label: t('preview.metaCustomConversions'), detail: conversionList }]
           : []),
-        { label: t('preview.metaCustomAudiences') },
-        { label: t('preview.metaLookalikes') },
+        // Not: Website kitleleri / benzer kitleler bu akışta deploy edilmediği için
+        // burada "oluşturulacak" diye listelenmez (yanıltıcı vaat olmamalı).
       ],
     },
     {
@@ -89,7 +92,7 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
           ? [{ label: t('preview.googleAdsConversions'), detail: conversionList }]
           : []),
         { label: t('preview.googleAdsRemarketing') },
-        { label: t('preview.googleAdsGa4Import') },
+        // Not: GA4 içe aktarma bağlantısı deploy'da kurulmaz (manuel) → vaat edilmez.
       ],
     },
     {
@@ -157,6 +160,13 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
         ))}
       </div>
 
+      {/* En az bir platform bağlı değilse uyarı */}
+      {!anyReady && (
+        <div className="mt-5 rounded-xl border border-primary/20 bg-primary/5 px-4 py-3 text-sm text-primary">
+          {t('preview.nothingToSetup')}
+        </div>
+      )}
+
       {/* Footer nav */}
       <div className="mt-6 flex items-center justify-between">
         <button
@@ -169,7 +179,8 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
         <button
           type="button"
           onClick={goNext}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors"
+          disabled={!anyReady}
+          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('preview.confirm')}
         </button>

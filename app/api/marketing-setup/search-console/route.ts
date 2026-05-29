@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
 import { getSetupAccessToken } from '@/lib/marketing-setup/setupGoogleToken'
 import { deploySearchConsole } from '@/lib/marketing-setup/gscClient'
@@ -16,10 +16,9 @@ function stepResult(result: DeployStepResult): NextResponse {
 }
 
 export async function POST(): Promise<NextResponse> {
-  const user = await getCurrentUser()
-  if (!user) {
-    return stepResult({ step: STEP, status: 'error', error: 'not_authenticated' })
-  }
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return stepResult({ step: STEP, status: 'error', error: access.error })
+  const user = access.user
 
   const setup = await getSetup(user.id)
   if (!setup) {

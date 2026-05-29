@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
 import { deployGtm } from '@/lib/marketing-setup/gtmClient'
 import { getSetupAccessToken } from '@/lib/marketing-setup/setupGoogleToken'
@@ -19,13 +19,14 @@ export const dynamic = 'force-dynamic'
 export async function POST(): Promise<NextResponse<DeployStepResult>> {
   const step = 'gtm' as const
 
-  const user = await getCurrentUser()
-  if (!user) {
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) {
     return NextResponse.json<DeployStepResult>(
-      { step, status: 'error', error: 'unauthorized' },
+      { step, status: 'error', error: access.error },
       { status: 200 },
     )
   }
+  const user = access.user
 
   const setup = await getSetup(user.id)
   if (!setup) {

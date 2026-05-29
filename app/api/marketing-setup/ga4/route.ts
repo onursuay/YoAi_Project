@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
 import { getSetupAccessToken } from '@/lib/marketing-setup/setupGoogleToken'
 import { deployGa4 } from '@/lib/marketing-setup/ga4AdminClient'
@@ -22,11 +22,12 @@ function hostDisplayName(siteUrl: string): string {
 }
 
 export async function POST() {
-  // Auth guard.
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error: 'unauthorized' }, { status: 401 })
+  // Auth + flag/owner guard.
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) {
+    return NextResponse.json<DeployStepResult>({ step: STEP, status: 'error', error: access.error }, { status: 200 })
   }
+  const user = access.user
 
   // Load the persisted setup.
   const setup = await getSetup(user.id)

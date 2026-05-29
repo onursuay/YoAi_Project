@@ -47,6 +47,10 @@ export default function MarketingSetupPage() {
             <div className="rounded-xl border border-gray-200 bg-gray-50 px-6 py-16 text-center text-sm text-gray-700">
               {t('errors.notAvailable')}
             </div>
+          ) : subscriptionGated ? (
+            // Abonelik bariyeri aktif: wizard'ı hiç mount etme (aksi halde yetkisiz
+            // connections/setup fetch'leri tetiklenirdi). Üstte AccessRequiredModal çıkar.
+            <div className="py-24" aria-hidden />
           ) : (
             <Suspense
               fallback={

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useCallback, useRef, useEffect } from 'react'
+import { useState, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   CheckCircle2,
@@ -104,16 +104,10 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
     setFinished(true)
   }, [running, runStep])
 
-  // Auto-run once on entering the "Automatic Setup" step (the preview's confirm
-  // button is the gate). Skip if a deploy already ran (e.g. user navigated back).
-  const autoStarted = useRef(false)
-  useEffect(() => {
-    if (autoStarted.current) return
-    autoStarted.current = true
-    const already = Object.values(state.deploySteps || {}).some((s) => s && s.status !== 'pending')
-    if (!already) void runAll()
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [])
+  // Kurulum kullanıcı "Başlat"a basınca çalışır — mount'ta OTOMATİK gerçek API'lere
+  // POST atılmaz (yarım/eksik state ile canlı dağıtım riskini önler).
+  // Daha önce bir deploy çalıştıysa (geri/ileri gezinme) tekrar tetiklenmez.
+  const alreadyRan = Object.values(deploySteps || {}).some((s) => s && s.status !== 'pending')
 
   async function retryStep(route: string, step: SetupStepName) {
     if (running) return
@@ -167,8 +161,8 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
         <p className="mt-1.5 text-sm text-gray-500">{t('deploy.description')}</p>
       </div>
 
-      {/* Start button */}
-      {!started && (
+      {/* Start button — yalnız bu oturumda başlamadıysa ve önceden çalışmadıysa */}
+      {!started && !alreadyRan && (
         <div className="flex justify-center mb-6">
           <button
             type="button"
@@ -309,7 +303,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
         <button
           type="button"
           onClick={goNext}
-          disabled={!finished || running}
+          disabled={(!finished && !alreadyRan) || running}
           className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.next')}

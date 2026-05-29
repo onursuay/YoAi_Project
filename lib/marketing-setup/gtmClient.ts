@@ -270,7 +270,6 @@ async function upsertTrigger(
   const found = existing.find((t) => t.name === trigger.name)
   const base = wsBase(accountId, containerId, workspaceId)
   if (found?.triggerId) {
-    existing[existing.indexOf(found)] = found
     return found
   }
   const created = await gtmFetch<GtmTrigger>(accessToken, `${base}/triggers`, {

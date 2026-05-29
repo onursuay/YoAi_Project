@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getOrCreateSetup, updateSetup } from '@/lib/marketing-setup/setupStore'
 import { scanSite } from '@/lib/marketing-setup/siteScanner'
 
@@ -14,10 +14,9 @@ export const dynamic = 'force-dynamic'
  * so the wizard can surface the real reason.
  */
 export async function POST(request: Request) {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
-  }
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
+  const user = access.user
 
   let siteUrl = ''
   try {

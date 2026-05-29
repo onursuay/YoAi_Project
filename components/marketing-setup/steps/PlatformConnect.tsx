@@ -13,9 +13,15 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
   const [containers, setContainers] = useState<{ publicId: string; name: string }[]>([])
 
   const conn = state.connections
-  const googleConnected = !!(conn?.googleAds.connected || conn?.ga4.connected || conn?.gsc.connected)
   const metaConnected = !!conn?.meta.connected
   const setupConnected = !!conn?.setupConsent.connected
+
+  // Üç Google servisi ayrı ayrı gösterilir — biri bağlı diye hepsi "bağlı" sayılmaz.
+  const googleServices = [
+    { label: t('preview.googleAds'), connected: !!conn?.googleAds.connected, href: '/api/integrations/google-ads/start' },
+    { label: t('preview.ga4'), connected: !!conn?.ga4.connected, href: '/api/integrations/google-analytics/start' },
+    { label: t('preview.gsc'), connected: !!conn?.gsc.connected, href: '/api/integrations/google-search-console/start' },
+  ]
 
   // Ad account identifiers are fed from the existing Entegrasyon connections —
   // never typed manually. resolveMetaContext / Google Ads connection provide them.
@@ -91,34 +97,26 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
             <h3 className="text-sm font-semibold text-gray-900">{t('connect.googleTitle')}</h3>
           </div>
           <p className="text-xs text-gray-500 flex-1">{t('connect.googleDescription')}</p>
-          <div className="mt-4">
-            {googleConnected ? (
-              <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                <CheckCircle2 className="w-4 h-4" />
-                {t('common.connected')}
-              </span>
-            ) : (
-              <div className="flex flex-wrap gap-2">
-                <a
-                  href="/api/integrations/google-ads/start"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors"
-                >
-                  {t('preview.googleAds')}
-                </a>
-                <a
-                  href="/api/integrations/google-analytics/start"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors"
-                >
-                  {t('preview.ga4')}
-                </a>
-                <a
-                  href="/api/integrations/google-search-console/start"
-                  className="inline-flex items-center gap-1.5 px-3 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors"
-                >
-                  {t('preview.gsc')}
-                </a>
+          <div className="mt-4 space-y-2">
+            {googleServices.map((svc) => (
+              <div key={svc.label} className="flex items-center justify-between gap-2">
+                <span className="text-xs text-gray-600">{svc.label}</span>
+                {svc.connected ? (
+                  <span className="inline-flex items-center gap-1 text-xs font-medium text-emerald-700">
+                    <CheckCircle2 className="w-3.5 h-3.5" />
+                    {t('common.connected')}
+                  </span>
+                ) : (
+                  <a
+                    href={svc.href}
+                    className="inline-flex items-center gap-1 text-xs font-medium text-primary hover:underline"
+                  >
+                    {t('connect.connectService')}
+                    <ExternalLink className="w-3 h-3" />
+                  </a>
+                )}
               </div>
-            )}
+            ))}
           </div>
         </div>
 
@@ -260,7 +258,16 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
           </label>
           <WizardSelect
             value={state.gtmMode}
-            onChange={(v) => update({ gtmMode: v === 'existing' ? 'existing' : 'create' })}
+            onChange={(v) => {
+              if (v === 'existing') {
+                update({ gtmMode: 'existing' })
+              } else {
+                // "Yeni oluştur"a geçince persist edilmiş kapsayıcı ID'sini de temizle —
+                // aksi halde deploy modu (gtm_container_id var mı?) yine "mevcut" sanır.
+                update({ gtmMode: 'create', gtmContainerId: '' })
+                void persist({ gtm_container_id: null })
+              }
+            }}
             options={[
               { value: 'create', label: t('connect.gtmCreate') },
               { value: 'existing', label: t('connect.gtmExisting') },

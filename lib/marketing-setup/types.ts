@@ -30,6 +30,8 @@ export interface SiteScanResult {
   detectedActions: DetectedAction[]
   recommendedEvents: RecommendedEvent[]
   scannedAt: string
+  /** Site sayfa sınırına takıldıysa (yalnız ilk N sayfa tarandı) true. */
+  truncated?: boolean
 }
 
 // ─── Persisted row (marketing_setups) ────────────────────────────────────────

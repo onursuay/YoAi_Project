@@ -138,24 +138,30 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
       {/* Scan results */}
       {scan && (
         <div className="mt-5 space-y-5">
-          {/* Detected actions */}
-          {scan.detectedActions.length > 0 && (
+          {/* Kısmi tarama uyarısı — site büyükse yalnız ilk N sayfa tarandı (sahte sanılmasın) */}
+          {scan.truncated && (
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+              {t('scan.truncatedNotice', { count: scan.pagesScanned })}
+            </div>
+          )}
+          {/* Detected actions — event bazında tekilleştirilmiş, sayfa frekansıyla
+              (ham per-page liste değil: aynı aksiyon her sayfa için tekrar etmez) */}
+          {actionsByEvent.size > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
               <h3 className="text-sm font-semibold text-gray-900 mb-3">
                 {t('scan.detectedActions')}
               </h3>
               <div className="flex flex-wrap gap-2">
-                {scan.detectedActions.map((a, i) => {
-                  const def = STANDARD_EVENTS.find((e) => e.key === a.event)
+                {STANDARD_EVENTS.filter((e) => actionsByEvent.has(e.key)).map((def) => {
+                  const pageCount = actionsByEvent.get(def.key)?.length ?? 0
                   return (
                     <span
-                      key={`${a.event}-${i}`}
+                      key={def.key}
                       className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-medium"
-                      title={a.source}
                     >
-                      {def ? t(`events.${def.i18nKey}`) : a.event}
+                      {t(`events.${def.i18nKey}`)}
                       <span className="text-emerald-500/70">
-                        {Math.round(a.confidence * 100)}%
+                        {t('scan.foundOnPages', { count: pageCount })}
                       </span>
                     </span>
                   )

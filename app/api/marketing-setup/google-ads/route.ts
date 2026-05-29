@@ -1,5 +1,5 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
 import { getGoogleAdsContext, buildGoogleAdsHeaders } from '@/lib/googleAdsAuth'
 import { GOOGLE_ADS_BASE } from '@/lib/google-ads/constants'
 import { getSetup, updateSetup, logStep } from '@/lib/marketing-setup/setupStore'
@@ -23,10 +23,9 @@ function step(body: Omit<DeployStepResult, 'step'>): NextResponse {
  * the selected events on the user's connected Google Ads account.
  */
 export async function POST() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return step({ status: 'error', error: 'errors.notConnectedSetup' })
-  }
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return step({ status: 'error', error: access.error })
+  const user = access.user
 
   // Resolve the EXISTING Google Ads context (cookie/DB). Throws with { code } when not connected.
   let ctxHeaders: Record<string, string>

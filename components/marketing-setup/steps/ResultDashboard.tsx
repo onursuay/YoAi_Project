@@ -122,17 +122,18 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
   const ga4Result = steps.ga4?.result
   const adsResult = steps.google_ads?.result
 
-  const audiencesCount =
-    num(metaResult?.audiencesCreated) ??
-    num(ga4Result?.audiencesCreated) ??
-    num(metaResult?.customAudiences) ??
-    0
-  const lookalikesCount = num(metaResult?.lookalikesCreated) ?? num(metaResult?.lookalikes) ?? 0
-  const adsConversionsCount =
-    num(adsResult?.conversionActionsCreated) ?? num(adsResult?.conversions) ?? conversionCount
+  // Özet sayıları YALNIZCA deploy'un gerçekten ürettiği alanlardan okunur.
+  // Üretilmeyen/başarısız adım için "seçili event sayısı"na uydurma fallback YOK.
+  const adsDone = steps.google_ads?.status === 'done'
+  const audiencesCount = num(ga4Result?.audiencesCreated) ?? 0
+  const adsConversionsCount = adsDone ? (num(adsResult?.conversionActionsCreated) ?? 0) : 0
+  const remarketingListsCount = adsDone ? (num(adsResult?.remarketingListsCreated) ?? 0) : 0
 
-  const matchScore =
+  // CAPI test sonucu Meta'nın kabul ettiği olay sayısıdır (events_received) —
+  // gerçek "eşleşme kalitesi" skoru değil; etiket buna göre dürüst gösterilir.
+  const eventsReceived =
     num(metaResult?.matchQuality) ?? (typeof metaResult?.matchQuality === 'string' ? metaResult.matchQuality : null)
+  const capiVerified = metaResult?.capiVerified === true
 
   return (
     <div className="max-w-3xl mx-auto">
@@ -164,13 +165,17 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
         </Card>
 
         <Card icon={<Building2 className="w-5 h-5" />} title={t('preview.meta')} step="meta" statusLabel={t('result.statusInstalled')}>
-          <p className="inline-flex items-center gap-1.5 text-xs text-emerald-700">
-            <CheckCircle2 className="w-3.5 h-3.5" />
-            {t('result.capiActive')}
-          </p>
-          {(metaTest.matchQuality != null || matchScore != null) && (
+          {capiVerified ? (
+            <p className="inline-flex items-center gap-1.5 text-xs text-emerald-700">
+              <CheckCircle2 className="w-3.5 h-3.5" />
+              {t('result.capiActive')}
+            </p>
+          ) : (
+            <p className="text-xs text-gray-500">{t('result.capiNotVerified')}</p>
+          )}
+          {(metaTest.matchQuality != null || eventsReceived != null) && (
             <p className="mt-1 text-xs text-gray-500">
-              {t('result.matchScore', { score: String(metaTest.matchQuality ?? matchScore) })}
+              {t('result.eventsReceived', { count: String(metaTest.matchQuality ?? eventsReceived) })}
             </p>
           )}
         </Card>
@@ -181,7 +186,12 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
           )}
         </Card>
 
-        <Card icon={<Search className="w-5 h-5" />} title={t('preview.gsc')} step="search_console" statusLabel={t('result.statusConnected')} />
+        <Card
+          icon={<Search className="w-5 h-5" />}
+          title={t('preview.gsc')}
+          step="search_console"
+          statusLabel={steps.search_console?.result?.verified === true ? t('result.statusConnected') : t('result.gscPendingVerification')}
+        />
       </div>
 
       {/* Test tools */}
@@ -222,7 +232,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
         )}
         {metaTest.matchQuality != null && !metaTest.error && (
           <p className="mt-2.5 text-xs text-emerald-700">
-            {t('result.matchScore', { score: String(metaTest.matchQuality) })}
+            {t('result.eventsReceived', { count: String(metaTest.matchQuality) })}
           </p>
         )}
       </div>
@@ -240,8 +250,8 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
             <p className="text-xs text-emerald-700/80">{t('result.summaryConversions', { count: adsConversionsCount })}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
-            <p className="text-lg font-semibold text-emerald-700">{lookalikesCount}</p>
-            <p className="text-xs text-emerald-700/80">{t('result.summaryLookalikes', { count: lookalikesCount })}</p>
+            <p className="text-lg font-semibold text-emerald-700">{remarketingListsCount}</p>
+            <p className="text-xs text-emerald-700/80">{t('result.summaryRemarketingLists', { count: remarketingListsCount })}</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2.5">

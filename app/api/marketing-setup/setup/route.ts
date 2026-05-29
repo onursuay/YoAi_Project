@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
-import { getCurrentUser } from '@/lib/billing/user'
-import { getSetup, updateSetup } from '@/lib/marketing-setup/setupStore'
+import { checkMarketingSetupAccess } from '@/lib/marketing-setup/guard'
+import { getSetup, getOrCreateSetup, updateSetup } from '@/lib/marketing-setup/setupStore'
 
 export const runtime = 'nodejs'
 export const dynamic = 'force-dynamic'
@@ -20,11 +20,9 @@ const PATCHABLE_COLUMNS = [
  * Returns the current user's marketing setup row (or null).
  */
 export async function GET() {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
-  }
-  const setup = await getSetup(user.id)
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
+  const setup = await getSetup(access.user.id)
   return NextResponse.json({ ok: true, setup })
 }
 
@@ -34,10 +32,9 @@ export async function GET() {
  * Applies the whitelisted columns and returns the fresh row.
  */
 export async function POST(request: Request) {
-  const user = await getCurrentUser()
-  if (!user) {
-    return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
-  }
+  const access = await checkMarketingSetupAccess()
+  if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
+  const user = access.user
 
   let patch: Record<string, unknown> = {}
   try {
@@ -60,6 +57,9 @@ export async function POST(request: Request) {
     return NextResponse.json({ ok: true, setup })
   }
 
+  // Satırın var olduğunu garanti et — aksi halde updateSetup 0 satır günceller ve
+  // patch sessizce kaybolurdu (tarama yapılmadan event/GTM seçimi persist edilirse).
+  await getOrCreateSetup(user.id, (safePatch.site_url as string | undefined) ?? '')
   const setup = await updateSetup(user.id, safePatch)
   return NextResponse.json({ ok: true, setup })
 }
