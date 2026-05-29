@@ -65,7 +65,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
           {statusIcon(r?.status)}
         </div>
         <p
-          className={`text-xs font-medium ${
+          className={`text-sm font-medium ${
             ok ? 'text-emerald-700' : r?.status === 'error' ? 'text-red-600' : 'text-gray-400'
           }`}
         >
@@ -107,10 +107,10 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
   const capiVerified = metaResult?.capiVerified === true
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">{t('result.title')}</h2>
-        <p className="mt-1.5 text-sm text-gray-500">{t('result.description')}</p>
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900">{t('result.title')}</h2>
+        <p className="mt-2 text-base text-gray-500">{t('result.description')}</p>
       </div>
 
       {/* Platform status cards */}
@@ -121,7 +121,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
               href={gtmPreviewUrl}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+              className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
             >
               <ExternalLink className="w-3.5 h-3.5" />
               {t('result.testGtmPreview')}
@@ -131,24 +131,24 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
 
         <Card icon={<BarChart3 className="w-5 h-5" />} title={t('preview.ga4')} step="ga4" statusLabel={t('result.statusConnected')}>
           {conversionCount > 0 && (
-            <p className="text-xs text-gray-500">{t('result.conversionsMarked', { count: conversionCount })}</p>
+            <p className="text-sm text-gray-500">{t('result.conversionsMarked', { count: conversionCount })}</p>
           )}
           {ga4AdsLinked && (
-            <p className="text-xs text-gray-500">{t('result.ga4AdsLinked')}</p>
+            <p className="text-sm text-gray-500">{t('result.ga4AdsLinked')}</p>
           )}
         </Card>
 
         <Card icon={<Building2 className="w-5 h-5" />} title={t('preview.meta')} step="meta" statusLabel={t('result.statusInstalled')}>
           {capiVerified ? (
-            <p className="inline-flex items-center gap-1.5 text-xs text-emerald-700">
+            <p className="inline-flex items-center gap-1.5 text-sm text-emerald-700">
               <CheckCircle2 className="w-3.5 h-3.5" />
               {t('result.capiActive')}
             </p>
           ) : (
-            <p className="text-xs text-gray-500">{t('result.capiNotVerified')}</p>
+            <p className="text-sm text-gray-500">{t('result.capiNotVerified')}</p>
           )}
           {eventsReceived != null && (
-            <p className="mt-1 text-xs text-gray-500">
+            <p className="mt-1 text-sm text-gray-500">
               {t('result.eventsReceived', { count: String(eventsReceived) })}
             </p>
           )}
@@ -156,7 +156,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
 
         <Card icon={<Globe className="w-5 h-5" />} title={t('preview.googleAds')} step="google_ads" statusLabel={t('result.statusConnected')}>
           {adsConversionsCount > 0 && (
-            <p className="text-xs text-gray-500">{t('result.summaryConversions', { count: adsConversionsCount })}</p>
+            <p className="text-sm text-gray-500">{t('result.summaryConversions', { count: adsConversionsCount })}</p>
           )}
         </Card>
 
@@ -174,32 +174,32 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{audiencesCount}</p>
-            <p className="text-xs text-emerald-700/80">{t('result.summaryAudiences', { count: audiencesCount })}</p>
+            <p className="text-sm text-emerald-700/80">{t('result.summaryAudiences', { count: audiencesCount })}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{lookalikesCount}</p>
-            <p className="text-xs text-emerald-700/80">{t('result.summaryLookalikes', { count: lookalikesCount })}</p>
+            <p className="text-sm text-emerald-700/80">{t('result.summaryLookalikes', { count: lookalikesCount })}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{adsConversionsCount}</p>
-            <p className="text-xs text-emerald-700/80">{t('result.summaryConversions', { count: adsConversionsCount })}</p>
+            <p className="text-sm text-emerald-700/80">{t('result.summaryConversions', { count: adsConversionsCount })}</p>
           </div>
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{remarketingListsCount}</p>
-            <p className="text-xs text-emerald-700/80">{t('result.summaryRemarketingLists', { count: remarketingListsCount })}</p>
+            <p className="text-sm text-emerald-700/80">{t('result.summaryRemarketingLists', { count: remarketingListsCount })}</p>
           </div>
         </div>
         <div className="mt-4 flex flex-wrap gap-2.5">
           <a
             href="/google-ads"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-medium shadow-sm hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors"
           >
             <Megaphone className="w-3.5 h-3.5" />
             {t('result.createGoogleAd')}
           </a>
           <a
             href="/meta-ads"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-xs font-medium shadow-sm hover:bg-primary/90 transition-colors"
+            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors"
           >
             <Megaphone className="w-3.5 h-3.5" />
             {t('result.createMetaAd')}

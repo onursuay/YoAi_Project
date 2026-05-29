@@ -2,6 +2,17 @@
 
 ---
 
+## 2026-05-29 — Marketing Kurulumu UX: "Marketing" adı, arama etiketi netleştirme, URL bug'ı, büyük font + 4 platform kartı
+- **Sorun (5 madde):** (1) "Arama Yapma" (site içi arama) ile "Telefon Araması" karıştırılıyordu. (2) Modül adı "Marketing" olacaktı, değişmemişti. (3) Adres kutusu boşken "14 sayfa tarandı" görünüyordu. (4) Yazılar çok küçük, alanlar dar/cılız. (5) Platform Bağlantıları'nda Google tek kart + Meta tek kart yerine 4 ayrı kart istendi.
+- **Çözüm:**
+  1. `events.viewSearchResults` etiketi "Arama Yapma" → **"Site İçi Arama"** (TR) / "Search" → "Site Search" (EN); telefon aramasıyla karışmaz.
+  2. Modül adı **"Marketing"**: sidebar (`lib/nav.ts`) + sayfa başlığı (`marketingSetup.title`, TR+EN).
+  3. **URL senkronizasyon bug'ı düzeltildi:** SiteScanner mount'tan sonra gelen kalıcı kayıt (async hydrate) ile adres kutusu artık senkronize ediliyor (`useEffect`); "tarandı" satırı hangi sitenin tarandığını (`scan.siteUrl`) da gösteriyor.
+  4. **Okunabilirlik:** 5 adımın tamamında (SiteScanner, PlatformConnect, ConfigPreview, Deployment, ResultDashboard) font büyütüldü (text-xs→sm, başlık xl→2xl, açıklama sm→base), kartlar/girdiler ferahlatıldı (p-5→6, py-2.5→3), container `max-w-3xl`→`max-w-4xl`.
+  5. **Platform Bağlantıları → 4 ayrı kart:** Google Ads · Google Analytics · Search Console · Meta. Her kart kendi ikonu + adı + bağlı/bağla durumuyla; bağlıysa primary çerçeve. (Kurulum izinleri + kimlik besleme bölümleri korundu.)
+  - tsc 0 hata; tr/en parity 2995=2995; amber/yellow yok.
+- **Dosyalar:** `lib/nav.ts`, `locales/{tr,en}.json`, `components/marketing-setup/steps/{SiteScanner,PlatformConnect,ConfigPreview,Deployment,ResultDashboard}.tsx`
+
 ## 2026-05-29 — Site Tarama: gerçek DOM tıklanabilir öğe çıkarma + Claude AI event tespiti (WhatsApp/telefon/IG DM/Messenger/e-posta)
 - **Sorun:** Tarama yalnız e-ticaret/form event'lerini yakalıyordu; **iletişim kanalları (özellikle WhatsApp) eksikti.** Ayrıca bu kanallar çoğu sitede chat/click-to-chat **eklentileriyle** sonradan eklendiği için sitenin ana kodunda görünmeyebiliyordu — sabit "popüler plugin" tahmini yanlış olur.
 - **Çözüm:** Tarama artık sitenin **gerçek DOM yapısını** çıkarıp event tespit ediyor (kullanıcının F12 `document.querySelectorAll('a, button, [onclick], [data-href]')` script'inin sunucu eşdeğeri):

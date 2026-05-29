@@ -3031,7 +3031,7 @@
     "marketingkurulumu": "Marketing Setup"
   },
   "marketingSetup": {
-    "title": "Marketing Setup",
+    "title": "Marketing",
     "subtitle": "Set up your entire digital marketing stack from a single panel.",
     "steps": {
       "scan": "Site Scan",
@@ -3063,7 +3063,7 @@
       "addToCart": "Add to Cart",
       "beginCheckout": "Begin Checkout",
       "addPaymentInfo": "Add Payment Info",
-      "viewSearchResults": "Search",
+      "viewSearchResults": "Site Search",
       "lead": "Contact / Form",
       "signUp": "Sign Up",
       "videoPlay": "Video Play",

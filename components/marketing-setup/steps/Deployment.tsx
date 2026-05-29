@@ -155,10 +155,10 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
   const anyError = SEQUENCE.some((s) => deploySteps[s.step]?.status === 'error')
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">{t('deploy.title')}</h2>
-        <p className="mt-1.5 text-sm text-gray-500">{t('deploy.description')}</p>
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900">{t('deploy.title')}</h2>
+        <p className="mt-2 text-base text-gray-500">{t('deploy.description')}</p>
       </div>
 
       {/* Start button — yalnız bu oturumda başlamadıysa ve önceden çalışmadıysa */}
@@ -189,7 +189,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
               <div className="flex-1 min-w-0">
                 <p className="text-sm font-medium text-gray-800">{t(labelKey)}</p>
                 <p
-                  className={`text-xs ${
+                  className={`text-sm ${
                     result?.status === 'error'
                       ? 'text-red-600'
                       : result?.status === 'done'
@@ -207,7 +207,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
                   type="button"
                   onClick={() => retryStep(route, step)}
                   disabled={running}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 text-sm font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className="w-3.5 h-3.5" />
                   {t('deploy.retryStep')}
@@ -232,17 +232,17 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
           {headSnippet && (
             <div className="mb-4">
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-gray-500">{t('deploy.snippetHead')}</span>
+                <span className="text-sm font-medium text-gray-500">{t('deploy.snippetHead')}</span>
                 <button
                   type="button"
                   onClick={() => copySnippet('head', headSnippet)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
                 >
                   {copied === 'head' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied === 'head' ? t('common.copied') : t('common.copy')}
                 </button>
               </div>
-              <pre className="overflow-x-auto rounded-xl bg-gray-900 text-gray-100 text-xs p-3.5 whitespace-pre-wrap break-all">
+              <pre className="overflow-x-auto rounded-xl bg-gray-900 text-gray-100 text-sm p-3.5 whitespace-pre-wrap break-all">
                 {headSnippet}
               </pre>
             </div>
@@ -251,17 +251,17 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
           {bodySnippet && (
             <div>
               <div className="flex items-center justify-between mb-1.5">
-                <span className="text-xs font-medium text-gray-500">{t('deploy.snippetBody')}</span>
+                <span className="text-sm font-medium text-gray-500">{t('deploy.snippetBody')}</span>
                 <button
                   type="button"
                   onClick={() => copySnippet('body', bodySnippet)}
-                  className="inline-flex items-center gap-1.5 text-xs font-medium text-primary hover:underline"
+                  className="inline-flex items-center gap-1.5 text-sm font-medium text-primary hover:underline"
                 >
                   {copied === 'body' ? <Check className="w-3.5 h-3.5" /> : <Copy className="w-3.5 h-3.5" />}
                   {copied === 'body' ? t('common.copied') : t('common.copy')}
                 </button>
               </div>
-              <pre className="overflow-x-auto rounded-xl bg-gray-900 text-gray-100 text-xs p-3.5 whitespace-pre-wrap break-all">
+              <pre className="overflow-x-auto rounded-xl bg-gray-900 text-gray-100 text-sm p-3.5 whitespace-pre-wrap break-all">
                 {bodySnippet}
               </pre>
             </div>
@@ -269,14 +269,14 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
 
           {/* Install guide tabs */}
           <div className="mt-5">
-            <h4 className="text-xs font-semibold text-gray-700 mb-2">{t('deploy.guideTitle')}</h4>
+            <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('deploy.guideTitle')}</h4>
             <div className="flex flex-wrap gap-1.5">
               {PLATFORM_TABS.map((tab) => (
                 <button
                   key={tab.id}
                   type="button"
                   onClick={() => setPlatformTab(tab.id)}
-                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
+                  className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors ${
                     platformTab === tab.id
                       ? 'bg-primary/8 text-primary'
                       : 'text-gray-600 hover:bg-gray-50'

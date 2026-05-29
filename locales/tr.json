@@ -3031,7 +3031,7 @@
     "marketingkurulumu": "Marketing Kurulumu"
   },
   "marketingSetup": {
-    "title": "Marketing Kurulumu",
+    "title": "Marketing",
     "subtitle": "Tüm dijital pazarlama altyapınızı tek panelden kurun.",
     "steps": {
       "scan": "Site Tarama",
@@ -3063,7 +3063,7 @@
       "addToCart": "Sepete Ekleme",
       "beginCheckout": "Ödeme Başlatma",
       "addPaymentInfo": "Ödeme Bilgisi Ekleme",
-      "viewSearchResults": "Arama Yapma",
+      "viewSearchResults": "Site İçi Arama",
       "lead": "İletişim / Form",
       "signUp": "Kayıt Olma",
       "videoPlay": "Video Oynatma",

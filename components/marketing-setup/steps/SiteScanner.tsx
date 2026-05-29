@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import { Search, Loader2, CheckCircle2, Globe } from 'lucide-react'
 import { STANDARD_EVENTS, type StandardEventKey } from '@/lib/marketing-setup/constants'
@@ -15,6 +15,12 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
 
   const scan = state.scan
   const selected = state.selectedEvents
+
+  // Kalıcı kayıt mount'tan SONRA (async hydrate) geldiğinde URL kutusunu senkronize
+  // et — aksi halde "tarandı" sonucu görünürken adres kutusu boş kalıyordu.
+  useEffect(() => {
+    if (state.siteUrl) setSiteUrl(state.siteUrl)
+  }, [state.siteUrl])
 
   async function runScan() {
     const url = siteUrl.trim()
@@ -34,7 +40,6 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
         setError(t('scan.errorScan'))
         return
       }
-      // Pre-check recommended events.
       const recommended = data.scan.recommendedEvents.map((r) => r.event)
       update({ siteUrl: url, scan: data.scan, selectedEvents: recommended })
       void persistSelection(recommended)
@@ -75,20 +80,20 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
   const recommendedSet = new Set((scan?.recommendedEvents ?? []).map((r) => r.event))
 
   return (
-    <div className="max-w-3xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">{t('scan.title')}</h2>
-        <p className="mt-1.5 text-sm text-gray-500">{t('scan.description')}</p>
+    <div className="max-w-4xl mx-auto">
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900">{t('scan.title')}</h2>
+        <p className="mt-2 text-base text-gray-500">{t('scan.description')}</p>
       </div>
 
       {/* URL input + scan */}
-      <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+      <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+        <label className="block text-base font-medium text-gray-700 mb-2">
           {t('scan.urlLabel')}
         </label>
-        <div className="flex flex-col sm:flex-row gap-2.5">
+        <div className="flex flex-col sm:flex-row gap-3">
           <div className="relative flex-1">
-            <Globe className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
+            <Globe className="absolute left-3.5 top-1/2 -translate-y-1/2 w-5 h-5 text-gray-400" />
             <input
               type="url"
               inputMode="url"
@@ -99,35 +104,41 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
               }}
               placeholder={t('scan.urlPlaceholder')}
               disabled={scanning}
-              className="w-full pl-9 pr-3 py-2.5 border border-gray-200 rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-gray-50 disabled:opacity-60"
+              className="w-full pl-11 pr-3.5 py-3 border border-gray-200 rounded-xl text-base shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none transition-all disabled:bg-gray-50 disabled:opacity-60"
             />
           </div>
           <button
             type="button"
             onClick={runScan}
             disabled={scanning || !siteUrl.trim()}
-            className="inline-flex items-center justify-center gap-2 px-5 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+            className="inline-flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-base font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
           >
             {scanning ? (
-              <Loader2 className="w-4 h-4 animate-spin" />
+              <Loader2 className="w-5 h-5 animate-spin" />
             ) : (
-              <Search className="w-4 h-4" />
+              <Search className="w-5 h-5" />
             )}
             {scanning ? t('scan.scanning') : t('scan.scanButton')}
           </button>
         </div>
 
         {error && (
-          <div className="mt-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-2.5 text-sm text-red-700">
+          <div className="mt-4 rounded-xl border border-red-200 bg-red-50 px-4 py-3 text-base text-red-700">
             {error}
           </div>
         )}
 
         {scan && !error && (
-          <div className="mt-3 flex items-center gap-2 text-sm text-emerald-700">
-            <CheckCircle2 className="w-4 h-4" />
+          <div className="mt-4 flex flex-wrap items-center gap-2 text-base text-emerald-700">
+            <CheckCircle2 className="w-5 h-5" />
             <span className="font-medium">{t('scan.scanned')}</span>
-            <span className="text-gray-400">·</span>
+            {scan.siteUrl && (
+              <>
+                <span className="text-gray-300">·</span>
+                <span className="text-gray-600 font-mono text-sm break-all">{scan.siteUrl}</span>
+              </>
+            )}
+            <span className="text-gray-300">·</span>
             <span className="text-gray-500">
               {t('scan.pagesScanned', { count: scan.pagesScanned })}
             </span>
@@ -137,27 +148,26 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
 
       {/* Scan results */}
       {scan && (
-        <div className="mt-5 space-y-5">
+        <div className="mt-6 space-y-6">
           {/* Kısmi tarama uyarısı — site büyükse yalnız ilk N sayfa tarandı (sahte sanılmasın) */}
           {scan.truncated && (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-sm text-gray-700">
+            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-base text-gray-700">
               {t('scan.truncatedNotice', { count: scan.pagesScanned })}
             </div>
           )}
-          {/* Detected actions — event bazında tekilleştirilmiş, sayfa frekansıyla
-              (ham per-page liste değil: aynı aksiyon her sayfa için tekrar etmez) */}
+          {/* Detected actions — event bazında tekilleştirilmiş, sayfa frekansıyla */}
           {actionsByEvent.size > 0 && (
-            <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-900 mb-3">
+            <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">
                 {t('scan.detectedActions')}
               </h3>
-              <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2.5">
                 {STANDARD_EVENTS.filter((e) => actionsByEvent.has(e.key)).map((def) => {
                   const pageCount = actionsByEvent.get(def.key)?.length ?? 0
                   return (
                     <span
                       key={def.key}
-                      className="inline-flex items-center gap-1.5 rounded-full bg-emerald-50 text-emerald-700 px-3 py-1 text-xs font-medium"
+                      className="inline-flex items-center gap-2 rounded-full bg-emerald-50 text-emerald-700 px-4 py-1.5 text-sm font-medium"
                     >
                       {t(`events.${def.i18nKey}`)}
                       <span className="text-emerald-500/70">
@@ -171,22 +181,22 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
           )}
 
           {/* Recommended events checklist (all STANDARD_EVENTS) */}
-          <div className="bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-            <div className="flex items-center justify-between mb-1">
-              <h3 className="text-sm font-semibold text-gray-900">
+          <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
+            <div className="flex items-center justify-between mb-1.5">
+              <h3 className="text-base font-semibold text-gray-900">
                 {t('scan.recommendedEvents')}
               </h3>
-              <span className="text-xs text-gray-400">
+              <span className="text-sm text-gray-400">
                 {t('scan.selectedCount', { count: selected.length })}
               </span>
             </div>
-            <p className="text-xs text-gray-500 mb-3">{t('scan.selectEventsHint')}</p>
+            <p className="text-sm text-gray-500 mb-4">{t('scan.selectEventsHint')}</p>
 
             {scan.detectedActions.length === 0 && scan.recommendedEvents.length === 0 && (
-              <p className="mb-3 text-xs text-gray-500">{t('scan.noEventsFound')}</p>
+              <p className="mb-3 text-sm text-gray-500">{t('scan.noEventsFound')}</p>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
               {STANDARD_EVENTS.map((def) => {
                 const checked = selected.includes(def.key)
                 const isRecommended = recommendedSet.has(def.key)
@@ -195,7 +205,7 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
                 return (
                   <label
                     key={def.key}
-                    className={`flex items-start gap-3 rounded-xl border px-3.5 py-3 cursor-pointer transition-all ${
+                    className={`flex items-start gap-3 rounded-xl border px-4 py-3.5 cursor-pointer transition-all ${
                       checked
                         ? 'border-primary/40 bg-primary/5'
                         : 'border-gray-200 hover:border-gray-300 bg-white'
@@ -205,21 +215,21 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
                       type="checkbox"
                       checked={checked}
                       onChange={() => toggleEvent(def.key)}
-                      className="mt-0.5 h-4 w-4 rounded border-gray-300 text-primary focus:ring-primary/30 accent-[var(--primary,#16a34a)]"
+                      className="mt-0.5 h-5 w-5 rounded border-gray-300 text-primary focus:ring-primary/30 accent-[var(--primary,#16a34a)]"
                     />
                     <span className="flex-1 min-w-0">
                       <span className="flex items-center gap-2 flex-wrap">
-                        <span className="text-sm font-medium text-gray-800">
+                        <span className="text-base font-medium text-gray-800">
                           {t(`events.${def.i18nKey}`)}
                         </span>
                         {isRecommended && (
-                          <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide">
+                          <span className="inline-flex items-center rounded-full bg-emerald-50 text-emerald-700 px-2 py-0.5 text-[11px] font-semibold uppercase tracking-wide">
                             {t('common.recommended')}
                           </span>
                         )}
                       </span>
                       {typeof conf === 'number' && (
-                        <span className="mt-0.5 block text-xs text-gray-400">
+                        <span className="mt-1 block text-sm text-gray-400">
                           {t('scan.confidence')}: {Math.round(conf * 100)}%
                         </span>
                       )}
@@ -233,12 +243,12 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
       )}
 
       {/* Footer nav */}
-      <div className="mt-6 flex justify-end">
+      <div className="mt-8 flex justify-end">
         <button
           type="button"
           onClick={goNext}
           disabled={!scan}
-          className="inline-flex items-center gap-2 px-6 py-2.5 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
+          className="inline-flex items-center gap-2 px-7 py-3 rounded-xl bg-primary text-white text-base font-medium shadow-sm hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
         >
           {t('common.next')}
         </button>

@@ -108,9 +108,9 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
 
   return (
     <div className="max-w-4xl mx-auto">
-      <div className="text-center mb-6">
-        <h2 className="text-xl font-semibold text-gray-900">{t('preview.title')}</h2>
-        <p className="mt-1.5 text-sm text-gray-500">{t('preview.description')}</p>
+      <div className="text-center mb-8">
+        <h2 className="text-2xl font-semibold text-gray-900">{t('preview.title')}</h2>
+        <p className="mt-2 text-base text-gray-500">{t('preview.description')}</p>
       </div>
 
       {/* Platform cards */}
@@ -152,7 +152,7 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
                   <span className="text-sm text-gray-700">
                     {item.label}
                     {item.detail && (
-                      <span className="block text-xs text-gray-400 mt-0.5">{item.detail}</span>
+                      <span className="block text-sm text-gray-400 mt-0.5">{item.detail}</span>
                     )}
                   </span>
                 </li>

@@ -125,7 +125,7 @@ export const gozetimMerkeziNavItem: NavItem = {
  */
 export const marketingSetupNavItem: NavItem = {
   id: 'marketing-kurulumu',
-  label: 'Marketing Kurulumu',
+  label: 'Marketing',
   href: ROUTES.MARKETING_SETUP,
   icon: Rocket,
 }
