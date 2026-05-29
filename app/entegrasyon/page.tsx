@@ -5,6 +5,7 @@ import { useSearchParams, useRouter } from 'next/navigation'
 import { useTranslations } from 'next-intl'
 import { ROUTES } from '@/lib/routes'
 import Topbar from '@/components/Topbar'
+import GoogleAccountModal from '@/components/google/GoogleAccountModal'
 import { Puzzle, AlertCircle, RefreshCw } from 'lucide-react'
 
 interface PlatformStatus {
@@ -472,7 +473,7 @@ function EntegrasyonContent() {
           </div>
 
           {googleConfigMissing && (
-            <div className="mb-4 p-4 bg-amber-50 border border-amber-200 rounded-xl text-amber-800 text-sm">
+            <div className="mb-4 p-4 bg-red-50 border border-red-200 rounded-xl text-red-700 text-sm">
               {t('google.configMissing')}
             </div>
           )}
@@ -717,86 +718,24 @@ function EntegrasyonContent() {
             </div>
           </div>
 
-          {/* Google Ads account selection modal */}
-          {googleAccountModalOpen && (
-            <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50" onClick={() => !selectingAccountId && setGoogleAccountModalOpen(false)}>
-              <div className="bg-white rounded-xl shadow-xl max-w-md w-full max-h-[80vh] flex flex-col" onClick={e => e.stopPropagation()}>
-                <div className="p-4 border-b border-gray-200 flex items-center justify-between">
-                  <h3 className="text-lg font-semibold text-gray-900">{t('google.selectAccountTitle')}</h3>
-                  <button
-                    type="button"
-                    onClick={() => !selectingAccountId && setGoogleAccountModalOpen(false)}
-                    className="p-2 text-gray-500 hover:text-gray-700 rounded-lg"
-                    disabled={!!selectingAccountId}
-                  >
-                    <span className="sr-only">Close</span>
-                    <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
-                  </button>
-                </div>
-                <div className="p-4 overflow-y-auto flex-1">
-                  {googleAccountStep === 'children' && (
-                    <button type="button" onClick={backToGoogleManagers} className="mb-3 text-sm text-primary hover:underline flex items-center gap-1">
-                      ← {t('google.selectAccountTitle')}
-                    </button>
-                  )}
-                  <h4 className="text-sm font-medium text-gray-700 mb-2">
-                    {googleAccountStep === 'managers' ? t('google.selectAccountTitle') : t('google.selectChildAccountTitle')}
-                  </h4>
-                  {(googleAccountStep === 'managers' ? googleManagersLoading : googleChildrenLoading) && (
-                    <p className="text-gray-600 text-center py-4">{t('google.selecting')}</p>
-                  )}
-                  {googleAccountsError && (
-                    <p className="text-red-600 text-sm py-2">{googleAccountsError}</p>
-                  )}
-                  {googleAccountStep === 'managers' && !googleManagersLoading && googleManagers.length > 0 && (
-                    <ul className="space-y-2">
-                      {googleManagers.map((m) => (
-                        <li key={m.customerId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                          <span className="font-medium text-gray-900">
-                            {m.name} (ID: {m.customerId}){' '}
-                            <span className={`inline-flex items-center px-2 py-0.5 text-caption font-medium rounded ${m.isManager ? 'bg-amber-100 text-amber-800' : 'bg-gray-100 text-gray-700'}`}>
-                              {m.isManager ? t('google.managerBadge') : t('google.accountBadge')}
-                            </span>
-                          </span>
-                          <button
-                            type="button"
-                            onClick={() => !selectingAccountId && onGoogleManagerOrAccountClick(m)}
-                            disabled={selectingAccountId === m.customerId}
-                            className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                          >
-                            {selectingAccountId === m.customerId ? t('google.selecting') : t('google.selectLabel')}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {googleAccountStep === 'managers' && !googleManagersLoading && !googleAccountsError && googleManagers.length === 0 && (
-                    <p className="text-gray-600 text-sm">{t('google.noAccounts')}</p>
-                  )}
-                  {googleAccountStep === 'children' && !googleChildrenLoading && googleChildren.length > 0 && (
-                    <ul className="space-y-2">
-                      {googleChildren.map((c) => (
-                        <li key={c.customerId} className="flex items-center justify-between p-3 border border-gray-200 rounded-lg">
-                          <span className="font-medium text-gray-900">{c.name} (ID: {c.customerId})</span>
-                          <button
-                            type="button"
-                            onClick={() => !selectingAccountId && onGoogleChildClick(c)}
-                            disabled={selectingAccountId === c.customerId}
-                            className="px-3 py-1.5 text-sm font-medium bg-primary text-white rounded-lg hover:bg-primary/90 disabled:opacity-50"
-                          >
-                            {selectingAccountId === c.customerId ? t('google.selecting') : t('google.selectLabel')}
-                          </button>
-                        </li>
-                      ))}
-                    </ul>
-                  )}
-                  {googleAccountStep === 'children' && !googleChildrenLoading && !googleAccountsError && googleChildren.length === 0 && (
-                    <p className="text-gray-600 text-sm">{t('google.noChildren')}</p>
-                  )}
-                </div>
-              </div>
-            </div>
-          )}
+          {/* Google Ads account selection modal (çoklu hesap destekli — Madde 2) */}
+          <GoogleAccountModal
+            isOpen={googleAccountModalOpen}
+            onClose={() => setGoogleAccountModalOpen(false)}
+            managers={googleManagers}
+            managersLoading={googleManagersLoading}
+            children={googleChildren}
+            childrenLoading={googleChildrenLoading}
+            accountStep={googleAccountStep}
+            selectingKey={selectingAccountId ? `account:${selectingAccountId}` : null}
+            accountsError={googleAccountsError}
+            onManagerOrAccountClick={onGoogleManagerOrAccountClick}
+            onChildClick={onGoogleChildClick}
+            backToManagers={backToGoogleManagers}
+            selectedManagerId={selectedGoogleManagerId}
+            activeCustomerId={googleStatus.accountId ?? null}
+            activeCustomerName={googleStatus.accountName ?? null}
+          />
 
           {/* GA Property selection modal */}
           {gaPropertyModalOpen && (

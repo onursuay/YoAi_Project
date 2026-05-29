@@ -3393,7 +3393,19 @@
     "loadingAccounts": "Loading accounts...",
     "continue": "Continue",
     "success": "Connection Successful!",
-    "successDesc": "Your Meta account has been successfully connected. Redirecting to your ad panel..."
+    "successDesc": "Your Meta account has been successfully connected. Redirecting to your ad panel...",
+    "selectAccountDescMulti": "Select the ad accounts you want to use",
+    "preparingConnection": "Preparing connection...",
+    "loadAccountsFailed": "Could not load accounts",
+    "retry": "Try Again",
+    "connectionVerifyFailed": "Meta connection could not be verified. Please refresh the page.",
+    "noAccountsTitle": "No ad account found",
+    "noAccountsDesc": "You must have at least one ad account in Meta Business Suite.",
+    "selecting": "Selecting...",
+    "selectedOfLimit": "{count}/{limit} accounts selected",
+    "selectedCount": "{count} accounts selected",
+    "continueWithCount": "Continue ({count})",
+    "accountLimitInfo": "You can connect up to {limit} ad accounts. Upgrade your plan for more."
   },
   "toolbar": {
     "searchPlaceholder": "Search by name or id...",

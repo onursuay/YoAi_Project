@@ -3393,7 +3393,19 @@
     "loadingAccounts": "Hesaplar yükleniyor...",
     "continue": "Devam Et",
     "success": "Bağlantı Başarılı!",
-    "successDesc": "Meta hesabınız başarıyla bağlandı. Reklam panelinize yönlendiriliyorsunuz..."
+    "successDesc": "Meta hesabınız başarıyla bağlandı. Reklam panelinize yönlendiriliyorsunuz...",
+    "selectAccountDescMulti": "Kullanmak istediğiniz reklam hesaplarını seçin",
+    "preparingConnection": "Bağlantı hazırlanıyor...",
+    "loadAccountsFailed": "Hesaplar yüklenemedi",
+    "retry": "Tekrar Dene",
+    "connectionVerifyFailed": "Meta bağlantısı doğrulanamadı. Sayfayı yenileyin.",
+    "noAccountsTitle": "Reklam hesabı bulunamadı",
+    "noAccountsDesc": "Meta Business Suite üzerinden en az bir reklam hesabınız olmalıdır.",
+    "selecting": "Seçiliyor...",
+    "selectedOfLimit": "{count}/{limit} hesap seçildi",
+    "selectedCount": "{count} hesap seçildi",
+    "continueWithCount": "Devam Et ({count})",
+    "accountLimitInfo": "En fazla {limit} reklam hesabı bağlayabilirsiniz. Daha fazlası için planınızı yükseltin."
   },
   "toolbar": {
     "searchPlaceholder": "İsim veya id ile ara...",

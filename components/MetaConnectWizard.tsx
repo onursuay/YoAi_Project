@@ -4,6 +4,8 @@ import { useState, useEffect, useCallback, useRef } from 'react'
 import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { ROUTES } from '@/lib/routes'
+import { useRegisteredAccounts } from '@/hooks/useRegisteredAccounts'
+import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 
 interface AdAccount {
   id: string
@@ -23,7 +25,11 @@ export default function MetaConnectWizard() {
   const [step, setStep] = useState(1)
   const [isConnected, setIsConnected] = useState(false)
   const [adAccounts, setAdAccounts] = useState<AdAccount[]>([])
-  const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
+  // Çoklu reklam hesabı (Madde 2): flag açıkken birden çok hesap seçilebilir.
+  // İlk seçilen hesap aktif olur; tümü kayıtlı kümeye eklenir (limit gate backend'de).
+  const [selectedIds, setSelectedIds] = useState<string[]>([])
+  const [showLimitModal, setShowLimitModal] = useState(false)
+  const reg = useRegisteredAccounts()
   const [isLoading, setIsLoading] = useState(false)
   const [step3Phase, setStep3Phase] = useState<Step3Phase>('waiting_session')
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -112,7 +118,7 @@ export default function MetaConnectWizard() {
       if (!mountedRef.current) return
       if (!retrySession) {
         setStep3Phase('error')
-        setFetchError('Meta bağlantısı doğrulanamadı. Sayfayı yenileyin.')
+        setFetchError(t('connectionVerifyFailed'))
         console.error('[STEP3] STEP3_FETCH_BLOCKED_WAITING_FOR_SESSION: session never became ready')
         return
       }
@@ -128,7 +134,7 @@ export default function MetaConnectWizard() {
 
     setAdAccounts(accounts)
     if (accounts.length > 0) {
-      setSelectedAccount(accounts[0].id)
+      setSelectedIds([accounts[0].id])
       setStep3Phase('done')
       console.log('[STEP3] STEP3_RENDER:', JSON.stringify({
         loading: false, hasSession: true, hasToken: true,
@@ -138,7 +144,7 @@ export default function MetaConnectWizard() {
       setStep3Phase('empty')
       console.log('[STEP3] STEP3_FETCH_EMPTY: no ad accounts found after all retries')
     }
-  }, [checkSessionReady, fetchAdAccountsWithRetry])
+  }, [checkSessionReady, fetchAdAccountsWithRetry, t])
 
   // On mount: check connection and init Step 3 if connected
   useEffect(() => {
@@ -175,15 +181,49 @@ export default function MetaConnectWizard() {
     await initStep3()
   }
 
+  // Hesap seçimini değiştir. Flag kapalı → tek seçim (radio). Flag açık → çoklu
+  // toggle; limit dolunca yeni seçim engellenir ve abonelik modalı açılır.
+  const toggleAccount = (id: string) => {
+    if (!reg.enabled) {
+      setSelectedIds([id])
+      return
+    }
+    setSelectedIds((prev) => {
+      if (prev.includes(id)) return prev.filter((x) => x !== id)
+      if (reg.remaining !== null && prev.length >= reg.remaining) {
+        setShowLimitModal(true)
+        return prev
+      }
+      return [...prev, id]
+    })
+  }
+
   const handleSelectAccount = async () => {
-    if (!selectedAccount) return
-    const account = adAccounts.find((a) => a.id === selectedAccount)
+    if (selectedIds.length === 0) return
     setIsLoading(true)
     try {
+      // Çoklu hesap (flag açık): seçilen tüm hesapları kayıtlı kümeye ekle.
+      // Limit zorlama backend'de (/api/account/registered) — Meta seçim/publish
+      // entegrasyonuna dokunulmaz.
+      if (reg.enabled) {
+        for (const id of selectedIds) {
+          const acc = adAccounts.find((a) => a.id === id)
+          const res = await reg.addAccount({ platform: 'meta', account_id: id, account_name: acc?.name ?? null })
+          if (!res.ok && res.error === 'limit_reached') {
+            setIsLoading(false)
+            setShowLimitModal(true)
+            return
+          }
+        }
+      }
+
+      // İlk seçilen hesabı AKTİF yap (mevcut Meta seçim akışı korunur).
+      const primaryId = selectedIds[0]
+      const account = adAccounts.find((a) => a.id === primaryId)
       const response = await fetch('/api/meta/select-adaccount', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ adAccountId: selectedAccount }),
+        body: JSON.stringify({ adAccountId: primaryId }),
       })
       const data = await response.json()
       if (response.ok) {
@@ -193,7 +233,7 @@ export default function MetaConnectWizard() {
           headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
             platform: 'meta',
-            account_id: data.account_id || selectedAccount,
+            account_id: data.account_id || primaryId,
             account_name: accountName,
           }),
         }).catch(() => {})
@@ -211,6 +251,7 @@ export default function MetaConnectWizard() {
   }
 
   return (
+    <>
     <div className="min-h-screen bg-gray-50 flex items-center justify-center p-6">
       <div className="max-w-2xl w-full">
         {/* Progress Steps */}
@@ -324,7 +365,7 @@ export default function MetaConnectWizard() {
                   {t('selectAccount')}
                 </h2>
                 <p className="text-gray-600">
-                  {t('selectAccountDesc')}
+                  {reg.enabled ? t('selectAccountDescMulti') : t('selectAccountDesc')}
                 </p>
               </div>
 
@@ -332,7 +373,7 @@ export default function MetaConnectWizard() {
               {step3Phase === 'waiting_session' && (
                 <div className="text-center py-12">
                   <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto"></div>
-                  <p className="text-gray-500 mt-4">Bağlantı hazırlanıyor...</p>
+                  <p className="text-gray-500 mt-4">{t('preparingConnection')}</p>
                 </div>
               )}
 
@@ -352,12 +393,12 @@ export default function MetaConnectWizard() {
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-2.5L13.732 4c-.77-.833-1.964-.833-2.732 0L3.732 16.5c-.77.833.192 2.5 1.732 2.5z" />
                     </svg>
                   </div>
-                  <p className="text-red-600 font-medium mb-2">{fetchError || 'Hesaplar yüklenemedi'}</p>
+                  <p className="text-red-600 font-medium mb-2">{fetchError || t('loadAccountsFailed')}</p>
                   <button
                     onClick={handleRetryFetch}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium mt-2"
                   >
-                    Tekrar Dene
+                    {t('retry')}
                   </button>
                 </div>
               )}
@@ -365,20 +406,20 @@ export default function MetaConnectWizard() {
               {/* Phase: empty result */}
               {step3Phase === 'empty' && (
                 <div className="text-center py-8">
-                  <div className="w-16 h-16 bg-amber-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                    <svg className="w-8 h-8 text-amber-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <div className="w-16 h-16 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
+                    <svg className="w-8 h-8 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
                     </svg>
                   </div>
-                  <p className="text-gray-700 font-medium mb-1">Reklam hesabı bulunamadı</p>
+                  <p className="text-gray-700 font-medium mb-1">{t('noAccountsTitle')}</p>
                   <p className="text-gray-500 text-sm mb-4">
-                    Meta Business Suite üzerinden en az bir reklam hesabınız olmalıdır.
+                    {t('noAccountsDesc')}
                   </p>
                   <button
                     onClick={handleRetryFetch}
                     className="px-5 py-2.5 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium"
                   >
-                    Tekrar Dene
+                    {t('retry')}
                   </button>
                 </div>
               )}
@@ -386,37 +427,71 @@ export default function MetaConnectWizard() {
               {/* Phase: done — show account list */}
               {step3Phase === 'done' && (
                 <>
-                  <div className="space-y-3 mb-6">
-                    {adAccounts.map((account) => (
-                      <label
-                        key={account.id}
-                        className="flex items-center p-4 border-2 rounded-lg cursor-pointer hover:bg-gray-50 transition-colors"
-                        style={{
-                          borderColor: selectedAccount === account.id ? '#10B981' : '#E5E7EB'
-                        }}
-                      >
-                        <input
-                          type="radio"
-                          name="adaccount"
-                          value={account.id}
-                          checked={selectedAccount === account.id}
-                          onChange={(e) => setSelectedAccount(e.target.value)}
-                          className="w-4 h-4 text-green-600"
-                        />
-                        <div className="ml-3">
-                          <div className="font-medium text-gray-900">{account.name}</div>
-                          <div className="text-sm text-gray-500">ID: {account.account_id}{account.currency ? ` · ${account.currency}` : ''}</div>
-                        </div>
-                      </label>
-                    ))}
+                  {/* Çoklu seçim sayacı (flag açık) */}
+                  {reg.enabled && (
+                    <div className="flex items-center justify-end mb-3">
+                      <span className="text-xs font-semibold bg-primary/5 text-primary px-2.5 py-1 rounded-full ring-1 ring-primary/15">
+                        {reg.limit !== null
+                          ? t('selectedOfLimit', { count: selectedIds.length, limit: reg.limit })
+                          : t('selectedCount', { count: selectedIds.length })}
+                      </span>
+                    </div>
+                  )}
+
+                  <div className="space-y-3 mb-4">
+                    {adAccounts.map((account) => {
+                      const checked = selectedIds.includes(account.id)
+                      const limitReached =
+                        reg.enabled && reg.remaining !== null && !checked && selectedIds.length >= reg.remaining
+                      return (
+                        <label
+                          key={account.id}
+                          onClick={(e) => {
+                            if (limitReached) {
+                              e.preventDefault()
+                              setShowLimitModal(true)
+                            }
+                          }}
+                          className={`flex items-center p-4 border-2 rounded-lg transition-colors ${
+                            limitReached ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
+                          }`}
+                          style={{ borderColor: checked ? '#10B981' : '#E5E7EB' }}
+                        >
+                          <input
+                            type={reg.enabled ? 'checkbox' : 'radio'}
+                            name="adaccount"
+                            value={account.id}
+                            checked={checked}
+                            disabled={limitReached}
+                            onChange={() => toggleAccount(account.id)}
+                            className="w-4 h-4 text-green-600"
+                          />
+                          <div className="ml-3">
+                            <div className="font-medium text-gray-900">{account.name}</div>
+                            <div className="text-sm text-gray-500">ID: {account.account_id}{account.currency ? ` · ${account.currency}` : ''}</div>
+                          </div>
+                        </label>
+                      )
+                    })}
                   </div>
+
+                  {/* Limit bilgi bandı (flag açık + limitli plan) */}
+                  {reg.enabled && reg.limit !== null && (
+                    <div className="mb-4 rounded-lg bg-primary/5 border border-primary/20 p-3">
+                      <p className="text-sm text-gray-700">{t('accountLimitInfo', { limit: reg.limit })}</p>
+                    </div>
+                  )}
 
                   <button
                     onClick={handleSelectAccount}
-                    disabled={!selectedAccount || isLoading}
+                    disabled={selectedIds.length === 0 || isLoading}
                     className="w-full px-6 py-3 bg-green-600 text-white rounded-lg hover:bg-green-700 font-medium disabled:opacity-50 disabled:cursor-not-allowed"
                   >
-                    {isLoading ? (locale === 'en' ? 'Selecting...' : 'Seçiliyor...') : t('continue')}
+                    {isLoading
+                      ? t('selecting')
+                      : reg.enabled
+                        ? t('continueWithCount', { count: selectedIds.length })
+                        : t('continue')}
                   </button>
                 </>
               )}
@@ -443,6 +518,17 @@ export default function MetaConnectWizard() {
         </div>
       </div>
     </div>
+
+    {showLimitModal && (
+      <AccessRequiredModal
+        type="subscription"
+        featureKey="ad_account_slot"
+        dismissible
+        onClose={() => setShowLimitModal(false)}
+        reason="onboarding_meta_account_limit"
+      />
+    )}
+    </>
   )
 }
 
