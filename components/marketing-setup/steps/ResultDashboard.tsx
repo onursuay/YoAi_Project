@@ -1,6 +1,5 @@
 'use client'
 
-import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   CheckCircle2,
@@ -27,12 +26,6 @@ function num(v: unknown): number | null {
 export default function ResultDashboard({ state, goBack }: StepProps) {
   const t = useTranslations('marketingSetup')
   const steps = state.deploySteps
-
-  const [metaTest, setMetaTest] = useState<{
-    loading: boolean
-    matchQuality?: string | number | null
-    error?: boolean
-  }>({ loading: false })
 
   const conversionCount = STANDARD_EVENTS.filter(
     (e) => e.isConversion && state.selectedEvents.includes(e.key),
@@ -81,33 +74,6 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
         {ok && <div className="mt-3 flex-1">{children}</div>}
       </div>
     )
-  }
-
-  // Meta test via CAPI.
-  async function testMeta() {
-    setMetaTest({ loading: true })
-    try {
-      const res = await fetch('/api/capi/event', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          eventName: 'PageView',
-          eventSourceUrl: state.siteUrl || undefined,
-          testEventCode: 'TEST', // server resolves/validates; UI surfaces matchQuality
-        }),
-      })
-      const data = (await res.json()) as {
-        ok?: boolean
-        matchQuality?: string | number | null
-      }
-      if (!res.ok || !data.ok) {
-        setMetaTest({ loading: false, error: true })
-        return
-      }
-      setMetaTest({ loading: false, matchQuality: data.matchQuality ?? null })
-    } catch {
-      setMetaTest({ loading: false, error: true })
-    }
   }
 
   // GTM preview URL from gtm result, if provided.
@@ -173,9 +139,9 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
           ) : (
             <p className="text-xs text-gray-500">{t('result.capiNotVerified')}</p>
           )}
-          {(metaTest.matchQuality != null || eventsReceived != null) && (
+          {eventsReceived != null && (
             <p className="mt-1 text-xs text-gray-500">
-              {t('result.eventsReceived', { count: String(metaTest.matchQuality ?? eventsReceived) })}
+              {t('result.eventsReceived', { count: String(eventsReceived) })}
             </p>
           )}
         </Card>
@@ -192,49 +158,6 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
           step="search_console"
           statusLabel={steps.search_console?.result?.verified === true ? t('result.statusConnected') : t('result.gscPendingVerification')}
         />
-      </div>
-
-      {/* Test tools */}
-      <div className="mt-5 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <div className="flex flex-wrap gap-2.5">
-          <a
-            href="https://analytics.google.com/"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors"
-          >
-            <ExternalLink className="w-3.5 h-3.5" />
-            {t('result.testGa4')}
-          </a>
-          <button
-            type="button"
-            onClick={testMeta}
-            disabled={metaTest.loading || steps.meta?.status !== 'done'}
-            className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
-          >
-            {metaTest.loading ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Building2 className="w-3.5 h-3.5" />}
-            {t('result.testMeta')}
-          </button>
-          {gtmPreviewUrl && (
-            <a
-              href={gtmPreviewUrl}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-xs font-medium text-gray-700 hover:border-primary hover:text-primary transition-colors"
-            >
-              <ExternalLink className="w-3.5 h-3.5" />
-              {t('result.testGtmPreview')}
-            </a>
-          )}
-        </div>
-        {metaTest.error && (
-          <p className="mt-2.5 text-xs text-red-600">{t('errors.generic')}</p>
-        )}
-        {metaTest.matchQuality != null && !metaTest.error && (
-          <p className="mt-2.5 text-xs text-emerald-700">
-            {t('result.eventsReceived', { count: String(metaTest.matchQuality) })}
-          </p>
-        )}
       </div>
 
       {/* Remarketing summary */}

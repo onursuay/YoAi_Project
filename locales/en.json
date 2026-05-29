@@ -1,4 +1,49 @@
 {
+  "billing": {
+    "accessRequired": {
+      "closeAria": "Close",
+      "subscription": {
+        "badge": "SUBSCRIPTION",
+        "title": "This feature requires a subscription",
+        "description": "You need an active subscription plan to use this area.",
+        "descWithFeature": "You need an active subscription plan to use {feature}.",
+        "cta": "View Plans"
+      },
+      "credit": {
+        "badge": "AI CREDITS",
+        "title": "This action requires credits",
+        "description": "You need a sufficient credit balance to run this AI action.",
+        "descWithFeature": "You need a sufficient credit balance to use {feature}.",
+        "cta": "Add Credits"
+      },
+      "features": {
+        "optimization": "Optimization",
+        "strategy": "Strategy",
+        "yoalgoritma": "YoAlgorithm",
+        "seo": "SEO",
+        "audience_ai": "AI-Based Audience",
+        "ad_account_slot": "Ad Account",
+        "marketing_setup": "Marketing Setup",
+        "optimization_ai_scan_pro": "AI Scan Pro",
+        "design_generation": "Design Generation",
+        "strategy_overage": "Extra Strategy",
+        "yoalgoritma_chat": "YoAlgorithm Chat"
+      },
+      "featureDescriptions": {
+        "optimization": "You need an active subscription plan for the optimization panel and campaign score.",
+        "strategy": "You need an active subscription plan to use the AI-powered strategy engine.",
+        "yoalgoritma": "You need an active subscription plan for the YoAlgorithm command center and AI suggestions.",
+        "seo": "You need an active subscription plan to use the SEO analysis tool.",
+        "audience_ai": "You need an active subscription plan for AI-based audience generation.",
+        "ad_account_slot": "You've reached your plan's ad account limit. Upgrade your plan to add more ad accounts.",
+        "marketing_setup": "You need an active subscription plan to use the marketing infrastructure setup wizard.",
+        "optimization_ai_scan_pro": "You need a sufficient credit balance for the AI Scan Pro deep analysis.",
+        "design_generation": "You need a sufficient credit balance to run AI design generation.",
+        "strategy_overage": "Your monthly strategy limit is reached. You need a sufficient credit balance to create extra strategies.",
+        "yoalgoritma_chat": "You need a sufficient credit balance for YoAlgorithm content generation."
+      }
+    }
+  },
   "legal": {
     "privacyPolicy": {
       "title": "Privacy Policy",

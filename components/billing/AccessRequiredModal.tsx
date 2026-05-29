@@ -2,6 +2,7 @@
 
 import { useEffect } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { Sparkles, Zap, ShieldCheck, Lock, X } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 import {
@@ -47,22 +48,6 @@ export interface AccessRequiredModalProps {
   onClose?: () => void
 }
 
-const SUBSCRIPTION_DEFAULTS = {
-  badge: 'ABONELİK',
-  title: 'Bu özellik için abonelik gereklidir',
-  description:
-    'Bu alanı kullanabilmek için aktif bir abonelik planına sahip olmanız gerekir.',
-  cta: 'Planları İncele',
-}
-
-const CREDIT_DEFAULTS = {
-  badge: 'AI KREDİ',
-  title: 'Bu işlem için kredi gereklidir',
-  description:
-    'Bu AI işlemini çalıştırmak için yeterli kredi bakiyesine sahip olmanız gerekir.',
-  cta: 'Kredi Yükle',
-}
-
 /**
  * YoAi'de ücretli erişim gerektiren TÜM alanlarda kullanılan global modal.
  *
@@ -91,6 +76,7 @@ export default function AccessRequiredModal({
   onClose,
 }: AccessRequiredModalProps) {
   const router = useRouter()
+  const t = useTranslations('billing.accessRequired')
   const canDismiss = dismissible && typeof onClose === 'function'
 
   // Body scroll lock — modal kapatılamadığı sürece arkadaki sayfada
@@ -116,27 +102,32 @@ export default function AccessRequiredModal({
     return () => document.removeEventListener('keydown', handler, true)
   }, [canDismiss, onClose])
 
+  const isCredit = type === 'credit'
+  const typeKey = isCredit ? 'credit' : 'subscription'
+
   const rule: FeatureAccessRule | null = featureKey
     ? getFeatureRule(featureKey)
     : null
-  const resolvedFeatureName = featureName ?? rule?.label
+  // Feature etiketi/açıklaması i18n öncelikli (TR+EN); featureAccessMap'teki TR
+  // değerler geriye-uyum fallback olarak kalır.
+  const featureLabelI18n =
+    rule && t.has(`features.${rule.key}`) ? t(`features.${rule.key}`) : undefined
+  const featureDescI18n =
+    rule && t.has(`featureDescriptions.${rule.key}`)
+      ? t(`featureDescriptions.${rule.key}`)
+      : undefined
+  const resolvedFeatureName = featureName ?? featureLabelI18n ?? rule?.label
 
-  const isCredit = type === 'credit'
-  const defaults = isCredit ? CREDIT_DEFAULTS : SUBSCRIPTION_DEFAULTS
-
-  const resolvedTitle = title ?? defaults.title
-  const resolvedBadge = badgeLabel ?? defaults.badge
+  const resolvedTitle = title ?? t(`${typeKey}.title`)
+  const resolvedBadge = badgeLabel ?? t(`${typeKey}.badge`)
   const resolvedDescription =
     description ??
+    featureDescI18n ??
     rule?.description ??
     (resolvedFeatureName
-      ? `${resolvedFeatureName} özelliğini kullanabilmek için ${
-          isCredit
-            ? 'yeterli kredi bakiyesine'
-            : 'aktif bir abonelik planına'
-        } sahip olmanız gerekir.`
-      : defaults.description)
-  const resolvedCta = ctaLabel ?? defaults.cta
+      ? t(`${typeKey}.descWithFeature`, { feature: resolvedFeatureName })
+      : t(`${typeKey}.description`))
+  const resolvedCta = ctaLabel ?? t(`${typeKey}.cta`)
   // Tek billing alanı şu an `/abonelik` — kredi sekmesine derin link veriyoruz.
   const defaultHref = isCredit
     ? `${ROUTES.SUBSCRIPTION}#krediler`
@@ -180,7 +171,7 @@ export default function AccessRequiredModal({
           <button
             type="button"
             onClick={onClose}
-            aria-label="Kapat"
+            aria-label={t('closeAria')}
             className="absolute right-3 top-3 flex h-8 w-8 items-center justify-center rounded-full text-gray-400 transition hover:bg-gray-100 hover:text-gray-600"
           >
             <X className="h-4 w-4" />

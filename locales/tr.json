@@ -1,4 +1,49 @@
 {
+  "billing": {
+    "accessRequired": {
+      "closeAria": "Kapat",
+      "subscription": {
+        "badge": "ABONELİK",
+        "title": "Bu özellik için abonelik gereklidir",
+        "description": "Bu alanı kullanabilmek için aktif bir abonelik planına sahip olmanız gerekir.",
+        "descWithFeature": "{feature} özelliğini kullanabilmek için aktif bir abonelik planına sahip olmanız gerekir.",
+        "cta": "Planları İncele"
+      },
+      "credit": {
+        "badge": "AI KREDİ",
+        "title": "Bu işlem için kredi gereklidir",
+        "description": "Bu AI işlemini çalıştırmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
+        "descWithFeature": "{feature} özelliğini kullanabilmek için yeterli kredi bakiyesine sahip olmanız gerekir.",
+        "cta": "Kredi Yükle"
+      },
+      "features": {
+        "optimization": "Optimizasyon",
+        "strategy": "Strateji",
+        "yoalgoritma": "YoAlgoritma",
+        "seo": "SEO",
+        "audience_ai": "AI Tabanlı Hedef Kitle",
+        "ad_account_slot": "Reklam Hesabı",
+        "marketing_setup": "Marketing Kurulumu",
+        "optimization_ai_scan_pro": "AI ile Tara Pro",
+        "design_generation": "Tasarım Üretimi",
+        "strategy_overage": "Ek Strateji",
+        "yoalgoritma_chat": "YoAlgoritma Sohbet"
+      },
+      "featureDescriptions": {
+        "optimization": "Optimizasyon paneli ve kampanya skoru için aktif bir abonelik planına sahip olmanız gerekir.",
+        "strategy": "AI destekli strateji motorunu kullanmak için aktif bir abonelik planına sahip olmanız gerekir.",
+        "yoalgoritma": "YoAlgoritma komut merkezi ve AI önerileri için aktif bir abonelik planına sahip olmanız gerekir.",
+        "seo": "SEO analiz aracını kullanmak için aktif bir abonelik planına sahip olmanız gerekir.",
+        "audience_ai": "AI tabanlı hedef kitle üretimi için aktif bir abonelik planına sahip olmanız gerekir.",
+        "ad_account_slot": "Planınızın reklam hesabı limitine ulaştınız. Daha fazla reklam hesabı eklemek için planınızı yükseltin.",
+        "marketing_setup": "Pazarlama altyapısı kurulum sihirbazını kullanmak için aktif bir abonelik planına sahip olmanız gerekir.",
+        "optimization_ai_scan_pro": "AI ile Tara Pro derinlemesine analizi için yeterli kredi bakiyesine sahip olmanız gerekir.",
+        "design_generation": "AI tasarım üretimini çalıştırmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
+        "strategy_overage": "Aylık strateji limitiniz doldu. Ek strateji oluşturmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
+        "yoalgoritma_chat": "YoAlgoritma içerik üretimi için yeterli kredi bakiyesine sahip olmanız gerekir."
+      }
+    }
+  },
   "legal": {
     "privacyPolicy": {
       "title": "Gizlilik Politikası",
