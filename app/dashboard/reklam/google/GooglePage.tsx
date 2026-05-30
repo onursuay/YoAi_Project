@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
+import AdAccountSlotSelector from '@/components/billing/AdAccountSlotSelector'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
 import { ToastContainer, ToastType } from '@/components/Toast'
@@ -442,6 +443,9 @@ export default function GooglePage() {
       />
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6 space-y-6">
+          {/* Multi-account slot seçici — tier'a göre 2+ hesap seçilebilir; aktif
+              hesap slot 1'dir. Mevcut select-account akışıyla mirror çalışır. */}
+          <AdAccountSlotSelector platform="google_ads" />
           {/* KPI Cards — values from campaign data, charts from daily series */}
           <div className="grid grid-cols-5 gap-4">
             <DashboardKpiCard

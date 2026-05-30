@@ -3,6 +3,7 @@
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import { useSearchParams, useRouter } from 'next/navigation'
+import AdAccountSlotSelector from '@/components/billing/AdAccountSlotSelector'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
 import ToggleSwitch from '@/components/ToggleSwitch'
@@ -2600,6 +2601,10 @@ export default function MetaPage() {
       />
       <div className="flex-1 overflow-y-auto bg-gray-50">
         <div className="p-6 space-y-6">
+          {/* Multi-account slot seçici — tier'a göre 2+ hesap seçilebilir; aktif
+              hesap slot 1'dir. Mevcut select-adaccount akışıyla mirror çalışır. */}
+          <AdAccountSlotSelector platform="meta" />
+
           {/* Quick Actions placeholder */}
           {/* KPI Cards — isMetaEmptyState => value "—", delta "—", placeholder sparkline (no ₺0/0); component empty prop enforces override */}
           {(() => {

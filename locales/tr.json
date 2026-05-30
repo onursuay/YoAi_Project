@@ -3126,7 +3126,16 @@
       "connectFromIntegration": "Bu hesabı Entegrasyon alanından bağlayın",
       "goToIntegrations": "Entegrasyon'a git",
       "multipleAccountsDetected": "{count} hesap bulundu — birini seç",
-      "switchingAccount": "Hesap değiştiriliyor…"
+      "switchingAccount": "Hesap değiştiriliyor…",
+      "slotsTitle": "Reklam Hesaplarınız",
+      "slotsSubtitle": "Slot 1 aktif hesabınızdır; planınıza göre ek slot'lar açıktır.",
+      "slotLabel": "Slot {n}",
+      "slotActive": "Aktif",
+      "slotPickAccount": "Hesap seç",
+      "slotTierLocked": "Plan yükseltme gerekli",
+      "slotRemove": "Kaldır",
+      "slotsLoading": "Hesaplar yükleniyor…",
+      "slotsCount": "{used} / {max} hesap kullanılıyor"
     },
     "preview": {
       "title": "Neler Kurulacak?",

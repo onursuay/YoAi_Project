@@ -3126,7 +3126,16 @@
       "connectFromIntegration": "Connect this account from the Integrations area",
       "goToIntegrations": "Go to Integrations",
       "multipleAccountsDetected": "{count} accounts found — pick one",
-      "switchingAccount": "Switching account…"
+      "switchingAccount": "Switching account…",
+      "slotsTitle": "Your Ad Accounts",
+      "slotsSubtitle": "Slot 1 is your active account; additional slots are available based on your plan.",
+      "slotLabel": "Slot {n}",
+      "slotActive": "Active",
+      "slotPickAccount": "Pick an account",
+      "slotTierLocked": "Plan upgrade required",
+      "slotRemove": "Remove",
+      "slotsLoading": "Loading accounts…",
+      "slotsCount": "{used} / {max} accounts in use"
     },
     "preview": {
       "title": "What Will Be Created?",

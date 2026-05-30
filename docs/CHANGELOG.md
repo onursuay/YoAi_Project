@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-30 — Multi-account slot UI (Faz 2A): AdAccountSlotSelector + /meta-ads + /google-ads entegrasyonu
+- **İstenen:** Reklam sayfalarında 2-slot (tier'a göre N-slot) hesap seçici. Slot 1 = aktif hesap, slot 2+ = ek hesaplar. Tier'ı aşan slot'lar görünür ama kilitli (uyarı yok).
+- **Çözüm:** Yeni `components/billing/AdAccountSlotSelector.tsx` (yeniden kullanılabilir) — props `platform: 'meta' | 'google_ads'`. Mount'ta `/api/meta/adaccounts` veya `/api/integrations/google-ads/accounts`'tan kullanıcının erişebildiği TÜM hesapları çeker; `/api/billing/ad-account-slots`'tan seçili slot'ları + maxSlots + isOwner okur. Her slot için WizardSelect dropdown gösterir; slot 1 = aktif (mor "Aktif" rozeti), diğerleri ek. Tier limitini aşan **1 ek slot görünür ama kilitli** (gri, lock ikonu, "Plan yükseltme gerekli", tıklanamaz — **uyarı popup'ı yok**). Slot değişimi: (1) `/api/billing/ad-account-slots` POST (slot tablosuna kaydet), (2) slot 1 ise ek olarak `/api/meta/select-adaccount` veya `/api/integrations/google-ads/select-account` çağır (mevcut Meta/Google entegrasyonu aktif hesabı buradan okur — mirror mantığı). Slot 2+ kaldırılabilir (X butonu); slot 1 silinemez (disconnect ayrı akış).
+- **Entegrasyon:** `app/dashboard/reklam/meta/MetaPage.tsx` ve `app/dashboard/reklam/google/GooglePage.tsx`'in Topbar'ından SONRA, KPI kartlarından ÖNCE komponent eklendi. Mevcut Meta/Google entegrasyon kodu **dokunulmadı** — sadece public endpoint'ler client'tan çağrıldı.
+- **i18n:** 9 yeni anahtar TR+EN (`slotsTitle`, `slotsSubtitle`, `slotLabel`, `slotActive`, `slotPickAccount`, `slotTierLocked`, `slotRemove`, `slotsLoading`, `slotsCount`). parity tam (3009/3009); tsc 0 hata; next build temiz.
+- **Kalan iş**: Faz 2B (`/entegrasyon` sadeleştirme — hesap detayı kaldır, sadece bağlı/değil göster), Faz 3 (YoAlgoritma/Strateji/Optimizasyon vb. modülleri `getSelectedAdAccounts` ile çoklu slot aware yap).
+- **Dosyalar:** `components/billing/AdAccountSlotSelector.tsx` (yeni), `app/dashboard/reklam/meta/MetaPage.tsx`, `app/dashboard/reklam/google/GooglePage.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-30 — Multi-account slot altyapısı (Faz 1): DB + store + tier limit + endpoint
 - **İstenen:** Kullanıcının Business Manager / MCC altında onlarca alt hesabı olabilir; tier'a göre N tane seçebilsin (Free/Basic: 2 toplam, Starter: 4, Premium: 8, Enterprise: 20). 3. seçim donuk olsun. Entegrasyon sayfası sade kalsın, hesap detayı reklam sayfalarına geçsin.
 - **Çözüm (Faz 1 — altyapı):** Mevcut `meta_connections` / `google_ads_connections` tablolarına dokunmadan paralel yeni katman:
