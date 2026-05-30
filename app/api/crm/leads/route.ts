@@ -38,6 +38,7 @@ export async function GET(request: Request) {
     note: l.note,
     createdAt: l.created_at,
     leadCreatedTime: l.lead_created_time,
+    metaSyncedAt: l.meta_synced_at,
   }))
 
   return NextResponse.json({ ok: true, leads, total: result.total, counts: result.counts })

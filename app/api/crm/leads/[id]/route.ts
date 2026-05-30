@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkCrmAccess } from '@/lib/crm/guard'
 import { getLead, updateLeadStatus, type CrmLeadStatus } from '@/lib/crm/leadStore'
+import { syncLeadToMeta } from '@/lib/crm/metaSync'
 
 export const dynamic = 'force-dynamic'
 
@@ -67,5 +68,19 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
     return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })
   }
 
-  return NextResponse.json({ ok: true, status: row.status, note: row.note })
+  // Faz 2 — Meta senkron (CUSTOMER_LIST audience + opsiyonel CAPI). Lead durumu
+  // zaten kaydedildi; senkron best-effort, hatası PATCH'i bozmaz. Meta yavaş/erişilemez
+  // olsa bile kullanıcıyı bekletmemek için 9sn üst sınır (race).
+  const metaSync = await Promise.race([
+    syncLeadToMeta(access.user.id, row, status).catch((e) => ({
+      ok: false as const,
+      reason: 'sync_failed' as const,
+      error: e instanceof Error ? e.message : String(e),
+    })),
+    new Promise<{ ok: false; reason: 'sync_timeout' }>((resolve) =>
+      setTimeout(() => resolve({ ok: false, reason: 'sync_timeout' }), 9000),
+    ),
+  ])
+
+  return NextResponse.json({ ok: true, status: row.status, note: row.note, metaSync })
 }

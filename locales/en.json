@@ -3071,7 +3071,8 @@
       "viewDetail": "Details",
       "markPositive": "Mark positive",
       "markNegative": "Mark negative",
-      "markNew": "Reset to new"
+      "markNew": "Reset to new",
+      "metaSynced": "Synced to Meta"
     },
     "detail": {
       "title": "Lead Detail",
@@ -3087,6 +3088,8 @@
       "connected": "Page connected.",
       "disconnected": "Disconnected.",
       "statusUpdated": "Lead updated.",
+      "synced": "Lead updated and synced to Meta.",
+      "syncFailed": "Lead updated; Meta sync failed.",
       "connectError": "Could not connect the page.",
       "error": "Something went wrong."
     }

@@ -3071,7 +3071,8 @@
       "viewDetail": "Detay",
       "markPositive": "Olumlu işaretle",
       "markNegative": "Olumsuz işaretle",
-      "markNew": "Yeniye al"
+      "markNew": "Yeniye al",
+      "metaSynced": "Meta'ya gönderildi"
     },
     "detail": {
       "title": "Lead Detayı",
@@ -3087,6 +3088,8 @@
       "connected": "Sayfa bağlandı.",
       "disconnected": "Bağlantı kaldırıldı.",
       "statusUpdated": "Lead güncellendi.",
+      "synced": "Lead güncellendi ve Meta'ya senkronlandı.",
+      "syncFailed": "Lead güncellendi; Meta senkronu yapılamadı.",
       "connectError": "Sayfa bağlanamadı.",
       "error": "Bir hata oluştu."
     }

@@ -15,6 +15,7 @@ import {
   Inbox,
   Mail,
   Phone,
+  CheckCircle2,
 } from 'lucide-react'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
 import CrmLeadDetailModal from './CrmLeadDetailModal'
@@ -33,6 +34,7 @@ interface LeadRow {
   note: string | null
   createdAt: string
   leadCreatedTime: string | null
+  metaSyncedAt: string | null
 }
 
 interface PageOption { id: string; name: string }
@@ -161,8 +163,16 @@ export default function CrmDashboard() {
       })
       const data = await res.json()
       if (data.ok) {
-        flash('ok', t('toast.statusUpdated'))
-        // Lokal güncelle + sayaçları yenile
+        // Durum kaydedildi; Meta senkron sonucuna göre mesaj seç.
+        const sync = data.metaSync as { ok?: boolean; reason?: string } | undefined
+        if (sync?.ok && status !== 'new') {
+          flash('ok', t('toast.synced'))
+        } else if (sync && !sync.ok && sync.reason === 'sync_failed') {
+          flash('err', t('toast.syncFailed'))
+        } else {
+          flash('ok', t('toast.statusUpdated'))
+        }
+        // Lokal güncelle + sayaçları yenile (metaSyncedAt server'dan gelir)
         setLeads((prev) => {
           if (filter !== 'all' && filter !== status) return prev.filter((l) => l.id !== id)
           return prev.map((l) => (l.id === id ? { ...l, status } : l))
@@ -343,6 +353,11 @@ export default function CrmDashboard() {
                       <div className="flex items-center gap-2 flex-wrap">
                         <h3 className="text-sm font-semibold text-gray-900 truncate">{lead.fullName || t('list.noName')}</h3>
                         {statusBadge(lead.status)}
+                        {lead.metaSyncedAt && lead.status !== 'new' && (
+                          <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
+                            <CheckCircle2 className="w-3 h-3" /> {t('list.metaSynced')}
+                          </span>
+                        )}
                       </div>
                       <div className="mt-1.5 flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-gray-500">
                         {lead.email && <span className="inline-flex items-center gap-1"><Mail className="w-3.5 h-3.5" />{lead.email}</span>}

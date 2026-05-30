@@ -33,6 +33,9 @@ export interface CrmLeadRow {
   status: CrmLeadStatus
   note: string | null
   lead_created_time: string | null
+  meta_synced_at: string | null
+  meta_capi_sent: boolean
+  meta_sync_error: string | null
   created_at: string
   updated_at: string
 }
@@ -166,4 +169,28 @@ export async function updateLeadStatus(
     return null
   }
   return data as CrmLeadRow
+}
+
+/**
+ * Meta senkron sonucunu işler (Faz 2). Lead'in durum güncellemesinden ayrı,
+ * best-effort: senkron başarısız olsa bile lead durumu zaten kayıtlıdır.
+ */
+export async function markMetaSync(
+  id: string,
+  userId: string,
+  patch: { syncedAt?: string; capiSent?: boolean; error?: string | null },
+): Promise<void> {
+  if (!supabase) return
+  const updates: Record<string, unknown> = {}
+  if (patch.syncedAt !== undefined) updates.meta_synced_at = patch.syncedAt
+  if (patch.capiSent !== undefined) updates.meta_capi_sent = patch.capiSent
+  if (patch.error !== undefined) updates.meta_sync_error = patch.error
+  if (Object.keys(updates).length === 0) return
+  // user_id filtresi: service-role kullandığımız için app katmanında izolasyon şart.
+  const { error } = await supabase
+    .from('crm_leads')
+    .update(updates)
+    .eq('id', id)
+    .eq('user_id', userId)
+  if (error) console.warn('[CrmLeadStore] META_SYNC_MARK_FAIL', error.message)
 }

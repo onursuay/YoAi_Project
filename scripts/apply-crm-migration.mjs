@@ -2,10 +2,12 @@
 /**
  * YoAi — CRM Faz 1 Migration Uygulayıcı
  *
- * Uygular:
+ * Uygular (sırayla):
  *   20260530000000_create_crm_tables.sql
  *     - crm_page_subscriptions (webhook page_id → user_id eşlemesi)
  *     - crm_leads (Meta Lead Ads → CRM, status: new|positive|negative)
+ *   20260530001000_crm_meta_sync.sql  (Faz 2)
+ *     - crm_leads: meta_synced_at / meta_capi_sent / meta_sync_error sütunları
  *
  * ⚠️  ÖNEMLİ: Bu migration CANONICAL Supabase projesine (omddq) uygulanmalı.
  *     Kod tablolar olmadan da GÜVENLİ çalışır (store'lar boş liste/null döner,
@@ -50,20 +52,26 @@ if (!DATABASE_URL) {
   process.exit(1)
 }
 
-const FILE = 'supabase/migrations/20260530000000_create_crm_tables.sql'
+const FILES = [
+  'supabase/migrations/20260530000000_create_crm_tables.sql',
+  'supabase/migrations/20260530001000_crm_meta_sync.sql',
+]
 
 async function main() {
-  console.log('\n🚀  YoAi — CRM Faz 1 Migration\n')
+  console.log('\n🚀  YoAi — CRM Migration (Faz 1 + Faz 2)\n')
   const client = new Client({ connectionString: DATABASE_URL })
   await client.connect()
+  client.on('notice', msg => { if (msg.message) console.log(`   ℹ  ${msg.message}`) })
   try {
-    const sql = readFileSync(resolve(ROOT, FILE), 'utf8')
-    console.log(`▶  ${FILE}`)
-    client.on('notice', msg => { if (msg.message) console.log(`   ℹ  ${msg.message}`) })
-    await client.query(sql)
-    console.log('   ✓  Başarılı\n')
+    for (const file of FILES) {
+      const sql = readFileSync(resolve(ROOT, file), 'utf8')
+      console.log(`▶  ${file}`)
+      await client.query(sql)
+      console.log('   ✓  Başarılı\n')
+    }
     console.log('✅  Migration uygulandı. Doğrulama (psql/SQL Editor):')
-    console.log("     SELECT to_regclass('public.crm_page_subscriptions'), to_regclass('public.crm_leads');\n")
+    console.log("     SELECT to_regclass('public.crm_page_subscriptions'), to_regclass('public.crm_leads');")
+    console.log("     SELECT column_name FROM information_schema.columns WHERE table_name='crm_leads' AND column_name LIKE 'meta_%';\n")
   } catch (err) {
     console.error(`   ✗  Başarısız: ${err.message}\n`)
     throw err

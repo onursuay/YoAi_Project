@@ -2,6 +2,22 @@
 
 ---
 
+## 2026-05-30 — CRM Faz 2: Meta senkron (olumlu/olumsuz lead → CUSTOMER_LIST + CAPI)
+- **Sorun:** Olumlu/olumsuz işaretlenen lead'ler Meta ile senkron çalışmalı (Mailchimp ↔ Meta modeli) — reklam optimizasyonunu beslemeli ve hedeflemeyi şekillendirmeli.
+- **Çözüm:** Lead durumu değişince gerçek Meta senkronu (additive, idempotent — mevcut Meta altyapısına dokunulmaz):
+  - **Olumlu** → "YoAi CRM — Olumlu Lead'ler" CUSTOMER_LIST custom audience'a SHA-256 hash'li e-posta/telefon eklenir (lookalike/retargeting tohumu) + bir kez CAPI `QualifiedLead` custom olayı (`system_generated`; standart Lead metriğini şişirmez).
+  - **Olumsuz** → "YoAi CRM — Olumsuz Lead'ler" audience'a eklenir (hedeflemeden hariç tutma) + olumlu listeden çıkarılır.
+  - **Yeni (geri al)** → her iki listeden çıkarılır.
+  - UI: işaretlemede "Meta'ya senkronlandı" toast'ı + lead satırında "Meta'ya gönderildi" rozeti.
+  - **Motor:** `lib/crm/metaSync.ts` — mevcut `MetaGraphClient` (Authorization header) + `sendCapiEvent` yeniden kullanılır; audience bul/oluştur idempotent (aynı isim → tekrar oluşturmaz), üye ekleme `POST /{aud}/users`, çıkarma `DELETE /{aud}/users` (payload gövdede).
+  - **İzleme:** `crm_leads`'e `meta_synced_at` / `meta_capi_sent` / `meta_sync_error` (migration `20260530001000`).
+- **Adversarial inceleme (4 ajan) sonrası düzeltmeler:** DELETE payload query→gövde (kitle çıkarma kırığı giderildi); `markMetaSync` IDOR (user_id filtresi); PATCH 9sn timeout race + düşük retry (kullanıcıyı bekletmez); pagination cursor mantığı sağlamlaştırıldı; telefon baştaki sıfır + min-uzunluk doğrulaması; gereksiz `description` parametresi kaldırıldı. (Kapsam dışı: mevcut `metaCapiClient.ts` token-in-query deseni — çalışan marketing-setup CAPI'sine dokunulmadı.)
+- **PII:** Hash'leme server-side (SHA-256, e-posta lowercase, telefon yalnız rakam); ham PII Meta'ya gönderilmez, loglanmaz.
+- **Bekleyen (prod):** `20260530001000_crm_meta_sync.sql` omddq'ya uygulanmalı (`scripts/apply-crm-migration.mjs` artık iki migration'ı da çalıştırır). Faz 3 (e-posta marketing) ayrı onay bekliyor.
+- **Dosyalar:** `lib/crm/{metaSync,leadStore}.ts`, `app/api/crm/leads/[id]/route.ts`, `app/api/crm/leads/route.ts`, `components/crm/CrmDashboard.tsx`, `supabase/migrations/20260530001000_crm_meta_sync.sql`, `scripts/apply-crm-migration.mjs`, `locales/{tr,en}.json`. tsc 0 hata; tr/en parity tam.
+
+---
+
 ## 2026-05-30 — MetaConnectWizard limit conflict düzeltildi + /entegrasyon'da bağlı kullanıcı adı
 - **Sorun 1 (kritik):** Wizard "1/2 hesap seçildi" gösteriyordu ama 2. seçimde abonelik modal'ı çıkıyordu; ileri'ye basınca da yine modal çıkıyordu. Kök neden: iki paralel limit sistemi (YENİ slot + ESKİ `useRegisteredAccounts`) çatışıyordu — eski reg sistemi daha sıkı sayıyordu, slot sistem 2 diyordu, MIN alınca 1 olunca 2. seçim block ediliyordu. Ayrıca `reg.addAccount` çağrısı limit_reached false-positive üretip ileri butonu modal'a düşürüyordu.
 - **Sorun 2:** /entegrasyon Meta kartında "Bağlı" yazıyordu ama hangi hesabın bağlı olduğu görünmüyordu; kullanıcı bağlı OAuth kullanıcısının/işletmesinin adını da görmek istiyordu.
