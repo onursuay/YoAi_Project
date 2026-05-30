@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Multi-account slot altyapısı (Faz 1): DB + store + tier limit + endpoint
+- **İstenen:** Kullanıcının Business Manager / MCC altında onlarca alt hesabı olabilir; tier'a göre N tane seçebilsin (Free/Basic: 2 toplam, Starter: 4, Premium: 8, Enterprise: 20). 3. seçim donuk olsun. Entegrasyon sayfası sade kalsın, hesap detayı reklam sayfalarına geçsin.
+- **Çözüm (Faz 1 — altyapı):** Mevcut `meta_connections` / `google_ads_connections` tablolarına dokunmadan paralel yeni katman:
+  - **Migration**: `user_selected_ad_accounts (user_id, platform, account_id, account_name, slot_index, ...)` — `UNIQUE(user_id, platform, slot_index)` + `UNIQUE(user_id, platform, account_id)`. Tabloya **omddq'ya elle uygulanmalı**.
+  - **Store** (`lib/billing/adAccountSlots.ts`): `getSelectedAdAccounts`, `countSelectedAdAccounts`, `getSelectedAdAccountsForPlatform`, `setAdAccountSlot`, `removeAdAccountSlot`, `isAdAccountAlreadySelected`. Plan-tier limit: `getMaxAdAccountsForPlan(planId)` → free/basic 2, starter 4, premium 8, enterprise 20.
+  - **Endpoint** (`/api/billing/ad-account-slots` GET/POST/DELETE): tier limit doğrulaması (owner muaf), aynı hesap iki slot'a giremez, sub'tan plan_id okur.
+- **Mevcut entegrasyona dokunulmadı**: `selected_ad_account_id` / `customer_id` "aktif (slot 1)" mantığıyla mirror'lanır; `resolveMetaContext` / `getGoogleAdsContext` dokunulmadan çalışmaya devam eder.
+- **Kalan iş (Faz 2 + 3):** /entegrasyon UI sadeleştirme (sadece bağlı/değil), reklam sayfalarında 2-slot dropdown selector, sihirbazın slot sistemine bağlanması, YoAlgoritma/Strateji vb. modüllerin multi-slot aware olması.
+- **Dosyalar:** `supabase/migrations/20260530000000_create_user_selected_ad_accounts.sql` (yeni), `lib/billing/adAccountSlots.ts` (yeni), `app/api/billing/ad-account-slots/route.ts` (yeni). tsc 0 hata; next build temiz.
+
 ## 2026-05-30 — Marketing: "Yazma İzinleri" yeniden adlandırma + Meta/Google Ads multi-account dropdown
 - **Sorun:** (1) "Bağlı" görünmesine rağmen "Kurulum İzni Ver" istemesi çelişki olarak algılanıyordu — okuma bağlantısı ile yazma izninin farkı açık değildi. (2) Kullanıcının Business Manager / MCC altında onlarca alt hesabı olabilir; sihirbazda yalnız tek hesap görünüyordu, alt hesapları seçemiyordu.
 - **Çözüm:**
