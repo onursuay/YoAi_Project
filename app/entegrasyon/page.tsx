@@ -521,30 +521,18 @@ function EntegrasyonContent() {
                   </button>
                 </div>
 
-                {metaStatus.connected && metaStatus.accountName && (
-                  <div className="mb-3 p-3 bg-green-50 rounded-lg">
-                    <p className="text-caption text-green-900 font-medium mb-1">{t('meta.account')}</p>
-                    <p className="text-sm text-green-800">{metaStatus.accountName}</p>
-                  </div>
-                )}
-
-                <button
-                  onClick={() => metaStatus.connected ? handleChangeAccount() : handleMetaToggle(true)}
-                  className={`w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm transition-colors ${
-                    metaStatus.connected 
-                      ? 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-                      : 'bg-primary text-white hover:bg-primary/90'
-                  }`}
-                >
-                  {metaStatus.connected ? (
-                    <RefreshCw className="w-4 h-4" />
-                  ) : (
+                {/* Hesap detayı + hesap değiştir kaldırıldı — hesap seçimi /meta-ads sayfasındaki slot selector'da yapılır. */}
+                {!metaStatus.connected && (
+                  <button
+                    onClick={() => handleMetaToggle(true)}
+                    className="w-full flex items-center justify-center gap-2 px-4 py-2 rounded-lg font-medium text-sm bg-primary text-white hover:bg-primary/90 transition-colors"
+                  >
                     <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                       <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
                     </svg>
-                  )}
-                  {metaStatus.connected ? t('meta.changeAccount') : t('meta.connectAccount')}
-                </button>
+                    {t('meta.connectAccount')}
+                  </button>
+                )}
               </div>
 
               {/* Google Ads */}
@@ -592,38 +580,7 @@ function EntegrasyonContent() {
                   </button>
                 </div>
 
-                {googleStatus.connected && googleStatus.hasSelectedAccount && (googleStatus.accountName || googleStatus.accountId) && (
-                  <div className="mb-3 p-3 bg-green-50 rounded-lg">
-                    <p className="text-caption text-green-900 font-medium mb-1">{t('google.account')}</p>
-                    <p className="text-sm text-green-800">{googleStatus.accountName || googleStatus.accountId}</p>
-                  </div>
-                )}
-
-                {googleStatus.connected && googleStatus.hasSelectedAccount && (
-                  <button
-                    onClick={openGoogleAccountModal}
-                    disabled={isLoading}
-                    type="button"
-                    className="w-full flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-gray-100 text-gray-700 hover:bg-gray-200 transition-colors disabled:opacity-50"
-                  >
-                    <RefreshCw className="w-4 h-4" />
-                    {t('google.changeAccount')}
-                  </button>
-                )}
-
-                {googleStatus.connected && !googleStatus.hasSelectedAccount && (
-                  <button
-                    onClick={openGoogleAccountModal}
-                    disabled={isLoading}
-                    className="w-full flex items-center justify-center gap-2 btn-h-sm px-4 rounded-lg font-medium text-ui bg-primary text-white hover:bg-primary/90 transition-colors disabled:opacity-50"
-                  >
-                    <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 10h16M4 14h16M4 18h16" />
-                    </svg>
-                    {t('google.selectAccount')}
-                  </button>
-                )}
-
+                {/* Hesap detayı + hesap seç/değiştir kaldırıldı — hesap seçimi /google-ads sayfasındaki slot selector'da yapılır. */}
                 {!googleStatus.connected && (
                   <button
                     onClick={handleGoogleConnect}

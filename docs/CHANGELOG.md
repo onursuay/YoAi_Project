@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Multi-account slot UI (Faz 2B): /entegrasyon sadeleştirme (Meta + Google Ads kartları)
+- **İstenen:** Entegrasyon sayfasında sadece "Meta bağlı / Google bağlı" durumu görünsün; hangi hesap seçili gösterilmesin. Hesap seçimi reklam sayfalarındaki slot selector'da yapılsın (Faz 2A'da eklendi).
+- **Çözüm:** `/entegrasyon/page.tsx` Meta ve Google Ads kartlarında:
+  - **Kaldırıldı**: hesap adı yeşil kutu gösterimi (`accountName` display block), "Hesabı Değiştir" butonu, "Hesap Seç" butonu, ilgili modal trigger'ları.
+  - **Korundu**: Bağlantı toggle'ı (connect/disconnect), durum rozeti (Bağlı/Değil), ilk bağlanma için "Bağla" butonu.
+  - **Akış**: Kullanıcı Meta/Google'ı bağlar → kart "Bağlı" gösterir → kullanıcı /meta-ads veya /google-ads'e gider → slot selector erişilebilir hesapları gösterir → kullanıcı slot 1'i seçer (= aktif).
+- **GA + GSC etkilenmedi**: Property/site seçimi onlar için farklı bir konsept (multi-tenant ad account değil); /entegrasyon'da seçim akışları korundu.
+- **Modal kodları dead-code olarak kaldı**: `GoogleAccountModal` import + state hâlâ var ama trigger çağrılmıyor (zarar vermez; ilerde temizlenir). next build temiz; tsc 0 hata.
+- **Dosyalar:** `app/entegrasyon/page.tsx`
+
 ## 2026-05-30 — Multi-account slot UI (Faz 2A): AdAccountSlotSelector + /meta-ads + /google-ads entegrasyonu
 - **İstenen:** Reklam sayfalarında 2-slot (tier'a göre N-slot) hesap seçici. Slot 1 = aktif hesap, slot 2+ = ek hesaplar. Tier'ı aşan slot'lar görünür ama kilitli (uyarı yok).
 - **Çözüm:** Yeni `components/billing/AdAccountSlotSelector.tsx` (yeniden kullanılabilir) — props `platform: 'meta' | 'google_ads'`. Mount'ta `/api/meta/adaccounts` veya `/api/integrations/google-ads/accounts`'tan kullanıcının erişebildiği TÜM hesapları çeker; `/api/billing/ad-account-slots`'tan seçili slot'ları + maxSlots + isOwner okur. Her slot için WizardSelect dropdown gösterir; slot 1 = aktif (mor "Aktif" rozeti), diğerleri ek. Tier limitini aşan **1 ek slot görünür ama kilitli** (gri, lock ikonu, "Plan yükseltme gerekli", tıklanamaz — **uyarı popup'ı yok**). Slot değişimi: (1) `/api/billing/ad-account-slots` POST (slot tablosuna kaydet), (2) slot 1 ise ek olarak `/api/meta/select-adaccount` veya `/api/integrations/google-ads/select-account` çağır (mevcut Meta/Google entegrasyonu aktif hesabı buradan okur — mirror mantığı). Slot 2+ kaldırılabilir (X butonu); slot 1 silinemez (disconnect ayrı akış).
