@@ -3085,7 +3085,7 @@
       "detectedActions": "Tespit Edilen Aksiyonlar",
       "foundOnPages": "{count} sayfada",
       "truncatedNotice": "Site büyük olduğu için yalnızca ilk {count} sayfa tarandı.",
-      "businessAnalysisTitle": "Site Analizi (AI)",
+      "businessAnalysisTitle": "Site Analizi",
       "businessTypeLabel": "İşletme türü",
       "businessSummaryLabel": "Özet",
       "recommendedEvents": "İzlemenizi Önerdiğimiz Event'ler",

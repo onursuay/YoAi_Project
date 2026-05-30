@@ -3085,7 +3085,7 @@
       "detectedActions": "Detected Actions",
       "foundOnPages": "on {count} pages",
       "truncatedNotice": "The site is large, so only the first {count} pages were scanned.",
-      "businessAnalysisTitle": "Site Analysis (AI)",
+      "businessAnalysisTitle": "Site Analysis",
       "businessTypeLabel": "Business type",
       "businessSummaryLabel": "Summary",
       "recommendedEvents": "Events We Recommend Tracking",

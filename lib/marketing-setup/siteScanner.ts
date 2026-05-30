@@ -66,6 +66,126 @@ function pageUrl(page: FirecrawlPage, fallback: string): string {
   return page.metadata?.sourceURL || page.metadata?.url || fallback
 }
 
+// ─── 3. Parti eklenti / widget tespiti ───────────────────────────────────────
+// Live chat, rezervasyon motoru, e-ticaret platformları gibi bilinen widget'ları
+// script src / inline HTML üzerinden tespit eder. Widget bulununca o eklentinin
+// SAĞLADIĞI event'ler kanıt havuzuna eklenir (örn. JivoChat → WhatsApp/telefon/
+// e-posta/lead; HotelRunner → purchase/checkout). Claude'a da eklenti listesi
+// kanıt olarak verilir → "site search yok ama WhatsApp widget var" gibi
+// durumlar isabetli yakalanır.
+interface KnownPlugin {
+  name: string
+  pattern: RegExp
+  events: StandardEventKey[]
+  description: string
+}
+
+const KNOWN_PLUGINS: KnownPlugin[] = [
+  // ── Canlı sohbet / iletişim widget'ları ──
+  {
+    name: 'JivoChat',
+    pattern: /jivochat\.com|jivosite\.com|node\.jivosite/i,
+    events: ['contact_whatsapp', 'contact_phone', 'contact_email', 'lead'],
+    description: 'JivoChat çok kanallı sohbet eklentisi (WhatsApp, telefon, e-posta, form üzerinden iletişim)',
+  },
+  { name: 'Tawk.to', pattern: /tawk\.to/i, events: ['lead'], description: 'Tawk.to canlı sohbet' },
+  { name: 'Drift', pattern: /drift\.com\/embed/i, events: ['lead'], description: 'Drift canlı sohbet' },
+  { name: 'Intercom', pattern: /widget\.intercom\.io|intercomcdn/i, events: ['lead'], description: 'Intercom mesajlaşma' },
+  { name: 'Crisp', pattern: /client\.crisp\.chat/i, events: ['lead'], description: 'Crisp canlı sohbet' },
+  { name: 'LiveChat', pattern: /cdn\.livechatinc\.com/i, events: ['lead'], description: 'LiveChat canlı sohbet' },
+  { name: 'Zendesk Chat', pattern: /zopim\.com|zdassets\.com\/ekr/i, events: ['lead'], description: 'Zendesk canlı sohbet' },
+  { name: 'Tidio', pattern: /code\.tidio\.co/i, events: ['lead'], description: 'Tidio canlı sohbet' },
+  {
+    name: 'HubSpot Chat',
+    pattern: /js\.hs-scripts\.com|js\.hsforms\.net|hubspot\.com\/messages/i,
+    events: ['lead'],
+    description: 'HubSpot canlı sohbet / form',
+  },
+  {
+    name: 'Facebook Messenger Customer Chat',
+    pattern: /fb-customer-chat|customerchat\.js/i,
+    events: ['contact_messenger', 'lead'],
+    description: 'Facebook Messenger Customer Chat',
+  },
+  {
+    name: 'WhatsApp Chat Widget',
+    pattern: /wa-widget|whatsapp-chat-widget|wp-whatsapp/i,
+    events: ['contact_whatsapp'],
+    description: 'WhatsApp sohbet widget\'ı',
+  },
+  // ── Rezervasyon / sipariş motorları ──
+  {
+    name: 'HotelRunner',
+    pattern: /hotelrunner\.com/i,
+    events: ['purchase', 'begin_checkout', 'add_payment_info'],
+    description: 'HotelRunner rezervasyon motoru (otel/konaklama; rezervasyon = purchase)',
+  },
+  {
+    name: 'Booking.com Widget',
+    pattern: /booking\.com\/widget/i,
+    events: ['purchase', 'begin_checkout'],
+    description: 'Booking.com rezervasyon widget\'ı',
+  },
+  {
+    name: 'OpenTable',
+    pattern: /opentable\.com\/widget/i,
+    events: ['lead', 'purchase'],
+    description: 'OpenTable restoran rezervasyon widget\'ı',
+  },
+  {
+    name: 'Calendly',
+    pattern: /calendly\.com\/embed|assets\.calendly\.com/i,
+    events: ['lead'],
+    description: 'Calendly randevu/toplantı planlayıcı',
+  },
+  // ── E-ticaret platformları ──
+  {
+    name: 'Shopify',
+    pattern: /cdn\.shopify\.com|shopify\.com\/shop/i,
+    events: ['purchase', 'add_to_cart', 'begin_checkout', 'add_payment_info'],
+    description: 'Shopify e-ticaret altyapısı',
+  },
+  {
+    name: 'WooCommerce',
+    pattern: /woocommerce|wc-ajax|wc-cart-fragments/i,
+    events: ['purchase', 'add_to_cart', 'begin_checkout', 'add_payment_info'],
+    description: 'WooCommerce e-ticaret (WordPress eklentisi)',
+  },
+  {
+    name: 'İdeasoft',
+    pattern: /ideasoft\.com\.tr|ideacdn\.net/i,
+    events: ['purchase', 'add_to_cart', 'begin_checkout', 'add_payment_info'],
+    description: 'İdeaSoft e-ticaret platformu',
+  },
+  {
+    name: 'Ticimax',
+    pattern: /ticimax\.com\.tr|ticimax\.com/i,
+    events: ['purchase', 'add_to_cart', 'begin_checkout', 'add_payment_info'],
+    description: 'Ticimax e-ticaret platformu',
+  },
+  // ── Form eklentileri ──
+  {
+    name: 'Contact Form 7',
+    pattern: /contact-form-7|wpcf7-form/i,
+    events: ['lead'],
+    description: 'Contact Form 7 (WordPress iletişim formu)',
+  },
+  {
+    name: 'WPForms',
+    pattern: /wpforms-confirmation|wpforms\.com/i,
+    events: ['lead'],
+    description: 'WPForms (WordPress form eklentisi)',
+  },
+]
+
+function detectPlugins(html: string): KnownPlugin[] {
+  const found: KnownPlugin[] = []
+  for (const plugin of KNOWN_PLUGINS) {
+    if (plugin.pattern.test(html)) found.push(plugin)
+  }
+  return found
+}
+
 // ─── Detection heuristics ─────────────────────────────────────────────────────
 // Each rule inspects normalized page HTML (lowercased) and emits zero or more
 // DetectedAction entries. Confidence reflects how unambiguous the signal is.
@@ -273,14 +393,22 @@ function summarizePage(page: FirecrawlPage, fallbackUrl: string): PageSummary {
 // öneriler üretir (reason zorunlu). Kanıtsız event önermez (örn. site search
 // yoksa view_search_results önerme). ANTHROPIC_API_KEY yoksa null → çağıran
 // deterministik fallback'e düşer.
-async function claudeAnalyzeSite(args: {
+interface AnalyzeArgs {
   siteUrl: string
   pageSummaries: PageSummary[]
   clickables: ClickableElement[]
   detectedEvents: StandardEventKey[]
-}): Promise<{ businessAnalysis: BusinessAnalysis; recommended: RecommendedEvent[] } | null> {
-  if (!isClaudeReady()) return null
+  detectedPlugins: KnownPlugin[]
+}
 
+interface AnalyzeResult {
+  businessAnalysis: BusinessAnalysis
+  recommended: RecommendedEvent[]
+}
+
+// Shared prompt builder: hem Claude hem OpenAI aynı kuralları ve aynı kanıt
+// havuzunu görsün ki cevaplar tutarlı olsun.
+function buildAnalysisPrompt(args: AnalyzeArgs): { system: string; user: string; validKeys: string[] } {
   // Tıklanabilir öğeleri dedup + ilk 60.
   const seen = new Set<string>()
   const sample: ClickableElement[] = []
@@ -309,49 +437,62 @@ async function claudeAnalyzeSite(args: {
     .map((c, i) => `${i + 1}. <${c.tag}> "${c.text}" -> ${c.target}`)
     .join('\n')
 
-  const result = await claudeJson<{
-    businessType: string
-    businessSummary: string
-    recommended: { event: string; confidence: number; reason: string }[]
-  }>({
-    system:
-      "Sen profesyonel bir dijital pazarlama analistisin. Sana bir web sitesinin sayfa " +
-      "içerikleri, tıklanabilir öğeleri ve algılanan aksiyonları verilecek. Hedef: GA4/Meta " +
-      "ölçümleme için izlenmesi GERÇEKTEN anlamlı event'leri seç ve her seçimi kanıta " +
-      'dayandır.\n\n' +
-      'KESİN KURALLAR:\n' +
-      '1) Yalnız sana verilen event anahtar listesinden seç (geçersiz anahtar üretme).\n' +
-      "2) businessType: TR olarak somut bir ifade (örn. 'İnşaat firması', 'Hizmet sitesi', " +
-      "'E-ticaret', 'Restoran', 'B2B SaaS', 'Yerel hizmet sağlayıcı'). Tek satır.\n" +
-      '3) businessSummary: 1-2 cümle TR özet — site ne yapıyor, kimlere hitap ediyor.\n' +
-      "4) KANITSIZ event ÖNERME. Site arama (input[type=search]) yoksa view_search_results " +
-      'önerme. Sepet/checkout yoksa add_to_cart/begin_checkout/add_payment_info önerme. ' +
-      'wa.me/m.me/ig.me/tel: yoksa ilgili iletişim event\'ini önerme.\n' +
-      "5) Her öneriye reason: gerçek kanıt TR cümle (örn. 'Footer'da wa.me linki var', " +
-      "'Hizmetler sayfasında \"Teklif Al\" formu mevcut', 'Ürün kartlarında Sepete Ekle " +
-      "butonu var').\n" +
-      '6) Maksimum 6 öneri; confidence 0-1 arası gerçekçi.',
-    user:
-      `Site: ${args.siteUrl}\n` +
-      `Taranan sayfa sayısı: ${args.pageSummaries.length}\n\n` +
-      `Sayfa içerikleri:\n${pagesText}\n\n` +
-      `Tıklanabilir öğeler (örnek):\n${clickList}\n\n` +
-      `Deterministik kuralların algıladığı event'ler: ${args.detectedEvents.join(', ') || '(yok)'}\n\n` +
-      `Geçerli event listesi:\n${eventsMenu}\n\n` +
-      'JSON döndür: {"businessType":"...","businessSummary":"...","recommended":' +
-      '[{"event":"lead","confidence":0.85,"reason":"..."}]}',
-    maxTokens: 1500,
-    temperature: 0,
-    timeoutMs: 45000,
-  })
+  const pluginsText = args.detectedPlugins.length
+    ? args.detectedPlugins.map((p) => `- ${p.name}: ${p.description}`).join('\n')
+    : '(tespit edilmedi)'
 
-  if (!result || !result.businessType || !Array.isArray(result.recommended)) return null
+  const system =
+    "Sen profesyonel bir dijital pazarlama analistisin. Sana bir web sitesinin sayfa " +
+    "içerikleri, tıklanabilir öğeleri, kullandığı 3. parti widget/eklentiler ve " +
+    "algılanan aksiyonları verilecek. Hedef: GA4/Meta ölçümleme için izlenmesi GERÇEKTEN " +
+    "anlamlı event'leri seç ve her seçimi kanıta dayandır.\n\n" +
+    'KESİN KURALLAR:\n' +
+    '1) Yalnız sana verilen event anahtar listesinden seç (geçersiz anahtar üretme).\n' +
+    "2) businessType: TR olarak somut bir ifade (örn. 'İnşaat firması', 'Hizmet sitesi', " +
+    "'E-ticaret', 'Otel/Konaklama', 'Restoran', 'B2B SaaS', 'Yerel hizmet sağlayıcı'). Tek satır.\n" +
+    '3) businessSummary: 1-2 cümle TR özet — site ne yapıyor, kimlere hitap ediyor.\n' +
+    "4) KANITSIZ event ÖNERME. Site arama (input[type=search]) yoksa view_search_results " +
+    'önerme. Sepet/checkout yoksa add_to_cart/begin_checkout/add_payment_info önerme. ' +
+    'wa.me/m.me/ig.me/tel: yoksa ilgili iletişim event\'ini önerme.\n' +
+    "5) Eklenti tespiti güçlü kanıttır — örn. 'JivoChat varsa' WhatsApp/telefon/e-posta " +
+    "üzerinden iletişim event'leri MUHTEMELEN mevcuttur; 'HotelRunner varsa' rezervasyon " +
+    "= purchase, ödeme adımları begin_checkout/add_payment_info; 'WooCommerce varsa' " +
+    'sepet/checkout/satın alma. Bu sinyalleri reason\'a yansıt.\n' +
+    "6) Her öneriye reason: gerçek kanıt TR cümle (örn. 'JivoChat eklentisi sitede yüklü; " +
+    "WhatsApp, telefon ve e-posta kanallarını sunuyor', 'Footer'da wa.me linki var', " +
+    "'HotelRunner rezervasyon motoru entegre').\n" +
+    '7) Maksimum 6 öneri; confidence 0-1 arası gerçekçi.'
+
+  const user =
+    `Site: ${args.siteUrl}\n` +
+    `Taranan sayfa sayısı: ${args.pageSummaries.length}\n\n` +
+    `Sayfa içerikleri:\n${pagesText}\n\n` +
+    `Tıklanabilir öğeler (örnek):\n${clickList}\n\n` +
+    `Tespit edilen 3. parti eklenti / widget'lar:\n${pluginsText}\n\n` +
+    `Deterministik kuralların algıladığı event'ler: ${args.detectedEvents.join(', ') || '(yok)'}\n\n` +
+    `Geçerli event listesi:\n${eventsMenu}\n\n` +
+    'JSON döndür: {"businessType":"...","businessSummary":"...","recommended":' +
+    '[{"event":"lead","confidence":0.85,"reason":"..."}]}'
+
+  return { system, user, validKeys }
+}
+
+/** Claude/OpenAI'dan dönen ham JSON'u AnalyzeResult'a normalize eder; geçersizse null. */
+function parseAnalysisResult(
+  raw: {
+    businessType?: string
+    businessSummary?: string
+    recommended?: { event?: string; confidence?: number; reason?: string }[]
+  } | null,
+  validKeys: string[],
+): AnalyzeResult | null {
+  if (!raw || !raw.businessType || !Array.isArray(raw.recommended)) return null
 
   const recommended: RecommendedEvent[] = []
   const seenEvents = new Set<string>()
-  for (const r of result.recommended) {
+  for (const r of raw.recommended) {
     if (typeof r?.event !== 'string') continue
-    if (!(validKeys as string[]).includes(r.event)) continue
+    if (!validKeys.includes(r.event)) continue
     if (seenEvents.has(r.event)) continue
     seenEvents.add(r.event)
     const confidence = Math.max(0, Math.min(1, Number(r.confidence) || 0.7))
@@ -365,11 +506,86 @@ async function claudeAnalyzeSite(args: {
 
   return {
     businessAnalysis: {
-      type: result.businessType.trim().slice(0, 100),
-      summary: (result.businessSummary || '').toString().trim().slice(0, 400),
+      type: raw.businessType.trim().slice(0, 100),
+      summary: (raw.businessSummary || '').toString().trim().slice(0, 400),
     },
     recommended,
   }
+}
+
+/** Birincil: Claude. Anahtar yoksa/hatalıysa null. */
+async function claudeAnalyzeSite(args: AnalyzeArgs): Promise<AnalyzeResult | null> {
+  if (!isClaudeReady()) return null
+  const { system, user, validKeys } = buildAnalysisPrompt(args)
+  const raw = await claudeJson<{
+    businessType: string
+    businessSummary: string
+    recommended: { event: string; confidence: number; reason: string }[]
+  }>({ system, user, maxTokens: 1500, temperature: 0, timeoutMs: 45000 })
+  return parseAnalysisResult(raw, validKeys)
+}
+
+/**
+ * Yedek: OpenAI (ChatGPT). Claude yetersiz kaldığında devreye girer.
+ * OPENAI_API_KEY yoksa veya hata olursa null → çağıran deterministik fallback'e düşer.
+ */
+async function openaiAnalyzeSite(args: AnalyzeArgs): Promise<AnalyzeResult | null> {
+  const apiKey = process.env.OPENAI_API_KEY
+  if (!apiKey) return null
+  const { system, user, validKeys } = buildAnalysisPrompt(args)
+  try {
+    const res = await fetch('https://api.openai.com/v1/chat/completions', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${apiKey}` },
+      body: JSON.stringify({
+        model: process.env.OPENAI_MODEL_SITE_SCAN || 'gpt-4o-mini',
+        temperature: 0,
+        max_tokens: 1500,
+        response_format: { type: 'json_object' },
+        messages: [
+          { role: 'system', content: system },
+          { role: 'user', content: user },
+        ],
+      }),
+      signal: AbortSignal.timeout(45000),
+    })
+    if (!res.ok) {
+      const errText = await res.text().catch(() => '')
+      console.error('[openai:site-scan] error', res.status, errText.slice(0, 200))
+      return null
+    }
+    const data = (await res.json()) as { choices?: { message?: { content?: string } }[] }
+    const content = data?.choices?.[0]?.message?.content
+    if (!content) return null
+    let parsed: unknown
+    try {
+      parsed = JSON.parse(content)
+    } catch {
+      return null
+    }
+    return parseAnalysisResult(
+      parsed as Parameters<typeof parseAnalysisResult>[0],
+      validKeys,
+    )
+  } catch (e) {
+    console.error(
+      '[openai:site-scan] exception',
+      e instanceof Error ? e.message : String(e),
+    )
+    return null
+  }
+}
+
+/**
+ * AI orkestratörü: Önce Claude'a sor. Claude erişilemez/yetersiz kalırsa
+ * (anahtar yok, hata, boş öneri) ChatGPT'ye düş. İkisi de boş dönerse null →
+ * çağıran (scanSite) deterministik buildRecommended fallback'ine geçer.
+ */
+async function aiAnalyzeSite(args: AnalyzeArgs): Promise<AnalyzeResult | null> {
+  const claudeResult = await claudeAnalyzeSite(args)
+  if (claudeResult && claudeResult.recommended.length > 0) return claudeResult
+  const openaiResult = await openaiAnalyzeSite(args)
+  return openaiResult
 }
 
 /** Build deduped recommendedEvents from the full detectedActions list. */
@@ -520,6 +736,31 @@ export async function scanSite(siteUrl: string): Promise<SiteScanResult> {
     detectedActions.push(...detectOnPage(haystack, pageUrl(page, url)))
   }
 
+  // ── 3.5 Eklenti / widget tespiti — site genelinde dedup ──────────────────
+  // JivoChat, Tawk, HotelRunner, Shopify, WooCommerce, vs. tespit edilirse o
+  // eklentinin sağladığı event'ler kanıt havuzuna eklenir; aynı zamanda Claude'a
+  // eklenti listesi verilir (3. parti widget'larla gelen event'leri ıskalamasın).
+  const detectedPluginsMap = new Map<string, KnownPlugin>()
+  for (const page of cappedPages) {
+    const html = page.rawHtml || page.html || ''
+    for (const plugin of detectPlugins(html)) {
+      if (!detectedPluginsMap.has(plugin.name)) detectedPluginsMap.set(plugin.name, plugin)
+    }
+  }
+  const detectedPlugins = Array.from(detectedPluginsMap.values())
+  for (const plugin of detectedPlugins) {
+    for (const event of plugin.events) {
+      if (!detectedActions.some((a) => a.event === event && a.via === 'plugin')) {
+        detectedActions.push({
+          event,
+          source: `plugin:${plugin.name}`,
+          via: 'plugin',
+          confidence: 0.85,
+        })
+      }
+    }
+  }
+
   // ── 4. Claude: işletme analizi + kanıt-temelli ÖNERİLER (birincil) ─────────
   // Deterministik tespit "kanıt havuzu" olarak kalır; Claude işletme türünü
   // belirleyip nihai recommendedEvents'i reason'larla üretir. Claude erişilemezse
@@ -530,11 +771,12 @@ export async function scanSite(siteUrl: string): Promise<SiteScanResult> {
   let recommendedEvents: RecommendedEvent[]
   let businessAnalysis: BusinessAnalysis | undefined
   try {
-    const ai = await claudeAnalyzeSite({
+    const ai = await aiAnalyzeSite({
       siteUrl: url,
       pageSummaries,
       clickables: allClickables,
       detectedEvents: Array.from(detectedSet),
+      detectedPlugins,
     })
     if (ai && ai.recommended.length > 0) {
       recommendedEvents = ai.recommended

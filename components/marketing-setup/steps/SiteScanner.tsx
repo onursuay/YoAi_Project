@@ -190,12 +190,6 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
               </div>
             </div>
           )}
-          {/* Kısmi tarama uyarısı — site büyükse yalnız ilk N sayfa tarandı (sahte sanılmasın) */}
-          {scan.truncated && (
-            <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-3.5 text-sm text-gray-700">
-              {t('scan.truncatedNotice', { count: scan.pagesScanned })}
-            </div>
-          )}
           {/* Detected actions — event bazında tekilleştirilmiş, sayfa frekansıyla */}
           {actionsByEvent.size > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
