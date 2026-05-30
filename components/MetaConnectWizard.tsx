@@ -30,6 +30,13 @@ export default function MetaConnectWizard() {
   const [selectedIds, setSelectedIds] = useState<string[]>([])
   const [showLimitModal, setShowLimitModal] = useState(false)
   const reg = useRegisteredAccounts()
+  // Yeni multi-account slot sistemi: tier-based total limit (Meta + Google birlikte).
+  // Owner enterprise tier'a düşer; free/basic 2, starter 4, premium 8, enterprise 20.
+  const [slotInfo, setSlotInfo] = useState<{ maxSlots: number; otherPlatformCount: number; loaded: boolean }>({
+    maxSlots: 2,
+    otherPlatformCount: 0,
+    loaded: false,
+  })
   const [isLoading, setIsLoading] = useState(false)
   const [step3Phase, setStep3Phase] = useState<Step3Phase>('waiting_session')
   const [fetchError, setFetchError] = useState<string | null>(null)
@@ -146,6 +153,22 @@ export default function MetaConnectWizard() {
     }
   }, [checkSessionReady, fetchAdAccountsWithRetry, t])
 
+  // Slot info'yu çek (maxSlots + Google'da kullanılan slot sayısı)
+  useEffect(() => {
+    let cancelled = false
+    fetch('/api/billing/ad-account-slots', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.ok) return
+        const otherCount = ((d.slots ?? []) as { platform: string }[]).filter(
+          (s) => s.platform === 'google_ads',
+        ).length
+        setSlotInfo({ maxSlots: d.maxSlots ?? 2, otherPlatformCount: otherCount, loaded: true })
+      })
+      .catch(() => { /* slot endpoint erişilemezse eski reg davranışı korunur */ })
+    return () => { cancelled = true }
+  }, [])
+
   // On mount: check connection and init Step 3 if connected
   useEffect(() => {
     mountedRef.current = true
@@ -197,8 +220,14 @@ export default function MetaConnectWizard() {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
       // Yalnız henüz kayıtlı OLMAYAN seçimler limite sayılır (çifte sayımı önler).
       const newlyAdded = [...prev, id].filter((x) => !isRegistered(x))
-      if (reg.remaining !== null && newlyAdded.length > reg.remaining) {
-        setShowLimitModal(true)
+      // Slot sistem limit: maxSlots - Google'da kullanılan = Meta için kalan
+      const slotLimit = slotInfo.loaded
+        ? Math.max(0, slotInfo.maxSlots - slotInfo.otherPlatformCount)
+        : Number.POSITIVE_INFINITY
+      const legacyLimit = reg.remaining !== null ? reg.remaining : Number.POSITIVE_INFINITY
+      const effectiveLimit = Math.min(slotLimit, legacyLimit)
+      if (newlyAdded.length > effectiveLimit) {
+        // Sessizce engelle (ilk kurulumda uyarı çıkarmama tercihi).
         return prev
       }
       return [...prev, id]
@@ -222,6 +251,24 @@ export default function MetaConnectWizard() {
             return
           }
         }
+      }
+
+      // Seçilen tüm hesapları YENİ multi-account slot sistemine kaydet (Faz 1+2).
+      // Slot 1 = primary (aktif), slot 2+ = ek hesaplar. /meta-ads'teki slot
+      // selector bu kayıtları gösterir; mevcut Meta entegrasyonuna dokunulmaz.
+      for (let i = 0; i < selectedIds.length; i++) {
+        const id = selectedIds[i]
+        const acc = adAccounts.find((a) => a.id === id)
+        await fetch('/api/billing/ad-account-slots', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({
+            platform: 'meta',
+            slotIndex: i + 1,
+            accountId: id,
+            accountName: acc?.name ?? null,
+          }),
+        }).catch(() => { /* slot kaydı başarısızsa primary akışı yine çalışır */ })
       }
 
       // İlk seçilen hesabı AKTİF yap (mevcut Meta seçim akışı korunur).
@@ -434,13 +481,18 @@ export default function MetaConnectWizard() {
               {/* Phase: done — show account list */}
               {step3Phase === 'done' && (
                 <>
-                  {/* Çoklu seçim sayacı (flag açık) */}
+                  {/* Çoklu seçim sayacı — slot sistemi yüklendiyse tier limiti gösterir */}
                   {reg.enabled && (
                     <div className="flex items-center justify-end mb-3">
                       <span className="text-xs font-semibold bg-primary/5 text-primary px-2.5 py-1 rounded-full ring-1 ring-primary/15">
-                        {reg.limit !== null
-                          ? t('selectedOfLimit', { count: selectedIds.length, limit: reg.limit })
-                          : t('selectedCount', { count: selectedIds.length })}
+                        {slotInfo.loaded
+                          ? t('selectedOfLimit', {
+                              count: selectedIds.length,
+                              limit: Math.max(0, slotInfo.maxSlots - slotInfo.otherPlatformCount),
+                            })
+                          : reg.limit !== null
+                            ? t('selectedOfLimit', { count: selectedIds.length, limit: reg.limit })
+                            : t('selectedCount', { count: selectedIds.length })}
                       </span>
                     </div>
                   )}
@@ -451,9 +503,22 @@ export default function MetaConnectWizard() {
                       // Zaten kayıtlı hesap (idempotent, bedava) asla "limit doldu" görünmez;
                       // limit yalnız yeni eklenecek seçimlere uygulanır.
                       const newlyAddedCount = selectedIds.filter((x) => !isRegistered(x)).length
+                      // Slot sistemi yüklendiyse o limit kesin (Meta için kalan = maxSlots - Google'da kullanılan).
+                      // Yüklenmediyse eski reg.remaining mantığına düşer.
+                      const slotMetaRemaining = slotInfo.loaded
+                        ? Math.max(0, slotInfo.maxSlots - slotInfo.otherPlatformCount - newlyAddedCount)
+                        : null
+                      const legacyRemaining =
+                        reg.enabled && reg.remaining !== null
+                          ? reg.remaining - newlyAddedCount
+                          : null
+                      const effectiveRemaining =
+                        slotMetaRemaining !== null && legacyRemaining !== null
+                          ? Math.min(slotMetaRemaining, legacyRemaining)
+                          : (slotMetaRemaining ?? legacyRemaining)
                       const limitReached =
-                        reg.enabled && reg.remaining !== null && !checked && !isRegistered(account.id) &&
-                        newlyAddedCount >= reg.remaining
+                        reg.enabled && !checked && !isRegistered(account.id) &&
+                        effectiveRemaining !== null && effectiveRemaining <= 0
                       return (
                         <label
                           key={account.id}

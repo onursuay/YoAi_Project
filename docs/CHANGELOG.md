@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — Multi-account slot UI (Faz 2C): MetaConnectWizard slot sistemine bağlandı
+- **Sorun:** Meta onboarding wizard'ı (Hoş Geldiniz → Bağlan → Hesap Seç → Tamamlandı) `useRegisteredAccounts` eski sistemini kullanıyordu; owner için limit `null` (sınırsız) idi, kullanıcı 5+ hesap seçebiliyordu. Yeni multi-account slot sisteminden (Faz 1+2A) habersizdi.
+- **Çözüm:** MetaConnectWizard'a `/api/billing/ad-account-slots` çağrısı eklendi (mount'ta maxSlots + Google'da kullanılan slot sayısı çekilir). Meta için kalan slot = `maxSlots - googleSlots` formülüyle hesaplanır:
+  - **Sayaç**: "X / Y seçildi" — Y = kalan Meta slot kapasitesi (slot sistemi yüklendiyse oradan, yoksa eski reg davranışı)
+  - **Limit zorlama**: toggle'da slot limit + eski reg limit'in MİNİMUMU uygulanır → daha sıkı olan kazanır
+  - **Yeni seçim engeli**: Limit dolunca sessizce engellenir (ilk kurulumda uyarı çıkmasın tercihi)
+  - **Tamamlanmada kayıt**: Seçilen tüm hesaplar `/api/billing/ad-account-slots` POST ile slot 1, 2, 3... olarak kaydedilir → `/meta-ads`'teki slot selector'da görünür. Mevcut `/api/meta/select-adaccount` + `/api/account/registered` akışları korundu.
+- **Tier davranışı**: owner = enterprise (20 slot), free/basic = 2 slot, starter = 4, premium = 8.
+- **Dosyalar:** `components/MetaConnectWizard.tsx`. tsc 0 hata; next build temiz.
+
 ## 2026-05-30 — Multi-account slot UI (Faz 2B): /entegrasyon sadeleştirme (Meta + Google Ads kartları)
 - **İstenen:** Entegrasyon sayfasında sadece "Meta bağlı / Google bağlı" durumu görünsün; hangi hesap seçili gösterilmesin. Hesap seçimi reklam sayfalarındaki slot selector'da yapılsın (Faz 2A'da eklendi).
 - **Çözüm:** `/entegrasyon/page.tsx` Meta ve Google Ads kartlarında:
