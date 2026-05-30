@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-05-30 — Marketing: "Yazma İzinleri" yeniden adlandırma + Meta/Google Ads multi-account dropdown
+- **Sorun:** (1) "Bağlı" görünmesine rağmen "Kurulum İzni Ver" istemesi çelişki olarak algılanıyordu — okuma bağlantısı ile yazma izninin farkı açık değildi. (2) Kullanıcının Business Manager / MCC altında onlarca alt hesabı olabilir; sihirbazda yalnız tek hesap görünüyordu, alt hesapları seçemiyordu.
+- **Çözüm:**
+  - **#1 — Yeniden adlandırma**: "Kurulum İzinleri" → **"Yazma İzinleri (GTM + Analytics + Search Console)"**; "Kurulum İzni Ver" → "Yazma İzni Ver"; "Kurulum izinleri verildi" → "Yazma izinleri verildi". Açıklama tamamen yenilendi: "Mevcut Google bağlantın **okuma** için yeterli. Ancak GTM container kurulumu, Analytics property oluşturma ve Search Console doğrulaması **YAZMA** izni gerektirir — bu izin sadece bu kuruluma özeldir, reklam/analitik bağlantılarını etkilemez."
+  - **#4 — Multi-account dropdown**: PlatformConnect artık mount'ta `/api/meta/adaccounts` ve `/api/integrations/google-ads/accounts` endpoint'lerinden kullanıcının erişebildiği TÜM reklam hesaplarını/customer'larını çeker. Birden fazla varsa salt-okunur display yerine **WizardSelect dropdown** gösterir + "{n} hesap bulundu — birini seç" rozeti. Hesap değiştirme: Meta için `/api/meta/select-adaccount` POST, Google Ads için `/api/integrations/google-ads/select-account` POST + connections refresh. Tek hesap varsa eski salt-okunur display korunur.
+- **Kalan iş**: #5 (Entegrasyon sayfası sadeleştirme + 2-account tier limit + planlar arası dağılım) — DB schema değişikliği gerektirdiği için ayrı bir tur. Mevcut Meta/Google entegrasyon dosyalarına dokunulmadı (sadece public API endpoint'leri internal'dan çağırılıyor).
+- **Dosyalar:** `components/marketing-setup/steps/PlatformConnect.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-05-30 — Marketing: 3. parti eklenti tespiti + OpenAI yedek AI + "Site Analizi" + truncated banner kaldırıldı
 - **Sorun:** (1) JivoChat, HotelRunner, WooCommerce gibi 3. parti widget'lar üzerinden işleyen iletişim/rezervasyon/satış event'leri yakalanmıyordu — kullanıcı "konu hangi plugin önemli değil, hepsini tarayıp event'leri yakala" dedi. (2) Claude site büyüklüğünde yetersiz kalırsa fallback yoktu (deterministik kural). (3) "Site Analizi (AI)" etiketi kullanıcıya gereksiz teknik detay veriyordu. (4) "Site büyük olduğu için yalnızca ilk N sayfa tarandı" uyarısı kabul edilemez bulundu (kullanıcıya zarar veren mesaj).
 - **Çözüm:**

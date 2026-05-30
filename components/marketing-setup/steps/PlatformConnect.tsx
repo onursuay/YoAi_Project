@@ -11,6 +11,9 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
   const t = useTranslations('marketingSetup')
   const [cloudOpen, setCloudOpen] = useState(false)
   const [containers, setContainers] = useState<{ publicId: string; name: string }[]>([])
+  const [metaAccounts, setMetaAccounts] = useState<{ id: string; name: string }[]>([])
+  const [adsAccounts, setAdsAccounts] = useState<{ customerId: string; name: string }[]>([])
+  const [switching, setSwitching] = useState<'meta' | 'ads' | null>(null)
 
   const conn = state.connections
   const metaConnected = !!conn?.meta.connected
@@ -57,6 +60,85 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
     if (Object.keys(patch).length) void persist(patch)
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaAcct, adsCust])
+
+  // Multi-account: kullanıcının erişebildiği Meta reklam hesaplarını listele.
+  // Birden fazla varsa UI dropdown gösterip seçim değiştirilebilir.
+  useEffect(() => {
+    if (!metaConnected) return
+    let cancelled = false
+    fetch('/api/meta/adaccounts', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.accounts) return
+        const list = (d.accounts as { id: string; name?: string }[]).map((a) => ({
+          id: a.id,
+          name: a.name || a.id,
+        }))
+        setMetaAccounts(list)
+      })
+      .catch(() => { /* listelenemezse dropdown gösterilmez, salt-okunur kalır */ })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [metaConnected])
+
+  // Multi-account: Google Ads müşterilerini (ListAccessibleCustomers) listele.
+  useEffect(() => {
+    if (!conn?.googleAds.connected) return
+    let cancelled = false
+    fetch('/api/integrations/google-ads/accounts', { cache: 'no-store' })
+      .then((r) => (r.ok ? r.json() : null))
+      .then((d) => {
+        if (cancelled || !d?.customers) return
+        const list = (d.customers as { customerId: string; name?: string }[]).map((c) => ({
+          customerId: c.customerId,
+          name: c.name || `Account ${c.customerId}`,
+        }))
+        setAdsAccounts(list)
+      })
+      .catch(() => { /* listelenemezse dropdown gösterilmez */ })
+    return () => { cancelled = true }
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [conn?.googleAds.connected])
+
+  // Aktif Meta reklam hesabını değiştir + connections refresh.
+  async function switchMetaAccount(id: string) {
+    if (switching || !id || id === metaAcct) return
+    setSwitching('meta')
+    try {
+      await fetch('/api/meta/select-adaccount', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ adAccountId: id }),
+      })
+      const r = await fetch('/api/marketing-setup/connections', { cache: 'no-store' })
+      if (r.ok) {
+        const data = await r.json()
+        update({ connections: data })
+      }
+    } catch { /* sessizce başarısız */ } finally {
+      setSwitching(null)
+    }
+  }
+
+  // Aktif Google Ads müşterisini değiştir + connections refresh.
+  async function switchAdsAccount(customerId: string) {
+    if (switching || !customerId || customerId === adsCust) return
+    setSwitching('ads')
+    try {
+      await fetch('/api/integrations/google-ads/select-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ customerId, loginCustomerId: customerId }),
+      })
+      const r = await fetch('/api/marketing-setup/connections', { cache: 'no-store' })
+      if (r.ok) {
+        const data = await r.json()
+        update({ connections: data })
+      }
+    } catch { /* sessizce başarısız */ } finally {
+      setSwitching(null)
+    }
+  }
 
   // Auto-detect existing GTM containers via the setup-consent token so the user
   // picks one instead of typing a GTM-XXXXXXX id.
@@ -169,7 +251,26 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('connect.metaAdAccountId')}
           </label>
-          {metaAcct ? (
+          {metaAcct && metaAccounts.length > 1 ? (
+            <div>
+              <p className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 className="w-4 h-4" />
+                {t('connect.multipleAccountsDetected', { count: metaAccounts.length })}
+              </p>
+              <WizardSelect
+                value={metaAcct}
+                onChange={(v) => void switchMetaAccount(v)}
+                disabled={switching === 'meta'}
+                options={metaAccounts.map((a) => ({
+                  value: a.id,
+                  label: a.name === a.id ? a.id : `${a.name} (${a.id})`,
+                }))}
+              />
+              {switching === 'meta' && (
+                <p className="mt-1 text-xs text-gray-500">{t('connect.switchingAccount')}</p>
+              )}
+            </div>
+          ) : metaAcct ? (
             <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-emerald-800 truncate">
@@ -204,7 +305,26 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
             {t('connect.googleAdsCustomerId')}
             <span className="ml-2 text-sm font-normal text-gray-400">{t('common.optional')}</span>
           </label>
-          {adsCust ? (
+          {adsCust && adsAccounts.length > 1 ? (
+            <div>
+              <p className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                <CheckCircle2 className="w-4 h-4" />
+                {t('connect.multipleAccountsDetected', { count: adsAccounts.length })}
+              </p>
+              <WizardSelect
+                value={adsCust}
+                onChange={(v) => void switchAdsAccount(v)}
+                disabled={switching === 'ads'}
+                options={adsAccounts.map((a) => ({
+                  value: a.customerId,
+                  label: a.name === a.customerId ? a.customerId : `${a.name} (${a.customerId})`,
+                }))}
+              />
+              {switching === 'ads' && (
+                <p className="mt-1 text-xs text-gray-500">{t('connect.switchingAccount')}</p>
+              )}
+            </div>
+          ) : adsCust ? (
             <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
               <span className="min-w-0">
                 <span className="block text-sm font-medium text-emerald-800 truncate">

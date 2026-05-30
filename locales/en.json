@@ -3115,16 +3115,18 @@
       "gtmContainerIdPlaceholder": "GTM-XXXXXXX",
       "gtmDetected": "{count} existing container(s) found",
       "gtmSelectPlaceholder": "Select a container",
-      "setupConsentTitle": "Setup Permissions",
-      "setupConsentDescription": "Writing to Tag Manager, Analytics admin and Search Console requires an additional Google consent. Your existing connections are not affected.",
-      "setupConsentConnect": "Grant Setup Permissions",
-      "setupConsentConnected": "Setup permissions granted",
+      "setupConsentTitle": "Write Permissions (GTM + Analytics + Search Console)",
+      "setupConsentDescription": "Your existing Google connection is sufficient for reads. However, GTM container setup, Analytics property creation, and Search Console verification require WRITE permission — this grant is specific to this setup and does not affect your ad/analytics connections.",
+      "setupConsentConnect": "Grant Write Permission",
+      "setupConsentConnected": "Write permissions granted",
       "cloudSetupGuide": "Google Cloud setup guide",
       "metaPixelId": "Meta Pixel",
       "metaPixelIdPlaceholder": "Pixel auto-detected",
       "autoFromIntegration": "Auto-detected from your integration",
       "connectFromIntegration": "Connect this account from the Integrations area",
-      "goToIntegrations": "Go to Integrations"
+      "goToIntegrations": "Go to Integrations",
+      "multipleAccountsDetected": "{count} accounts found — pick one",
+      "switchingAccount": "Switching account…"
     },
     "preview": {
       "title": "What Will Be Created?",

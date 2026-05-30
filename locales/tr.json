@@ -3115,16 +3115,18 @@
       "gtmContainerIdPlaceholder": "GTM-XXXXXXX",
       "gtmDetected": "{count} mevcut kapsayıcı bulundu",
       "gtmSelectPlaceholder": "Kapsayıcı seç",
-      "setupConsentTitle": "Kurulum İzinleri",
-      "setupConsentDescription": "Tag Manager, Analytics yönetimi ve Search Console'a yazma izni için ek bir Google onayı gerekir. Mevcut bağlantılarınız etkilenmez.",
-      "setupConsentConnect": "Kurulum İzni Ver",
-      "setupConsentConnected": "Kurulum izinleri verildi",
+      "setupConsentTitle": "Yazma İzinleri (GTM + Analytics + Search Console)",
+      "setupConsentDescription": "Mevcut Google bağlantın okuma için yeterlidir. Ancak GTM container kurulumu, Analytics property oluşturma ve Search Console doğrulaması YAZMA izni gerektirir — bu izin sadece bu kuruluma özeldir, reklam/analitik bağlantılarını etkilemez.",
+      "setupConsentConnect": "Yazma İzni Ver",
+      "setupConsentConnected": "Yazma izinleri verildi",
       "cloudSetupGuide": "Google Cloud kurulum rehberi",
       "metaPixelId": "Meta Pixel",
       "metaPixelIdPlaceholder": "Pixel otomatik algılanır",
       "autoFromIntegration": "Entegrasyon'dan otomatik alındı",
       "connectFromIntegration": "Bu hesabı Entegrasyon alanından bağlayın",
-      "goToIntegrations": "Entegrasyon'a git"
+      "goToIntegrations": "Entegrasyon'a git",
+      "multipleAccountsDetected": "{count} hesap bulundu — birini seç",
+      "switchingAccount": "Hesap değiştiriliyor…"
     },
     "preview": {
       "title": "Neler Kurulacak?",
