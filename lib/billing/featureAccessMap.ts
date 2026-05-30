@@ -87,6 +87,13 @@ export const FEATURE_ACCESS: Record<string, FeatureAccessRule> = {
     description:
       'Pazarlama altyapısı kurulum sihirbazını kullanmak için aktif bir abonelik planına sahip olmanız gerekir.',
   },
+  crm: {
+    key: 'crm',
+    label: 'CRM',
+    tier: 'subscription_required',
+    description:
+      'Reklam lead\'lerinizi tek panelde toplamak ve yönetmek için aktif bir abonelik planına sahip olmanız gerekir.',
+  },
 
   // ─── Kredi gerektiren AI aksiyonları ─────────────────────────────
   optimization_ai_scan_pro: {

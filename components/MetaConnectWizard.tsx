@@ -503,22 +503,15 @@ export default function MetaConnectWizard() {
                       // Zaten kayıtlı hesap (idempotent, bedava) asla "limit doldu" görünmez;
                       // limit yalnız yeni eklenecek seçimlere uygulanır.
                       const newlyAddedCount = selectedIds.filter((x) => !isRegistered(x)).length
-                      // Slot sistemi yüklendiyse o limit kesin (Meta için kalan = maxSlots - Google'da kullanılan).
-                      // Yüklenmediyse eski reg.remaining mantığına düşer.
-                      const slotMetaRemaining = slotInfo.loaded
+                      // Slot sistem YEGANE otorite: maxSlots - Google'da kullanılan = Meta için kalan.
+                      // Eski reg.remaining tamamen yok sayılır (iki sistem çatışmasını önler).
+                      // Slot sistem henüz yüklenmediyse (mount race), limitsiz davran (sonradan setSlotInfo gelir).
+                      const effectiveRemaining = slotInfo.loaded
                         ? Math.max(0, slotInfo.maxSlots - slotInfo.otherPlatformCount - newlyAddedCount)
-                        : null
-                      const legacyRemaining =
-                        reg.enabled && reg.remaining !== null
-                          ? reg.remaining - newlyAddedCount
-                          : null
-                      const effectiveRemaining =
-                        slotMetaRemaining !== null && legacyRemaining !== null
-                          ? Math.min(slotMetaRemaining, legacyRemaining)
-                          : (slotMetaRemaining ?? legacyRemaining)
+                        : Number.POSITIVE_INFINITY
                       const limitReached =
                         reg.enabled && !checked && !isRegistered(account.id) &&
-                        effectiveRemaining !== null && effectiveRemaining <= 0
+                        effectiveRemaining <= 0
                       return (
                         <label
                           key={account.id}

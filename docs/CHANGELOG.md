@@ -2,6 +2,20 @@
 
 ---
 
+## 2026-05-30 — CRM Faz 1: Reklam lead'leri → CRM (olumlu/olumsuz işaretleme)
+- **Sorun:** Meta Lead Ads reklamlarından düşen lead'leri tek panelde toplama, olumlu/olumsuz niteleme ve (sonraki fazda) Meta'ya geri senkron ihtiyacı (Mailchimp ↔ Meta modeli). Mevcut webhook'ta `leadgen` dalı boştu ("MVP: log only").
+- **Çözüm:** Uçtan uca CRM Faz 1 — gerçek zamanlı webhook ile lead toplama, abonelik gerektiren modül:
+  - **DB (migration):** `crm_page_subscriptions` (webhook page_id → user_id eşlemesi) + `crm_leads` (status `new|positive|negative`, `UNIQUE(user_id,meta_leadgen_id)` ile idempotent). Yalnız additive, RLS'li.
+  - **Ingestion:** `app/api/meta/webhook` `leadgen` dalı dolduruldu → fire-and-forget `ingestLeadgen()`; Page Access Token ile `GET /{leadgen_id}` çekilip `crm_leads`'e idempotent yazılır. **Meta entegrasyonu bozulmadı** — GET/verify ve diğer alanlar aynen korundu, yalnız boş dal dolduruldu; mevcut `pageToken`/`client` yeniden kullanıldı.
+  - **API:** `GET /api/crm/pages` (bağlanabilir + bağlı sayfalar), `POST/DELETE /api/crm/connect` (page → leadgen subscribe/unsubscribe), `GET /api/crm/leads` (maskeli liste + sayaçlar), `GET/PATCH /api/crm/leads/[id]` (tam detay + olumlu/olumsuz). Hepsi `checkCrmAccess` (auth + abonelik + owner bypass) ile korundu.
+  - **UI:** Sidebar'a CRM (`Contact` ikonu) + `ROUTES.CRM`; `app/crm` (abonelik gate, owner bypass) → sayfa bağlama paneli + durum filtreleri + lead listesi (e-posta/telefon maskeli) + detay modalı (maskesiz, kendi lead'i; mailto/tel). Onaylı palet (no amber), WizardSelect.
+  - **Billing + i18n:** `featureAccessMap.crm` (subscription_required) + tam `crm` namespace ve `sidebar.crm` / `features.crm` (tr+en eşit).
+- **PII:** Liste maskeli, detay tam (kullanıcının kendi lead'i — iletişim için gerekli); ham veri DB'de service-role + abonelik gate arkasında.
+- **Bekleyen (prod):** omddq'ya migration uygulanmalı (`scripts/apply-crm-migration.mjs` veya SQL Editor) — kod tablo olmadan da güvenli çalışır (boş liste/null, crash yok). Meta App'te webhook `leadgen` aboneliği + `META_WEBHOOK_VERIFY_TOKEN`. Faz 2 (Meta senkron) + Faz 3 (e-posta marketing) ayrı onay bekliyor.
+- **Dosyalar:** `supabase/migrations/20260530000000_create_crm_tables.sql`, `scripts/apply-crm-migration.mjs`, `lib/crm/{pageSubscriptionStore,leadStore,guard,metaLeadIngest,mask}.ts`, `app/api/meta/webhook/route.ts`, `app/api/crm/{pages,connect,leads,leads/[id]}/route.ts`, `app/crm/{layout,page}.tsx`, `components/crm/{CrmDashboard,CrmLeadDetailModal}.tsx`, `lib/{routes,nav,billing/featureAccessMap}.ts`, `locales/{tr,en}.json`. tsc 0 hata.
+
+---
+
 ## 2026-05-30 — Multi-slot fetch wrapper (Faz 3A): YoAlgoritma/analytics modülleri için multi-slot deep-fetch helper'ları
 - **İhtiyaç:** Mevcut `fetchMetaDeep` / `fetchGoogleDeep` tek hesap çalışır (override pattern); YoAlgoritma, Strateji, Optimizasyon vb. modüller multi-slot aware olabilmek için tüm seçili slot'ların verisini iterate edip birleştirmeli.
 - **Çözüm:** Yeni `lib/yoai/multiSlotFetcher.ts` — `fetchMetaDeepAllSlots(userId)` ve `fetchGoogleDeepAllSlots(userId)`:

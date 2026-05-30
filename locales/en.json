@@ -24,6 +24,7 @@
         "audience_ai": "AI-Based Audience",
         "ad_account_slot": "Ad Account",
         "marketing_setup": "Marketing",
+        "crm": "CRM",
         "optimization_ai_scan_pro": "AI Scan Pro",
         "design_generation": "Design Generation",
         "strategy_overage": "Extra Strategy",
@@ -37,6 +38,7 @@
         "audience_ai": "You need an active subscription plan for AI-based audience generation.",
         "ad_account_slot": "You've reached your plan's ad account limit. Upgrade your plan to add more ad accounts.",
         "marketing_setup": "You need an active subscription plan to use the marketing infrastructure setup wizard.",
+        "crm": "You need an active subscription plan to collect and manage your ad leads in one panel.",
         "optimization_ai_scan_pro": "You need a sufficient credit balance for the AI Scan Pro deep analysis.",
         "design_generation": "You need a sufficient credit balance to run AI design generation.",
         "strategy_overage": "Your monthly strategy limit is reached. You need a sufficient credit balance to create extra strategies.",
@@ -3015,6 +3017,7 @@
     "raporlar": "Reports",
     "katalog": "Catalog",
     "seo": "SEO",
+    "crm": "CRM",
     "entegrasyon": "Integration",
     "kurumsal": "Corporate",
     "gizlilikpolitikasi": "Privacy Policy",
@@ -3030,6 +3033,63 @@
     "cikisYap": "Log Out",
     "dil": "English",
     "marketingkurulumu": "Marketing"
+  },
+  "crm": {
+    "title": "CRM",
+    "description": "Collect leads from your ads in one panel and mark them as positive or negative.",
+    "connectedSummary": "{count} pages connected",
+    "connect": {
+      "title": "Connect a Page",
+      "description": "Connect the Facebook page you advertise with so leads flow into the CRM automatically.",
+      "selectPage": "Facebook Page",
+      "selectPagePlaceholder": "Select a page",
+      "connectButton": "Connect",
+      "managePages": "Manage Pages",
+      "connectedPages": "Connected Pages",
+      "disconnect": "Disconnect",
+      "done": "Done",
+      "loading": "Loading pages…",
+      "noPages": "No new connectable Facebook page found.",
+      "metaNotConnected": "Connect your Meta account first.",
+      "metaNotConnectedHint": "To let the CRM collect leads, connect your Meta account from the Integration page."
+    },
+    "filters": {
+      "all": "All",
+      "new": "New",
+      "positive": "Positive",
+      "negative": "Negative"
+    },
+    "status": {
+      "new": "New",
+      "positive": "Positive",
+      "negative": "Negative"
+    },
+    "list": {
+      "empty": "No leads yet",
+      "emptyHint": "When a lead comes in from your ads it will appear here automatically.",
+      "noName": "Unnamed lead",
+      "viewDetail": "Details",
+      "markPositive": "Mark positive",
+      "markNegative": "Mark negative",
+      "markNew": "Reset to new"
+    },
+    "detail": {
+      "title": "Lead Detail",
+      "notFound": "Lead not found.",
+      "name": "Full Name",
+      "email": "Email",
+      "phone": "Phone",
+      "campaign": "Campaign",
+      "receivedAt": "Received At",
+      "formData": "Form Fields"
+    },
+    "toast": {
+      "connected": "Page connected.",
+      "disconnected": "Disconnected.",
+      "statusUpdated": "Lead updated.",
+      "connectError": "Could not connect the page.",
+      "error": "Something went wrong."
+    }
   },
   "marketingSetup": {
     "title": "Marketing",

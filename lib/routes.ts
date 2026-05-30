@@ -9,6 +9,7 @@ export const ROUTES = {
   SUBSCRIPTION: '/abonelik',
   INVOICES: '/faturalarim',
   MARKETING_SETUP: '/marketing-kurulumu',
+  CRM: '/crm',
 } as const
 
 /** TR slug → EN slug mapping (all translatable paths) */

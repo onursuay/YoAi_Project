@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { ingestLeadgen } from '@/lib/crm/metaLeadIngest'
 
 const VERIFY_TOKEN = process.env.META_WEBHOOK_VERIFY_TOKEN
 const DEBUG = process.env.NODE_ENV !== 'production'
@@ -52,10 +53,18 @@ export async function POST(request: Request) {
       for (const change of changes) {
         if (change.field === 'leadgen') {
           const leadData = change.value
-          console.log(`[Webhook] 🎯 New Lead! Page: ${pageId}, Form: ${leadData?.form_id}, Lead: ${leadData?.leadgen_id}`)
+          const leadgenId = leadData?.leadgen_id
+          const formId = leadData?.form_id
+          console.log(`[Webhook] 🎯 New Lead! Page: ${pageId}, Form: ${formId}, Lead: ${leadgenId}`)
 
-          // MVP: Log only.
-          // Post-MVP: fetch lead details + store in DB + notify CRM
+          // CRM ingestion: lead detayını çek + crm_leads'e idempotent yaz.
+          // Fire-and-forget — Meta 20sn içinde 200 bekler; ingest'i await etmeyiz,
+          // hata non-fatal (loglanır, webhook yine 200 döner).
+          if (leadgenId && pageId) {
+            ingestLeadgen(String(pageId), String(leadgenId), formId ? String(formId) : undefined).catch(
+              (err) => console.error('[Webhook] CRM ingest error', err),
+            )
+          }
         }
       }
     }

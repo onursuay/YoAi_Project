@@ -12,6 +12,7 @@ import {
   ShieldCheck,
   Briefcase,
   Rocket,
+  Contact,
 } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 
@@ -97,6 +98,12 @@ export const navItems: NavItem[] = [
     label: 'SEO',
     href: '/seo',
     icon: Search,
+  },
+  {
+    id: 'crm',
+    label: 'CRM',
+    href: ROUTES.CRM,
+    icon: Contact,
   },
   {
     id: 'entegrasyon',

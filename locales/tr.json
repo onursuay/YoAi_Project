@@ -24,6 +24,7 @@
         "audience_ai": "AI Tabanlı Hedef Kitle",
         "ad_account_slot": "Reklam Hesabı",
         "marketing_setup": "Marketing",
+        "crm": "CRM",
         "optimization_ai_scan_pro": "AI ile Tara Pro",
         "design_generation": "Tasarım Üretimi",
         "strategy_overage": "Ek Strateji",
@@ -37,6 +38,7 @@
         "audience_ai": "AI tabanlı hedef kitle üretimi için aktif bir abonelik planına sahip olmanız gerekir.",
         "ad_account_slot": "Planınızın reklam hesabı limitine ulaştınız. Daha fazla reklam hesabı eklemek için planınızı yükseltin.",
         "marketing_setup": "Pazarlama altyapısı kurulum sihirbazını kullanmak için aktif bir abonelik planına sahip olmanız gerekir.",
+        "crm": "Reklam lead'lerinizi tek panelde toplamak ve yönetmek için aktif bir abonelik planına sahip olmanız gerekir.",
         "optimization_ai_scan_pro": "AI ile Tara Pro derinlemesine analizi için yeterli kredi bakiyesine sahip olmanız gerekir.",
         "design_generation": "AI tasarım üretimini çalıştırmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
         "strategy_overage": "Aylık strateji limitiniz doldu. Ek strateji oluşturmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
@@ -3015,6 +3017,7 @@
     "raporlar": "Raporlar",
     "katalog": "Katalog",
     "seo": "SEO",
+    "crm": "CRM",
     "entegrasyon": "Entegrasyon",
     "kurumsal": "Kurumsal",
     "gizlilikpolitikasi": "Gizlilik Politikası",
@@ -3030,6 +3033,63 @@
     "cikisYap": "Çıkış Yap",
     "dil": "Türkçe",
     "marketingkurulumu": "Marketing"
+  },
+  "crm": {
+    "title": "CRM",
+    "description": "Reklamlarınızdan gelen lead'leri tek panelde toplayın, olumlu/olumsuz olarak işaretleyin.",
+    "connectedSummary": "{count} sayfa bağlı",
+    "connect": {
+      "title": "Sayfa Bağla",
+      "description": "Lead'lerin CRM'e otomatik düşmesi için reklam verdiğiniz Facebook sayfasını bağlayın.",
+      "selectPage": "Facebook Sayfası",
+      "selectPagePlaceholder": "Bir sayfa seçin",
+      "connectButton": "Bağla",
+      "managePages": "Sayfaları Yönet",
+      "connectedPages": "Bağlı Sayfalar",
+      "disconnect": "Bağlantıyı Kaldır",
+      "done": "Bitti",
+      "loading": "Sayfalar yükleniyor…",
+      "noPages": "Bağlanabilir yeni bir Facebook sayfası bulunamadı.",
+      "metaNotConnected": "Önce Meta hesabınızı bağlayın.",
+      "metaNotConnectedHint": "CRM'in lead toplayabilmesi için Entegrasyon sayfasından Meta hesabınızı bağlamanız gerekir."
+    },
+    "filters": {
+      "all": "Tümü",
+      "new": "Yeni",
+      "positive": "Olumlu",
+      "negative": "Olumsuz"
+    },
+    "status": {
+      "new": "Yeni",
+      "positive": "Olumlu",
+      "negative": "Olumsuz"
+    },
+    "list": {
+      "empty": "Henüz lead yok",
+      "emptyHint": "Reklamlarınızdan bir lead düştüğünde otomatik olarak burada görünecek.",
+      "noName": "İsimsiz lead",
+      "viewDetail": "Detay",
+      "markPositive": "Olumlu işaretle",
+      "markNegative": "Olumsuz işaretle",
+      "markNew": "Yeniye al"
+    },
+    "detail": {
+      "title": "Lead Detayı",
+      "notFound": "Lead bulunamadı.",
+      "name": "Ad Soyad",
+      "email": "E-posta",
+      "phone": "Telefon",
+      "campaign": "Kampanya",
+      "receivedAt": "Geliş Tarihi",
+      "formData": "Form Bilgileri"
+    },
+    "toast": {
+      "connected": "Sayfa bağlandı.",
+      "disconnected": "Bağlantı kaldırıldı.",
+      "statusUpdated": "Lead güncellendi.",
+      "connectError": "Sayfa bağlanamadı.",
+      "error": "Bir hata oluştu."
+    }
   },
   "marketingSetup": {
     "title": "Marketing",
