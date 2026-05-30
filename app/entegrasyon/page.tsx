@@ -14,6 +14,8 @@ interface PlatformStatus {
   accountId?: string
   hasSelectedAccount?: boolean
   lastSyncAt?: string
+  /** OAuth bağlı kullanıcı/işletme adı (Meta: /me?fields=name; Google: kullanıcı/customer adı). */
+  connectedUserName?: string
 }
 
 interface GAStatus {
@@ -148,6 +150,7 @@ function EntegrasyonContent() {
             connected: data.connected,
             accountName: data.adAccountName,
             accountId: data.adAccountId,
+            connectedUserName: data.connectedUserName ?? undefined,
           })
         }
         if (!cancelled && googleRes.ok) {
@@ -501,6 +504,9 @@ function EntegrasyonContent() {
                       }`}>
                         {metaStatus.connected ? t('meta.connected') : t('meta.notConnected')}
                       </span>
+                      {metaStatus.connected && metaStatus.connectedUserName && (
+                        <p className="mt-1.5 text-sm text-gray-700 font-medium">{metaStatus.connectedUserName}</p>
+                      )}
                     </div>
                   </div>
                   <button

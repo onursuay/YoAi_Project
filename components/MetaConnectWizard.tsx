@@ -5,7 +5,6 @@ import { useRouter } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
 import { ROUTES } from '@/lib/routes'
 import { useRegisteredAccounts } from '@/hooks/useRegisteredAccounts'
-import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 
 interface AdAccount {
   id: string
@@ -28,7 +27,6 @@ export default function MetaConnectWizard() {
   // Çoklu reklam hesabı (Madde 2): flag açıkken birden çok hesap seçilebilir.
   // İlk seçilen hesap aktif olur; tümü kayıtlı kümeye eklenir (limit gate backend'de).
   const [selectedIds, setSelectedIds] = useState<string[]>([])
-  const [showLimitModal, setShowLimitModal] = useState(false)
   const reg = useRegisteredAccounts()
   // Yeni multi-account slot sistemi: tier-based total limit (Meta + Google birlikte).
   // Owner enterprise tier'a düşer; free/basic 2, starter 4, premium 8, enterprise 20.
@@ -220,14 +218,13 @@ export default function MetaConnectWizard() {
       if (prev.includes(id)) return prev.filter((x) => x !== id)
       // Yalnız henüz kayıtlı OLMAYAN seçimler limite sayılır (çifte sayımı önler).
       const newlyAdded = [...prev, id].filter((x) => !isRegistered(x))
-      // Slot sistem limit: maxSlots - Google'da kullanılan = Meta için kalan
+      // Slot sistem YEGANE otorite: maxSlots - Google'da kullanılan = Meta için kalan.
+      // Slot sistem yüklenmediyse limitsiz davran (race koşulunda kullanıcıyı engellemeyiz).
       const slotLimit = slotInfo.loaded
         ? Math.max(0, slotInfo.maxSlots - slotInfo.otherPlatformCount)
         : Number.POSITIVE_INFINITY
-      const legacyLimit = reg.remaining !== null ? reg.remaining : Number.POSITIVE_INFINITY
-      const effectiveLimit = Math.min(slotLimit, legacyLimit)
-      if (newlyAdded.length > effectiveLimit) {
-        // Sessizce engelle (ilk kurulumda uyarı çıkarmama tercihi).
+      if (newlyAdded.length > slotLimit) {
+        // Sessizce engelle — modal/uyarı yok (kullanıcı tercihi).
         return prev
       }
       return [...prev, id]
@@ -238,20 +235,8 @@ export default function MetaConnectWizard() {
     if (selectedIds.length === 0) return
     setIsLoading(true)
     try {
-      // Çoklu hesap (flag açık): seçilen tüm hesapları kayıtlı kümeye ekle.
-      // Limit zorlama backend'de (/api/account/registered) — Meta seçim/publish
-      // entegrasyonuna dokunulmaz.
-      if (reg.enabled) {
-        for (const id of selectedIds) {
-          const acc = adAccounts.find((a) => a.id === id)
-          const res = await reg.addAccount({ platform: 'meta', account_id: id, account_name: acc?.name ?? null })
-          if (!res.ok && res.error === 'limit_reached') {
-            setIsLoading(false)
-            setShowLimitModal(true)
-            return
-          }
-        }
-      }
+      // ESKİ reg.addAccount çağrısı kaldırıldı — limit_reached yanlış pozitifleri
+      // wizard'da abonelik modalı tetikliyordu. Slot sistemi yegane otorite (aşağıda).
 
       // Seçilen tüm hesapları YENİ multi-account slot sistemine kaydet (Faz 1+2).
       // Slot 1 = primary (aktif), slot 2+ = ek hesaplar. /meta-ads'teki slot
@@ -516,10 +501,8 @@ export default function MetaConnectWizard() {
                         <label
                           key={account.id}
                           onClick={(e) => {
-                            if (limitReached) {
-                              e.preventDefault()
-                              setShowLimitModal(true)
-                            }
+                            // Limit dolunca SESSİZCE engelle — modal/uyarı yok (kullanıcı tercihi).
+                            if (limitReached) e.preventDefault()
                           }}
                           className={`flex items-center p-4 border-2 rounded-lg transition-colors ${
                             limitReached ? 'opacity-50 cursor-not-allowed' : 'cursor-pointer hover:bg-gray-50'
@@ -588,15 +571,7 @@ export default function MetaConnectWizard() {
       </div>
     </div>
 
-    {showLimitModal && (
-      <AccessRequiredModal
-        type="subscription"
-        featureKey="ad_account_slot"
-        dismissible
-        onClose={() => setShowLimitModal(false)}
-        reason="onboarding_meta_account_limit"
-      />
-    )}
+    {/* Abonelik modal'ı kaldırıldı — slot sistem limiti sessizce uygular. */}
     </>
   )
 }

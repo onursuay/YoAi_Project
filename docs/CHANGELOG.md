@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-05-30 — MetaConnectWizard limit conflict düzeltildi + /entegrasyon'da bağlı kullanıcı adı
+- **Sorun 1 (kritik):** Wizard "1/2 hesap seçildi" gösteriyordu ama 2. seçimde abonelik modal'ı çıkıyordu; ileri'ye basınca da yine modal çıkıyordu. Kök neden: iki paralel limit sistemi (YENİ slot + ESKİ `useRegisteredAccounts`) çatışıyordu — eski reg sistemi daha sıkı sayıyordu, slot sistem 2 diyordu, MIN alınca 1 olunca 2. seçim block ediliyordu. Ayrıca `reg.addAccount` çağrısı limit_reached false-positive üretip ileri butonu modal'a düşürüyordu.
+- **Sorun 2:** /entegrasyon Meta kartında "Bağlı" yazıyordu ama hangi hesabın bağlı olduğu görünmüyordu; kullanıcı bağlı OAuth kullanıcısının/işletmesinin adını da görmek istiyordu.
+- **Çözüm:**
+  - **Slot sistem yegane otorite:** Wizard'da eski `reg.addAccount` çağrısı kaldırıldı. `toggleAccount` ve `limitReached` SADECE slot sistem'i okur (`slotInfo.maxSlots - otherPlatformCount`). Eski `reg.remaining` legacy fallback tamamen silindi.
+  - **Modal'lar kaldırıldı:** `showLimitModal` state, `setShowLimitModal` çağrıları, `AccessRequiredModal` JSX ve import tamamen silindi. Limit dolunca sessizce engellenir (uyarı yok, donuk slot görüntüsü yeterli).
+  - **Bağlı kullanıcı adı:** `/api/meta/status` GET ek olarak `connectedUserName` döner (`/me?fields=name` Graph çağrısı, best-effort; hata olursa null). /entegrasyon Meta kartında "Bağlı" rozeti altında bağlı kullanıcı/işletme adı gösterilir.
+- **Dosyalar:** `components/MetaConnectWizard.tsx`, `app/api/meta/status/route.ts`, `app/entegrasyon/page.tsx`. tsc 0 hata; next build temiz.
+- **Sonraki:** Google için aynı şekilde bağlı kullanıcı adı gösterimi (OAuth userinfo veya manager hesap adı).
+
 ## 2026-05-30 — CRM Faz 1: Reklam lead'leri → CRM (olumlu/olumsuz işaretleme)
 - **Sorun:** Meta Lead Ads reklamlarından düşen lead'leri tek panelde toplama, olumlu/olumsuz niteleme ve (sonraki fazda) Meta'ya geri senkron ihtiyacı (Mailchimp ↔ Meta modeli). Mevcut webhook'ta `leadgen` dalı boştu ("MVP: log only").
 - **Çözüm:** Uçtan uca CRM Faz 1 — gerçek zamanlı webhook ile lead toplama, abonelik gerektiren modül:

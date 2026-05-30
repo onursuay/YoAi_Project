@@ -21,10 +21,28 @@ export async function GET() {
     "meta_selected_ad_account_name",
   );
 
+  // Best-effort: bağlanan kullanıcı/işletme adını çek (/me?fields=name).
+  // Hata olursa connectedUserName null kalır; status akışı bozulmaz.
+  let connectedUserName: string | null = null;
+  try {
+    const meRes = await metaGraphFetch("/me", accessToken, {
+      params: { fields: "name" },
+    });
+    if (meRes.ok) {
+      const meData = await meRes.json().catch(() => ({}));
+      if (meData && typeof meData.name === "string") {
+        connectedUserName = meData.name;
+      }
+    }
+  } catch {
+    /* connectedUserName null kalır */
+  }
+
   return NextResponse.json({
     connected: true,
     adAccountId: selectedAdAccountId?.value || null,
     adAccountName: selectedAdAccountName?.value || null,
+    connectedUserName,
   }, {
     headers: { 'Cache-Control': 'no-store, no-cache, must-revalidate' }
   });
