@@ -160,6 +160,7 @@ function EntegrasyonContent() {
             accountName: data?.accountName ?? undefined,
             accountId: data?.accountId ?? undefined,
             hasSelectedAccount: Boolean(data?.hasSelectedAccount ?? data?.accountId),
+            connectedUserName: data?.connectedUserName ?? undefined,
           })
         }
         if (!cancelled && tiktokRes.ok) {
@@ -557,6 +558,9 @@ function EntegrasyonContent() {
                       }`}>
                         {googleStatus.connected ? t('google.connected') : t('google.notConnected')}
                       </span>
+                      {googleStatus.connected && googleStatus.connectedUserName && (
+                        <p className="mt-1.5 text-sm text-gray-700 font-medium">{googleStatus.connectedUserName}</p>
+                      )}
                     </div>
                   </div>
                   <button
