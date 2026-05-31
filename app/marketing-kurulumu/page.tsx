@@ -38,7 +38,7 @@ export default function MarketingSetupPage() {
       <Topbar title={t('title')} description={t('subtitle')} />
 
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
-        <div className="max-w-4xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           {resolving ? (
             <div className="flex items-center justify-center py-24 text-sm text-gray-500">
               {t('common.loading')}

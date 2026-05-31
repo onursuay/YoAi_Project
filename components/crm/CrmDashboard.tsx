@@ -64,6 +64,7 @@ export default function CrmDashboard() {
   const [selectedPage, setSelectedPage] = useState('')
   const [connecting, setConnecting] = useState(false)
   const [showConnectPanel, setShowConnectPanel] = useState(false)
+  const connectPanelRef = useRef<HTMLDivElement>(null)
 
   // ── Lead'ler ──
   const [leads, setLeads] = useState<LeadRow[]>([])
@@ -148,6 +149,16 @@ export default function CrmDashboard() {
     document.addEventListener('mousedown', onDown)
     return () => document.removeEventListener('mousedown', onDown)
   }, [pageMenuOpen])
+
+  // Sayfa Bağla paneli (yönet modu) dış-tıklamada kapanır.
+  useEffect(() => {
+    if (!showConnectPanel) return
+    const onDown = (e: MouseEvent) => {
+      if (connectPanelRef.current && !connectPanelRef.current.contains(e.target as Node)) setShowConnectPanel(false)
+    }
+    document.addEventListener('mousedown', onDown)
+    return () => document.removeEventListener('mousedown', onDown)
+  }, [showConnectPanel])
 
   const toggleStage = useCallback((s: Stage) => {
     setHiddenStages((prev) => {
@@ -312,7 +323,7 @@ export default function CrmDashboard() {
     <div className="w-full px-6 lg:px-8 py-8">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[80] px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-md text-center ${toast.kind === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+        <div className={`fixed top-4 right-6 z-[80] px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm ${toast.kind === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
           {toast.msg}
         </div>
       )}
@@ -343,7 +354,7 @@ export default function CrmDashboard() {
 
       {/* Bağlantı bölümü */}
       {(noConnections || showConnectPanel) ? (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-6 animate-card-enter">
+        <div ref={connectPanelRef} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-6 animate-card-enter">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
               <Link2 className="w-5 h-5 text-primary" />
@@ -450,38 +461,6 @@ export default function CrmDashboard() {
             </span>
           </div>
           <div className="flex items-center gap-2">
-            {/* Aşama (sütun) filtresi — Pano/Liste toggle'ının solunda */}
-            <div ref={filterRef} className="relative">
-              <button
-                onClick={() => setFilterOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition"
-              >
-                <Filter className="w-4 h-4" /> {t('stageFilter')}
-                {hiddenStages.size > 0 && (
-                  <span className="text-xs text-primary font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
-                )}
-              </button>
-              {filterOpen && (
-                <div className="absolute left-0 top-full mt-1 z-30 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1">
-                  {STAGES.map((s) => {
-                    const visible = !hiddenStages.has(s)
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => toggleStage(s)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-gray-50"
-                      >
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${visible ? 'bg-primary border-primary' : 'border-gray-300'}`}>
-                          {visible && <Check className="w-3 h-3 text-white" />}
-                        </span>
-                        <span className={`w-2 h-2 rounded-full ${STAGE_STYLE[s].dot}`} />
-                        <span className="flex-1 text-gray-700">{stageLabel(s)}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
-            </div>
             {/* Görünüm geçişi */}
             <div className="inline-flex rounded-xl border border-gray-200 p-0.5 bg-white">
               <button
@@ -510,6 +489,38 @@ export default function CrmDashboard() {
             >
               <Plus className="w-4 h-4" /> {t('connect.managePages')}
             </button>
+            {/* Aşama (sütun) filtresi — en sağda, Sayfaları Yönet'in sağında */}
+            <div ref={filterRef} className="relative">
+              <button
+                onClick={() => setFilterOpen((v) => !v)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition"
+              >
+                <Filter className="w-4 h-4" /> {t('stageFilter')}
+                {hiddenStages.size > 0 && (
+                  <span className="text-xs text-primary font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
+                )}
+              </button>
+              {filterOpen && (
+                <div className="absolute right-0 top-full mt-1 z-30 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1">
+                  {STAGES.map((s) => {
+                    const visible = !hiddenStages.has(s)
+                    return (
+                      <button
+                        key={s}
+                        onClick={() => toggleStage(s)}
+                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-gray-50"
+                      >
+                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${visible ? 'bg-primary border-primary' : 'border-gray-300'}`}>
+                          {visible && <Check className="w-3 h-3 text-white" />}
+                        </span>
+                        <span className={`w-2 h-2 rounded-full ${STAGE_STYLE[s].dot}`} />
+                        <span className="flex-1 text-gray-700">{stageLabel(s)}</span>
+                      </button>
+                    )
+                  })}
+                </div>
+              )}
+            </div>
           </div>
         </div>
       )}
