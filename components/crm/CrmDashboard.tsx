@@ -234,7 +234,7 @@ export default function CrmDashboard() {
   )
 
   return (
-    <div className="max-w-6xl mx-auto px-6 py-8">
+    <div className="w-full px-6 lg:px-8 py-8">
       {/* Toast */}
       {toast && (
         <div className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm ${toast.kind === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
@@ -398,7 +398,7 @@ export default function CrmDashboard() {
             {STAGES.map((stage) => {
               const items = leads.filter((l) => l.status === stage)
               return (
-                <div key={stage} className="shrink-0 w-72 bg-gray-50 rounded-2xl border border-gray-200">
+                <div key={stage} className="flex-1 min-w-[240px] bg-gray-50 rounded-2xl border border-gray-200">
                   <div className="px-4 pt-3.5 pb-2.5 border-b border-gray-200">
                     <div className={`h-1 w-10 rounded-full mb-2 ${STAGE_STYLE[stage].bar}`} />
                     <div className="flex items-center justify-between">
