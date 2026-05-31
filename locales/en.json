@@ -3048,6 +3048,30 @@
     "title": "Email Marketing",
     "description": "Create, send and track email campaigns to your contacts.",
     "soon": "Soon",
+    "contacts": {
+      "importCrm": "Import from CRM",
+      "upload": "Upload CSV/Excel",
+      "total": "contacts",
+      "optOut": "opted out",
+      "empty": "No contacts yet",
+      "emptyHint": "Import from CRM or upload a CSV/Excel file to add contacts.",
+      "colEmail": "Email",
+      "colName": "Name",
+      "colPhone": "Phone",
+      "colSource": "Source",
+      "colDate": "Added",
+      "imported": "{count} contacts imported from CRM.",
+      "uploaded": "{count} contacts added (of {total} rows).",
+      "noValid": "No valid email found in the file.",
+      "parseError": "Could not read the file.",
+      "error": "Something went wrong.",
+      "source": {
+        "crm": "CRM",
+        "csv": "CSV/Excel",
+        "sheets": "Google Sheets",
+        "manual": "Manual"
+      }
+    },
     "setup": {
       "title": "Verify your sending domain",
       "desc": "To keep your emails out of spam, you must verify your own sending domain (SPF/DKIM). We'll guide you through this during setup."

@@ -3048,6 +3048,30 @@
     "title": "Email Marketing",
     "description": "Kişilerinize e-posta kampanyaları oluşturun, gönderin ve sonuçları takip edin.",
     "soon": "Yakında",
+    "contacts": {
+      "importCrm": "CRM'den Aktar",
+      "upload": "CSV/Excel Yükle",
+      "total": "kişi",
+      "optOut": "abonelikten çıktı",
+      "empty": "Henüz kişi yok",
+      "emptyHint": "CRM'den aktar veya CSV/Excel yükleyerek kişi ekle.",
+      "colEmail": "E-posta",
+      "colName": "Ad Soyad",
+      "colPhone": "Telefon",
+      "colSource": "Kaynak",
+      "colDate": "Eklendi",
+      "imported": "{count} kişi CRM'den aktarıldı.",
+      "uploaded": "{count} kişi eklendi ({total} satırdan).",
+      "noValid": "Dosyada geçerli e-posta bulunamadı.",
+      "parseError": "Dosya okunamadı.",
+      "error": "Bir hata oluştu.",
+      "source": {
+        "crm": "CRM",
+        "csv": "CSV/Excel",
+        "sheets": "Google Sheets",
+        "manual": "Manuel"
+      }
+    },
     "setup": {
       "title": "Gönderim domainini doğrula",
       "desc": "E-postaların spam'e düşmemesi için kendi gönderim domainini (SPF/DKIM) doğrulaman gerekir. Bu adımı kurarken yönlendireceğiz."
