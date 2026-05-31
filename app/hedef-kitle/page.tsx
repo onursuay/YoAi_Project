@@ -251,7 +251,7 @@ export default function HedefKitlePage() {
         adAccountName={(platform === 'google' ? googleName : adAccountName) || undefined}
       />
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
-        <div className="max-w-6xl mx-auto space-y-4">
+        <div className="max-w-7xl mx-auto space-y-4">
           {/* Platform Switcher: Meta / Google */}
           <PlatformTabs activePlatform={platform} onPlatformChange={handlePlatformChange} />
 
@@ -275,7 +275,9 @@ export default function HedefKitlePage() {
 
           {/* Google — salt-okunur gerçek veri görünümü (segment kataloğu + user list'ler) */}
           {platform === 'google' && (
-            <GoogleAudienceView activeTab={activeTab as 'SAVED' | 'CUSTOM'} />
+            <div className="animate-card-enter">
+              <GoogleAudienceView activeTab={activeTab as 'SAVED' | 'CUSTOM'} />
+            </div>
           )}
 
           {/* AI Tab — Strategy-created audiences (yalnızca Meta, erişim varsa) */}
@@ -306,6 +308,7 @@ export default function HedefKitlePage() {
 
           {/* Audience List (non-AI tabs, yalnızca Meta) */}
           {platform === 'meta' && activeTab !== 'AI' && (
+            <div className="animate-card-enter">
             <AudienceList
               audiences={audiences}
               loading={loading}
@@ -315,6 +318,7 @@ export default function HedefKitlePage() {
               onToast={addToast}
               filter={activeTab as AudienceType}
             />
+            </div>
           )}
         </div>
       </div>

@@ -464,7 +464,7 @@ export default function YoAiPage() {
               </div>
         </div>
         {isIdleWithNoMessages ? (
-          <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-8 pb-12 relative z-10">
+          <div className="max-w-[1440px] mx-auto px-6 py-6 space-y-8 pb-12 relative z-10 animate-card-enter">
             {ccError && !ccLoading && (
               <div className="flex items-center justify-between bg-red-50 border border-red-200 rounded-xl px-4 py-3">
                 <p className="text-sm text-red-700">{ccError}</p>

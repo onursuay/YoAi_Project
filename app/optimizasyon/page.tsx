@@ -464,8 +464,8 @@ export default function OptimizasyonPage() {
           {/* Campaign list */}
           {!loading && filteredCampaigns.length > 0 && (
             <div className="space-y-3">
-              {filteredCampaigns.map(campaign => (
-                <div key={campaign.id}>
+              {filteredCampaigns.map((campaign, ci) => (
+                <div key={campaign.id} className="animate-card-enter" style={{ ['--card-index' as string]: Math.min(ci, 10) }}>
                   <CampaignCard
                     campaign={campaign}
                     expanded={expandedId === campaign.id}
@@ -529,8 +529,8 @@ export default function OptimizasyonPage() {
             )}
             {!extLoading && !extError && extCampaigns.length > 0 && (
               <div className="space-y-3">
-                {(searchQuery ? extCampaigns.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())) : extCampaigns).map(c => (
-                  <div key={c.id}>
+                {(searchQuery ? extCampaigns.filter(c => c.name.toLowerCase().includes(searchQuery.toLowerCase())) : extCampaigns).map((c, ci) => (
+                  <div key={c.id} className="animate-card-enter" style={{ ['--card-index' as string]: Math.min(ci, 10) }}>
                     <GoogleCampaignCard
                       campaign={c}
                       expanded={extExpandedId === c.id}

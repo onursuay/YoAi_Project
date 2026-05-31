@@ -353,7 +353,7 @@ function RaporlarContent() {
     <>
       <Topbar title={t('title')} description={t('description')} />
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
 
           {/* Provider Tabs */}
           <div className="flex flex-wrap items-center justify-between gap-3 mb-6">
@@ -436,7 +436,7 @@ function RaporlarContent() {
             <div className="space-y-6">
               {/* KPI Cards */}
               {currentReport.kpis.length > 0 && (
-                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4">
+                <div className="grid grid-cols-2 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-7 gap-4 animate-card-enter">
                   {currentReport.kpis.map((kpi) => (
                     <KpiCard key={kpi.key} kpi={kpi} t={t} />
                   ))}
@@ -457,7 +457,7 @@ function RaporlarContent() {
 
               {/* Daily Trend Chart */}
               {currentReport.dailySeries.length > 0 && chartLines.length > 0 && (
-                <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-card-enter" style={{ ['--card-index' as string]: 1 }}>
                   <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
                     <TrendingUp className="w-5 h-5 text-primary" />
                     {t('dailyTrend')}
@@ -987,7 +987,7 @@ export default function RaporlarPage() {
         <>
           <Topbar title="..." description="" />
           <div className="flex-1 overflow-y-auto app-content-surface p-6">
-            <div className="max-w-6xl mx-auto">
+            <div className="max-w-7xl mx-auto">
               <ReportSkeleton />
             </div>
           </div>

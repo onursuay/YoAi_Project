@@ -459,7 +459,7 @@ function EntegrasyonContent() {
         description={t('description')}
       />
       <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
-        <div className="max-w-6xl mx-auto">
+        <div className="max-w-7xl mx-auto">
           <div className="bg-white rounded-2xl border border-gray-200 p-8 mb-6">
             <div className="flex items-start gap-4">
               <div className="w-12 h-12 bg-primary/10 rounded-xl flex items-center justify-center">
@@ -490,7 +490,7 @@ function EntegrasyonContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
               
               {/* Meta Ads */}
-              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all hover:shadow-md ${
                 metaStatus.connected ? 'border-primary' : 'border-gray-200'
               }`}>
                 <div className="flex items-start justify-between mb-4">
@@ -543,7 +543,7 @@ function EntegrasyonContent() {
               </div>
 
               {/* Google Ads */}
-              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all hover:shadow-md ${
                 googleStatus.connected ? 'border-primary' : 'border-gray-200'
               }`}>
                 <div className="flex items-start justify-between mb-4">
@@ -606,7 +606,7 @@ function EntegrasyonContent() {
               </div>
 
               {/* TikTok Ads */}
-              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all hover:shadow-md ${
                 tiktokStatus.connected ? 'border-primary' : 'border-gray-200'
               }`}>
                 <div className="flex items-start justify-between mb-4">
@@ -790,7 +790,7 @@ function EntegrasyonContent() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
 
               {/* Google Analytics */}
-              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all hover:shadow-md ${
                 gaStatus.connected ? 'border-primary' : 'border-gray-200'
               }`}>
                 <div className="flex items-start justify-between mb-4">
@@ -873,7 +873,7 @@ function EntegrasyonContent() {
               </div>
 
               {/* Google Search Console */}
-              <div className={`bg-white rounded-xl border-2 cardPad transition-all ${
+              <div className={`bg-white rounded-xl border-2 cardPad transition-all hover:shadow-md ${
                 gscStatus.connected ? 'border-primary' : 'border-gray-200'
               }`}>
                 <div className="flex items-start justify-between mb-4">
@@ -971,7 +971,7 @@ export default function EntegrasyonPage() {
           description="Reklam ve raporlama platformlarınızı bağlayın"
         />
         <div className="flex-1 overflow-y-auto app-content-surface p-6">
-          <div className="max-w-6xl mx-auto">
+          <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
               <p className="text-gray-600">Yükleniyor...</p>
             </div>

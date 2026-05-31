@@ -597,9 +597,9 @@ export default function TasarimPage() {
                 </button>
               </div>
               <div className="flex items-center gap-3">
-                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-amber-50 border border-amber-200 rounded-lg">
-                  <Coins className="w-4 h-4 text-amber-500" />
-                  <span className="text-sm font-medium text-amber-700">{credits} {t('credits')}</span>
+                <div className="flex items-center gap-1.5 px-3 py-1.5 bg-primary/5 border border-primary/20 rounded-lg">
+                  <Coins className="w-4 h-4 text-primary" />
+                  <span className="text-sm font-medium text-primary">{credits} {t('credits')}</span>
                 </div>
                 <button
                   onClick={() => router.push('/abonelik#krediler')}

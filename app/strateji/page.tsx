@@ -152,19 +152,19 @@ export default function StratejiPage() {
         }}
       />
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
-        <div className="max-w-6xl mx-auto space-y-6">
+        <div className="max-w-7xl mx-auto space-y-6">
           {/* KPI Bar */}
           <KPIBar />
 
           {/* Modül açıklaması + kullanım bilgisi */}
-          <div className="bg-white rounded-xl border border-gray-200 p-5">
+          <div className="bg-white rounded-xl border border-gray-200 p-5 animate-card-enter">
             <div className="flex items-start gap-4">
               <div className="w-10 h-10 bg-primary/10 rounded-xl flex items-center justify-center flex-shrink-0">
                 <span className="text-lg">🎯</span>
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-sm font-semibold text-gray-900">Strateji Motoru</h3>
+                  <h3 className="text-base font-semibold text-gray-900">Strateji Motoru</h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     needsCreditsForStrategy
                       ? 'bg-primary/10 text-primary'
@@ -193,9 +193,9 @@ export default function StratejiPage() {
           </div>
 
           {/* Strateji Listesi */}
-          <div>
+          <div className="animate-card-enter" style={{ ['--card-index' as string]: 1 }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-sm font-medium text-gray-700">Strateji Planları</h3>
+              <h3 className="text-base font-medium text-gray-700">Strateji Planları</h3>
               <span className="text-xs text-gray-500">{instances.length} kayıt</span>
             </div>
             <StrategyList
