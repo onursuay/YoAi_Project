@@ -3128,15 +3128,14 @@
       "testFailed": "Bağlantı testi başarısız",
       "error": "Bir hata oluştu.",
       "cards": {
-        "smtp": { "title": "E-posta hesabını bağla", "desc": "Gmail / Outlook / kurumsal mailini uygulama şifresiyle bağla, kendi adresinden gönder." },
+        "smtp": { "title": "Kurumsal / özel SMTP", "desc": "Kendi mail sunucunun SMTP bilgileriyle bağla (kurumsal/özel)." },
         "domain": { "title": "Kendi domainini doğrula", "desc": "DNS kayıtlarıyla markalı adresinden gönder; en yüksek hacim ve teslim." },
-        "oauth": { "title": "Tek tık Gmail / Outlook", "desc": "OAuth ile tek tıkla bağlan; şifre girmeden." }
+        "oauth": { "title": "Gmail / Outlook (tek tık)", "desc": "OAuth ile tek tıkla bağlan, şifre girmeden — önerilen." }
       },
       "smtp": {
-        "title": "E-posta hesabını bağla (SMTP)",
-        "provider": "Sağlayıcı",
-        "custom": "Diğer (kurumsal/özel)",
-        "appPwHint": "Gmail/Outlook için normal şifre değil, 'uygulama şifresi' (app password) kullanmalısın.",
+        "title": "Kurumsal / özel SMTP",
+        "corpHint": "Kendi mail sunucunun SMTP bilgilerini gir. (Gmail/Outlook için 'Tek tık' kartını kullan.)",
+        "secure": "SSL/TLS (genelde port 465)",
         "fromEmail": "Gönderen e-posta",
         "fromName": "Gönderen adı",
         "user": "Kullanıcı adı",

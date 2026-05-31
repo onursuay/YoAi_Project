@@ -2,18 +2,11 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Mail, Globe, Server, Loader2, Trash2, Star, ArrowLeft, X, Zap, Check } from 'lucide-react'
-import WizardSelect from '@/components/meta/wizard/WizardSelect'
+import { Globe, Server, Loader2, Trash2, Star, ArrowLeft, X, Zap, Check } from 'lucide-react'
 
 interface Account {
   id: string; type: string; label: string | null; fromName: string | null; fromEmail: string
   status: string; isDefault: boolean; host: string | null; user: string | null
-}
-
-const PRESETS: Record<string, { host: string; port: number; secure: boolean }> = {
-  gmail: { host: 'smtp.gmail.com', port: 465, secure: true },
-  outlook: { host: 'smtp.office365.com', port: 587, secure: false },
-  custom: { host: '', port: 587, secure: false },
 }
 
 export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 'err', m: string, ms?: number) => void; onClose: () => void }) {
@@ -23,15 +16,14 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
   const [loading, setLoading] = useState(true)
   const [mode, setMode] = useState<'list' | 'smtp'>('list')
 
-  // SMTP form
-  const [preset, setPreset] = useState('gmail')
-  const [host, setHost] = useState(PRESETS.gmail.host)
-  const [port, setPort] = useState(String(PRESETS.gmail.port))
-  const [secure, setSecure] = useState(PRESETS.gmail.secure)
+  // SMTP form (yalnız kurumsal/özel sunucu)
   const [fromEmail, setFromEmail] = useState('')
   const [fromName, setFromName] = useState('')
   const [user, setUser] = useState('')
   const [pass, setPass] = useState('')
+  const [host, setHost] = useState('')
+  const [port, setPort] = useState('587')
+  const [secure, setSecure] = useState(false)
   const [saving, setSaving] = useState(false)
 
   const load = useCallback(async () => {
@@ -44,12 +36,6 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
   }, [])
   useEffect(() => { load() }, [load])
 
-  const selectPreset = (p: string) => {
-    setPreset(p)
-    const cfg = PRESETS[p]
-    if (cfg) { setHost(cfg.host); setPort(String(cfg.port)); setSecure(cfg.secure) }
-  }
-
   const saveSmtp = useCallback(async () => {
     if (!fromEmail || !user || !pass || !host) { flash('err', t('sending.missing')); return }
     setSaving(true)
@@ -60,7 +46,7 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
       })
       const data = await res.json()
       if (data.ok) { flash('ok', t('sending.connected')); setMode('list'); setPass(''); load() }
-      else if (data.error === 'smtp_failed') flash('err', `${t('sending.testFailed')}: ${(data.message || '').slice(0, 80)}`, 8000)
+      else if (data.error === 'smtp_failed') flash('err', data.message || t('sending.testFailed'), 8000)
       else flash('err', t('sending.error'))
     } catch { flash('err', t('sending.error')) } finally { setSaving(false) }
   }, [fromEmail, user, pass, host, port, secure, fromName, flash, t, load])
@@ -68,22 +54,14 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
   const setDefault = async (id: string) => { await fetch(`/api/email/sending-accounts/${id}`, { method: 'PATCH' }); load() }
   const remove = async (id: string) => { await fetch(`/api/email/sending-accounts/${id}`, { method: 'DELETE' }); load() }
 
-  // ── SMTP form ──
+  // ── SMTP form (kurumsal/özel) ──
   if (mode === 'smtp') {
     return (
       <div className="max-w-xl">
         <button onClick={() => setMode('list')} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4"><ArrowLeft className="w-4 h-4" /> {t('sending.back')}</button>
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
           <h3 className="text-base font-semibold text-gray-900">{t('sending.smtp.title')}</h3>
-          <div>
-            <label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.provider')}</label>
-            <WizardSelect value={preset} onChange={selectPreset} options={[
-              { value: 'gmail', label: 'Gmail' }, { value: 'outlook', label: 'Outlook / Hotmail' }, { value: 'custom', label: t('sending.smtp.custom') },
-            ]} />
-            {(preset === 'gmail' || preset === 'outlook') && (
-              <p className="text-xs text-primary mt-1.5">{t('sending.smtp.appPwHint')}</p>
-            )}
-          </div>
+          <p className="text-xs text-gray-500">{t('sending.smtp.corpHint')}</p>
           <div className="grid grid-cols-2 gap-3">
             <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.fromEmail')}</label>
               <input value={fromEmail} onChange={(e) => { setFromEmail(e.target.value); if (!user) setUser(e.target.value) }} placeholder="siz@firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
@@ -93,15 +71,16 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
           <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.user')}</label>
             <input value={user} onChange={(e) => setUser(e.target.value)} placeholder="siz@firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
           <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.pass')}</label>
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} placeholder={t('sending.smtp.passPlaceholder')} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-          {preset === 'custom' && (
-            <div className="grid grid-cols-3 gap-3">
-              <div className="col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.host')}</label>
-                <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-              <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.port')}</label>
-                <input value={port} onChange={(e) => setPort(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-            </div>
-          )}
+            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.host')}</label>
+              <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
+            <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.port')}</label>
+              <input value={port} onChange={(e) => setPort(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
+            <input type="checkbox" checked={secure} onChange={(e) => setSecure(e.target.checked)} className="rounded border-gray-300 text-primary focus:ring-primary/20" /> {t('sending.smtp.secure')}
+          </label>
           <div className="flex justify-end pt-2 border-t border-gray-100">
             <button onClick={saveSmtp} disabled={saving} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
               {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} {t('sending.smtp.testSave')}
@@ -114,9 +93,9 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
 
   // ── Liste + 3 kart ──
   const cards = [
-    { key: 'smtp', icon: Server, soon: false, onClick: () => setMode('smtp') },
-    { key: 'domain', icon: Globe, soon: true, onClick: () => {} },
     { key: 'oauth', icon: Zap, soon: true, onClick: () => {} },
+    { key: 'domain', icon: Globe, soon: true, onClick: () => {} },
+    { key: 'smtp', icon: Server, soon: false, onClick: () => setMode('smtp') },
   ]
 
   return (
@@ -126,7 +105,6 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
         <button onClick={onClose} className="p-1.5 text-gray-400 hover:text-gray-700"><X className="w-5 h-5" /></button>
       </div>
 
-      {/* Bağlı hesaplar */}
       {!loading && accounts.length > 0 && (
         <div className="space-y-2 mb-6">
           {accounts.map((a) => (

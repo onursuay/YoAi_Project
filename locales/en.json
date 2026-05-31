@@ -3128,15 +3128,14 @@
       "testFailed": "Connection test failed",
       "error": "Something went wrong.",
       "cards": {
-        "smtp": { "title": "Connect your email", "desc": "Connect Gmail / Outlook / corporate email with an app password and send from your own address." },
+        "smtp": { "title": "Corporate / custom SMTP", "desc": "Connect with your own mail server's SMTP details (corporate/custom)." },
         "domain": { "title": "Verify your domain", "desc": "Send from your branded address via DNS records; highest volume and deliverability." },
-        "oauth": { "title": "One-click Gmail / Outlook", "desc": "Connect with one click via OAuth, no password needed." }
+        "oauth": { "title": "Gmail / Outlook (one-click)", "desc": "Connect with one click via OAuth, no password needed — recommended." }
       },
       "smtp": {
-        "title": "Connect your email (SMTP)",
-        "provider": "Provider",
-        "custom": "Other (corporate/custom)",
-        "appPwHint": "For Gmail/Outlook use an 'app password', not your normal password.",
+        "title": "Corporate / custom SMTP",
+        "corpHint": "Enter your own mail server's SMTP details. (For Gmail/Outlook use the 'One-click' card.)",
+        "secure": "SSL/TLS (usually port 465)",
         "fromEmail": "From email",
         "fromName": "From name",
         "user": "Username",
