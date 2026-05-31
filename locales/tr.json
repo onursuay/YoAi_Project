@@ -3001,6 +3001,13 @@
       "errors": {
         "generic": "Analiz sırasında bir hata oluştu.",
         "network": "Bağlantı hatası. Lütfen internet bağlantınızı kontrol edin."
+      },
+      "scoreLabels": {
+        "excellent": "Mükemmel",
+        "good": "İyi",
+        "medium": "Orta",
+        "weak": "Zayıf",
+        "critical": "Kritik"
       }
     }
   },
@@ -3450,12 +3457,30 @@
     "faqTitle": "Sıkça Sorulan Sorular",
     "faqSubtitle": "Aklınıza takılan sorulara hızlı yanıtlar.",
     "faq": [
-      { "q": "Planımı istediğim zaman değiştirebilir veya iptal edebilir miyim?", "a": "Evet. Planınızı dilediğiniz zaman yükseltebilir, düşürebilir veya iptal edebilirsiniz. Herhangi bir taahhüt yoktur." },
-      { "q": "Reklam hesabı sayısını sonradan artırabilir miyim?", "a": "Evet. Tüm planlar reklam hesabı sayısına göre ölçeklenir; ihtiyaç duydukça yeni hesaplar ekleyebilirsiniz." },
-      { "q": "Aylık ve yıllık ödeme arasındaki fark nedir?", "a": "Yıllık ödemeyi tercih ettiğinizde tüm planlarda %30 indirim uygulanır." },
-      { "q": "Hangi reklam platformlarını destekliyorsunuz?", "a": "Google Ads ve Meta (Facebook, Instagram) reklamlarınızı tek panelden oluşturabilir ve yönetebilirsiniz." },
-      { "q": "Ücretsiz denemeye başlamak için kredi kartı gerekiyor mu?", "a": "Hayır. Ücretsiz denemenizi başlatmak için kredi kartı bilgisi girmenize gerek yoktur." },
-      { "q": "Enterprise plan kimler için uygundur?", "a": "7 ve üzeri reklam hesabı yöneten ajanslar ve büyük ekipler için tasarlanmıştır; ihtiyacınıza göre özel fiyatlandırma sunarız." }
+      {
+        "q": "Planımı istediğim zaman değiştirebilir veya iptal edebilir miyim?",
+        "a": "Evet. Planınızı dilediğiniz zaman yükseltebilir, düşürebilir veya iptal edebilirsiniz. Herhangi bir taahhüt yoktur."
+      },
+      {
+        "q": "Reklam hesabı sayısını sonradan artırabilir miyim?",
+        "a": "Evet. Tüm planlar reklam hesabı sayısına göre ölçeklenir; ihtiyaç duydukça yeni hesaplar ekleyebilirsiniz."
+      },
+      {
+        "q": "Aylık ve yıllık ödeme arasındaki fark nedir?",
+        "a": "Yıllık ödemeyi tercih ettiğinizde tüm planlarda %30 indirim uygulanır."
+      },
+      {
+        "q": "Hangi reklam platformlarını destekliyorsunuz?",
+        "a": "Google Ads ve Meta (Facebook, Instagram) reklamlarınızı tek panelden oluşturabilir ve yönetebilirsiniz."
+      },
+      {
+        "q": "Ücretsiz denemeye başlamak için kredi kartı gerekiyor mu?",
+        "a": "Hayır. Ücretsiz denemenizi başlatmak için kredi kartı bilgisi girmenize gerek yoktur."
+      },
+      {
+        "q": "Enterprise plan kimler için uygundur?",
+        "a": "7 ve üzeri reklam hesabı yöneten ajanslar ve büyük ekipler için tasarlanmıştır; ihtiyacınıza göre özel fiyatlandırma sunarız."
+      }
     ],
     "ctaTitle": "Hemen başlamaya hazır mısınız?",
     "ctaSubtitle": "Ücretsiz denemenizi başlatın. Kredi kartı gerekmez.",

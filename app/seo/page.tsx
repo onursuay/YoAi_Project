@@ -168,28 +168,28 @@ const categoryConfig: Record<string, { icon: typeof Search; label: string; label
 
 function getScoreColor(score: number): string {
   if (score >= 80) return '#22C55E'
-  if (score >= 50) return '#F59E0B'
+  if (score >= 50) return '#059669'
   return '#EF4444'
 }
 
 function getScoreBg(score: number): string {
   if (score >= 80) return 'bg-green-50'
-  if (score >= 50) return 'bg-amber-50'
+  if (score >= 50) return 'bg-primary/5'
   return 'bg-red-50'
 }
 
 function getScoreText(score: number): string {
   if (score >= 80) return 'text-green-700'
-  if (score >= 50) return 'text-amber-700'
+  if (score >= 50) return 'text-primary'
   return 'text-red-700'
 }
 
-function getScoreLabel(score: number): string {
-  if (score >= 90) return 'Mükemmel'
-  if (score >= 80) return 'İyi'
-  if (score >= 60) return 'Orta'
-  if (score >= 40) return 'Zayıf'
-  return 'Kritik'
+function getScoreLabelKey(score: number): string {
+  if (score >= 90) return 'excellent'
+  if (score >= 80) return 'good'
+  if (score >= 60) return 'medium'
+  if (score >= 40) return 'weak'
+  return 'critical'
 }
 
 // ─── Components ───
@@ -243,7 +243,7 @@ function CheckItem({ check }: { check: Check }) {
   const statusIcon = {
     pass: <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />,
     fail: <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />,
-    warning: <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />,
+    warning: <AlertTriangle className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />,
   }
 
   return (
@@ -291,7 +291,7 @@ function CategoryCard({ categoryKey, category }: { categoryKey: string; category
                 </span>
               )}
               {warnCount > 0 && (
-                <span className="flex items-center gap-1 text-caption text-amber-600">
+                <span className="flex items-center gap-1 text-caption text-gray-500">
                   <AlertTriangle className="w-3 h-3" /> {warnCount}
                 </span>
               )}
@@ -333,7 +333,7 @@ function LighthouseAuditItem({ audit }: { audit: LighthouseAudit }) {
   let statusIcon = <CheckCircle2 className="w-4 h-4 text-green-500 shrink-0 mt-0.5" />
   if (score !== null) {
     if (score < 0.5) statusIcon = <XCircle className="w-4 h-4 text-red-500 shrink-0 mt-0.5" />
-    else if (score < 0.9) statusIcon = <AlertTriangle className="w-4 h-4 text-amber-500 shrink-0 mt-0.5" />
+    else if (score < 0.9) statusIcon = <AlertTriangle className="w-4 h-4 text-gray-500 shrink-0 mt-0.5" />
   }
 
   return (
@@ -777,7 +777,7 @@ export default function SEOPage() {
                         <div className="text-center sm:text-left">
                           <h2 className="text-xl font-bold text-gray-900">{t('overallScore')}</h2>
                           <div className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${getScoreBg(result.overallScore)} ${getScoreText(result.overallScore)}`}>
-                            {getScoreLabel(result.overallScore)}
+                            {t(`scoreLabels.${getScoreLabelKey(result.overallScore)}`)}
                           </div>
                           <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
                             <ExternalLink className="w-3.5 h-3.5" />
@@ -910,7 +910,7 @@ export default function SEOPage() {
                         {result.redirectChain.map((hop, i) => (
                           <div key={i} className="flex items-center gap-2">
                             <span className={`text-caption font-mono px-2 py-0.5 rounded ${
-                              hop.status >= 300 && hop.status < 400 ? 'bg-amber-50 text-amber-700' : 'bg-green-50 text-green-700'
+                              hop.status >= 300 && hop.status < 400 ? 'bg-gray-100 text-gray-700' : 'bg-green-50 text-green-700'
                             }`}>
                               {hop.status}
                             </span>
@@ -922,7 +922,7 @@ export default function SEOPage() {
                         ))}
                       </div>
                       {result.redirectChain.length > 2 && (
-                        <div className="mt-3 text-caption text-amber-600 flex items-center gap-1">
+                        <div className="mt-3 text-caption text-primary flex items-center gap-1">
                           <AlertTriangle className="w-3 h-3" />
                           {t('redirects.warning')}
                         </div>
