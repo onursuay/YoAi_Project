@@ -93,7 +93,7 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
 
   // ── Liste + 3 kart ──
   const cards = [
-    { key: 'oauth', icon: Zap, soon: true, onClick: () => {} },
+    { key: 'oauth', icon: Zap, soon: false, onClick: () => { window.location.href = '/api/email/gmail/start' } },
     { key: 'domain', icon: Globe, soon: true, onClick: () => {} },
     { key: 'smtp', icon: Server, soon: false, onClick: () => setMode('smtp') },
   ]

@@ -12,6 +12,22 @@ export function smtpTransport(config: SmtpConfig, pass: string) {
   })
 }
 
+/** Gmail OAuth2 transport — refresh_token ile (nodemailer access token'ı otomatik tazeler). */
+export function gmailOAuthTransport(email: string, refreshToken: string) {
+  return nodemailer.createTransport({
+    host: 'smtp.gmail.com',
+    port: 465,
+    secure: true,
+    auth: {
+      type: 'OAuth2',
+      user: email,
+      clientId: process.env.GOOGLE_CLIENT_ID,
+      clientSecret: process.env.GOOGLE_CLIENT_SECRET,
+      refreshToken,
+    },
+  })
+}
+
 /** Bağlantı + kimlik doğrulamayı test eder (kaydetmeden önce). */
 export async function verifySmtp(config: SmtpConfig, pass: string): Promise<{ ok: boolean; error?: string }> {
   try {

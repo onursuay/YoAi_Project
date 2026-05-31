@@ -3127,10 +3127,14 @@
       "connected": "Sending account connected.",
       "testFailed": "Connection test failed",
       "error": "Something went wrong.",
+      "gmailConnected": "Gmail account connected.",
+      "gmailConfig": "Google connection not configured (Gmail API / scope).",
+      "gmailNoRefresh": "Could not obtain authorization. Please try again and approve the permissions.",
+      "gmailError": "Could not connect Gmail. Please try again.",
       "cards": {
         "smtp": { "title": "Corporate / custom SMTP", "desc": "Connect with your own mail server's SMTP details (corporate/custom)." },
         "domain": { "title": "Verify your domain", "desc": "Send from your branded address via DNS records; highest volume and deliverability." },
-        "oauth": { "title": "Gmail / Outlook (one-click)", "desc": "Connect with one click via OAuth, no password needed — recommended." }
+        "oauth": { "title": "Gmail (one-click)", "desc": "Connect your Gmail with one click (OAuth), no password. Outlook soon." }
       },
       "smtp": {
         "title": "Corporate / custom SMTP",

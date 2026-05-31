@@ -3127,10 +3127,14 @@
       "connected": "Gönderim hesabı bağlandı.",
       "testFailed": "Bağlantı testi başarısız",
       "error": "Bir hata oluştu.",
+      "gmailConnected": "Gmail hesabı bağlandı.",
+      "gmailConfig": "Google bağlantısı yapılandırılmamış (Gmail API / izin).",
+      "gmailNoRefresh": "Yetki alınamadı. Lütfen tekrar deneyin ve izinleri onaylayın.",
+      "gmailError": "Gmail bağlanamadı. Tekrar deneyin.",
       "cards": {
         "smtp": { "title": "Kurumsal / özel SMTP", "desc": "Kendi mail sunucunun SMTP bilgileriyle bağla (kurumsal/özel)." },
         "domain": { "title": "Kendi domainini doğrula", "desc": "DNS kayıtlarıyla markalı adresinden gönder; en yüksek hacim ve teslim." },
-        "oauth": { "title": "Gmail / Outlook (tek tık)", "desc": "OAuth ile tek tıkla bağlan, şifre girmeden — önerilen." }
+        "oauth": { "title": "Gmail (tek tık)", "desc": "Gmail hesabını tek tıkla bağla (OAuth), şifre girmeden. Outlook yakında." }
       },
       "smtp": {
         "title": "Kurumsal / özel SMTP",

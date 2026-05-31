@@ -4,8 +4,8 @@ import { supabase } from '@/lib/supabase/client'
 import { getCampaign, markCampaign } from './campaignStore'
 import { resolveRecipients, type Segment } from './segments'
 import { unsubscribeUrl } from './unsubscribe'
-import { getDefaultAccount, decryptSmtpPass, type SmtpConfig } from './sendingAccountStore'
-import { smtpTransport } from './smtpSender'
+import { getDefaultAccount, decryptSmtpPass, decryptRefreshToken, type SmtpConfig } from './sendingAccountStore'
+import { smtpTransport, gmailOAuthTransport } from './smtpSender'
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'YO Dijital Medya Anonim Şirketi <info@yodijital.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
@@ -53,6 +53,13 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
     via = 'smtp'
     dispatch = async (to, subject, html) => {
       try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'smtp' } catch { return null }
+    }
+  } else if (account && account.type === 'gmail') {
+    const transport = gmailOAuthTransport(account.from_email, decryptRefreshToken(account))
+    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    via = 'smtp'
+    dispatch = async (to, subject, html) => {
+      try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'gmail' } catch { return null }
     }
   } else if (account && account.type === 'domain') {
     if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }

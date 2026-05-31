@@ -82,3 +82,42 @@ export function decryptSmtpPass(account: SendingAccountRow): string {
   if (!enc) return ''
   try { return decryptSecret(enc) } catch { return '' }
 }
+
+export interface CreateOAuthInput {
+  type: 'gmail' | 'outlook'
+  fromEmail: string
+  fromName?: string | null
+  refreshToken: string
+}
+
+/** OAuth (Gmail/Outlook) hesabı ekler/günceller — refresh_token ŞİFRELİ. */
+export async function createOAuthAccount(userId: string, input: CreateOAuthInput): Promise<SendingAccountRow | null> {
+  if (!supabase) return null
+  const fromEmail = input.fromEmail.trim().toLowerCase()
+  const config = { refreshTokenEnc: encryptSecret(input.refreshToken) }
+  const existing = await listAccounts(userId)
+  // Aynı tür+adres varsa yeniden bağlanmada güncelle (duplicate engeli).
+  const dup = existing.find((a) => a.type === input.type && a.from_email === fromEmail)
+  if (dup) {
+    const { data } = await supabase.from('email_sending_accounts')
+      .update({ config, from_name: input.fromName ?? dup.from_name, status: 'active', updated_at: new Date().toISOString() })
+      .eq('id', dup.id).eq('user_id', userId).select().single()
+    return (data as SendingAccountRow) ?? null
+  }
+  const { data, error } = await supabase.from('email_sending_accounts')
+    .insert({
+      user_id: userId, type: input.type, label: fromEmail,
+      from_name: input.fromName ?? null, from_email: fromEmail,
+      config, status: 'active', is_default: existing.length === 0,
+    })
+    .select().single()
+  if (error || !data) { console.error('[SendingAccount] OAUTH_CREATE_FAIL', error?.message); return null }
+  return data as SendingAccountRow
+}
+
+/** OAuth refresh_token'ı çözer (yalnız gönderim anında). */
+export function decryptRefreshToken(account: SendingAccountRow): string {
+  const enc = (account.config as { refreshTokenEnc?: string }).refreshTokenEnc
+  if (!enc) return ''
+  try { return decryptSecret(enc) } catch { return '' }
+}

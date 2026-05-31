@@ -60,6 +60,17 @@ export default function EmailDashboard() {
 
   useEffect(() => { loadContacts(offset) }, [offset, loadContacts])
 
+  // Gmail OAuth dönüşü (?gmail=connected|error|...) → bildir + paneli aç.
+  useEffect(() => {
+    const g = new URLSearchParams(window.location.search).get('gmail')
+    if (!g) return
+    if (g === 'connected') { flash('ok', t('sending.gmailConnected')); setManagingSending(true) }
+    else if (g === 'config_missing') flash('err', t('sending.gmailConfig'), 8000)
+    else if (g === 'no_refresh') flash('err', t('sending.gmailNoRefresh'), 8000)
+    else flash('err', t('sending.gmailError'))
+    window.history.replaceState({}, '', '/email-marketing')
+  }, [flash, t])
+
   const handleImportCrm = useCallback(async () => {
     setImporting(true)
     try {
