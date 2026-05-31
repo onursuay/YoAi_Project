@@ -158,6 +158,21 @@ export default function CrmDashboard() {
     })
   }, [])
 
+  // Aşama filtresi tercihini kalıcı yap — sayfa yenilemesinde korunur.
+  const stagesHydrated = useRef(false)
+  useEffect(() => {
+    try {
+      const raw = window.localStorage.getItem('crm.hiddenStages')
+      if (raw) setHiddenStages(new Set(JSON.parse(raw) as Stage[]))
+    } catch { /* yok say */ }
+  }, [])
+  useEffect(() => {
+    if (!stagesHydrated.current) { stagesHydrated.current = true; return }
+    try {
+      window.localStorage.setItem('crm.hiddenStages', JSON.stringify([...hiddenStages]))
+    } catch { /* yok say */ }
+  }, [hiddenStages])
+
   const connectablePages = useMemo(() => {
     const ids = new Set(connected.map((c) => c.pageId))
     return pages.filter((p) => !ids.has(p.id))
