@@ -11,7 +11,7 @@ interface Account {
   records: DnsRecord[] | null
 }
 
-export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 'err', m: string, ms?: number) => void; onClose: () => void }) {
+export default function SendingAccounts({ flash, onClose, isOwner }: { flash: (k: 'ok' | 'err', m: string, ms?: number) => void; onClose: () => void; isOwner: boolean }) {
   const t = useTranslations('email')
 
   const [accounts, setAccounts] = useState<Account[]>([])
@@ -211,9 +211,11 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
     )
   }
 
-  // ── Liste + 4 kart ──
+  // ── Liste + kartlar ──
+  // "Platform (alt mail)" yalnız süper admin/owner'a — normal kullanıcılar bizim
+  // domainimizden gönderemez (itibar/yasal risk).
   const cards = [
-    { key: 'platform', icon: Rocket, onClick: () => setMode('platform') },
+    ...(isOwner ? [{ key: 'platform', icon: Rocket, onClick: () => setMode('platform') }] : []),
     { key: 'domain', icon: Globe, onClick: () => setMode('domain') },
     { key: 'oauth', icon: Zap, onClick: () => { window.location.href = '/api/email/gmail/start' } },
     { key: 'smtp', icon: Server, onClick: () => setMode('smtp') },
@@ -248,7 +250,7 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
       )}
 
       <p className="text-sm text-gray-600 mb-3">{t('sending.chooseHint')}</p>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+      <div className={`grid grid-cols-1 md:grid-cols-2 ${isOwner ? 'lg:grid-cols-4' : 'lg:grid-cols-3'} gap-4`}>
         {cards.map(({ key, icon: Icon, onClick }) => (
           <button key={key} onClick={onClick} className="text-left rounded-2xl border border-gray-200 bg-white shadow-sm p-5 transition hover:border-primary hover:shadow-md">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Icon className="w-5 h-5 text-primary" /></div>

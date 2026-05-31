@@ -34,8 +34,10 @@ export async function POST(request: Request) {
   try { body = await request.json() } catch { return NextResponse.json({ ok: false, error: 'invalid_body' }, { status: 400 }) }
   const type = body.type
 
-  // ── Alt mail (platform üzerinden) ──
+  // ── Alt mail (platform üzerinden) — YALNIZ süper admin/owner ──
+  // Normal kullanıcılar bizim domainimizden gönderemez (itibar/yasal risk).
   if (type === 'platform') {
+    if (!access.isOwner) return NextResponse.json({ ok: false, error: 'platform_owner_only' }, { status: 403 })
     const row = await createPlatformAccount(access.user.id, {
       fromName: String(body.fromName ?? ''),
       replyTo: String(body.replyTo ?? ''),

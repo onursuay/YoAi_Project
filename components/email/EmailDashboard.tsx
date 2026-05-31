@@ -6,6 +6,7 @@ import { Users, Send, Workflow, ShieldCheck, Download, Upload, Loader2, Mail, Ph
 import { parseContactsFile } from './parseContactsFile'
 import CampaignsTab from './CampaignsTab'
 import SendingAccounts from './SendingAccounts'
+import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 type Tab = 'contacts' | 'campaigns' | 'automation'
 
@@ -23,6 +24,7 @@ const PAGE = 50
 
 export default function EmailDashboard() {
   const t = useTranslations('email')
+  const { isOwner } = useSubscription()
 
   const [tab, setTab] = useState<Tab>('contacts')
   const [managingSending, setManagingSending] = useState(false)
@@ -142,7 +144,7 @@ export default function EmailDashboard() {
       )}
 
       {managingSending ? (
-        <SendingAccounts flash={flash} onClose={() => setManagingSending(false)} />
+        <SendingAccounts flash={flash} onClose={() => setManagingSending(false)} isOwner={isOwner} />
       ) : (
        <>
       {/* Gönderim hesabı yönlendirmesi */}
