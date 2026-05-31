@@ -188,7 +188,7 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
               >
                 <Icon className="w-6 h-6" />
               </span>
-              <h3 className="text-sm font-semibold text-gray-900">{p.title}</h3>
+              <h3 className="text-base font-semibold text-gray-900">{p.title}</h3>
               <div className="mt-4 w-full">
                 {p.connected ? (
                   <span className="inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
@@ -214,7 +214,7 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
         <div className="flex items-start gap-3">
           <ShieldCheck className="w-6 h-6 text-primary flex-shrink-0 mt-0.5" />
           <div className="flex-1 min-w-0">
-            <h3 className="text-sm font-semibold text-gray-900">{t('connect.setupConsentTitle')}</h3>
+            <h3 className="text-base font-semibold text-gray-900">{t('connect.setupConsentTitle')}</h3>
             <p className="mt-1.5 text-sm text-gray-500">{t('connect.setupConsentDescription')}</p>
             <div className="mt-4 flex flex-wrap items-center gap-4">
               {setupConnected ? (

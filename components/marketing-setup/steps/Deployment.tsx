@@ -227,7 +227,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
       {/* GTM snippets + install guide */}
       {gtmDone && (headSnippet || bodySnippet) && (
         <div className="mt-5 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-          <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('deploy.snippetTitle')}</h3>
+          <h3 className="text-base font-semibold text-gray-900 mb-3">{t('deploy.snippetTitle')}</h3>
 
           {headSnippet && (
             <div className="mb-4">

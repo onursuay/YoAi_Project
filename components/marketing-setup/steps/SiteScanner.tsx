@@ -174,7 +174,7 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
               <div className="flex items-center gap-2 mb-3">
                 <Sparkles className="w-4 h-4 text-primary" />
-                <h3 className="text-sm font-semibold text-gray-900">
+                <h3 className="text-base font-semibold text-gray-900">
                   {t('scan.businessAnalysisTitle')}
                 </h3>
               </div>
@@ -193,7 +193,7 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
           {/* Detected actions — event bazında tekilleştirilmiş, sayfa frekansıyla */}
           {actionsByEvent.size > 0 && (
             <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
-              <h3 className="text-sm font-semibold text-gray-900 mb-4">
+              <h3 className="text-base font-semibold text-gray-900 mb-4">
                 {t('scan.detectedActions')}
               </h3>
               <div className="flex flex-wrap gap-2.5">
@@ -218,7 +218,7 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
           {/* Recommended events checklist (all STANDARD_EVENTS) */}
           <div className="bg-white border border-gray-200 rounded-2xl p-6 shadow-sm">
             <div className="flex items-center justify-between mb-1.5">
-              <h3 className="text-sm font-semibold text-gray-900">
+              <h3 className="text-base font-semibold text-gray-900">
                 {t('scan.recommendedEvents')}
               </h3>
               <span className="text-sm text-gray-400">

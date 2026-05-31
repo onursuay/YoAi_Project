@@ -145,7 +145,8 @@ export default function MarketingSetupWizard() {
     <div className="space-y-6">
       <Stepper current={step} onStepClick={(i) => setStep(i)} />
 
-      <div>
+      {/* key={step} → her adım geçişinde içerik yumuşakça belirir */}
+      <div key={step} className="animate-card-enter">
         <CurrentStep {...stepProps} />
       </div>
 

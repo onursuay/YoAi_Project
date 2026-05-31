@@ -343,7 +343,7 @@ export default function CrmDashboard() {
 
       {/* Bağlantı bölümü */}
       {(noConnections || showConnectPanel) ? (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-6">
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-8 mb-6 animate-card-enter">
           <div className="flex items-center gap-3 mb-2">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center">
               <Link2 className="w-5 h-5 text-primary" />
@@ -520,17 +520,17 @@ export default function CrmDashboard() {
             <Loader2 className="w-6 h-6 animate-spin" />
           </div>
         ) : counts.all === 0 ? (
-          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 px-6 text-center">
+          <div className="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 px-6 text-center animate-card-enter">
             <div className="w-14 h-14 rounded-2xl bg-gray-50 flex items-center justify-center mx-auto mb-4">
               <Inbox className="w-6 h-6 text-gray-300" />
             </div>
-            <p className="text-gray-700 font-medium">{t('list.empty')}</p>
+            <p className="text-base text-gray-700 font-semibold">{t('list.empty')}</p>
             <p className="text-sm text-gray-500 mt-1">{t('list.emptyHint')}</p>
           </div>
         ) : view === 'board' ? (
           /* ── Kanban (Pano) ── */
           <div className="flex gap-4 overflow-x-auto pb-4">
-            {STAGES.filter((s) => !hiddenStages.has(s)).map((stage) => {
+            {STAGES.filter((s) => !hiddenStages.has(s)).map((stage, ci) => {
               const items = pageLeads.filter((l) => l.status === stage)
               return (
                 <div
@@ -544,12 +544,13 @@ export default function CrmDashboard() {
                     const lead = leads.find((l) => l.id === id)
                     if (lead && lead.status !== stage) handleStage(id, stage)
                   }}
-                  className={`flex-1 min-w-[240px] rounded-2xl border transition ${dragOverStage === stage ? 'bg-primary/5 border-primary/40 ring-2 ring-primary/20' : 'bg-gray-50 border-gray-200'}`}
+                  style={{ ['--card-index' as string]: ci }}
+                  className={`flex-1 min-w-[240px] rounded-2xl border transition animate-card-enter ${dragOverStage === stage ? 'bg-primary/5 border-primary/40 ring-2 ring-primary/20' : 'bg-gray-50 border-gray-200'}`}
                 >
                   <div className="px-4 pt-3.5 pb-2.5 border-b border-gray-200">
                     <div className={`h-1 w-10 rounded-full mb-2 ${STAGE_STYLE[stage].bar}`} />
                     <div className="flex items-center justify-between">
-                      <span className="text-sm font-semibold text-gray-800">{stageLabel(stage)}</span>
+                      <span className="text-base font-semibold text-gray-800">{stageLabel(stage)}</span>
                       <span className="text-xs font-medium text-gray-500 bg-white border border-gray-200 rounded-full px-2 py-0.5">{counts[stage]}</span>
                     </div>
                   </div>
@@ -607,12 +608,16 @@ export default function CrmDashboard() {
               <div className="py-16 text-center text-sm text-gray-500">{t('board.emptyColumn')}</div>
             ) : (
               <div className="space-y-3">
-                {listLeads.map((lead) => (
-                  <div key={lead.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 hover:shadow-md transition">
+                {listLeads.map((lead, li) => (
+                  <div
+                    key={lead.id}
+                    style={{ ['--card-index' as string]: Math.min(li, 12) }}
+                    className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 hover:shadow-md hover:-translate-y-0.5 transition-all duration-300 animate-card-enter"
+                  >
                     <div className="flex items-start justify-between gap-4">
                       <div className="min-w-0 flex-1">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <h3 className="text-sm font-semibold text-gray-900 truncate">{lead.fullName || t('list.noName')}</h3>
+                          <h3 className="text-base font-semibold text-gray-900 truncate">{lead.fullName || t('list.noName')}</h3>
                           {lead.metaSyncedAt && lead.status !== 'giris' && (
                             <span className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full text-[11px] font-medium bg-emerald-50 text-emerald-700 border border-emerald-200">
                               <CheckCircle2 className="w-3 h-3" /> {t('list.metaSynced')}

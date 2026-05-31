@@ -132,7 +132,7 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
               >
                 {c.icon}
               </span>
-              <h3 className="flex-1 text-sm font-semibold text-gray-900">{c.title}</h3>
+              <h3 className="flex-1 text-base font-semibold text-gray-900">{c.title}</h3>
               <span
                 className={`rounded-full px-2.5 py-0.5 text-[11px] font-semibold ${
                   c.enabled ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-500'

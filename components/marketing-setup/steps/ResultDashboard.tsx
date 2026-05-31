@@ -61,7 +61,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
       >
         <div className="flex items-center gap-2.5 mb-2">
           <span className="text-primary">{icon}</span>
-          <h3 className="text-sm font-semibold text-gray-900 flex-1">{title}</h3>
+          <h3 className="text-base font-semibold text-gray-900 flex-1">{title}</h3>
           {statusIcon(r?.status)}
         </div>
         <p
@@ -170,7 +170,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
 
       {/* Remarketing summary */}
       <div className="mt-5 bg-white border border-gray-200 rounded-2xl p-5 shadow-sm">
-        <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('result.remarketingTitle')}</h3>
+        <h3 className="text-base font-semibold text-gray-900 mb-3">{t('result.remarketingTitle')}</h3>
         <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
           <div className="rounded-xl bg-emerald-50 px-3 py-3 text-center">
             <p className="text-lg font-semibold text-emerald-700">{audiencesCount}</p>
