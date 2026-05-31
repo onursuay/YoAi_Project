@@ -13,6 +13,7 @@ import {
   Briefcase,
   Rocket,
   Contact,
+  Mail,
 } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 
@@ -104,6 +105,12 @@ export const navItems: NavItem[] = [
     label: 'CRM',
     href: ROUTES.CRM,
     icon: Contact,
+  },
+  {
+    id: 'email-marketing',
+    label: 'Email Marketing',
+    href: ROUTES.EMAIL_MARKETING,
+    icon: Mail,
   },
   {
     id: 'entegrasyon',

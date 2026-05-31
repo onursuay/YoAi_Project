@@ -25,6 +25,7 @@
         "ad_account_slot": "Ad Account",
         "marketing_setup": "Marketing",
         "crm": "CRM",
+        "email_marketing": "Email Marketing",
         "optimization_ai_scan_pro": "AI Scan Pro",
         "design_generation": "Design Generation",
         "strategy_overage": "Extra Strategy",
@@ -39,6 +40,7 @@
         "ad_account_slot": "You've reached your plan's ad account limit. Upgrade your plan to add more ad accounts.",
         "marketing_setup": "You need an active subscription plan to use the marketing infrastructure setup wizard.",
         "crm": "You need an active subscription plan to collect and manage your ad leads in one panel.",
+        "email_marketing": "You need an active subscription plan to create and send email campaigns.",
         "optimization_ai_scan_pro": "You need a sufficient credit balance for the AI Scan Pro deep analysis.",
         "design_generation": "You need a sufficient credit balance to run AI design generation.",
         "strategy_overage": "Your monthly strategy limit is reached. You need a sufficient credit balance to create extra strategies.",
@@ -3025,6 +3027,7 @@
     "katalog": "Catalog",
     "seo": "SEO",
     "crm": "CRM",
+    "emailmarketing": "Email Marketing",
     "entegrasyon": "Integration",
     "kurumsal": "Corporate",
     "gizlilikpolitikasi": "Privacy Policy",
@@ -3040,6 +3043,29 @@
     "cikisYap": "Log Out",
     "dil": "English",
     "marketingkurulumu": "Marketing"
+  },
+  "email": {
+    "title": "Email Marketing",
+    "description": "Create, send and track email campaigns to your contacts.",
+    "soon": "Soon",
+    "setup": {
+      "title": "Verify your sending domain",
+      "desc": "To keep your emails out of spam, you must verify your own sending domain (SPF/DKIM). We'll guide you through this during setup."
+    },
+    "sections": {
+      "contacts": {
+        "title": "Contacts",
+        "desc": "Import from CRM leads, upload Excel/CSV or connect Google Sheets; build lists and segments."
+      },
+      "campaigns": {
+        "title": "Campaigns",
+        "desc": "Compose subject and content, pick a segment, send or schedule; open/click tracking."
+      },
+      "automation": {
+        "title": "Automation",
+        "desc": "Stage-triggered emails: welcome new leads, follow up on Qualified, thank Converted."
+      }
+    }
   },
   "crm": {
     "title": "CRM",

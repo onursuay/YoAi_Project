@@ -25,6 +25,7 @@
         "ad_account_slot": "Reklam Hesabı",
         "marketing_setup": "Marketing",
         "crm": "CRM",
+        "email_marketing": "Email Marketing",
         "optimization_ai_scan_pro": "AI ile Tara Pro",
         "design_generation": "Tasarım Üretimi",
         "strategy_overage": "Ek Strateji",
@@ -39,6 +40,7 @@
         "ad_account_slot": "Planınızın reklam hesabı limitine ulaştınız. Daha fazla reklam hesabı eklemek için planınızı yükseltin.",
         "marketing_setup": "Pazarlama altyapısı kurulum sihirbazını kullanmak için aktif bir abonelik planına sahip olmanız gerekir.",
         "crm": "Reklam lead'lerinizi tek panelde toplamak ve yönetmek için aktif bir abonelik planına sahip olmanız gerekir.",
+        "email_marketing": "E-posta kampanyaları oluşturmak ve göndermek için aktif bir abonelik planına sahip olmanız gerekir.",
         "optimization_ai_scan_pro": "AI ile Tara Pro derinlemesine analizi için yeterli kredi bakiyesine sahip olmanız gerekir.",
         "design_generation": "AI tasarım üretimini çalıştırmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
         "strategy_overage": "Aylık strateji limitiniz doldu. Ek strateji oluşturmak için yeterli kredi bakiyesine sahip olmanız gerekir.",
@@ -3025,6 +3027,7 @@
     "katalog": "Katalog",
     "seo": "SEO",
     "crm": "CRM",
+    "emailmarketing": "Email Marketing",
     "entegrasyon": "Entegrasyon",
     "kurumsal": "Kurumsal",
     "gizlilikpolitikasi": "Gizlilik Politikası",
@@ -3040,6 +3043,29 @@
     "cikisYap": "Çıkış Yap",
     "dil": "Türkçe",
     "marketingkurulumu": "Marketing"
+  },
+  "email": {
+    "title": "Email Marketing",
+    "description": "Kişilerinize e-posta kampanyaları oluşturun, gönderin ve sonuçları takip edin.",
+    "soon": "Yakında",
+    "setup": {
+      "title": "Gönderim domainini doğrula",
+      "desc": "E-postaların spam'e düşmemesi için kendi gönderim domainini (SPF/DKIM) doğrulaman gerekir. Bu adımı kurarken yönlendireceğiz."
+    },
+    "sections": {
+      "contacts": {
+        "title": "Kişiler",
+        "desc": "CRM lead'lerinden aktar, Excel/CSV yükle veya Google Sheets bağla; listeler ve segmentler oluştur."
+      },
+      "campaigns": {
+        "title": "Kampanyalar",
+        "desc": "Konu ve içerik oluştur, segment seç, gönder veya zamanla; açılma/tıklama takibi."
+      },
+      "automation": {
+        "title": "Otomasyon",
+        "desc": "Aşama tetikli otomatik e-postalar: yeni lead'e hoşgeldin, Uygun'a takip, Dönüşüm'e teşekkür."
+      }
+    }
   },
   "crm": {
     "title": "CRM",

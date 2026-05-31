@@ -94,6 +94,13 @@ export const FEATURE_ACCESS: Record<string, FeatureAccessRule> = {
     description:
       'Reklam lead\'lerinizi tek panelde toplamak ve yönetmek için aktif bir abonelik planına sahip olmanız gerekir.',
   },
+  email_marketing: {
+    key: 'email_marketing',
+    label: 'Email Marketing',
+    tier: 'subscription_required',
+    description:
+      'E-posta kampanyaları oluşturmak ve göndermek için aktif bir abonelik planına sahip olmanız gerekir.',
+  },
 
   // ─── Kredi gerektiren AI aksiyonları ─────────────────────────────
   optimization_ai_scan_pro: {
