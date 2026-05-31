@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — YoAlgoritma: Hesap Sağlık kartı arka yüz metin sıkışması giderildi
+- **Sorun:** Uzun `body` + `recommended_action` metninde `mt-auto` ile alta itilen paragraf body'e sıkışıyor, alt kenara yeterli boşluk kalmıyordu
+- **Çözüm:** `p-4→p-5`, `mt-auto` kaldırılıp `mt-4 pt-3 border-t border-white/10` ile sabit ayırıcı çizgi eklendi
+- **Dosyalar:** components/yoai/hierarchy/AccountAlertsBanner.tsx
+
 ## 2026-05-31 — YoAlgoritma: Hesap Sağlık kartları responsive grid düzeltmesi
 - **Sorun:** AccountAlertsBanner, tüm uyarı kartlarını `repeat(n, 1fr)` ile tek satıra sıkıştırıyordu. 7 kart olduğunda her kart ~170px'e düşerek içerik okunamaz hale geliyordu.
 - **Çözüm:** Inline `gridTemplateColumns` stili kaldırıldı, yerine responsive Tailwind grid eklendi: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`. Flip-card tasarımı ve koyu tema değiştirilmedi.
