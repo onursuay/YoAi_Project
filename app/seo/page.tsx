@@ -222,7 +222,7 @@ function BigScoreCircle({ score }: { score: number }) {
 
 function LighthouseScoreCard({ label, score, icon: Icon }: { label: string; score: number; icon: typeof Zap }) {
   return (
-    <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center gap-2">
+    <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-col items-center gap-2 transition-all duration-300 hover:shadow-md hover:-translate-y-0.5">
       <Icon className="w-5 h-5 text-gray-400" />
       <CircularProgress percentage={score} size={48} />
       <span className="text-ui font-medium text-gray-600 text-center">{label}</span>
@@ -262,7 +262,7 @@ function CheckItem({ check }: { check: Check }) {
   )
 }
 
-function CategoryCard({ categoryKey, category }: { categoryKey: string; category: Category }) {
+function CategoryCard({ categoryKey, category, index = 0 }: { categoryKey: string; category: Category; index?: number }) {
   const [expanded, setExpanded] = useState(true)
   const config = categoryConfig[categoryKey]
   if (!config) return null
@@ -273,7 +273,10 @@ function CategoryCard({ categoryKey, category }: { categoryKey: string; category
   const warnCount = category.checks.filter(c => c.status === 'warning').length
 
   return (
-    <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
+    <div
+      className="bg-white rounded-xl border border-gray-200 overflow-hidden animate-card-enter transition-shadow duration-300 hover:shadow-md"
+      style={{ ['--card-index' as string]: index }}
+    >
       <button
         onClick={() => setExpanded(!expanded)}
         className="w-full flex items-center justify-between p-4 hover:bg-gray-50 transition-colors"
@@ -669,7 +672,7 @@ export default function SEOPage() {
                   <button
                     onClick={handleAnalyze}
                     disabled={loading || !url.trim()}
-                    className="px-6 py-3 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2 shrink-0"
+                    className="px-6 py-3 bg-primary text-white rounded-xl font-medium text-sm hover:bg-primary/90 active:scale-[0.97] disabled:opacity-50 disabled:cursor-not-allowed disabled:active:scale-100 transition-all flex items-center gap-2 shrink-0"
                   >
                     {loading ? (
                       <><Loader2 className="w-4 h-4 animate-spin" />{t('analyzing')}</>
@@ -771,7 +774,7 @@ export default function SEOPage() {
 
                   {/* Overall Score - hide when competitor comparison is shown */}
                   {!competitorResult && (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-8 animate-card-enter">
                       <div className="flex flex-col sm:flex-row items-center gap-8">
                         <BigScoreCircle score={result.overallScore} />
                         <div className="text-center sm:text-left">
@@ -852,7 +855,7 @@ export default function SEOPage() {
 
                   {/* Top Keywords */}
                   {result.topKeywords && result.topKeywords.length > 0 && (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-6">
+                    <div className="bg-white rounded-2xl border border-gray-200 p-6 animate-card-enter">
                       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Search className="w-4 h-4" />
                         {t('keywords.title')}
@@ -871,7 +874,7 @@ export default function SEOPage() {
                           </thead>
                           <tbody>
                             {result.topKeywords.map((kw, i) => (
-                              <tr key={i} className="border-b border-gray-50">
+                              <tr key={i} className="border-b border-gray-50 hover:bg-gray-50/60 transition-colors">
                                 <td className="py-2 font-medium text-gray-900">{kw.word}</td>
                                 <td className="py-2 text-center text-gray-600">{kw.count}</td>
                                 <td className="py-2 text-center text-gray-600">%{kw.density}</td>
@@ -894,8 +897,8 @@ export default function SEOPage() {
 
                   {/* Category Cards */}
                   <div className="space-y-4">
-                    {Object.entries(result.categories).map(([key, category]) => (
-                      <CategoryCard key={key} categoryKey={key} category={category} />
+                    {Object.entries(result.categories).map(([key, category], i) => (
+                      <CategoryCard key={key} categoryKey={key} category={category} index={i} />
                     ))}
                   </div>
 
@@ -957,7 +960,7 @@ export default function SEOPage() {
 
                   {/* AI Recommendations */}
                   {result.recommendations && result.recommendations.length > 0 && (
-                    <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl border border-primary/20 p-6">
+                    <div className="bg-gradient-to-br from-primary/5 to-primary/10 rounded-2xl border border-primary/20 p-6 animate-card-enter">
                       <h3 className="text-base font-semibold text-gray-900 mb-4 flex items-center gap-2">
                         <Lightbulb className="w-4 h-4 text-primary" />
                         {t('recommendations.title')}
@@ -1180,6 +1183,10 @@ export default function SEOPage() {
           body { background: white !important; }
           .print\\:bg-white { background: white !important; }
           .print\\:p-0 { padding: 0 !important; }
+          .animate-card-enter { opacity: 1 !important; transform: none !important; animation: none !important; }
+        }
+        @media (prefers-reduced-motion: reduce) {
+          .animate-card-enter { opacity: 1 !important; transform: none !important; animation: none !important; }
         }
       `}</style>
 
