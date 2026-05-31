@@ -213,8 +213,8 @@ function BigScoreCircle({ score }: { score: number }) {
         />
       </svg>
       <div className="absolute flex flex-col items-center">
-        <span className="text-3xl font-bold" style={{ color }}>{score}</span>
-        <span className="text-caption text-gray-500">/100</span>
+        <span className="text-4xl font-bold" style={{ color }}>{score}</span>
+        <span className="text-sm text-gray-500">/100</span>
       </div>
     </div>
   )
@@ -233,8 +233,8 @@ function LighthouseScoreCard({ label, score, icon: Icon }: { label: string; scor
 function CoreWebVitalCard({ label, value }: { label: string; value: string }) {
   return (
     <div className="bg-gray-50 rounded-lg p-3 text-center">
-      <div className="text-base font-semibold text-gray-900">{value}</div>
-      <div className="text-caption text-gray-500 mt-1">{label}</div>
+      <div className="text-base font-bold text-gray-900">{value}</div>
+      <div className="text-xs text-gray-500 mt-1 font-medium">{label}</div>
     </div>
   )
 }
@@ -371,11 +371,11 @@ function RecommendationCard({ rec, index }: { rec: Recommendation; index: number
           {index + 1}
         </span>
         <div className="flex-1 min-w-0">
-          <p className="text-sm text-gray-700">{rec.text}</p>
+          <p className="text-sm text-gray-700 leading-relaxed">{rec.text}</p>
           {(rec.code || rec.guide) && (
             <button
               onClick={() => setShowCode(!showCode)}
-              className="mt-2 flex items-center gap-1.5 text-caption font-medium text-primary hover:text-primary/80 transition-colors"
+              className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               <Code className="w-3.5 h-3.5" />
               {showCode ? 'Gizle' : 'Nasıl Yapılır?'}
@@ -775,17 +775,17 @@ export default function SEOPage() {
                       <div className="flex flex-col sm:flex-row items-center gap-8">
                         <BigScoreCircle score={result.overallScore} />
                         <div className="text-center sm:text-left">
-                          <h2 className="text-xl font-bold text-gray-900">{t('overallScore')}</h2>
-                          <div className={`inline-block mt-2 px-3 py-1 rounded-full text-sm font-semibold ${getScoreBg(result.overallScore)} ${getScoreText(result.overallScore)}`}>
+                          <h2 className="text-2xl font-bold text-gray-900">{t('overallScore')}</h2>
+                          <div className={`inline-block mt-2 px-3.5 py-1.5 rounded-full text-sm font-semibold ${getScoreBg(result.overallScore)} ${getScoreText(result.overallScore)}`}>
                             {t(`scoreLabels.${getScoreLabelKey(result.overallScore)}`)}
                           </div>
                           <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-                            <ExternalLink className="w-3.5 h-3.5" />
+                            <ExternalLink className="w-4 h-4" />
                             <a href={result.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors truncate max-w-xs">
                               {result.url}
                             </a>
                           </div>
-                          <div className="text-caption text-gray-400 mt-1">
+                          <div className="text-sm text-gray-400 mt-1">
                             {new Date(result.analyzedAt).toLocaleString('tr-TR')}
                           </div>
                         </div>
@@ -861,12 +861,12 @@ export default function SEOPage() {
                         <table className="w-full text-sm">
                           <thead>
                             <tr className="border-b border-gray-100">
-                              <th className="text-left py-2 text-ui font-medium text-gray-500">{t('keywords.word')}</th>
-                              <th className="text-center py-2 text-ui font-medium text-gray-500">{t('keywords.count')}</th>
-                              <th className="text-center py-2 text-ui font-medium text-gray-500">{t('keywords.density')}</th>
-                              <th className="text-center py-2 text-ui font-medium text-gray-500">Title</th>
-                              <th className="text-center py-2 text-ui font-medium text-gray-500">H1</th>
-                              <th className="text-center py-2 text-ui font-medium text-gray-500">Meta</th>
+                              <th className="text-left py-2.5 text-sm font-semibold text-gray-600">{t('keywords.word')}</th>
+                              <th className="text-center py-2.5 text-sm font-semibold text-gray-600">{t('keywords.count')}</th>
+                              <th className="text-center py-2.5 text-sm font-semibold text-gray-600">{t('keywords.density')}</th>
+                              <th className="text-center py-2.5 text-sm font-semibold text-gray-600">Title</th>
+                              <th className="text-center py-2.5 text-sm font-semibold text-gray-600">H1</th>
+                              <th className="text-center py-2.5 text-sm font-semibold text-gray-600">Meta</th>
                             </tr>
                           </thead>
                           <tbody>
@@ -989,9 +989,9 @@ export default function SEOPage() {
               {/* Empty State */}
               {!result && !loading && !error && (
                 <div className="bg-white rounded-2xl border border-gray-200 p-12 text-center">
-                  <Search className="w-12 h-12 text-gray-300 mx-auto mb-4" />
-                  <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('emptyTitle')}</h2>
-                  <p className="text-sm text-gray-500 max-w-md mx-auto">{t('emptyDescription')}</p>
+                  <Search className="w-14 h-14 text-gray-300 mx-auto mb-4" />
+                  <h2 className="text-xl font-bold text-gray-900 mb-2">{t('emptyTitle')}</h2>
+                  <p className="text-base text-gray-500 max-w-lg mx-auto leading-relaxed">{t('emptyDescription')}</p>
                 </div>
               )}
             </>
