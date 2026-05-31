@@ -155,7 +155,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
   const anyError = SEQUENCE.some((s) => deploySteps[s.step]?.status === 'error')
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-xl font-semibold text-gray-900">{t('deploy.title')}</h2>
         <p className="mt-2 text-sm text-gray-500">{t('deploy.description')}</p>

@@ -231,7 +231,7 @@ export default function SiteScanner({ state, update, goNext }: StepProps) {
               <p className="mb-3 text-sm text-gray-500">{t('scan.noEventsFound')}</p>
             )}
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
               {STANDARD_EVENTS.map((def) => {
                 const checked = selected.includes(def.key)
                 const rec = scan.recommendedEvents.find((r) => r.event === def.key)

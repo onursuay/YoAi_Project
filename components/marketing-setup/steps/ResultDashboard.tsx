@@ -107,13 +107,13 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
   const capiVerified = metaResult?.capiVerified === true
 
   return (
-    <div className="max-w-4xl mx-auto">
+    <div className="max-w-7xl mx-auto">
       <div className="text-center mb-8">
         <h2 className="text-xl font-semibold text-gray-900">{t('result.title')}</h2>
         <p className="mt-2 text-sm text-gray-500">{t('result.description')}</p>
       </div>
 
-      {/* Platform status cards */}
+      {/* Platform status cards — 4 kart, dengeli 2×2 (geniş ekranda büyür) */}
       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
         <Card icon={<Tags className="w-5 h-5" />} title={t('preview.gtm')} step="gtm" statusLabel={t('result.statusPublished')}>
           {gtmPreviewUrl ? (
