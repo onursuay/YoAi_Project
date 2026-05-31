@@ -262,7 +262,7 @@ export default function CrmDashboard() {
     <div className="w-full px-6 lg:px-8 py-8">
       {/* Toast */}
       {toast && (
-        <div className={`fixed top-20 right-6 z-50 px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-sm ${toast.kind === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
+        <div className={`fixed top-4 left-1/2 -translate-x-1/2 z-[80] px-4 py-3 rounded-xl shadow-lg text-sm font-medium max-w-md text-center ${toast.kind === 'ok' ? 'bg-emerald-600 text-white' : 'bg-red-600 text-white'}`}>
           {toast.msg}
         </div>
       )}

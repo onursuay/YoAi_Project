@@ -29,7 +29,10 @@ export default function StageSelect({
   const place = useCallback(() => {
     const r = triggerRef.current?.getBoundingClientRect()
     if (!r) return
-    const left = Math.max(8, Math.min(r.right - MENU_W, window.innerWidth - MENU_W - 8))
+    // Sağa doğru aç: trigger'ın sol kenarına hizala; ekran sağına taşarsa içeri al.
+    let left = r.left
+    if (left + MENU_W > window.innerWidth - 8) left = window.innerWidth - MENU_W - 8
+    if (left < 8) left = 8
     setPos({ top: r.bottom + 4, left })
   }, [])
 
