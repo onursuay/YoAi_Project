@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — YoAlgoritma: Hesap Sağlık kartları responsive grid düzeltmesi
+- **Sorun:** AccountAlertsBanner, tüm uyarı kartlarını `repeat(n, 1fr)` ile tek satıra sıkıştırıyordu. 7 kart olduğunda her kart ~170px'e düşerek içerik okunamaz hale geliyordu.
+- **Çözüm:** Inline `gridTemplateColumns` stili kaldırıldı, yerine responsive Tailwind grid eklendi: `grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4`. Flip-card tasarımı ve koyu tema değiştirilmedi.
+- **Dosyalar:** components/yoai/hierarchy/AccountAlertsBanner.tsx
+
 ## 2026-05-31 — Tüm modüller (Meta/Google reklam hariç): max-w-7xl + animasyon + amber fix
 - **Sorun:** SEO, CRM, Marketing'e uygulanan genişlik + animasyon + okunabilir tipografi değişikliklerinin kalan tüm modüllere (Strateji, Optimizasyon, YoAlgoritma, Hedef Kitle, Tasarım, Raporlar, Entegrasyon) de taşınması istendi. Meta/Google reklam alanları hariç.
 - **Çözüm:** **Strateji** — max-w-6xl→7xl, başlıklar text-base, info kartı+liste animate-card-enter. **Optimizasyon** — Meta+Google kampanya kartları kademeli animate-card-enter. **YoAlgoritma** — command center ana konteyneri animate-card-enter (max-w-[1440px] korundu). **Hedef Kitle** — max-w-7xl, GoogleAudienceView+AudienceList wrappers animate-card-enter. **Tasarım** — kredi göstergesi amber ihlali (bg-amber-50/text-amber-500/700) → bg-primary/5+text-primary. **Raporlar** — max-w-7xl (2 konum), KPI grid+trend grafiği animate-card-enter. **Entegrasyon** — max-w-7xl (2 konum), tüm platform bağlantı kartları hover:shadow-md. Meta/Google entegrasyon koduna dokunulmadı.
