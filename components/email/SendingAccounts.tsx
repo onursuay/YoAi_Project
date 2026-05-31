@@ -2,11 +2,13 @@
 
 import { useCallback, useEffect, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Globe, Server, Loader2, Trash2, Star, ArrowLeft, X, Zap, Check } from 'lucide-react'
+import { Globe, Server, Loader2, Trash2, Star, ArrowLeft, X, Zap, Check, Rocket, Copy } from 'lucide-react'
 
+interface DnsRecord { record?: string; name?: string; type?: string; value?: string; priority?: number }
 interface Account {
   id: string; type: string; label: string | null; fromName: string | null; fromEmail: string
-  status: string; isDefault: boolean; host: string | null; user: string | null
+  replyTo: string | null; status: string; isDefault: boolean; host: string | null; domain: string | null
+  records: DnsRecord[] | null
 }
 
 export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 'err', m: string, ms?: number) => void; onClose: () => void }) {
@@ -14,17 +16,28 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
 
   const [accounts, setAccounts] = useState<Account[]>([])
   const [loading, setLoading] = useState(true)
-  const [mode, setMode] = useState<'list' | 'smtp'>('list')
+  const [mode, setMode] = useState<'list' | 'platform' | 'domain' | 'smtp'>('list')
+  const [busy, setBusy] = useState(false)
 
-  // SMTP form (yalnız kurumsal/özel sunucu)
-  const [fromEmail, setFromEmail] = useState('')
-  const [fromName, setFromName] = useState('')
-  const [user, setUser] = useState('')
-  const [pass, setPass] = useState('')
-  const [host, setHost] = useState('')
-  const [port, setPort] = useState('587')
-  const [secure, setSecure] = useState(false)
-  const [saving, setSaving] = useState(false)
+  // platform
+  const [pFromName, setPFromName] = useState('')
+  const [pReplyTo, setPReplyTo] = useState('')
+
+  // domain
+  const [dDomain, setDDomain] = useState('')
+  const [dFromEmail, setDFromEmail] = useState('')
+  const [dFromName, setDFromName] = useState('')
+  const [dRecords, setDRecords] = useState<DnsRecord[] | null>(null)
+  const [dAccountId, setDAccountId] = useState<string | null>(null)
+
+  // smtp
+  const [sFromEmail, setSFromEmail] = useState('')
+  const [sFromName, setSFromName] = useState('')
+  const [sUser, setSUser] = useState('')
+  const [sPass, setSPass] = useState('')
+  const [sHost, setSHost] = useState('')
+  const [sPort, setSPort] = useState('587')
+  const [sSecure, setSSecure] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -36,54 +49,74 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
   }, [])
   useEffect(() => { load() }, [load])
 
-  const saveSmtp = useCallback(async () => {
-    if (!fromEmail || !user || !pass || !host) { flash('err', t('sending.missing')); return }
-    setSaving(true)
+  const post = (body: Record<string, unknown>) => fetch('/api/email/sending-accounts', {
+    method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(body),
+  }).then((r) => r.json())
+
+  const savePlatform = useCallback(async () => {
+    setBusy(true)
     try {
-      const res = await fetch('/api/email/sending-accounts', {
-        method: 'POST', headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ type: 'smtp', host, port: Number(port), secure, user, pass, fromEmail, fromName, label: host }),
-      })
-      const data = await res.json()
-      if (data.ok) { flash('ok', t('sending.connected')); setMode('list'); setPass(''); load() }
-      else if (data.error === 'smtp_failed') flash('err', data.message || t('sending.testFailed'), 8000)
+      const d = await post({ type: 'platform', fromName: pFromName, replyTo: pReplyTo })
+      if (d.ok) { flash('ok', t('sending.connected')); setMode('list'); load() } else flash('err', t('sending.error'))
+    } finally { setBusy(false) }
+  }, [pFromName, pReplyTo, flash, t, load])
+
+  const createDomain = useCallback(async () => {
+    if (!dDomain || !dFromEmail) { flash('err', t('sending.missing')); return }
+    setBusy(true)
+    try {
+      const d = await post({ type: 'domain', domain: dDomain, fromEmail: dFromEmail, fromName: dFromName })
+      if (d.ok) { setDRecords(d.records ?? []); setDAccountId(d.account?.id ?? null) }
+      else if (d.error === 'email_domain_mismatch') flash('err', t('sending.domain.mismatch'))
+      else flash('err', d.message || t('sending.error'), 8000)
+    } finally { setBusy(false) }
+  }, [dDomain, dFromEmail, dFromName, flash, t])
+
+  const verifyDomain = useCallback(async () => {
+    if (!dAccountId) return
+    setBusy(true)
+    try {
+      const r = await fetch(`/api/email/sending-accounts/${dAccountId}/verify`, { method: 'POST' })
+      const d = await r.json()
+      if (d.ok && d.status === 'active') { flash('ok', t('sending.domain.verified')); setMode('list'); load() }
+      else { flash('err', t('sending.domain.pending'), 8000); if (d.records) setDRecords(d.records) }
+    } finally { setBusy(false) }
+  }, [dAccountId, flash, t, load])
+
+  const saveSmtp = useCallback(async () => {
+    if (!sFromEmail || !sUser || !sPass || !sHost) { flash('err', t('sending.missing')); return }
+    setBusy(true)
+    try {
+      const d = await post({ type: 'smtp', host: sHost, port: Number(sPort), secure: sSecure, user: sUser, pass: sPass, fromEmail: sFromEmail, fromName: sFromName })
+      if (d.ok) { flash('ok', t('sending.connected')); setMode('list'); setSPass(''); load() }
+      else if (d.error === 'smtp_failed') flash('err', d.message || t('sending.testFailed'), 8000)
       else flash('err', t('sending.error'))
-    } catch { flash('err', t('sending.error')) } finally { setSaving(false) }
-  }, [fromEmail, user, pass, host, port, secure, fromName, flash, t, load])
+    } finally { setBusy(false) }
+  }, [sFromEmail, sUser, sPass, sHost, sPort, sSecure, sFromName, flash, t, load])
 
   const setDefault = async (id: string) => { await fetch(`/api/email/sending-accounts/${id}`, { method: 'PATCH' }); load() }
   const remove = async (id: string) => { await fetch(`/api/email/sending-accounts/${id}`, { method: 'DELETE' }); load() }
+  const copy = (v: string) => { navigator.clipboard?.writeText(v).then(() => flash('ok', t('sending.domain.copied'), 1500)).catch(() => {}) }
 
-  // ── SMTP form (kurumsal/özel) ──
-  if (mode === 'smtp') {
+  const input = 'w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20'
+  const label = 'block text-sm font-medium text-gray-700 mb-1.5'
+  const Back = () => <button onClick={() => { setMode('list'); setDRecords(null); setDAccountId(null) }} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4"><ArrowLeft className="w-4 h-4" /> {t('sending.back')}</button>
+
+  // ── Alt mail (platform) ──
+  if (mode === 'platform') {
     return (
-      <div className="max-w-xl">
-        <button onClick={() => setMode('list')} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4"><ArrowLeft className="w-4 h-4" /> {t('sending.back')}</button>
+      <div className="max-w-xl"><Back />
         <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
-          <h3 className="text-base font-semibold text-gray-900">{t('sending.smtp.title')}</h3>
-          <p className="text-xs text-gray-500">{t('sending.smtp.corpHint')}</p>
-          <div className="grid grid-cols-2 gap-3">
-            <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.fromEmail')}</label>
-              <input value={fromEmail} onChange={(e) => { setFromEmail(e.target.value); if (!user) setUser(e.target.value) }} placeholder="siz@firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.fromName')}</label>
-              <input value={fromName} onChange={(e) => setFromName(e.target.value)} placeholder="Firma Adı" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-          </div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.user')}</label>
-            <input value={user} onChange={(e) => setUser(e.target.value)} placeholder="siz@firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-          <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.pass')}</label>
-            <input type="password" value={pass} onChange={(e) => setPass(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-          <div className="grid grid-cols-3 gap-3">
-            <div className="col-span-2"><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.host')}</label>
-              <input value={host} onChange={(e) => setHost(e.target.value)} placeholder="smtp.firma.com" className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-            <div><label className="block text-sm font-medium text-gray-700 mb-1.5">{t('sending.smtp.port')}</label>
-              <input value={port} onChange={(e) => setPort(e.target.value)} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm outline-none focus:border-primary focus:ring-2 focus:ring-primary/20" /></div>
-          </div>
-          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer">
-            <input type="checkbox" checked={secure} onChange={(e) => setSecure(e.target.checked)} className="rounded border-gray-300 text-primary focus:ring-primary/20" /> {t('sending.smtp.secure')}
-          </label>
+          <h3 className="text-base font-semibold text-gray-900">{t('sending.platform.title')}</h3>
+          <p className="text-xs text-gray-500">{t('sending.platform.hint')}</p>
+          <div><label className={label}>{t('sending.platform.fromName')}</label>
+            <input value={pFromName} onChange={(e) => setPFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+          <div><label className={label}>{t('sending.platform.replyTo')}</label>
+            <input value={pReplyTo} onChange={(e) => setPReplyTo(e.target.value)} placeholder="siz@firma.com" className={input} />
+            <p className="text-xs text-gray-400 mt-1">{t('sending.platform.replyHint')}</p></div>
           <div className="flex justify-end pt-2 border-t border-gray-100">
-            <button onClick={saveSmtp} disabled={saving} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
-              {saving ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} {t('sending.smtp.testSave')}
+            <button onClick={savePlatform} disabled={busy} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} {t('sending.platform.activate')}
             </button>
           </div>
         </div>
@@ -91,12 +124,101 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
     )
   }
 
-  // ── Liste + 3 kart ──
+  // ── Kendi domaini ──
+  if (mode === 'domain') {
+    return (
+      <div className="max-w-2xl"><Back />
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+          <h3 className="text-base font-semibold text-gray-900">{t('sending.domain.title')}</h3>
+          {!dRecords ? (
+            <>
+              <div><label className={label}>{t('sending.domain.domain')}</label>
+                <input value={dDomain} onChange={(e) => setDDomain(e.target.value)} placeholder="mail.firma.com" className={input} /></div>
+              <div className="grid grid-cols-2 gap-3">
+                <div><label className={label}>{t('sending.domain.fromEmail')}</label>
+                  <input value={dFromEmail} onChange={(e) => setDFromEmail(e.target.value)} placeholder="info@mail.firma.com" className={input} /></div>
+                <div><label className={label}>{t('sending.domain.fromName')}</label>
+                  <input value={dFromName} onChange={(e) => setDFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+              </div>
+              <p className="text-xs text-gray-400">{t('sending.domain.emailHint')}</p>
+              <div className="flex justify-end pt-2 border-t border-gray-100">
+                <button onClick={createDomain} disabled={busy} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : null} {t('sending.domain.getRecords')}
+                </button>
+              </div>
+            </>
+          ) : (
+            <>
+              <p className="text-sm text-gray-600">{t('sending.domain.recordsHint')}</p>
+              <div className="rounded-xl border border-gray-200 overflow-hidden">
+                <table className="w-full text-xs">
+                  <thead className="bg-gray-50 text-gray-500"><tr><th className="text-left px-3 py-2">Tür</th><th className="text-left px-3 py-2">Ad / Host</th><th className="text-left px-3 py-2">Değer</th></tr></thead>
+                  <tbody className="divide-y divide-gray-100">
+                    {dRecords.map((r, i) => (
+                      <tr key={i}>
+                        <td className="px-3 py-2 font-medium text-gray-700">{r.type}</td>
+                        <td className="px-3 py-2 text-gray-600 font-mono break-all">{r.name}</td>
+                        <td className="px-3 py-2 text-gray-600 font-mono break-all">
+                          <span className="inline-flex items-start gap-1">{r.value}
+                            <button onClick={() => copy(r.value || '')} className="text-gray-300 hover:text-primary shrink-0"><Copy className="w-3 h-3" /></button>
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+              <div className="flex items-center justify-between pt-2 border-t border-gray-100">
+                <p className="text-xs text-gray-400">{t('sending.domain.afterAdd')}</p>
+                <button onClick={verifyDomain} disabled={busy} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+                  {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} {t('sending.domain.verify')}
+                </button>
+              </div>
+            </>
+          )}
+        </div>
+      </div>
+    )
+  }
+
+  // ── Kurumsal SMTP ──
+  if (mode === 'smtp') {
+    return (
+      <div className="max-w-xl"><Back />
+        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
+          <h3 className="text-base font-semibold text-gray-900">{t('sending.smtp.title')}</h3>
+          <p className="text-xs text-gray-500">{t('sending.smtp.corpHint')}</p>
+          <div className="grid grid-cols-2 gap-3">
+            <div><label className={label}>{t('sending.smtp.fromEmail')}</label>
+              <input value={sFromEmail} onChange={(e) => { setSFromEmail(e.target.value); if (!sUser) setSUser(e.target.value) }} placeholder="siz@firma.com" className={input} /></div>
+            <div><label className={label}>{t('sending.smtp.fromName')}</label>
+              <input value={sFromName} onChange={(e) => setSFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+          </div>
+          <div><label className={label}>{t('sending.smtp.user')}</label><input value={sUser} onChange={(e) => setSUser(e.target.value)} className={input} /></div>
+          <div><label className={label}>{t('sending.smtp.pass')}</label><input type="password" value={sPass} onChange={(e) => setSPass(e.target.value)} className={input} /></div>
+          <div className="grid grid-cols-3 gap-3">
+            <div className="col-span-2"><label className={label}>{t('sending.smtp.host')}</label><input value={sHost} onChange={(e) => setSHost(e.target.value)} placeholder="smtp.firma.com" className={input} /></div>
+            <div><label className={label}>{t('sending.smtp.port')}</label><input value={sPort} onChange={(e) => setSPort(e.target.value)} className={input} /></div>
+          </div>
+          <label className="flex items-center gap-2 text-sm text-gray-700 cursor-pointer"><input type="checkbox" checked={sSecure} onChange={(e) => setSSecure(e.target.checked)} className="rounded border-gray-300 text-primary focus:ring-primary/20" /> {t('sending.smtp.secure')}</label>
+          <div className="flex justify-end pt-2 border-t border-gray-100">
+            <button onClick={saveSmtp} disabled={busy} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50">
+              {busy ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />} {t('sending.smtp.testSave')}
+            </button>
+          </div>
+        </div>
+      </div>
+    )
+  }
+
+  // ── Liste + 4 kart ──
   const cards = [
-    { key: 'oauth', icon: Zap, soon: false, onClick: () => { window.location.href = '/api/email/gmail/start' } },
-    { key: 'domain', icon: Globe, soon: true, onClick: () => {} },
-    { key: 'smtp', icon: Server, soon: false, onClick: () => setMode('smtp') },
+    { key: 'platform', icon: Rocket, onClick: () => setMode('platform') },
+    { key: 'domain', icon: Globe, onClick: () => setMode('domain') },
+    { key: 'oauth', icon: Zap, onClick: () => { window.location.href = '/api/email/gmail/start' } },
+    { key: 'smtp', icon: Server, onClick: () => setMode('smtp') },
   ]
+  const typeLabel = (a: Account) => a.type === 'platform' ? t('sending.cards.platform.title') : a.type === 'domain' ? `${a.domain} (${a.status === 'active' ? t('sending.domain.active') : t('sending.domain.pendingShort')})` : a.type.toUpperCase()
 
   return (
     <div>
@@ -113,11 +235,11 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
                 <div className="w-9 h-9 rounded-lg bg-gray-50 flex items-center justify-center"><Server className="w-4 h-4 text-primary" /></div>
                 <div className="min-w-0">
                   <p className="text-sm font-medium text-gray-900 truncate">{a.fromName ? `${a.fromName} · ` : ''}{a.fromEmail}</p>
-                  <p className="text-xs text-gray-500">{a.type.toUpperCase()} · {a.host} {a.isDefault && <span className="text-primary font-medium">· {t('sending.default')}</span>}</p>
+                  <p className="text-xs text-gray-500">{typeLabel(a)} {a.isDefault && <span className="text-primary font-medium">· {t('sending.default')}</span>}</p>
                 </div>
               </div>
               <div className="flex items-center gap-1">
-                {!a.isDefault && <button onClick={() => setDefault(a.id)} title={t('sending.makeDefault')} className="p-1.5 text-gray-400 hover:text-primary"><Star className="w-4 h-4" /></button>}
+                {!a.isDefault && a.status === 'active' && <button onClick={() => setDefault(a.id)} title={t('sending.makeDefault')} className="p-1.5 text-gray-400 hover:text-primary"><Star className="w-4 h-4" /></button>}
                 <button onClick={() => remove(a.id)} className="p-1.5 text-gray-400 hover:text-red-600"><Trash2 className="w-4 h-4" /></button>
               </div>
             </div>
@@ -126,14 +248,12 @@ export default function SendingAccounts({ flash, onClose }: { flash: (k: 'ok' | 
       )}
 
       <p className="text-sm text-gray-600 mb-3">{t('sending.chooseHint')}</p>
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {cards.map(({ key, icon: Icon, soon, onClick }) => (
-          <button key={key} onClick={onClick} disabled={soon}
-            className={`text-left rounded-2xl border bg-white shadow-sm p-5 transition ${soon ? 'border-gray-200 opacity-60 cursor-not-allowed' : 'border-gray-200 hover:border-primary hover:shadow-md'}`}>
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+        {cards.map(({ key, icon: Icon, onClick }) => (
+          <button key={key} onClick={onClick} className="text-left rounded-2xl border border-gray-200 bg-white shadow-sm p-5 transition hover:border-primary hover:shadow-md">
             <div className="w-11 h-11 rounded-xl bg-primary/10 flex items-center justify-center mb-3"><Icon className="w-5 h-5 text-primary" /></div>
             <h3 className="text-sm font-semibold text-gray-900">{t(`sending.cards.${key}.title`)}</h3>
             <p className="text-xs text-gray-600 mt-1">{t(`sending.cards.${key}.desc`)}</p>
-            {soon && <span className="inline-flex mt-2 px-2 py-0.5 rounded-full text-[10px] font-medium bg-gray-100 text-gray-500">{t('soon')}</span>}
           </button>
         ))}
       </div>

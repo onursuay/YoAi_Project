@@ -3132,9 +3132,35 @@
       "gmailNoRefresh": "Yetki alınamadı. Lütfen tekrar deneyin ve izinleri onaylayın.",
       "gmailError": "Gmail bağlanamadı. Tekrar deneyin.",
       "cards": {
+        "platform": { "title": "Platform üzerinden (alt mail)", "desc": "Kurulum yok — bizim adresimizden, senin gönderen adınla anında gönder. Yanıtlar sana gelir." },
         "smtp": { "title": "Kurumsal / özel SMTP", "desc": "Kendi mail sunucunun SMTP bilgileriyle bağla (kurumsal/özel)." },
         "domain": { "title": "Kendi domainini doğrula", "desc": "DNS kayıtlarıyla markalı adresinden gönder; en yüksek hacim ve teslim." },
         "oauth": { "title": "Gmail (tek tık)", "desc": "Gmail hesabını tek tıkla bağla (OAuth), şifre girmeden. Outlook yakında." }
+      },
+      "platform": {
+        "title": "Platform üzerinden (alt mail)",
+        "hint": "Hiçbir kurulum gerektirmez. Bizim doğrulanmış adresimizden, senin gönderen adınla gönderilir; yanıtlar senin adresine gelir.",
+        "fromName": "Gönderen adı",
+        "replyTo": "Yanıt adresi",
+        "replyHint": "Alıcı 'Yanıtla' derse mail buraya gelir (kendi e-postan).",
+        "activate": "Aktifleştir"
+      },
+      "domain": {
+        "title": "Kendi domainini doğrula",
+        "domain": "Alan adı",
+        "fromEmail": "Gönderen e-posta",
+        "fromName": "Gönderen adı",
+        "emailHint": "Gönderen e-posta, alan adınla aynı olmalı (örn. info@mail.firma.com).",
+        "getRecords": "Kayıtları Al",
+        "recordsHint": "Aşağıdaki DNS kayıtlarını alan adınızın DNS ayarlarına ekleyin, sonra 'Doğrula'ya basın.",
+        "afterAdd": "Kayıtları ekledikten sonra (yayılması birkaç dk–saat sürebilir)",
+        "verify": "Doğrula",
+        "verified": "Domain doğrulandı.",
+        "pending": "Henüz doğrulanmadı. DNS kayıtlarını kontrol edip tekrar deneyin.",
+        "mismatch": "Gönderen e-posta, alan adıyla eşleşmiyor.",
+        "copied": "Kopyalandı.",
+        "active": "doğrulandı",
+        "pendingShort": "bekliyor"
       },
       "smtp": {
         "title": "Kurumsal / özel SMTP",

@@ -12,10 +12,11 @@ export interface SmtpConfig { host: string; port: number; secure: boolean; user:
 export interface SendingAccountRow {
   id: string
   user_id: string
-  type: 'smtp' | 'domain' | 'gmail' | 'outlook'
+  type: 'smtp' | 'domain' | 'gmail' | 'outlook' | 'platform'
   label: string | null
   from_name: string | null
   from_email: string
+  reply_to: string | null
   config: Record<string, unknown>
   status: 'pending' | 'active' | 'failed'
   is_default: boolean
@@ -63,11 +64,46 @@ export async function createSmtpAccount(userId: string, input: CreateSmtpInput):
   return data as SendingAccountRow
 }
 
+/** "Alt mail" — platform üzerinden gönderim (kurulum yok). Yanıt adresi kullanıcının. */
+export async function createPlatformAccount(
+  userId: string,
+  input: { fromName: string; replyTo: string },
+): Promise<SendingAccountRow | null> {
+  if (!supabase) return null
+  const platformFrom = process.env.PLATFORM_FROM_ADDRESS || 'gonderim@yodijital.com'
+  const existing = await listAccounts(userId)
+  const dup = existing.find((a) => a.type === 'platform')
+  const patch = {
+    from_name: input.fromName.trim() || 'YoAi',
+    reply_to: input.replyTo.trim().toLowerCase() || null,
+    status: 'active' as const,
+    updated_at: new Date().toISOString(),
+  }
+  if (dup) {
+    const { data } = await supabase.from('email_sending_accounts').update(patch).eq('id', dup.id).eq('user_id', userId).select().single()
+    return (data as SendingAccountRow) ?? null
+  }
+  const { data, error } = await supabase.from('email_sending_accounts')
+    .insert({
+      user_id: userId, type: 'platform', label: 'Platform',
+      from_email: platformFrom, config: {}, is_default: existing.length === 0, ...patch,
+    })
+    .select().single()
+  if (error || !data) { console.error('[SendingAccount] PLATFORM_CREATE_FAIL', error?.message); return null }
+  return data as SendingAccountRow
+}
+
 export async function setDefaultAccount(id: string, userId: string): Promise<boolean> {
   if (!supabase) return false
   await supabase.from('email_sending_accounts').update({ is_default: false }).eq('user_id', userId)
   const { error } = await supabase.from('email_sending_accounts').update({ is_default: true }).eq('id', id).eq('user_id', userId)
   return !error
+}
+
+export async function getAccount(id: string, userId: string): Promise<SendingAccountRow | null> {
+  if (!supabase) return null
+  const { data } = await supabase.from('email_sending_accounts').select('*').eq('id', id).eq('user_id', userId).maybeSingle()
+  return (data as SendingAccountRow) ?? null
 }
 
 export async function deleteAccount(id: string, userId: string): Promise<boolean> {

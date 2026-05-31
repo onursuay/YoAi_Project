@@ -64,9 +64,19 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
   } else if (account && account.type === 'domain') {
     if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
     const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    const replyTo = account.reply_to || undefined
     via = 'domain'
     dispatch = async (to, subject, html) => {
-      try { const r = await resend.emails.send({ from, to, subject, html }); return r.data?.id ?? null } catch { return null }
+      try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
+    }
+  } else if (account && account.type === 'platform') {
+    if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
+    const platformFrom = process.env.PLATFORM_FROM_ADDRESS || 'gonderim@yodijital.com'
+    const from = `${account.from_name || 'YoAi'} <${platformFrom}>`
+    const replyTo = account.reply_to || undefined
+    via = 'shared'
+    dispatch = async (to, subject, html) => {
+      try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
     }
   } else {
     if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }

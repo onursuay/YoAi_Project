@@ -3132,9 +3132,35 @@
       "gmailNoRefresh": "Could not obtain authorization. Please try again and approve the permissions.",
       "gmailError": "Could not connect Gmail. Please try again.",
       "cards": {
+        "platform": { "title": "Send via platform (sub-mail)", "desc": "No setup — send instantly from our address with your sender name. Replies go to you." },
         "smtp": { "title": "Corporate / custom SMTP", "desc": "Connect with your own mail server's SMTP details (corporate/custom)." },
         "domain": { "title": "Verify your domain", "desc": "Send from your branded address via DNS records; highest volume and deliverability." },
         "oauth": { "title": "Gmail (one-click)", "desc": "Connect your Gmail with one click (OAuth), no password. Outlook soon." }
+      },
+      "platform": {
+        "title": "Send via platform (sub-mail)",
+        "hint": "No setup needed. Sent from our verified address with your sender name; replies go to your address.",
+        "fromName": "Sender name",
+        "replyTo": "Reply-to address",
+        "replyHint": "If a recipient hits 'Reply', it goes here (your own email).",
+        "activate": "Activate"
+      },
+      "domain": {
+        "title": "Verify your domain",
+        "domain": "Domain",
+        "fromEmail": "From email",
+        "fromName": "Sender name",
+        "emailHint": "The from email must match your domain (e.g. info@mail.company.com).",
+        "getRecords": "Get records",
+        "recordsHint": "Add the DNS records below to your domain's DNS settings, then click Verify.",
+        "afterAdd": "After adding the records (propagation may take minutes–hours)",
+        "verify": "Verify",
+        "verified": "Domain verified.",
+        "pending": "Not verified yet. Check the DNS records and try again.",
+        "mismatch": "From email does not match the domain.",
+        "copied": "Copied.",
+        "active": "verified",
+        "pendingShort": "pending"
       },
       "smtp": {
         "title": "Corporate / custom SMTP",
