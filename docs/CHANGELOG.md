@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — YoAlgoritma: Kartlar seçili hesaba göre filtrelenmiyordu (birleşik gösterim) düzeltildi
+- **Sorun:** İşletme modunda (per-account) kullanıcı bir reklam hesabı seçse bile YoAlgoritma "Hesap Sağlık Durumu" kartları tüm hesapların birleşimini gösteriyordu. Kök neden: (1) `resolveYoaiScope`, `yoai_business_scope` cookie'si yoksa flag açık olsa bile `scoped:false` dönüyor; UI ise fallback ile hesabı "seçili" gösterip cookie'yi hiç yazmıyordu (switcher'da "zaten seçili" erken-return no-op) → endpoint filtresiz veri dönüyordu. (2) `account_alerts` filtresi, eşleşen günlük analize (`runCampaigns`) bağlıydı; analiz yoksa doğru kartlar bile boş dönüyordu. (3) Silinmiş Meta bağlantısından kalma `account_id=NULL` legacy uyarılar sızıyordu.
+- **Çözüm:** (1) Switcher açılışta scope cookie yoksa UI'da seçili görünen işletmeyi sunucuya otomatik yazar (session-guard + tek reload); "zaten seçili" no-op yalnız cookie gerçekten yazılıysa çalışır. (2) Hierarchy endpoint `account_alerts`'ı `account_id` ile günlük analizden bağımsız süzer; `scopePending` artık yalnız kampanya kartları için "hazırlanıyor" gösterir, hesap uyarıları her zaman görünür. (3) Owner'ın orphan `account_id=NULL` legacy uyarıları superseded yapıldı (veri silinmedi, gizlendi).
+- **Dosyalar:** components/account/UnifiedAccountSwitcher.tsx, app/api/yoai/improvements/hierarchy/route.ts, components/yoai/hierarchy/HierarchicalImprovements.tsx
+
 ## 2026-05-31 — YoAlgoritma: Hesap Sağlık kartı arka yüz metin sıkışması giderildi
 - **Sorun:** Uzun `body` + `recommended_action` metninde `mt-auto` ile alta itilen paragraf body'e sıkışıyor, alt kenara yeterli boşluk kalmıyordu
 - **Çözüm:** `p-4→p-5`, `mt-auto` kaldırılıp `mt-4 pt-3 border-t border-white/10` ile sabit ayırıcı çizgi eklendi

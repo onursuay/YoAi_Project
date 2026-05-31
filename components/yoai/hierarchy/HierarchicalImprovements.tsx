@@ -36,15 +36,12 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey 
     try {
       const res = await fetch('/api/yoai/improvements/hierarchy', { credentials: 'include' })
       const json = await res.json()
-      if (json.ok && json.scopePending) {
-        // Seçili işletmenin scope'lu analizi hazır değil — Command Center yenilenince
-        // (refreshKey bump) tekrar çekilir. O ana dek boş+hazırlanıyor göster (yanlış kart yok).
-        setData(EMPTY)
-        setPending(true)
-        return
-      }
-      setPending(false)
+      // Hesap uyarıları her zaman gösterilir (account_id ile scope'lanmış gelir).
+      // scopePending YALNIZ kampanya kartları için "hazırlanıyor" göstergesidir —
+      // seçili işletmenin scope'lu günlük analizi henüz hazır değil demektir.
       if (json.ok && json.data) setData(json.data as ImprovementHierarchy)
+      else setData(EMPTY)
+      setPending(!!(json.ok && json.scopePending))
     } catch (e) {
       console.warn('[HierarchicalImprovements] fetch failed:', e)
     } finally {

@@ -41,6 +41,8 @@ export default function UnifiedAccountSwitcher() {
   const [scopeBusinessId, setScopeBusinessId] = useState<string | null>(null)
   const [scopeMeta, setScopeMeta] = useState<string | null>(null)
   const [scopeGoogle, setScopeGoogle] = useState<string | null>(null)
+  // İşletme scope cookie'si okundu mu (auto-init yarışını önlemek için)
+  const [scopeLoaded, setScopeLoaded] = useState(false)
   const [busyId, setBusyId] = useState<string | null>(null)
   const [open, setOpen] = useState(false)
   const [showLimitModal, setShowLimitModal] = useState(false)
@@ -65,7 +67,7 @@ export default function UnifiedAccountSwitcher() {
         setScopeMeta(d.scope.metaAccountId ?? null)
         setScopeGoogle(d.scope.googleCustomerId ?? null)
       }
-    }).catch(() => {})
+    }).catch(() => {}).finally(() => setScopeLoaded(true))
   }, [reg.perAccountScope])
 
   // Kayıtlı hesapları işletmelere grupla (isim eşleştirme)
@@ -103,8 +105,39 @@ export default function UnifiedAccountSwitcher() {
     return byActive || null
   }, [businesses, scopeBusinessId, scopeMeta, scopeGoogle, activeMeta, activeGoogle])
 
+  // Auto-init: işletme modunda scope cookie YOKSA, UI'da fallback ile seçili görünen
+  // işletmeyi sunucuya da yaz. Aksi halde resolveYoaiScope scoped=false döner ve
+  // YoAlgoritma kartları tüm hesapların birleşimini gösterir (kullanıcı bir hesap
+  // seçili sansa bile). Cookie yazılınca veriler o işletmeye scope'lanır.
+  useEffect(() => {
+    if (!reg.perAccountScope || !scopeLoaded || !selectedBusiness) return
+    const hasCookieScope = !!(scopeBusinessId || scopeMeta || scopeGoogle)
+    if (hasCookieScope) return // kullanıcının açık seçimi var — dokunma
+    try { if (sessionStorage.getItem('yoai_scope_autoinit') === '1') return } catch {}
+    try { sessionStorage.setItem('yoai_scope_autoinit', '1') } catch {}
+    ;(async () => {
+      try {
+        const res = await fetch('/api/yoai/business-scope', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          credentials: 'include',
+          body: JSON.stringify({
+            businessId: selectedBusiness.id,
+            metaAccountId: selectedBusiness.meta?.accountId ?? null,
+            googleCustomerId: selectedBusiness.google?.customerId ?? null,
+            googleLoginCustomerId: selectedBusiness.google?.loginCustomerId ?? null,
+          }),
+        })
+        if (res.ok) { clearYoAlgoritmaClientCache(); window.location.reload() }
+      } catch { /* sessiz — sonraki etkileşimde yeniden denenir */ }
+    })()
+  }, [reg.perAccountScope, scopeLoaded, selectedBusiness, scopeBusinessId, scopeMeta, scopeGoogle])
+
   const selectBusiness = async (b: BusinessGroup) => {
-    if (selectedBusiness?.id === b.id) { setOpen(false); return }
+    // Zaten seçili VE cookie gerçekten yazılıysa no-op. Cookie yoksa (UI fallback ile
+    // seçili görünüyorsa) tıklama scope'u sunucuya yazsın — aksi halde birleşik kalır.
+    const cookieScoped = !!(scopeBusinessId || scopeMeta || scopeGoogle)
+    if (selectedBusiness?.id === b.id && cookieScoped) { setOpen(false); return }
     setBusyId(b.id)
     try {
       const res = await fetch('/api/yoai/business-scope', {

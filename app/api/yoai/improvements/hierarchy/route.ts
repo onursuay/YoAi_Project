@@ -34,10 +34,32 @@ export async function GET(request: Request) {
 
     const data = await getImprovementHierarchy(userId, statuses)
 
-    // ── İşletme scope'u: kartları seçili işletmenin kampanyalarına sınırla ──
+    // ── İşletme scope'u: kartları seçili işletmeye sınırla ──
     if (isPerAccountScopeEnabled()) {
       const scope = await resolveYoaiScope()
       if (scope.scoped) {
+        const hasMeta = !!scope.metaId
+        const hasGoogle = !!scope.googleCustomerId
+        const metaAcc = normalizeMetaAccountId(scope.metaId)
+        const googleAcc = normalizeGoogleCustomerId(scope.googleCustomerId)
+
+        // Hesap uyarıları account_id taşır → günlük analizden BAĞIMSIZ, doğrudan o
+        // hesaba göre süz (eşleşen analiz olmasa bile doğru hesabın kartları görünür).
+        // Hesap boyutlu (account_id dolu) → O hesaba göre; legacy (account_id NULL) →
+        // yalnız o platformun AKTİF seçimi varsa (başka hesabın/silinmiş bağlantının
+        // uyarısı sızmasın).
+        const scopedAlerts = data.accountAlerts.filter((a) => {
+          if (a.account_id != null) {
+            if (a.source_platform === 'meta') return metaAcc != null && normalizeMetaAccountId(a.account_id) === metaAcc
+            if (a.source_platform === 'google') return googleAcc != null && normalizeGoogleCustomerId(a.account_id) === googleAcc
+            return false
+          }
+          return (a.source_platform === 'meta' && hasMeta) || (a.source_platform === 'google' && hasGoogle) || a.source_platform == null
+        })
+
+        // Kampanya kartları account_id taşımaz → seçili işletmenin scope'lu günlük
+        // analizindeki kampanya kimliklerine göre süz. Eşleşen analiz henüz hazır
+        // değilse kampanyalar "hazırlanıyor" (scopePending); hesap uyarıları yine gösterilir.
         const run = await getBestAvailableRun(userId)
         const currentSig = buildAccountScope(scope.metaId, scope.googleCustomerId)
         const runCampaigns: any[] | null =
@@ -46,10 +68,8 @@ export async function GET(request: Request) {
             : null
 
         if (!runCampaigns) {
-          // Seçili işletmenin scope'lu analizi henüz hazır değil → yanlış kart gösterme.
-          // İstemci, Command Center yenilenince kartları yeniden çeker.
           return NextResponse.json(
-            { ok: true, data: { accountAlerts: [], campaigns: [] } as ImprovementHierarchy, scopePending: true },
+            { ok: true, data: { accountAlerts: scopedAlerts, campaigns: [] } as ImprovementHierarchy, scopePending: true },
             { headers: { 'Cache-Control': 'no-store' } },
           )
         }
@@ -59,23 +79,8 @@ export async function GET(request: Request) {
             .filter((c) => c && c.id != null && c.platform)
             .map((c) => `${String(c.platform).toLowerCase()}:${String(c.id)}`),
         )
-        const hasMeta = !!scope.metaId
-        const hasGoogle = !!scope.googleCustomerId
-        const metaAcc = normalizeMetaAccountId(scope.metaId)
-        const googleAcc = normalizeGoogleCustomerId(scope.googleCustomerId)
-
         const filtered: ImprovementHierarchy = {
-          // Hesap uyarıları: hesap boyutlu (account_id dolu) ise O hesaba göre süz
-          // (başka işletmenin — örn. Belgemod — uyarısı sızmasın); legacy (account_id
-          // NULL) uyarı için platform bazlı geriye uyumlu süzme.
-          accountAlerts: data.accountAlerts.filter((a) => {
-            if (a.account_id != null) {
-              if (a.source_platform === 'meta') return metaAcc != null && normalizeMetaAccountId(a.account_id) === metaAcc
-              if (a.source_platform === 'google') return googleAcc != null && normalizeGoogleCustomerId(a.account_id) === googleAcc
-              return false
-            }
-            return (a.source_platform === 'meta' && hasMeta) || (a.source_platform === 'google' && hasGoogle) || a.source_platform == null
-          }),
+          accountAlerts: scopedAlerts,
           campaigns: data.campaigns.filter((c) =>
             allowed.has(`${String(c.source_platform)}:${String(c.campaign_id)}`),
           ),
