@@ -71,7 +71,7 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
     }
   } else if (account && account.type === 'platform') {
     if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
-    const platformFrom = process.env.PLATFORM_FROM_ADDRESS || 'gonderim@yodijital.com'
+    const platformFrom = account.from_email || process.env.PLATFORM_FROM_ADDRESS || 'info@yodijital.com'
     const from = `${account.from_name || 'YoAi'} <${platformFrom}>`
     const replyTo = account.reply_to || undefined
     via = 'shared'
