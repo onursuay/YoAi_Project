@@ -232,9 +232,21 @@ export async function syncLeadToMeta(
     return { ok: false, reason: 'no_pii' }
   }
 
-  const account = normalizeAccount(conn.selectedAdAccountId)
   // Düşük retry/timeout: PATCH'i çok bekletmemek için (üstte ayrıca race var).
   const client = new MetaGraphClient({ accessToken: conn.accessToken, maxRetries: 1, timeout: 8000 })
+
+  // Reklam hesabını lead'i ÜRETEN reklamdan çöz — audience, kullanıcının
+  // "seçili" hesabına değil, lead'in geldiği reklam hesabına gitmeli (kullanıcı
+  // onlarca hesaba sahip olabilir; seçili hesap farklı bir işletme olabilir).
+  let account = normalizeAccount(conn.selectedAdAccountId)
+  if (lead.ad_id) {
+    try {
+      const adRes = await client.get<{ account_id?: string }>(`/${lead.ad_id}`, { fields: 'account_id' })
+      if (adRes.ok && adRes.data?.account_id) account = `act_${adRes.data.account_id}`
+    } catch {
+      /* çözülemezse seçili hesaba düş */
+    }
+  }
 
   try {
     const audiences = await findAudiencesByName(client, account, ALL_STAGE_AUDIENCES)
