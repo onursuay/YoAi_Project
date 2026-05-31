@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — Marketing: SEO gibi tam genişlik + 3'lü kart gridleri
+- **Sorun:** Marketing Kurulum sihirbazı `max-w-4xl` ile dardı; event seçim kartları 2'li grid'de sıkışık görünüyordu. SEO gibi genişletilmesi ve kartların 3'lü yan yana olması istendi.
+- **Çözüm:** Sayfa konteyneri + 5 adım sarmalayıcısının tamamı `max-w-4xl → max-w-7xl`. Event seçim kartları (SiteScanner, 14 event) ve ConfigPreview platform kartları (5 kart) `sm:grid-cols-2 → lg:grid-cols-3`. ResultDashboard 4 kart için orphan oluşmaması adına dengeli 2×2 düzeninde bırakıldı (geniş ekranda kartlar büyür); PlatformConnect zaten `lg:grid-cols-4`. Yalnızca layout/sunum katmanı; API ve veri akışına dokunulmadı.
+- **Dosyalar:** [app/marketing-kurulumu/page.tsx](app/marketing-kurulumu/page.tsx), [components/marketing-setup/steps/](components/marketing-setup/steps/) (SiteScanner, PlatformConnect, ConfigPreview, Deployment, ResultDashboard)
+
 ## 2026-05-31 — CRM & Marketing: SEO ile aynı tasarım dili (tipografi + animasyon)
 - **Sorun:** SEO alanına uygulanan modern tasarım iyileştirmelerinin (okunabilir tipografi + kademeli giriş animasyonu) CRM ve Marketing alanlarına da taşınması istendi.
 - **Çözüm:** Sunum katmanında tutarlı tipografi + animasyon: **CRM** Kanban sütunları ve liste lead kartlarına `animate-card-enter` kademeli giriş + hover-lift; bağlantı paneli/boş durum kartlarına giriş animasyonu; sütun başlıkları ve liste lead isimleri `text-sm → text-base`. **Marketing** wizard adım içeriği `key={step}` ile her geçişte yumuşak beliriş; tüm adım kart başlıkları (SiteScanner/PlatformConnect/ConfigPreview/ResultDashboard/Deployment) `text-sm → text-base`. Meta/Google entegrasyonu, API ve veri akışına dokunulmadı; `prefers-reduced-motion` guard'ı `globals.css`'de zaten mevcut.
