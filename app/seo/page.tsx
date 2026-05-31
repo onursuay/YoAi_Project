@@ -414,7 +414,7 @@ function RecommendationCard({ rec, index }: { rec: Recommendation; index: number
 
 function AnalysisSkeleton() {
   return (
-    <div className="max-w-4xl mx-auto space-y-6 animate-pulse">
+    <div className="space-y-6 animate-pulse">
       <div className="bg-white rounded-2xl border border-gray-200 p-8">
         <div className="flex items-center justify-center gap-8">
           <div className="w-[140px] h-[140px] rounded-full bg-gray-200" />
@@ -622,7 +622,7 @@ export default function SEOPage() {
     <>
       <Topbar title={t('title')} description={t('description')} />
       <div className="flex-1 overflow-y-auto app-content-surface p-6 print:bg-white print:p-0">
-        <div className="max-w-5xl mx-auto space-y-6" ref={printRef}>
+        <div className="max-w-7xl mx-auto space-y-6" ref={printRef}>
 
           {/* Tab Navigation */}
           <div className="flex gap-1 bg-white rounded-xl border border-gray-200 p-1 print:hidden">
