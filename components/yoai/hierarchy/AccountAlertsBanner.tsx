@@ -78,10 +78,10 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
                   <Pointer className="yoai-tap w-7 h-7 text-emerald-400 shrink-0" aria-label={t('flipHint')} />
                 </div>
                 {/* ARKA YÜZ — detay (hover) */}
-                <div className="yoai-face yoai-back border border-[#23314d] p-4 flex flex-col gap-2" style={FACE_STYLE}>
+                <div className="yoai-face yoai-back border border-[#23314d] p-5 flex flex-col" style={FACE_STYLE}>
                   <p className="text-[12px] text-slate-200 leading-relaxed">{a.body}</p>
                   {a.recommended_action ? (
-                    <p className="text-[12px] text-emerald-300 font-semibold leading-relaxed mt-auto">→ {a.recommended_action}</p>
+                    <p className="text-[12px] text-emerald-300 font-semibold leading-relaxed mt-4 pt-3 border-t border-white/10">→ {a.recommended_action}</p>
                   ) : null}
                 </div>
               </div>
