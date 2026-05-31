@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-05-31 — CRM & Marketing: SEO ile aynı tasarım dili (tipografi + animasyon)
+- **Sorun:** SEO alanına uygulanan modern tasarım iyileştirmelerinin (okunabilir tipografi + kademeli giriş animasyonu) CRM ve Marketing alanlarına da taşınması istendi.
+- **Çözüm:** Sunum katmanında tutarlı tipografi + animasyon: **CRM** Kanban sütunları ve liste lead kartlarına `animate-card-enter` kademeli giriş + hover-lift; bağlantı paneli/boş durum kartlarına giriş animasyonu; sütun başlıkları ve liste lead isimleri `text-sm → text-base`. **Marketing** wizard adım içeriği `key={step}` ile her geçişte yumuşak beliriş; tüm adım kart başlıkları (SiteScanner/PlatformConnect/ConfigPreview/ResultDashboard/Deployment) `text-sm → text-base`. Meta/Google entegrasyonu, API ve veri akışına dokunulmadı; `prefers-reduced-motion` guard'ı `globals.css`'de zaten mevcut.
+- **Dosyalar:** [components/crm/CrmDashboard.tsx](components/crm/CrmDashboard.tsx), [components/marketing-setup/MarketingSetupWizard.tsx](components/marketing-setup/MarketingSetupWizard.tsx), [components/marketing-setup/steps/](components/marketing-setup/steps/) (SiteScanner, PlatformConnect, ConfigPreview, ResultDashboard, Deployment)
+
 ## 2026-05-31 — SEO: Amber/sarı renk ihlalleri kaldırıldı + i18n puan etiketleri
 - **Sorun:** SEO sayfasında proje renk kuralını ihlal eden amber/sarı tonlar kullanılıyordu (`bg-amber-50`, `text-amber-700`, `text-amber-500`, `text-amber-600`, `#F59E0B`). Ayrıca `getScoreLabel` hardcoded Türkçe string döndürüyordu (i18n ihlali).
 - **Çözüm:** Tüm amber renkleri onaylı palete taşındı: orta puan → `bg-primary/5` + `text-primary` + `#059669`; uyarı ikonları → `text-gray-500`; redirect zinciri → `bg-gray-100 text-gray-700`; redirect uyarısı → `text-primary`. `getScoreLabel` fonksiyonu `getScoreLabelKey` + `t('scoreLabels.*')` kullanacak şekilde refactor edildi; `scoreLabels` anahtarları (excellent/good/medium/weak/critical) her iki locales dosyasına eklendi.
