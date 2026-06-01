@@ -62,11 +62,12 @@ function analyzeSchema($: CheerioAPI): Category {
     try {
       const raw = $(el).html() || '{}'
       const parsed = JSON.parse(raw) as Record<string, unknown>
-      const flattenGraph = (obj: Record<string, unknown>) => {
+      const flattenGraph = (obj: Record<string, unknown>, depth = 0) => {
+        if (depth > 10) return
         allSchemas.push(obj)
         if (Array.isArray(obj['@graph'])) {
           for (const item of obj['@graph']) {
-            flattenGraph(item as Record<string, unknown>)
+            flattenGraph(item as Record<string, unknown>, depth + 1)
           }
         }
       }
@@ -332,33 +333,41 @@ function analyzeEeat($: CheerioAPI, html: string): Category {
     // best-effort
   }
 
-  $('a[href]').each((_, el) => {
-    const href = $(el).attr('href')?.trim() || ''
-    if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return
-    if (/^https?:\/\//i.test(href)) {
-      try {
-        const linkHost = new URL(href).hostname
-        if (!baseHost || linkHost !== baseHost) {
-          externalLinkCount++
+  if (!baseHost) {
+    checks.push({
+      id: 'external-links',
+      title: 'Dış Kaynak Linkleri',
+      description: 'Canonical URL bulunamadığı için dış link analizi yapılamadı.',
+      status: 'warning',
+    })
+  } else {
+    $('a[href]').each((_, el) => {
+      const href = $(el).attr('href')?.trim() || ''
+      if (!href || href.startsWith('#') || href.startsWith('javascript:') || href.startsWith('mailto:') || href.startsWith('tel:')) return
+      if (/^https?:\/\//i.test(href)) {
+        try {
+          const linkHost = new URL(href).hostname
+          if (linkHost !== baseHost) {
+            externalLinkCount++
+          }
+        } catch {
+          // skip unparseable
         }
-      } catch {
-        // skip unparseable
       }
-    }
-  })
+    })
 
-  // Fallback: if baseHost is empty, count all absolute http links as external
-  checks.push({
-    id: 'external-links',
-    title: 'Harici Kaynak Linkleri',
-    description: externalLinkCount >= 2
-      ? `${externalLinkCount} adet harici link bulundu. Güvenilir kaynaklara bağlantı Trust sinyali verir.`
-      : externalLinkCount === 1
-        ? '1 adet harici link bulundu. En az 2 güvenilir kaynağa link vermek Trust skorunu artırır.'
-        : 'Harici link bulunamadı. Güvenilir kaynaklara (akademik, resmi siteler) link vermek E-E-A-T\'i destekler.',
-    status: externalLinkCount >= 2 ? 'pass' : externalLinkCount === 1 ? 'warning' : 'fail',
-    value: `${externalLinkCount} harici link`,
-  })
+    checks.push({
+      id: 'external-links',
+      title: 'Harici Kaynak Linkleri',
+      description: externalLinkCount >= 2
+        ? `${externalLinkCount} adet harici link bulundu. Güvenilir kaynaklara bağlantı Trust sinyali verir.`
+        : externalLinkCount === 1
+          ? '1 adet harici link bulundu. En az 2 güvenilir kaynağa link vermek Trust skorunu artırır.'
+          : 'Harici link bulunamadı. Güvenilir kaynaklara (akademik, resmi siteler) link vermek E-E-A-T\'i destekler.',
+      status: externalLinkCount >= 2 ? 'pass' : externalLinkCount === 1 ? 'warning' : 'fail',
+      value: `${externalLinkCount} harici link`,
+    })
+  }
 
   // Suppress unused variable lint warning
   void html
@@ -472,10 +481,8 @@ function analyzeAiReadability($: CheerioAPI): Category {
 function analyzeCitability($: CheerioAPI): Category {
   const checks: Check[] = []
 
-  // Remove scripts for text extraction
-  const $clone = $('body')
-  $clone.find('script, style, noscript').remove()
-  const bodyText = $clone.text()
+  // script/style already removed by analyzeAiReadability (runs first)
+  const bodyText = $('body').text()
 
   // has-statistics
   const statPattern = /\b\d+(\.\d+)?\s*%|\b\d{2,}\s*(milyon|milyar|bin|million|billion|thousand|users|kullanıcı|müşteri|adet|kişi|yıl|year|saat|hour|gün|day)/i
