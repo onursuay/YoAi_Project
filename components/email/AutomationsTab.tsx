@@ -159,10 +159,7 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
               <textarea value={html} onChange={(e) => setHtml(e.target.value)} rows={12} placeholder={t('automations.contentPlaceholder')} className="w-full rounded-xl border border-gray-200 px-3 py-2 text-sm font-mono focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" />
               <p className="text-xs text-gray-400 mt-1">{t('automations.contentHint')}</p>
             </div>
-            <div className="flex items-center justify-between gap-2 pt-2 border-t border-gray-100">
-              <button onClick={() => setComposing(false)} className="inline-flex items-center gap-1.5 px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-600 hover:bg-gray-50 hover:text-gray-900 transition-all">
-                <ArrowLeft className="w-4 h-4" /> {t('automations.back')}
-              </button>
+            <div className="flex items-center justify-end gap-2 pt-2 border-t border-gray-100">
               <button
                 onClick={handleSave}
                 disabled={saving || accountReady === false}
@@ -186,6 +183,14 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
                   html.trim() || `<p style="color:#d1d5db">${t('automations.previewEmpty')}</p>`
                 }</body></html>`}
               />
+            </div>
+            <div className="mt-3 flex justify-end">
+              <button
+                onClick={() => setComposing(false)}
+                className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 active:scale-[0.97] transition-all"
+              >
+                <ArrowLeft className="w-4 h-4" /> {t('automations.back')}
+              </button>
             </div>
           </div>
         </div>
