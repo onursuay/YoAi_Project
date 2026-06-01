@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — Email Otomasyon: Tekil manuel kişi eklemede contact_added tetiği
+- **Sorun:** Yeni bir kişi manuel olarak tek tek eklendiğinde `contact_added` türündeki otomasyon e-postaları tetiklenmiyordu.
+- **Çözüm:** `POST /api/email/contacts` handler'ına best-effort otomasyon tetiği eklendi. Yalnızca `rows.length === 1 && source === 'manual' && result.inserted === 1` koşulu sağlandığında (gerçekten yeni, tekil, manuel ekleme) `runContactAddedAutomations` çağrılır. Toplu CSV/CRM import'lar tetiklemez. 9 saniyelik timeout race ve `.catch(() => {})` ile best-effort; hata hiçbir zaman response'u bozmaz.
+- **Dosyalar:** app/api/email/contacts/route.ts
+
 ## 2026-05-31 — YoAlgoritma: Kartlar seçili hesaba göre filtrelenmiyordu (birleşik gösterim) düzeltildi
 - **Sorun:** İşletme modunda (per-account) kullanıcı bir reklam hesabı seçse bile YoAlgoritma "Hesap Sağlık Durumu" kartları tüm hesapların birleşimini gösteriyordu. Kök neden: (1) `resolveYoaiScope`, `yoai_business_scope` cookie'si yoksa flag açık olsa bile `scoped:false` dönüyor; UI ise fallback ile hesabı "seçili" gösterip cookie'yi hiç yazmıyordu (switcher'da "zaten seçili" erken-return no-op) → endpoint filtresiz veri dönüyordu. (2) `account_alerts` filtresi, eşleşen günlük analize (`runCampaigns`) bağlıydı; analiz yoksa doğru kartlar bile boş dönüyordu. (3) Silinmiş Meta bağlantısından kalma `account_id=NULL` legacy uyarılar sızıyordu.
 - **Çözüm:** (1) Switcher açılışta scope cookie yoksa UI'da seçili görünen işletmeyi sunucuya otomatik yazar (session-guard + tek reload); "zaten seçili" no-op yalnız cookie gerçekten yazılıysa çalışır. (2) Hierarchy endpoint `account_alerts`'ı `account_id` ile günlük analizden bağımsız süzer; `scopePending` artık yalnız kampanya kartları için "hazırlanıyor" gösterir, hesap uyarıları her zaman görünür. (3) Owner'ın orphan `account_id=NULL` legacy uyarıları superseded yapıldı (veri silinmedi, gizlendi).
