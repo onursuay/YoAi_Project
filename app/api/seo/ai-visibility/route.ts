@@ -30,7 +30,11 @@ async function checkViaTavily(apiKey: string, domain: string): Promise<{ visible
     }),
     signal: AbortSignal.timeout(20000),
   })
-  if (!response.ok) throw new Error(`Tavily ${response.status}`)
+  if (!response.ok) {
+    const errText = await response.text()
+    console.error('[ai-visibility] Tavily error', response.status, errText)
+    throw new Error(`Tavily ${response.status}`)
+  }
   const data = await response.json()
   const answer: string = data?.answer ?? ''
   const results: { content?: string }[] = data?.results ?? []
