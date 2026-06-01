@@ -133,13 +133,13 @@ export const gozetimMerkeziNavItem: NavItem = {
 }
 
 /**
- * Marketing Kurulumu — rollout sırasında gizli. `navItems` içine konmaz;
+ * Dönüşüm Sihirbazı (route: marketing-kurulumu) — rollout sırasında gizli. `navItems` içine konmaz;
  * yalnız owner veya `MARKETING_SETUP_ENABLED` açıkken client tarafında dinamik
  * enjekte edilir (Gözetim Merkezi ile aynı desen). UI etiketi sidebar.marketingkurulumu.
  */
 export const marketingSetupNavItem: NavItem = {
   id: 'marketing-kurulumu',
-  label: 'Marketing',
+  label: 'Dönüşüm Sihirbazı',
   href: ROUTES.MARKETING_SETUP,
   icon: Rocket,
 }

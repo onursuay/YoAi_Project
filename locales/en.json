@@ -23,7 +23,7 @@
         "seo": "SEO",
         "audience_ai": "AI-Based Audience",
         "ad_account_slot": "Ad Account",
-        "marketing_setup": "Marketing",
+        "marketing_setup": "Conversion Wizard",
         "crm": "CRM",
         "email_marketing": "Email Marketing",
         "optimization_ai_scan_pro": "AI Scan Pro",
@@ -38,7 +38,7 @@
         "seo": "You need an active subscription plan to use the SEO analysis tool.",
         "audience_ai": "You need an active subscription plan for AI-based audience generation.",
         "ad_account_slot": "You've reached your plan's ad account limit. Upgrade your plan to add more ad accounts.",
-        "marketing_setup": "You need an active subscription plan to use the marketing infrastructure setup wizard.",
+        "marketing_setup": "You need an active subscription plan to use the conversion tracking wizard.",
         "crm": "You need an active subscription plan to collect and manage your ad leads in one panel.",
         "email_marketing": "You need an active subscription plan to create and send email campaigns.",
         "optimization_ai_scan_pro": "You need a sufficient credit balance for the AI Scan Pro deep analysis.",
@@ -3042,7 +3042,7 @@
     "yardimMerkezi": "Help Center",
     "cikisYap": "Log Out",
     "dil": "English",
-    "marketingkurulumu": "Marketing"
+    "marketingkurulumu": "Conversion Wizard"
   },
   "email": {
     "title": "Email Marketing",
@@ -3317,8 +3317,8 @@
     }
   },
   "marketingSetup": {
-    "title": "Marketing",
-    "subtitle": "Set up your entire digital marketing stack from a single panel.",
+    "title": "Conversion Wizard",
+    "subtitle": "Start tracking your website conversions from a single panel.",
     "steps": {
       "scan": "Site Scan",
       "connect": "Platform Connections",

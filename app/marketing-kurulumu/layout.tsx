@@ -14,7 +14,7 @@ export default function MarketingSetupLayout({
       <div className="flex h-screen bg-gray-50">
         <SidebarNav />
         <div className="flex-1 flex flex-col overflow-hidden">
-          <BusinessProfileGuard area="Marketing Kurulumu">
+          <BusinessProfileGuard area="Dönüşüm Sihirbazı">
             {children}
           </BusinessProfileGuard>
         </div>
