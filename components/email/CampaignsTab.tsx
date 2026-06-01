@@ -197,23 +197,23 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
                   html.trim() || `<p style="color:#d1d5db">${t('campaigns.previewEmpty')}</p>`
                 }<hr style="margin-top:28px;border:none;border-top:1px solid #e5e7eb"/><p style="font-size:11px;color:#9ca3af;margin-top:12px">${t('campaigns.unsubPreview')}</p></body></html>`}
               />
-            </div>
-            <div className="mt-3 flex flex-col items-end gap-2">
-              <button
-                onClick={() => setBackOpen(v => !v)}
-                className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
-              >
-                <span>{t('campaigns.back')}</span>
-                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${backOpen ? 'rotate-180' : ''}`} />
-              </button>
-              {backOpen && (
+              <div className="px-4 py-3 border-t border-gray-100 bg-gray-50/60 flex flex-col items-end gap-2">
                 <button
-                  onClick={() => setComposing(false)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all"
+                  onClick={() => setBackOpen(v => !v)}
+                  className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
                 >
-                  <ArrowLeft className="w-3.5 h-3.5" /> {t('campaigns.back')}
+                  <span>{t('campaigns.back')}</span>
+                  <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${backOpen ? 'rotate-180' : ''}`} />
                 </button>
-              )}
+                {backOpen && (
+                  <button
+                    onClick={() => setComposing(false)}
+                    className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all"
+                  >
+                    <ArrowLeft className="w-3.5 h-3.5" /> {t('campaigns.back')}
+                  </button>
+                )}
+              </div>
             </div>
           </div>
         </div>
