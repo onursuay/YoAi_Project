@@ -134,11 +134,26 @@ export default function CrmDashboard() {
     return () => document.removeEventListener('mousedown', onDown)
   }, [filterOpen])
 
-  // Bağlı sayfalar geldiğinde aktif sayfayı belirle (ilk sayfa; mevcut geçerliyse korunur).
+  // Bağlı sayfalar geldiğinde aktif sayfayı belirle:
+  // 1) mevcut seçim hâlâ geçerliyse korunur
+  // 2) değilse localStorage'daki son seçim geçerliyse o (yenileme sonrası hafıza)
+  // 3) hiçbiri yoksa ilk sayfa
   useEffect(() => {
     if (connected.length === 0) { setActivePageId(null); return }
-    setActivePageId((cur) => (cur && connected.some((c) => c.pageId === cur) ? cur : connected[0].pageId))
+    setActivePageId((cur) => {
+      if (cur && connected.some((c) => c.pageId === cur)) return cur
+      let stored: string | null = null
+      try { stored = window.localStorage.getItem('crm.activePageId') } catch { /* yok say */ }
+      if (stored && connected.some((c) => c.pageId === stored)) return stored
+      return connected[0].pageId
+    })
   }, [connected])
+
+  // Aktif sayfa seçimini kalıcı yap — sayfa yenilemesinde son seçim korunur.
+  useEffect(() => {
+    if (!activePageId) return
+    try { window.localStorage.setItem('crm.activePageId', activePageId) } catch { /* yok say */ }
+  }, [activePageId])
 
   // Sayfa seçici dış-tıklama kapatır.
   useEffect(() => {
@@ -385,6 +400,9 @@ export default function CrmDashboard() {
                   onChange={setSelectedPage}
                   options={connectablePages.map((p) => ({ value: p.id, label: p.name }))}
                   placeholder={t('connect.selectPagePlaceholder')}
+                  searchable
+                  searchPlaceholder={t('connect.searchPagePlaceholder')}
+                  searchEmptyText={t('connect.noPageMatch')}
                 />
               </div>
               <button
@@ -483,43 +501,46 @@ export default function CrmDashboard() {
             >
               <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> {t('sync.button')}
             </button>
-            <button
-              onClick={() => setShowConnectPanel(true)}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition"
-            >
-              <Plus className="w-4 h-4" /> {t('connect.managePages')}
-            </button>
-            {/* Aşama (sütun) filtresi — en sağda, Sayfaları Yönet'in sağında */}
-            <div ref={filterRef} className="relative">
+            {/* Yönetim grubu: Sayfaları Yönet + Aşamalar — tek gri kapsayıcı, butonlar beyaz chip olarak belirgin */}
+            <div className="inline-flex items-center gap-0.5 rounded-xl border border-gray-200 bg-gray-100 p-0.5">
               <button
-                onClick={() => setFilterOpen((v) => !v)}
-                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition"
+                onClick={() => setShowConnectPanel(true)}
+                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition"
               >
-                <Filter className="w-4 h-4" /> {t('stageFilter')}
-                {hiddenStages.size > 0 && (
-                  <span className="text-xs text-primary font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
-                )}
+                <Plus className="w-4 h-4" /> {t('connect.managePages')}
               </button>
-              {filterOpen && (
-                <div className="absolute right-0 top-full mt-1 z-30 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1">
-                  {STAGES.map((s) => {
-                    const visible = !hiddenStages.has(s)
-                    return (
-                      <button
-                        key={s}
-                        onClick={() => toggleStage(s)}
-                        className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-gray-50"
-                      >
-                        <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${visible ? 'bg-primary border-primary' : 'border-gray-300'}`}>
-                          {visible && <Check className="w-3 h-3 text-white" />}
-                        </span>
-                        <span className={`w-2 h-2 rounded-full ${STAGE_STYLE[s].dot}`} />
-                        <span className="flex-1 text-gray-700">{stageLabel(s)}</span>
-                      </button>
-                    )
-                  })}
-                </div>
-              )}
+              {/* Aşama (sütun) filtresi — yönetim grubunun sağ ucunda */}
+              <div ref={filterRef} className="relative">
+                <button
+                  onClick={() => setFilterOpen((v) => !v)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition"
+                >
+                  <Filter className="w-4 h-4" /> {t('stageFilter')}
+                  {hiddenStages.size > 0 && (
+                    <span className="text-xs text-primary font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
+                  )}
+                </button>
+                {filterOpen && (
+                  <div className="absolute right-0 top-full mt-1 z-30 w-52 bg-white rounded-xl border border-gray-200 shadow-lg py-1">
+                    {STAGES.map((s) => {
+                      const visible = !hiddenStages.has(s)
+                      return (
+                        <button
+                          key={s}
+                          onClick={() => toggleStage(s)}
+                          className="w-full flex items-center gap-2 px-3 py-1.5 text-sm text-left hover:bg-gray-50"
+                        >
+                          <span className={`w-4 h-4 rounded border flex items-center justify-center shrink-0 ${visible ? 'bg-primary border-primary' : 'border-gray-300'}`}>
+                            {visible && <Check className="w-3 h-3 text-white" />}
+                          </span>
+                          <span className={`w-2 h-2 rounded-full ${STAGE_STYLE[s].dot}`} />
+                          <span className="flex-1 text-gray-700">{stageLabel(s)}</span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                )}
+              </div>
             </div>
           </div>
         </div>

@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — CRM Sistemi: yeniden adlandırma, sayfa araması, yönetim grubu ve seçim hafızası
+- **Sorun:** (1) "CRM" modül adı sade bir başlık istendi; (2) "Sayfaları Yönet" ve "Aşamalar" iki ayrı butondu, tek belirgin grup içine alınması istendi; (3) Sayfa bağlama seçicide çok sayıda Facebook sayfası olunca arama yoktu; (4) Çoklu sayfa seçicide son seçilen sayfa, sayfa yenilenince ilk sayfaya dönüyordu (hafızaya alınmıyordu).
+- **Çözüm:** (1) Modül adı "CRM Sistemi" (TR) / "CRM System" (EN) olarak güncellendi — Topbar başlığı ve nav etiketleri. (2) "Sayfaları Yönet" + "Aşamalar" tek gri (`bg-gray-100`) kapsayıcıda, butonlar beyaz `shadow-sm` chip olarak belirgin. (3) `WizardSelect`'e opsiyonel `searchable` prop'u eklendi (default kapalı — mevcut/Meta-Google dropdown'ları etkilenmez), CRM sayfa seçicide aktif edildi; arama kutusu açılınca odaklanır, TR-duyarlı filtre + "Eşleşen sayfa yok" durumu. (4) Aktif sayfa seçimi `crm.activePageId` ile localStorage'a yazılıyor ve geçerliyse yenileme sonrası geri yükleniyor.
+- **Dosyalar:** `components/crm/CrmDashboard.tsx`, `components/meta/wizard/WizardSelect.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-01 — SEO: GEO/AEO puanı ve AI görünürlük taraması sayfa yenilemede korunuyor
 - **Sorun:** SEO Plus'ta GEO/AEO Puanı ve altındaki AI görünürlük taraması yalnızca React state'inde tutuluyordu; sayfa yenilenince kayboluyordu (Genel SEO Puanı ise localStorage'dan geri yükleniyordu).
 - **Çözüm:** GEO/AEO sonucu `seo_last_geo`, AI görünürlük sonucu `seo_ai_visibility` anahtarıyla localStorage'a yazılıyor ve mount'ta yalnız aynı URL'e aitse geri yükleniyor. Otomatik analiz akışına da GEO/AEO taraması eklendi.

@@ -1,7 +1,7 @@
 'use client'
 
 import * as React from 'react'
-import { ChevronDown, Check } from 'lucide-react'
+import { ChevronDown, Check, Search } from 'lucide-react'
 
 export interface WizardSelectOption {
   value: string
@@ -18,6 +18,12 @@ interface WizardSelectProps {
   error?: boolean
   className?: string
   placeholder?: string
+  /** Açılır listenin üstünde arama kutusu göster (uzun listeler için). Default kapalı — mevcut kullanımlar etkilenmez. */
+  searchable?: boolean
+  /** Arama kutusu placeholder'ı (i18n'den geçilmeli) */
+  searchPlaceholder?: string
+  /** Arama sonuç bulunamadığında gösterilecek metin (i18n'den geçilmeli) */
+  searchEmptyText?: string
 }
 
 /** Kampanya Hedefi referanslı custom dropdown — tüm wizard select'leri için standart */
@@ -29,9 +35,14 @@ export default function WizardSelect({
   error = false,
   className = '',
   placeholder,
+  searchable = false,
+  searchPlaceholder,
+  searchEmptyText,
 }: WizardSelectProps) {
   const [open, setOpen] = React.useState(false)
+  const [query, setQuery] = React.useState('')
   const ref = React.useRef<HTMLDivElement>(null)
+  const inputRef = React.useRef<HTMLInputElement>(null)
 
   React.useEffect(() => {
     const handler = (e: MouseEvent) => {
@@ -41,7 +52,21 @@ export default function WizardSelect({
     return () => document.removeEventListener('mousedown', handler)
   }, [])
 
+  // Açılınca aramayı sıfırla ve arama kutusuna odaklan.
+  React.useEffect(() => {
+    if (!open || !searchable) return
+    setQuery('')
+    const id = window.setTimeout(() => inputRef.current?.focus(), 0)
+    return () => window.clearTimeout(id)
+  }, [open, searchable])
+
   const selected = options.find((o) => o.value === value)
+
+  const filtered = React.useMemo(() => {
+    if (!searchable || !query.trim()) return options
+    const q = query.trim().toLocaleLowerCase('tr')
+    return options.filter((o) => o.label.toLocaleLowerCase('tr').includes(q))
+  }, [options, query, searchable])
 
   return (
     <div ref={ref} className={`relative ${className}`}>
@@ -68,30 +93,50 @@ export default function WizardSelect({
       </button>
 
       {open && (
-        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-y-auto max-h-72">
-          {options.map((o) => {
-            const isSel = o.value === value
-            return (
-              <button
-                key={o.value}
-                type="button"
-                disabled={o.disabled}
-                onClick={() => {
-                  if (o.disabled) return
-                  onChange(o.value)
-                  setOpen(false)
-                }}
-                className={`
-                  w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors
-                  ${o.disabled ? 'opacity-40 cursor-not-allowed' : ''}
-                  ${isSel ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}
-                `}
-              >
-                <span style={o.style} className="truncate">{o.label}</span>
-                {isSel && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
-              </button>
-            )
-          })}
+        <div className="absolute z-50 w-full mt-1.5 bg-white border border-gray-200 rounded-xl shadow-[0_8px_24px_rgba(0,0,0,0.12),0_2px_8px_rgba(0,0,0,0.08)] overflow-hidden">
+          {searchable && (
+            <div className="p-2 border-b border-gray-100">
+              <div className="relative">
+                <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400 pointer-events-none" />
+                <input
+                  ref={inputRef}
+                  value={query}
+                  onChange={(e) => setQuery(e.target.value)}
+                  placeholder={searchPlaceholder}
+                  className="w-full pl-8 pr-3 py-2 text-sm rounded-lg border border-gray-200 outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition"
+                />
+              </div>
+            </div>
+          )}
+          <div className="overflow-y-auto max-h-72">
+            {filtered.length === 0 ? (
+              <p className="px-4 py-3 text-sm text-gray-400 text-center">{searchEmptyText ?? ''}</p>
+            ) : (
+              filtered.map((o) => {
+                const isSel = o.value === value
+                return (
+                  <button
+                    key={o.value}
+                    type="button"
+                    disabled={o.disabled}
+                    onClick={() => {
+                      if (o.disabled) return
+                      onChange(o.value)
+                      setOpen(false)
+                    }}
+                    className={`
+                      w-full flex items-center justify-between px-4 py-2.5 text-sm text-left transition-colors
+                      ${o.disabled ? 'opacity-40 cursor-not-allowed' : ''}
+                      ${isSel ? 'bg-primary/8 text-primary font-semibold' : 'text-gray-700 hover:bg-gray-50'}
+                    `}
+                  >
+                    <span style={o.style} className="truncate">{o.label}</span>
+                    {isSel && <Check className="w-4 h-4 text-primary flex-shrink-0" />}
+                  </button>
+                )
+              })
+            )}
+          </div>
         </div>
       )}
     </div>
