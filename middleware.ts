@@ -38,6 +38,27 @@ const APP_SLUGS = new Set([
   'hesabim', 'abonelik', 'faturalarim',
 ])
 
+/**
+ * Public legal/marketing pages (privacy, terms, cookie, data-deletion) — both
+ * EN and TR slugs. These must look like public, crawlable static documents to
+ * external validators (Google OAuth verification, search engines): the app's
+ * default `private, no-store` Cache-Control (forced by cookies() in the root
+ * layout) makes them look like authenticated/dynamic pages. We override that
+ * here so the page is served as a public web document.
+ */
+const PUBLIC_LEGAL_SLUGS = new Set([
+  'privacy-policy', 'gizlilik-politikasi',
+  'terms', 'terms-of-service', 'kullanim-kosullari',
+  'cookie-policy', 'cerez-politikasi',
+  'data-deletion', 'veri-silme',
+])
+
+/** Mark a response as a public, crawlable web document. */
+function applyPublicLegalHeaders(response: NextResponse) {
+  response.headers.set('Cache-Control', 'public, max-age=0, s-maxage=86400, must-revalidate')
+  response.headers.set('X-Robots-Tag', 'index, follow')
+}
+
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl
 
@@ -65,6 +86,9 @@ export function middleware(request: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
     })
+    if (PUBLIC_LEGAL_SLUGS.has(rest.split('/')[1] || '')) {
+      applyPublicLegalHeaders(response)
+    }
     return response
   }
 
@@ -95,6 +119,9 @@ export function middleware(request: NextRequest) {
       path: '/',
       maxAge: 60 * 60 * 24 * 365,
     })
+  }
+  if (PUBLIC_LEGAL_SLUGS.has(pathname.split('/')[1] || '')) {
+    applyPublicLegalHeaders(response)
   }
 
   return response
