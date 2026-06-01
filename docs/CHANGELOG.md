@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — SSRF tam koruma: redirect manual, IPv6 AAAA, DNS fail-closed
+- **Sorun:** `analyze-geo` endpoint'indeki mevcut SSRF koruması yetersizdi: `redirect: 'follow'` ile redirect zinciri doğrulanmıyordu; yalnızca IPv4 A kaydı kontrol ediliyordu (AAAA atlanıyordu); DNS hatası sessizce geçiliyordu (fail-open).
+- **Çözüm:** `lib/seo/assertSafeUrl.ts` yeni standalone modülü oluşturuldu (`lib/email/ssrf.ts` deseniyle aynı kalite). `redirect: 'manual'` ile her redirect hop'unda `assertSafeUrl` yeniden çalışır; `dns.lookup({ all: true })` ile hem A hem AAAA kayıtları kontrol edilir; DNS hatası artık `throw` ile fail-closed; CGNAT (100.64/10), multicast, IPv4-mapped IPv6, non-HTTP redirect scheme reddi eklendi. Max 5 redirect limiti.
+- **Dosyalar:** `lib/seo/assertSafeUrl.ts` (yeni), `app/api/seo/analyze-geo/route.ts`
+
 ## 2026-06-01 — GEO/AEO UI bileşenleri: ScoreCard, AnalysisPanel, VisibilityChecker
 - **Sorun:** SEO Plus modülünde GEO/AEO skor kartı, kategori analiz paneli ve AI görünürlük kontrolü için UI bileşenleri yoktu.
 - **Çözüm:** 3 yeni React client bileşeni oluşturuldu. `GeoAeoScoreCard` — SVG daire göstergeli skor kartı (seçilebilir, loading state). `GeoAeoAnalysisPanel` — 5 GEO/AEO kategorisini collapse/expand kartlarla gösteren panel + AiVisibilityChecker entegrasyonu. `AiVisibilityChecker` — Perplexity API üzerinden AI görünürlük sorgusu yapan buton + sonuç gösterimi. Tüm metinler `next-intl` i18n'den (`dashboard.seo.geoAeo`), proje tasarım kurallarına uygun (`animate-card-enter`, `hover:shadow-md`, amber renk yok).
