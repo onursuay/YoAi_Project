@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkEmailAccess } from '@/lib/email/guard'
 import { listContacts, countContacts, upsertContacts, type ContactInput } from '@/lib/email/contactStore'
+import { runContactAddedAutomations } from '@/lib/email/automationRunner'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
@@ -50,6 +51,17 @@ export async function POST(request: Request) {
   if (rows.length === 0) return NextResponse.json({ ok: false, error: 'no_rows' }, { status: 400 })
   if (rows.length > 50000) return NextResponse.json({ ok: false, error: 'too_many' }, { status: 413 })
 
-  const result = await upsertContacts(access.user.id, rows, body.source ?? 'csv')
+  const source = body.source ?? 'csv'
+  const result = await upsertContacts(access.user.id, rows, source)
+
+  // Yalnız TEKİL MANUEL ekleme + gerçekten yeni kişi (inserted===1) → contact_added otomasyonu.
+  // Toplu CSV/CRM import tetiklemez (timeout/rate-limit/spam koruması). best-effort, hatası yutulur.
+  if (rows.length === 1 && source === 'manual' && result.inserted === 1) {
+    await Promise.race([
+      runContactAddedAutomations(access.user.id, { email: rows[0].email }).catch(() => {}),
+      new Promise<void>((resolve) => setTimeout(resolve, 9000)),
+    ])
+  }
+
   return NextResponse.json({ ok: true, ...result })
 }
