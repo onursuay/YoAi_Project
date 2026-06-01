@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — Genel yazı boyutu bir tık küçültüldü
+- **Sorun:** Site geneli yazı boyutları biraz daha küçük istendi.
+- **Çözüm:** Kök ölçek `html { font-size }` %93.75'ten %90'a düşürüldü; tüm rem tabanlı (Tailwind text-*, typography utility) boyutlar orantılı ve tutarlı şekilde küçüldü.
+- **Dosyalar:** `app/globals.css`
+
 ## 2026-06-01 — SEO: "AI'da Görünüyor musun?" alıntısı site diline göre TR/EN
 - **Sorun:** Tavily/Perplexity sorgusu İngilizce hardcoded'dı; dönen alıntı her zaman İngilizce çıkıyordu.
 - **Çözüm:** Client locale (`useLocale`) API'ye iletiliyor; `buildQuery()` dile göre Türkçe veya İngilizce sorgu üretiyor. Default `tr`.
