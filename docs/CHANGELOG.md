@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — GEO/AEO Analyzer: lib + API endpoint
+- **Sorun:** SEO Plus modülü GEO/AEO puanı gösteriyor ancak gerçek HTML analizi yapan arka uç yoktu.
+- **Çözüm:** `lib/seo/geoAnalyzer.ts` oluşturuldu — 5 kategori (schema %25, contentFormat %20, eeat %20, aiReadability %20, citability %15) ve 16 adet kontrol ile saf HTML analizi yapar; Cheerio tabanlı, dış API çağrısı yok. `app/api/seo/analyze-geo/route.ts` POST endpoint'i oluşturuldu — URL alır, sayfayı çeker, analyzeGeoAeo() çalıştırır, GeoAeoResult döner.
+- **Dosyalar:** `lib/seo/geoAnalyzer.ts` (yeni), `app/api/seo/analyze-geo/route.ts` (yeni)
+
 ## 2026-06-01 — SEO modülü "SEO Plus" olarak yeniden adlandırıldı + GEO/AEO i18n anahtarları eklendi
 - **Sorun:** SEO modülü artık klasik arama motoru analizinin ötesine geçerek GEO (Generative Engine Optimization) ve AEO (Answer Engine Optimization) yetenekleri kazanıyor; eski "SEO" adı ve açıklaması bu genişlemeyi yansıtmıyordu.
 - **Çözüm:** Modül adı her yerde "SEO Plus" oldu (sidebar etiketi, sayfa başlığı, billing feature adı, dashboard section açıklaması). Yeni GEO/AEO puanı, kategori açıklamaları ve AI görünürlük kontrolü için `dashboard.seo.geoAeo` namespace'i eklendi. `dashboard.seo.articles` içine AI formatı ve Article schema i18n anahtarları eklendi. `lib/nav.ts` hardcoded label güncellendi.
