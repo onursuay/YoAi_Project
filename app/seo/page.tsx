@@ -206,7 +206,7 @@ function BigScoreCircle({ score }: { score: number }) {
   const color = getScoreColor(score)
 
   return (
-    <div className="relative inline-flex items-center justify-center">
+    <div className="relative inline-flex items-center justify-center shrink-0">
       <svg width={size} height={size} className="transform -rotate-90">
         <circle cx={size / 2} cy={size / 2} r={radius} stroke="#E5E7EB" strokeWidth={strokeWidth} fill="none" />
         <circle
@@ -801,7 +801,7 @@ export default function SEOPage() {
                       {/* LEFT: SEO Score */}
                       <button
                         onClick={() => setActiveScore('seo')}
-                        className={`flex items-center gap-6 p-6 rounded-2xl border-2 bg-white text-left transition-all duration-300 hover:shadow-md cursor-pointer ${
+                        className={`flex-1 flex items-center gap-6 p-6 rounded-2xl border-2 bg-white text-left transition-all duration-300 hover:shadow-md cursor-pointer ${
                           activeScore === 'seo'
                             ? 'border-primary ring-2 ring-primary/20'
                             : 'border-transparent hover:border-gray-200'
