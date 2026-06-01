@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Users, Send, Workflow, ShieldCheck, Download, Upload, Loader2, Mail, Phone, Trash2 } from 'lucide-react'
+import { Users, Send, Workflow, ShieldCheck, Download, Upload, Loader2, Mail, Phone, Trash2, Plus } from 'lucide-react'
 import { parseContactsFile } from './parseContactsFile'
 import CampaignsTab from './CampaignsTab'
+import AutomationsTab from './AutomationsTab'
 import SendingAccounts from './SendingAccounts'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
@@ -35,6 +36,11 @@ export default function EmailDashboard() {
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const [adding, setAdding] = useState(false)
+  const [addEmail, setAddEmail] = useState('')
+  const [addName, setAddName] = useState('')
+  const [addPhone, setAddPhone] = useState('')
+  const [addSaving, setAddSaving] = useState(false)
   const fileRef = useRef<HTMLInputElement>(null)
 
   const [toast, setToast] = useState<{ kind: 'ok' | 'err'; msg: string } | null>(null)
@@ -126,13 +132,31 @@ export default function EmailDashboard() {
     } catch { /* sessiz */ }
   }, [offset, loadContacts])
 
+  const handleAddManual = useCallback(async () => {
+    const email = addEmail.trim()
+    if (!/^[^@\s]+@[^@\s]+\.[^@\s]+$/.test(email)) { flash('err', t('contacts.addNeedEmail')); return }
+    setAddSaving(true)
+    try {
+      const res = await fetch('/api/email/contacts', {
+        method: 'POST', headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ rows: [{ email, fullName: addName.trim() || null, phone: addPhone.trim() || null }], source: 'manual' }),
+      })
+      const d = await res.json()
+      if (d.ok) {
+        flash('ok', t('contacts.addSaved'))
+        setAdding(false); setAddEmail(''); setAddName(''); setAddPhone('')
+        loadContacts(offset)
+      } else flash('err', t('contacts.error'))
+    } finally { setAddSaving(false) }
+  }, [addEmail, addName, addPhone, flash, t, loadContacts, offset])
+
   const sourceLabel = (s: string) => t(`contacts.source.${['crm', 'csv', 'sheets', 'manual'].includes(s) ? s : 'manual'}`)
   const fmtDate = (iso: string) => { try { return new Date(iso).toLocaleDateString('tr-TR', { day: '2-digit', month: 'short', year: 'numeric' }) } catch { return iso } }
 
   const tabs: { key: Tab; icon: typeof Users; soon: boolean }[] = [
     { key: 'contacts', icon: Users, soon: false },
     { key: 'campaigns', icon: Send, soon: false },
-    { key: 'automation', icon: Workflow, soon: true },
+    { key: 'automation', icon: Workflow, soon: false },
   ]
 
   return (
@@ -190,6 +214,12 @@ export default function EmailDashboard() {
             </div>
             <div className="flex items-center gap-2">
               <button
+                onClick={() => setAdding((v) => !v)}
+                className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 transition"
+              >
+                <Plus className="w-4 h-4" /> {t('contacts.addManual')}
+              </button>
+              <button
                 onClick={handleImportCrm}
                 disabled={importing}
                 className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50 disabled:opacity-50 transition"
@@ -206,6 +236,23 @@ export default function EmailDashboard() {
               </button>
             </div>
           </div>
+
+          {adding && (
+            <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 mb-4 animate-card-enter">
+              <p className="text-base font-semibold text-gray-900 mb-3">{t('contacts.addManualTitle')}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                <input value={addEmail} onChange={(e) => setAddEmail(e.target.value)} placeholder={t('contacts.addEmail')} className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input value={addName} onChange={(e) => setAddName(e.target.value)} placeholder={t('contacts.addName')} className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" />
+                <input value={addPhone} onChange={(e) => setAddPhone(e.target.value)} placeholder={t('contacts.addPhone')} className="rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none" />
+              </div>
+              <div className="flex items-center justify-end gap-2 mt-3">
+                <button onClick={() => setAdding(false)} className="px-4 py-2 rounded-xl border border-gray-200 text-sm text-gray-700 hover:bg-gray-50">{t('contacts.addCancel')}</button>
+                <button onClick={handleAddManual} disabled={addSaving} className="inline-flex items-center gap-1.5 px-5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 active:scale-[0.97] transition-all">
+                  {addSaving ? <Loader2 className="w-4 h-4 animate-spin" /> : t('contacts.addSave')}
+                </button>
+              </div>
+            </div>
+          )}
 
           {/* Tablo */}
           {loading ? (
@@ -263,13 +310,7 @@ export default function EmailDashboard() {
 
       {tab === 'campaigns' && <CampaignsTab flash={flash} />}
 
-      {tab === 'automation' && (
-        <div className="bg-white rounded-2xl border border-gray-200 shadow-sm py-16 px-6 text-center">
-          <p className="text-gray-700 font-medium">{t('sections.automation.title')}</p>
-          <p className="text-sm text-gray-500 mt-1">{t('sections.automation.desc')}</p>
-          <span className="inline-flex items-center mt-3 px-2.5 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-500">{t('soon')}</span>
-        </div>
-      )}
+      {tab === 'automation' && <AutomationsTab flash={flash} />}
        </>
       )}
     </div>
