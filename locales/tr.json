@@ -3070,7 +3070,16 @@
         "csv": "CSV/Excel",
         "sheets": "Google Sheets",
         "manual": "Manuel"
-      }
+      },
+      "addManual": "Kişi Ekle",
+      "addManualTitle": "Yeni kişi",
+      "addEmail": "E-posta",
+      "addName": "Ad soyad",
+      "addPhone": "Telefon",
+      "addSave": "Ekle",
+      "addSaved": "Kişi eklendi.",
+      "addNeedEmail": "Geçerli bir e-posta gerekli.",
+      "addCancel": "Vazgeç"
     },
     "campaigns": {
       "new": "Yeni Kampanya",
@@ -3193,6 +3202,32 @@
         "title": "Otomasyon",
         "desc": "Aşama tetikli otomatik e-postalar: yeni lead'e hoşgeldin, Uygun'a takip, Dönüşüm'e teşekkür."
       }
+    },
+    "automations": {
+      "count": "otomasyon",
+      "new": "Yeni Otomasyon",
+      "empty": "Henüz otomasyon yok",
+      "emptyHint": "Bir aşamaya girince veya yeni kişi eklenince otomatik e-posta gönderen kural oluşturun.",
+      "back": "Geri",
+      "name": "Otomasyon adı",
+      "namePlaceholder": "Örn. Uygun aşamasına hoşgeldin",
+      "triggerLabel": "Tetikleyici",
+      "triggerStage": "Bir aşamaya girince",
+      "triggerContact": "Yeni kişi eklenince",
+      "stageLabel": "Aşama",
+      "subject": "Konu",
+      "content": "İçerik",
+      "contentPlaceholder": "Merhaba,\n\nMesajınız buraya...",
+      "contentHint": "Basit HTML kullanabilirsiniz. Abonelikten-çık linki otomatik eklenir.",
+      "save": "Kaydet",
+      "saved": "Otomasyon kaydedildi.",
+      "needContent": "Konu ve içerik zorunlu.",
+      "enabledOn": "Aktif",
+      "enabledOff": "Pasif",
+      "preview": "ÖNİZLEME",
+      "previewEmpty": "İçerik önizlemesi burada görünür.",
+      "triggerSummaryStage": "{stage} aşamasına girince",
+      "triggerSummaryContact": "Yeni kişi eklenince"
     }
   },
   "crm": {

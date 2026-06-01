@@ -3070,7 +3070,16 @@
         "csv": "CSV/Excel",
         "sheets": "Google Sheets",
         "manual": "Manual"
-      }
+      },
+      "addManual": "Add Contact",
+      "addManualTitle": "New contact",
+      "addEmail": "Email",
+      "addName": "Full name",
+      "addPhone": "Phone",
+      "addSave": "Add",
+      "addSaved": "Contact added.",
+      "addNeedEmail": "A valid email is required.",
+      "addCancel": "Cancel"
     },
     "campaigns": {
       "new": "New Campaign",
@@ -3193,6 +3202,32 @@
         "title": "Automation",
         "desc": "Stage-triggered emails: welcome new leads, follow up on Qualified, thank Converted."
       }
+    },
+    "automations": {
+      "count": "automations",
+      "new": "New Automation",
+      "empty": "No automations yet",
+      "emptyHint": "Create a rule that sends an automatic email when a lead enters a stage or a new contact is added.",
+      "back": "Back",
+      "name": "Automation name",
+      "namePlaceholder": "e.g. Welcome on Qualified stage",
+      "triggerLabel": "Trigger",
+      "triggerStage": "When entering a stage",
+      "triggerContact": "When a new contact is added",
+      "stageLabel": "Stage",
+      "subject": "Subject",
+      "content": "Content",
+      "contentPlaceholder": "Hello,\n\nYour message here...",
+      "contentHint": "You can use simple HTML. An unsubscribe link is added automatically.",
+      "save": "Save",
+      "saved": "Automation saved.",
+      "needContent": "Subject and content are required.",
+      "enabledOn": "Active",
+      "enabledOff": "Inactive",
+      "preview": "PREVIEW",
+      "previewEmpty": "Content preview appears here.",
+      "triggerSummaryStage": "When entering {stage}",
+      "triggerSummaryContact": "When a new contact is added"
     }
   },
   "crm": {
