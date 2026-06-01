@@ -2,15 +2,10 @@
 
 ---
 
-## 2026-06-01 — Email Otomasyon: AutomationsTab UI bileşeni oluşturuldu
-- **Sorun:** Otomasyon sekmesi için liste + composer arayüzü yoktu.
-- **Çözüm:** `AutomationsTab.tsx` bileşeni oluşturuldu. CampaignsTab ile aynı layout (sol form + sağ iframe önizlemesi), WizardSelect tetikleyici dropdown (CRM aşaması veya yeni kişi), `flash` prop entegrasyonu, `animate-card-enter` + staggered index, etkinleştir/devre dışı bırak toggle, düzenle/sil, tam EN/TR i18n uyumu.
-- **Dosyalar:** components/email/AutomationsTab.tsx
-
-## 2026-06-01 — Email Otomasyon: Tekil manuel kişi eklemede contact_added tetiği
-- **Sorun:** Yeni bir kişi manuel olarak tek tek eklendiğinde `contact_added` türündeki otomasyon e-postaları tetiklenmiyordu.
-- **Çözüm:** `POST /api/email/contacts` handler'ına best-effort otomasyon tetiği eklendi. Yalnızca `rows.length === 1 && source === 'manual' && result.inserted === 1` koşulu sağlandığında (gerçekten yeni, tekil, manuel ekleme) `runContactAddedAutomations` çağrılır. Toplu CSV/CRM import'lar tetiklemez. 9 saniyelik timeout race ve `.catch(() => {})` ile best-effort; hata hiçbir zaman response'u bozmaz.
-- **Dosyalar:** app/api/email/contacts/route.ts
+## 2026-06-01 — Email Marketing: Otomasyon (aşama tetikli otomatik e-posta)
+- **Sorun:** Email Marketing > Otomasyon sekmesi "Yakında" ile devre dışıydı.
+- **Çözüm:** CRM aşama girişi ve tekil yeni kişi eklenince anında otomatik e-posta gönderen otomasyon motoru. Inline fire-and-forget tetik (CRM PATCH + contacts POST, Meta-sync ile paralel best-effort — ana akışı bozmaz), mevcut `sender.ts` gönderim katmanı `buildDispatch` ile yeniden kullanıldı. Yeni `email_automations` CRUD store + `automationRunner` (opt-out/KVKK kontrollü, her tetiklenmede gönderim) + `AutomationsTab` UI (WizardSelect tetikleyici, canlı önizleme, aç/kapa). Kişiler sekmesine tekil "Kişi Ekle" formu (yalnız gerçekten yeni tekil manuel ekleme tetikler; toplu CSV/CRM import tetiklemez). `email_sends` otomasyon kayıtlarına açıldı (automation_id + campaign_id nullable). Tam EN/TR i18n.
+- **Dosyalar:** `lib/email/{sender,automationStore,automationRunner}.ts`, `app/api/email/automations/{route,[id]/route}.ts`, `app/api/crm/leads/[id]/route.ts`, `app/api/email/contacts/route.ts`, `components/email/{AutomationsTab,EmailDashboard}.tsx`, `supabase/migrations/20260601000000_email_sends_automation.sql`, `locales/{tr,en}.json`
 
 ## 2026-05-31 — YoAlgoritma: Kartlar seçili hesaba göre filtrelenmiyordu (birleşik gösterim) düzeltildi
 - **Sorun:** İşletme modunda (per-account) kullanıcı bir reklam hesabı seçse bile YoAlgoritma "Hesap Sağlık Durumu" kartları tüm hesapların birleşimini gösteriyordu. Kök neden: (1) `resolveYoaiScope`, `yoai_business_scope` cookie'si yoksa flag açık olsa bile `scoped:false` dönüyor; UI ise fallback ile hesabı "seçili" gösterip cookie'yi hiç yazmıyordu (switcher'da "zaten seçili" erken-return no-op) → endpoint filtresiz veri dönüyordu. (2) `account_alerts` filtresi, eşleşen günlük analize (`runCampaigns`) bağlıydı; analiz yoksa doğru kartlar bile boş dönüyordu. (3) Silinmiş Meta bağlantısından kalma `account_id=NULL` legacy uyarılar sızıyordu.
