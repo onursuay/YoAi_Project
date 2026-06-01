@@ -11,6 +11,26 @@ function getScoreColor(score: number): string {
   return '#DC2626'
 }
 
+function getScoreBg(score: number): string {
+  if (score >= 80) return 'bg-green-50'
+  if (score >= 50) return 'bg-primary/5'
+  return 'bg-red-50'
+}
+
+function getScoreTextColor(score: number): string {
+  if (score >= 80) return 'text-green-700'
+  if (score >= 50) return 'text-primary'
+  return 'text-red-700'
+}
+
+function getScoreLabelKey(score: number): string {
+  if (score >= 90) return 'excellent'
+  if (score >= 80) return 'good'
+  if (score >= 60) return 'medium'
+  if (score >= 40) return 'weak'
+  return 'critical'
+}
+
 interface Props {
   score: number | null
   loading: boolean
@@ -20,6 +40,7 @@ interface Props {
 
 export default function GeoAeoScoreCard({ score, loading, selected, onClick }: Props) {
   const t = useTranslations('dashboard.seo.geoAeo')
+  const tSeo = useTranslations('dashboard.seo')
 
   const size = 140
   const strokeWidth = 10
@@ -65,17 +86,22 @@ export default function GeoAeoScoreCard({ score, loading, selected, onClick }: P
       </div>
 
       {/* Labels */}
-      <div>
-        <div className="text-xl font-bold text-gray-900">{t('scoreTitle')}</div>
+      <div className="min-w-0">
+        <h2 className="text-xl font-bold text-gray-900">{t('scoreTitle')}</h2>
         {loading ? (
-          <p className="text-sm text-gray-400 mt-1">{t('loading')}</p>
+          <p className="text-sm text-gray-400 mt-2">{t('loading')}</p>
         ) : score === null ? (
           <>
-            <p className="text-sm text-gray-500 mt-1">{t('notAnalyzed')}</p>
-            <p className="text-caption text-gray-400 mt-0.5">{t('notAnalyzedHint')}</p>
+            <p className="text-sm text-gray-500 mt-2">{t('notAnalyzed')}</p>
+            <p className="text-xs text-gray-400 mt-0.5">{t('notAnalyzedHint')}</p>
           </>
         ) : (
-          <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
+          <>
+            <div className={`inline-block mt-2 px-3.5 py-1.5 rounded-full text-sm font-semibold ${getScoreBg(score)} ${getScoreTextColor(score)}`}>
+              {tSeo(`scoreLabels.${getScoreLabelKey(score)}`)}
+            </div>
+            <p className="text-sm text-gray-500 mt-3">{t('subtitle')}</p>
+          </>
         )}
       </div>
     </button>
