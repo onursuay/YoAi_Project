@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — GEO/AEO UI bileşenleri: ScoreCard, AnalysisPanel, VisibilityChecker
+- **Sorun:** SEO Plus modülünde GEO/AEO skor kartı, kategori analiz paneli ve AI görünürlük kontrolü için UI bileşenleri yoktu.
+- **Çözüm:** 3 yeni React client bileşeni oluşturuldu. `GeoAeoScoreCard` — SVG daire göstergeli skor kartı (seçilebilir, loading state). `GeoAeoAnalysisPanel` — 5 GEO/AEO kategorisini collapse/expand kartlarla gösteren panel + AiVisibilityChecker entegrasyonu. `AiVisibilityChecker` — Perplexity API üzerinden AI görünürlük sorgusu yapan buton + sonuç gösterimi. Tüm metinler `next-intl` i18n'den (`dashboard.seo.geoAeo`), proje tasarım kurallarına uygun (`animate-card-enter`, `hover:shadow-md`, amber renk yok).
+- **Dosyalar:** `components/seo/GeoAeoScoreCard.tsx` (yeni), `components/seo/GeoAeoAnalysisPanel.tsx` (yeni), `components/seo/AiVisibilityChecker.tsx` (yeni)
+
 ## 2026-06-01 — SSRF koruması: analyze-geo URL doğrulaması
 - **Sorun:** `app/api/seo/analyze-geo/route.ts` kullanıcı girdisini doğrulamadan fetch ediyordu; saldırgan `http://127.0.0.1/...` veya `http://169.254.169.254/metadata` göndererek iç ağa erişebilirdi.
 - **Çözüm:** `isPrivateIp()` + `assertSafeUrl()` fonksiyonları eklendi. `dns/promises` ile hostname çözümlenerek tüm IP'ler RFC1918/loopback/link-local aralıklarına karşı kontrol edilir. Yalnızca HTTP/HTTPS izin verilir. Hata yanıtları iç detay sızdırmaz; `typeof url !== 'string'` input doğrulaması eklendi; `redirect: 'follow'` açık hale getirildi.
