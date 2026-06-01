@@ -437,6 +437,7 @@ export default function GooglePage() {
           title: showEmptyState ? t('selectAdAccountFirst') : undefined,
         }}
         googleAccountName={!showEmptyState ? connection.selected?.customerName : undefined}
+        googleActiveId={!showEmptyState ? (connection.selected?.customerId ?? null) : null}
         onGoogleChangeAccount={!showEmptyState ? connection.openAccountModal : undefined}
         googleChangeAccountLabel={tTable('common.change')}
       />

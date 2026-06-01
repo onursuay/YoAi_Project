@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — Google Ads: hesap dropdown Meta tasarımıyla eşitlendi + hesap adı düzeltmesi
+- **Sorun:** Google Ads hesap seçici büyük bir centered modal olarak açılıyordu (Meta'nın küçük hover dropdown'undan farklı); ayrıca topbar'da hesap adı yerine ID numarası gösteriliyordu.
+- **Çözüm:** `Topbar.tsx`'e Google dropdown için hover-based davranış eklendi (Meta ile aynı mekanizma): kayıtlı Google hesapları dropdown panelde listelenir, hesap adı gösterilir, aktif hesap yeşil ile işaretlenir, "Hesap Ekle" butonu browse modalını açar. `GoogleAccountModal.tsx`'deki `switchToRegistered` fonksiyonunda `customerName: acc.account_name || acc.account_id` hatası düzeltildi — gerçek isim yoksa sunucu Google Ads API'den çeker. `GooglePage.tsx`'e `googleActiveId` prop'u eklendi.
+- **Dosyalar:** `components/Topbar.tsx`, `app/dashboard/reklam/google/GooglePage.tsx`, `components/google/GoogleAccountModal.tsx`
+
 ## 2026-06-01 — SEO Plus: makale üretim toggle'ları — AI format + Article schema
 - **Sorun:** Makale üretirken "AI'ya uygun format" ve "Article schema markup ekle" seçenekleri yoktu; yayın sırasında JSON-LD schema ekleme desteği de bulunmuyordu.
 - **Çözüm:** `SeoArticlesTab.tsx`'e `aiFormat` ve `articleSchema` state'leri + checkbox toggle'ları eklendi. `aiFormat` üretim API çağrısına `params` ile geçilir; `buildGenerationPrompt` → `seo_article` case'ine AI format bloku eklendi (paragraf kısalığı, H2/H3 yapısı, konu cümlesi önde). `articleSchema` kaydetme çağrısına `params` ile geçilir; yayın route'unda (`app/api/seo/publish/route.ts`) `articleSchema === 'true'` ise `<script type="application/ld+json">` bloku HTML'e ön eklenir.

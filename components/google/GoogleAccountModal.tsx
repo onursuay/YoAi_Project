@@ -93,7 +93,7 @@ export default function GoogleAccountModal({
         body: JSON.stringify({
           loginCustomerId: acc.login_customer_id || acc.account_id,
           customerId: acc.account_id,
-          customerName: acc.account_name || acc.account_id,
+          ...(acc.account_name && acc.account_name !== acc.account_id ? { customerName: acc.account_name } : {}),
         }),
       })
       window.location.reload()

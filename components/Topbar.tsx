@@ -3,7 +3,7 @@
 import { useRouter, usePathname } from 'next/navigation'
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, type LucideIcon } from 'lucide-react'
+import { ChevronDown, TrendingUp, Lightbulb, Target, Zap, BarChart3, AlertTriangle, Plus, Loader2, type LucideIcon } from 'lucide-react'
 import { clearYoAlgoritmaClientCache } from '@/lib/yoai/clientCache'
 import { useRegisteredAccounts } from '@/hooks/useRegisteredAccounts'
 import MultiAccountDropdown from '@/components/account/MultiAccountDropdown'
@@ -29,6 +29,8 @@ interface TopbarProps {
   showTicker?: boolean
   /** Google Ads: selected account name + change-account action (only used on Google page) */
   googleAccountName?: string
+  /** Active Google customer ID for dropdown highlighting */
+  googleActiveId?: string | null
   onGoogleChangeAccount?: () => void
   googleChangeAccountLabel?: string
 }
@@ -48,6 +50,7 @@ export default function Topbar({
   showMetaSection = false,
   showTicker = false,
   googleAccountName,
+  googleActiveId,
   onGoogleChangeAccount,
   googleChangeAccountLabel = 'Change Account',
 }: TopbarProps) {
@@ -60,6 +63,9 @@ export default function Topbar({
   const [selectedAccount, setSelectedAccount] = useState<string | null>(null)
   const [accountSearch, setAccountSearch] = useState('')
   const timeoutRef = useRef<NodeJS.Timeout | null>(null)
+  const [showGoogleDropdown, setShowGoogleDropdown] = useState(false)
+  const [googleSwitchingId, setGoogleSwitchingId] = useState<string | null>(null)
+  const googleTimerRef = useRef<NodeJS.Timeout | null>(null)
   const locale = useLocale()
 
   // Çoklu reklam hesabı (Madde 2) — flag kapalıyken enabled=false → mevcut UI korunur
@@ -190,6 +196,35 @@ export default function Topbar({
     }
   }
 
+  const handleGoogleMouseEnter = () => {
+    if (googleTimerRef.current) { clearTimeout(googleTimerRef.current); googleTimerRef.current = null }
+    setShowGoogleDropdown(true)
+  }
+
+  const handleGoogleMouseLeave = () => {
+    googleTimerRef.current = setTimeout(() => setShowGoogleDropdown(false), 150)
+  }
+
+  const switchGoogleAccount = async (acc: { account_id: string; account_name: string | null; login_customer_id: string | null }) => {
+    if (acc.account_id === googleActiveId || googleSwitchingId) return
+    setGoogleSwitchingId(acc.account_id)
+    try {
+      await fetch('/api/integrations/google-ads/select-account', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        credentials: 'include',
+        body: JSON.stringify({
+          loginCustomerId: acc.login_customer_id || acc.account_id,
+          customerId: acc.account_id,
+          ...(acc.account_name && acc.account_name !== acc.account_id ? { customerName: acc.account_name } : {}),
+        }),
+      })
+      window.location.reload()
+    } catch {
+      setGoogleSwitchingId(null)
+    }
+  }
+
   return (
     <>
     <style>{`
@@ -280,17 +315,76 @@ export default function Topbar({
 
         <div className="flex items-center gap-3">
           {/* 1. Google Ads account (only when props set from Google page) */}
-          {googleAccountName && onGoogleChangeAccount && (
-            <div className="relative">
+          {googleAccountName && (
+            <div
+              className="relative"
+              onMouseEnter={handleGoogleMouseEnter}
+              onMouseLeave={handleGoogleMouseLeave}
+            >
               <button
                 type="button"
-                onClick={() => onGoogleChangeAccount()}
                 className="flex items-center gap-2 px-4 py-2 bg-white border border-green-400 rounded-lg hover:bg-green-50 transition-all shadow-[0_0_8px_rgba(34,197,94,0.3)] hover:shadow-[0_0_12px_rgba(34,197,94,0.5)]"
               >
                 <div className="w-2 h-2 bg-green-500 rounded-full animate-pulse" />
                 <span className="text-sm font-medium text-gray-700">{googleAccountName}</span>
-                <ChevronDown className="w-4 h-4 text-gray-600" />
+                <span className="text-xs font-semibold bg-green-100 text-green-700 px-2 py-0.5 rounded-full">
+                  {isAppReview ? 'Connected' : t('connected')}
+                </span>
+                <ChevronDown className={`w-4 h-4 text-gray-600 transition-transform ${showGoogleDropdown ? 'rotate-180' : ''}`} />
               </button>
+
+              {showGoogleDropdown && (() => {
+                const googleRegistered = reg.accounts.filter(a => a.platform === 'google')
+                return (
+                  <div className="absolute right-0 mt-2 w-72 bg-white rounded-xl shadow-xl border border-gray-200 z-50">
+                    <div className="p-3 border-b border-gray-200">
+                      <p className="text-[11px] font-semibold uppercase tracking-wide text-gray-500">{t('title')}</p>
+                    </div>
+
+                    {googleRegistered.length > 0 && (
+                      <div className="max-h-56 overflow-y-auto">
+                        {googleRegistered.map(acc => {
+                          const isActive = acc.account_id === googleActiveId
+                          const accName = (acc.account_name && acc.account_name !== acc.account_id)
+                            ? acc.account_name
+                            : `Account ${acc.account_id}`
+                          return (
+                            <button
+                              key={acc.account_id}
+                              type="button"
+                              onClick={() => switchGoogleAccount(acc)}
+                              disabled={isActive || !!googleSwitchingId}
+                              className={`w-full text-left px-4 py-3 hover:bg-gray-50 transition-colors flex items-center justify-between ${isActive ? 'bg-green-50' : ''}`}
+                            >
+                              <div className="min-w-0">
+                                <p className="text-sm font-medium text-gray-900 truncate">{accName}</p>
+                                <p className="text-caption text-gray-500 font-mono select-all">ID: {acc.account_id}</p>
+                              </div>
+                              <div className="shrink-0 ml-2">
+                                {isActive && <div className="w-2 h-2 bg-green-500 rounded-full" />}
+                                {googleSwitchingId === acc.account_id && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
+                              </div>
+                            </button>
+                          )
+                        })}
+                      </div>
+                    )}
+
+                    {onGoogleChangeAccount && (
+                      <div className={googleRegistered.length > 0 ? 'border-t border-gray-100' : ''}>
+                        <button
+                          type="button"
+                          onClick={() => { setShowGoogleDropdown(false); onGoogleChangeAccount() }}
+                          className="w-full text-left px-4 py-2.5 flex items-center gap-2 text-sm font-medium text-primary hover:bg-primary/5 transition-colors"
+                        >
+                          <Plus className="w-4 h-4 shrink-0" />
+                          {t('addAccount')}
+                        </button>
+                      </div>
+                    )}
+                  </div>
+                )
+              })()}
             </div>
           )}
           {/* 2. Reklam Hesapları Dropdown (Meta) */}
