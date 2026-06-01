@@ -11,8 +11,11 @@ const FROM_EMAIL = process.env.FROM_EMAIL || 'YO Dijital Medya Anonim Şirketi <
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
 const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KEY) : null
 
+export type SendVia = 'smtp' | 'domain' | 'shared'
+export type Dispatch = (to: string, subject: string, html: string) => Promise<string | null>
+
 /** Kullanıcı içeriği + zorunlu KVKK abonelikten-çık footer'ı. */
-function buildHtml(body: string, unsubUrl: string): string {
+export function buildHtml(body: string, unsubUrl: string): string {
   return `<!doctype html><html><body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1f2937;line-height:1.6">
 ${body}
 <hr style="margin-top:32px;border:none;border-top:1px solid #e5e7eb"/>
@@ -25,10 +28,69 @@ export interface SendResult {
   reason?: 'not_found' | 'resend_not_configured' | 'already' | 'no_recipients'
   sent: number
   total: number
-  via?: 'smtp' | 'domain' | 'shared'
+  via?: SendVia
 }
 
-type Dispatch = (to: string, subject: string, html: string) => Promise<string | null>
+/**
+ * Kullanıcının varsayılan gönderim hesabına göre dispatch fonksiyonu üretir.
+ * smtp/gmail için resend gerekmez; domain/platform/shared için resend gerekir —
+ * resend yoksa null döner (çağıran 'resend_not_configured' olarak yorumlar).
+ */
+export async function buildDispatch(userId: string): Promise<{ dispatch: Dispatch; via: SendVia } | null> {
+  const account = await getDefaultAccount(userId)
+
+  if (account && account.type === 'smtp') {
+    const transport = smtpTransport(account.config as unknown as SmtpConfig, decryptSmtpPass(account))
+    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    return {
+      via: 'smtp',
+      dispatch: async (to, subject, html) => {
+        try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'smtp' } catch { return null }
+      },
+    }
+  }
+  if (account && account.type === 'gmail') {
+    const transport = gmailOAuthTransport(account.from_email, decryptRefreshToken(account))
+    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    return {
+      via: 'smtp',
+      dispatch: async (to, subject, html) => {
+        try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'gmail' } catch { return null }
+      },
+    }
+  }
+  if (account && account.type === 'domain') {
+    if (!resend) return null
+    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    const replyTo = account.reply_to || undefined
+    return {
+      via: 'domain',
+      dispatch: async (to, subject, html) => {
+        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
+      },
+    }
+  }
+  if (account && account.type === 'platform') {
+    if (!resend) return null
+    const platformFrom = account.from_email || process.env.PLATFORM_FROM_ADDRESS || 'info@yodijital.com'
+    const from = `${account.from_name || 'YoAi'} <${platformFrom}>`
+    const replyTo = account.reply_to || undefined
+    return {
+      via: 'shared',
+      dispatch: async (to, subject, html) => {
+        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
+      },
+    }
+  }
+  // Hesap yok → paylaşımlı Resend (FROM_EMAIL)
+  if (!resend) return null
+  return {
+    via: 'shared',
+    dispatch: async (to, subject, html) => {
+      try { const r = await resend.emails.send({ from: FROM_EMAIL, to, subject, html }); return r.data?.id ?? null } catch { return null }
+    },
+  }
+}
 
 /**
  * Bir kampanyayı segmentindeki alıcılara gönderir. Gönderim hesabı varsa onu
@@ -42,49 +104,9 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
     return { ok: false, reason: 'already', sent: 0, total: 0 }
   }
 
-  // Gönderim yolu seç
-  const account = await getDefaultAccount(userId)
-  let dispatch: Dispatch
-  let via: 'smtp' | 'domain' | 'shared'
-
-  if (account && account.type === 'smtp') {
-    const transport = smtpTransport(account.config as unknown as SmtpConfig, decryptSmtpPass(account))
-    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
-    via = 'smtp'
-    dispatch = async (to, subject, html) => {
-      try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'smtp' } catch { return null }
-    }
-  } else if (account && account.type === 'gmail') {
-    const transport = gmailOAuthTransport(account.from_email, decryptRefreshToken(account))
-    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
-    via = 'smtp'
-    dispatch = async (to, subject, html) => {
-      try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'gmail' } catch { return null }
-    }
-  } else if (account && account.type === 'domain') {
-    if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
-    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
-    const replyTo = account.reply_to || undefined
-    via = 'domain'
-    dispatch = async (to, subject, html) => {
-      try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
-    }
-  } else if (account && account.type === 'platform') {
-    if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
-    const platformFrom = account.from_email || process.env.PLATFORM_FROM_ADDRESS || 'info@yodijital.com'
-    const from = `${account.from_name || 'YoAi'} <${platformFrom}>`
-    const replyTo = account.reply_to || undefined
-    via = 'shared'
-    dispatch = async (to, subject, html) => {
-      try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
-    }
-  } else {
-    if (!resend) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
-    via = 'shared'
-    dispatch = async (to, subject, html) => {
-      try { const r = await resend.emails.send({ from: FROM_EMAIL, to, subject, html }); return r.data?.id ?? null } catch { return null }
-    }
-  }
+  const built = await buildDispatch(userId)
+  if (!built) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
+  const { dispatch, via } = built
 
   await markCampaign(campaignId, { status: 'sending' })
 
