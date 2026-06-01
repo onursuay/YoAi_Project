@@ -3214,7 +3214,6 @@
       "triggerLabel": "Tetikleyici",
       "triggerStage": "Bir aşamaya girince",
       "triggerContact": "Yeni kişi eklenince",
-      "stageLabel": "Aşama",
       "subject": "Konu",
       "content": "İçerik",
       "contentPlaceholder": "Merhaba,\n\nMesajınız buraya...",

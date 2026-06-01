@@ -19,16 +19,33 @@ export async function POST(request: Request) {
   }
   if (!supabase) return NextResponse.json({ ok: false }, { status: 500 })
 
-  const { data: camp } = await supabase.from('email_campaigns').select('user_id').eq('id', c).maybeSingle()
-  if (!camp) return NextResponse.json({ ok: false, error: 'invalid' }, { status: 400 })
-  const userId = (camp as { user_id: string }).user_id
+  let userId: string
+  let sendId: string | null = null
+  if (c === 'automation') {
+    const { data: send } = await supabase
+      .from('email_sends')
+      .select('id, user_id')
+      .eq('email', e)
+      .not('automation_id', 'is', null)
+      .order('sent_at', { ascending: false })
+      .limit(1)
+      .maybeSingle()
+    if (!send) return NextResponse.json({ ok: false, error: 'invalid' }, { status: 400 })
+    userId = (send as { user_id: string }).user_id
+    sendId = (send as { id: string }).id
+  } else {
+    const { data: camp } = await supabase.from('email_campaigns').select('user_id').eq('id', c).maybeSingle()
+    if (!camp) return NextResponse.json({ ok: false, error: 'invalid' }, { status: 400 })
+    userId = (camp as { user_id: string }).user_id
+    const { data: send } = await supabase.from('email_sends').select('id').eq('campaign_id', c).eq('email', e).maybeSingle()
+    sendId = (send as { id: string } | null)?.id ?? null
+  }
   const now = new Date().toISOString()
 
   await supabase.from('email_contacts').update({ opt_out: true, opt_out_at: now }).eq('user_id', userId).eq('email', e)
   await supabase.from('crm_leads').update({ email_opt_out: true }).eq('user_id', userId).eq('email', e)
 
-  const { data: send } = await supabase.from('email_sends').select('id').eq('campaign_id', c).eq('email', e).maybeSingle()
-  await supabase.from('email_events').insert({ send_id: (send as { id: string } | null)?.id ?? null, user_id: userId, type: 'unsubscribed', at: now })
+  await supabase.from('email_events').insert({ send_id: sendId, user_id: userId, type: 'unsubscribed', at: now })
 
   return NextResponse.json({ ok: true })
 }

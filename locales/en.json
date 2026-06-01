@@ -3214,7 +3214,6 @@
       "triggerLabel": "Trigger",
       "triggerStage": "When entering a stage",
       "triggerContact": "When a new contact is added",
-      "stageLabel": "Stage",
       "subject": "Subject",
       "content": "Content",
       "contentPlaceholder": "Hello,\n\nYour message here...",

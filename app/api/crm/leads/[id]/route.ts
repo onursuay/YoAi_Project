@@ -64,10 +64,12 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   }
 
   const note = body.note !== undefined ? String(body.note) : undefined
+  const prev = await getLead(id, access.user.id)
   const row = await updateLeadStatus(id, access.user.id, status, note)
   if (!row) {
     return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })
   }
+  const statusChanged = prev?.status !== status
 
   // Faz 2 — Meta senkron + Email otomasyon tetiği (her ikisi de best-effort, paralel).
   // Lead durumu zaten kaydedildi; ikisinin de hatası/timeout'u PATCH'i bozmaz.
@@ -83,7 +85,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
       ),
     ]),
     Promise.race([
-      runStageAutomations(access.user.id, row, status).catch(() => {}),
+      (statusChanged ? runStageAutomations(access.user.id, row, status) : Promise.resolve()).catch(() => {}),
       new Promise<void>((resolve) => setTimeout(resolve, 9000)),
     ]),
   ])
