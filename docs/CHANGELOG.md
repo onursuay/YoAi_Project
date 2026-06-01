@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — SEO sayfası: split SEO/GEO skor kartı ve koşullu panel gösterimi
+- **Sorun:** SEO sayfasında GEO/AEO analizi hesaplansa da kullanıcıya gösterilecek UI entegrasyonu yoktu; mevcut tek "Overall Score" kartı sadece SEO skorunu gösteriyordu.
+- **Çözüm:** `app/seo/page.tsx` güncellendi. (A) `GeoAeoScoreCard`, `GeoAeoAnalysisPanel`, `GeoAeoResult` import'ları eklendi. (B) `activeScore`, `geoResult`, `geoLoading` state değişkenleri eklendi. (C) `handleAnalyze` içinde SEO analizi başlarken arka planda `/api/seo/analyze-geo` fire-and-forget çağrısı başlatılır; auto-analyze akışında geoState sıfırlanır. (D) Eski tekil Overall Score kartı, iki tıklanabilir sekmeli (SEO | GEO/AEO) grid kartla değiştirildi. (E) Tüm SEO detay panelleri (Lighthouse, keywords, kategoriler, kırık linkler, yönlendirmeler, öneriler) yalnızca `activeScore === 'seo'` veya rakip karşılaştırması aktifken gösterilir; `activeScore === 'geo'` seçilince `GeoAeoAnalysisPanel` gösterilir.
+- **Dosyalar:** `app/seo/page.tsx`
+
 ## 2026-06-01 — SSRF tam koruma: redirect manual, IPv6 AAAA, DNS fail-closed
 - **Sorun:** `analyze-geo` endpoint'indeki mevcut SSRF koruması yetersizdi: `redirect: 'follow'` ile redirect zinciri doğrulanmıyordu; yalnızca IPv4 A kaydı kontrol ediliyordu (AAAA atlanıyordu); DNS hatası sessizce geçiliyordu (fail-open).
 - **Çözüm:** `lib/seo/assertSafeUrl.ts` yeni standalone modülü oluşturuldu (`lib/email/ssrf.ts` deseniyle aynı kalite). `redirect: 'manual'` ile her redirect hop'unda `assertSafeUrl` yeniden çalışır; `dns.lookup({ all: true })` ile hem A hem AAAA kayıtları kontrol edilir; DNS hatası artık `throw` ile fail-closed; CGNAT (100.64/10), multicast, IPv4-mapped IPv6, non-HTTP redirect scheme reddi eklendi. Max 5 redirect limiti.

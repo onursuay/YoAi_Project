@@ -48,6 +48,9 @@ import SeoToolsTab from '@/components/seo/SeoToolsTab'
 import SeoArticlesTab from '@/components/seo/SeoArticlesTab'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
+import GeoAeoScoreCard from '@/components/seo/GeoAeoScoreCard'
+import GeoAeoAnalysisPanel from '@/components/seo/GeoAeoAnalysisPanel'
+import type { GeoAeoResult } from '@/lib/seo/geoAnalyzer'
 
 // ─── Interfaces ───
 
@@ -466,6 +469,11 @@ export default function SEOPage() {
   const [showSubscriptionGate, setShowSubscriptionGate] = useState(false)
   const [autoAnalyzeTried, setAutoAnalyzeTried] = useState(false)
 
+  // GEO/AEO split score state
+  const [activeScore, setActiveScore] = useState<'seo' | 'geo'>('seo')
+  const [geoResult, setGeoResult] = useState<GeoAeoResult | null>(null)
+  const [geoLoading, setGeoLoading] = useState(false)
+
   // Restore state from localStorage on mount
   useEffect(() => {
     try {
@@ -501,6 +509,8 @@ export default function SEOPage() {
         setUrl(pUrl)
         if (!hasSubscription) return // abonelik yoksa sadece URL'i doldur, analiz etme
         setLoading(true)
+        setGeoResult(null)
+        setGeoLoading(false)
         try {
           const r = await analyzeUrl(pUrl)
           if (r) {
@@ -544,6 +554,19 @@ export default function SEOPage() {
     setError('')
     setResult(null)
     setCompetitorResult(null)
+    setGeoResult(null)
+    setGeoLoading(true)
+    setActiveScore('seo')
+
+    // GEO/AEO analizi arka planda başlar (fire-and-forget)
+    fetch('/api/seo/analyze-geo', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ url: url.trim() }),
+    })
+      .then(r => r.json())
+      .then((data: GeoAeoResult) => { setGeoResult(data); setGeoLoading(false) })
+      .catch(() => setGeoLoading(false))
 
     try {
       const promises: Promise<SeoResult | null>[] = [analyzeUrl(url.trim())]
@@ -772,19 +795,33 @@ export default function SEOPage() {
                     </div>
                   )}
 
-                  {/* Overall Score - hide when competitor comparison is shown */}
+                  {/* Split Score Card: SEO | GEO/AEO */}
                   {!competitorResult && (
-                    <div className="bg-white rounded-2xl border border-gray-200 p-8 animate-card-enter">
-                      <div className="flex flex-col sm:flex-row items-center gap-8">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-card-enter">
+                      {/* LEFT: SEO Score */}
+                      <button
+                        onClick={() => setActiveScore('seo')}
+                        className={`flex items-center gap-6 p-6 rounded-2xl border-2 bg-white text-left transition-all duration-300 hover:shadow-md cursor-pointer ${
+                          activeScore === 'seo'
+                            ? 'border-primary ring-2 ring-primary/20'
+                            : 'border-transparent hover:border-gray-200'
+                        }`}
+                      >
                         <BigScoreCircle score={result.overallScore} />
-                        <div className="text-center sm:text-left">
-                          <h2 className="text-2xl font-bold text-gray-900">{t('overallScore')}</h2>
+                        <div className="min-w-0">
+                          <h2 className="text-xl font-bold text-gray-900">{t('overallScore')}</h2>
                           <div className={`inline-block mt-2 px-3.5 py-1.5 rounded-full text-sm font-semibold ${getScoreBg(result.overallScore)} ${getScoreText(result.overallScore)}`}>
                             {t(`scoreLabels.${getScoreLabelKey(result.overallScore)}`)}
                           </div>
                           <div className="flex items-center gap-2 mt-3 text-sm text-gray-500">
-                            <ExternalLink className="w-4 h-4" />
-                            <a href={result.url} target="_blank" rel="noopener noreferrer" className="hover:text-primary transition-colors truncate max-w-xs">
+                            <ExternalLink className="w-4 h-4 shrink-0" />
+                            <a
+                              href={result.url}
+                              target="_blank"
+                              rel="noopener noreferrer"
+                              className="hover:text-primary transition-colors truncate"
+                              onClick={e => e.stopPropagation()}
+                            >
                               {result.url}
                             </a>
                           </div>
@@ -792,9 +829,21 @@ export default function SEOPage() {
                             {new Date(result.analyzedAt).toLocaleString('tr-TR')}
                           </div>
                         </div>
-                      </div>
+                      </button>
+
+                      {/* RIGHT: GEO/AEO Score */}
+                      <GeoAeoScoreCard
+                        score={geoResult?.score ?? null}
+                        loading={geoLoading}
+                        selected={activeScore === 'geo'}
+                        onClick={() => setActiveScore('geo')}
+                      />
                     </div>
                   )}
+
+                  {/* SEO detail panels — visible when SEO score selected or competitor shown */}
+                  {(activeScore === 'seo' || !!competitorResult) && (
+                  <>
 
                   {/* Lighthouse Scores */}
                   {(result.lighthouse || result.lighthouseDesktop) && (
@@ -985,6 +1034,18 @@ export default function SEOPage() {
                           ))}
                       </div>
                     </div>
+                  )}
+
+                  </>
+                  )}
+
+                  {/* GEO/AEO panel — visible when GEO/AEO score selected, no competitor */}
+                  {activeScore === 'geo' && !competitorResult && (
+                    <GeoAeoAnalysisPanel
+                      result={geoResult}
+                      loading={geoLoading}
+                      siteUrl={url}
+                    />
                   )}
                 </>
               )}
