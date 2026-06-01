@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — geoAnalyzer: recursion guard + external-link edge case + DOM mutation fix
+- **Sorun:** `flattenGraph` sonsuz döngüye girebilirdi; `analyzeEeat` canonical/og:url yokken tüm absolute linkleri harici sayıyordu; `analyzeCitability` zaten temizlenmiş DOM'dan script/style kaldırmayı tekrarlıyordu.
+- **Çözüm:** `flattenGraph` için `depth > 10` guard eklendi. `analyzeEeat` içinde `baseHost` boşsa harici link kontrolü atlanarak `warning` döndürülür. `analyzeCitability` içindeki tekrarlı `script, style, noscript` cleanup kaldırıldı (`analyzeAiReadability` ilk çalıştığından bu adım gereksizdi).
+- **Dosyalar:** `lib/seo/geoAnalyzer.ts`
+
 ## 2026-06-01 — GEO/AEO Analyzer: lib + API endpoint
 - **Sorun:** SEO Plus modülü GEO/AEO puanı gösteriyor ancak gerçek HTML analizi yapan arka uç yoktu.
 - **Çözüm:** `lib/seo/geoAnalyzer.ts` oluşturuldu — 5 kategori (schema %25, contentFormat %20, eeat %20, aiReadability %20, citability %15) ve 16 adet kontrol ile saf HTML analizi yapar; Cheerio tabanlı, dış API çağrısı yok. `app/api/seo/analyze-geo/route.ts` POST endpoint'i oluşturuldu — URL alır, sayfayı çeker, analyzeGeoAeo() çalıştırır, GeoAeoResult döner.
