@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Loader2, CheckCircle2, XCircle, AlertCircle, Bot } from 'lucide-react'
 import { useTranslations, useLocale } from 'next-intl'
 
@@ -21,6 +21,19 @@ export default function AiVisibilityChecker({ siteUrl }: Props) {
   const [loading, setLoading] = useState(false)
   const [result, setResult] = useState<VisibilityResult | null>(null)
 
+  // Sayfa yenilenince son AI görünürlük taramasını geri yükle (yalnız aynı URL'e aitse)
+  useEffect(() => {
+    try {
+      const saved = localStorage.getItem('seo_ai_visibility')
+      if (saved) {
+        const parsed = JSON.parse(saved)
+        if (parsed?.result && parsed.url === (siteUrl || '')) {
+          setResult(parsed.result)
+        }
+      }
+    } catch { /* ignore */ }
+  }, [siteUrl])
+
   async function handleCheck() {
     if (!siteUrl) return
     setLoading(true)
@@ -33,6 +46,9 @@ export default function AiVisibilityChecker({ siteUrl }: Props) {
       })
       const data: VisibilityResult = await res.json()
       setResult(data)
+      try {
+        localStorage.setItem('seo_ai_visibility', JSON.stringify({ result: data, url: siteUrl }))
+      } catch { /* ignore */ }
     } catch {
       setResult({ visible: false, excerpt: null, domain: '', error: 'network_error' })
     } finally {

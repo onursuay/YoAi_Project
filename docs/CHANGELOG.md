@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — SEO: GEO/AEO puanı ve AI görünürlük taraması sayfa yenilemede korunuyor
+- **Sorun:** SEO Plus'ta GEO/AEO Puanı ve altındaki AI görünürlük taraması yalnızca React state'inde tutuluyordu; sayfa yenilenince kayboluyordu (Genel SEO Puanı ise localStorage'dan geri yükleniyordu).
+- **Çözüm:** GEO/AEO sonucu `seo_last_geo`, AI görünürlük sonucu `seo_ai_visibility` anahtarıyla localStorage'a yazılıyor ve mount'ta yalnız aynı URL'e aitse geri yükleniyor. Otomatik analiz akışına da GEO/AEO taraması eklendi.
+- **Dosyalar:** `app/seo/page.tsx`, `components/seo/AiVisibilityChecker.tsx`
+
 ## 2026-06-01 — Genel yazı boyutu bir tık küçültüldü
 - **Sorun:** Site geneli yazı boyutları biraz daha küçük istendi.
 - **Çözüm:** Kök ölçek `html { font-size }` %93.75'ten %90'a düşürüldü; tüm rem tabanlı (Tailwind text-*, typography utility) boyutlar orantılı ve tutarlı şekilde küçüldü.

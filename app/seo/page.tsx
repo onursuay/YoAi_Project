@@ -482,6 +482,14 @@ export default function SEOPage() {
         const parsed = JSON.parse(saved)
         setResult(parsed.result)
         setUrl(parsed.url || '')
+        // GEO/AEO sonucunu yalnız aynı URL'e aitse geri yükle
+        const savedGeo = localStorage.getItem('seo_last_geo')
+        if (savedGeo) {
+          const parsedGeo = JSON.parse(savedGeo)
+          if (parsedGeo?.result && parsedGeo.url === (parsed.url || '')) {
+            setGeoResult(parsedGeo.result)
+          }
+        }
       }
       const hist = localStorage.getItem('seo_history')
       if (hist) setHistory(JSON.parse(hist))
@@ -510,7 +518,22 @@ export default function SEOPage() {
         if (!hasSubscription) return // abonelik yoksa sadece URL'i doldur, analiz etme
         setLoading(true)
         setGeoResult(null)
-        setGeoLoading(false)
+        setGeoLoading(true)
+        // GEO/AEO analizi arka planda başlar (fire-and-forget) + persist
+        fetch('/api/seo/analyze-geo', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ url: pUrl }),
+        })
+          .then(r => r.json())
+          .then((data: GeoAeoResult) => {
+            setGeoResult(data)
+            setGeoLoading(false)
+            try {
+              localStorage.setItem('seo_last_geo', JSON.stringify({ result: data, url: pUrl }))
+            } catch { /* ignore */ }
+          })
+          .catch(() => setGeoLoading(false))
         try {
           const r = await analyzeUrl(pUrl)
           if (r) {
@@ -565,7 +588,13 @@ export default function SEOPage() {
       body: JSON.stringify({ url: url.trim() }),
     })
       .then(r => r.json())
-      .then((data: GeoAeoResult) => { setGeoResult(data); setGeoLoading(false) })
+      .then((data: GeoAeoResult) => {
+        setGeoResult(data)
+        setGeoLoading(false)
+        try {
+          localStorage.setItem('seo_last_geo', JSON.stringify({ result: data, url: url.trim() }))
+        } catch { /* ignore */ }
+      })
       .catch(() => setGeoLoading(false))
 
     try {
