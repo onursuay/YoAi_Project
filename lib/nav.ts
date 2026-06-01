@@ -11,7 +11,7 @@ import {
   Building2,
   ShieldCheck,
   Briefcase,
-  Rocket,
+  WandSparkles,
   Contact,
   Mail,
 } from 'lucide-react'
@@ -141,6 +141,6 @@ export const marketingSetupNavItem: NavItem = {
   id: 'marketing-kurulumu',
   label: 'Dönüşüm Sihirbazı',
   href: ROUTES.MARKETING_SETUP,
-  icon: Rocket,
+  icon: WandSparkles,
 }
 

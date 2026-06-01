@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — "Dönüşüm Sihirbazı" sidebar ikonu sihirli değnek oldu
+- **Sorun:** Yeniden adlandırılan "Dönüşüm Sihirbazı" alanının sidebar ikonu hâlâ eski `Rocket` (roket) idi; yeni "Sihirbaz" temasıyla uyumsuzdu.
+- **Çözüm:** İkon lucide-react `WandSparkles` (sihirli değnek + pırıltılar) ile değiştirildi.
+- **Dosyalar:** `lib/nav.ts`
+
 ## 2026-06-01 — "Marketing" alanı "Dönüşüm Sihirbazı" olarak yeniden adlandırıldı
 - **Sorun:** Sidebar'da "Marketing" etiketiyle görünen alan aslında kampanya yönetimi değil; web sitesini tarayıp olayları (satın alma/form/lead) tespit eden ve GTM/GA4/Meta Pixel/Google Ads/Search Console üzerinden dönüşüm takibi altyapısı kuran 5 adımlı bir sihirbaz. Ad hem yanıltıcıydı hem de mevcut "Email Marketing" alanıyla çakışıyordu.
 - **Çözüm:** Kullanıcı-yüzlü tüm etiketler "Dönüşüm Sihirbazı" (EN: "Conversion Wizard") oldu — sidebar etiketi, sayfa başlığı + dönüşüm odaklı yeni alt başlık, AccessRequiredModal feature adı/açıklaması, BusinessProfileGuard alan adı. Route (`/marketing-kurulumu`), klasörler, nav `id`, i18n key path'leri ve feature key (`marketing_setup`) link/bookmark kırılmaması için değiştirilmedi. İlgisiz `MARKETING_IMAGE`/`remarketing` geçen yerlere dokunulmadı.
