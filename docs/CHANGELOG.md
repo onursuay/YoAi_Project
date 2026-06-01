@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — SEO Plus: SEO ve GEO/AEO kart yapısı standartlaştırıldı
+- **Sorun:** İki skor kartı farklı component yapısı kullanıyordu — SEO kartı `BigScoreCircle`'da `shrink-0` eksikti; button'da `flex-1` yoktu.
+- **Çözüm:** `BigScoreCircle` wrapper'ına `shrink-0` eklendi, SEO kart button'una `flex-1` eklendi — GeoAeoScoreCard ile birebir aynı yapı.
+- **Dosyalar:** `app/seo/page.tsx`
+
 ## 2026-06-01 — Google Ads: hesap dropdown Meta tasarımıyla eşitlendi + hesap adı düzeltmesi
 - **Sorun:** Google Ads hesap seçici büyük bir centered modal olarak açılıyordu (Meta'nın küçük hover dropdown'undan farklı); ayrıca topbar'da hesap adı yerine ID numarası gösteriliyordu.
 - **Çözüm:** `Topbar.tsx`'e Google dropdown için hover-based davranış eklendi (Meta ile aynı mekanizma): kayıtlı Google hesapları dropdown panelde listelenir, hesap adı gösterilir, aktif hesap yeşil ile işaretlenir, "Hesap Ekle" butonu browse modalını açar. `GoogleAccountModal.tsx`'deki `switchToRegistered` fonksiyonunda `customerName: acc.account_name || acc.account_id` hatası düzeltildi — gerçek isim yoksa sunucu Google Ads API'den çeker. `GooglePage.tsx`'e `googleActiveId` prop'u eklendi.
