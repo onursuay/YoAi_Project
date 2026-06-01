@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Loader2, Send, Trash2, ArrowLeft, Users, Inbox } from 'lucide-react'
+import { Plus, Loader2, Send, Trash2, ArrowLeft, Users, Inbox, ChevronDown } from 'lucide-react'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
 import { STAGES } from '@/components/crm/stageMeta'
 
@@ -46,6 +46,7 @@ export default function CampaignsTab({ flash }: { flash: (k: 'ok' | 'err', m: st
   const [recipientCount, setRecipientCount] = useState<number | null>(null)
   const [saving, setSaving] = useState(false)
   const [sending, setSending] = useState(false)
+  const [backOpen, setBackOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -77,7 +78,7 @@ export default function CampaignsTab({ flash }: { flash: (k: 'ok' | 'err', m: st
     ...STAGES.map((s) => ({ value: `stage:${s}`, label: `${t('campaigns.seg.stagePrefix')}: ${tc(`stages.${s}`)}` })),
   ], [t, tc])
 
-  const openNew = () => { setEditId(null); setName(''); setSubject(''); setHtml(''); setSeg('all'); setComposing(true) }
+  const openNew = () => { setEditId(null); setName(''); setSubject(''); setHtml(''); setSeg('all'); setComposing(true); setBackOpen(false) }
 
   const saveDraft = useCallback(async (): Promise<string | null> => {
     const payload = { name: name || t('campaigns.untitled'), subject, html, segment: decodeSeg(seg) }
@@ -132,9 +133,6 @@ export default function CampaignsTab({ flash }: { flash: (k: 'ok' | 'err', m: st
   if (composing) {
     return (
       <div>
-        <button onClick={() => setComposing(false)} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="w-4 h-4" /> {t('campaigns.back')}
-        </button>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           {/* Form */}
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
@@ -171,7 +169,6 @@ export default function CampaignsTab({ flash }: { flash: (k: 'ok' | 'err', m: st
 
           {/* Canlı önizleme */}
           <div className="lg:sticky lg:top-4 self-start">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('campaigns.preview')}</p>
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden animate-card-enter">
               <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
                 <p className="text-[11px] text-gray-400">{t('campaigns.previewFrom')}</p>
@@ -186,6 +183,23 @@ export default function CampaignsTab({ flash }: { flash: (k: 'ok' | 'err', m: st
                   html.trim() || `<p style="color:#d1d5db">${t('campaigns.previewEmpty')}</p>`
                 }<hr style="margin-top:28px;border:none;border-top:1px solid #e5e7eb"/><p style="font-size:11px;color:#9ca3af;margin-top:12px">${t('campaigns.unsubPreview')}</p></body></html>`}
               />
+            </div>
+            <div className="mt-3 flex flex-col items-end gap-2">
+              <button
+                onClick={() => setBackOpen(v => !v)}
+                className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <span>{t('campaigns.back')}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${backOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {backOpen && (
+                <button
+                  onClick={() => setComposing(false)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> {t('campaigns.back')}
+                </button>
+              )}
             </div>
           </div>
         </div>

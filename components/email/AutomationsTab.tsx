@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Loader2, Trash2, ArrowLeft, Zap, Workflow } from 'lucide-react'
+import { Plus, Loader2, Trash2, ArrowLeft, Zap, Workflow, ChevronDown } from 'lucide-react'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
 import { STAGES } from '@/components/crm/stageMeta'
 
@@ -41,6 +41,7 @@ export default function AutomationsTab({ flash }: { flash: (k: 'ok' | 'err', m: 
   const [subject, setSubject] = useState('')
   const [html, setHtml] = useState('')
   const [saving, setSaving] = useState(false)
+  const [backOpen, setBackOpen] = useState(false)
 
   const load = useCallback(async () => {
     setLoading(true)
@@ -57,10 +58,10 @@ export default function AutomationsTab({ flash }: { flash: (k: 'ok' | 'err', m: 
     { value: 'contact', label: t('automations.triggerContact') },
   ], [t, tc])
 
-  const openNew = () => { setEditId(null); setName(''); setTrig('stage:uygun'); setSubject(''); setHtml(''); setComposing(true) }
+  const openNew = () => { setEditId(null); setName(''); setTrig('stage:uygun'); setSubject(''); setHtml(''); setComposing(true); setBackOpen(false) }
   const openEdit = (a: AutomationItem) => {
     setEditId(a.id); setName(a.name)
-    setTrig(encodeTrigger(a.trigger as Trigger)); setSubject(a.subject); setHtml(a.html); setComposing(true)
+    setTrig(encodeTrigger(a.trigger as Trigger)); setSubject(a.subject); setHtml(a.html); setComposing(true); setBackOpen(false)
   }
 
   const handleSave = useCallback(async () => {
@@ -97,9 +98,6 @@ export default function AutomationsTab({ flash }: { flash: (k: 'ok' | 'err', m: 
   if (composing) {
     return (
       <div>
-        <button onClick={() => setComposing(false)} className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 mb-4">
-          <ArrowLeft className="w-4 h-4" /> {t('automations.back')}
-        </button>
         <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
           <div className="bg-white rounded-2xl border border-gray-200 shadow-sm p-6 space-y-4">
             <div>
@@ -126,7 +124,6 @@ export default function AutomationsTab({ flash }: { flash: (k: 'ok' | 'err', m: 
             </div>
           </div>
           <div className="lg:sticky lg:top-4 self-start">
-            <p className="text-xs font-medium text-gray-500 uppercase tracking-wide mb-2">{t('automations.preview')}</p>
             <div className="rounded-2xl border border-gray-200 bg-white shadow-sm overflow-hidden animate-card-enter">
               <div className="px-5 py-3 border-b border-gray-100 bg-gray-50">
                 <p className="text-sm font-semibold text-gray-900 mt-0.5">{subject || '—'}</p>
@@ -139,6 +136,23 @@ export default function AutomationsTab({ flash }: { flash: (k: 'ok' | 'err', m: 
                   html.trim() || `<p style="color:#d1d5db">${t('automations.previewEmpty')}</p>`
                 }</body></html>`}
               />
+            </div>
+            <div className="mt-3 flex flex-col items-end gap-2">
+              <button
+                onClick={() => setBackOpen(v => !v)}
+                className="inline-flex items-center gap-1.5 text-xs text-gray-400 hover:text-gray-600 transition-colors"
+              >
+                <span>{t('automations.back')}</span>
+                <ChevronDown className={`w-3.5 h-3.5 transition-transform duration-200 ${backOpen ? 'rotate-180' : ''}`} />
+              </button>
+              {backOpen && (
+                <button
+                  onClick={() => setComposing(false)}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-xl border border-gray-200 text-sm text-gray-600 hover:text-gray-800 hover:bg-gray-50 transition-all"
+                >
+                  <ArrowLeft className="w-3.5 h-3.5" /> {t('automations.back')}
+                </button>
+              )}
             </div>
           </div>
         </div>
