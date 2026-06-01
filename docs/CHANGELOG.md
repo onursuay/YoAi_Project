@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — Email Otomasyon: unsubscribe linki, status-change guard, dead i18n key
+- **Sorun:** (1) Otomasyon e-postalarındaki abonelikten-çık linkleri `c=automation` ile geldiği için campaigns tablosunda eşleşme bulamıyor, 400 dönüyor; yasal zorunluluk ihlali. (2) `runStageAutomations` her PATCH'te (aynı durum kaydedilse bile) tetiklendiğinden duplicate otomasyon maili gönderiliyordu. (3) `email.automations.stageLabel` i18n anahtarı hiçbir bileşende kullanılmıyordu.
+- **Çözüm:** (1) Unsubscribe route'a `c=automation` dalı eklendi: `email_sends` tablosunda `automation_id IS NOT NULL` olan en son kaydı e-posta ile eşleştirip `user_id`/`send_id` çözümleniyor; campaign dalı (else) aynen korundu. (2) CRM leads PATCH'e `prev` okuma + `statusChanged` hesabı eklendi; `runStageAutomations` yalnız gerçek durum değişikliğinde tetikleniyor — Meta sync dokunulmadı, her PATCH'te çalışmaya devam ediyor. (3) `stageLabel` her iki locale dosyasından silindi; `automations` nesnesi 23 anahtara indi, TR/EN pariteleri korunuyor.
+- **Dosyalar:** `app/api/email/unsubscribe/route.ts`, `app/api/crm/leads/[id]/route.ts`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-01 — Email Marketing: Otomasyon (aşama tetikli otomatik e-posta)
 - **Sorun:** Email Marketing > Otomasyon sekmesi "Yakında" ile devre dışıydı.
 - **Çözüm:** CRM aşama girişi ve tekil yeni kişi eklenince anında otomatik e-posta gönderen otomasyon motoru. Inline fire-and-forget tetik (CRM PATCH + contacts POST, Meta-sync ile paralel best-effort — ana akışı bozmaz), mevcut `sender.ts` gönderim katmanı `buildDispatch` ile yeniden kullanıldı. Yeni `email_automations` CRUD store + `automationRunner` (opt-out/KVKK kontrollü, her tetiklenmede gönderim) + `AutomationsTab` UI (WizardSelect tetikleyici, canlı önizleme, aç/kapa). Kişiler sekmesine tekil "Kişi Ekle" formu (yalnız gerçekten yeni tekil manuel ekleme tetikler; toplu CSV/CRM import tetiklemez). `email_sends` otomasyon kayıtlarına açıldı (automation_id + campaign_id nullable). Tam EN/TR i18n.
