@@ -3017,6 +3017,7 @@
       },
       "geoAeo": {
         "scoreTitle": "GEO/AEO Puanı",
+        "subtitle": "GEO · AEO",
         "loading": "Analiz ediliyor...",
         "notAnalyzed": "Henüz analiz yapılmadı",
         "notAnalyzedHint": "Analiz Et butonuna tıklayın",

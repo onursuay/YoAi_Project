@@ -6,7 +6,7 @@ import { useTranslations } from 'next-intl'
 function getScoreColor(score: number): string {
   if (score >= 80) return '#10B981'
   if (score >= 60) return '#059669'
-  if (score >= 40) return '#F59E0B'
+  if (score >= 40) return '#F97316'
   if (score >= 20) return '#EF4444'
   return '#DC2626'
 }
@@ -75,7 +75,7 @@ export default function GeoAeoScoreCard({ score, loading, selected, onClick }: P
             <p className="text-caption text-gray-400 mt-0.5">{t('notAnalyzedHint')}</p>
           </>
         ) : (
-          <p className="text-sm text-gray-500 mt-1">GEO · AEO</p>
+          <p className="text-sm text-gray-500 mt-1">{t('subtitle')}</p>
         )}
       </div>
     </button>

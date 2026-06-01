@@ -3017,6 +3017,7 @@
       },
       "geoAeo": {
         "scoreTitle": "GEO/AEO Score",
+        "subtitle": "GEO · AEO",
         "loading": "Analyzing...",
         "notAnalyzed": "Not analyzed yet",
         "notAnalyzedHint": "Click Analyze to start",
