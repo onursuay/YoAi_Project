@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
-import * as dns from 'dns/promises'
 import { analyzeGeoAeo } from '@/lib/seo/geoAnalyzer'
+import { assertSafeUrl } from '@/lib/seo/assertSafeUrl'
 
 function normalizeUrl(input: string): string {
   let url = input.trim()
@@ -9,54 +9,43 @@ function normalizeUrl(input: string): string {
   return url
 }
 
-// Returns true if the IP address is in a private/reserved range
-function isPrivateIp(ip: string): boolean {
-  // IPv4 private ranges
-  const privateRanges = [
-    /^127\./,                        // loopback
-    /^10\./,                         // RFC1918
-    /^192\.168\./,                   // RFC1918
-    /^172\.(1[6-9]|2\d|3[01])\./,   // RFC1918
-    /^169\.254\./,                   // link-local (AWS metadata)
-    /^0\.0\.0\.0/,                   // unspecified
-    /^::1$/,                         // IPv6 loopback
-    /^fc00:/,                        // IPv6 unique local
-    /^fe80:/,                        // IPv6 link-local
-  ]
-  return privateRanges.some(r => r.test(ip))
-}
+const MAX_REDIRECTS = 5
 
-async function assertSafeUrl(urlString: string): Promise<void> {
-  let parsed: URL
-  try {
-    parsed = new URL(urlString)
-  } catch {
-    throw new Error('Invalid URL')
-  }
+async function safeFetch(startUrl: string): Promise<Response> {
+  let currentUrl = startUrl
+  let hops = 0
 
-  // Only allow http/https
-  if (!['http:', 'https:'].includes(parsed.protocol)) {
-    throw new Error('Only HTTP/HTTPS URLs are allowed')
-  }
+  while (hops < MAX_REDIRECTS) {
+    // Validate before each fetch (covers redirect destinations too)
+    await assertSafeUrl(currentUrl)
 
-  const hostname = parsed.hostname
+    const res = await fetch(currentUrl, {
+      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; YoAiBot/1.0)' },
+      signal: AbortSignal.timeout(15000),
+      redirect: 'manual',
+    })
 
-  // Reject bare IPs that are private
-  if (/^\d{1,3}(\.\d{1,3}){3}$/.test(hostname) || hostname === '::1') {
-    if (isPrivateIp(hostname)) throw new Error('Private IP addresses are not allowed')
-    return
-  }
+    if (res.status >= 300 && res.status < 400) {
+      const location = res.headers.get('location')
+      if (!location) throw new Error('Redirect with no Location header')
 
-  // DNS resolve and check all returned addresses
-  try {
-    const addresses = await dns.resolve(hostname)
-    for (const addr of addresses) {
-      if (isPrivateIp(addr)) throw new Error('URL resolves to a private address')
+      // Resolve relative redirects against current URL
+      const next = new URL(location, currentUrl).toString()
+
+      // Only allow http/https redirects
+      if (!/^https?:\/\//i.test(next)) {
+        throw new Error('Redirect to non-HTTP scheme rejected')
+      }
+
+      currentUrl = next
+      hops++
+      continue
     }
-  } catch (e) {
-    if (e instanceof Error && e.message.includes('private')) throw e
-    // DNS failure = can't reach = let fetch handle it
+
+    return res
   }
+
+  throw new Error('Too many redirects')
 }
 
 export async function POST(req: NextRequest) {
@@ -69,14 +58,7 @@ export async function POST(req: NextRequest) {
 
     const normalized = normalizeUrl(url)
 
-    // SSRF protection: reject private/internal addresses
-    await assertSafeUrl(normalized)
-
-    const res = await fetch(normalized, {
-      headers: { 'User-Agent': 'Mozilla/5.0 (compatible; YoAiBot/1.0)' },
-      signal: AbortSignal.timeout(15000),
-      redirect: 'follow',
-    })
+    const res = await safeFetch(normalized)
 
     if (!res.ok) {
       return NextResponse.json({ error: 'Could not fetch URL' }, { status: 422 })
@@ -88,16 +70,19 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json(result)
   } catch (err) {
-    if (err instanceof Error && (
+    const isSsrf = err instanceof Error && (
       err.message.includes('private') ||
       err.message.includes('Private') ||
       err.message.includes('not allowed') ||
       err.message.includes('Invalid URL') ||
-      err.message.includes('HTTP/HTTPS')
-    )) {
+      err.message.includes('HTTP/HTTPS') ||
+      err.message.includes('resolve') ||
+      err.message.includes('Redirect') ||
+      err.message.includes('redirects')
+    )
+    if (isSsrf) {
       return NextResponse.json({ error: 'Invalid or disallowed URL' }, { status: 422 })
     }
-    // Generic error — don't leak internal details
     return NextResponse.json({ error: 'Analysis failed' }, { status: 500 })
   }
 }
