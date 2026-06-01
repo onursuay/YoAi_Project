@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-01 — SEO: "AI'da Görünüyor musun?" alıntısı site diline göre TR/EN
+- **Sorun:** Tavily/Perplexity sorgusu İngilizce hardcoded'dı; dönen alıntı her zaman İngilizce çıkıyordu.
+- **Çözüm:** Client locale (`useLocale`) API'ye iletiliyor; `buildQuery()` dile göre Türkçe veya İngilizce sorgu üretiyor. Default `tr`.
+- **Dosyalar:** `components/seo/AiVisibilityChecker.tsx`, `app/api/seo/ai-visibility/route.ts`
+
 ## 2026-06-01 — SEO Plus: SEO ve GEO/AEO kart yapısı standartlaştırıldı
 - **Sorun:** İki skor kartı farklı component yapısı kullanıyordu — SEO kartı `BigScoreCircle`'da `shrink-0` eksikti; button'da `flex-1` yoktu.
 - **Çözüm:** `BigScoreCircle` wrapper'ına `shrink-0` eklendi, SEO kart button'una `flex-1` eklendi — GeoAeoScoreCard ile birebir aynı yapı.
