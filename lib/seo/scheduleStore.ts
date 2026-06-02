@@ -138,6 +138,50 @@ export async function deleteSchedule(id: string, userId: string): Promise<boolea
   return true
 }
 
+/**
+ * Atomik "claim": bu schedule'ı bugünün üretimi için kilitler. Eşzamanlı ikinci
+ * bir cron invocation'ı (veya gecikmeli event) aynı makaleyi İKİNCİ kez üretemesin
+ * diye, üretime başlamadan ÖNCE çağrılır.
+ *
+ * `last_run_date`'i tek atomik UPDATE ile bugüne çeker — yalnız henüz bugün için
+ * claim edilmemişse (null VEYA farklı gün). Postgres satır kilidi sayesinde iki
+ * eşzamanlı çağrıdan yalnız BİRİ satırı günceller → yalnız o `true` alır.
+ * `last_status`/`last_error` sıfırlanır (yeni denemenin başlangıcı).
+ *
+ * @returns claim bu çağrı tarafından alındıysa true; başkası aldıysa false.
+ */
+export async function claimScheduleRun(id: string, localDate: string): Promise<boolean> {
+  if (!supabase) return false
+  const now = new Date().toISOString()
+  const { data, error } = await supabase
+    .from('article_schedules')
+    .update({ last_run_date: localDate, last_run_at: now, last_status: null, last_error: null, updated_at: now })
+    .eq('id', id)
+    .or(`last_run_date.is.null,last_run_date.neq.${localDate}`)
+    .select('id')
+  if (error) {
+    console.error('[ScheduleStore] CLAIM_FAIL', error.message)
+    return false
+  }
+  return (data?.length ?? 0) > 0
+}
+
+/**
+ * Claim'i geri al — üretim sırasında HATA fırlarsa (AI/yayın), aynı gün bir
+ * sonraki saatlik cron'un yeniden deneyebilmesi için `last_run_date` null'a çekilir.
+ * Yalnız sonuç henüz işaretlenmemişse (last_status null) ve claim hâlâ bizimse
+ * (last_run_date == localDate) uygulanır — başarı/skip işaretlenmiş kaydı bozmaz.
+ */
+export async function releaseScheduleClaim(id: string, localDate: string): Promise<void> {
+  if (!supabase) return
+  await supabase
+    .from('article_schedules')
+    .update({ last_run_date: null, updated_at: new Date().toISOString() })
+    .eq('id', id)
+    .eq('last_run_date', localDate)
+    .is('last_status', null)
+}
+
 export async function markScheduleRun(
   id: string,
   patch: { lastRunAt?: string; lastRunDate?: string; nextRunAt?: string | null; lastStatus?: ScheduleStatus; lastError?: string | null }

@@ -54,14 +54,18 @@ async function getUserEmail(userId: string): Promise<string | null> {
 export async function runScheduleArticle(
   scheduleId: string,
   userId: string,
+  opts: { skipDateGuard?: boolean } = {},
 ): Promise<RunScheduleResult> {
   const lang: 'tr' | 'en' = 'tr'
 
-  // 1) Zamanlamayı yükle + idempotency (bugün zaten çalıştıysa atla)
+  // 1) Zamanlamayı yükle + idempotency (bugün zaten çalıştıysa atla).
+  // skipDateGuard: çağıran taraf zaten atomik claim (claimScheduleRun) yaptıysa
+  // burada last_run_date bugüne çekilmiş olur; o claim'i "zaten çalıştı" sanıp
+  // üretimi atlamamak için tarih kontrolü devre dışı bırakılır.
   const s = await getSchedule(scheduleId, userId)
   if (!s || !s.enabled) return { ok: false, skipped: 'not_due_or_disabled' }
   const local = getLocalParts(s.timezone)
-  if (s.last_run_date === local.date) return { ok: false, skipped: 'already_ran_today' }
+  if (!opts.skipDateGuard && s.last_run_date === local.date) return { ok: false, skipped: 'already_ran_today' }
   const localDate = local.date
 
   // 2) Hedef siteyi çöz

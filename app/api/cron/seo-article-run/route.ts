@@ -11,8 +11,8 @@
    ────────────────────────────────────────────────────────── */
 
 import { NextResponse } from 'next/server'
-import { listEnabledSchedules } from '@/lib/seo/scheduleStore'
-import { isScheduleDue } from '@/lib/seo/timezone'
+import { listEnabledSchedules, claimScheduleRun, releaseScheduleClaim } from '@/lib/seo/scheduleStore'
+import { isScheduleDue, getLocalParts } from '@/lib/seo/timezone'
 import { runScheduleArticle } from '@/lib/seo/runScheduleArticle'
 
 export const dynamic = 'force-dynamic'
@@ -54,10 +54,21 @@ export async function GET(request: Request) {
   const startedAt = Date.now()
   const results: Array<Record<string, unknown>> = []
   for (const s of due) {
+    // Atomik claim: eşzamanlı ikinci bir tetik (veya gecikmeli event) aynı
+    // makaleyi İKİNCİ kez üretmesin. Yalnız claim'i kazanan invocation üretir.
+    const localDate = getLocalParts(s.timezone, now).date
+    const claimed = await claimScheduleRun(s.id, localDate)
+    if (!claimed) {
+      console.log('[seo-cron] skip (claimed by other)', s.id)
+      results.push({ scheduleId: s.id, skipped: 'claimed_by_other' })
+      continue
+    }
     try {
-      const r = await runScheduleArticle(s.id, s.user_id)
+      const r = await runScheduleArticle(s.id, s.user_id, { skipDateGuard: true })
       results.push({ scheduleId: s.id, ...r })
     } catch (e) {
+      // Üretim patladı → claim'i bırak ki aynı gün bir sonraki saatlik cron tekrar denesin.
+      await releaseScheduleClaim(s.id, localDate)
       console.error('[seo-cron] inline_error', s.id, (e as Error).message)
       results.push({ scheduleId: s.id, ok: false, error: (e as Error).message })
     }
