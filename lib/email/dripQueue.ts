@@ -11,31 +11,90 @@ export interface QueueItem {
   email: string
   scheduled_at: string
   status: string
+  parent_queue_id: string | null
+  email_send_id: string | null
 }
 
-export async function enqueueSteps(
+/** Tetikleyicide yalnız ilk adımı (step_order=0) kuyruğa ekler. */
+export async function enqueueFirstStep(
   userId: string,
   automationId: string,
-  steps: StepRow[],
+  firstStep: StepRow,
   contact: { email: string; contactId?: string | null },
 ): Promise<void> {
-  if (!supabase || steps.length === 0) return
-  const now = new Date()
-  let cumulativeDays = 0
-  const rows = steps.map((s) => {
-    cumulativeDays += s.delay_days
-    const scheduledAt = new Date(now.getTime() + cumulativeDays * 86_400_000).toISOString()
-    return {
-      automation_id: automationId,
-      step_id: s.id,
-      user_id: userId,
-      contact_id: contact.contactId ?? null,
-      email: contact.email,
-      scheduled_at: scheduledAt,
-      status: 'pending',
-    }
+  if (!supabase) return
+  await supabase.from('email_drip_queue').insert({
+    automation_id: automationId,
+    step_id: firstStep.id,
+    user_id: userId,
+    contact_id: contact.contactId ?? null,
+    email: contact.email,
+    scheduled_at: new Date().toISOString(),
+    status: 'pending',
+    parent_queue_id: null,
+    email_send_id: null,
   })
-  await supabase.from('email_drip_queue').insert(rows)
+}
+
+/** Mevcut adım gönderildikten sonra bir sonraki adımı kuyruğa ekler. */
+export async function enqueueNextStep(
+  parentQueueId: string,
+  nextStep: StepRow,
+  current: { userId: string; automationId: string; email: string; contactId: string | null },
+): Promise<void> {
+  if (!supabase) return
+  const scheduledAt = new Date(Date.now() + nextStep.delay_days * 86_400_000).toISOString()
+  await supabase.from('email_drip_queue').insert({
+    automation_id: current.automationId,
+    step_id: nextStep.id,
+    user_id: current.userId,
+    contact_id: current.contactId,
+    email: current.email,
+    scheduled_at: scheduledAt,
+    status: 'pending',
+    parent_queue_id: parentQueueId,
+    email_send_id: null,
+  })
+}
+
+/** Gönderim sonrası queue öğesine email_send_id yazar. */
+export async function setEmailSendId(queueItemId: string, emailSendId: string): Promise<void> {
+  if (!supabase) return
+  await supabase
+    .from('email_drip_queue')
+    .update({ email_send_id: emailSendId })
+    .eq('id', queueItemId)
+}
+
+/**
+ * Adımın koşulunu değerlendirir.
+ * 'always' → true
+ * 'if_opened' / 'if_not_opened' / 'if_clicked' → parent'ın email_events'ini kontrol eder
+ */
+export async function evaluateCondition(item: QueueItem, condition: { type: string }): Promise<boolean> {
+  if (condition.type === 'always') return true
+  if (!supabase || !item.parent_queue_id) return false
+
+  const { data: parent } = await supabase
+    .from('email_drip_queue')
+    .select('email_send_id')
+    .eq('id', item.parent_queue_id)
+    .maybeSingle()
+
+  if (!parent?.email_send_id) return false
+
+  const { data: events } = await supabase
+    .from('email_events')
+    .select('type')
+    .eq('send_id', parent.email_send_id)
+
+  const eventTypes = new Set((events ?? []).map((e: { type: string }) => e.type))
+
+  if (condition.type === 'if_opened') return eventTypes.has('opened')
+  if (condition.type === 'if_not_opened') return !eventTypes.has('opened')
+  if (condition.type === 'if_clicked') return eventTypes.has('clicked')
+
+  return false
 }
 
 export async function getDueItems(limit = 100): Promise<QueueItem[]> {
@@ -62,4 +121,9 @@ export async function markItemSent(itemId: string): Promise<void> {
 export async function markItemFailed(itemId: string): Promise<void> {
   if (!supabase) return
   await supabase.from('email_drip_queue').update({ status: 'failed' }).eq('id', itemId)
+}
+
+export async function markItemSkipped(itemId: string): Promise<void> {
+  if (!supabase) return
+  await supabase.from('email_drip_queue').update({ status: 'skipped' }).eq('id', itemId)
 }
