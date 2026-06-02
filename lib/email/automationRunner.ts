@@ -3,11 +3,13 @@ import { supabase } from '@/lib/supabase/client'
 import { buildDispatch, buildHtml } from './sender'
 import { unsubscribeUrl } from './unsubscribe'
 import { listEnabledAutomations, type AutomationRow, type AutomationTrigger } from './automationStore'
+import { listSteps } from './automationStepsStore'
+import { enqueueSteps } from './dripQueue'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
 
 /** email_contacts'te bu e-posta opt-out işaretliyse true (KVKK). Kayıt yoksa false. */
-async function isOptedOut(userId: string, email: string): Promise<boolean> {
+export async function isOptedOut(userId: string, email: string): Promise<boolean> {
   if (!supabase) return false
   const { data } = await supabase
     .from('email_contacts')
@@ -53,12 +55,20 @@ export async function runStageAutomations(
   stage: string,
 ): Promise<void> {
   if (!lead.email) return
-  const autos = await listEnabledAutomations(userId)
-  const matched = autos.filter((a) => {
-    const tr = a.trigger as AutomationTrigger
-    return tr?.type === 'crm_stage_enter' && tr.stage === stage
-  })
-  await sendToContact(userId, lead.email, matched)
+  const all = await listEnabledAutomations(userId)
+  const matching = all.filter(
+    (a) => (a.trigger as AutomationTrigger).type === 'crm_stage_enter' &&
+            (a.trigger as { type: string; stage: string }).stage === stage,
+  )
+  if (matching.length === 0) return
+  for (const automation of matching) {
+    const steps = await listSteps(automation.id)
+    if (steps.length > 0) {
+      await enqueueSteps(userId, automation.id, steps, { email: lead.email, contactId: null })
+    } else {
+      await sendToContact(userId, lead.email, [automation])
+    }
+  }
 }
 
 /** Yeni kişi eklenince (tekil manuel) — eşleşen contact_added otomasyonları. */
@@ -66,8 +76,15 @@ export async function runContactAddedAutomations(
   userId: string,
   contact: { email: string },
 ): Promise<void> {
-  if (!contact.email) return
-  const autos = await listEnabledAutomations(userId)
-  const matched = autos.filter((a) => (a.trigger as AutomationTrigger)?.type === 'contact_added')
-  await sendToContact(userId, contact.email, matched)
+  const all = await listEnabledAutomations(userId)
+  const matching = all.filter((a) => (a.trigger as AutomationTrigger).type === 'contact_added')
+  if (matching.length === 0) return
+  for (const automation of matching) {
+    const steps = await listSteps(automation.id)
+    if (steps.length > 0) {
+      await enqueueSteps(userId, automation.id, steps, { email: contact.email, contactId: null })
+    } else {
+      await sendToContact(userId, contact.email, [automation])
+    }
+  }
 }
