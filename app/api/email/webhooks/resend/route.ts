@@ -1,5 +1,5 @@
-import { timingSafeEqual } from 'node:crypto'
 import { NextResponse } from 'next/server'
+import { Webhook } from 'svix'
 import { supabase } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
@@ -14,22 +14,30 @@ interface ResendWebhookEvent {
 }
 
 export async function POST(req: Request) {
-  const url = new URL(req.url)
-  const secret = url.searchParams.get('secret')
-  const expectedSecret = process.env.RESEND_WEBHOOK_SECRET
-  if (!expectedSecret || !secret) return NextResponse.json({ ok: false }, { status: 401 })
-  try {
-    const a = Buffer.from(secret)
-    const b = Buffer.from(expectedSecret)
-    if (a.length !== b.length || !timingSafeEqual(a, b)) {
-      return NextResponse.json({ ok: false }, { status: 401 })
-    }
-  } catch {
+  const signingSecret = process.env.RESEND_WEBHOOK_SECRET
+  if (!signingSecret) return NextResponse.json({ ok: false }, { status: 401 })
+
+  // Resend uses svix to sign webhook payloads — verify via svix headers, not URL params
+  const svixId = req.headers.get('svix-id')
+  const svixTimestamp = req.headers.get('svix-timestamp')
+  const svixSignature = req.headers.get('svix-signature')
+
+  if (!svixId || !svixTimestamp || !svixSignature) {
     return NextResponse.json({ ok: false }, { status: 401 })
   }
 
+  const rawBody = await req.text()
   let body: ResendWebhookEvent
-  try { body = await req.json() } catch { return NextResponse.json({ ok: false }, { status: 400 }) }
+  try {
+    const wh = new Webhook(signingSecret)
+    body = wh.verify(rawBody, {
+      'svix-id': svixId,
+      'svix-timestamp': svixTimestamp,
+      'svix-signature': svixSignature,
+    }) as ResendWebhookEvent
+  } catch {
+    return NextResponse.json({ ok: false }, { status: 401 })
+  }
 
   const { type, data } = body
   const emailId = data?.email_id
