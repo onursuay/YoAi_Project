@@ -13,6 +13,7 @@ interface StepDraft {
   subject: string
   html: string
   delay_days: number
+  condition: { type: 'always' | 'if_opened' | 'if_not_opened' | 'if_clicked' }
 }
 
 interface AutomationItem {
@@ -52,7 +53,7 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
   const [accountReady, setAccountReady] = useState<boolean | null>(null)
 
   // multi-step state
-  const [steps, setSteps] = useState<StepDraft[]>([{ step_order: 0, subject: '', html: '', delay_days: 0 }])
+  const [steps, setSteps] = useState<StepDraft[]>([{ step_order: 0, subject: '', html: '', delay_days: 0, condition: { type: 'always' } }])
   const [activeStep, setActiveStep] = useState(0)
 
   const load = useCallback(async () => {
@@ -79,7 +80,7 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
 
   const openNew = () => {
     setEditId(null); setName(''); setTrig('stage:uygun'); setSubject(''); setHtml('')
-    setSteps([{ step_order: 0, subject: '', html: '', delay_days: 0 }])
+    setSteps([{ step_order: 0, subject: '', html: '', delay_days: 0, condition: { type: 'always' } }])
     setActiveStep(0)
     setComposing(true)
     checkAccount()
@@ -89,9 +90,10 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
     setTrig(encodeTrigger(a.trigger as Trigger)); setSubject(a.subject); setHtml(a.html)
     const existingSteps = (a.steps && a.steps.length > 0)
       ? a.steps.map((s: StepDraft) => ({
-          step_order: s.step_order, subject: s.subject, html: s.html, delay_days: s.delay_days
+          step_order: s.step_order, subject: s.subject, html: s.html, delay_days: s.delay_days,
+          condition: (s.condition as { type: 'always'|'if_opened'|'if_not_opened'|'if_clicked' }) ?? { type: 'always' },
         }))
-      : [{ step_order: 0, subject: a.subject || '', html: a.html || '', delay_days: 0 }]
+      : [{ step_order: 0, subject: a.subject || '', html: a.html || '', delay_days: 0, condition: { type: 'always' as const } }]
     setSteps(existingSteps)
     setActiveStep(0)
     setComposing(true)
@@ -108,7 +110,7 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
         subject: steps[0]?.subject ?? '',
         html: steps[0]?.html ?? '',
         enabled: true,
-        steps: steps.map((s, i) => ({ step_order: i, subject: s.subject, html: s.html, delay_days: s.delay_days })),
+        steps: steps.map((s, i) => ({ step_order: i, subject: s.subject, html: s.html, delay_days: s.delay_days, condition: s.condition })),
       }
       const url = editId ? `/api/email/automations/${editId}` : '/api/email/automations'
       const method = editId ? 'PATCH' : 'POST'
@@ -185,23 +187,37 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">{t('automations.steps.label')}</label>
               <div className="flex items-center gap-1 mb-4 flex-wrap">
-                {steps.map((_, i) => (
-                  <button
-                    key={i}
-                    onClick={() => setActiveStep(i)}
-                    className={`px-3 py-1.5 rounded-lg text-sm font-medium transition ${
-                      activeStep === i ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                    }`}
-                  >
-                    {t('automations.steps.tab', { n: i + 1 })}
-                  </button>
-                ))}
+                {steps.map((s, i) => {
+                  const condBadge =
+                    i === 0 ? null
+                    : s.condition.type === 'if_opened' ? ' ✓'
+                    : s.condition.type === 'if_not_opened' ? ' ✗'
+                    : s.condition.type === 'if_clicked' ? ' ↗'
+                    : null
+
+                  return (
+                    <button
+                      key={i}
+                      onClick={() => setActiveStep(i)}
+                      className={`inline-flex items-center gap-0.5 px-3 py-1.5 rounded-lg text-sm font-medium transition ${
+                        activeStep === i ? 'bg-primary text-white' : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                      }`}
+                    >
+                      {t('automations.steps.tab', { n: i + 1 })}
+                      {condBadge && (
+                        <span className={`text-[10px] font-bold ${activeStep === i ? 'text-white/80' : 'text-gray-400'}`}>
+                          {condBadge}
+                        </span>
+                      )}
+                    </button>
+                  )
+                })}
                 {steps.length < 5 && (
                   <button
                     onClick={() => {
                       setSteps((prev) => [
                         ...prev,
-                        { step_order: prev.length, subject: '', html: '', delay_days: 1 },
+                        { step_order: prev.length, subject: '', html: '', delay_days: 1, condition: { type: 'always' } },
                       ])
                       setActiveStep(steps.length)
                     }}
@@ -217,22 +233,47 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
                   {activeStep === 0 ? (
                     <p className="text-xs text-gray-500">{t('automations.steps.delayFirst')}</p>
                   ) : (
-                    <div>
-                      <label className="block text-sm font-medium text-gray-700 mb-1.5">
-                        {t('automations.steps.delayLabel')}
-                      </label>
-                      <input
-                        type="number"
-                        min={1}
-                        max={30}
-                        value={steps[activeStep].delay_days}
-                        onChange={(e) => {
-                          const v = Math.max(1, parseInt(e.target.value) || 1)
-                          setSteps((prev) => prev.map((s, i) => i === activeStep ? { ...s, delay_days: v } : s))
-                        }}
-                        className="w-24 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
-                      />
-                    </div>
+                    <>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          {t('automations.steps.condition.label')}
+                        </label>
+                        <WizardSelect
+                          value={steps[activeStep].condition.type}
+                          onChange={(v) =>
+                            setSteps((prev) =>
+                              prev.map((s, i) =>
+                                i === activeStep
+                                  ? { ...s, condition: { type: v as 'always' | 'if_opened' | 'if_not_opened' | 'if_clicked' } }
+                                  : s
+                              )
+                            )
+                          }
+                          options={[
+                            { value: 'always', label: t('automations.steps.condition.always') },
+                            { value: 'if_opened', label: t('automations.steps.condition.if_opened') },
+                            { value: 'if_not_opened', label: t('automations.steps.condition.if_not_opened') },
+                            { value: 'if_clicked', label: t('automations.steps.condition.if_clicked') },
+                          ]}
+                        />
+                      </div>
+                      <div>
+                        <label className="block text-sm font-medium text-gray-700 mb-1.5">
+                          {t('automations.steps.delayLabel')}
+                        </label>
+                        <input
+                          type="number"
+                          min={1}
+                          max={30}
+                          value={steps[activeStep].delay_days}
+                          onChange={(e) => {
+                            const v = Math.max(1, parseInt(e.target.value) || 1)
+                            setSteps((prev) => prev.map((s, i) => i === activeStep ? { ...s, delay_days: v } : s))
+                          }}
+                          className="w-24 rounded-xl border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:ring-2 focus:ring-primary/20 outline-none"
+                        />
+                      </div>
+                    </>
                   )}
 
                   <div>

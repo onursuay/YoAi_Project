@@ -161,6 +161,11 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey,
 
   const modalCampaign = modalCampaignId ? data.campaigns.find((c) => c.id === modalCampaignId) : undefined
 
+  // "Tarama sürüyor" görünümü: bootstrap aktif VEYA kart yok ama aktif kampanya var.
+  // Bu sayede poll timeout'undan sonra da (kart hâlâ yoksa) spinner + "hazırlanıyor"
+  // tutarlı kalır — statik "hazırlanıyor" yerine kullanıcı sürecin devam ettiğini görür.
+  const showPreparing = bootstrapping || (data.campaigns.length === 0 && (activeCampaigns ?? 0) > 0)
+
   return (
     <div data-testid="yoai-hierarchy">
       {/* SEVİYE 0 — hesap sağlık durumu */}
@@ -176,15 +181,15 @@ export default function HierarchicalImprovements({ onApprovePublish, refreshKey,
         <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
       </div>
 
-      {(loading || pending || bootstrapping) ? (
+      {(loading || pending || showPreparing) ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
           <Loader2 className="w-6 h-6 text-gray-300 mx-auto mb-2 animate-spin" />
-          <p className="text-sm text-gray-500">{bootstrapping ? t('preparing') : t('loading')}</p>
+          <p className="text-sm text-gray-500">{showPreparing ? t('preparing') : t('loading')}</p>
         </div>
       ) : data.campaigns.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
           <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">{(activeCampaigns && activeCampaigns > 0) ? t('preparing') : t('noCampaigns')}</p>
+          <p className="text-sm text-gray-500">{t('noCampaigns')}</p>
         </div>
       ) : (
         <div className="grid gap-4 grid-cols-1">

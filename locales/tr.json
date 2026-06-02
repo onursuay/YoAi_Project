@@ -3311,7 +3311,14 @@
         "remove": "Bu adımı sil",
         "delayFirst": "Tetiklenince hemen gönderilir",
         "delayLabel": "Önceki adımdan kaç gün sonra?",
-        "maxReached": "En fazla 5 adım ekleyebilirsiniz."
+        "maxReached": "En fazla 5 adım ekleyebilirsiniz.",
+        "condition": {
+          "label": "Bu adım ne zaman gönderilsin?",
+          "always": "Her zaman gönder",
+          "if_opened": "Önceki mail açıldıysa",
+          "if_not_opened": "Önceki mail açılmadıysa",
+          "if_clicked": "Önceki maildeki linke tıklandıysa"
+        }
       }
     }
   },

@@ -3311,7 +3311,14 @@
         "remove": "Delete this step",
         "delayFirst": "Sent immediately when triggered",
         "delayLabel": "Days after previous step?",
-        "maxReached": "You can add up to 5 steps."
+        "maxReached": "You can add up to 5 steps.",
+        "condition": {
+          "label": "When should this step be sent?",
+          "always": "Always send",
+          "if_opened": "If previous email was opened",
+          "if_not_opened": "If previous email was not opened",
+          "if_clicked": "If a link in the previous email was clicked"
+        }
       }
     }
   },
