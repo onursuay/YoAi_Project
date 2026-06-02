@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — Email: Bounce Auto-Block + Drip Sequence
+- **Sorun:** Hard bounce / spam şikayeti gelince kişi opt-out edilmiyordu; otomasyonlar tek mail ile sınırlıydı.
+- **Çözüm:** (A) Resend webhook (`/api/email/webhooks/resend`) → hard bounce / complaint → `email_contacts.opt_out` + `crm_leads.email_opt_out` otomatik; timing-safe secret doğrulaması. (B) `email_automation_steps` + `email_drip_queue` tabloları; `automationRunner` adımlı otomasyonları kuyruğa yazar; saatlik cron (`/api/cron/email-drip-process`) vakti gelenleri gönderir. (C) `AutomationsTab` sekme tabanlı çok adımlı editör (max 5 adım, gecikme gün cinsinden, geri uyumluluk korundu).
+- **Dosyalar:** `app/api/email/webhooks/resend/route.ts`, `app/api/cron/email-drip-process/route.ts`, `lib/email/automationStepsStore.ts`, `lib/email/dripQueue.ts`, `lib/email/automationRunner.ts`, `app/api/email/automations/[id]/route.ts`, `app/api/email/automations/route.ts`, `components/email/AutomationsTab.tsx`, `supabase/migrations/20260602000000_*`, `supabase/migrations/20260602001000_*`, `vercel.json`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-02 — feat(email/drip): Multi-Step Otomasyon Composer UI (tab'lı adım editörü)
 - **Sorun:** AutomationsTab composer'ı tek konu+içerik alanından oluşuyordu; çok adımlı drip dizisi oluşturulamıyordu.
 - **Çözüm:** `StepDraft` interface ve `steps`/`activeStep` state eklendi. Composer'daki konu+içerik alanları yerine sekme tabanlı adım editörü geldi (max 5 adım, adım sil, gecikme günü). `handleSave` adımları API payload'una gönderir (legacy `subject`/`html` ilk adımdan beslenir). Preview iframe aktif adımı gösterir. `openNew` ve `openEdit` steps state'i sıfırlar/yükler. i18n: `automations.steps.*` anahtarları tr.json ve en.json'a eklendi. TypeScript kontrolü: 0 hata.
