@@ -27,6 +27,10 @@
     {
       "path": "/api/cron/crm-lead-pull",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/email-drip-process",
+      "schedule": "0 * * * *"
     }
   ]
 }
