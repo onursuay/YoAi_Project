@@ -2131,6 +2131,21 @@
         "ready": "Hazır",
         "last": "Son",
         "createAd": "AI Reklam Oluştur"
+      },
+      "adWizard": {
+        "title": "AI Reklam Oluştur",
+        "titleApproval": "Öneri Onayı",
+        "subtitle": "Reklamlarınız + Rakip analizi → Tam kampanya yapısı",
+        "subtitleApproval": "Öneriyi inceleyin ve yayınlayın",
+        "selectPlatform": "Platform Seçin",
+        "metaAds": "Meta Ads",
+        "metaAdsDesc": "Kampanya + Reklam Seti + Reklam",
+        "googleAds": "Google Ads",
+        "googleAdsDesc": "Kampanya + Ad Group + RSA",
+        "generatingTitle": "AI Reklam Önerisi Hazırlanıyor",
+        "generatingDesc": "Reklamlarınız analiz ediliyor → Rakipler inceleniyor → Kampanya yapısı oluşturuluyor…",
+        "errorGenerate": "AI reklam önerisi üretilemedi",
+        "errorConnection": "Bağlantı hatası"
       }
     },
     "strateji": {

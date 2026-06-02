@@ -2131,6 +2131,21 @@
         "ready": "Ready",
         "last": "Last",
         "createAd": "Create AI Ad"
+      },
+      "adWizard": {
+        "title": "Create AI Ad",
+        "titleApproval": "Proposal Approval",
+        "subtitle": "Your ads + competitor analysis → Full campaign structure",
+        "subtitleApproval": "Review and publish the proposal",
+        "selectPlatform": "Select Platform",
+        "metaAds": "Meta Ads",
+        "metaAdsDesc": "Campaign + Ad Set + Ad",
+        "googleAds": "Google Ads",
+        "googleAdsDesc": "Campaign + Ad Group + RSA",
+        "generatingTitle": "Preparing AI Ad Proposal",
+        "generatingDesc": "Analyzing your ads → Reviewing competitors → Building campaign structure…",
+        "errorGenerate": "Could not generate AI ad proposal",
+        "errorConnection": "Connection error"
       }
     },
     "strateji": {

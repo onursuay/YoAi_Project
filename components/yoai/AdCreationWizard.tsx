@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { X, Loader2, Sparkles, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import MetaPreflightPanel, { type PreflightConfirmPayload } from './MetaPreflightPanel'
@@ -43,6 +44,7 @@ const OBJECTIVE_LABELS: Record<string, string> = {
 }
 
 export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal, onPublished }: Props) {
+  const t = useTranslations('dashboard.yoai.adWizard')
   const [step, setStep] = useState<Step>(initialProposal ? 'preview' : 'platform')
   const [platform, setPlatform] = useState<Platform | null>(initialProposal?.platform as Platform || null)
   const [proposals, setProposals] = useState<FullAdProposal[]>(initialProposal ? [initialProposal] : [])
@@ -52,28 +54,45 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
   const [publishResult, setPublishResult] = useState<{ ok: boolean; message: string } | null>(null)
   const [preflightPayload, setPreflightPayload] = useState<PreflightConfirmPayload | null>(null)
 
+  const callGenerateAd = async (p: Platform, forceGenerate: boolean) => {
+    const res = await fetch('/api/yoai/generate-ad', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ platform: p, forceGenerate }),
+    })
+    return res.json()
+  }
+
+  // Route bağlı tüm platformların önerilerini dönebilir; seçilen platformu süz.
+  const pickPlatformProposals = (json: any, p: Platform): FullAdProposal[] => {
+    if (!json?.ok || !Array.isArray(json.data?.proposals)) return []
+    return (json.data.proposals as FullAdProposal[]).filter((pr) => pr.platform === p)
+  }
+
   const handleSelectPlatform = async (p: Platform) => {
     setPlatform(p)
     setStep('generating')
     setError(null)
 
     try {
-      const res = await fetch('/api/yoai/generate-ad', {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ platform: p }),
-      })
-      const json = await res.json()
-      if (json.ok && json.data?.proposals?.length > 0) {
-        setProposals(json.data.proposals)
-        setCompetitorInfo(json.data.competitorAnalysis || null)
+      // 1) Önce kayıtlı (hızlı) sonucu dene
+      let json = await callGenerateAd(p, false)
+      let list = pickPlatformProposals(json, p)
+      // 2) Kayıtlı veri yoksa (haftalık tarama henüz çalışmamış) → canlı üretim tetikle
+      if (list.length === 0) {
+        json = await callGenerateAd(p, true)
+        list = pickPlatformProposals(json, p)
+      }
+      if (list.length > 0) {
+        setProposals(list)
+        setCompetitorInfo(json.data?.competitorAnalysis || null)
         setStep('preview')
       } else {
-        setError(json.data?.error || json.error || 'AI reklam önerisi üretilemedi')
+        setError(json.data?.error || json.error || t('errorGenerate'))
         setStep('platform')
       }
     } catch {
-      setError('Bağlantı hatası')
+      setError(t('errorConnection'))
       setStep('platform')
     }
   }
@@ -158,10 +177,10 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
             </div>
             <div>
               <h2 className="text-base font-semibold text-white">
-                {initialProposal ? 'Öneri Onayı' : 'AI Reklam Oluştur'}
+                {initialProposal ? t('titleApproval') : t('title')}
               </h2>
               <p className="text-xs text-slate-400">
-                {initialProposal ? 'Öneriyi inceleyin ve yayınlayın' : 'Reklamlarınız + Rakip analizi → Tam kampanya yapısı'}
+                {initialProposal ? t('subtitleApproval') : t('subtitle')}
               </p>
             </div>
           </div>
@@ -181,18 +200,18 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                   <p className="text-sm text-red-200">{error}</p>
                 </div>
               )}
-              <h3 className="text-sm font-semibold text-white mb-4">Platform Seçin</h3>
+              <h3 className="text-sm font-semibold text-white mb-4">{t('selectPlatform')}</h3>
               <div className="grid grid-cols-2 gap-4">
                 {connectedPlatforms.includes('Meta') && (
                   <button
                     onClick={() => handleSelectPlatform('Meta')}
                     className="p-6 rounded-2xl border-2 border-[#1e2d45] hover:border-blue-500/60 hover:bg-blue-900/10 transition-all text-left"
                   >
-                    <div className="w-12 h-12 bg-blue-900/30 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-xl font-bold text-blue-400">M</span>
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 p-2.5">
+                      <img src="/platform-icons/meta.svg" alt="Meta" width={28} height={28} className="w-full h-full object-contain" />
                     </div>
-                    <h4 className="font-semibold text-white mb-1">Meta Ads</h4>
-                    <p className="text-xs text-slate-400">Kampanya + Reklam Seti + Reklam</p>
+                    <h4 className="font-semibold text-white mb-1">{t('metaAds')}</h4>
+                    <p className="text-xs text-slate-400">{t('metaAdsDesc')}</p>
                   </button>
                 )}
                 {connectedPlatforms.includes('Google') && (
@@ -200,11 +219,11 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                     onClick={() => handleSelectPlatform('Google')}
                     className="p-6 rounded-2xl border-2 border-[#1e2d45] hover:border-red-500/60 hover:bg-red-900/10 transition-all text-left"
                   >
-                    <div className="w-12 h-12 bg-red-900/30 rounded-xl flex items-center justify-center mb-3">
-                      <span className="text-xl font-bold text-red-400">G</span>
+                    <div className="w-12 h-12 bg-white rounded-xl flex items-center justify-center mb-3 p-2.5">
+                      <img src="/platform-icons/google-ads.svg" alt="Google Ads" width={28} height={28} className="w-full h-full object-contain" />
                     </div>
-                    <h4 className="font-semibold text-white mb-1">Google Ads</h4>
-                    <p className="text-xs text-slate-400">Kampanya + Ad Group + RSA</p>
+                    <h4 className="font-semibold text-white mb-1">{t('googleAds')}</h4>
+                    <p className="text-xs text-slate-400">{t('googleAdsDesc')}</p>
                   </button>
                 )}
               </div>
@@ -215,9 +234,9 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
           {step === 'generating' && (
             <div className="flex flex-col items-center justify-center py-16">
               <Loader2 className="w-10 h-10 text-emerald-400 animate-spin mb-4" />
-              <h3 className="text-lg font-semibold text-white mb-2">AI Reklam Önerisi Hazırlanıyor</h3>
+              <h3 className="text-lg font-semibold text-white mb-2">{t('generatingTitle')}</h3>
               <p className="text-sm text-slate-400 text-center max-w-sm">
-                Reklamlarınız analiz ediliyor → Rakipler inceleniyor → Kampanya yapısı oluşturuluyor…
+                {t('generatingDesc')}
               </p>
             </div>
           )}
