@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — SEO otomatik makale üretimi: Inngest bağımlılığı kaldırıldı (inline üretim)
+- **Sorun:** SEO Plus'ta zamanlama kaydedilmesine rağmen hiç makale üretilmiyordu (`yoai_articles` boş, `last_run_at: null`). Teşhis: saatlik cron `/api/cron/seo-article-run` çalışıyordu (`due:2, sent:2`) ama `mode:inngest` ile Inngest'e event gönderiyordu; Inngest Cloud prod'da function'ları sync etmediğinden event'ler hiçbir function'a ulaşmıyor, makale üretilmiyordu (150sn sonrası bile `last_error` null = function hiç başlamadı).
+- **Çözüm:** Cron handler'daki `isInngestReady()` fan-out guard'ı kaldırıldı; SEO üretimi her zaman cron gövdesinde **inline** çalışır (üret + görsel + yayınla). SEO akışı hafif ve idempotent (`last_run_date` ile günde bir) olduğundan Inngest kurulumuna bağımlı değil; Vercel 60s bütçesine sığmayan due'lar bir sonraki saatlik cron'da aynı gün telafi edilir.
+- **Dosyalar:** `app/api/cron/seo-article-run/route.ts`
+
 ## 2026-06-02 — Üç hata düzeltmesi: Email çok-adım validasyonu, CRM sayfa seçici flicker, SEO anahtar kelime kaybı
 - **Sorun:** (1) Email Marketing otomasyonunda 2.+ adıma konu/içerik yazılıp ilk adım boş bırakılınca "Konu ve içerik zorunlu" hatası alınıyordu — validasyon yalnız `steps[0]`'a bakıyordu. (2) CRM'de birden çok sayfa bağlıyken yenilemede önce ilk sayfa (alfabetik/insertion sırası) görünüp sonra doğru aktif sayfaya geçen flicker vardı — `activePageId` `null` başlayıp doğru değer `useEffect`'te sonradan set ediliyordu. (3) SEO Plus üretim ayarlarında anahtar kelime input'a yazılıp Enter'a basılmadan "Kaydet"e basılınca kelime kaydedilmiyor, yenilemede kayboluyordu.
 - **Çözüm:** (1) `handleSave` tüm adımları `findIndex` ile kontrol eder; eksik adım varsa o adıma odaklanıp uyarı verir. (2) `activePageId` lazy initializer ile `localStorage`'dan ilk render'da senkron okunur → bağlı sayfalar gelir gelmez doğru ad görünür, flicker yok. (3) `handleSave` input'taki commit edilmemiş kelimeyi de havuza dahil eder; ayrıca kayıt sonrası `keyword_pool` DB'nin döndürdüğü değerle senkronize edilir.

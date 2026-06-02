@@ -11,7 +11,6 @@
    ────────────────────────────────────────────────────────── */
 
 import { NextResponse } from 'next/server'
-import { inngest, isInngestReady } from '@/inngest/client'
 import { listEnabledSchedules } from '@/lib/seo/scheduleStore'
 import { isScheduleDue } from '@/lib/seo/timezone'
 import { runScheduleArticle } from '@/lib/seo/runScheduleArticle'
@@ -38,25 +37,20 @@ export async function GET(request: Request) {
     isScheduleDue(s.publish_time, s.timezone, s.frequency, s.weekday, s.last_run_date, now)
   )
 
-  console.log('[seo-cron] enabled:', schedules.length, 'due:', due.length, 'inngest:', isInngestReady())
+  console.log('[seo-cron] enabled:', schedules.length, 'due:', due.length)
 
   if (due.length === 0) {
     return NextResponse.json({ ok: true, due: 0, sent: 0 })
   }
 
-  // Inngest yapılandırılmışsa durable fan-out; aksi halde cron gövdesinde INLINE
-  // üret+yayınla — böylece otomatik akış Inngest kurulumuna BAĞIMLI OLMADAN çalışır.
-  if (isInngestReady()) {
-    const events = due.map((s) => ({
-      name: 'article/generate-publish.user' as const,
-      data: { scheduleId: s.id, userId: s.user_id },
-    }))
-    await inngest.send(events)
-    return NextResponse.json({ ok: true, mode: 'inngest', due: due.length, sent: events.length })
-  }
-
-  // INLINE fallback (Inngest yok). Vercel 60s sınırı için zaman bütçesiyle sırayla;
-  // yetişmeyen due'lar bir sonraki saatlik cron'da (catch-up penceresiyle) telafi edilir.
+  // INLINE üret+yayınla — cron gövdesinde doğrudan çalışır.
+  // NOT: Daha önce Inngest fan-out kullanılıyordu; ancak Inngest Cloud prod'da
+  // function'ları sync etmediğinden gönderilen event'ler işlenmiyor ve makale
+  // üretilmiyordu (cron 'mode:inngest' dönüp due>0 olsa bile çıktı yoktu). SEO
+  // üretimi hafif ve idempotent (last_run_date ile günde bir) olduğundan, Inngest
+  // kurulumuna BAĞIMLI OLMADAN cron gövdesinde inline çalıştırılır.
+  // Vercel 60s sınırı için zaman bütçesiyle sırayla; yetişmeyen due'lar bir sonraki
+  // saatlik cron'da (catch-up penceresiyle) AYNI GÜN telafi edilir.
   const startedAt = Date.now()
   const results: Array<Record<string, unknown>> = []
   for (const s of due) {
@@ -69,6 +63,6 @@ export async function GET(request: Request) {
     }
     if (Date.now() - startedAt > 45_000) break
   }
-  console.log('[seo-cron] inline ran:', results.length, '/', due.length)
+  console.log('[seo-cron] ran:', results.length, '/', due.length)
   return NextResponse.json({ ok: true, mode: 'inline', due: due.length, ran: results.length, results })
 }
