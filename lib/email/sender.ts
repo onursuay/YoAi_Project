@@ -14,13 +14,29 @@ const resend = process.env.RESEND_API_KEY ? new Resend(process.env.RESEND_API_KE
 export type SendVia = 'smtp' | 'domain' | 'shared'
 export type Dispatch = (to: string, subject: string, html: string) => Promise<string | null>
 
-/** Kullanıcı içeriği + zorunlu KVKK abonelikten-çık footer'ı + opsiyonel açılma pikseli. */
-export function buildHtml(body: string, unsubUrl: string, trackPixelUrl?: string): string {
+/**
+ * Kullanıcı içeriği + KVKK footer + opsiyonel açılma pikseli + opsiyonel link click tracking.
+ * clickTrackBase varsa body içindeki http(s) linkler tracking URL'ine sarılır.
+ * Unsubscribe footer linki footer'a doğrudan eklendiğinden sarılmaz.
+ */
+export function buildHtml(
+  body: string,
+  unsubUrl: string,
+  trackPixelUrl?: string,
+  clickTrackBase?: string,
+): string {
+  const processedBody = clickTrackBase
+    ? body.replace(
+        /href=(["'])(https?:\/\/[^"']+)\1/gi,
+        (_, q, url) => `href="${clickTrackBase}&url=${encodeURIComponent(url)}"`,
+      )
+    : body
+
   const pixel = trackPixelUrl
     ? `<img src="${trackPixelUrl}" width="1" height="1" style="display:none;opacity:0;max-height:1px;border:0;outline:0" alt="" />`
     : ''
   return `<!doctype html><html><body style="margin:0;padding:24px;font-family:Arial,Helvetica,sans-serif;color:#1f2937;line-height:1.6">
-${body}
+${processedBody}
 ${pixel}
 <hr style="margin-top:32px;border:none;border-top:1px solid #e5e7eb"/>
 <p style="font-size:12px;color:#9ca3af;margin-top:12px">Bu e-postaları almak istemiyorsanız <a href="${unsubUrl}" style="color:#9ca3af;text-decoration:underline">abonelikten çıkabilirsiniz</a>.</p>
@@ -126,7 +142,8 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
 
   for (const r of recipients) {
     const pixelUrl = `${APP_URL}/api/email/track/open?c=${encodeURIComponent(campaignId)}&e=${encodeURIComponent(r.email)}`
-    const html = buildHtml(campaign.html, unsubscribeUrl(APP_URL, campaignId, r.email), pixelUrl)
+    const clickBase = `${APP_URL}/api/email/track/click?c=${encodeURIComponent(campaignId)}&e=${encodeURIComponent(r.email)}`
+    const html = buildHtml(campaign.html, unsubscribeUrl(APP_URL, campaignId, r.email), pixelUrl, clickBase)
     const id = await dispatch(r.email, subject, html)
     sendRows.push({
       campaign_id: campaignId, user_id: userId, contact_id: r.contactId, email: r.email,

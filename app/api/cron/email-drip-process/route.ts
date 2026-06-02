@@ -50,9 +50,13 @@ export async function GET(request: Request) {
       const built = await buildDispatch(item.user_id)
       if (!built) { await markItemFailed(item.id); failed++; continue }
 
+      const pixelUrl = `${APP_URL}/api/email/track/open?q=${encodeURIComponent(item.id)}`
+      const clickBase = `${APP_URL}/api/email/track/click?q=${encodeURIComponent(item.id)}`
       const html = buildHtml(
         currentStep.html,
         unsubscribeUrl(APP_URL, 'automation', item.email),
+        pixelUrl,
+        clickBase,
       )
       const resendId = await built.dispatch(item.email, currentStep.subject || '(konusuz)', html)
 
