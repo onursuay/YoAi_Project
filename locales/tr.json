@@ -3156,6 +3156,27 @@
         "sourceCrm": "Kaynak: CRM",
         "sourceCsv": "Kaynak: CSV/Excel",
         "stagePrefix": "CRM Aşaması"
+      },
+      "detail": {
+        "back": "Kampanyalara Dön",
+        "sentAt": "Gönderildi",
+        "statSent": "Gönderilen",
+        "statOpened": "Açılma Oranı",
+        "statClicked": "Tıklama",
+        "statBounced": "Teslim Edilemedi",
+        "chartTitle": "Saatlik Açılmalar",
+        "chartEmpty": "Henüz açılma verisi yok.",
+        "chartNote": "Not: Bazı e-posta istemcileri resim yüklemeyi engeller; gerçek oran daha yüksek olabilir.",
+        "tableTitle": "Alıcılar",
+        "colEmail": "E-posta",
+        "colSent": "Gönderildi",
+        "colOpened": "Açıldı",
+        "colClicked": "Tıkladı",
+        "colBounced": "Teslim edilemedi",
+        "yes": "Evet",
+        "no": "Hayır",
+        "loading": "İstatistikler yükleniyor…",
+        "noData": "Veri yok"
       }
     },
     "sending": {

@@ -3156,6 +3156,27 @@
         "sourceCrm": "Source: CRM",
         "sourceCsv": "Source: CSV/Excel",
         "stagePrefix": "CRM Stage"
+      },
+      "detail": {
+        "back": "Back to Campaigns",
+        "sentAt": "Sent",
+        "statSent": "Sent",
+        "statOpened": "Open Rate",
+        "statClicked": "Clicks",
+        "statBounced": "Bounced",
+        "chartTitle": "Hourly Opens",
+        "chartEmpty": "No open data yet.",
+        "chartNote": "Note: Some email clients block image loading; the actual rate may be higher.",
+        "tableTitle": "Recipients",
+        "colEmail": "Email",
+        "colSent": "Sent",
+        "colOpened": "Opened",
+        "colClicked": "Clicked",
+        "colBounced": "Bounced",
+        "yes": "Yes",
+        "no": "No",
+        "loading": "Loading stats…",
+        "noData": "No data"
       }
     },
     "sending": {

@@ -2,9 +2,10 @@
 
 import { useCallback, useEffect, useMemo, useState } from 'react'
 import { useTranslations } from 'next-intl'
-import { Plus, Loader2, Send, Trash2, ArrowLeft, Users, Inbox, ShieldCheck, AlertCircle } from 'lucide-react'
+import { Plus, Loader2, Send, Trash2, ArrowLeft, Users, Inbox, ShieldCheck, AlertCircle, BarChart2 } from 'lucide-react'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
 import { STAGES } from '@/components/crm/stageMeta'
+import CampaignDetail from './CampaignDetail'
 
 type Segment = { type: 'all' } | { type: 'source'; source: string } | { type: 'crm_stage'; stage: string }
 
@@ -36,6 +37,7 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
   const [campaigns, setCampaigns] = useState<CampaignListItem[]>([])
   const [loading, setLoading] = useState(true)
   const [composing, setComposing] = useState(false)
+  const [detailId, setDetailId] = useState<string | null>(null)
 
   // composer
   const [editId, setEditId] = useState<string | null>(null)
@@ -133,6 +135,11 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
       sending: 'bg-primary/10 text-primary', sent: 'bg-emerald-50 text-emerald-700', failed: 'bg-red-50 text-red-700',
     }
     return <span className={`text-xs font-medium rounded-full px-2 py-0.5 ${map[s] || 'bg-gray-100 text-gray-600'}`}>{t(`campaigns.status.${s}`)}</span>
+  }
+
+  // ── Kampanya Detay Görünümü ──
+  if (detailId) {
+    return <CampaignDetail campaignId={detailId} onBack={() => setDetailId(null)} />
   }
 
   // ── Composer (sol form + sağ canlı önizleme) ──
@@ -261,8 +268,11 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
       ) : (
         <div className="space-y-3">
           {campaigns.map((c) => (
-            <div key={c.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center justify-between gap-4">
-              <div className="min-w-0">
+            <div key={c.id} className="bg-white rounded-2xl border border-gray-200 shadow-sm p-4 flex items-center justify-between gap-4 hover:shadow-md transition-all duration-300">
+              <button
+                onClick={() => c.status === 'sent' ? setDetailId(c.id) : undefined}
+                className={`min-w-0 flex-1 text-left ${c.status === 'sent' ? 'cursor-pointer' : 'cursor-default'}`}
+              >
                 <div className="flex items-center gap-2 flex-wrap">
                   <h3 className="text-sm font-semibold text-gray-900 truncate">{c.name}</h3>
                   {statusBadge(c.status)}
@@ -271,8 +281,19 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
                 {c.status === 'sent' && (
                   <p className="text-xs text-emerald-600 mt-1">{t('campaigns.sentStat', { sent: c.stats?.sent ?? 0, total: c.stats?.recipients ?? 0 })}</p>
                 )}
+              </button>
+              <div className="flex items-center gap-1 shrink-0">
+                {c.status === 'sent' && (
+                  <button
+                    onClick={() => setDetailId(c.id)}
+                    className="p-2 text-gray-400 hover:text-primary transition"
+                    title="İstatistikleri Görüntüle"
+                  >
+                    <BarChart2 className="w-4 h-4" />
+                  </button>
+                )}
+                <button onClick={() => handleDelete(c.id)} className="p-2 text-gray-300 hover:text-red-600 transition"><Trash2 className="w-4 h-4" /></button>
               </div>
-              <button onClick={() => handleDelete(c.id)} className="p-2 text-gray-300 hover:text-red-600 shrink-0"><Trash2 className="w-4 h-4" /></button>
             </div>
           ))}
         </div>

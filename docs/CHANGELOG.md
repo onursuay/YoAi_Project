@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — Email Marketing: Açılma takibi + kampanya detay istatistik sayfası
+- **Sorun:** Gönderilen kampanyalarda açılma/tıklama/teslim edilemedi istatistikleri takip edilmiyor ve gösterilmiyordu.
+- **Çözüm:** (1) Her gönderilen maile gizli 1x1 piksel eklendi (`buildHtml`); piksel yüklenince `/api/email/track/open` endpoint'i `email_events` tablosuna `opened` kaydı atar. (2) `/api/email/campaigns/[id]/stats` API'si: gönderim + olay verilerini birleştirip saatlik açılma dağılımı ve alıcı bazlı liste döndürür. (3) `CampaignDetail.tsx`: 4 özet kart (Gönderilen / Açılma Oranı / Tıklama / Bounced) + Recharts AreaChart (saatlik açılmalar) + alıcı tablosu (açıldı/tıkladı/bounced sütunları). (4) Kampanya listesinde gönderilmiş kampanyalara tıklanınca veya BarChart2 butonuyla detay açılır.
+- **Dosyalar:** `lib/email/sender.ts`, `app/api/email/track/open/route.ts`, `app/api/email/campaigns/[id]/stats/route.ts`, `components/email/CampaignDetail.tsx`, `components/email/CampaignsTab.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-02 — CRM: Lead'leri Çek + Sayfaları Yönet + Aşamalar tek primary toggle grubuna alındı
 - **Sorun:** Üç aksiyon butonu ayrı ayrı yerleştirilmişti; "Lead'leri Çek" primary renkli, diğer ikisi gri chip stilindeydi.
 - **Çözüm:** Üç buton tek `bg-primary/10` kapsayıcıda birleştirildi; her biri `bg-primary text-white` stiliyle eşit görünüme kavuştu.
