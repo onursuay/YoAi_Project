@@ -220,7 +220,7 @@ export default function CampaignDetail({
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} />
               <Tooltip
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: 12 }}
-                formatter={(v: number) => [v, 'Açılma']}
+                formatter={(v) => [v, 'Açılma']}
               />
               <Area
                 type="monotone"
