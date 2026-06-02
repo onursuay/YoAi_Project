@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — CRM: Lead'leri Çek + Sayfaları Yönet + Aşamalar tek primary toggle grubuna alındı
+- **Sorun:** Üç aksiyon butonu ayrı ayrı yerleştirilmişti; "Lead'leri Çek" primary renkli, diğer ikisi gri chip stilindeydi.
+- **Çözüm:** Üç buton tek `bg-primary/10` kapsayıcıda birleştirildi; her biri `bg-primary text-white` stiliyle eşit görünüme kavuştu.
+- **Dosyalar:** `components/crm/CrmDashboard.tsx`
+
 ## 2026-06-01 — CRM Sistemi: yeniden adlandırma, sayfa araması, yönetim grubu ve seçim hafızası
 - **Sorun:** (1) "CRM" modül adı sade bir başlık istendi; (2) "Sayfaları Yönet" ve "Aşamalar" iki ayrı butondu, tek belirgin grup içine alınması istendi; (3) Sayfa bağlama seçicide çok sayıda Facebook sayfası olunca arama yoktu; (4) Çoklu sayfa seçicide son seçilen sayfa, sayfa yenilenince ilk sayfaya dönüyordu (hafızaya alınmıyordu).
 - **Çözüm:** (1) Modül adı "CRM Sistemi" (TR) / "CRM System" (EN) olarak güncellendi — Topbar başlığı ve nav etiketleri. (2) "Sayfaları Yönet" + "Aşamalar" tek gri (`bg-gray-100`) kapsayıcıda, butonlar beyaz `shadow-sm` chip olarak belirgin. (3) `WizardSelect`'e opsiyonel `searchable` prop'u eklendi (default kapalı — mevcut/Meta-Google dropdown'ları etkilenmez), CRM sayfa seçicide aktif edildi; arama kutusu açılınca odaklanır, TR-duyarlı filtre + "Eşleşen sayfa yok" durumu. (4) Aktif sayfa seçimi `crm.activePageId` ile localStorage'a yazılıyor ve geçerliyse yenileme sonrası geri yükleniyor.

@@ -494,30 +494,30 @@ export default function CrmDashboard() {
                 <ListIcon className="w-4 h-4" /> {t('view.list')}
               </button>
             </div>
-            <button
-              onClick={handleSync}
-              disabled={syncing}
-              className="inline-flex items-center gap-1.5 px-3.5 py-2 rounded-xl bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition"
-            >
-              <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> {t('sync.button')}
-            </button>
-            {/* Yönetim grubu: Sayfaları Yönet + Aşamalar — tek gri kapsayıcı, butonlar beyaz chip olarak belirgin */}
-            <div className="inline-flex items-center gap-0.5 rounded-xl border border-gray-200 bg-gray-100 p-0.5">
+            {/* Aksiyon grubu: Lead'leri Çek + Sayfaları Yönet + Aşamalar — tek primary kapsayıcı */}
+            <div className="inline-flex items-center gap-0.5 rounded-xl border border-primary/30 bg-primary/10 p-0.5">
+              <button
+                onClick={handleSync}
+                disabled={syncing}
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 disabled:opacity-50 disabled:cursor-not-allowed transition active:scale-[0.97]"
+              >
+                <RefreshCw className={`w-4 h-4 ${syncing ? 'animate-spin' : ''}`} /> {t('sync.button')}
+              </button>
               <button
                 onClick={() => setShowConnectPanel(true)}
-                className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition"
+                className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition active:scale-[0.97]"
               >
                 <Plus className="w-4 h-4" /> {t('connect.managePages')}
               </button>
-              {/* Aşama (sütun) filtresi — yönetim grubunun sağ ucunda */}
+              {/* Aşama (sütun) filtresi */}
               <div ref={filterRef} className="relative">
                 <button
                   onClick={() => setFilterOpen((v) => !v)}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-white text-sm text-gray-700 shadow-sm hover:bg-gray-50 transition"
+                  className="inline-flex items-center gap-1.5 px-3.5 py-1.5 rounded-lg bg-primary text-white text-sm font-medium hover:bg-primary/90 transition active:scale-[0.97]"
                 >
                   <Filter className="w-4 h-4" /> {t('stageFilter')}
                   {hiddenStages.size > 0 && (
-                    <span className="text-xs text-primary font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
+                    <span className="text-xs text-white/80 font-medium">{STAGES.length - hiddenStages.size}/{STAGES.length}</span>
                   )}
                 </button>
                 {filterOpen && (
