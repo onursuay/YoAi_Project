@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkEmailAccess } from '@/lib/email/guard'
 import { upsertAutomation, deleteAutomation, type AutomationTrigger } from '@/lib/email/automationStore'
+import { replaceSteps, type StepInput } from '@/lib/email/automationStepsStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,7 +11,7 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
   if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
 
   const { id } = await params
-  let body: { name?: string; trigger?: AutomationTrigger; subject?: string; html?: string; enabled?: boolean }
+  let body: { name?: string; trigger?: AutomationTrigger; subject?: string; html?: string; enabled?: boolean; steps?: StepInput[] }
   try {
     body = await request.json()
   } catch {
@@ -19,6 +20,11 @@ export async function PATCH(request: Request, { params }: { params: Promise<{ id
 
   const row = await upsertAutomation(access.user.id, { id, ...body })
   if (!row) return NextResponse.json({ ok: false, error: 'not_found' }, { status: 404 })
+
+  if (body.steps !== undefined && row) {
+    const steps = Array.isArray(body.steps) ? (body.steps as StepInput[]) : []
+    await replaceSteps(id, steps)
+  }
 
   return NextResponse.json({ ok: true })
 }

@@ -1,6 +1,7 @@
 import { NextResponse } from 'next/server'
 import { checkEmailAccess } from '@/lib/email/guard'
 import { listAutomations, upsertAutomation, type AutomationTrigger } from '@/lib/email/automationStore'
+import { listSteps, replaceSteps, type StepInput } from '@/lib/email/automationStepsStore'
 
 export const dynamic = 'force-dynamic'
 
@@ -10,9 +11,8 @@ export async function GET() {
   if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
 
   const automations = await listAutomations(access.user.id)
-  return NextResponse.json({
-    ok: true,
-    automations: automations.map((a) => ({
+  const withSteps = await Promise.all(
+    automations.map(async (a) => ({
       id: a.id,
       name: a.name,
       trigger: a.trigger,
@@ -20,8 +20,10 @@ export async function GET() {
       html: a.html,
       enabled: a.enabled,
       createdAt: a.created_at,
-    })),
-  })
+      steps: await listSteps(a.id),
+    }))
+  )
+  return NextResponse.json({ ok: true, automations: withSteps })
 }
 
 /** POST /api/email/automations — yeni otomasyon. */
@@ -29,7 +31,7 @@ export async function POST(request: Request) {
   const access = await checkEmailAccess()
   if (!access.ok) return NextResponse.json({ ok: false, error: access.error }, { status: access.status })
 
-  let body: { name?: string; trigger?: AutomationTrigger; subject?: string; html?: string; enabled?: boolean }
+  let body: { name?: string; trigger?: AutomationTrigger; subject?: string; html?: string; enabled?: boolean; steps?: StepInput[] }
   try {
     body = await request.json()
   } catch {
@@ -44,6 +46,11 @@ export async function POST(request: Request) {
     enabled: body.enabled ?? true,
   })
   if (!row) return NextResponse.json({ ok: false, error: 'save_failed' }, { status: 500 })
+
+  const steps = Array.isArray(body.steps) ? (body.steps as StepInput[]) : []
+  if (steps.length > 0 && row) {
+    await replaceSteps(row.id, steps)
+  }
 
   return NextResponse.json({ ok: true, id: row.id })
 }
