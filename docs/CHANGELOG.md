@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — fix(email/webhook): Güvenlik ve kalite iyileştirmeleri
+- **Sorun:** Resend webhook route'unda timing-attack açığı, tip güvensizliği, null crash riski ve try-catch eksikliği vardı.
+- **Çözüm:** (1) Secret karşılaştırması `timingSafeEqual` ile güvenli hale getirildi. (2) `ResendWebhookEvent` interface eklendi, bounce tipi `'hard' | 'soft'` olarak daraltıldı. (3) `send.email` null check eklendi (crash önleme). (4) Supabase işlemleri try-catch içine alındı, hata loglanıp `ok: true` dönüyor.
+- **Dosyalar:** `app/api/email/webhooks/resend/route.ts`
+
 ## 2026-06-02 — Email: Resend Webhook — Bounce/Complaint Auto Opt-Out
 - **Sorun:** Resend'den gelen bounce ve şikayet (complaint) olayları işlenmiyordu; hard bounce veya şikayet olan alıcılar otomatik olarak opt-out yapılmıyordu.
 - **Çözüm:** `POST /api/email/webhooks/resend` endpoint'i eklendi. `?secret=` query parametresiyle `RESEND_WEBHOOK_SECRET` doğrulaması yapılır. `email.bounced` (hard) ve `email.complained` olaylarında `email_events` tablosuna kayıt atılır, `email_sends.status` güncellenir, `email_contacts.opt_out` ve `crm_leads.email_opt_out` alanları otomatik olarak true yapılır. `email.delivered` olayında da status `delivered` güncellenir. Ayrıca `email_sends` tablosuna `'complained'` status değeri eklendi.
