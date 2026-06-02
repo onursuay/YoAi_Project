@@ -4,7 +4,7 @@ import { buildDispatch, buildHtml } from './sender'
 import { unsubscribeUrl } from './unsubscribe'
 import { listEnabledAutomations, type AutomationRow, type AutomationTrigger } from './automationStore'
 import { listSteps } from './automationStepsStore'
-import { enqueueSteps } from './dripQueue'
+import { enqueueFirstStep } from './dripQueue'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
 
@@ -64,7 +64,7 @@ export async function runStageAutomations(
   for (const automation of matching) {
     const steps = await listSteps(automation.id)
     if (steps.length > 0) {
-      await enqueueSteps(userId, automation.id, steps, { email: lead.email, contactId: null })
+      await enqueueFirstStep(userId, automation.id, steps[0], { email: lead.email, contactId: null })
     } else {
       await sendToContact(userId, lead.email, [automation])
     }
@@ -82,7 +82,7 @@ export async function runContactAddedAutomations(
   for (const automation of matching) {
     const steps = await listSteps(automation.id)
     if (steps.length > 0) {
-      await enqueueSteps(userId, automation.id, steps, { email: contact.email, contactId: null })
+      await enqueueFirstStep(userId, automation.id, steps[0], { email: contact.email, contactId: null })
     } else {
       await sendToContact(userId, contact.email, [automation])
     }
