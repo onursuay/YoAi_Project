@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — feat(email/drip): Automation API Steps Desteği (GET list + POST/PATCH)
+- **Sorun:** Automation API endpoint'leri (GET list, POST yeni otomasyon, PATCH güncelleme) adım (steps) verisi döndürmüyor ve kaydetmiyordu.
+- **Çözüm:** `listSteps`, `replaceSteps`, `StepInput` import'ları eklendi. GET handler her otomasyonun adımlarını `Promise.all` ile paralel çeker ve `steps` alanıyla döner. POST handler body'deki `steps` dizisini `replaceSteps` ile kaydeder. PATCH handler body'de `steps` tanımlıysa yine `replaceSteps` ile günceller. TypeScript kontrolü: 0 hata.
+- **Dosyalar:** `app/api/email/automations/route.ts`, `app/api/email/automations/[id]/route.ts`
+
 ## 2026-06-02 — feat(email/drip): Drip Queue Altyapısı + Saatlik Cron Processor
 - **Sorun:** Email otomasyonları tek seferde tüm adımları gönderiyordu; zamanlı (delay_days) damla kampanyası (drip) desteği yoktu.
 - **Çözüm:** (1) `automationStepsStore.ts` — `email_automation_steps` tablosunu yönetir (listSteps, replaceSteps). (2) `dripQueue.ts` — `email_drip_queue` tablosuna adımları `scheduled_at` ile ekler; `getDueItems`, `markItemSent`, `markItemFailed` fonksiyonları. (3) `automationRunner.ts` güncellendi: adım varsa anında göndermek yerine kuyruğa alır; `isOptedOut` export edildi. (4) `/api/cron/email-drip-process` saatlik cron endpoint: zamanı gelen kuyruk öğelerini işler, gönderir, `email_sends` kaydeder. (5) `vercel.json`'a saatlik cron eklendi.
