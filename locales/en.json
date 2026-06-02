@@ -2179,7 +2179,9 @@
         "close": "Close",
         "publishConnError": "Connection error: {detail}",
         "publishInvalidResponse": "Invalid response: {detail}",
-        "publishGenericDone": "Operation completed"
+        "publishGenericDone": "Operation completed",
+        "statusPaused": "draft",
+        "statusEnabled": "active"
       }
     },
     "strateji": {

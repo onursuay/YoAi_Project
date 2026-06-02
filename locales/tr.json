@@ -2179,7 +2179,9 @@
         "close": "Kapat",
         "publishConnError": "Bağlantı hatası: {detail}",
         "publishInvalidResponse": "Geçersiz yanıt: {detail}",
-        "publishGenericDone": "İşlem tamamlandı"
+        "publishGenericDone": "İşlem tamamlandı",
+        "statusPaused": "taslak",
+        "statusEnabled": "aktif"
       }
     },
     "strateji": {

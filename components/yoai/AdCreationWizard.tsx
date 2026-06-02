@@ -1,13 +1,14 @@
 'use client'
 
 import { useState } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { X, Loader2, Sparkles, ChevronRight, ChevronLeft, CheckCircle, AlertTriangle } from 'lucide-react'
 import AdPreviewCard from './AdPreviewCard'
 import MetaPreflightPanel, { type PreflightConfirmPayload } from './MetaPreflightPanel'
 import MetaCreativePanel, { type MetaCreativePayload } from './MetaCreativePanel'
 import type { FullAdProposal } from '@/lib/yoai/adCreator'
 import type { Platform } from '@/lib/yoai/analysisTypes'
+import { translateEnum } from '@/lib/yoai/translations'
 
 interface Props {
   onClose: () => void
@@ -27,24 +28,9 @@ function normalizeMetaDestination(objective: string, destination: string): strin
   return destination
 }
 
-const OBJECTIVE_LABELS: Record<string, string> = {
-  OUTCOME_TRAFFIC: 'Trafik',
-  OUTCOME_ENGAGEMENT: 'Etkileşim',
-  OUTCOME_LEADS: 'Potansiyel Müşteri',
-  OUTCOME_SALES: 'Dönüşüm / Satış',
-  OUTCOME_AWARENESS: 'Marka Bilinirliği',
-  OUTCOME_APP_PROMOTION: 'Uygulama Tanıtımı',
-  TRAFFIC: 'Trafik',
-  CONVERSIONS: 'Dönüşüm',
-  ENGAGEMENT: 'Etkileşim',
-  MAXIMIZE_CONVERSIONS: 'Dönüşümleri Artır',
-  MAXIMIZE_CLICKS: 'Tıklamaları Artır',
-  TARGET_CPA: 'Hedef CPA',
-  TARGET_ROAS: 'Hedef ROAS',
-}
-
 export default function AdCreationWizard({ onClose, connectedPlatforms, initialProposal, onPublished }: Props) {
   const t = useTranslations('dashboard.yoai.adWizard')
+  const locale: 'tr' | 'en' = useLocale() === 'en' ? 'en' : 'tr'
   const [step, setStep] = useState<Step>(initialProposal ? 'preview' : 'platform')
   const [platform, setPlatform] = useState<Platform | null>(initialProposal?.platform as Platform || null)
   const [proposals, setProposals] = useState<FullAdProposal[]>(initialProposal ? [initialProposal] : [])
@@ -150,7 +136,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
       try { json = JSON.parse(text) } catch { json = { ok: false, error: t('publishInvalidResponse', { detail: text.slice(0, 200) }) } }
 
       const rawMsg = (json.message || json.error || t('publishGenericDone')) as string
-      const cleanMsg = rawMsg.replace(/\bPAUSED\b/g, 'taslak').replace(/\bENABLED\b/g, 'aktif')
+      const cleanMsg = rawMsg.replace(/\bPAUSED\b/g, t('statusPaused')).replace(/\bENABLED\b/g, t('statusEnabled'))
       setPublishResult({ ok: json.ok, message: cleanMsg })
       setStep('done')
       onPublished?.(!!json.ok)
@@ -347,7 +333,7 @@ export default function AdCreationWizard({ onClose, connectedPlatforms, initialP
                 {[
                   { label: t('fieldPlatform'), value: selected.platform },
                   { label: t('fieldCampaign'), value: selected.campaignName },
-                  { label: t('fieldObjective'), value: selected.objectiveLabel || (selected.campaignObjective ? OBJECTIVE_LABELS[selected.campaignObjective] || selected.campaignObjective : undefined) },
+                  { label: t('fieldObjective'), value: selected.objectiveLabel || (selected.campaignObjective ? translateEnum(selected.campaignObjective, locale, selected.platform === 'Google' ? 'google' : 'meta') : undefined) },
                   { label: t('fieldBudget'), value: selected.dailyBudget != null ? t('budgetPerDay', { amount: selected.dailyBudget }) : undefined },
                   { label: t('fieldAdGroup'), value: selected.adsetName },
                   { label: t('fieldHeadline'), value: selected.headlines?.[0] || selected.headline },
