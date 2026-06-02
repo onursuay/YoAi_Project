@@ -43,7 +43,7 @@ export default function PricingPlans() {
   }
 
   return (
-    <div className="max-w-[1400px] mx-auto">
+    <div className="max-w-[1240px] mx-auto">
       {/* Billing cycle toggle */}
       <div className="flex justify-center mb-10">
         <div className="inline-flex items-center gap-1 bg-white/[0.04] border border-white/[0.08] rounded-full p-1">
