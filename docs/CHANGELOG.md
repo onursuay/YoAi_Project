@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — Email Funnel: Koşul dropdown + sekme badge (UI)
+- **Sorun:** Otomasyon adımı formunda koşul (her zaman / önceki açıldıysa / açılmadıysa / tıklandıysa) seçimi yoktu; sekme butonlarından seçili koşul anlaşılamıyordu.
+- **Çözüm:** (1) `StepDraft` interface'ine `condition: { type }` eklendi. (2) `openNew`, `openEdit`, "+ Adım Ekle" default değerlerine `condition: { type: 'always' }` eklendi. (3) `handleSave` payload'ına condition dahil edildi. (4) Sekme butonlarına koşul badge'i (✓ açıldıysa / ✗ açılmadıysa / ↗ tıklandıysa) eklendi. (5) Aktif adım formunda (adım > 0) delay'den önce WizardSelect koşul dropdown'u eklendi. (6) `tr.json` + `en.json`: `automations.steps.condition` anahtarları eklendi. TypeScript: 0 hata.
+- **Dosyalar:** `components/email/AutomationsTab.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-02 — Email Funnel: Cron koşul değerlendirme + lazy next step enqueue
 - **Sorun:** Cron processor koşul değerlendirmesi (evaluateCondition), skipped durumu ve lazy next-step enqueue yapmıyordu; email_send_id geri yazılmıyordu.
 - **Çözüm:** `email-drip-process/route.ts` yeniden yazıldı: (1) her item için önce `getStep` ile adım içeriği alınır, (2) `evaluateCondition` koşulu değerlendirir, koşul sağlanmazsa `markItemSkipped`, (3) gönderim sonrası `email_sends` satırından `id` okunarak `setEmailSendId` ile queue item'a yazılır, (4) `getNextStep` + `enqueueNextStep` ile bir sonraki adım lazy kuyruğa eklenir. Response'a `skipped` sayacı eklendi.
