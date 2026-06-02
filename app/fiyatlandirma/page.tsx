@@ -76,12 +76,12 @@ export default async function FiyatlandirmaPage() {
       </section>
 
       {/* ═══════════ PLANS ═══════════ */}
-      <section className="w-full px-6 pb-14 md:pb-20">
+      <section className="w-full px-6 pb-4 md:pb-5">
         <PricingPlans />
       </section>
 
       {/* ═══════════ BOTTOM CTA ═══════════ */}
-      <section className="relative w-full px-6 py-14 md:py-20">
+      <section className="relative w-full px-6 pt-4 pb-14 md:pt-5 md:pb-20">
         <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[600px] h-[400px] rounded-full blur-[150px]" style={{ background: 'radial-gradient(ellipse, rgba(16,185,129,0.08), transparent 70%)' }} />
         </div>

@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-02 — Fiyatlandırma: plan notları ile alt CTA arası boşluk küçültüldü
+- **Sorun:** Plan kartları altındaki notlar ("* 14 gün ücretsiz deneme…") ile "Hemen başlamaya hazır mısınız?" başlığı arasındaki dikey boşluk aşırı fazlaydı (PLANS `pb-14 md:pb-20` + CTA `py-14 md:py-20` ≈ 112/160px).
+- **Çözüm:** Bu mesafe, hero alt metni ("Reklam hesabı sayınıza göre…") ile aylık/yıllık toggle arası referans boşluğuna (hero `pb-8 md:pb-10` = 32/40px) eşitlendi: PLANS `pb-4 md:pb-5`, CTA `pt-4 md:pt-5` (alt padding `pb-14 md:pb-20` korundu) — toplam 32/40px.
+- **Dosyalar:** `app/fiyatlandirma/page.tsx`
+
 ## 2026-06-02 — SEO otomatik makale üretimi: Inngest bağımlılığı kaldırıldı (inline üretim)
 - **Sorun:** SEO Plus'ta zamanlama kaydedilmesine rağmen hiç makale üretilmiyordu (`yoai_articles` boş, `last_run_at: null`). Teşhis: saatlik cron `/api/cron/seo-article-run` çalışıyordu (`due:2, sent:2`) ama `mode:inngest` ile Inngest'e event gönderiyordu; Inngest Cloud prod'da function'ları sync etmediğinden event'ler hiçbir function'a ulaşmıyor, makale üretilmiyordu (150sn sonrası bile `last_error` null = function hiç başlamadı).
 - **Çözüm:** Cron handler'daki `isInngestReady()` fan-out guard'ı kaldırıldı; SEO üretimi her zaman cron gövdesinde **inline** çalışır (üret + görsel + yayınla). SEO akışı hafif ve idempotent (`last_run_date` ile günde bir) olduğundan Inngest kurulumuna bağımlı değil; Vercel 60s bütçesine sığmayan due'lar bir sonraki saatlik cron'da aynı gün telafi edilir.
