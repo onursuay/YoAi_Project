@@ -1,8 +1,22 @@
+import { createHmac, timingSafeEqual } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
 
 const FALLBACK = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
+const CLICK_SECRET = process.env.UNSUBSCRIBE_SECRET || process.env.RESEND_API_KEY || ''
+
+function verifyClickSig(targetUrl: string, sig: string): boolean {
+  if (!CLICK_SECRET || !sig) return false
+  const expected = createHmac('sha256', CLICK_SECRET).update(targetUrl).digest('hex').slice(0, 16)
+  try {
+    const a = Buffer.from(expected)
+    const b = Buffer.from(sig.slice(0, 16))
+    return a.length === b.length && timingSafeEqual(a, b)
+  } catch {
+    return false
+  }
+}
 
 export async function GET(req: Request) {
   const url = new URL(req.url)
@@ -10,12 +24,17 @@ export async function GET(req: Request) {
   const email = url.searchParams.get('e')
   const queueItemId = url.searchParams.get('q')
   const targetUrl = url.searchParams.get('url')
+  const sig = url.searchParams.get('sig')
 
-  // Geçersiz veya tehlikeli hedef URL'leri reddet
-  const isSafeUrl = targetUrl && /^https?:\/\//i.test(targetUrl)
-  const destination = isSafeUrl ? targetUrl : FALLBACK
+  // Güvenlik: yalnız http(s) ve HMAC imzası geçerliyse redirect yap
+  const isHttpUrl = targetUrl != null && /^https?:\/\//i.test(targetUrl)
+  const sigValid = isHttpUrl && verifyClickSig(targetUrl!, sig ?? '')
 
-  if (supabase && isSafeUrl) {
+  if (!sigValid) {
+    return Response.redirect(FALLBACK, 302)
+  }
+
+  if (supabase) {
     try {
       let sendId: string | null = null
       let userId: string | null = null
@@ -53,5 +72,5 @@ export async function GET(req: Request) {
     }
   }
 
-  return Response.redirect(destination, 302)
+  return Response.redirect(targetUrl!, 302)
 }

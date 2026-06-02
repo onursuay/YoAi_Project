@@ -1,4 +1,5 @@
 import 'server-only'
+import { createHmac } from 'node:crypto'
 import { Resend } from 'resend'
 import { supabase } from '@/lib/supabase/client'
 import { getCampaign, markCampaign } from './campaignStore'
@@ -25,10 +26,14 @@ export function buildHtml(
   trackPixelUrl?: string,
   clickTrackBase?: string,
 ): string {
-  const processedBody = clickTrackBase
+  const clickSecret = process.env.UNSUBSCRIBE_SECRET || process.env.RESEND_API_KEY || ''
+  const processedBody = clickTrackBase && clickSecret
     ? body.replace(
         /href=(["'])(https?:\/\/[^"']+)\1/gi,
-        (_, q, url) => `href="${clickTrackBase}&url=${encodeURIComponent(url)}"`,
+        (_, _q, url) => {
+          const sig = createHmac('sha256', clickSecret).update(url).digest('hex').slice(0, 16)
+          return `href="${clickTrackBase}&url=${encodeURIComponent(url)}&sig=${sig}"`
+        },
       )
     : body
 
