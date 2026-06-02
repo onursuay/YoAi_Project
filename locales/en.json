@@ -2103,7 +2103,9 @@
         "rejectCancel": "CANCEL",
         "publishFailed": "Publishing failed",
         "loading": "Loading cards…",
-        "empty": "No improvement cards yet. Weekly analysis runs automatically Sunday night.",
+        "empty": "No improvement cards yet.",
+        "preparing": "Preparing your first analysis… cards will appear in a few minutes.",
+        "noCampaigns": "No active campaigns. Analysis starts automatically once you create a campaign.",
         "emptyDrilldown": "No cards at this level.",
         "emptyAds": "No separate ad suggestion for this ad set — applying the ad set suggestions above is enough.",
         "status": {

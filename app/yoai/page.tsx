@@ -532,7 +532,6 @@ export default function YoAiPage() {
               health={healthOverview}
               lastAnalysis={ccData?.lastAnalysis ?? null}
               loading={ccLoading}
-              aiGenerated={ccData?.aiGenerated ?? false}
               onCreateAd={() => setShowAdWizard(true)}
               approvalsPendingCount={approvalsPendingCount}
             />
@@ -540,6 +539,7 @@ export default function YoAiPage() {
             {/* YoAlgoritma Geliştirme Kartları (Faz 3) — hiyerarşik drill-down */}
             <HierarchicalImprovements
               refreshKey={improvementRefreshKey}
+              activeCampaigns={healthOverview?.activeCampaigns}
               onApprovePublish={(proposal, id) => {
                 setWizardProposal(proposal)
                 setApprovingImprovementId(id)

@@ -8,7 +8,6 @@ interface Props {
   health: DeepHealthOverview | null
   lastAnalysis: string | null
   loading: boolean
-  aiGenerated: boolean
   onCreateAd?: () => void
   /**
    * Faz 0D: gerçek yoai_pending_approvals.status='pending' count.

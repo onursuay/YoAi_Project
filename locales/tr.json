@@ -2103,7 +2103,9 @@
         "rejectCancel": "VAZGEÇ",
         "publishFailed": "Yayınlama başarısız oldu",
         "loading": "Kartlar yükleniyor…",
-        "empty": "Henüz geliştirme kartı yok. Haftalık analiz Pazar gece otomatik çalışır.",
+        "empty": "Henüz geliştirme kartı yok.",
+        "preparing": "İlk analiziniz hazırlanıyor… birkaç dakika içinde kartlar görünecek.",
+        "noCampaigns": "Aktif kampanya bulunmuyor. Kampanya oluşturduğunuzda analiz otomatik başlar.",
         "emptyDrilldown": "Bu seviyede kart yok.",
         "emptyAds": "Bu ad set için ayrı reklam önerisi üretilmedi — yukarıdaki ad set önerilerini uygulamanız yeterli.",
         "status": {
