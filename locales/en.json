@@ -3324,6 +3324,7 @@
       "namePlaceholder": "e.g. Welcome on Qualified stage",
       "triggerLabel": "Trigger",
       "triggerStage": "When entering a stage",
+      "triggerStageLabel": "When entering {stage} stage",
       "triggerContact": "When a new contact is added",
       "subject": "Subject",
       "content": "Content",

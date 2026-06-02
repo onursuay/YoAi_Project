@@ -67,7 +67,7 @@ export default function AutomationsTab({ flash, onManageSending }: { flash: (k: 
   useEffect(() => { load() }, [load])
 
   const trigOptions = useMemo(() => [
-    ...STAGES.map((s) => ({ value: `stage:${s}`, label: `${t('automations.triggerStage')}: ${tc(`stages.${s}`)}` })),
+    ...STAGES.map((s) => ({ value: `stage:${s}`, label: t('automations.triggerStageLabel', { stage: tc(`stages.${s}`) }) })),
     { value: 'contact', label: t('automations.triggerContact') },
   ], [t, tc])
 

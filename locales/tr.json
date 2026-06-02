@@ -3324,6 +3324,7 @@
       "namePlaceholder": "Örn. Uygun aşamasına hoşgeldin",
       "triggerLabel": "Tetikleyici",
       "triggerStage": "Bir aşamaya girince",
+      "triggerStageLabel": "{stage} aşamasına girince",
       "triggerContact": "Yeni kişi eklenince",
       "subject": "Konu",
       "content": "İçerik",
