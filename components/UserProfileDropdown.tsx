@@ -72,7 +72,7 @@ export default function UserProfileDropdown({ collapsed, hasGozetimAccess = fals
 
   const menuItems = [
     { label: t('hesabim'), icon: User, href: ROUTES.MY_ACCOUNT },
-    { label: 'İşletme Profili', icon: Briefcase, href: '/yoai/isletme-profili' },
+    { label: 'İşletme Profili', icon: Briefcase, href: '/yoalgoritma/isletme-profili' },
     { label: t('faturalarim'), icon: FileText, href: ROUTES.INVOICES },
     { label: t('abonelik'), icon: CreditCard, href: ROUTES.SUBSCRIPTION },
     { label: t('yardimMerkezi'), icon: HelpCircle, href: '#' },

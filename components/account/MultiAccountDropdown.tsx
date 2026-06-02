@@ -93,7 +93,7 @@ export default function MultiAccountDropdown({
     const inlineMulti = ['/optimizasyon', '/hedef-kitle']
     if (inlineMulti.some(p => pathname?.startsWith(p))) {
       window.location.href = `${pathname}?platform=${platform}`
-    } else if (pathname?.startsWith('/yoai')) {
+    } else if (pathname?.startsWith('/yoalgoritma')) {
       window.location.reload()
     } else if (platform === 'google') {
       window.location.href = '/google-ads'

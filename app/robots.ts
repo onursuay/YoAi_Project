@@ -23,7 +23,7 @@ export default function robots(): MetadataRoute.Robots {
         '/meta-ads',
         '/google-ads',
         '/tiktok-ads',
-        '/yoai',
+        '/yoalgoritma',
         '/seo',
         '/strateji',
         '/optimizasyon',

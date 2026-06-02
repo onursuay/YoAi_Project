@@ -73,7 +73,7 @@ export const navItems: NavItem[] = [
   {
     id: 'yoai',
     label: 'YoAi',
-    href: '/yoai',
+    href: '/yoalgoritma',
     icon: Sparkles,
   },
   {

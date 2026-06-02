@@ -250,7 +250,7 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
             <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
               <p className="text-sm text-gray-700">{t('noProfileUrl')}</p>
               <a
-                href="/yoai"
+                href="/yoalgoritma"
                 className="inline-flex items-center gap-1.5 mt-3 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700"
               >
                 {t('openProfile')} <ArrowRight className="w-3.5 h-3.5" />

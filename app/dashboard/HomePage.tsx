@@ -310,7 +310,7 @@ export default function HomePage() {
   const quickAccessItems = [
     { id: 'strateji', label: isEn ? 'Strategy' : 'Strateji', href: '/strateji', icon: Target, badge: 'AI' },
     { id: 'optimizasyon', label: isEn ? 'Optimization' : 'Optimizasyon', href: '/optimizasyon', icon: TrendingUp, badge: 'AI' },
-    { id: 'yoai', label: 'YoAi', href: '/yoai', icon: Sparkles },
+    { id: 'yoai', label: 'YoAi', href: '/yoalgoritma', icon: Sparkles },
     { id: 'hedefKitle', label: isEn ? 'Target Audience' : 'Hedef Kitle', href: '/hedef-kitle', icon: Users, badge: 'AI' },
     { id: 'tasarim', label: isEn ? 'Design' : 'Tasarım', href: '/tasarim', icon: ImageIcon, badge: 'AI' },
     { id: 'raporlar', label: isEn ? 'Reports' : 'Raporlar', href: '/raporlar', icon: FileText },

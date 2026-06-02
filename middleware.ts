@@ -12,6 +12,10 @@ const EN_TO_TR: Record<string, string> = {
   'design': 'tasarim',
   'reports': 'raporlar',
   'integration': 'entegrasyon',
+  'yoalgorithm': 'yoalgoritma',
+  'subscription': 'abonelik',
+  'account': 'hesabim',
+  'invoices': 'faturalarim',
   'terms-of-service': 'terms',
   'pricing': 'fiyatlandirma',
 }
@@ -24,6 +28,10 @@ const TR_TO_EN: Record<string, string> = {
   'tasarim': 'design',
   'raporlar': 'reports',
   'entegrasyon': 'integration',
+  'yoalgoritma': 'yoalgorithm',
+  'abonelik': 'subscription',
+  'hesabim': 'account',
+  'faturalarim': 'invoices',
   'gizlilik-politikasi': 'privacy-policy',
   'cerez-politikasi': 'cookie-policy',
   'kullanim-kosullari': 'terms-of-service',
@@ -34,8 +42,8 @@ const TR_TO_EN: Record<string, string> = {
 /** All app slugs that need /en/ prefix when locale=en (includes same-slug routes) */
 const APP_SLUGS = new Set([
   ...Object.keys(TR_TO_EN),
-  'meta-ads', 'google-ads', 'tiktok-ads', 'yoai', 'seo', 'dashboard',
-  'hesabim', 'abonelik', 'faturalarim',
+  'meta-ads', 'google-ads', 'tiktok-ads', 'seo', 'dashboard',
+  'crm', 'email-marketing',
 ])
 
 /**
