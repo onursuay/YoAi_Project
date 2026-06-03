@@ -46,6 +46,22 @@ export function getLocalParts(tz: string, at: Date = new Date()): LocalParts {
   }
 }
 
+export interface ScheduleDueInput {
+  publishTime: string
+  timezone: string
+  lastRunDate: string | null
+  scheduleMode?: string | null            // 'daily' | 'weekly_days' | 'monthly_days'
+  daysOfWeek?: number[] | null            // 0=Pazar..6=Cumartesi
+  daysOfMonth?: number[] | null           // 1..31
+  // legacy (schedule_mode yoksa kullanılır)
+  frequency?: 'daily' | 'weekdays' | 'weekly'
+  weekday?: number | null
+}
+
+function lastDayOfMonth(year: number, month1to12: number): number {
+  return new Date(year, month1to12, 0).getDate() // month1to12 ay sonu
+}
+
 /**
  * Schedule bu anda tetiklenmeli mi?
  *
@@ -53,29 +69,48 @@ export function getLocalParts(tz: string, at: Date = new Date()): LocalParts {
  * bugün geldi/geçti + bugün henüz çalışmadı" mantığı kullanır → kullanıcı yayın
  * saatini o günkü pencereden SONRA ayarlasa bile (ör. 23:14'ü 23:30'da kaydetse)
  * bir sonraki saatlik cron'da AYNI GÜN telafi edilir; ertesi güne sarkmaz.
+ *
+ * scheduleMode değerlerine göre gün uygunluğu:
+ *   'daily'        — her gün tetiklenir
+ *   'weekly_days'  — daysOfWeek listesindeki hafta günlerinde tetiklenir
+ *   'monthly_days' — daysOfMonth listesindeki ay günlerinde tetiklenir;
+ *                    kısa aylarda seçilen 29-31 → ayın son gününe clamp edilir
+ *   (boş/null)     — legacy: frequency ('daily'|'weekdays'|'weekly') + weekday alanı kullanılır
  */
-export function isScheduleDue(
-  publishTime: string,
-  timezone: string,
-  frequency: 'daily' | 'weekdays' | 'weekly',
-  weekday: number | null,
-  lastRunDate: string | null,
-  at: Date = new Date()
-): boolean {
-  const local = getLocalParts(timezone, at)
-  const [hStr, mStr] = publishTime.split(':')
-  const targetHour = parseInt(hStr ?? '9', 10)
-  const targetMinute = parseInt(mStr ?? '0', 10)
+export function isScheduleDue(input: ScheduleDueInput, at: Date = new Date()): boolean {
+  const local = getLocalParts(input.timezone, at)
+  const [hStr, mStr] = input.publishTime.split(':')
+  const targetMinutes = parseInt(hStr ?? '9', 10) * 60 + parseInt(mStr ?? '0', 10)
 
-  // Aynı yerel günde zaten çalıştıysa tekrar tetikleme (idempotency).
-  if (lastRunDate === local.date) return false
+  // Aynı yerel günde zaten çalıştıysa tekrar tetikleme.
+  if (input.lastRunDate === local.date) return false
 
-  // Frekans kontrolü — bugün uygun bir gün mü?
-  if (frequency === 'weekdays' && (local.weekday === 0 || local.weekday === 6)) return false
-  if (frequency === 'weekly' && weekday != null && local.weekday !== weekday) return false
+  const [yStr, moStr, dStr] = local.date.split('-')
+  const year = parseInt(yStr, 10)
+  const month = parseInt(moStr, 10)
+  const dayOfMonth = parseInt(dStr, 10)
 
-  // Yayın anı bugün geldi/geçti mi? (dakika dahil)
+  const mode = input.scheduleMode || ''
+  let dayOk: boolean
+
+  if (mode === 'weekly_days') {
+    dayOk = (input.daysOfWeek ?? []).includes(local.weekday)
+  } else if (mode === 'monthly_days') {
+    const dom = input.daysOfMonth ?? []
+    const lastDay = lastDayOfMonth(year, month)
+    // Kısa ayda 29-31 seçilmişse → ayın son gününe clamp.
+    dayOk = dom.some((d) => d === dayOfMonth || (d > lastDay && dayOfMonth === lastDay))
+  } else if (mode === 'daily') {
+    dayOk = true
+  } else {
+    // Legacy: schedule_mode yoksa eski frequency mantığı.
+    const freq = input.frequency ?? 'daily'
+    if (freq === 'weekdays' && (local.weekday === 0 || local.weekday === 6)) dayOk = false
+    else if (freq === 'weekly' && input.weekday != null && local.weekday !== input.weekday) dayOk = false
+    else dayOk = true
+  }
+  if (!dayOk) return false
+
   const nowMinutes = local.hour * 60 + local.minute
-  const targetMinutes = targetHour * 60 + targetMinute
   return nowMinutes >= targetMinutes
 }
