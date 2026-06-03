@@ -37,24 +37,42 @@ export async function GET(request: Request) {
     }
     const stamp = new Date().toISOString()
     const read = await supabase.from('site_content_briefs').select('site_connection_id,scan_status').limit(3)
-    const conn = await supabase.from('site_connections').select('id').eq('status', 'active').limit(1).maybeSingle()
-    let write: { error: string | null; rows: number } = { error: 'no_conn', rows: 0 }
+    const conn = await supabase
+      .from('site_connections')
+      .select('id,user_id,base_url')
+      .eq('status', 'active')
+      .limit(1)
+      .maybeSingle()
+
+    // Pipeline'ı try/catch ile çalıştır — gerçek hatayı/stack'i yakala.
+    let pipelineResult: unknown = null
+    let pipelineError: string | null = null
+    let rowAfter: unknown = null
     if (conn.data) {
-      const w = await supabase
+      const c = conn.data as { id: string; user_id: string; base_url: string }
+      try {
+        pipelineResult = await runSiteBriefPipeline(c.id, c.user_id)
+      } catch (e) {
+        pipelineError = `${(e as Error).message}\n${(e as Error).stack ?? ''}`.slice(0, 800)
+      }
+      const after = await supabase
         .from('site_content_briefs')
-        .update({ last_error: `diag_${stamp}` })
-        .eq('site_connection_id', (conn.data as { id: string }).id)
-        .select('id')
-      write = { error: w.error ? `${w.error.code}: ${w.error.message}` : null, rows: w.data?.length ?? 0 }
+        .select('scan_status,company_name,categories,last_error')
+        .eq('site_connection_id', c.id)
+        .maybeSingle()
+      rowAfter = after.data
     }
     return NextResponse.json({
       diag: true,
       supabaseRef: ref,
       keyInfo,
+      stamp,
       readError: read.error ? `${read.error.code}: ${read.error.message}` : null,
       readRows: read.data?.length ?? 0,
-      readSample: read.data ?? null,
-      writeProbe: write,
+      probedConn: conn.data ?? null,
+      pipelineResult,
+      pipelineError,
+      rowAfter,
     })
   }
 
