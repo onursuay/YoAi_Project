@@ -2,6 +2,8 @@ import { NextResponse } from 'next/server'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { listSchedules, upsertSchedule, type ScheduleFrequency } from '@/lib/seo/scheduleStore'
+import { getBriefByConnection } from '@/lib/seo/siteContentBriefStore'
+import { runSiteBriefPipeline } from '@/lib/seo/siteBriefPipeline'
 
 export const dynamic = 'force-dynamic'
 
@@ -65,5 +67,16 @@ export async function POST(request: Request) {
   })
 
   if (!schedule) return NextResponse.json({ ok: false, error: 'save_failed' }, { status: 500 })
+
+  // Hedef sitenin brief'i yoksa arka planda üret (fire-and-forget).
+  if (schedule.site_connection_id) {
+    const existing = await getBriefByConnection(schedule.site_connection_id)
+    if (!existing) {
+      void runSiteBriefPipeline(schedule.site_connection_id, userId).catch((e) =>
+        console.error('[schedules] BRIEF_TRIGGER_FAIL', (e as Error).message)
+      )
+    }
+  }
+
   return NextResponse.json({ ok: true, schedule }, { status: 201 })
 }

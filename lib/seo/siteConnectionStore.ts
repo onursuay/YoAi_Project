@@ -2,6 +2,7 @@ import 'server-only'
 import { supabase } from '@/lib/supabase/client'
 import { encryptSecret, decryptSecret, maskSecret } from './crypto'
 import type { SiteCredentials, SitePlatform } from './connectors/types'
+import { runSiteBriefPipeline } from '@/lib/seo/siteBriefPipeline'
 
 /**
  * site_connections tablosu için tek noktadan erişim katmanı.
@@ -269,7 +270,12 @@ export async function upsertConnection(
     console.error('[SiteConnectionStore] INSERT_FAIL', { user: shortUser(userId), message: error?.message })
     return null
   }
-  return toMasked(data as SiteConnectionRow)
+  // Yeni site bağlandı → içerik brief'ini arka planda üret (fire-and-forget).
+  const inserted = data as SiteConnectionRow
+  void runSiteBriefPipeline(inserted.id, userId).catch((e) =>
+    console.error('[SiteConnectionStore] BRIEF_TRIGGER_FAIL', (e as Error).message)
+  )
+  return toMasked(inserted)
 }
 
 /** Yalnız metadata günceller (label, isDefault) — gizli bilgiye dokunmaz. */
