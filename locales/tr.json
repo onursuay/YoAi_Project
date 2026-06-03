@@ -3008,7 +3008,17 @@
           "lastStatusSuccess": "Son çalışma: başarılı",
           "lastStatusError": "Son çalışma: hata",
           "lastStatusSkippedCredits": "Son çalışma: kredi yetersiz",
-          "lastStatusSkippedNoSite": "Son çalışma: site yok"
+          "lastStatusSkippedNoSite": "Son çalışma: site yok",
+          "scheduleMode": "Yayın takvimi",
+          "modeDaily": "Her gün",
+          "modeWeeklyDays": "Haftanın günleri",
+          "modeMonthlyDays": "Ayın günleri",
+          "selectDaysOfWeek": "Hangi günler yayınlansın?",
+          "selectDaysOfMonth": "Ayın hangi günleri?",
+          "targetCategories": "Hedef kategoriler",
+          "targetCategoriesHint": "Boş bırakırsanız tüm kategoriler arasında dönülür.",
+          "categoriesScanning": "Kategoriler taranıyor…",
+          "categoriesNone": "Henüz kategori bulunamadı (site taraması bekleniyor)."
         }
       },
       "lighthouse": {

@@ -3008,7 +3008,17 @@
           "lastStatusSuccess": "Last run: success",
           "lastStatusError": "Last run: error",
           "lastStatusSkippedCredits": "Last run: insufficient credits",
-          "lastStatusSkippedNoSite": "Last run: no site"
+          "lastStatusSkippedNoSite": "Last run: no site",
+          "scheduleMode": "Publishing schedule",
+          "modeDaily": "Every day",
+          "modeWeeklyDays": "Days of week",
+          "modeMonthlyDays": "Days of month",
+          "selectDaysOfWeek": "Which days to publish?",
+          "selectDaysOfMonth": "Which days of the month?",
+          "targetCategories": "Target categories",
+          "targetCategoriesHint": "Leave empty to rotate across all categories.",
+          "categoriesScanning": "Scanning categories…",
+          "categoriesNone": "No categories found yet (waiting for site scan)."
         }
       },
       "lighthouse": {
