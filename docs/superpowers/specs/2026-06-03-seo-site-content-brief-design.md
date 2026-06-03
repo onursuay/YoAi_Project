@@ -116,9 +116,13 @@ Mevcut `frequency` / `weekday` kolonları geriye uyum için bırakılır; yeni `
 
 Saat kontrolü (`publish_time`/`timezone`) ve günlük idempotency (`claimScheduleRun`/`last_run_date`) mevcut haliyle korunur.
 
-### 5. Anahtar kelime havuzu kalıcılığı
+### 5. Anahtar kelime havuzu kalıcılığı — KOD İNCELENDİ: zaten doğru
 
-DB'de havuz `[]` olduğundan, `components/seo/SeoAutomationPanel.tsx` → `POST /api/seo/schedules` kayıt akışı doğrulanır. "Yazılıp Enter'a basılmamış son kelime kaydedilmeden düşüyor" tipi bir UI kaybı varsa düzeltilir (kaydetmeden önce input'taki bekleyen kelimeyi havuza commit et). Bu, kullanıcının kelimesinin gerçekten kalıcı olmasını sağlar.
+`components/seo/SeoAutomationPanel.tsx` incelendi: havuz kalıcılığı **zaten sağlam** —
+- `addKeyword` (`:155-163`) kelime eklenince anında `handleSave(next)` ile kaydeder.
+- `handleSave` (`:104-115`) "Enter'a basılmamış bekleyen input'taki kelimeyi" de payload'a katar.
+
+Yani persistence bug'ı **yok**. DB'deki `keyword_pool: []`, kullanıcının "Koltuk Yıkama"yı hiç başarıyla eklememiş olduğunu gösterir (ekrandaki boş alanla tutarlı). **Bu bölümde kod değişikliği gerekmez** — kullanıcı kelimeyi ekleyince kalıcı olacaktır. Asıl düzeltme site-brief'tir: havuz boş kalsa bile AI artık ustasiniyolla.com'un kendi kimliğine göre yazar.
 
 ## Veri Akışı
 
