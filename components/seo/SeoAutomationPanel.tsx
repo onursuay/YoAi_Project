@@ -93,9 +93,17 @@ export default function SeoAutomationPanel() {
         setTimezone(s.timezone)
         setFrequency(s.frequency)
         if (s.weekday != null) setWeekday(s.weekday)
-        if (s.schedule_mode) setScheduleMode(s.schedule_mode)
-        if (Array.isArray(s.days_of_week)) setDaysOfWeek(s.days_of_week)
-        if (Array.isArray(s.days_of_month)) setDaysOfMonth(s.days_of_month)
+        if (s.schedule_mode) {
+          setScheduleMode(s.schedule_mode)
+          if (Array.isArray(s.days_of_week)) setDaysOfWeek(s.days_of_week)
+          if (Array.isArray(s.days_of_month)) setDaysOfMonth(s.days_of_month)
+        } else if (s.frequency === 'weekly' && s.weekday != null) {
+          setScheduleMode('weekly_days')
+          setDaysOfWeek([s.weekday])
+        } else if (s.frequency === 'weekdays') {
+          setScheduleMode('weekly_days')
+          setDaysOfWeek([1, 2, 3, 4, 5])
+        }
         if (Array.isArray(s.target_categories)) setTargetCategories(s.target_categories)
         setTone(s.tone)
         setWordCount(s.word_count)

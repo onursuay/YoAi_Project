@@ -25,7 +25,7 @@ export interface ArticleScheduleRow {
   word_count: number
   keyword_pool: string[]
   target_categories: string[]
-  schedule_mode: 'daily' | 'weekly_days' | 'monthly_days'
+  schedule_mode: 'daily' | 'weekly_days' | 'monthly_days' | null
   days_of_week: number[]
   days_of_month: number[]
   auto_publish: boolean

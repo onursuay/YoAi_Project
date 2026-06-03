@@ -51,13 +51,13 @@ export async function runSiteBriefPipeline(siteConnectionId: string, userId: str
 
   // 1) Tara (HTTP scrape; LLM yok)
   const scan = await scanBusinessSource({ source_type: 'website', source_url: baseUrl })
-  if (scan.scan_status === 'failed') {
+  if (scan.scan_status !== 'completed') {
     await upsertBrief(userId, siteConnectionId, {
       scan_status: 'failed',
-      last_error: scan.error_message ?? 'scan_failed',
+      last_error: scan.error_message ?? `scan_${scan.scan_status}`,
       scanned_at: new Date().toISOString(),
     })
-    return { ok: false, status: 'failed', error: scan.error_message ?? 'scan_failed' }
+    return { ok: false, status: 'failed', error: scan.error_message ?? `scan_${scan.scan_status}` }
   }
 
   // 2) Claude sentezi (yoksa deterministik scrape alanlarıyla 'partial')

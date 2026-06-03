@@ -59,8 +59,8 @@ CREATE POLICY "site_content_briefs_delete_own"
 ALTER TABLE public.article_schedules
   ADD COLUMN IF NOT EXISTS target_categories text[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.article_schedules
-  ADD COLUMN IF NOT EXISTS schedule_mode text NOT NULL DEFAULT 'daily'
-    CHECK (schedule_mode IN ('daily','weekly_days','monthly_days'));
+  ADD COLUMN IF NOT EXISTS schedule_mode text
+    CHECK (schedule_mode IS NULL OR schedule_mode IN ('daily','weekly_days','monthly_days'));
 ALTER TABLE public.article_schedules
   ADD COLUMN IF NOT EXISTS days_of_week int[] NOT NULL DEFAULT '{}';
 ALTER TABLE public.article_schedules
