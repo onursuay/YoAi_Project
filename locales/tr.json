@@ -3018,7 +3018,14 @@
           "targetCategories": "Hedef kategoriler",
           "targetCategoriesHint": "Boş bırakırsanız tüm kategoriler arasında dönülür.",
           "categoriesScanning": "Kategoriler taranıyor…",
-          "categoriesNone": "Henüz kategori bulunamadı (site taraması bekleniyor)."
+          "categoriesNone": "Henüz kategori bulunamadı (site taraması bekleniyor).",
+          "weekday0": "Pazar",
+          "weekday1": "Pazartesi",
+          "weekday2": "Salı",
+          "weekday3": "Çarşamba",
+          "weekday4": "Perşembe",
+          "weekday5": "Cuma",
+          "weekday6": "Cumartesi"
         }
       },
       "lighthouse": {

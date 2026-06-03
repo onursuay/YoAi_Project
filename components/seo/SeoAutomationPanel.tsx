@@ -207,7 +207,7 @@ export default function SeoAutomationPanel() {
     }
   }
 
-  const weekdays = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+  const weekdays = [0, 1, 2, 3, 4, 5, 6].map((i) => t(`weekday${i}` as Parameters<typeof t>[0]))
 
   if (loading) {
     return (
