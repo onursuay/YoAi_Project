@@ -242,12 +242,26 @@ export default function SeoAutomationPanel() {
         </div>
       ) : (
         <>
-      {/* Üretim modu: otomatik mi / manuel mi */}
-      <label className="flex items-center gap-2 cursor-pointer">
-        <input type="checkbox" checked={enabled} onChange={(e) => setEnabled(e.target.checked)} className="w-4 h-4 rounded accent-purple-600" />
-        <span className="text-sm font-medium text-gray-900">{enabled ? t('enabled') : t('disabled')}</span>
-      </label>
-      {!enabled && <p className="text-xs text-gray-500 leading-relaxed">{t('manualHint')}</p>}
+      {/* Üretim modu — net iki seçenek (segment kontrolü) */}
+      <div>
+        <div className="inline-flex rounded-xl border border-gray-200 p-1 bg-gray-50 shadow-[inset_0_1px_2px_rgba(0,0,0,0.04)]">
+          <button
+            type="button"
+            onClick={() => setEnabled(true)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${enabled ? 'bg-white text-primary shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'text-gray-600 hover:text-gray-900'}`}
+          >
+            {t('enabled')}
+          </button>
+          <button
+            type="button"
+            onClick={() => setEnabled(false)}
+            className={`px-4 py-2 rounded-lg text-sm font-medium transition-all ${!enabled ? 'bg-white text-primary shadow-[0_1px_3px_rgba(0,0,0,0.08)]' : 'text-gray-600 hover:text-gray-900'}`}
+          >
+            {t('disabled')}
+          </button>
+        </div>
+        {!enabled && <p className="text-xs text-gray-500 leading-relaxed mt-2">{t('manualHint')}</p>}
+      </div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
         {/* Site */}
@@ -271,7 +285,7 @@ export default function SeoAutomationPanel() {
             type="time"
             value={publishTime}
             onChange={(e) => setPublishTime(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/15 focus:border-primary"
+            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
           />
         </div>
 
@@ -301,7 +315,7 @@ export default function SeoAutomationPanel() {
                     key={i}
                     type="button"
                     onClick={() => setDaysOfWeek(on ? daysOfWeek.filter((x) => x !== i) : [...daysOfWeek, i])}
-                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${on ? 'bg-primary/8 text-primary border-primary' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`px-3.5 py-2 rounded-xl border text-sm font-medium transition-all ${on ? 'bg-primary/8 text-primary border-primary ring-2 ring-primary/20' : 'bg-white text-gray-700 border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] hover:border-gray-300'}`}
                   >
                     {d}
                   </button>
@@ -322,7 +336,7 @@ export default function SeoAutomationPanel() {
                     key={day}
                     type="button"
                     onClick={() => setDaysOfMonth(on ? daysOfMonth.filter((x) => x !== day) : [...daysOfMonth, day])}
-                    className={`h-8 rounded-md border text-sm transition-colors ${on ? 'bg-primary/8 text-primary border-primary' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                    className={`h-9 rounded-xl border text-sm font-medium transition-all ${on ? 'bg-primary/8 text-primary border-primary ring-2 ring-primary/20' : 'bg-white text-gray-700 border-gray-200 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] hover:border-gray-300'}`}
                   >
                     {day}
                   </button>
