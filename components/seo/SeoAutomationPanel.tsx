@@ -18,6 +18,10 @@ interface Schedule {
   site_connection_id: string | null
   enabled: boolean
   frequency: 'daily' | 'weekdays' | 'weekly'
+  schedule_mode?: 'daily' | 'weekly_days' | 'monthly_days' | null
+  days_of_week?: number[] | null
+  days_of_month?: number[] | null
+  target_categories?: string[] | null
   publish_time: string
   timezone: string
   weekday: number | null
@@ -50,6 +54,12 @@ export default function SeoAutomationPanel() {
   const [timezone, setTimezone] = useState(browserTz || 'Europe/Istanbul')
   const [frequency, setFrequency] = useState<'daily' | 'weekdays' | 'weekly'>('daily')
   const [weekday, setWeekday] = useState(1)
+  const [scheduleMode, setScheduleMode] = useState<'daily' | 'weekly_days' | 'monthly_days'>('daily')
+  const [daysOfWeek, setDaysOfWeek] = useState<number[]>([])
+  const [daysOfMonth, setDaysOfMonth] = useState<number[]>([])
+  const [targetCategories, setTargetCategories] = useState<string[]>([])
+  const [briefCategories, setBriefCategories] = useState<string[]>([])
+  const [briefStatus, setBriefStatus] = useState<string | null>(null)
   const [tone, setTone] = useState('Samimi')
   const [wordCount, setWordCount] = useState(500)
   const [autoPublish, setAutoPublish] = useState(true)
@@ -83,6 +93,18 @@ export default function SeoAutomationPanel() {
         setTimezone(s.timezone)
         setFrequency(s.frequency)
         if (s.weekday != null) setWeekday(s.weekday)
+        if (s.schedule_mode) {
+          setScheduleMode(s.schedule_mode)
+          if (Array.isArray(s.days_of_week)) setDaysOfWeek(s.days_of_week)
+          if (Array.isArray(s.days_of_month)) setDaysOfMonth(s.days_of_month)
+        } else if (s.frequency === 'weekly' && s.weekday != null) {
+          setScheduleMode('weekly_days')
+          setDaysOfWeek([s.weekday])
+        } else if (s.frequency === 'weekdays') {
+          setScheduleMode('weekly_days')
+          setDaysOfWeek([1, 2, 3, 4, 5])
+        }
+        if (Array.isArray(s.target_categories)) setTargetCategories(s.target_categories)
         setTone(s.tone)
         setWordCount(s.word_count)
         setAutoPublish(s.auto_publish)
@@ -95,6 +117,17 @@ export default function SeoAutomationPanel() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Site değişince brief kategorilerini çek
+  useEffect(() => {
+    if (!siteConnectionId) { setBriefCategories([]); setBriefStatus(null); return }
+    let cancelled = false
+    fetch(`/api/seo/brief?siteConnectionId=${siteConnectionId}`, { cache: 'no-store' })
+      .then((r) => r.json())
+      .then((d) => { if (!cancelled && d.ok) { setBriefCategories(d.brief?.categories ?? []); setBriefStatus(d.brief?.scan_status ?? null) } })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [siteConnectionId])
 
   // function declaration → hoisted; addKeyword/removeKeyword aşağıdan çağırabilir.
   async function handleSave(kwOverride?: string[]) {
@@ -122,6 +155,10 @@ export default function SeoAutomationPanel() {
         timezone,
         frequency,
         weekday: frequency === 'weekly' ? weekday : null,
+        scheduleMode,
+        daysOfWeek: scheduleMode === 'weekly_days' ? daysOfWeek : [],
+        daysOfMonth: scheduleMode === 'monthly_days' ? daysOfMonth : [],
+        targetCategories,
         tone,
         wordCount,
         autoPublish,
@@ -178,7 +215,7 @@ export default function SeoAutomationPanel() {
     }
   }
 
-  const weekdays = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi']
+  const weekdays = [0, 1, 2, 3, 4, 5, 6].map((i) => t(`weekday${i}` as Parameters<typeof t>[0]))
 
   if (loading) {
     return (
@@ -235,31 +272,60 @@ export default function SeoAutomationPanel() {
           />
         </div>
 
-        {/* Frequency */}
+        {/* Yayın takvimi modu */}
         <div>
-          <label className="block text-xs font-medium text-gray-600 mb-1">{t('frequency')}</label>
+          <label className="block text-xs font-medium text-gray-600 mb-1">{t('scheduleMode')}</label>
           <CustomSelect
-            value={frequency}
-            onChange={(v) => setFrequency(v as 'daily' | 'weekdays' | 'weekly')}
-            ariaLabel={t('frequency')}
+            value={scheduleMode}
+            onChange={(v) => setScheduleMode(String(v) as 'daily' | 'weekly_days' | 'monthly_days')}
+            ariaLabel={t('scheduleMode')}
             options={[
-              { value: 'daily', label: t('freqDaily') },
-              { value: 'weekdays', label: t('freqWeekdays') },
-              { value: 'weekly', label: t('freqWeekly') },
+              { value: 'daily', label: t('modeDaily') },
+              { value: 'weekly_days', label: t('modeWeeklyDays') },
+              { value: 'monthly_days', label: t('modeMonthlyDays') },
             ]}
           />
         </div>
 
-        {/* Weekday (weekly) */}
-        {frequency === 'weekly' && (
-          <div>
-            <label className="block text-xs font-medium text-gray-600 mb-1">{t('weekday')}</label>
-            <CustomSelect
-              value={weekday}
-              onChange={(v) => setWeekday(Number(v))}
-              ariaLabel={t('weekday')}
-              options={weekdays.map((d, i) => ({ value: i, label: d }))}
-            />
+        {scheduleMode === 'weekly_days' && (
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('selectDaysOfWeek')}</label>
+            <div className="flex flex-wrap gap-2">
+              {weekdays.map((d, i) => {
+                const on = daysOfWeek.includes(i)
+                return (
+                  <button
+                    key={i}
+                    type="button"
+                    onClick={() => setDaysOfWeek(on ? daysOfWeek.filter((x) => x !== i) : [...daysOfWeek, i])}
+                    className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${on ? 'bg-primary/8 text-primary border-primary' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                  >
+                    {d}
+                  </button>
+                )
+              })}
+            </div>
+          </div>
+        )}
+
+        {scheduleMode === 'monthly_days' && (
+          <div className="md:col-span-2">
+            <label className="block text-xs font-medium text-gray-600 mb-1">{t('selectDaysOfMonth')}</label>
+            <div className="grid grid-cols-7 gap-1.5">
+              {Array.from({ length: 31 }, (_, k) => k + 1).map((day) => {
+                const on = daysOfMonth.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setDaysOfMonth(on ? daysOfMonth.filter((x) => x !== day) : [...daysOfMonth, day])}
+                    className={`h-8 rounded-md border text-sm transition-colors ${on ? 'bg-primary/8 text-primary border-primary' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                  >
+                    {day}
+                  </button>
+                )
+              })}
+            </div>
           </div>
         )}
 
@@ -297,6 +363,33 @@ export default function SeoAutomationPanel() {
           <input type="checkbox" checked={autoPublish} onChange={(e) => setAutoPublish(e.target.checked)} className="w-4 h-4 rounded accent-purple-600" />
           <span className="text-sm text-gray-700">{t('autoPublish')}</span>
         </label>
+      </div>
+
+      {/* Hedef kategoriler (brief'ten) */}
+      <div>
+        <label className="block text-xs font-medium text-gray-600 mb-1">{t('targetCategories')}</label>
+        {briefStatus === 'running' || briefStatus === 'pending' ? (
+          <p className="text-sm text-gray-500">{t('categoriesScanning')}</p>
+        ) : briefCategories.length === 0 ? (
+          <p className="text-sm text-gray-500">{t('categoriesNone')}</p>
+        ) : (
+          <div className="flex flex-wrap gap-2">
+            {briefCategories.map((cat) => {
+              const on = targetCategories.includes(cat)
+              return (
+                <button
+                  key={cat}
+                  type="button"
+                  onClick={() => setTargetCategories(on ? targetCategories.filter((c) => c !== cat) : [...targetCategories, cat])}
+                  className={`px-3 py-1.5 rounded-lg border text-sm transition-colors ${on ? 'bg-emerald-50 text-emerald-700 border-emerald-200' : 'bg-white text-gray-700 border-gray-200 hover:bg-gray-50'}`}
+                >
+                  {cat}
+                </button>
+              )
+            })}
+          </div>
+        )}
+        <p className="text-xs text-gray-500 mt-1">{t('targetCategoriesHint')}</p>
       </div>
 
       {/* Keyword pool */}

@@ -34,7 +34,19 @@ export async function GET(request: Request) {
   const schedules = await listEnabledSchedules()
 
   const due = schedules.filter((s) =>
-    isScheduleDue(s.publish_time, s.timezone, s.frequency, s.weekday, s.last_run_date, now)
+    isScheduleDue(
+      {
+        publishTime: s.publish_time,
+        timezone: s.timezone,
+        lastRunDate: s.last_run_date,
+        scheduleMode: s.schedule_mode,
+        daysOfWeek: s.days_of_week,
+        daysOfMonth: s.days_of_month,
+        frequency: s.frequency,
+        weekday: s.weekday,
+      },
+      now
+    )
   )
 
   console.log('[seo-cron] enabled:', schedules.length, 'due:', due.length)

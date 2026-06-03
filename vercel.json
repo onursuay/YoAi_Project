@@ -31,6 +31,10 @@
     {
       "path": "/api/cron/email-drip-process",
       "schedule": "0 * * * *"
+    },
+    {
+      "path": "/api/cron/seo-brief-refresh",
+      "schedule": "0 2 1 * *"
     }
   ]
 }

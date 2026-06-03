@@ -24,6 +24,10 @@ export interface ArticleScheduleRow {
   tone: string
   word_count: number
   keyword_pool: string[]
+  target_categories: string[]
+  schedule_mode: 'daily' | 'weekly_days' | 'monthly_days' | null
+  days_of_week: number[]
+  days_of_month: number[]
   auto_publish: boolean
   generate_image: boolean
   last_run_at: string | null
@@ -46,6 +50,10 @@ export interface UpsertScheduleInput {
   tone?: string
   wordCount?: number
   keywordPool?: string[]
+  targetCategories?: string[]
+  scheduleMode?: 'daily' | 'weekly_days' | 'monthly_days'
+  daysOfWeek?: number[]
+  daysOfMonth?: number[]
   autoPublish?: boolean
   generateImage?: boolean
 }
@@ -101,6 +109,10 @@ export async function upsertSchedule(userId: string, input: UpsertScheduleInput)
   if (input.tone !== undefined) payload.tone = input.tone
   if (input.wordCount !== undefined) payload.word_count = input.wordCount
   if (input.keywordPool !== undefined) payload.keyword_pool = input.keywordPool
+  if (input.targetCategories !== undefined) payload.target_categories = input.targetCategories
+  if (input.scheduleMode !== undefined) payload.schedule_mode = input.scheduleMode
+  if (input.daysOfWeek !== undefined) payload.days_of_week = input.daysOfWeek
+  if (input.daysOfMonth !== undefined) payload.days_of_month = input.daysOfMonth
   if (input.autoPublish !== undefined) payload.auto_publish = input.autoPublish
   if (input.generateImage !== undefined) payload.generate_image = input.generateImage
 

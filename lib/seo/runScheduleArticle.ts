@@ -116,6 +116,8 @@ export async function runScheduleArticle(
   const topic = await selectDailyTopic(userId, {
     keywordPool: s.keyword_pool ?? [],
     language: lang,
+    siteConnectionId: site.id,
+    targetCategories: s.target_categories ?? [],
   })
 
   // 5) Makale üret (ANTHROPIC_API_KEY yoksa generateArticle throw eder)
