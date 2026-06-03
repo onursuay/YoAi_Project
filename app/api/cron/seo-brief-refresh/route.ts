@@ -27,6 +27,37 @@ export async function GET(request: Request) {
   }
   if (!supabase) return NextResponse.json({ ok: false, error: 'db_unavailable' }, { status: 503 })
 
+  // ── GEÇİCİ TEŞHİS (?diag=1) — prod yazma sorununu izole eder, sonra kaldırılacak.
+  if (new URL(request.url).searchParams.get('diag') === '1') {
+    const ref = (process.env.SUPABASE_URL || process.env.NEXT_PUBLIC_SUPABASE_URL || '').replace(/https:\/\/([^.]+).*/, '$1')
+    const keyInfo = {
+      has_SERVICE_ROLE_KEY: Boolean(process.env.SUPABASE_SERVICE_ROLE_KEY),
+      has_SERVICE_KEY: Boolean(process.env.SUPABASE_SERVICE_KEY),
+      has_ANON: Boolean(process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY),
+    }
+    const stamp = new Date().toISOString()
+    const read = await supabase.from('site_content_briefs').select('site_connection_id,scan_status').limit(3)
+    const conn = await supabase.from('site_connections').select('id').eq('status', 'active').limit(1).maybeSingle()
+    let write: { error: string | null; rows: number } = { error: 'no_conn', rows: 0 }
+    if (conn.data) {
+      const w = await supabase
+        .from('site_content_briefs')
+        .update({ last_error: `diag_${stamp}` })
+        .eq('site_connection_id', (conn.data as { id: string }).id)
+        .select('id')
+      write = { error: w.error ? `${w.error.code}: ${w.error.message}` : null, rows: w.data?.length ?? 0 }
+    }
+    return NextResponse.json({
+      diag: true,
+      supabaseRef: ref,
+      keyInfo,
+      readError: read.error ? `${read.error.code}: ${read.error.message}` : null,
+      readRows: read.data?.length ?? 0,
+      readSample: read.data ?? null,
+      writeProbe: write,
+    })
+  }
+
   const startedAt = Date.now()
   const targets: Array<{ id: string; user_id: string }> = []
 
