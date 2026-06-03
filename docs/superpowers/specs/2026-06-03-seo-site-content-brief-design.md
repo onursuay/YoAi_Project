@@ -26,9 +26,11 @@ SEO içeriğinin kimliğini **hedef sitenin kendisinden** türetmek; merkezi tek
 ## Kararlar (brainstorming çıktısı)
 
 1. **İçerik kimliği kaynağı:** Hedef site taranıp brief otomatik türetilir (merkezi profile bağlı değil).
-2. **Tarama zamanı:** Site bağlandığında ilk tarama + ondan sonra **aylık (ayda 1)** otomatik tazeleme.
+2. **Tarama zamanı:** Site bağlandığında ilk tarama + ondan sonra **aylık (ayda 1)** otomatik tazeleme. Halihazırda bağlı/aktif siteler ilk deploy'da **geri-doldurma (backfill)** ile taranır.
 3. **Brief derinliği:** Claude sentezi (zengin) — mevcut marka sentez hattı yeniden kullanılır.
-4. **Devreye alım:** Herkese canlı, güvenli fallback ile (flag yok). Brief yoksa/başarısızsa bugünkü profil+kelime mantığına düşer → sıfır regresyon.
+4. **Kategori hedefleme:** Brief sitedeki tüm hizmet/kategorileri otomatik çıkarır; kullanıcı UI'da hangilerine yazılacağını seçer (varsayılan: hepsi). Havuz boşken AI **seçili kategoriler arasında rotasyonla** konu üretir (hepsi zamanla kapsanır).
+5. **Yayın takvimi:** Mevcut Her gün / Hafta içi / Haftada bir yerine esnek model: **Her gün** kısayolu + **haftanın belirli günleri** (çoklu) + **ayın belirli günleri** (çoklu).
+6. **Devreye alım:** Herkese canlı, güvenli fallback ile (flag yok). Brief yoksa/başarısızsa bugünkü profil+kelime mantığına düşer → sıfır regresyon.
 
 ## Mimari
 
@@ -47,6 +49,7 @@ site_content_briefs
   brand_tone          text
   target_audience     text
   products_or_services text[]   default '{}'
+  categories          text[]    default '{}'  -- sitedeki hizmet/kategoriler (Kombi, Petek, Koltuk Yıkama…)
   keyword_themes      text[]    default '{}'
   content_angles      text[]    default '{}'
   audience_pains      text[]    default '{}'
@@ -59,11 +62,22 @@ site_content_briefs
 
 İndeksler: `(site_connection_id)` UNIQUE, `(user_id)`. Site silinince brief cascade silinir.
 
+### 1b. `article_schedules`'e eklenecek kolonlar (additive)
+
+```
+target_categories  text[]  default '{}'   -- kullanıcının seçtiği kategoriler; boş = hepsi
+schedule_mode      text    default 'daily' -- 'daily' | 'weekly_days' | 'monthly_days'
+days_of_week       int[]   default '{}'    -- 0=Pazar … 6=Cumartesi (weekly_days modunda)
+days_of_month      int[]   default '{}'    -- 1..31 (monthly_days modunda; 29-31 kısa ayda son güne clamp)
+```
+
+Mevcut `frequency` / `weekday` kolonları geriye uyum için bırakılır; yeni `schedule_mode` öncelikli okunur, yoksa eski alanlardan türetilir (geçiş için).
+
 ### 2. Brief üretim hattı — `lib/seo/siteBriefPipeline.ts` → `runSiteBriefPipeline(siteConnectionId, userId)`
 
 1. `site_connections.base_url` çözülür.
 2. Mevcut **`lib/yoai/businessSourceScanner.ts`** ile site sayfaları taranır (HTTP scrape, LLM yok).
-3. **Claude sentezi:** mevcut `runBrandProfilePipeline` / marka sentez deseni yeniden kullanılır; scrape edilen içerikten yapılandırılmış brief üretilir.
+3. **Claude sentezi:** mevcut `runBrandProfilePipeline` / marka sentez deseni yeniden kullanılır; scrape edilen içerikten yapılandırılmış brief üretilir. Sentez, sitenin menü/navigasyon ve sayfa başlıklarından **hizmet/kategori listesini** (`categories[]`) de çıkarır (örn. Kombi Servisi, Petek Temizleme, Koltuk Yıkama, Halı Yıkama, Klima Servisi).
 4. `site_content_briefs`'e upsert + `scan_status` güncellenir. Hata olursa `failed` + `last_error`, asla throw ile akışı kırmaz.
 
 İdempotent ve fire-and-forget güvenli.
@@ -73,19 +87,34 @@ site_content_briefs
 - **Site bağlanınca:** `POST /api/seo/site-connections` (veya mevcut bağlama endpoint'i) sonrası `runSiteBriefPipeline` fire-and-forget.
 - **Otomasyon kaydında:** `POST /api/seo/schedules` → hedef sitenin brief'i yoksa fire-and-forget tetikle.
 - **Aylık cron:** mevcut SEO cron altyapısına ek bir adım veya ayrı route → `scanned_at` 30 günden eski (veya `pending`/`failed`) brief'leri yeniden üretir. (Vercel cron; mevcut `app/api/cron/seo-article-run` deseniyle uyumlu ayrı/iç adım.)
+- **Backfill (ilk deploy):** Halihazırda bağlı/aktif tüm `site_connections` için brief yoksa bir kerelik tarama tetiklenir (idempotent — brief'i olan atlanır). Böylece ustasiniyolla.com gibi mevcut siteler hemen taranır.
 - **(Opsiyonel) On-demand:** İçerik brief kartında "Yeniden Tara" butonu → aynı pipeline.
 
 ### 4. Konu seçimi değişikliği — `lib/seo/topicSelector.ts`
 
-`selectDailyTopic(userId, opts)` imzasına `siteConnectionId?: string` eklenir. Yeni öncelik:
+`selectDailyTopic(userId, opts)` imzasına `siteConnectionId?: string` ve `targetCategories?: string[]` eklenir. Yeni öncelik:
 
 1. **Anahtar Kelime Havuzu doluysa → kullanıcının kelimesi her zaman kazanır** (`pickFromPool`, mevcut davranış korunur — orijinal şikayetin garantisi).
 2. `businessContext` kaynağı:
    - `siteConnectionId` verilmiş ve `site_content_briefs` kaydı `completed` ise → **site brief'inden** (`summary_text` + alanlar) kurulur.
    - Aksi halde (brief yok / `failed` / tablo boş) → **fallback:** mevcut `getProfileByUserId` + `getIntelligenceByUserId` mantığı (bugünkü davranış).
-3. Havuz boşsa → `aiSelectKeyword` site brief bağlamıyla çağrılır.
+3. Havuz boşsa → **kategori rotasyonu:**
+   - Aday kategoriler = `targetCategories` (boşsa brief'in `categories[]`'i; o da boşsa kategori yok → düz site bağlamı).
+   - `recentTitles` ile son makalelerde **en az kullanılmış** kategori seçilir (basit round-robin; başlık eşleştirme `includes` ile).
+   - `aiSelectKeyword` o kategoriye odaklı çağrılır (site brief bağlamı + "şu kategoriye yaz: X").
 
-`runScheduleArticle.ts:116` çağrısı `siteConnectionId: site.id` geçirecek şekilde güncellenir.
+`runScheduleArticle.ts:116` çağrısı `siteConnectionId: site.id` ve `targetCategories: s.target_categories` geçirecek şekilde güncellenir.
+
+### 4b. Yayın takvimi — `schedule_mode` ve `isScheduleDue`
+
+`lib/seo/scheduleStore.ts`'teki "bugün çalışmalı mı" mantığı (`isScheduleDue`) yeni modeli okur:
+
+- `daily` → her gün due.
+- `weekly_days` → bugünün yerel haftagünü `days_of_week` içinde ise due.
+- `monthly_days` → bugünün yerel ayın günü `days_of_month` içinde ise due (29-31 kısa ayda ayın son gününe clamp).
+- `schedule_mode` boşsa → eski `frequency`/`weekday`'den türet (geçiş uyumluluğu).
+
+Saat kontrolü (`publish_time`/`timezone`) ve günlük idempotency (`claimScheduleRun`/`last_run_date`) mevcut haliyle korunur.
 
 ### 5. Anahtar kelime havuzu kalıcılığı
 
@@ -95,14 +124,16 @@ DB'de havuz `[]` olduğundan, `components/seo/SeoAutomationPanel.tsx` → `POST 
 
 ```
 Site bağla ──▶ runSiteBriefPipeline ──▶ businessSourceScanner (scrape)
-                                     └─▶ Claude sentezi ──▶ site_content_briefs (completed)
+                                     └─▶ Claude sentezi ──▶ site_content_briefs (categories[], completed)
 
+İlk deploy ──▶ backfill: brief'i olmayan aktif siteler ──▶ runSiteBriefPipeline
 Aylık cron ──▶ scanned_at > 30g olanları ──▶ runSiteBriefPipeline (yeniden)
 
-Günlük makale (cron/inline):
-  runScheduleArticle ──▶ selectDailyTopic(userId, { keywordPool, siteConnectionId })
+Cron (saatlik) ──▶ isScheduleDue(schedule_mode: daily|weekly_days|monthly_days) ──▶ due ise:
+  runScheduleArticle ──▶ selectDailyTopic(userId, { keywordPool, siteConnectionId, targetCategories })
        ├─ havuz dolu  → kullanıcı kelimesi
-       └─ havuz boş   → AI(site brief bağlamı) | fallback(profil bağlamı)
+       └─ havuz boş   → kategori rotasyonu (seçili kategoriler) → AI(site brief bağlamı)
+                        | fallback(profil bağlamı, brief yoksa)
   ──▶ generateArticle(businessContext = site brief | fallback) ──▶ yayınla
 ```
 
@@ -116,14 +147,18 @@ Günlük makale (cron/inline):
 
 - `site_content_briefs` migration omddq'da doğrulanır (read-only probe + self-cleaning smoke), repo migration'ının uygulandığı teyit edilir.
 - `runSiteBriefPipeline` ustasiniyolla.com üzerinde çalıştırılıp brief'in gerçekten site kimliğini (kombi/petek/koltuk yıkama servis) yansıttığı doğrulanır — Belgemod sızması olmamalı.
-- `selectDailyTopic` birim davranışı: (a) havuz dolu → kullanıcı kelimesi; (b) brief var → site bağlamı; (c) brief yok → fallback profil.
+- `selectDailyTopic` birim davranışı: (a) havuz dolu → kullanıcı kelimesi; (b) brief var → site bağlamı; (c) brief yok → fallback profil; (d) havuz boş + kategoriler → rotasyon farklı kategorilere dağılıyor.
+- `isScheduleDue`: daily / weekly_days (seçili gün) / monthly_days (seçili gün + kısa ay clamp) doğru due hesaplıyor; eski `frequency` kayıtları hâlâ çalışıyor.
 - Havuz kalıcılığı: UI'dan kelime ekle + kaydet → DB'de `keyword_pool` dolu görünmeli.
+- Kategori çıkarımı: ustasiniyolla.com brief'i Kombi/Petek/Koltuk/Halı/Klima kategorilerini yakalamalı.
 
 ## UI / i18n
 
 - Yeni metinler **`locales/tr.json` + `locales/en.json`** ikisine birden, aynı key path.
 - İçerik brief durum kartı/etiketleri proje standardı: `max-w-7xl`, `animate-card-enter`, no-amber palet, dropdown gerekiyorsa `WizardSelect`.
 - `scan_status` gösterimi mevcut tarama etiketleriyle tutarlı (Taranıyor… / Tarandı / Kısmi / başarısız).
+- **Kategori seçimi:** Üretim Ayarları'nda, brief'ten gelen kategoriler checkbox/chip listesi olarak gösterilir; kullanıcı hangilerine yazılacağını işaretler (varsayılan hepsi seçili). Brief henüz hazır değilse "Kategoriler taranıyor…" durumu gösterilir.
+- **Yayın takvimi seçici:** "Her gün" / "Haftanın günleri" / "Ayın günleri" mod seçimi; haftanın günleri çoklu toggle (Pzt…Paz), ayın günleri çoklu (1…31) grid. `WizardSelect` + chip toggle deseni; amber yok.
 
 ## Kapsam Dışı (YAGNI)
 
@@ -133,5 +168,5 @@ Günlük makale (cron/inline):
 
 ## Etkilenecek Dosyalar (tahmini)
 
-- **Yeni:** `supabase/migrations/<ts>_create_site_content_briefs.sql`, `lib/seo/siteContentBriefStore.ts`, `lib/seo/siteBriefPipeline.ts`, aylık cron route (veya mevcut cron'a adım).
-- **Değişen:** `lib/seo/topicSelector.ts`, `lib/seo/runScheduleArticle.ts`, site bağlama endpoint'i + `POST /api/seo/schedules` (fire-and-forget tetik), `components/seo/SeoAutomationPanel.tsx` (havuz kalıcılığı), gerekirse içerik brief kartı bileşeni, `locales/tr.json` + `locales/en.json`.
+- **Yeni:** `supabase/migrations/<ts>_create_site_content_briefs.sql` (+ `article_schedules`'e additive kolonlar), `lib/seo/siteContentBriefStore.ts`, `lib/seo/siteBriefPipeline.ts`, aylık cron + backfill route (veya mevcut cron'a adım), gerekirse kategori-seçici ve takvim-seçici bileşenleri.
+- **Değişen:** `lib/seo/topicSelector.ts` (site brief + kategori rotasyonu), `lib/seo/runScheduleArticle.ts` (siteConnectionId + targetCategories geçişi), `lib/seo/scheduleStore.ts` (`schedule_mode`/`days_of_week`/`days_of_month` + `isScheduleDue`), site bağlama endpoint'i + `POST /api/seo/schedules` (fire-and-forget tetik + yeni alanlar), `app/api/cron/seo-article-run` (yeni due mantığı), `components/seo/SeoAutomationPanel.tsx` (havuz kalıcılığı + kategori + takvim UI), `locales/tr.json` + `locales/en.json`.
