@@ -1,67 +1,9 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
-import { useTranslations, useLocale } from 'next-intl'
-import { Loader2, Zap, Save, X, CheckCircle2, Clock, ChevronLeft, ChevronRight } from 'lucide-react'
+import { useTranslations } from 'next-intl'
+import { Loader2, Zap, Save, X, CheckCircle2, Clock } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
-
-/* ═══════ Ayın günleri — gerçek takvim seçici (Reklam alanı DateRangePicker stiliyle) ═══════ */
-
-const CAL_DAYS_TR = ['Pt', 'Sa', 'Ça', 'Pe', 'Cu', 'Ct', 'Pz']
-const CAL_DAYS_EN = ['Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa', 'Su']
-const CAL_MONTHS_TR = ['Ocak', 'Şubat', 'Mart', 'Nisan', 'Mayıs', 'Haziran', 'Temmuz', 'Ağustos', 'Eylül', 'Ekim', 'Kasım', 'Aralık']
-const CAL_MONTHS_EN = ['January', 'February', 'March', 'April', 'May', 'June', 'July', 'August', 'September', 'October', 'November', 'December']
-
-function MonthDayCalendar({ selected, onToggle, isEn }: { selected: number[]; onToggle: (d: number) => void; isEn: boolean }) {
-  const DAY_NAMES = isEn ? CAL_DAYS_EN : CAL_DAYS_TR
-  const MONTH_NAMES = isEn ? CAL_MONTHS_EN : CAL_MONTHS_TR
-  const now = new Date()
-  const [vy, setVy] = useState(now.getFullYear())
-  const [vm, setVm] = useState(now.getMonth())
-
-  const daysInMonth = new Date(vy, vm + 1, 0).getDate()
-  let startDow = new Date(vy, vm, 1).getDay() - 1 // Pazartesi = 0
-  if (startDow < 0) startDow = 6
-  const cells: (number | null)[] = []
-  for (let i = 0; i < startDow; i++) cells.push(null)
-  for (let d = 1; d <= daysInMonth; d++) cells.push(d)
-
-  const prev = () => { if (vm === 0) { setVm(11); setVy(vy - 1) } else setVm(vm - 1) }
-  const next = () => { if (vm === 11) { setVm(0); setVy(vy + 1) } else setVm(vm + 1) }
-
-  return (
-    <div className="inline-block rounded-xl border border-gray-200 p-3 shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)]">
-      <div className="flex items-center justify-between mb-2">
-        <button type="button" onClick={prev} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-          <ChevronLeft className="w-4 h-4 text-gray-500" />
-        </button>
-        <span className="text-sm font-semibold text-gray-700">{MONTH_NAMES[vm]} {vy}</span>
-        <button type="button" onClick={next} className="p-1 hover:bg-gray-100 rounded-lg transition-colors">
-          <ChevronRight className="w-4 h-4 text-gray-500" />
-        </button>
-      </div>
-      <div className="grid grid-cols-7 gap-1">
-        {DAY_NAMES.map((d) => (
-          <div key={d} className="w-9 text-xs text-gray-400 text-center py-1 font-medium">{d}</div>
-        ))}
-        {cells.map((d, i) =>
-          d === null ? (
-            <div key={`e-${i}`} className="h-9" />
-          ) : (
-            <button
-              key={d}
-              type="button"
-              onClick={() => onToggle(d)}
-              className={`h-9 w-9 text-sm rounded-lg transition-colors ${selected.includes(d) ? 'bg-emerald-500 text-white font-semibold shadow-sm' : 'text-gray-700 hover:bg-gray-100'}`}
-            >
-              {d}
-            </button>
-          )
-        )}
-      </div>
-    </div>
-  )
-}
 
 /* ═══════ Types ═══════ */
 
@@ -96,7 +38,6 @@ interface Schedule {
 export default function SeoAutomationPanel() {
   const tArt = useTranslations('dashboard.seo.articles')
   const t = useTranslations('dashboard.seo.articles.automation')
-  const isEn = useLocale() === 'en'
 
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
@@ -405,12 +346,25 @@ export default function SeoAutomationPanel() {
         {scheduleMode === 'monthly_days' && (
           <div className="md:col-span-2">
             <label className="block text-xs font-medium text-gray-600 mb-1">{t('selectDaysOfMonth')}</label>
-            <MonthDayCalendar
-              isEn={isEn}
-              selected={daysOfMonth}
-              onToggle={(d) => setDaysOfMonth(daysOfMonth.includes(d) ? daysOfMonth.filter((x) => x !== d) : [...daysOfMonth, d])}
-            />
-            <p className="text-xs text-gray-500 mt-2 leading-relaxed">{t('monthlyClampHint')}</p>
+            <div className="grid grid-cols-7 gap-1.5 max-w-md">
+              {Array.from({ length: 31 }, (_, k) => k + 1).map((day) => {
+                const on = daysOfMonth.includes(day)
+                return (
+                  <button
+                    key={day}
+                    type="button"
+                    onClick={() => setDaysOfMonth(on ? daysOfMonth.filter((x) => x !== day) : [...daysOfMonth, day])}
+                    className={`h-9 rounded-lg text-sm font-medium transition-colors ${on ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
+                  >
+                    {day}
+                  </button>
+                )
+              })}
+            </div>
+            {daysOfMonth.length > 0 && (
+              <p className="text-xs text-emerald-700 mt-2 font-medium">{t('selectedDaysList', { days: [...daysOfMonth].sort((a, b) => a - b).join(', ') })}</p>
+            )}
+            <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{t('monthlyClampHint')}</p>
           </div>
         )}
           </>
