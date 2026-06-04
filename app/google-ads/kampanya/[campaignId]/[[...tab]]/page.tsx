@@ -1,9 +1,9 @@
 'use client'
 
-import { useState } from 'react'
 import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft } from 'lucide-react'
 import Tabs from '@/components/Tabs'
+import { usePathTab } from '@/hooks/usePathTab'
 import { useGoogleCampaignDetail } from '@/hooks/google/useGoogleCampaignDetail'
 import CampaignOverviewTab from '@/components/google/detail/CampaignOverviewTab'
 import CampaignSearchTermsTab from '@/components/google/detail/CampaignSearchTermsTab'
@@ -25,7 +25,8 @@ export default function CampaignDetailPage() {
   const params = useParams()
   const router = useRouter()
   const campaignId = params.campaignId as string
-  const [activeTab, setActiveTab] = useState('overview')
+  // Sekme durumu URL path'inden türetilir (/google-ads/kampanya/<id>/<sekme>)
+  const { activeTab, setTab } = usePathTab('google-ads-detay', { segmentParam: 'tab', idParam: 'campaignId' })
 
   const data = useGoogleCampaignDetail(campaignId)
 
@@ -72,7 +73,7 @@ export default function CampaignDetailPage() {
         ) : (
           <div className="p-6 space-y-4">
             <div className="bg-white rounded-xl border border-gray-200">
-              <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setActiveTab} />
+              <Tabs tabs={tabs} activeTab={activeTab} onTabChange={setTab} />
 
               {activeTab === 'overview' && data.detail && (
                 <CampaignOverviewTab detail={data.detail} />

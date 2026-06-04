@@ -26,12 +26,14 @@ import { RefreshCw, Pencil, Trash2, Copy, Search, Eye, EyeOff, X } from 'lucide-
 import { useGoogleAdsKpis } from '@/hooks/google/useGoogleAdsKpis'
 import { useGoogleAdsCampaigns } from '@/hooks/google/useGoogleAdsCampaigns'
 import { useGoogleAdsConnection } from '@/hooks/google/useGoogleAdsConnection'
+import { usePathTab } from '@/hooks/usePathTab'
 
 export default function GooglePage() {
   const t = useTranslations('dashboard.google')
   const tTable = useTranslations('dashboard.meta')
   const locale = useLocale()
-  const [activeTab, setActiveTab] = useState('kampanyalar')
+  // Sekme durumu URL path'inden türetilir (/google-ads/<sekme>) — yalnız sunum katmanı
+  const { activeTab, setTab: setActiveTab } = usePathTab('google-ads')
   const [toasts, setToasts] = useState<Array<{ id: string; message: string; type: ToastType }>>([])
   const [showWizard, setShowWizard] = useState(false)
   const [showPMaxWizard, setShowPMaxWizard] = useState(false)

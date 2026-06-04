@@ -236,7 +236,7 @@ export default function GoogleTableReal({
                         <td key={col.key} className="px-4 py-4 text-sm">
                           <div className="flex items-center gap-2 group/name">
                             <Link
-                              href={`/google-ads/${campaign.campaignId}`}
+                              href={`/google-ads/kampanya/${campaign.campaignId}`}
                               className="text-ui text-gray-900 hover:text-green-700 hover:underline transition-colors"
                             >
                               {campaign.campaignName}

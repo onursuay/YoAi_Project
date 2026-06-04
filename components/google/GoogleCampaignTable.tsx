@@ -83,7 +83,7 @@ export default function GoogleCampaignTable({
             </td>
             <td className="px-4 py-4 text-sm text-gray-900">
               <Link
-                href={`/google-ads/${item.campaignId}`}
+                href={`/google-ads/kampanya/${item.campaignId}`}
                 className="hover:text-green-700 hover:underline transition-colors"
               >
                 {item.campaignName}
