@@ -5,19 +5,28 @@
  * eşlemesiyle tek noktada tanımlanır. Her sekme gerçek bir alt-rota (path
  * segment) olarak URL'ye yansır — örn. `/hedef-kitle/meta/detayli-kitle`.
  *
- * Önemli i18n notu: middleware (bkz. middleware.ts / lib/routes.ts) yalnızca
- * yolun İLK slug'ını çevirir (`/en/target-audience/...` → `/hedef-kitle/...`).
- * Bu yüzden alt-segment slug'ları **locale-agnostic** (TR=EN ortak) tutulur;
- * `meta`, `kampanyalar`, `detayli-kitle` her iki dilde de aynıdır.
+ * i18n (locale-aware slug):
+ * - Her sekmenin TR slug'ı (`slug`) ve opsiyonel EN slug'ı (`slugEn`) vardır.
+ *   TR arayüzde Türkçe slug, EN arayüzde İngilizce slug üretilir.
+ * - Modülün İLK slug'ı (örn. hedef-kitle ↔ target-audience) middleware/localePath
+ *   ile çevrilir (bkz. lib/routes.ts). Alt-segmentler catch-all rotalarda
+ *   yakalandığı için herhangi bir slug'ı taşıyabilir; `slugToTabId` hem TR hem EN
+ *   slug'ı tanır (tolerant), böylece rota her iki dilde de çözülür.
+ * - Sabit (literal) rota segmentleri (örn. google-ads detayındaki `kampanya`)
+ *   dosya sistemiyle eşleştiği için ÇEVRİLMEZ; her iki dilde aynı kalır.
+ * - Marka/özel ad slug'ları (meta, google, tiktok, kampanyalar) çevrilse de
+ *   anlamlıdır; gerekli yerlerde slugEn verilir.
  */
 
-import { SLUG_EN_TO_TR } from '@/lib/routes'
+import { SLUG_TR_TO_EN, SLUG_EN_TO_TR } from '@/lib/routes'
 
 export type TabRouteKind = 'simple' | 'platform' | 'dynamic'
 
 export interface TabDef {
-  /** URL'de görünen segment (locale-agnostic). */
+  /** TR URL slug'ı. */
   slug: string
+  /** EN URL slug'ı (verilmezse `slug` kullanılır). */
+  slugEn?: string
   /** Bileşen içi tab kimliği (mevcut state değerleriyle birebir). */
   id: string
   /** Opsiyonel i18n etiket anahtarı. */
@@ -44,10 +53,10 @@ export const TAB_ROUTES = {
     defaultPlatform: 'meta',
     defaultTab: 'SAVED',
     tabs: [
-      { slug: 'ai-kitle', id: 'AI', labelKey: 'dashboard.hedefKitle.tabs.ai' },
-      { slug: 'detayli-kitle', id: 'SAVED', labelKey: 'dashboard.hedefKitle.tabs.saved' },
-      { slug: 'benzer-kitle', id: 'LOOKALIKE', labelKey: 'dashboard.hedefKitle.tabs.lookalike' },
-      { slug: 'retargeting', id: 'CUSTOM', labelKey: 'dashboard.hedefKitle.tabs.custom' },
+      { slug: 'ai-kitle', slugEn: 'ai-audience', id: 'AI', labelKey: 'dashboard.hedefKitle.tabs.ai' },
+      { slug: 'detayli-kitle', slugEn: 'detailed-audience', id: 'SAVED', labelKey: 'dashboard.hedefKitle.tabs.saved' },
+      { slug: 'benzer-kitle', slugEn: 'lookalike', id: 'LOOKALIKE', labelKey: 'dashboard.hedefKitle.tabs.lookalike' },
+      { slug: 'retargeting', slugEn: 'retargeting', id: 'CUSTOM', labelKey: 'dashboard.hedefKitle.tabs.custom' },
     ],
   },
   'meta-ads': {
@@ -55,9 +64,9 @@ export const TAB_ROUTES = {
     kind: 'simple',
     defaultTab: 'kampanyalar',
     tabs: [
-      { slug: 'kampanyalar', id: 'kampanyalar' },
-      { slug: 'reklam-setleri', id: 'reklam-setleri' },
-      { slug: 'reklamlar', id: 'reklamlar' },
+      { slug: 'kampanyalar', slugEn: 'campaigns', id: 'kampanyalar' },
+      { slug: 'reklam-setleri', slugEn: 'ad-sets', id: 'reklam-setleri' },
+      { slug: 'reklamlar', slugEn: 'ads', id: 'reklamlar' },
     ],
   },
   'google-ads': {
@@ -65,23 +74,34 @@ export const TAB_ROUTES = {
     kind: 'simple',
     defaultTab: 'kampanyalar',
     tabs: [
-      { slug: 'kampanyalar', id: 'kampanyalar' },
-      { slug: 'reklam-gruplari', id: 'reklam-gruplari' },
-      { slug: 'reklamlar', id: 'reklamlar' },
+      { slug: 'kampanyalar', slugEn: 'campaigns', id: 'kampanyalar' },
+      { slug: 'reklam-gruplari', slugEn: 'ad-groups', id: 'reklam-gruplari' },
+      { slug: 'reklamlar', slugEn: 'ads', id: 'reklamlar' },
     ],
   },
   // Google Ads kampanya detayı — /google-ads/kampanya/[campaignId]/<tab>
+  // ('kampanya' sabit rota segmenti; çevrilmez)
   'google-ads-detay': {
     base: '/google-ads/kampanya',
     kind: 'dynamic',
     defaultTab: 'overview',
     tabs: [
-      { slug: 'overview', id: 'overview' },
-      { slug: 'search-terms', id: 'search-terms' },
-      { slug: 'locations', id: 'locations' },
-      { slug: 'ad-schedule', id: 'ad-schedule' },
-      { slug: 'landing-pages', id: 'landing-pages' },
-      { slug: 'assets', id: 'assets' },
+      { slug: 'genel-bakis', slugEn: 'overview', id: 'overview' },
+      { slug: 'arama-terimleri', slugEn: 'search-terms', id: 'search-terms' },
+      { slug: 'lokasyonlar', slugEn: 'locations', id: 'locations' },
+      { slug: 'reklam-zamanlamasi', slugEn: 'ad-schedule', id: 'ad-schedule' },
+      { slug: 'varis-sayfalari', slugEn: 'landing-pages', id: 'landing-pages' },
+      { slug: 'ogeler', slugEn: 'assets', id: 'assets' },
+    ],
+  },
+  'optimizasyon': {
+    base: '/optimizasyon',
+    kind: 'simple',
+    defaultTab: 'meta',
+    tabs: [
+      { slug: 'meta', id: 'meta' },
+      { slug: 'google', id: 'google' },
+      { slug: 'tiktok', id: 'tiktok' },
     ],
   },
   'raporlar': {
@@ -89,9 +109,9 @@ export const TAB_ROUTES = {
     kind: 'simple',
     defaultTab: 'meta_ads',
     tabs: [
-      { slug: 'meta-ads', id: 'meta_ads' },
-      { slug: 'google-ads', id: 'google_ads' },
-      { slug: 'google-analytics', id: 'google_analytics' },
+      { slug: 'meta-reklam', slugEn: 'meta-ads', id: 'meta_ads' },
+      { slug: 'google-reklam', slugEn: 'google-ads', id: 'google_ads' },
+      { slug: 'analytics', id: 'google_analytics' },
       { slug: 'search-console', id: 'google_search_console' },
     ],
   },
@@ -100,11 +120,11 @@ export const TAB_ROUTES = {
     kind: 'simple',
     defaultTab: 'analysis',
     tabs: [
-      { slug: 'analysis', id: 'analysis' },
-      { slug: 'history', id: 'history' },
-      { slug: 'bulk', id: 'bulk' },
-      { slug: 'tools', id: 'tools' },
-      { slug: 'articles', id: 'articles' },
+      { slug: 'analiz', slugEn: 'analysis', id: 'analysis' },
+      { slug: 'gecmis', slugEn: 'history', id: 'history' },
+      { slug: 'toplu-tarama', slugEn: 'bulk', id: 'bulk' },
+      { slug: 'araclar', slugEn: 'tools', id: 'tools' },
+      { slug: 'icerikler', slugEn: 'articles', id: 'articles' },
     ],
   },
   'tasarim': {
@@ -112,8 +132,18 @@ export const TAB_ROUTES = {
     kind: 'simple',
     defaultTab: 'tasarim',
     tabs: [
-      { slug: 'tasarim', id: 'tasarim' },
-      { slug: 'kutuphane', id: 'kutuphane' },
+      { slug: 'tasarim', slugEn: 'design', id: 'tasarim' },
+      { slug: 'kutuphane', slugEn: 'library', id: 'kutuphane' },
+    ],
+  },
+  'email-marketing': {
+    base: '/email-marketing',
+    kind: 'simple',
+    defaultTab: 'contacts',
+    tabs: [
+      { slug: 'kisiler', slugEn: 'contacts', id: 'contacts' },
+      { slug: 'kampanyalar', slugEn: 'campaigns', id: 'campaigns' },
+      { slug: 'otomasyon', slugEn: 'automation', id: 'automation' },
     ],
   },
   'strateji': {
@@ -121,10 +151,10 @@ export const TAB_ROUTES = {
     kind: 'dynamic',
     defaultTab: 'wizard',
     tabs: [
-      { slug: 'wizard', id: 'wizard' },
+      { slug: 'kesif', slugEn: 'discovery', id: 'wizard' },
       { slug: 'plan', id: 'plan' },
-      { slug: 'tasks', id: 'tasks' },
-      { slug: 'jobs', id: 'jobs' },
+      { slug: 'gorevler', slugEn: 'tasks', id: 'tasks' },
+      { slug: 'is-gecmisi', slugEn: 'jobs', id: 'jobs' },
     ],
   },
 } satisfies Record<string, ModuleTabConfig>
@@ -135,22 +165,21 @@ export function getModuleConfig(module: string): ModuleTabConfig | undefined {
   return (TAB_ROUTES as Record<string, ModuleTabConfig>)[module]
 }
 
-/** Tab id → URL slug. Bilinmeyen id'de varsayılan sekme slug'ına düşer. */
-export function tabIdToSlug(module: string, id: string): string {
+/** Tab id → URL slug (locale'e göre TR/EN). Bilinmeyen id'de varsayılan sekme slug'ına düşer. */
+export function tabIdToSlug(module: string, id: string, locale: string = 'tr'): string {
   const cfg = getModuleConfig(module)
   if (!cfg) return id
-  const match = cfg.tabs.find((t) => t.id === id)
-  if (match) return match.slug
-  const def = cfg.tabs.find((t) => t.id === cfg.defaultTab)
-  return def?.slug ?? id
+  const tab = cfg.tabs.find((t) => t.id === id) ?? cfg.tabs.find((t) => t.id === cfg.defaultTab)
+  if (!tab) return id
+  return locale === 'en' ? (tab.slugEn ?? tab.slug) : tab.slug
 }
 
-/** URL slug → tab id. Eksik/bilinmeyen slug'da varsayılan sekmeye düşer. */
+/** URL slug → tab id. Hem TR hem EN slug'ı tanır; eksik/bilinmeyen slug'da varsayılana düşer. */
 export function slugToTabId(module: string, slug: string | undefined): string {
   const cfg = getModuleConfig(module)
   if (!cfg) return slug ?? ''
   if (!slug) return cfg.defaultTab
-  return cfg.tabs.find((t) => t.slug === slug)?.id ?? cfg.defaultTab
+  return cfg.tabs.find((t) => t.slug === slug || t.slugEn === slug)?.id ?? cfg.defaultTab
 }
 
 export function isPlatformSlug(module: string, slug: string | undefined): boolean {
@@ -163,21 +192,33 @@ export interface BuildTabPathOpts {
   platform?: string
   /** kind === 'dynamic' modülleri için id segmenti (strateji [id], kampanya detayı). */
   id?: string
+  /** Hedef locale ('tr' | 'en'); slug seçimini ve /en önekini belirler. */
+  locale?: string
 }
 
-/** Modül + tab id → TR taban yolu (locale uygulaması çağırana aittir). */
+/** Modül + tab id → locale'e uygun TAM yol (örn. /hedef-kitle/meta/detayli-kitle veya /en/target-audience/meta/detailed-audience). */
 export function buildTabPath(module: string, tabId: string, opts: BuildTabPathOpts = {}): string {
+  const { platform, id, locale = 'tr' } = opts
   const cfg = getModuleConfig(module)
   if (!cfg) return '/'
-  const slug = tabIdToSlug(module, tabId)
+  const en = locale === 'en'
+  const tabSlug = tabIdToSlug(module, tabId, locale)
+  // Taban yolunu locale'e göre yerelleştir: yalnız İLK segment çevrilir,
+  // sonraki literal segmentler (örn. 'kampanya') aynen kalır.
+  const baseSegs = cfg.base.replace(/^\/+/, '').split('/')
+  if (en) baseSegs[0] = SLUG_TR_TO_EN[baseSegs[0]] || baseSegs[0]
+  const base = baseSegs.join('/')
+  const prefix = en ? '/en/' : '/'
+  let path: string
   if (cfg.kind === 'platform') {
-    const platform = opts.platform ?? cfg.defaultPlatform ?? cfg.platforms?.[0] ?? 'meta'
-    return `${cfg.base}/${platform}/${slug}`
+    const pf = platform ?? cfg.defaultPlatform ?? cfg.platforms?.[0] ?? 'meta'
+    path = `${prefix}${base}/${pf}/${tabSlug}`
+  } else if (cfg.kind === 'dynamic') {
+    path = `${prefix}${base}/${id ?? ''}/${tabSlug}`
+  } else {
+    path = `${prefix}${base}/${tabSlug}`
   }
-  if (cfg.kind === 'dynamic') {
-    return `${cfg.base}/${opts.id ?? ''}/${slug}`.replace(/\/{2,}/g, '/')
-  }
-  return `${cfg.base}/${slug}`
+  return path.replace(/\/{2,}/g, '/')
 }
 
 export interface ParsedTab {
@@ -207,8 +248,7 @@ export function parseTabPath(pathname: string): ParsedTab | null {
   if (firstTr === 'google-ads' && segments[1] === 'kampanya') {
     const cfg = getModuleConfig('google-ads-detay')!
     const id = segments[2]
-    const tabSlug = segments[3]
-    const tabId = slugToTabId('google-ads-detay', tabSlug)
+    const tabId = slugToTabId('google-ads-detay', segments[3])
     return { module: 'google-ads-detay', base: cfg.base, tabId, tabSlug: tabIdToSlug('google-ads-detay', tabId), id }
   }
 

@@ -129,8 +129,8 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
     if (siteParam === 'connected') setSiteBanner({ kind: 'connected' })
     else if (siteParam === 'rejected') setSiteBanner({ kind: 'rejected' })
     else if (siteParam === 'error') setSiteBanner({ kind: 'error', reason: searchParams.get('reason') || undefined })
-    // URL'i temizle (path tabanlı sekme korunur)
-    router.replace('/seo/articles', { scroll: false })
+    // URL'i temizle (mevcut path/sekme korunur, yalnız query düşer — locale-safe)
+    router.replace(window.location.pathname, { scroll: false })
   }, [searchParams, router])
 
   /* ═══════ İşletme profilindeki web sitesi (SEO bu URL'den beslenir) ═══════ */

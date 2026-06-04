@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useTranslations } from 'next-intl'
+import { usePathTab } from '@/hooks/usePathTab'
 import Topbar from '@/components/Topbar'
 import Toolbar from '@/components/Toolbar'
 import TableShimmer from '@/components/TableShimmer'
@@ -50,14 +51,9 @@ export default function OptimizasyonPage() {
   const [scanPhase, setScanPhase] = useState(0)
   const [scanResults, setScanResults] = useState<Record<string, MagicScanResult>>({})
 
-  // ── Kaynak seçici (Meta / Google / TikTok) + harici (non-Meta) veri ──
-  const [source, setSource] = useState<'meta' | 'google' | 'tiktok'>('meta')
-  // Birleşik hesap seçicisinden gelen ?platform sinyaliyle başlangıç sekmesini aç
-  // (örn. Google hesabı seçilince Optimizasyon'da kalıp Google sekmesi açılır)
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get('platform')
-    if (p === 'google') setSource(p) // TikTok yakında — zorla açılmaz
-  }, [])
+  // ── Kaynak seçici (Meta / Google / TikTok) — URL path'inden türetilir (/optimizasyon/<kaynak>) ──
+  const { activeTab: sourceRaw, setTab: setSource } = usePathTab('optimizasyon')
+  const source = sourceRaw as 'meta' | 'google' | 'tiktok'
 
   // Aktif Google hesabı adını çek (Google sekmesinde buton etiketi için)
   useEffect(() => {

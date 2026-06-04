@@ -22,7 +22,6 @@ import {
   getModuleConfig,
   type BuildTabPathOpts,
 } from '@/lib/tabRoutes'
-import { localePath } from '@/lib/routes'
 
 function currentLocale(): string {
   if (typeof document === 'undefined') return 'tr'
@@ -62,8 +61,7 @@ export function usePathTab(module: string, options: UsePathTabOptions = {}) {
   const navigate = useCallback(
     (tabId: string, opts: NavOpts = {}) => {
       const { replace, ...pathOpts } = opts
-      const trPath = buildTabPath(module, tabId, { platform, id, ...pathOpts })
-      const href = localePath(trPath, currentLocale())
+      const href = buildTabPath(module, tabId, { platform, id, locale: currentLocale(), ...pathOpts })
       if (replace) router.replace(href, { scroll: false })
       else router.push(href, { scroll: false })
     },

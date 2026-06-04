@@ -1,13 +1,15 @@
 /* ──────────────────────────────────────────────────────────
-   Strateji okunabilir URL yardımcıları
+   Strateji URL yardımcıları
 
-   Amaç: /strateji/<UUID> yerine okunabilir /strateji/<slug>--<id8>.
-   - Migration YOK: slug başlıktan anlık türetilir, sonuna UUID'nin ilk 8
-     karakteri (kısa kimlik) eklenir.
-   - Geri uyumlu: eski tam-UUID linkleri de çalışır (ayraç yoksa param
-     doğrudan kimlik kabul edilir).
+   Amaç: kısa, temiz /strateji/<id8>[/<sekme>] yolu.
+   - Migration YOK: kısa kimlik = UUID'nin ilk 8 karakteri; GET route bunu tam
+     UUID'ye çözer.
+   - Geri uyumlu: eski okunabilir '<slug>--<id8>' ve tam-UUID linkleri de çalışır
+     (extractStrategyIdSegment her ikisini de ayıklar).
    - API route'ları değişmez: sayfa, çözülmüş tam UUID'yi kullanır.
    ────────────────────────────────────────────────────────── */
+
+import { tabIdToSlug } from '@/lib/tabRoutes'
 
 const TR_MAP: Record<string, string> = {
   ç: 'c', Ç: 'c', ğ: 'g', Ğ: 'g', ı: 'i', I: 'i', İ: 'i',
@@ -31,16 +33,16 @@ export function isFullUuid(s: string): boolean {
 }
 
 /**
- * Okunabilir strateji yolu üretir: /strateji/<slug>--<id8>[suffix]
- * @param suffix opsiyonel query/sekme eki, örn. '?tab=jobs'
+ * Kısa, temiz strateji yolu üretir: /strateji/<id8>[/<sekme>]
+ * @param tab opsiyonel sekme id'si (wizard|plan|tasks|jobs) → locale slug'ına çevrilir
  */
 export function strategyPath(
   instance: { id: string; title?: string | null; brand?: string | null },
-  suffix = '',
+  tab?: string,
 ): string {
-  const slug = slugifyTr(instance.title || instance.brand || '') || 'strateji'
   const short = instance.id.slice(0, 8)
-  return `/strateji/${slug}--${short}${suffix}`
+  const base = `/strateji/${short}`
+  return tab ? `${base}/${tabIdToSlug('strateji', tab)}` : base
 }
 
 /**

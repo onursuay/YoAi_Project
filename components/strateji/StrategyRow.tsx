@@ -68,7 +68,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {instance.status === 'FAILED' && instance.last_error && (
             <button
-              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, '?tab=jobs')) }}
+              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, 'jobs')) }}
               className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
               title="Hata detayı"
             >
@@ -77,7 +77,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {canViewPlan && (
             <button
-              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, '?tab=plan')) }}
+              onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, 'plan')) }}
               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
               title="Planı gör"
             >

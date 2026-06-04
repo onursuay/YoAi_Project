@@ -8,6 +8,7 @@ import CampaignsTab from './CampaignsTab'
 import AutomationsTab from './AutomationsTab'
 import SendingAccounts from './SendingAccounts'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
+import { usePathTab } from '@/hooks/usePathTab'
 
 type Tab = 'contacts' | 'campaigns' | 'automation'
 
@@ -27,7 +28,9 @@ export default function EmailDashboard() {
   const t = useTranslations('email')
   const { isOwner } = useSubscription()
 
-  const [tab, setTab] = useState<Tab>('contacts')
+  // Sekme durumu URL path'inden türetilir (/email-marketing/<sekme>)
+  const { activeTab, setTab } = usePathTab('email-marketing')
+  const tab = activeTab as Tab
   const [managingSending, setManagingSending] = useState(false)
   const [contacts, setContacts] = useState<Contact[]>([])
   const [total, setTotal] = useState(0)
