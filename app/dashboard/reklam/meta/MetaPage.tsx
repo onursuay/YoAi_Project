@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useMemo, useRef, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { useSearchParams, useRouter } from 'next/navigation'
+import { usePathTab } from '@/hooks/usePathTab'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
 import ToggleSwitch from '@/components/ToggleSwitch'
@@ -153,13 +153,9 @@ export default function MetaPage() {
   const t = useTranslations('dashboard.meta')
   const tMetrics = useTranslations('meta.metrics')
   const recommendationsEnabled = process.env.NEXT_PUBLIC_RECOMMENDATIONS_ENABLED === 'true'
-  const searchParams = useSearchParams()
-  const router = useRouter()
-  
-  // Read initial tab from URL query param
-  const initialTab = searchParams.get('tab') || 'kampanyalar'
+  // Sekme durumu URL path'inden türetilir (/meta-ads/<sekme>)
   const validTabs = ['kampanyalar', 'reklam-setleri', 'reklamlar']
-  const [activeTab, setActiveTab] = useState(validTabs.includes(initialTab) ? initialTab : 'kampanyalar')
+  const { activeTab, setTab } = usePathTab('meta-ads')
   const [campaigns, setCampaigns] = useState<Campaign[]>([])
   const [adsets, setAdsets] = useState<AdSet[]>([])
   const [ads, setAds] = useState<Ad[]>([])
@@ -332,15 +328,11 @@ export default function MetaPage() {
   const clientCache = useRef<Map<string, { data: any; timestamp: number }>>(new Map())
   const CACHE_TTL = 0 // Cache disabled
   
-  // Handle tab change with URL update
+  // Handle tab change — path'e gider (/meta-ads/<sekme>), activeTab path'ten türetilir
   const handleTabChange = (newTab: string) => {
     if (validTabs.includes(newTab)) {
       userLoadTriggerRef.current = true
-      setActiveTab(newTab)
-      // Update URL without full navigation
-      const params = new URLSearchParams(searchParams.toString())
-      params.set('tab', newTab)
-      router.push(`?${params.toString()}`, { scroll: false })
+      setTab(newTab)
     }
   }
 
@@ -1080,13 +1072,8 @@ export default function MetaPage() {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [dateRange, activeTab, selectedAdAccountId, refreshToken, rateLimitedUntil])
   
-  // Sync activeTab with URL on mount/URL change
-  useEffect(() => {
-    const urlTab = searchParams.get('tab')
-    if (urlTab && validTabs.includes(urlTab) && urlTab !== activeTab) {
-      setActiveTab(urlTab)
-    }
-  }, [searchParams])
+  // activeTab artık usePathTab ile URL path'inden türetilir; ayrı senkron gerekmez.
+  // Path değişince (router.push) activeTab güncellenir ve yukarıdaki yükleme effect'i tetiklenir.
 
   // Reset optScore ref when account/tab changes (prevent wrong tab/account score)
   useEffect(() => {
