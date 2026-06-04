@@ -278,15 +278,33 @@ export default function SeoAutomationPanel() {
 
         {enabled && (
           <>
-        {/* Time */}
+        {/* Yayın Saati — Meta tarzı saat:dakika seçici (native saat kutusu yerine) */}
         <div>
           <label className="block text-xs font-medium text-gray-600 mb-1">{t('time')}</label>
-          <input
-            type="time"
-            value={publishTime}
-            onChange={(e) => setPublishTime(e.target.value)}
-            className="w-full px-3 py-2.5 border border-gray-200 rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-          />
+          <div className="flex items-center gap-2">
+            <div className="flex-1">
+              <CustomSelect
+                value={(publishTime.split(':')[0] || '09').padStart(2, '0')}
+                onChange={(v) => setPublishTime(`${String(v).padStart(2, '0')}:${(publishTime.split(':')[1] || '00').padStart(2, '0')}`)}
+                ariaLabel={`${t('time')} — saat`}
+                options={Array.from({ length: 24 }, (_, h) => ({ value: String(h).padStart(2, '0'), label: String(h).padStart(2, '0') }))}
+              />
+            </div>
+            <span className="text-gray-400 font-semibold">:</span>
+            <div className="flex-1">
+              <CustomSelect
+                value={(publishTime.split(':')[1] || '00').padStart(2, '0')}
+                onChange={(v) => setPublishTime(`${(publishTime.split(':')[0] || '09').padStart(2, '0')}:${String(v).padStart(2, '0')}`)}
+                ariaLabel={`${t('time')} — dakika`}
+                options={(() => {
+                  const mins = Array.from({ length: 12 }, (_, k) => String(k * 5).padStart(2, '0'))
+                  const cur = (publishTime.split(':')[1] || '00').padStart(2, '0')
+                  if (!mins.includes(cur)) mins.push(cur)
+                  return mins.sort().map((m) => ({ value: m, label: m }))
+                })()}
+              />
+            </div>
+          </div>
         </div>
 
         {/* Yayın takvimi modu */}
