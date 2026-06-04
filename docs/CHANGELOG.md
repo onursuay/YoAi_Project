@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-04 — SEO Plus: Yayın Hedefi 3'lü grid + renk + metin iyileştirmeleri
+- **Sorun:** Yayın Hedefi kartları alt alta sıralıydı; checkbox/buton rengi mor (purple) idi; etiket metni uzun ve tire içeriyordu
+- **Çözüm:** Yayın Hedefi içeriği `grid-cols-1 md:grid-cols-3` ile yan yana; her sütuna `animate-card-enter` staggered animasyon eklendi. Checkbox `accent-primary`, Save butonu `bg-primary` olarak güncellendi; purple renklerin tamamı primary/emerald'a taşındı. Etiket "Makaleyi otomatik yayınla (kapalıysa taslak olarak kalır.)" olarak kısaltıldı (TR + EN).
+- **Dosyalar:** `components/seo/SeoSitesPanel.tsx`, `components/seo/SeoAutomationPanel.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-03 — SEO brief hotfix: prod'da `select('*')` boş dönüp upsert sessizce bozuluyordu
 - **Sorun:** Canlıya alındıktan sonra brief'ler bir türlü üretilmiyordu (`scan_status` hep `running`/`failed`, makaleler hâlâ yanlış işletme temalı). Teşhis: yeni `site_content_briefs` tablosunda prod PostgREST örneğinin şema cache'i `select('*')` genişletmesini **boş** döndürüyordu (açık kolon seçimi çalışıyordu). Bu yüzden `getBriefByConnection` satırı "yok" sanıyor, `upsertBrief` INSERT deneyip UNIQUE(site_connection_id) kısıtını ihlal edip **sessizce** başarısız oluyordu; pipeline dönüş değerini kontrol etmediği için yine "completed" raporluyordu.
 - **Çözüm:** `siteContentBriefStore` içindeki tüm `select('*')` çağrıları açık kolon listesine (`BRIEF_COLS`) çevrildi; `upsertBrief` native `upsert(..., { onConflict: 'site_connection_id' })`'a geçirildi (oku-sonra-yaz bağımlılığı kaldırıldı). Doğrulama: ustasiniyolla.com brief'i "Ustasını Yolla" + gerçek hizmetler (Koltuk/Halı/Kombi/Klima…), Elysium Garden Hotel brief'i otel kategorileriyle `completed`.
