@@ -81,6 +81,10 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
   const [profileUrl, setProfileUrl] = useState<string | null>(null) // işletme profilindeki web sitesi
   const [siteBanner, setSiteBanner] = useState<{ kind: 'connected' | 'rejected' | 'error'; reason?: string } | null>(null)
 
+  // Üretim modu (Otomasyon panelinden gelir): true = Otomatik Üretim, false = Manuel Üretim.
+  // "Yeni İçerik" butonu yalnız Manuel Üretim modunda görünür.
+  const [autoMode, setAutoMode] = useState(true)
+
   // Generator form
   const [showGenerator, setShowGenerator] = useState(false)
   const [keyword, setKeyword] = useState('')
@@ -471,7 +475,7 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
 
       {/* Yayın Hedefi (etkin site URL'inden = analiz tabındaki aktif URL) + Üretim Ayarları — tek akış */}
       <SeoSitesPanel banner={siteBanner} profileUrl={effectiveSiteUrl} />
-      <SeoAutomationPanel />
+      <SeoAutomationPanel onModeChange={(auto) => { setAutoMode(auto); if (auto) setShowGenerator(false) }} />
 
       {/* Makale yönetimi başlığı + Yeni İçerik (üretici form hemen altında açılır) */}
       <div className="flex items-center justify-between flex-wrap gap-2 pt-2">
@@ -483,12 +487,15 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
             <p className="text-xs text-gray-500 mt-0.5 truncate">{t('showingForSite', { site: effectiveSiteUrl })}</p>
           )}
         </div>
-        <button
-          onClick={() => setShowGenerator((v) => !v)}
-          className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 transition-colors"
-        >
-          <Plus className="w-3.5 h-3.5" /> {t('newArticle')}
-        </button>
+        {/* Yeni İçerik yalnız Manuel Üretim modunda — otomatik modda mantıken anlamsız */}
+        {!autoMode && (
+          <button
+            onClick={() => setShowGenerator((v) => !v)}
+            className="inline-flex items-center gap-1.5 px-3 py-1.5 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 hover:shadow-md active:scale-[0.97] transition-all duration-300"
+          >
+            <Plus className={`w-3.5 h-3.5 transition-transform duration-300 ${showGenerator ? 'rotate-45' : ''}`} /> {t('newArticle')}
+          </button>
+        )}
       </div>
 
       {/* İçerik üretici */}

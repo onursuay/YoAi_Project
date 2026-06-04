@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-04 — SEO Plus: Üretim Ayarları UX rötuşları
+- **Sorun:** (1) "Yeni İçerik" butonu Otomatik Üretim modunda da görünüyordu — mantıken anlamsız; (2) buton moru (purple) idi ve animasyonsuzdu; (3) "Makaleyi otomatik yayınla" checkbox tikinin rengi belirsizdi; (4) "Otomatik üretim / Manuel üretim" etiketlerinde "üretim" küçük harfle başlıyordu.
+- **Çözüm:** "Yeni İçerik" butonu artık yalnız **Manuel Üretim** modunda görünüyor (mod bilgisi `SeoAutomationPanel` → `onModeChange` callback ile parent'a iletildi). Buton primary yeşile çevrildi + `active:scale` / `hover:shadow-md` + açılışta `Plus` ikonu 45° dönen toggle animasyonu. Otomatik yayınla checkbox'ı `appearance-none` + beyaz `Check` ikonu ile yeniden yazıldı (yeşil kutu, beyaz tik). Etiketler "Otomatik Üretim / Manuel Üretim" (TR) ve "Automatic Generation / Manual Production" (EN) olarak title-case yapıldı.
+- **Dosyalar:** `components/seo/SeoArticlesTab.tsx`, `components/seo/SeoAutomationPanel.tsx`, `locales/tr.json`, `locales/en.json`
+
 ## 2026-06-04 — SEO: Yayın Hedefi kartları toggle+modal UX'e çevrildi
 - **Sorun:** WordPress ve Webhook kartları satır içi açılıp/kapanıyordu; tıklanabilir olduğu hissettirmiyordu.
 - **Çözüm:** Kartlar artık tıklandığında primary renk ile seçili hale geliyor ve içerik girişi için blur backdrop'lu centered modal açılıyor; inline açılım kaldırıldı. `alwaysOpen` prop ile form modal içinde wrapper'sız render ediliyor.

@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
-import { Loader2, Zap, Save, X, CheckCircle2, Clock } from 'lucide-react'
+import { Loader2, Zap, Save, X, CheckCircle2, Clock, Check } from 'lucide-react'
 import CustomSelect from '@/components/ui/CustomSelect'
 
 /* ═══════ Types ═══════ */
@@ -35,7 +35,7 @@ interface Schedule {
 
 /* ═══════ Component ═══════ */
 
-export default function SeoAutomationPanel() {
+export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (autoMode: boolean) => void }) {
   const tArt = useTranslations('dashboard.seo.articles')
   const t = useTranslations('dashboard.seo.articles.automation')
 
@@ -117,6 +117,10 @@ export default function SeoAutomationPanel() {
   }, [])
 
   useEffect(() => { load() }, [load])
+
+  // Üretim modunu (otomatik/manuel) üst bileşene bildir — "Yeni İçerik" butonu
+  // yalnız Manuel Üretim modunda görünmeli (otomatik modda mantıken anlamsız).
+  useEffect(() => { onModeChange?.(enabled) }, [enabled, onModeChange])
 
   // Site değişince brief kategorilerini çek
   useEffect(() => {
@@ -377,7 +381,15 @@ export default function SeoAutomationPanel() {
       {enabled && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={autoPublish} onChange={(e) => setAutoPublish(e.target.checked)} className="w-4 h-4 rounded accent-primary" />
+            <span className="relative inline-flex h-4 w-4 shrink-0 items-center justify-center">
+              <input
+                type="checkbox"
+                checked={autoPublish}
+                onChange={(e) => setAutoPublish(e.target.checked)}
+                className="peer h-4 w-4 cursor-pointer appearance-none rounded border border-gray-300 bg-white transition-colors checked:border-primary checked:bg-primary"
+              />
+              <Check className="pointer-events-none absolute h-3 w-3 text-white opacity-0 transition-opacity peer-checked:opacity-100" strokeWidth={3} />
+            </span>
             <span className="text-sm text-gray-700">{t('autoPublish')}</span>
           </label>
         </div>
