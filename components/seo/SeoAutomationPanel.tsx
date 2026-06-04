@@ -300,12 +300,7 @@ export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (a
                 value={(publishTime.split(':')[1] || '00').padStart(2, '0')}
                 onChange={(v) => setPublishTime(`${(publishTime.split(':')[0] || '09').padStart(2, '0')}:${String(v).padStart(2, '0')}`)}
                 ariaLabel={`${t('time')} — dakika`}
-                options={(() => {
-                  const mins = Array.from({ length: 12 }, (_, k) => String(k * 5).padStart(2, '0'))
-                  const cur = (publishTime.split(':')[1] || '00').padStart(2, '0')
-                  if (!mins.includes(cur)) mins.push(cur)
-                  return mins.sort().map((m) => ({ value: m, label: m }))
-                })()}
+                options={Array.from({ length: 60 }, (_, m) => ({ value: String(m).padStart(2, '0'), label: String(m).padStart(2, '0') }))}
               />
             </div>
           </div>

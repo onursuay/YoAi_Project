@@ -65,10 +65,11 @@ function lastDayOfMonth(year: number, month1to12: number): number {
 /**
  * Schedule bu anda tetiklenmeli mi?
  *
- * Saatlik cron (0 * * * *) ile çalışır. Tek-saat tam eşleşme yerine "yayın anı
- * bugün geldi/geçti + bugün henüz çalışmadı" mantığı kullanır → kullanıcı yayın
- * saatini o günkü pencereden SONRA ayarlasa bile (ör. 23:14'ü 23:30'da kaydetse)
- * bir sonraki saatlik cron'da AYNI GÜN telafi edilir; ertesi güne sarkmaz.
+ * Dakikalık cron (* * * * *) ile çalışır → kullanıcının girdiği saat:dakika TAM
+ * yakalanır. Tek-an tam eşleşme yerine "yayın anı bugün geldi/geçti + bugün henüz
+ * çalışmadı" mantığı kullanır → kullanıcı yayın saatini o günkü pencereden SONRA
+ * ayarlasa bile (ör. 23:14'ü 23:30'da kaydetse) bir sonraki dakikalık cron'da
+ * AYNI GÜN telafi edilir; ertesi güne sarkmaz.
  *
  * scheduleMode değerlerine göre gün uygunluğu:
  *   'daily'        — her gün tetiklenir

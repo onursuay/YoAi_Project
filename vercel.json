@@ -22,7 +22,7 @@
     },
     {
       "path": "/api/cron/seo-article-run",
-      "schedule": "0 * * * *"
+      "schedule": "* * * * *"
     },
     {
       "path": "/api/cron/crm-lead-pull",

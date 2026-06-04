@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-04 — SEO Otomatik Üretim: girilen saat:dakikada TAM çalışır (cron dakikalık)
+- **Sorun:** Kullanıcı yayın saatini 09:50 girse de makale 09:50'de üretilmiyordu. Cron `0 * * * *` (saatte bir, yalnız 0. dakika) çalıştığından, 09:50 hedefi ancak bir sonraki saat başında (10:00) telafi penceresiyle üretiliyordu. Ayrıca dakika seçici yalnız 5'er dakikalık slot sunuyordu → kullanıcıya "istediğin saati gir" denip aslında yaklaşık çalıştırmak yanıltıcıydı.
+- **Çözüm:** SEO cron'u `* * * * *` (dakikalık) yapıldı → kullanıcının girdiği saat:dakika TAM yakalanıyor. Frontend dakika seçici 00–59 tam aralığa açıldı (5'er slot kısıtı kaldırıldı). Üretim idempotent kalır (`claimScheduleRun` atomik claim + `last_run_date` günde-bir guard) — dakikalık tetiklemede çift üretim olmaz. Kod yorumları (cron route + `isScheduleDue`) dakikalık modele göre güncellendi. Inngest kullanılmadı (prod'da güvenilir değil; inline-cron korunur).
+- **Dosyalar:** `vercel.json`, `components/seo/SeoAutomationPanel.tsx`, `app/api/cron/seo-article-run/route.ts`, `lib/seo/timezone.ts`
+
 ## 2026-06-04 — SEO Plus: Üretim Ayarları UX rötuşları
 - **Sorun:** (1) "Yeni İçerik" butonu Otomatik Üretim modunda da görünüyordu — mantıken anlamsız; (2) buton moru (purple) idi ve animasyonsuzdu; (3) "Makaleyi otomatik yayınla" checkbox tikinin rengi belirsizdi; (4) "Otomatik üretim / Manuel üretim" etiketlerinde "üretim" küçük harfle başlıyordu.
 - **Çözüm:** "Yeni İçerik" butonu artık yalnız **Manuel Üretim** modunda görünüyor (mod bilgisi `SeoAutomationPanel` → `onModeChange` callback ile parent'a iletildi). Buton primary yeşile çevrildi + `active:scale` / `hover:shadow-md` + açılışta `Plus` ikonu 45° dönen toggle animasyonu. Otomatik yayınla checkbox'ı `appearance-none` + beyaz `Check` ikonu ile yeniden yazıldı (yeşil kutu, beyaz tik). Etiketler "Otomatik Üretim / Manuel Üretim" (TR) ve "Automatic Generation / Manual Production" (EN) olarak title-case yapıldı.

@@ -1,10 +1,11 @@
 /* ──────────────────────────────────────────────────────────
    GET /api/cron/seo-article-run
 
-   Saatlik Vercel cron (0 * * * *). enabled olan article_schedules
+   Dakikalık Vercel cron (* * * * *). enabled olan article_schedules
    içinde, kullanıcının yerel saati publish_time ile eşleşen ve bugün
-   henüz çalışmamış olanları bulup `article/generate-publish.user`
-   Inngest event'ini fan-out eder.
+   henüz çalışmamış olanları bulup üretir/yayınlar. Dakikalık tetikleme
+   sayesinde kullanıcının girdiği saat:dakika TAM olarak yakalanır
+   (eski saatlik cron'da 09:50 hedefi 10:00'da çalışıyordu — düzeltildi).
 
    Auth: CRON_SECRET (Bearer header). Manuel tetik için admin de bu
    secret ile çağırabilir.
@@ -62,7 +63,7 @@ export async function GET(request: Request) {
   // üretimi hafif ve idempotent (last_run_date ile günde bir) olduğundan, Inngest
   // kurulumuna BAĞIMLI OLMADAN cron gövdesinde inline çalıştırılır.
   // Vercel 60s sınırı için zaman bütçesiyle sırayla; yetişmeyen due'lar bir sonraki
-  // saatlik cron'da (catch-up penceresiyle) AYNI GÜN telafi edilir.
+  // dakikalık cron'da (catch-up penceresiyle) AYNI GÜN telafi edilir.
   const startedAt = Date.now()
   const results: Array<Record<string, unknown>> = []
   for (const s of due) {
