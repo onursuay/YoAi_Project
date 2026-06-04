@@ -317,7 +317,6 @@ export default function SeoAutomationPanel() {
             options={[
               { value: 'daily', label: t('modeDaily') },
               { value: 'weekly_days', label: t('modeWeeklyDays') },
-              { value: 'monthly_days', label: t('modeMonthlyDays') },
             ]}
           />
         </div>
@@ -343,30 +342,6 @@ export default function SeoAutomationPanel() {
           </div>
         )}
 
-        {scheduleMode === 'monthly_days' && (
-          <div className="md:col-span-2">
-            <label className="block text-xs font-medium text-gray-600 mb-1">{t('selectDaysOfMonth')}</label>
-            <div className="grid grid-cols-7 gap-1.5 max-w-md">
-              {Array.from({ length: 31 }, (_, k) => k + 1).map((day) => {
-                const on = daysOfMonth.includes(day)
-                return (
-                  <button
-                    key={day}
-                    type="button"
-                    onClick={() => setDaysOfMonth(on ? daysOfMonth.filter((x) => x !== day) : [...daysOfMonth, day])}
-                    className={`h-9 rounded-lg text-sm font-medium transition-colors ${on ? 'bg-emerald-500 text-white shadow-sm' : 'bg-white text-gray-700 border border-gray-200 hover:border-gray-300 hover:bg-gray-50'}`}
-                  >
-                    {day}
-                  </button>
-                )
-              })}
-            </div>
-            {daysOfMonth.length > 0 && (
-              <p className="text-xs text-emerald-700 mt-2 font-medium">{t('selectedDaysList', { days: [...daysOfMonth].sort((a, b) => a - b).join(', ') })}</p>
-            )}
-            <p className="text-xs text-gray-500 mt-1.5 leading-relaxed">{t('monthlyClampHint')}</p>
-          </div>
-        )}
           </>
         )}
 
