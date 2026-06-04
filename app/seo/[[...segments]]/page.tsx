@@ -2,7 +2,7 @@
 
 import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
-import { useSearchParams } from 'next/navigation'
+import { usePathTab } from '@/hooks/usePathTab'
 import Topbar from '@/components/Topbar'
 import CircularProgress from '@/components/CircularProgress'
 import {
@@ -447,7 +447,6 @@ function AnalysisSkeleton() {
 
 export default function SEOPage() {
   const t = useTranslations('dashboard.seo')
-  const searchParams = useSearchParams()
   const [url, setUrl] = useState('')
   const [competitorUrl, setCompetitorUrl] = useState('')
   const [showCompetitor, setShowCompetitor] = useState(false)
@@ -455,7 +454,8 @@ export default function SEOPage() {
   const [result, setResult] = useState<SeoResult | null>(null)
   const [competitorResult, setCompetitorResult] = useState<SeoResult | null>(null)
   const [error, setError] = useState('')
-  const [activeTab, setActiveTab] = useState<'analysis' | 'history' | 'bulk' | 'tools' | 'articles'>('analysis')
+  // Sekme durumu URL path'inden türetilir (/seo/<sekme>)
+  const { activeTab, setTab } = usePathTab('seo')
   const [lighthouseMode, setLighthouseMode] = useState<'mobile' | 'desktop'>('mobile')
   const [history, setHistory] = useState<HistoryItem[]>([])
   const [bulkUrls, setBulkUrls] = useState('')
@@ -496,12 +496,8 @@ export default function SEOPage() {
     } catch { /* ignore */ }
   }, [])
 
-  // Yayın yetkilendirme callback'i ?tab=articles (veya ?site=...) ile döner → İçerikler sekmesi
-  useEffect(() => {
-    if (searchParams.get('tab') === 'articles' || searchParams.get('site')) {
-      setActiveTab('articles')
-    }
-  }, [searchParams])
+  // Yayın yetkilendirme callback'i artık doğrudan /seo/articles path'ine döner
+  // (?site=connected|rejected|error banner query'si SeoArticlesTab tarafından okunur).
 
   // Analiz: localStorage'da sonuç yoksa işletme profilindeki web sitesinden otomatik besle/analiz et
   useEffect(() => {
@@ -690,7 +686,7 @@ export default function SEOPage() {
             ]).map(tab => (
               <button
                 key={tab.key}
-                onClick={() => setActiveTab(tab.key)}
+                onClick={() => setTab(tab.key)}
                 className={`flex-1 flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg text-sm font-medium transition-all ${
                   activeTab === tab.key
                     ? 'bg-primary text-white shadow-sm'
@@ -1117,7 +1113,7 @@ export default function SEOPage() {
                       key={i}
                       onClick={() => {
                         setUrl(item.url)
-                        setActiveTab('analysis')
+                        setTab('analysis')
                         // Trigger re-analysis
                       }}
                       className="w-full flex items-center justify-between p-3 rounded-lg hover:bg-gray-50 transition-colors text-left border border-gray-100"
@@ -1241,7 +1237,7 @@ export default function SEOPage() {
                             onClick={() => {
                               setResult(r)
                               setUrl(r.url)
-                              setActiveTab('analysis')
+                              setTab('analysis')
                             }}
                             className="text-caption text-primary font-medium hover:underline shrink-0"
                           >

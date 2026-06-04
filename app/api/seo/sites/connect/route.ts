@@ -41,7 +41,7 @@ export async function GET(request: Request) {
   const origin = url.origin
   const cookieStore = await cookies()
   const isEn = cookieStore.get('NEXT_LOCALE')?.value === 'en'
-  const seoUrl = (q: string) => (isEn ? `/en/seo?tab=articles&${q}` : `/seo?tab=articles&${q}`)
+  const seoUrl = (q: string) => (isEn ? `/en/seo/articles?${q}` : `/seo/articles?${q}`)
 
   const userId = cookieStore.get('user_id')?.value
   if (!userId) {

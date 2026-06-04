@@ -11,6 +11,7 @@ import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import PublishModal from '@/components/tasarim/PublishModal'
 import TextOverlayControls, { DEFAULT_OVERLAY, type OverlayConfig, type TextPosition } from '@/components/tasarim/TextOverlayControls'
 import { ToastContainer, type Toast, type ToastType } from '@/components/Toast'
+import { usePathTab } from '@/hooks/usePathTab'
 const LIBRARY_STORAGE_KEY = 'yoai-tasarim-library'
 
 type Mode = 'gorsel' | 'video'
@@ -65,7 +66,9 @@ export default function TasarimPage() {
   const [isGenerating, setIsGenerating] = useState(false)
   const [gallery, setGallery] = useState<GeneratedItem[]>(sampleGallery)
   const [activeItem, setActiveItem] = useState<GeneratedItem | null>(sampleGallery[0])
-  const [activeTab, setActiveTab] = useState<Tab>('tasarim')
+  // Sekme durumu URL path'inden türetilir (/tasarim/<sekme>)
+  const { activeTab: activeTabRaw, setTab } = usePathTab('tasarim')
+  const activeTab = activeTabRaw as Tab
 
   // Library: user-generated items persisted in localStorage (sync init to prevent data loss)
   const [library, setLibrary] = useState<GeneratedItem[]>(() => {
@@ -580,7 +583,7 @@ export default function TasarimPage() {
             <div className="bg-white border-b border-gray-200 px-6 py-3 flex items-center justify-between">
               <div className="flex gap-1 bg-gray-100 rounded-lg p-1">
                 <button
-                  onClick={() => setActiveTab('tasarim')}
+                  onClick={() => setTab('tasarim')}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                     activeTab === 'tasarim' ? 'text-gray-900 bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
@@ -588,7 +591,7 @@ export default function TasarimPage() {
                   {t('tabDesign')}
                 </button>
                 <button
-                  onClick={() => setActiveTab('kutuphane')}
+                  onClick={() => setTab('kutuphane')}
                   className={`px-4 py-1.5 text-sm font-medium rounded-md transition-colors ${
                     activeTab === 'kutuphane' ? 'text-gray-900 bg-white shadow-sm' : 'text-gray-500 hover:text-gray-700'
                   }`}
@@ -804,7 +807,7 @@ export default function TasarimPage() {
                       <p className="text-gray-500 font-medium">{t('libraryEmpty')}</p>
                       <p className="text-sm text-gray-400 mt-1">{t('libraryEmptyHint')}</p>
                       <button
-                        onClick={() => setActiveTab('tasarim')}
+                        onClick={() => setTab('tasarim')}
                         className="mt-4 px-4 py-2 text-sm font-medium text-primary border border-primary rounded-lg hover:bg-primary/5 transition-colors"
                       >
                         {t('createDesign')}

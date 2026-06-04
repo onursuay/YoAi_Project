@@ -1,8 +1,8 @@
 'use client'
 
 import { Suspense, useCallback, useEffect, useMemo, useState } from 'react'
-import { useSearchParams } from 'next/navigation'
 import { useTranslations, useLocale } from 'next-intl'
+import { usePathTab } from '@/hooks/usePathTab'
 import Topbar from '@/components/Topbar'
 import DateRangePicker from '@/components/DateRangePicker'
 import {
@@ -132,7 +132,6 @@ function getDefaultDateTo(): string {
 function RaporlarContent() {
   const t = useTranslations('dashboard.raporlar')
   const locale = useLocale()
-  const searchParams = useSearchParams()
 
   const [connections, setConnections] = useState<Record<ProviderKey, ConnectionState>>({
     meta_ads: { connected: false, hasSelection: false },
@@ -141,7 +140,12 @@ function RaporlarContent() {
     google_search_console: { connected: false, hasSelection: false },
   })
   const [connectionsLoading, setConnectionsLoading] = useState(true)
-  const [activeProvider, setActiveProvider] = useState<ProviderKey | null>(null)
+  // Aktif sağlayıcı URL path'inden gelir (/raporlar/<saglayici>); path boşsa
+  // bağlantılar yüklenince otomatik seçilen sağlayıcıya (ilk bağlı) düşer.
+  const { activeTab: pathProvider, setTab, segments: providerSegments } = usePathTab('raporlar')
+  const providerFromPath = providerSegments.length > 0 ? (pathProvider as ProviderKey) : null
+  const [autoProvider, setAutoProvider] = useState<ProviderKey | null>(null)
+  const activeProvider = providerFromPath ?? autoProvider
   const [reportData, setReportData] = useState<Record<string, ReportPayload>>({})
   const [reportLoading, setReportLoading] = useState(false)
   const [reportError, setReportError] = useState<string | null>(null)
@@ -217,16 +221,9 @@ function RaporlarContent() {
 
         setConnections(newConnections as Record<ProviderKey, ConnectionState>)
 
-        // Auto-select first connected provider
-        const paramProvider = searchParams.get('provider') as ProviderKey | null
-        if (paramProvider && newConnections[paramProvider]?.connected) {
-          setActiveProvider(paramProvider)
-        } else if (firstConnected) {
-          setActiveProvider(firstConnected)
-        } else {
-          // select first provider even if not connected
-          setActiveProvider('meta_ads')
-        }
+        // Path'te sağlayıcı yoksa ilk bağlı sağlayıcıyı (yoksa meta_ads) otomatik seç.
+        // Path'te sağlayıcı varsa o öncelikli (activeProvider = providerFromPath ?? autoProvider).
+        setAutoProvider(firstConnected ?? 'meta_ads')
       } catch (error) {
         console.error('Failed to load connection statuses:', error)
       } finally {
@@ -235,7 +232,7 @@ function RaporlarContent() {
     }
     loadStatuses()
     return () => { cancelled = true }
-  }, [searchParams])
+  }, [])
 
   // Fetch report data when provider or dates change
   const fetchReport = useCallback(async (provider: ProviderKey) => {
@@ -366,7 +363,7 @@ function RaporlarContent() {
                 return (
                   <button
                     key={p.key}
-                    onClick={() => isConnected && setActiveProvider(p.key)}
+                    onClick={() => isConnected && setTab(p.key)}
                     disabled={!isConnected}
                     className={`
                       flex items-center gap-3 px-5 py-3 rounded-xl border-2 font-medium text-sm transition-all

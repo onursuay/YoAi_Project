@@ -15,21 +15,7 @@ import GoogleAudienceView from '@/components/hedef-kitle/google/GoogleAudienceVi
 import type { AudienceRow, AudienceType, AudienceSource, UnifiedAudience } from '@/components/hedef-kitle/wizard/types'
 import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import { useSubscription } from '@/components/providers/SubscriptionProvider'
-
-// Meta: AI + Detaylı + Benzer + Retargeting
-const META_AUDIENCE_TABS = [
-  { id: 'AI', label: 'AI Tabanlı Hedef Kitle', icon: <Sparkles className="w-4 h-4" /> },
-  { id: 'SAVED', label: 'Detaylı Kitle', icon: <Globe className="w-4 h-4" /> },
-  { id: 'LOOKALIKE', label: 'Benzer Kitle', icon: <Users className="w-4 h-4" /> },
-  { id: 'CUSTOM', label: 'Retargeting', icon: <Target className="w-4 h-4" /> },
-]
-
-// Google: Benzer Kitle (Google'da nesne olarak yok) ve AI (Strateji → Meta) gizli.
-// Detaylı = Google segment kataloğu, Retargeting = hesabın user list'leri (salt-okunur).
-const GOOGLE_AUDIENCE_TABS = [
-  { id: 'SAVED', label: 'Detaylı Kitle', icon: <Globe className="w-4 h-4" /> },
-  { id: 'CUSTOM', label: 'Retargeting', icon: <Target className="w-4 h-4" /> },
-]
+import { usePathTab } from '@/hooks/usePathTab'
 
 interface Assets {
   pixels: { id: string; name: string }[]
@@ -82,18 +68,13 @@ export default function HedefKitlePage() {
   const { hasSubscription, isOwner, loading: subLoading } = useSubscription()
   // AI Tabanlı sekmesi erişimi: aktif abonelik VEYA owner bypass
   const hasAiAccess = hasSubscription || isOwner
-  const [platform, setPlatform] = useState<Platform>('meta')
-  const [activeTab, setActiveTab] = useState('SAVED')
+  // Platform + sekme URL path'inden türetilir (/hedef-kitle/<platform>/<sekme>)
+  const { activeTab, platform: platformRaw, setTab, setPlatform: setPathPlatform } = usePathTab('hedef-kitle')
+  const platform = (platformRaw ?? 'meta') as Platform
   // Aktif Meta hesabı — Topbar'da birleşik hesap seçici göstermek için
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
   // Aktif Google hesabı adı — Google sekmesinde seçici butonunda göstermek için
   const [googleName, setGoogleName] = useState<string | null>(null)
-
-  // Birleşik seçiciden gelen ?platform sinyaliyle başlangıç platformunu ayarla
-  useEffect(() => {
-    const p = new URLSearchParams(window.location.search).get('platform')
-    if (p === 'google' || p === 'meta') setPlatform(p)
-  }, [])
 
   // Aktif Meta hesabını çek (seçici görünürlüğü). Geçişte reload ile veriye bağlanır.
   useEffect(() => {
@@ -111,21 +92,31 @@ export default function HedefKitlePage() {
       .catch(() => {})
   }, [])
 
+  // Meta: AI + Detaylı + Benzer + Retargeting
+  const META_AUDIENCE_TABS = [
+    { id: 'AI', label: t('tabs.ai'), icon: <Sparkles className="w-4 h-4" /> },
+    { id: 'SAVED', label: t('tabs.saved'), icon: <Globe className="w-4 h-4" /> },
+    { id: 'LOOKALIKE', label: t('tabs.lookalike'), icon: <Users className="w-4 h-4" /> },
+    { id: 'CUSTOM', label: t('tabs.custom'), icon: <Target className="w-4 h-4" /> },
+  ]
+  // Google: Benzer Kitle (Google'da nesne olarak yok) ve AI (Strateji → Meta) gizli.
+  const GOOGLE_AUDIENCE_TABS = [
+    { id: 'SAVED', label: t('tabs.saved'), icon: <Globe className="w-4 h-4" /> },
+    { id: 'CUSTOM', label: t('tabs.custom'), icon: <Target className="w-4 h-4" /> },
+  ]
   const audienceTabs = platform === 'google' ? GOOGLE_AUDIENCE_TABS : META_AUDIENCE_TABS
 
   // Sekme değişimi: AI sekmesi seçilebilir; erişim kontrolü içerik render'ında
   // DEKLARATİF olarak yapılır (abonelik yoksa içerik render edilmez, modal çıkar).
   const handleTabChange = useCallback((tabId: string) => {
-    setActiveTab(tabId)
-  }, [])
+    setTab(tabId)
+  }, [setTab])
 
   // Platform değişince Google'da olmayan sekmelerden (AI / Benzer Kitle) güvenli sekmeye düş
   const handlePlatformChange = useCallback((next: Platform) => {
-    setPlatform(next)
-    if (next === 'google') {
-      setActiveTab((cur) => (cur === 'SAVED' || cur === 'CUSTOM' ? cur : 'SAVED'))
-    }
-  }, [])
+    const safeTab = next === 'google' && (activeTab === 'AI' || activeTab === 'LOOKALIKE') ? 'SAVED' : activeTab
+    setPathPlatform(next, safeTab)
+  }, [activeTab, setPathPlatform])
   const [audiences, setAudiences] = useState<UnifiedAudience[]>([])
   const [loading, setLoading] = useState(true)
   const [wizardOpen, setWizardOpen] = useState(false)

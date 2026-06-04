@@ -90,7 +90,12 @@ export default function MultiAccountDropdown({
   // Hesap seçilince nereye gidilecek (bağlam-duyarlı). Çok-platformlu modülde
   // modülden çıkmadan ilgili sekme açılır; sadece-Meta modülde Google → Google sayfası.
   const navigateAfterSwitch = (platform: 'meta' | 'google') => {
-    const inlineMulti = ['/optimizasyon', '/hedef-kitle']
+    // Hedef Kitle path tabanlı (/hedef-kitle/<platform>/<sekme>): platform segmentini değiştir
+    if (pathname?.startsWith('/hedef-kitle')) {
+      window.location.href = `/hedef-kitle/${platform}`
+      return
+    }
+    const inlineMulti = ['/optimizasyon']
     if (inlineMulti.some(p => pathname?.startsWith(p))) {
       window.location.href = `${pathname}?platform=${platform}`
     } else if (pathname?.startsWith('/yoalgoritma')) {

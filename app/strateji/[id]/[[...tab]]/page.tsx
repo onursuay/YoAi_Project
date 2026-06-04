@@ -1,10 +1,11 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
-import { useParams, useRouter, useSearchParams } from 'next/navigation'
+import { useParams, useRouter } from 'next/navigation'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
+import { usePathTab } from '@/hooks/usePathTab'
 import { ToastContainer } from '@/components/Toast'
 import type { Toast } from '@/components/Toast'
 import type { StrategyInstance, StrategyOutput, StrategyTask, SyncJob, InputPayload, TaskStatus, MetricsSnapshot } from '@/lib/strategy/types'
@@ -32,8 +33,9 @@ export default function StratejiDetailPage() {
   // diğer mutasyon çağrılarında kullanılır.
   const lookupId = extractStrategyIdSegment(idParam)
   const router = useRouter()
-  const searchParams = useSearchParams()
-  const initialTab = searchParams.get('tab') || 'wizard'
+  // Sekme durumu URL path'inden türetilir (/strateji/<id>/<sekme>)
+  const { activeTab, setTab, segments: tabSegments } = usePathTab('strateji', { segmentParam: 'tab', idParam: 'id' })
+  const hasTabInPath = tabSegments.length > 0
 
   const [instance, setInstance] = useState<StrategyInstance | null>(null)
   const [input, setInput] = useState<{ payload: InputPayload } | null>(null)
@@ -42,7 +44,6 @@ export default function StratejiDetailPage() {
   const [jobs, setJobs] = useState<SyncJob[]>([])
   const [metrics, setMetrics] = useState<MetricsSnapshot[]>([])
   const [loading, setLoading] = useState(true)
-  const [activeTab, setActiveTab] = useState(initialTab)
   const [saving, setSaving] = useState(false)
   const [regenerating, setRegenerating] = useState(false)
   const [approving, setApproving] = useState(false)
@@ -82,22 +83,24 @@ export default function StratejiDetailPage() {
       setAiGenerated(!!json.aiGenerated)
       setAiFallbackReason(json.aiFallbackReason ?? null)
 
-      // Auto-tab based on phase — SADECE ilk yüklemede; sonradan kullanıcının
+      // Auto-tab based on phase — SADECE ilk yüklemede ve URL'de sekme yokken;
+      // path'i ilgili sekmeye replace eder (geçmişi kirletmez), sonradan kullanıcının
       // seçtiği sekmeyi ezmemek için autoTabbedRef ile bir kez çalışır.
       const status = json.instance?.status
-      if (status && !searchParams.get('tab') && !autoTabbedRef.current) {
+      if (status && !hasTabInPath && !autoTabbedRef.current) {
         autoTabbedRef.current = true
-        if (['DRAFT', 'COLLECTING'].includes(status)) setActiveTab('wizard')
-        else if (['ANALYZING', 'GENERATING_PLAN', 'READY_FOR_REVIEW'].includes(status)) setActiveTab('plan')
-        else if (['APPLYING', 'RUNNING', 'NEEDS_ACTION'].includes(status)) setActiveTab('tasks')
-        else if (status === 'FAILED') setActiveTab('jobs')
+        let target = 'wizard'
+        if (['ANALYZING', 'GENERATING_PLAN', 'READY_FOR_REVIEW'].includes(status)) target = 'plan'
+        else if (['APPLYING', 'RUNNING', 'NEEDS_ACTION'].includes(status)) target = 'tasks'
+        else if (status === 'FAILED') target = 'jobs'
+        if (target !== 'wizard') setTab(target, { replace: true })
       }
     } catch {
       router.push('/strateji')
     } finally {
       setLoading(false)
     }
-  }, [lookupId, router, searchParams])
+  }, [lookupId, router, hasTabInPath, setTab])
 
   // İlk yükleme
   useEffect(() => { fetchDetail() }, [fetchDetail])
@@ -166,7 +169,7 @@ export default function StratejiDetailPage() {
       const analyzeJson = await analyzeRes.json()
       if (analyzeJson.ok) {
         addToast('Analiz başlatıldı', 'success')
-        setActiveTab('plan')
+        setTab('plan')
         fetchDetail()
       } else {
         addToast(analyzeJson.message || 'Analiz başlatılamadı', 'error')
@@ -207,7 +210,7 @@ export default function StratejiDetailPage() {
       const json = await res.json()
       if (json.ok) {
         addToast(mode === 'apply' ? 'Uygulama başlatıldı' : 'Öneri modu aktif', 'success')
-        setActiveTab('tasks')
+        setTab('tasks')
         fetchDetail()
       } else {
         addToast(json.message || 'Onay hatası', 'error')
@@ -384,7 +387,7 @@ export default function StratejiDetailPage() {
           )}
 
           {/* Tabs */}
-          <Tabs tabs={TABS} activeTab={activeTab} onTabChange={setActiveTab} />
+          <Tabs tabs={TABS} activeTab={activeTab} onTabChange={setTab} />
 
           {/* Tab İçerikleri */}
           <div className="bg-white rounded-b-xl border border-t-0 border-gray-200 p-5">

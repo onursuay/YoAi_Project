@@ -97,7 +97,8 @@ export default function SidebarNav() {
 
   const isActive = (href?: string) => {
     if (!href) return false
-    return pathname === href
+    // Alt-sekme path'lerinde de modül aktif kalsın: /meta-ads/reklamlar → Meta aktif
+    return pathname === href || pathname.startsWith(href + '/')
   }
 
   const locale = typeof document !== 'undefined'

@@ -2522,6 +2522,12 @@
     "hedefKitle": {
       "title": "Target Audience",
       "description": "Manage your target audiences",
+      "tabs": {
+        "ai": "AI-Based Target Audience",
+        "saved": "Detailed Audience",
+        "lookalike": "Lookalike Audience",
+        "custom": "Retargeting"
+      },
       "aiEmptyTitle": "AI-Based Target Audience",
       "aiEmptyDesc": "Once you create and approve a plan in the Strategy module, audiences are generated here automatically via AI persona analysis based on your business profile's sector, target audience and competitor data."
     },

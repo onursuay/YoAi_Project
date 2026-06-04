@@ -2522,6 +2522,12 @@
     "hedefKitle": {
       "title": "Hedef Kitle",
       "description": "Hedef kitlelerinizi yönetin",
+      "tabs": {
+        "ai": "AI Tabanlı Hedef Kitle",
+        "saved": "Detaylı Kitle",
+        "lookalike": "Benzer Kitle",
+        "custom": "Retargeting"
+      },
       "aiEmptyTitle": "AI Tabanlı Hedef Kitle",
       "aiEmptyDesc": "Strateji modülünden bir plan oluşturup onayladığınızda, işletme profilinizdeki sektör, hedef kitle ve rakip verilerine göre AI persona analiziyle hedef kitleler otomatik olarak burada oluşturulur."
     },
