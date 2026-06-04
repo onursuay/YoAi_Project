@@ -2996,7 +2996,7 @@
           "freqWeekdays": "Hafta içi",
           "freqWeekly": "Haftada bir",
           "weekday": "Gün",
-          "autoPublish": "Üretilen makaleyi otomatik yayınla — kapalıysa taslak olarak kalır",
+          "autoPublish": "Makaleyi otomatik yayınla (kapalıysa taslak olarak kalır.)",
           "generateImage": "Öne çıkan görsel üret (20 kredi)",
           "keywordPool": "Anahtar Kelime Havuzu (opsiyonel)",
           "keywordPoolHint": "Boş bırakırsanız konuyu yapay zeka seçer.",

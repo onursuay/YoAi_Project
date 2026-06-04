@@ -377,7 +377,7 @@ export default function SeoAutomationPanel() {
       {enabled && (
         <div className="space-y-2">
           <label className="flex items-center gap-2 cursor-pointer">
-            <input type="checkbox" checked={autoPublish} onChange={(e) => setAutoPublish(e.target.checked)} className="w-4 h-4 rounded accent-purple-600" />
+            <input type="checkbox" checked={autoPublish} onChange={(e) => setAutoPublish(e.target.checked)} className="w-4 h-4 rounded accent-primary" />
             <span className="text-sm text-gray-700">{t('autoPublish')}</span>
           </label>
         </div>
@@ -429,7 +429,7 @@ export default function SeoAutomationPanel() {
           onChange={(e) => setKwInput(e.target.value)}
           onKeyDown={(e) => { if (e.key === 'Enter') { e.preventDefault(); addKeyword() } }}
           placeholder={t('keywordPoolPlaceholder')}
-          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-purple-500 focus:border-purple-500"
+          className="w-full px-3 py-2 border border-gray-300 rounded-lg text-sm focus:ring-2 focus:ring-primary/20 focus:border-primary"
         />
         <p className="text-xs text-gray-500 mt-1">{t('keywordPoolHint')}</p>
       </div>
@@ -458,7 +458,7 @@ export default function SeoAutomationPanel() {
           <button
             onClick={() => handleSave()}
             disabled={saving}
-            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50"
+            className="inline-flex items-center gap-1.5 px-4 py-2 text-sm text-white bg-primary rounded-lg hover:bg-primary/90 disabled:opacity-50 transition-colors"
           >
             {saving ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Save className="w-3.5 h-3.5" />}
             {t('save')}

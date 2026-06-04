@@ -2996,7 +2996,7 @@
           "freqWeekdays": "Weekdays",
           "freqWeekly": "Weekly",
           "weekday": "Day",
-          "autoPublish": "Publish generated articles automatically — kept as draft if off",
+          "autoPublish": "Auto-publish article (kept as draft if off.)",
           "generateImage": "Generate featured image (20 credits)",
           "keywordPool": "Keyword Pool (optional)",
           "keywordPoolHint": "Leave empty to let AI pick the topic.",
