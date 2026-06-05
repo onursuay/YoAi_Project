@@ -145,7 +145,7 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
           <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
             <Globe className="w-4 h-4" /> {t('publishTarget')}
           </h3>
-          <p className="text-xs text-gray-500 mt-0.5">{t('publishTargetDesc')}</p>
+          <p className="text-sm text-gray-500 leading-relaxed mt-1">{t('publishTargetDesc')}</p>
         </div>
 
         {/* Banner */}
@@ -176,9 +176,9 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
             <Loader2 className="w-5 h-5 animate-spin" />
           </div>
         ) : (
-          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 items-start">
+          <div className="space-y-4">
 
-            {/* ── Sütun 1: Bağlı siteler veya yetkilendirme ── */}
+            {/* ── Birincil: mevcut yayın hedefi veya yetkilendirme ── */}
             <div className="animate-card-enter" style={{ ['--card-index' as string]: 0 }}>
               {connections.length > 0 && (
                 <div className="space-y-2">
@@ -270,47 +270,49 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
               )}
             </div>
 
-            {/* ── Sütun 2: Uygulama Parolası seçim kartı ── */}
-            <div className="animate-card-enter" style={{ ['--card-index' as string]: 1 }}>
+            {/* ── İkincil: bağlantı yöntemleri (eşit iki kart) ── */}
+            <div
+              className="grid grid-cols-1 sm:grid-cols-2 gap-3 animate-card-enter"
+              style={{ ['--card-index' as string]: 1 }}
+            >
+              {/* Uygulama Parolası ile bağlan */}
               <button
                 type="button"
                 onClick={() => setActiveModal(activeModal === 'wordpress' ? null : 'wordpress')}
-                className={`w-full flex items-center justify-between gap-3 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md ${
+                className={`group flex h-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeModal === 'wordpress'
-                    ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/15'
-                    : 'border border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5'
+                    ? 'border border-primary bg-primary/5 ring-2 ring-primary/15 shadow-sm'
+                    : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
                 }`}
               >
-                <span className="flex items-center gap-2.5">
-                  <KeyRound className={`w-4 h-4 shrink-0 ${activeModal === 'wordpress' ? 'text-primary' : 'text-gray-400'}`} />
-                  <span>
-                    <span className="block text-sm font-medium text-gray-900">{tWp('title')}</span>
-                    <span className="block text-xs text-gray-500 leading-relaxed">{tWp('subtitle')}</span>
-                  </span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'wordpress' ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
+                  <KeyRound className="w-4 h-4" />
                 </span>
-                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'wordpress' ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-gray-900">{tWp('title')}</span>
+                  <span className="block text-xs text-gray-500 leading-relaxed mt-0.5">{tWp('subtitle')}</span>
+                </span>
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'wordpress' ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-gray-400'}`} />
               </button>
-            </div>
 
-            {/* ── Sütun 3: Webhook seçim kartı ── */}
-            <div className="animate-card-enter" style={{ ['--card-index' as string]: 2 }}>
+              {/* Başka bir site / özel yazılım */}
               <button
                 type="button"
                 onClick={() => setActiveModal(activeModal === 'webhook' ? null : 'webhook')}
-                className={`w-full flex items-center justify-between gap-3 rounded-xl p-4 text-left transition-all duration-200 hover:shadow-md ${
+                className={`group flex h-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeModal === 'webhook'
-                    ? 'border-2 border-primary bg-primary/5 ring-2 ring-primary/15'
-                    : 'border border-dashed border-gray-300 hover:border-primary/50 hover:bg-primary/5'
+                    ? 'border border-primary bg-primary/5 ring-2 ring-primary/15 shadow-sm'
+                    : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
                 }`}
               >
-                <span className="flex items-center gap-2.5">
-                  <Webhook className={`w-4 h-4 shrink-0 ${activeModal === 'webhook' ? 'text-primary' : 'text-gray-400'}`} />
-                  <span>
-                    <span className="block text-sm font-medium text-gray-900">{tWh('title')}</span>
-                    <span className="block text-xs text-gray-500 leading-relaxed">{tWh('subtitle')}</span>
-                  </span>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'webhook' ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
+                  <Webhook className="w-4 h-4" />
                 </span>
-                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'webhook' ? 'rotate-180 text-primary' : 'text-gray-400'}`} />
+                <span className="min-w-0 flex-1">
+                  <span className="block text-sm font-semibold text-gray-900">{tWh('title')}</span>
+                  <span className="block text-xs text-gray-500 leading-relaxed mt-0.5">{tWh('subtitle')}</span>
+                </span>
+                <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'webhook' ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-gray-400'}`} />
               </button>
             </div>
 

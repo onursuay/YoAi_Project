@@ -234,8 +234,8 @@ export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (a
   return (
     <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
       <div>
-        <h3 className="text-sm font-semibold text-gray-900 flex items-center gap-2">
-          <Zap className="w-4 h-4 text-purple-600" /> {t('title')}
+        <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
+          <Zap className="w-4 h-4 text-primary" /> {t('title')}
         </h3>
         <p className="text-xs text-gray-500 mt-0.5">{t('description')}</p>
       </div>
