@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { getProfileByUserId, getIntelligenceByUserId } from '@/lib/yoai/businessProfileStore'
 import { claudeText } from '@/lib/anthropic/text'
 import { getBriefByConnection, type SiteContentBriefRow } from '@/lib/seo/siteContentBriefStore'
+import { runSiteBriefPipeline } from '@/lib/seo/siteBriefPipeline'
 
 /**
  * Otomatik makale akışı için günlük SEO konusu/anahtar kelime seçimi.
@@ -19,6 +20,16 @@ export interface TopicResult {
   keyword: string
   businessContext: string
   recentTitles: string[]
+}
+
+async function getSiteBaseUrl(siteConnectionId: string): Promise<string | null> {
+  if (!supabase) return null
+  const { data } = await supabase
+    .from('site_connections')
+    .select('base_url')
+    .eq('id', siteConnectionId)
+    .maybeSingle()
+  return (data as { base_url?: string } | null)?.base_url ?? null
 }
 
 async function fetchRecentTitles(userId: string, limit = 14): Promise<string[]> {
@@ -119,14 +130,36 @@ export async function selectDailyTopic(
   const language = opts.language ?? 'tr'
   const recentTitles = await fetchRecentTitles(userId)
 
-  // Bağlam: önce site brief (completed), yoksa profil fallback (bugünkü davranış).
+  // Bağlam kaynağı KRİTİK (bug fix): bir SİTE bağlıysa (siteConnectionId) bağlam
+  // YALNIZ o sitenin brief'inden gelir. Kullanıcının global iş profiline ASLA
+  // düşülmez — o profil başka bir firma olabilir (ör. eskiden eklenmiş başka bir
+  // işletme); aksi halde bağlı site için yanlış firmanın konulu makalesi üretilir.
   let businessContext = ''
   let briefCategories: string[] = []
-  const brief = opts.siteConnectionId ? await getBriefByConnection(opts.siteConnectionId) : null
-  if (brief && brief.scan_status === 'completed') {
-    businessContext = buildContextFromBrief(brief)
-    briefCategories = brief.categories ?? []
+
+  const isUsableBrief = (b: SiteContentBriefRow | null): b is SiteContentBriefRow =>
+    !!b && (b.scan_status === 'completed' || b.scan_status === 'partial')
+
+  if (opts.siteConnectionId) {
+    let brief = await getBriefByConnection(opts.siteConnectionId)
+    if (!isUsableBrief(brief)) {
+      // Brief hazır değil (yok / takılı 'running' / 'failed') → ŞİMDİ üret, sonra
+      // tekrar oku. Böylece site-özgü bağlam kesinleşir; global profile düşülmez.
+      await runSiteBriefPipeline(opts.siteConnectionId, userId).catch(() => {})
+      brief = await getBriefByConnection(opts.siteConnectionId)
+    }
+    if (isUsableBrief(brief)) {
+      businessContext = buildContextFromBrief(brief)
+      briefCategories = brief.categories ?? []
+    } else {
+      // Tarama hâlâ başarısız → SİTE URL'inden minimal bağlam (global profile DEĞİL).
+      const baseUrl = await getSiteBaseUrl(opts.siteConnectionId)
+      businessContext = baseUrl
+        ? `Hedef site: ${baseUrl}\n(Site içeriği taranamadı; bu siteye uygun, sektörel genel bir konu seç.)`
+        : ''
+    }
   } else {
+    // Hiç site bağlı değil (legacy yol) → kullanıcının global iş profili + intelligence.
     const [profile, intel] = await Promise.all([getProfileByUserId(userId), getIntelligenceByUserId(userId)])
     businessContext = buildContext(profile, intel)
   }
