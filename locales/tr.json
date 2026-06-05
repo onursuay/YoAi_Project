@@ -3748,6 +3748,8 @@
     "yearlyBilled": "yıllık faturalandırılır",
     "perMonth": "aylık",
     "perYear": "yıl",
+    "chargedInTryMonthly": "Kartınızdan aylık ≈ ₺{amount} tahsil edilir",
+    "chargedInTryYearly": "Kartınızdan yıllık ≈ ₺{amount} tahsil edilir",
     "trialBadge": "14 gün ücretsiz",
     "selectPlan": "Planı Seç",
     "popular": "En Popüler",
@@ -3799,7 +3801,8 @@
       "popular": "Popüler",
       "redirecting": "Ödeme sayfasına yönlendiriliyor...",
       "notConfigured": "Ödeme sistemi henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.",
-      "startError": "Ödeme başlatılamadı. Lütfen tekrar deneyin."
+      "startError": "Ödeme başlatılamadı. Lütfen tekrar deneyin.",
+      "usdChargeNote": "Fiyatlar ABD doları olup, kartınızdan güncel kurla Türk Lirası olarak tahsil edilir."
     },
     "optimizationNote": "Optimizasyon özelliği deneme sürecinde kullanılamaz.",
     "gateModal": {

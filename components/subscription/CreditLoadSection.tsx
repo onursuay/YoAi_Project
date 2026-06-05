@@ -4,7 +4,7 @@ import { useState } from 'react'
 import { Coins, Sparkles, Check } from 'lucide-react'
 import { useTranslations } from 'next-intl'
 import { useCredits } from '@/components/providers/CreditProvider'
-import { CREDIT_PACKAGES } from '@/lib/subscription/plans'
+import { CREDIT_PACKAGES, toChargeTRY } from '@/lib/subscription/plans'
 
 export default function CreditLoadSection() {
   const t = useTranslations('subscription.credits')
@@ -87,9 +87,14 @@ export default function CreditLoadSection() {
                   </span>
                 )}
               </div>
-              <span className={`text-sm font-semibold ${isSelected ? 'text-primary' : 'text-gray-900'}`}>
-                ${pkg.price}
-              </span>
+              <div className="text-right">
+                <span className={`block text-sm font-semibold ${isSelected ? 'text-primary' : 'text-gray-900'}`}>
+                  ${pkg.price}
+                </span>
+                <span className="block text-[11px] text-gray-400">
+                  ≈ ₺{Math.round(toChargeTRY(pkg.price)).toLocaleString('tr-TR')}
+                </span>
+              </div>
             </button>
           )
         })}
@@ -114,6 +119,7 @@ export default function CreditLoadSection() {
       <div className="space-y-1.5 text-sm text-gray-500 mt-4">
         <p>{t('perGeneration')}</p>
         <p className="text-primary font-medium">{t('freeCredits')}</p>
+        <p className="text-xs text-gray-400">{t('usdChargeNote')}</p>
       </div>
     </div>
   )

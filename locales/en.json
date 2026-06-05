@@ -3748,6 +3748,8 @@
     "yearlyBilled": "billed annually",
     "perMonth": "per month",
     "perYear": "year",
+    "chargedInTryMonthly": "≈ ₺{amount} charged monthly to your card",
+    "chargedInTryYearly": "≈ ₺{amount} charged yearly to your card",
     "trialBadge": "14 days free",
     "selectPlan": "Select Plan",
     "popular": "Most Popular",
@@ -3799,7 +3801,8 @@
       "popular": "Popular",
       "redirecting": "Redirecting to payment page...",
       "notConfigured": "Payment system is not configured yet. Please try again later.",
-      "startError": "Could not start payment. Please try again."
+      "startError": "Could not start payment. Please try again.",
+      "usdChargeNote": "Prices are in USD and charged to your card in Turkish Lira at the current rate."
     },
     "optimizationNote": "Optimization feature is not available during trial.",
     "gateModal": {

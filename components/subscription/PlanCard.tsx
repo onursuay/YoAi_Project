@@ -2,7 +2,7 @@
 
 import { Check, Minus, Plus } from 'lucide-react'
 import type { SubscriptionPlan, BillingCycle } from '@/lib/subscription/types'
-import { getMonthlyPrice, getYearlyPrice, getYearlyMonthlyPrice, PLAN_SECTION_TITLES, MIN_AD_ACCOUNTS, MAX_AD_ACCOUNTS, ENTERPRISE_MIN_AD_ACCOUNTS, ENTERPRISE_MAX_AD_ACCOUNTS } from '@/lib/subscription/plans'
+import { getMonthlyPrice, getYearlyPrice, getYearlyMonthlyPrice, toChargeTRY, PLAN_SECTION_TITLES, MIN_AD_ACCOUNTS, MAX_AD_ACCOUNTS, ENTERPRISE_MIN_AD_ACCOUNTS, ENTERPRISE_MAX_AD_ACCOUNTS } from '@/lib/subscription/plans'
 import { useTranslations } from 'next-intl'
 
 interface Props {
@@ -33,6 +33,11 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
 
   // Original monthly price (for strikethrough when yearly)
   const originalMonthlyTotal = monthlyPrice * 12
+
+  // İyzico'dan TL olarak tahsil edilecek GERÇEK tutar (USD × kur). Aylık döngüde
+  // aylık tutar; yıllık döngüde tek seferlik yıllık toplam tahsil edilir.
+  const chargeUsd = billingCycle === 'monthly' ? monthlyPrice : yearlyTotal
+  const chargeTry = Math.round(toChargeTRY(chargeUsd)).toLocaleString('tr-TR')
 
   const sectionTitle = PLAN_SECTION_TITLES[plan.id] || t('features')
 
@@ -116,6 +121,9 @@ export default function PlanCard({ plan, billingCycle, isCurrentPlan, onSelect, 
                 {' '}${yearlyTotal.toFixed(2)}/{t('perYear')}
               </p>
             )}
+            <p className="text-xs text-gray-500 mt-1.5">
+              {t(billingCycle === 'monthly' ? 'chargedInTryMonthly' : 'chargedInTryYearly', { amount: chargeTry })}
+            </p>
           </>
         )}
       </div>
