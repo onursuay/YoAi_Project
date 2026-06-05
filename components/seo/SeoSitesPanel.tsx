@@ -3,8 +3,8 @@
 import { useState, useEffect, useCallback } from 'react'
 import { useTranslations } from 'next-intl'
 import {
-  Loader2, Globe, Trash2, CheckCircle2, AlertCircle,
-  RefreshCw, ExternalLink, ArrowRight, KeyRound, Webhook, ChevronDown, X,
+  Loader2, Globe, CheckCircle2, AlertCircle,
+  ExternalLink, ArrowRight, KeyRound, Webhook, ChevronDown, X,
 } from 'lucide-react'
 import SeoWebhookConnect from './SeoWebhookConnect'
 import SeoWordPressConnect from './SeoWordPressConnect'
@@ -28,7 +28,7 @@ interface Props {
   profileUrl?: string | null
 }
 
-const SOFT_REASONS = new Set(['not_wordpress', 'rest_blocked', 'no_app_passwords'])
+const SOFT_REASONS = new Set(['not_wordpress', 'rest_blocked', 'no_app_passwords', 'auth_blocked'])
 
 /* ═══════ Component ═══════ */
 
@@ -39,8 +39,6 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
 
   const [connections, setConnections] = useState<SiteConnection[]>([])
   const [loading, setLoading] = useState(true)
-  const [testingId, setTestingId] = useState<string | null>(null)
-  const [testResult, setTestResult] = useState<Record<string, boolean>>({})
   const [wpIncompatible, setWpIncompatible] = useState(false)
   const [activeModal, setActiveModal] = useState<'wordpress' | 'webhook' | null>(null)
 
@@ -87,6 +85,7 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
       case 'not_wordpress': return t('errNotWordpress')
       case 'unreachable': return t('errUnreachable')
       case 'auth_failed': return t('errAuthFailed')
+      case 'auth_blocked': return t('errAuthBlocked')
       case 'test_failed': return t('errTestFailed')
       case 'site_mismatch': return t('errSiteMismatch')
       case 'save_failed': return t('errSaveFailed')
@@ -99,36 +98,6 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
   const handleAuthorize = () => {
     if (!profileUrl) return
     window.location.href = `/api/seo/sites/connect?siteUrl=${encodeURIComponent(profileUrl)}&platform=wordpress`
-  }
-
-  const handleTest = async (id: string) => {
-    setTestingId(id)
-    try {
-      const res = await fetch(`/api/seo/sites/${id}/test`, { method: 'POST' })
-      const data = await res.json()
-      setTestResult((prev) => ({ ...prev, [id]: Boolean(data.ok) }))
-      fetchConnections()
-    } catch {
-      setTestResult((prev) => ({ ...prev, [id]: false }))
-    } finally {
-      setTestingId(null)
-    }
-  }
-
-  const handleDelete = async (id: string) => {
-    if (!confirm(t('removeConfirm'))) return
-    await fetch(`/api/seo/sites/${id}`, { method: 'DELETE' })
-    fetchConnections()
-  }
-
-  const platformLabel = (p: string): string => {
-    switch (p) {
-      case 'wordpress': return t('platformWordpress')
-      case 'shopify': return t('platformShopify')
-      case 'ideasoft': return t('platformIdeasoft')
-      case 'generic': return t('platformGeneric')
-      default: return p
-    }
   }
 
   const closeModal = () => setActiveModal(null)
@@ -178,62 +147,8 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
         ) : (
           <div className="space-y-4">
 
-            {/* ── Birincil: mevcut yayın hedefi veya yetkilendirme ── */}
-            <div className="animate-card-enter" style={{ ['--card-index' as string]: 0 }}>
-              {connections.length > 0 && (
-                <div className="space-y-2">
-                  {connections.map((c) => (
-                    <div
-                      key={c.id}
-                      className="flex items-center justify-between gap-3 border border-gray-200 rounded-xl p-3 hover:shadow-md transition-all duration-300"
-                    >
-                      <div className="min-w-0 flex-1">
-                        <div className="flex items-center gap-2 flex-wrap">
-                          <Globe className="w-4 h-4 text-gray-400 shrink-0" />
-                          <span className="text-sm font-medium text-gray-900 truncate">{c.label || c.baseUrl}</span>
-                          <span className="inline-flex px-1.5 py-0.5 text-[10px] font-medium rounded bg-gray-100 text-gray-500">
-                            {platformLabel(c.platform)}
-                          </span>
-                          <span className={`inline-flex px-2 py-0.5 text-xs font-medium rounded-full ${
-                            c.status === 'active' ? 'bg-emerald-50 text-emerald-700'
-                              : c.status === 'error' ? 'bg-red-50 text-red-700'
-                              : 'bg-gray-100 text-gray-600'
-                          }`}>
-                            {c.status === 'active' ? t('statusActive') : c.status === 'error' ? t('statusError') : t('statusRevoked')}
-                          </span>
-                        </div>
-                        <p className="text-xs text-gray-500 mt-0.5 truncate">
-                          {c.username ? `${c.username} · ` : ''}{c.baseUrl}
-                        </p>
-                        {testResult[c.id] !== undefined && (
-                          <p className={`text-xs mt-1 flex items-center gap-1 ${testResult[c.id] ? 'text-emerald-600' : 'text-red-600'}`}>
-                            {testResult[c.id] ? <CheckCircle2 className="w-3 h-3" /> : <AlertCircle className="w-3 h-3" />}
-                            {testResult[c.id] ? t('testOk') : t('testFail')}
-                          </p>
-                        )}
-                      </div>
-                      <div className="flex items-center gap-1 shrink-0">
-                        <button
-                          onClick={() => handleTest(c.id)}
-                          disabled={testingId === c.id}
-                          className="p-1.5 text-gray-400 hover:text-primary rounded transition-colors"
-                          title={t('test')}
-                        >
-                          {testingId === c.id ? <Loader2 className="w-4 h-4 animate-spin" /> : <RefreshCw className="w-4 h-4" />}
-                        </button>
-                        <button
-                          onClick={() => handleDelete(c.id)}
-                          className="p-1.5 text-gray-400 hover:text-red-500 rounded transition-colors"
-                          title={t('remove')}
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </button>
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              )}
-
+            {/* ── Birincil: yetkilendirme / profil durumu (bağlı değilken) ── */}
+            <div className="animate-card-enter empty:hidden" style={{ ['--card-index' as string]: 0 }}>
               {connections.length === 0 && profileUrl && !wpIncompatible && (
                 <div className="border border-primary/20 rounded-xl p-4 bg-primary/5 space-y-3">
                   <div>

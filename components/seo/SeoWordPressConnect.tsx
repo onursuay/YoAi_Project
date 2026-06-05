@@ -49,6 +49,7 @@ export default function SeoWordPressConnect({ defaultUrl, onConnected, defaultOp
       case 'username_required': return t('errUsernameRequired')
       case 'weak_password': return t('errWeakPassword')
       case 'auth_failed': return t('errAuthFailed')
+      case 'auth_blocked': return t('errAuthBlocked')
       case 'unreachable': return t('errUnreachable')
       case 'not_wordpress': return t('errNotWordpress')
       default: return t('errSaveFailed')

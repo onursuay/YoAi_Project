@@ -68,6 +68,7 @@ export async function POST(request: Request) {
   if (!test.ok) {
     const code =
       test.errorCode === 'auth' ? 'auth_failed'
+      : test.errorCode === 'auth_blocked' ? 'auth_blocked'
       : test.errorCode === 'network' ? 'unreachable'
       : test.errorCode === 'not_found' ? 'not_wordpress'
       : 'test_failed'

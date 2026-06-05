@@ -50,13 +50,30 @@ export class WordPressConnector implements SiteConnector {
       // Zaman aşımı zorunlu: site (ör. güvenlik eklentisi) sunucu isteğini yanıtsız bırakırsa
       // fetch sonsuza dek asılı kalır ve çağıran route (callback) timeout'a düşer. 10sn yeterli.
       const res = await fetch(`${this.base}/wp-json/wp/v2/users/me?context=edit`, {
-        headers: { Authorization: this.auth },
+        headers: { Authorization: this.auth, Accept: 'application/json' },
         signal: AbortSignal.timeout(10_000),
       })
       if (res.ok) {
         return { ok: true, detail: 'Bağlantı doğrulandı.' }
       }
       if (res.status === 401 || res.status === 403) {
+        // 401/403 gövdesindeki WP hata kodu kritik ayrımı verir:
+        // - incorrect_password / invalid_username → gerçekten yanlış kimlik bilgisi
+        // - rest_not_logged_in / rest_cannot_authenticate → Authorization başlığı WordPress'e
+        //   hiç ulaşmamış (sunucu/CGI başlığı düşürüyor). Bu durumda kimlik bilgisi doğru olsa
+        //   bile auth çalışmaz; "şifre hatalı" demek kullanıcıyı yanıltır.
+        let wpCode = ''
+        try {
+          const data = (await res.json()) as { code?: string }
+          wpCode = (data?.code || '').toLowerCase()
+        } catch { /* gövde okunamadı — varsayılan auth hatası */ }
+        if (wpCode === 'rest_not_logged_in' || wpCode === 'rest_cannot_authenticate') {
+          return {
+            ok: false,
+            errorCode: 'auth_blocked',
+            detail: 'Sunucu, kimlik doğrulama başlığını (Authorization) WordPress\'e iletmiyor.',
+          }
+        }
         return { ok: false, errorCode: 'auth', detail: 'Kullanıcı adı veya uygulama şifresi hatalı.' }
       }
       if (res.status === 404) {

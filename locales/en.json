@@ -2917,6 +2917,7 @@
           "errNotWordpress": "This address wasn't recognized as a site we can auto-publish to. You can still generate articles and publish them manually via Copy / Download HTML.",
           "errUnreachable": "Could not reach the site.",
           "errAuthFailed": "Authorization failed.",
+          "errAuthBlocked": "We reached your site, but your server isn’t passing the authentication credentials to WordPress (the Authorization header is being blocked). This is not a username or password error. Enable forwarding of the Authorization header to PHP in your hosting/server settings, or connect using the “Other site / custom software” (Webhook) method.",
           "errTestFailed": "Connection test failed.",
           "errSiteMismatch": "The approved site does not match the entered address.",
           "errSaveFailed": "Could not save the connection.",
@@ -2982,6 +2983,7 @@
             "errUsernameRequired": "Enter your WordPress username.",
             "errWeakPassword": "The application password looks incomplete. Paste the full password WordPress gave you.",
             "errAuthFailed": "Username or application password is incorrect.",
+            "errAuthBlocked": "We reached your site, but your server isn’t passing the authentication credentials to WordPress (the Authorization header is being blocked). This is not a password error — the details you entered may be correct. Enable forwarding of the Authorization header to PHP in your hosting/server settings, or connect using the “Other site / custom software” (Webhook) method.",
             "errUnreachable": "Couldn't reach the site (timeout). The site may be very slow; try again shortly.",
             "errNotWordpress": "No WordPress REST API found at this address. Check the site address.",
             "errSaveFailed": "Couldn't save the connection. Please try again."

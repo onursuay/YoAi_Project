@@ -2,6 +2,16 @@
 
 ---
 
+## 2026-06-05 — WordPress App Password "giriş bilgileri kabul edilmiyor" yanlış teşhisi düzeltildi
+- **Sorun:** SEO > İçerikler > "Uygulama Parolası ile bağlan" kartında doğru WordPress kullanıcı adı + uygulama parolası girilse bile bağlantı reddediliyor ve "Kullanıcı adı veya uygulama parolası hatalı" gösteriliyordu. Kök neden (canlı `ustasiniyolla.com` üzerinde curl ile doğrulandı): REST API açık, Uygulama Parolaları etkin, yönlendirme/WAF yok — ancak sunucu (PHP 7.4, CGI/paylaşımlı hosting) HTTP `Authorization` başlığını PHP'ye **iletmeden düşürüyor**. WordPress kimlik bilgisini hiç görmüyor, 401 `rest_not_logged_in` dönüyor. Connector her 401'i kör şekilde "auth hatası" sayıp şifre hatası gibi gösteriyordu.
+- **Çözüm:** `WordPressConnector.testConnection` artık 401/403 gövdesindeki WP hata kodunu okuyor: `rest_not_logged_in`/`rest_cannot_authenticate` → yeni `auth_blocked` kodu (başlık düşürülmüş; kimlik bilgisi doğru olabilir), `incorrect_password`/`invalid_username` → gerçek `auth` hatası. Yeni `auth_blocked`, modal ve banner'da "bu bir parola hatası değildir; sunucu Authorization başlığını engelliyor — hosting ayarından iletin ya da Webhook ile bağlanın" şeklinde doğru, eyleme dönük mesaj gösteriyor (TR+EN). Meta/Google entegrasyonuna dokunulmadı.
+- **Dosyalar:** `lib/seo/connectors/types.ts`, `lib/seo/connectors/wordpress.ts`, `app/api/seo/sites/wordpress/route.ts`, `app/api/seo/sites/callback/route.ts`, `components/seo/SeoWordPressConnect.tsx`, `components/seo/SeoSitesPanel.tsx`, `locales/tr.json`, `locales/en.json`
+
+## 2026-06-05 — SEO Plus > İçerikler "Yayın Hedefi": bağlı site durum kartı kaldırıldı
+- **Sorun:** "Yayın Hedefi"ndeki aktif bağlı site (ustasiniyolla.com · WordPress · Aktif) durum kartı, hemen yanındaki "Uygulama Parolası ile bağlan" WordPress yöntem kartıyla görsel olarak çakışıp tekrar izlenimi veriyordu.
+- **Çözüm:** Bağlı site durum kartı (ve onunla birlikte yalnız o kartta kullanılan test/sil handler'ları, state'leri, import'ları) kaldırıldı; geriye iki net bağlantı yöntemi kartı kaldı. Bağlıyken birincil blok boş kalınca `empty:hidden` ile fazladan boşluk oluşmuyor.
+- **Dosyalar:** `components/seo/SeoSitesPanel.tsx`
+
 ## 2026-06-05 — SEO Plus > İçerikler "Yayın Hedefi" kart düzeni iyileştirme
 - **Sorun:** "Yayın Hedefi" alanı 3 sütunlu tek bir grid'di; mevcut **aktif bağlı site kartı** ile iki **kesik çizgili (dashed) bağlantı-yöntemi kartı** aynı sırada yer alıyordu. Kartlar farklı yükseklikte (asimetrik), kavramsal olarak karışık ve dashed border görsel gürültü yaratıyordu.
 - **Çözüm:** Sunum katmanı yeniden düzenlendi (handler/state/modal/API değişmedi): (1) Mevcut yayın hedefi / yetkilendirme durumu artık **tam genişlikte birincil blok**; (2) iki bağlantı yöntemi (Uygulama Parolası, Webhook) altta **eşit yükseklikli 2 sütunlu** kart olarak — dashed yerine premium solid border, ikon tile'ı ve aktif/hover durumları; (3) bölüm açıklaması `text-xs` → `text-sm leading-relaxed` (tipografi standardı); (4) boy-scout: Üretim Ayarları başlığı `text-sm` → `text-base`, palet dışı `text-purple-600` ikon → `text-primary`. Yeni metin/i18n eklenmedi.

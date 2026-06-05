@@ -13,6 +13,7 @@ export type SitePlatform = 'wordpress' | 'ideasoft' | 'shopify' | 'generic'
 
 export type ConnectorErrorCode =
   | 'auth'
+  | 'auth_blocked'   // kimlik bilgisi doğru olabilir ama sunucu Authorization başlığını uygulamaya iletmiyor
   | 'network'
   | 'not_found'
   | 'validation'

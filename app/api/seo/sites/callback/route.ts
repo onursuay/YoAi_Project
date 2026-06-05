@@ -71,7 +71,7 @@ export async function GET(request: Request) {
   if (!test.ok) {
     // auth → uygulama şifresi/kullanıcı hatalı; network/timeout → site sunucu isteğini
     // engelliyor olabilir (net "ulaşılamadı" mesajı, sonsuz bekleme yerine).
-    return fail(test.errorCode === 'auth' ? 'auth_failed' : test.errorCode === 'network' ? 'unreachable' : 'test_failed')
+    return fail(test.errorCode === 'auth' ? 'auth_failed' : test.errorCode === 'auth_blocked' ? 'auth_blocked' : test.errorCode === 'network' ? 'unreachable' : 'test_failed')
   }
 
   // İlk bağlantıysa varsayılan yap

@@ -2917,6 +2917,7 @@
           "errNotWordpress": "Bu adres otomatik yayına uygun bir site olarak algılanmadı. Makaleleri üretip Kopyala / HTML İndir ile elle yayınlayabilirsiniz.",
           "errUnreachable": "Siteye ulaşılamadı.",
           "errAuthFailed": "Yetkilendirme başarısız oldu.",
+          "errAuthBlocked": "Sitenize ulaşıldı ancak sunucunuz kimlik doğrulama bilgisini WordPress’e iletmiyor (Authorization başlığı engelleniyor). Bu bir kullanıcı adı veya parola hatası değildir. Hosting/sunucu ayarlarından Authorization başlığının PHP’ye iletilmesini sağlayın; alternatif olarak “Başka bir site / özel yazılım” (Webhook) yöntemiyle bağlanabilirsiniz.",
           "errTestFailed": "Bağlantı testi başarısız.",
           "errSiteMismatch": "Onaylanan site, girilen adresle eşleşmiyor.",
           "errSaveFailed": "Bağlantı kaydedilemedi.",
@@ -2982,6 +2983,7 @@
             "errUsernameRequired": "WordPress kullanıcı adınızı girin.",
             "errWeakPassword": "Uygulama parolası eksik görünüyor. WordPress’in verdiği parolanın tamamını yapıştırın.",
             "errAuthFailed": "Kullanıcı adı veya uygulama parolası hatalı.",
+            "errAuthBlocked": "Sitenize ulaşıldı ancak sunucunuz kimlik doğrulama bilgisini WordPress’e iletmiyor (Authorization başlığı engelleniyor). Bu bir parola hatası değildir — girdiğiniz bilgiler doğru olabilir. Hosting/sunucu ayarlarından Authorization başlığının PHP’ye iletilmesini sağlayın; alternatif olarak “Başka bir site / özel yazılım” (Webhook) yöntemiyle bağlanabilirsiniz.",
             "errUnreachable": "Siteye ulaşılamadı (zaman aşımı). Site çok yavaş olabilir; biraz sonra tekrar deneyin.",
             "errNotWordpress": "Bu adreste WordPress REST API bulunamadı. Site adresini kontrol edin.",
             "errSaveFailed": "Bağlantı kaydedilemedi. Lütfen tekrar deneyin."
