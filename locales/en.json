@@ -3036,7 +3036,7 @@
           "monthlyClampHint": "29, 30 and 31: in months without these days (e.g. February) publishing happens on that month's last day.",
           "targetCategories": "Target categories",
           "targetCategoriesHint": "Leave empty to rotate across all categories.",
-          "categoriesScanning": "Scanning categories…",
+          "categoriesScanning": "Scanning categories",
           "categoriesNone": "No categories found yet (waiting for site scan).",
           "weekday0": "Sunday",
           "weekday1": "Monday",

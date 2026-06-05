@@ -3036,7 +3036,7 @@
           "monthlyClampHint": "29, 30 ve 31: bu günleri olmayan aylarda (örn. Şubat) o ayın son gününde yayınlanır.",
           "targetCategories": "Hedef kategoriler",
           "targetCategoriesHint": "Boş bırakırsanız tüm kategoriler arasında dönülür.",
-          "categoriesScanning": "Kategoriler taranıyor…",
+          "categoriesScanning": "Kategoriler taranıyor",
           "categoriesNone": "Henüz kategori bulunamadı (site taraması bekleniyor).",
           "weekday0": "Pazar",
           "weekday1": "Pazartesi",

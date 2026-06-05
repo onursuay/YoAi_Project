@@ -122,14 +122,41 @@ export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (a
   // yalnız Manuel Üretim modunda görünmeli (otomatik modda mantıken anlamsız).
   useEffect(() => { onModeChange?.(enabled) }, [enabled, onModeChange])
 
-  // Site değişince brief kategorilerini çek
+  // Site değişince brief kategorilerini çek. Hazır değilse (yok / takılı 'running' /
+  // failed) awaited tetikle: site bağlanınca fire-and-forget tarama Vercel'de
+  // yarıda kesilip 'running'da takılabiliyor — bu, taramayı istek içinde
+  // sonuna kadar çalıştırıp kategorileri kesin getirir. Hazır brief varsa
+  // (completed/partial + kategori) yeniden ÜRETİLMEZ (token israfı olmaz).
   useEffect(() => {
     if (!siteConnectionId) { setBriefCategories([]); setBriefStatus(null); return }
     let cancelled = false
-    fetch(`/api/seo/brief?siteConnectionId=${siteConnectionId}`, { cache: 'no-store' })
-      .then((r) => r.json())
-      .then((d) => { if (!cancelled && d.ok) { setBriefCategories(d.brief?.categories ?? []); setBriefStatus(d.brief?.scan_status ?? null) } })
-      .catch(() => {})
+    const isReady = (st: string | null, cats: string[]) =>
+      (st === 'completed' || st === 'partial') && cats.length > 0
+
+    ;(async () => {
+      try {
+        const g = await fetch(`/api/seo/brief?siteConnectionId=${siteConnectionId}`, { cache: 'no-store' }).then((r) => r.json())
+        if (cancelled) return
+        const gb = g?.brief
+        if (gb && isReady(gb.scan_status, gb.categories ?? [])) {
+          setBriefCategories(gb.categories ?? []); setBriefStatus(gb.scan_status); return
+        }
+        // Hazır değil → tarama göstergesini aç ve sonuna kadar çalışan üretimi tetikle.
+        setBriefCategories([]); setBriefStatus('running')
+        const p = await fetch('/api/seo/brief', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ siteConnectionId }),
+        }).then((r) => r.json())
+        if (cancelled) return
+        const pb = p?.brief
+        setBriefCategories(pb?.categories ?? [])
+        setBriefStatus(pb?.scan_status ?? 'failed')
+      } catch {
+        if (!cancelled) setBriefStatus('failed')
+      }
+    })()
+
     return () => { cancelled = true }
   }, [siteConnectionId])
 
@@ -390,13 +417,18 @@ export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (a
         </div>
       )}
 
-      {/* Hedef kategoriler (brief'ten) */}
+      {/* Hedef kategoriler (brief'ten — otomatik tespit; manuel giriş yok) */}
       <div>
         <label className="block text-xs font-medium text-gray-600 mb-1">{t('targetCategories')}</label>
         {briefStatus === 'running' || briefStatus === 'pending' ? (
-          <p className="text-sm text-gray-500">{t('categoriesScanning')}</p>
+          <span className="inline-flex items-center gap-1.5 text-xs text-gray-500">
+            {t('categoriesScanning')}
+            <span className="seo-scan-dots inline-flex items-center gap-1" aria-hidden="true">
+              <span /><span /><span />
+            </span>
+          </span>
         ) : briefCategories.length === 0 ? (
-          <p className="text-sm text-gray-500">{t('categoriesNone')}</p>
+          <span className="text-xs text-gray-400">{t('categoriesNone')}</span>
         ) : (
           <div className="flex flex-wrap gap-2">
             {briefCategories.map((cat) => {
@@ -414,7 +446,6 @@ export default function SeoAutomationPanel({ onModeChange }: { onModeChange?: (a
             })}
           </div>
         )}
-        <p className="text-xs text-gray-500 mt-1">{t('targetCategoriesHint')}</p>
       </div>
 
       {/* Keyword pool */}
