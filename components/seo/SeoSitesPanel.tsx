@@ -107,6 +107,10 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
     closeModal()
   }
 
+  // Yöntem kartlarında "bağlı" göstergesi için: hangi platform aktif bağlı?
+  const wpConnected = connections.some((c) => c.platform === 'wordpress' && c.status === 'active')
+  const webhookConnected = connections.some((c) => c.platform === 'generic' && c.status === 'active')
+
   return (
     <>
       <div className="bg-white border border-gray-200 rounded-xl p-5 space-y-4">
@@ -197,16 +201,21 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
                 className={`group flex h-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeModal === 'wordpress'
                     ? 'border border-primary bg-primary/5 ring-2 ring-primary/15 shadow-sm'
-                    : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
+                    : wpConnected
+                      ? 'border border-emerald-200 bg-emerald-50/40 hover:shadow-md'
+                      : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
                 }`}
               >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'wordpress' ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'wordpress' ? 'bg-primary/10 text-primary' : wpConnected ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
                   <KeyRound className="w-4 h-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-gray-900">{tWp('title')}</span>
-                  <span className="block text-xs text-gray-500 leading-relaxed mt-0.5">{tWp('subtitle')}</span>
+                  <span className="block text-xs text-gray-500 mt-0.5 truncate">{tWp('subtitle')}</span>
                 </span>
+                {wpConnected && (
+                  <CheckCircle2 className="w-[18px] h-[18px] shrink-0 text-emerald-600" aria-label={t('statusActive')} />
+                )}
                 <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'wordpress' ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-gray-400'}`} />
               </button>
 
@@ -217,16 +226,21 @@ export default function SeoSitesPanel({ banner, profileUrl }: Props) {
                 className={`group flex h-full items-center gap-3 rounded-xl p-4 text-left transition-all duration-200 ${
                   activeModal === 'webhook'
                     ? 'border border-primary bg-primary/5 ring-2 ring-primary/15 shadow-sm'
-                    : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
+                    : webhookConnected
+                      ? 'border border-emerald-200 bg-emerald-50/40 hover:shadow-md'
+                      : 'border border-gray-200 hover:border-primary/40 hover:shadow-md'
                 }`}
               >
-                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'webhook' ? 'bg-primary/10 text-primary' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
+                <span className={`flex h-9 w-9 shrink-0 items-center justify-center rounded-lg transition-colors ${activeModal === 'webhook' ? 'bg-primary/10 text-primary' : webhookConnected ? 'bg-emerald-100 text-emerald-600' : 'bg-gray-50 text-gray-400 group-hover:text-primary'}`}>
                   <Webhook className="w-4 h-4" />
                 </span>
                 <span className="min-w-0 flex-1">
                   <span className="block text-sm font-semibold text-gray-900">{tWh('title')}</span>
-                  <span className="block text-xs text-gray-500 leading-relaxed mt-0.5">{tWh('subtitle')}</span>
+                  <span className="block text-xs text-gray-500 mt-0.5 truncate">{tWh('subtitle')}</span>
                 </span>
+                {webhookConnected && (
+                  <CheckCircle2 className="w-[18px] h-[18px] shrink-0 text-emerald-600" aria-label={t('statusActive')} />
+                )}
                 <ChevronDown className={`w-4 h-4 shrink-0 transition-transform duration-200 ${activeModal === 'webhook' ? 'rotate-180 text-primary' : 'text-gray-300 group-hover:text-gray-400'}`} />
               </button>
             </div>

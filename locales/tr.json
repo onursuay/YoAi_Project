@@ -2936,7 +2936,7 @@
           "wpIncompatibleNote": "Web siteniz tek-tıkla otomatik yayına uygun değil. Aşağıdan kendi sisteminize webhook ile bağlanıp makalelerinizi otomatik gönderebilirsiniz.",
           "webhook": {
             "title": "Başka bir site / özel yazılım",
-            "subtitle": "WordPress dışı bir siteye (özel yazılım, kendi sisteminiz) makaleleri webhook ile gönderin.",
+            "subtitle": "WordPress dışı / özel yazılım siteler için.",
             "urlLabel": "Webhook adresi",
             "urlPlaceholder": "https://siteniz.com/api/yoai-webhook",
             "secretLabel": "Gizli anahtar",
@@ -2961,7 +2961,7 @@
           },
           "wpManual": {
             "title": "Uygulama Parolası ile bağlan",
-            "subtitle": "Tek-tık yetkilendirme açılmıyorsa bu yolu kullanın (önerilen).",
+            "subtitle": "WordPress siteniz için önerilen yöntem.",
             "urlLabel": "Site adresi",
             "urlPlaceholder": "https://siteniz.com",
             "usernameLabel": "WordPress kullanıcı adı",

@@ -2936,7 +2936,7 @@
           "wpIncompatibleNote": "Your website is not eligible for one-click automatic publishing. You can connect your own system via webhook below and send your articles automatically.",
           "webhook": {
             "title": "Another site / custom software",
-            "subtitle": "Send articles to a non-WordPress site (custom software, your own system) via webhook.",
+            "subtitle": "For non-WordPress or custom-built sites.",
             "urlLabel": "Webhook URL",
             "urlPlaceholder": "https://yoursite.com/api/yoai-webhook",
             "secretLabel": "Secret key",
@@ -2961,7 +2961,7 @@
           },
           "wpManual": {
             "title": "Connect with an Application Password",
-            "subtitle": "Use this if one-click authorization doesn't open (recommended).",
+            "subtitle": "Recommended for WordPress sites.",
             "urlLabel": "Site address",
             "urlPlaceholder": "https://yoursite.com",
             "usernameLabel": "WordPress username",
