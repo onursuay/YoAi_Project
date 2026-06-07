@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-07 — SEO makale yılı GÜNCEL YIL'a sabitlendi (eski yıl "2025" başlık fix)
+- **Sorun:** 2026 yılındayken otomatik üretilen makale başlığı eski yılı içeriyordu ("Koltuk Yıkama Fiyatları Ankara **2025** Rehberi"). Kök neden: anahtar kelime seçimi (`aiSelectKeyword`) ve makale üretim prompt'ları (otomatik + manuel) Claude'a **güncel tarih/yıl bilgisini hiç geçirmiyordu**; model kendi bilgi kesim yılına (2025) düşüp başlık/içerikte eski yılı yazıyordu. "2025"in asıl kaynağı, başlığa giren anahtar kelimenin kendisiydi.
+- **Çözüm:** Üç prompt noktasına da `new Date().getFullYear()` ile dinamik güncel yıl + "yıl geçecekse MUTLAKA güncel yılı kullan; geçmiş yılları ASLA yazma" direktifi eklendi. Hardcoded yıl yok — her yıl otomatik doğru. Hem otomatik hem manuel üretim kapsanır.
+- **Dosyalar:** `lib/seo/topicSelector.ts`, `lib/yoai/prompts.ts`
+
 ## 2026-06-05 — SEO makale üretimi YANLIŞ FİRMA bağlamı düzeltildi (site brief'ine sıkı kapsam)
 - **Sorun:** Kullanıcı `ustasiniyolla.com`'u bağladığı hâlde sistem, eskiden eklenmiş **başka bir firmanın** (Belgemod) bilgileriyle makale üretti ("Makine Operatörü MYK Belgesi…"). Kök neden: `selectDailyTopic`, bağlı sitenin brief'i `'completed'` değilse kullanıcının **global iş profiline** (başka firma olabilir) düşüyordu. ustasiniyolla brief'i fire-and-forget Vercel'de kesilip `'running'`'de takıldığı için bu fallback tetiklendi → yanlış firma konulu makale. Ayrıca `'completed'` şartı, scrape'ten gelen geçerli `'partial'` brief'i de eliyordu.
 - **Çözüm:** `selectDailyTopic` artık: bir site bağlıysa (`siteConnectionId`) bağlam **YALNIZ o sitenin brief'inden** gelir — global iş profiline **asla** düşmez. Brief hazır değilse (yok / takılı `running` / `failed`) istek içinde `runSiteBriefPipeline` ile **şimdi üretilir**, sonra okunur; o da olmazsa site URL'inden minimal bağlam kullanılır (yine global profil değil). `'partial'` brief de geçerli sayılır. Global profil yalnız **hiç site bağlı olmayan** (legacy) yolda kullanılır. Bu, [topicSelector.ts](lib/seo/topicSelector.ts) tek noktasında olduğu için hem otomatik hem manuel üretimi kapsar. İlgili: brief'in güvenilir tamamlanması (önceki commit).

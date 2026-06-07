@@ -109,6 +109,7 @@ async function aiSelectKeyword(
   category?: string | null
 ): Promise<string | null> {
   const langName = language === 'en' ? 'English' : 'Türkçe'
+  const year = new Date().getFullYear()
   const recent = recentTitles.length
     ? `\n\nZaten yayınlanmış başlıklar (bunlardan FARKLI, çakışmayan bir konu seç):\n${recentTitles.map((t) => `- ${t}`).join('\n')}`
     : ''
@@ -116,6 +117,8 @@ async function aiSelectKeyword(
   const prompt = `Aşağıdaki işletme için ${langName} dilinde, SEO açısından değerli, arama hacmi olabilecek YENİ bir blog makalesi konusu/anahtar kelimesi öner.
 İşletme bağlamı:
 ${businessContext || '(bağlam yok — sektörel genel bir konu seç)'}${catLine}${recent}
+
+Güncel yıl ${year}. Konu/anahtar kelimede yıl geçecekse MUTLAKA ${year} kullan; geçmiş yılları (örn. ${year - 1}, ${year - 2}) ASLA yazma.
 
 SADECE anahtar kelime/konu ifadesini döndür (3-6 kelime), başka hiçbir şey yazma.`
   const text = await claudeText({ user: prompt, maxTokens: 60, temperature: 0.8 })

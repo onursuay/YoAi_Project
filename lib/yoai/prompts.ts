@@ -20,6 +20,7 @@ export function buildGenerationPrompt(
   category: Exclude<ContentCategory, 'off_topic'>,
   params: Record<string, string>
 ): string {
+  const year = new Date().getFullYear()
   const base = `Sen YoAi — dijital pazarlama ve içerik üretimi konusunda uzmanlaşmış bir AI asistansın.
 Her zaman Türkçe yanıt ver. Ürettiğin içerik profesyonel, özgün ve kullanıma hazır olsun.
 Markdown formatı kullan (başlıklar, listeler, kalın yazı vb.).
@@ -36,6 +37,7 @@ Gereksiz açıklama yapma, doğrudan içeriği üret.`
 - Web sitesi / marka bağlamı: ${params.siteUrl} (içeriği bu sitenin sektörüne, ürün/hizmetlerine ve hedef kitlesine uygun şekilde, o markanın sesiyle üret)` : ''}
 
 ## KURALLAR:
+- Güncel yıl ${year}. Başlık veya içerikte yıl geçecekse MUTLAKA ${year} kullan; eski yılları (${year - 1}, ${year - 2} vb.) ASLA yazma.
 - H1, H2, H3 başlık hiyerarşisini uygula
 - Anahtar kelimeyi doğal şekilde başlık ve paragraflara yerleştir
 - Meta açıklama önerisi ekle (max 160 karakter)
@@ -161,6 +163,7 @@ export interface StructuredSeoInput {
 
 export function buildStructuredSeoArticlePrompt(input: StructuredSeoInput): string {
   const lang = input.language === 'en' ? 'English' : 'Türkçe'
+  const year = new Date().getFullYear()
   const recent =
     input.recentTitles && input.recentTitles.length
       ? `\n\n## ZATEN YAYINLANMIŞ BAŞLIKLAR (bunlarla AYNI/ÇOK BENZER konu üretme):\n${input.recentTitles.map((t) => `- ${t}`).join('\n')}`
@@ -178,6 +181,7 @@ export function buildStructuredSeoArticlePrompt(input: StructuredSeoInput): stri
 - Ton: ${input.tone}${brand}${recent}
 
 ## SEO KURALLARI
+- Güncel yıl ${year}. Başlıkta veya içerikte yıl geçecekse MUTLAKA ${year} kullan; geçmiş/eski yılları (${year - 1}, ${year - 2} vb.) ASLA yazma.
 - Anahtar kelimeyi başlıkta, ilk paragrafta ve içerikte DOĞAL şekilde kullan (keyword stuffing yapma).
 - İçeriği H2 (##) ve H3 (###) alt başlıklarla yapılandır. H1 KULLANMA (başlık ayrı alanda).
 - Giriş + bilgilendirici bölümler + sonuç. Madde listeleri uygun yerde kullan.
