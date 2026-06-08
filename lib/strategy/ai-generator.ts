@@ -2,6 +2,7 @@ import type { InputPayload, Blueprint, Persona, CreativeTheme, Experiment, Risk,
 import { generateBlueprint as generateTemplateBased } from './blueprint-generator'
 import { strategyClaudeText, isAnthropicReady } from './claude'
 import { extractJsonObject } from '@/lib/anthropic/text'
+import { META_ANALYSIS_KNOWLEDGE } from '@/lib/yoai/ai/docs/meta_analysis_knowledge'
 
 // ════════════════════════════════════════════════════════════
 // AI-Powered Blueprint Generator (Claude — projenin standart motoru)
@@ -77,6 +78,11 @@ Kurallar:
 - Örnek DOĞRU: "Kıbrıs'a en uygun feribot bileti burada" — son kullanıcıya hitap ediyor.
 - Hook'lar müşterinin ilgisini çekmeli, ürün/hizmet tanımını tekrarlamamalı.`
 
+/** Strateji system prompt'unu üretir; Meta kanalı seçiliyse Meta analiz bilgisini ekler. */
+export function buildStrategySystemPrompt(channels: { meta?: boolean; google?: boolean; tiktok?: boolean }): string {
+  return channels?.meta ? `${SYSTEM_PROMPT}\n\n${META_ANALYSIS_KNOWLEDGE}` : SYSTEM_PROMPT
+}
+
 function buildUserPrompt(input: InputPayload): string {
   const parts = [
     `Sektör: ${input.industry}${input.industry_custom ? ` (${input.industry_custom})` : ''}`,
@@ -131,7 +137,7 @@ export async function generateBlueprintWithAI(
   let stage: 'call' | 'parse' = 'call'
   try {
     const content = await strategyClaudeText({
-      system: SYSTEM_PROMPT,
+      system: buildStrategySystemPrompt(input.channels),
       user: (businessContextPromptBlock ? `${businessContextPromptBlock}\n\n${buildUserPrompt(input)}` : buildUserPrompt(input))
         + '\n\nSADECE geçerli bir JSON objesi döndür. Açıklama, başlık veya kod bloğu ekleme.',
       // Tam blueprint JSON'u 4000 token'a sığmıyor → kesiliyor → parse hatası →

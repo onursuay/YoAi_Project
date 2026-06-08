@@ -13,6 +13,7 @@ import { buildPerCampaignSystemBlocks } from '../../lib/yoai/ai/perCampaignPromp
 import { buildPerAdSystemBlocks } from '../../lib/yoai/ai/perAdPrompt'
 import { buildSystemBlocks } from '../../lib/yoai/ai/systemPrompt'
 import { buildOptimizationSystemPrompt } from '../../lib/meta/optimization/aiRecommender'
+import { buildStrategySystemPrompt } from '../../lib/strategy/ai-generator'
 // <<BUILDER IMPORTS — yeni import'ları BU SATIRIN ÜSTÜNE ekle>>
 
 const FULL_MARKER = 'Meta Reklam Analiz Bilgisi'
@@ -78,6 +79,14 @@ test('optimizasyon systemPrompt bilgi + temel rolü içerir', () => {
   assert.ok(sp.includes(FULL_MARKER), 'optimizasyon prompt bilgi içermiyor')
   assert.ok(sp.includes('Meta Ads optimization expert'), 'temel rol metni kaybolmuş')
   assert.ok(sp.includes('Turkish'), 'dil parametresi uygulanmamış')
+})
+
+test('strateji: Meta kanalı bilgi içerir, sadece-Google içermez', () => {
+  const withMeta = buildStrategySystemPrompt({ meta: true, google: true })
+  const googleOnly = buildStrategySystemPrompt({ meta: false, google: true })
+  assert.ok(withMeta.includes(FULL_MARKER), 'Meta kanalı bilgi içermiyor')
+  assert.ok(withMeta.includes('dijital pazarlama stratejisti'), 'temel system prompt kaybolmuş')
+  assert.ok(!googleOnly.includes(FULL_MARKER), 'sadece-Google strateji bilgi içermemeli')
 })
 
 // <<INJECTION TESTS — yeni test()'leri BU SATIRIN ÜSTÜNE ekle>>
