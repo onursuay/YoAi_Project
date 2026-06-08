@@ -8,6 +8,7 @@
 
 import { META_AD_RULES_CURATED } from './docs/meta_ad_rules_curated'
 import { GOOGLE_ADS_RULES_CURATED } from './docs/google_ads_rules_curated'
+import { metaAnalysisBlock } from './docs/meta_analysis_knowledge'
 
 export const AI_ENGINE_SYSTEM_PROMPT = `Sen YoAlgoritma'nın AI motorusun — dijital reklam hesaplarını analiz eden, gerçek veri-driven öneriler üreten bir uzmansın.
 
@@ -237,8 +238,12 @@ export function buildSystemBlocks(
   platform: 'Meta' | 'Google',
 ): Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }> {
   const rules = platform === 'Meta' ? META_AD_RULES_CURATED : GOOGLE_ADS_RULES_CURATED
-  return [
+  const blocks: Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }> = [
     { type: 'text', text: AI_ENGINE_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
     { type: 'text', text: rules, cache_control: { type: 'ephemeral' } },
   ]
+  if (platform === 'Meta') {
+    blocks.push(metaAnalysisBlock())
+  }
+  return blocks
 }

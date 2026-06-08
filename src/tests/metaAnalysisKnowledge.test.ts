@@ -11,6 +11,7 @@ import {
 } from '../../lib/yoai/ai/docs/meta_analysis_knowledge'
 import { buildPerCampaignSystemBlocks } from '../../lib/yoai/ai/perCampaignPrompt'
 import { buildPerAdSystemBlocks } from '../../lib/yoai/ai/perAdPrompt'
+import { buildSystemBlocks } from '../../lib/yoai/ai/systemPrompt'
 // <<BUILDER IMPORTS — yeni import'ları BU SATIRIN ÜSTÜNE ekle>>
 
 const FULL_MARKER = 'Meta Reklam Analiz Bilgisi'
@@ -60,6 +61,13 @@ test('perCampaign: Meta system block bilgi içerir, Google içermez', () => {
 test('perAd: Meta system block bilgi içerir, Google içermez', () => {
   const meta = buildPerAdSystemBlocks('Meta')
   const google = buildPerAdSystemBlocks('Google')
+  assert.ok(meta.some((b) => b.text.includes(FULL_MARKER)), 'Meta bloğunda bilgi yok')
+  assert.ok(!google.some((b) => b.text.includes(FULL_MARKER)), 'Google bloğunda bilgi OLMAMALI')
+})
+
+test('legacy buildSystemBlocks: Meta bilgi içerir, Google içermez', () => {
+  const meta = buildSystemBlocks('Meta')
+  const google = buildSystemBlocks('Google')
   assert.ok(meta.some((b) => b.text.includes(FULL_MARKER)), 'Meta bloğunda bilgi yok')
   assert.ok(!google.some((b) => b.text.includes(FULL_MARKER)), 'Google bloğunda bilgi OLMAMALI')
 })
