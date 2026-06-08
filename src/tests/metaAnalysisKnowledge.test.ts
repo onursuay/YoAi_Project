@@ -12,6 +12,7 @@ import {
 import { buildPerCampaignSystemBlocks } from '../../lib/yoai/ai/perCampaignPrompt'
 import { buildPerAdSystemBlocks } from '../../lib/yoai/ai/perAdPrompt'
 import { buildSystemBlocks } from '../../lib/yoai/ai/systemPrompt'
+import { buildOptimizationSystemPrompt } from '../../lib/meta/optimization/aiRecommender'
 // <<BUILDER IMPORTS — yeni import'ları BU SATIRIN ÜSTÜNE ekle>>
 
 const FULL_MARKER = 'Meta Reklam Analiz Bilgisi'
@@ -70,6 +71,13 @@ test('legacy buildSystemBlocks: Meta bilgi içerir, Google içermez', () => {
   const google = buildSystemBlocks('Google')
   assert.ok(meta.some((b) => b.text.includes(FULL_MARKER)), 'Meta bloğunda bilgi yok')
   assert.ok(!google.some((b) => b.text.includes(FULL_MARKER)), 'Google bloğunda bilgi OLMAMALI')
+})
+
+test('optimizasyon systemPrompt bilgi + temel rolü içerir', () => {
+  const sp = buildOptimizationSystemPrompt('Turkish')
+  assert.ok(sp.includes(FULL_MARKER), 'optimizasyon prompt bilgi içermiyor')
+  assert.ok(sp.includes('Meta Ads optimization expert'), 'temel rol metni kaybolmuş')
+  assert.ok(sp.includes('Turkish'), 'dil parametresi uygulanmamış')
 })
 
 // <<INJECTION TESTS — yeni test()'leri BU SATIRIN ÜSTÜNE ekle>>

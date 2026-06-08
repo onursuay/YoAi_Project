@@ -9,6 +9,7 @@ import type {
 } from './types'
 import { createChangeSet } from './changeSetManager'
 import { getAnthropicClient, getAiEngineModel, isAnthropicReady } from '@/lib/anthropic/client'
+import { META_ANALYSIS_KNOWLEDGE } from '@/lib/yoai/ai/docs/meta_analysis_knowledge'
 
 // ═══════════════════════════════════════════════════════════════════════════
 // Fallback Recommendation Templates (deterministic, always available)
@@ -324,16 +325,9 @@ function generateFallback(
 // AI-Powered Generator (Claude — ANTHROPIC_API_KEY varsa)
 // ═══════════════════════════════════════════════════════════════════════════
 
-async function generateWithAI(
-  campaign: OptimizationCampaign,
-  problemTags: ProblemTag[],
-  locale: string,
-): Promise<Recommendation[]> {
-  if (!isAnthropicReady()) throw new Error('ANTHROPIC_API_KEY yok')
-
-  const lang = locale === 'en' ? 'English' : 'Turkish'
-
-  const systemPrompt = `You are a Meta Ads optimization expert. Given campaign data and detected problems, generate actionable recommendations in ${lang}.
+/** Optimizasyon AI system prompt'unu üretir (Meta analiz bilgisi dahil — Meta-only modül). */
+export function buildOptimizationSystemPrompt(lang: string): string {
+  return `You are a Meta Ads optimization expert. Given campaign data and detected problems, generate actionable recommendations in ${lang}.
 
 Output ONLY a JSON array of objects with this exact schema:
 [{
@@ -353,7 +347,21 @@ Category rules:
 - REVIEW_REQUIRED: for significant budget changes, targeting changes
 - TASK: for creative refresh, landing page, audience expansion (non-API actions)
 
-Keep recommendations concise and metric-backed.`
+Keep recommendations concise and metric-backed.
+
+${META_ANALYSIS_KNOWLEDGE}`
+}
+
+async function generateWithAI(
+  campaign: OptimizationCampaign,
+  problemTags: ProblemTag[],
+  locale: string,
+): Promise<Recommendation[]> {
+  if (!isAnthropicReady()) throw new Error('ANTHROPIC_API_KEY yok')
+
+  const lang = locale === 'en' ? 'English' : 'Turkish'
+
+  const systemPrompt = buildOptimizationSystemPrompt(lang)
 
   const i = campaign.insights
   const userPrompt = `Campaign: "${campaign.name}"
