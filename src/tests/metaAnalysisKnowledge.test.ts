@@ -9,6 +9,7 @@ import {
   META_CREATIVE_PRINCIPLES,
   metaAnalysisBlock,
 } from '../../lib/yoai/ai/docs/meta_analysis_knowledge'
+import { buildPerCampaignSystemBlocks } from '../../lib/yoai/ai/perCampaignPrompt'
 // <<BUILDER IMPORTS — yeni import'ları BU SATIRIN ÜSTÜNE ekle>>
 
 const FULL_MARKER = 'Meta Reklam Analiz Bilgisi'
@@ -46,6 +47,13 @@ test('metaAnalysisBlock() cached system block döndürür', () => {
   assert.strictEqual(b.type, 'text')
   assert.strictEqual(b.cache_control.type, 'ephemeral')
   assert.ok(b.text.includes(FULL_MARKER))
+})
+
+test('perCampaign: Meta system block bilgi içerir, Google içermez', () => {
+  const meta = buildPerCampaignSystemBlocks('Meta')
+  const google = buildPerCampaignSystemBlocks('Google')
+  assert.ok(meta.some((b) => b.text.includes(FULL_MARKER)), 'Meta bloğunda bilgi yok')
+  assert.ok(!google.some((b) => b.text.includes(FULL_MARKER)), 'Google bloğunda bilgi OLMAMALI')
 })
 
 // <<INJECTION TESTS — yeni test()'leri BU SATIRIN ÜSTÜNE ekle>>

@@ -15,6 +15,7 @@
 
 import { META_AD_RULES_CURATED } from './docs/meta_ad_rules_curated'
 import { GOOGLE_ADS_RULES_CURATED } from './docs/google_ads_rules_curated'
+import { metaAnalysisBlock } from './docs/meta_analysis_knowledge'
 import { BENCHMARKS } from './accountSerializer'
 import { translateEnum } from '@/lib/yoai/translations'
 import type { AiPlatform } from './types'
@@ -169,6 +170,9 @@ export function buildPerCampaignSystemBlocks(
     { type: 'text', text: PER_CAMPAIGN_SYSTEM_PROMPT, cache_control: { type: 'ephemeral' } },
     { type: 'text', text: rules, cache_control: { type: 'ephemeral' } },
   ]
+  if (platform === 'Meta') {
+    blocks.push(metaAnalysisBlock())
+  }
   if (businessContext) {
     blocks.push({ type: 'text', text: `# İşletme bağlamı (kullanıcı beyanı + iş zekası)\n${businessContext}`, cache_control: { type: 'ephemeral' } })
   }
