@@ -50,3 +50,6 @@ next-env.d.ts
 out/
 node_modules/
 .claude/
+
+# Öğrenen Beyin — kendi git repo'su (yoai-brain, private). Ana repo onu izlemez.
+_learnings/

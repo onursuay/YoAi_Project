@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-09 — Kendi kendine öğrenen + otomatik yedeklenen "Öğrenen Beyin" (4 katman)
+- **Sorun:** YoAi'nin dağınık dersleri (CLAUDE.md + memory) yapılandırılmamıştı; AI önerilerinin gerçek ürün-sonucu (ROAS/CTR etkisi) ölçülüp derse dönüşmüyordu; geliştirme bilgisi otomatik yedeklenmiyordu.
+- **Çözüm:** 4 katmanlı sistem kuruldu. (1) `_learnings/` öğrenen beyin (README/INDEX/_TEMPLATE/global/units/doctrine, tohumlanmış gerçek derslerle). (2) CLAUDE.md'ye bağlayıcı döngü kuralı: ÖNCE OKU / SONRA YAZ (sormadan) / SONUCU YAZ (✅/❌/⚠️ + KÖK NEDEN, uydurma rakam yasak). (3) Ayrı **private** `yoai-brain` repo'su yedeği — push öncesi genişletilmiş secret-scan, git check-ignore ile hariç tutma (NFC/NFD-safe). (4) Güvenli hibrit periyodik öğrenme: yerel `collect-outcomes.mjs` (Supabase omddq SALT-OKUNUR → anonim agrega `_data/latest.json` → launchd günlük 08:00 → push; token yerelde) + haftalık bulut routine (Pazar 23:00 İstanbul, yalnız repo JSON'ını okuyup kök-neden analizi yazar, hassas kaynağa bağlanmaz). Öğrenme kapsamı = ürün sonucu (`yoai_recommendation_results` + `yoai_action_outcomes`); AI engine/publish'e **dokunulmadı** (closed-loop default-OFF).
+- **Dosyalar:** `_learnings/**` (ayrı yoai-brain repo'su), `scripts/brain/{collect-outcomes.mjs,secret-scan.sh,run-collect.sh,install-launchd.sh}`, `CLAUDE.md` (Öğrenen Beyin bölümü), `.gitignore` (`_learnings/`)
+
 ## 2026-06-09 — Kendini güncelleyen resmi reklam bilgi tabanı (alt-proje B)
 - **Sorun:** Aylık doküman taraması (officialAdsDocsRefresh) değişiklikleri yalnız snapshot'a yazıyordu; AI'nin kullandığı bilgiye dönüşmüyordu (kopuk köprü). Ayrıca düz fetch JS-render resmi dokümanlarda zayıftı; onay/bildirim yoktu.
 - **Çözüm:** (1) AI parser köprüsü (`officialAdsKnowledgeParser`) değişen snapshot'ı review_required taslaklara çevirir (versiyonlu + idempotent, flag `OFFICIAL_ADS_AI_PARSER`, default-off). (2) Resmi doküman çekme Firecrawl (html/markdown) + düz fetch fallback. (3) Best-effort owner e-posta (`officialAdsChangeNotifier`). (4) Gözetim Merkezi'nde onay paneli + super-admin endpoint'leri (`approve` önceki versiyonu emekliye ayırır → canlı). (5) Onaylı bilgi analiz prompt'larına da enjekte (`officialKnowledgeBlock`, empty-safe) — reklam üretimi+politika+analiz birleşti. Meta/Google publish, Apify, sosyal dokunulmadı.

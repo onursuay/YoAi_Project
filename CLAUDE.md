@@ -87,6 +87,15 @@ Bundan sonra **sıfırdan oluşturulan tüm reklamların başlık (headline) ve 
 
 3. **Kapsam:** Bu kural reklam metnini **üreten** her noktada (AI prompt'ları, şablonlar, varsayılan metin önerileri) geçerlidir. Üretim katmanı değişir; Meta/Google **API ve publish akışı KORUNUR** ([feedback_no_touch_meta_google](memory)) — yalnız metnin içeriği bu kurallara uydurulur.
 
+## Öğrenen Beyin (`_learnings/`) — ZORUNLU Döngü
+Bu projede kendi kendine öğrenen + otomatik yedeklenen bir beyin vardır: [_learnings/](_learnings/) (detay: [_learnings/README.md](_learnings/README.md)). Kapsam: **ürün sonucu (öneri etkisi)** — AI önerilerinin gerçek ROAS/CTR/CPC etkisi (`yoai_recommendation_results` + `yoai_action_outcomes`, **SALT-OKUNUR**). Üç bağlayıcı madde:
+
+1. **ÖNCE OKU:** Her görevin başında [_learnings/INDEX.md](_learnings/INDEX.md) taranır; ilgili `units/*_learnings.md` + `global/*` okunur ve geçmiş ders **uygulanır**.
+2. **SONRA YAZ (SORMADAN):** Her anlamlı değişiklikten sonra ilgili `units/*_learnings.md` + `INDEX.md` güncellenir — kullanıcıya **sorulmaz**, otomatik yapılır. Sonra `scripts/brain/secret-scan.sh` → temizse `_learnings` repo'suna commit + push.
+3. **SONUCU YAZ:** Outcome verisi geldikçe `✅/❌/⚠️ + KÖK NEDEN` yazılır. Kök neden olmadan "başarılı/başarısız" **YASAK**; benchmark'a **uydurma rakam** koymak YASAK (veri yoksa "yeterli veri yok").
+
+Kayıt formatı sabittir: [_learnings/_TEMPLATE.md](_learnings/_TEMPLATE.md). Beyin yedeği ayrı private repo'dadır (`yoai-brain`); ana kod repo'su bu klasörü `.gitignore` ile hariç tutar. **Sır/medya asla beyne girmez**; push öncesi secret-scan zorunlu; hariç tutma `git check-ignore` ile (string karşılaştırma DEĞİL — Türkçe yol NFC/NFD tuzağı). Layer 4: yerel `scripts/brain/collect-outcomes.mjs` (token YERELDE) anonim agregayı `_data/latest.json`'a yazıp push eder; haftalık bulut routine onu okuyup kök-neden analizi yazar (hassas kaynağa bağlanmadan). **Closed-loop (öğrenileni canlı AI motoruna geri besleme) default-OFF — ayrı onay ister; AI engine/publish'e dokunulmaz.**
+
 ## Otomatik Commit + Push
 Her değişiklik tamamlandıktan sonra otomatik olarak:
 1. Değiştirilen dosyaları stage et
