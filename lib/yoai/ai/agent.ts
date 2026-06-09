@@ -18,6 +18,7 @@ import {
   buildSystemBlocks,
   buildUserBrief,
 } from './systemPrompt'
+import { officialKnowledgeBlock } from './docs/officialKnowledgeBlock'
 import { BENCHMARKS, buildAccountOverview, buildCampaignsDetail } from './accountSerializer'
 import { validateAdSpecPayload } from './adSpecPayload'
 import type {
@@ -61,11 +62,14 @@ export async function runAiEngineForAccount(args: RunAiEngineArgs): Promise<AiEn
   const startedAt = Date.now()
   const trace: AiEngineTraceEntry[] = []
 
+  // Onaylı resmi bilgi bloğu (alt-proje B) — yoksa null → eklenmez (empty-safe)
+  const kb = await officialKnowledgeBlock(args.ctx.platform)
+
   const stream = client.messages.stream({
     model,
     max_tokens: MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGET },
-    system: buildSystemBlocks(args.ctx.platform),
+    system: buildSystemBlocks(args.ctx.platform, kb ? [kb] : undefined),
     messages: [{ role: 'user', content: userMessage }],
   })
   const response = await stream.finalMessage()
@@ -116,7 +120,10 @@ export async function runAiEngineForAccount(args: RunAiEngineArgs): Promise<AiEn
  * Çağıran taraf (Inngest function) bunu messageBatches.create'in
  * `requests` array'ine `{ custom_id, params }` olarak ekler.
  */
-export function buildBatchRequestParams(args: RunAiEngineArgs): {
+export function buildBatchRequestParams(
+  args: RunAiEngineArgs,
+  extraBlocks?: Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }>,
+): {
   model: string
   max_tokens: number
   thinking: { type: 'enabled'; budget_tokens: number }
@@ -140,7 +147,7 @@ export function buildBatchRequestParams(args: RunAiEngineArgs): {
     model,
     max_tokens: MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: THINKING_BUDGET },
-    system: buildSystemBlocks(args.ctx.platform),
+    system: buildSystemBlocks(args.ctx.platform, extraBlocks),
     messages: [{ role: 'user', content: userMessage }],
   }
 }

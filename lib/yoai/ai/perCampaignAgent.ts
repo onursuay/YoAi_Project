@@ -87,11 +87,14 @@ export interface PerCampaignRunMeta {
 }
 
 /** Tek kampanyayı Batch API request'ine dönüştürür (Inngest `requests` array'i için). */
-export function buildPerCampaignBatchRequestParams(args: {
-  ctx: PerCampaignContext
-  businessContext?: string
-  competitorContext?: string | null
-}): {
+export function buildPerCampaignBatchRequestParams(
+  args: {
+    ctx: PerCampaignContext
+    businessContext?: string
+    competitorContext?: string | null
+  },
+  extraBlocks?: Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }>,
+): {
   model: string
   max_tokens: number
   thinking: { type: 'enabled'; budget_tokens: number }
@@ -102,7 +105,7 @@ export function buildPerCampaignBatchRequestParams(args: {
     model: getAiEngineModel(),
     max_tokens: PER_CAMPAIGN_MAX_TOKENS,
     thinking: { type: 'enabled', budget_tokens: PER_CAMPAIGN_THINKING_BUDGET },
-    system: buildPerCampaignSystemBlocks(args.ctx.platform, args.businessContext, args.competitorContext),
+    system: buildPerCampaignSystemBlocks(args.ctx.platform, args.businessContext, args.competitorContext, extraBlocks),
     messages: [{ role: 'user', content: buildPerCampaignUserBrief(args.ctx) }],
   }
 }

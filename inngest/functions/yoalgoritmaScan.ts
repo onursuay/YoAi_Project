@@ -21,6 +21,7 @@
 import { inngest } from '../client'
 import { getAnthropicClient } from '@/lib/anthropic/client'
 import { buildBatchRequestParams, parseBatchResult } from '@/lib/yoai/ai/agent'
+import { officialKnowledgeBlock } from '@/lib/yoai/ai/docs/officialKnowledgeBlock'
 import {
   gatherUserScanInputs,
   scanContextFromFetched,
@@ -90,12 +91,17 @@ export const yoalgoritmaScanUser = inngest.createFunction(
       const customId = rawCustomId.slice(0, 64)
       const competitorContext =
         ctx.platform === 'Meta' ? scanInputs.competitorContext.meta : scanInputs.competitorContext.google
-      const params = buildBatchRequestParams({
-        ctx,
-        industry: scanInputs.industry,
-        businessContext: scanInputs.businessContext,
-        competitorContext,
-      })
+      // Onaylı resmi bilgi bloğu (alt-proje B) — empty-safe; yoksa eklenmez
+      const kb = await officialKnowledgeBlock(ctx.platform)
+      const params = buildBatchRequestParams(
+        {
+          ctx,
+          industry: scanInputs.industry,
+          businessContext: scanInputs.businessContext,
+          competitorContext,
+        },
+        kb ? [kb] : undefined,
+      )
       requestEntries.push({ custom_id: customId, platform: ctx.platform, accountId: ctx.accountId })
       batchRequests.push({ custom_id: customId, params })
     }

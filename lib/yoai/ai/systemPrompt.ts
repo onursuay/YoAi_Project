@@ -236,6 +236,7 @@ export function buildUserBrief(args: {
  */
 export function buildSystemBlocks(
   platform: 'Meta' | 'Google',
+  extraBlocks?: Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }>,
 ): Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }> {
   const rules = platform === 'Meta' ? META_AD_RULES_CURATED : GOOGLE_ADS_RULES_CURATED
   const blocks: Array<{ type: 'text'; text: string; cache_control: { type: 'ephemeral' } }> = [
@@ -245,5 +246,7 @@ export function buildSystemBlocks(
   if (platform === 'Meta') {
     blocks.push(metaAnalysisBlock())
   }
+  // Onaylı resmi bilgi (alt-proje B) — caller async fetch edip geçirir; yoksa eklenmez.
+  if (extraBlocks && extraBlocks.length) blocks.push(...extraBlocks)
   return blocks
 }

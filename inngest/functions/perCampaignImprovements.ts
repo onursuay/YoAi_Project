@@ -21,6 +21,7 @@ import { inngest } from '../client'
 import { getAnthropicClient } from '@/lib/anthropic/client'
 import { gatherUserScanInputs, type UserScanInputs } from '@/lib/yoai/ai/scanUser'
 import { buildPerCampaignBatchRequestParams, parsePerCampaignBatchResult } from '@/lib/yoai/ai/perCampaignAgent'
+import { officialKnowledgeBlock, type SystemBlock } from '@/lib/yoai/ai/docs/officialKnowledgeBlock'
 import type { PerCampaignContext, AccountCampaignSummary } from '@/lib/yoai/ai/perCampaignPrompt'
 import {
   listRecentCampaignImprovements,
@@ -182,6 +183,13 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     const customToCampaign = new Map<string, ActiveCampaign>()
     const firstPerPlatform = new Set<'meta' | 'google'>()
     const batchRequests: Array<{ custom_id: string; params: ReturnType<typeof buildPerCampaignBatchRequestParams> }> = []
+    // Onaylı resmi bilgi bloğu (alt-proje B) — platform başına bir kez fetch (empty-safe)
+    const kbCache = new Map<'Meta' | 'Google', SystemBlock | null>()
+    const getKb = async (p: 'Meta' | 'Google'): Promise<SystemBlock[] | undefined> => {
+      if (!kbCache.has(p)) kbCache.set(p, await officialKnowledgeBlock(p))
+      const b = kbCache.get(p)
+      return b ? [b] : undefined
+    }
     for (const c of toGenerate) {
       const customId = sanitizeCustomId(c.platform, c.campaign.id)
       if (customToCampaign.has(customId)) continue
@@ -197,9 +205,10 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
         accountCampaignsSummary: includeAccountAlerts ? summaryByPlatform[c.platform] : undefined,
       }
       const competitorContext = c.aiPlatform === 'Meta' ? scanInputs.competitorContext.meta : scanInputs.competitorContext.google
+      const extraBlocks = await getKb(c.aiPlatform)
       batchRequests.push({
         custom_id: customId,
-        params: buildPerCampaignBatchRequestParams({ ctx, businessContext: scanInputs.businessContext, competitorContext }),
+        params: buildPerCampaignBatchRequestParams({ ctx, businessContext: scanInputs.businessContext, competitorContext }, extraBlocks),
       })
     }
 
