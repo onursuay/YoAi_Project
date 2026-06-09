@@ -35,6 +35,17 @@ function platformBadge(p: string): string {
     : 'bg-emerald-50 text-emerald-700 border-emerald-200'
 }
 
+/** Yalnız http/https şemalı URL'leri döndürür (javascript:/data: XSS engellenir). */
+function safeHttpUrl(raw: string | null | undefined): string | null {
+  if (!raw) return null
+  try {
+    const u = new URL(raw)
+    return u.protocol === 'https:' || u.protocol === 'http:' ? u.toString() : null
+  } catch {
+    return null
+  }
+}
+
 export default function OfficialAdsKnowledgePanel() {
   const [entries, setEntries] = useState<PendingEntry[]>([])
   const [loading, setLoading] = useState(true)
@@ -119,6 +130,7 @@ export default function OfficialAdsKnowledgePanel() {
         {entries.map((entry, index) => {
           const it = entry.item
           const acting = actingId === it.id
+          const safeSource = safeHttpUrl(it.source_url)
           return (
             <div
               key={it.id}
@@ -167,9 +179,9 @@ export default function OfficialAdsKnowledgePanel() {
                   <X className="h-4 w-4" />
                   Reddet
                 </button>
-                {it.source_url && (
+                {safeSource && (
                   <a
-                    href={it.source_url}
+                    href={safeSource}
                     target="_blank"
                     rel="noopener noreferrer"
                     className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
