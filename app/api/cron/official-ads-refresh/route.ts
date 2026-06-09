@@ -1,5 +1,6 @@
 import { NextResponse } from 'next/server'
 import { runOfficialAdsDocsRefresh } from '@/lib/yoai/officialAdsDocsRefresh'
+import { notifyOwnerOfficialAdsChanges } from '@/lib/yoai/officialAdsChangeNotifier'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
@@ -64,9 +65,21 @@ export async function GET(request: Request) {
             changed_sources: result.changedSources,
             failed_sources: result.failedSources,
             review_required_count: result.reviewRequiredCount,
-            summary_json: { changed: result.changed, failed: result.failed },
+            summary_json: {
+              changed: result.changed,
+              failed: result.failed,
+              createdDrafts: result.createdDrafts,
+            },
           })
           .eq('id', runId)
+      }
+
+      // Best-effort owner bildirim (SMTP yoksa sessizce atlar, job patlamaz)
+      let notify: { sent: boolean; reason?: string } = { sent: false, reason: 'skipped' }
+      try {
+        notify = await notifyOwnerOfficialAdsChanges(result)
+      } catch (e) {
+        console.warn('[OfficialAdsRefresh] bildirim hatası:', e)
       }
 
       return NextResponse.json({
@@ -76,6 +89,8 @@ export async function GET(request: Request) {
         changedSources: result.changedSources,
         failedSources: result.failedSources,
         reviewRequiredCount: result.reviewRequiredCount,
+        createdDrafts: result.createdDrafts,
+        notified: notify.sent,
         changed: result.changed,
         failed: result.failed,
       })

@@ -9,7 +9,7 @@
    Admin onayı (officialAdsKnowledgeStore.approveKnowledgeItem) gerekir.
    ────────────────────────────────────────────────────────── */
 
-import { claudeJson, isClaudeReady } from '../anthropic/text'
+import { claudeJson, isClaudeReady, type ClaudeTextArgs } from '../anthropic/text'
 import type { OfficialAdsSource } from './officialAdsDocsRefresh'
 import type { OfficialAdsKnowledgeItem } from './officialAdsKnowledgeStore'
 
@@ -96,7 +96,7 @@ export function buildParserPrompt(
 // ── Parse (AI) ──────────────────────────────────────────────────────────────
 
 export interface ParseDeps {
-  callJson?: typeof claudeJson
+  callJson?: (args: ClaudeTextArgs) => Promise<unknown>
   claudeReady?: () => boolean
 }
 
@@ -105,20 +105,18 @@ export async function parseSnapshotToKnowledge(
   deps: ParseDeps = {},
 ): Promise<ParsedKnowledgeItem[]> {
   const ready = deps.claudeReady ?? isClaudeReady
-  const call = deps.callJson ?? claudeJson
+  const call: (args: ClaudeTextArgs) => Promise<unknown> =
+    deps.callJson ?? ((args) => claudeJson(args))
   if (!ready()) return []
   const text = (params.normalizedText || '').trim()
   if (text.length < MIN_DOC_CHARS) return []
 
   const { system, user } = buildParserPrompt(text, params.source, params.existingApproved)
-  const out = await call<{ items?: ParsedKnowledgeItem[] }>({
-    system,
-    user,
-    maxTokens: 3500,
-    temperature: 0.2,
-  })
+  const raw = (await call({ system, user, maxTokens: 3500, temperature: 0.2 })) as {
+    items?: ParsedKnowledgeItem[]
+  } | null
 
-  const items = out?.items
+  const items = raw?.items
   if (!Array.isArray(items)) return []
 
   return items.filter(

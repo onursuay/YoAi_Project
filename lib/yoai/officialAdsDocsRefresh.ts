@@ -12,6 +12,8 @@
 import { createHash } from 'crypto'
 import { isFirecrawlReady } from '../firecrawl/client'
 import { scrapeSite } from '../firecrawl/scrapeSite'
+import { parseSnapshotToKnowledge, persistKnowledgeDrafts } from './officialAdsKnowledgeParser'
+import type { OfficialAdsKnowledgeItem } from './officialAdsKnowledgeStore'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -63,8 +65,21 @@ export interface RefreshResult {
   changedSources: number
   failedSources: number
   reviewRequiredCount: number
+  /** AI parser ile üretilen onay-bekleyen taslak sayısı (flag açıkken) */
+  createdDrafts: number
   changed: SourceChangeResult[]
   failed: SourceFailResult[]
+}
+
+type ApprovedHint = Pick<OfficialAdsKnowledgeItem, 'normalized_key' | 'title' | 'summary'>
+
+export interface RefreshOptions {
+  /** AI parser köprüsü açık mı (default: env OFFICIAL_ADS_AI_PARSER === 'true') */
+  parserEnabled?: boolean
+  /** Test için enjekte edilebilir bağımlılıklar */
+  parseFn?: typeof parseSnapshotToKnowledge
+  persistFn?: typeof persistKnowledgeDrafts
+  loadApprovedFn?: (platform: string) => Promise<ApprovedHint[]>
 }
 
 // ── Constants ─────────────────────────────────────────────────────────────────
@@ -229,15 +244,43 @@ export async function fetchOfficialAdsSource(source: OfficialAdsSource): Promise
 export async function runOfficialAdsDocsRefresh(
   // Accept supabase client as parameter for testability
   supabase: any,
+  opts: RefreshOptions = {},
 ): Promise<RefreshResult> {
   const result: RefreshResult = {
     checkedSources: 0,
     changedSources: 0,
     failedSources: 0,
     reviewRequiredCount: 0,
+    createdDrafts: 0,
     changed: [],
     failed: [],
   }
+
+  const parserEnabled = opts.parserEnabled ?? process.env.OFFICIAL_ADS_AI_PARSER === 'true'
+  const parseFn = opts.parseFn ?? parseSnapshotToKnowledge
+  const persistFn = opts.persistFn ?? persistKnowledgeDrafts
+
+  // Onaylı bilgi ipuçları platform başına bir kez yüklenir (parser delta için kullanır)
+  const approvedCache = new Map<string, ApprovedHint[]>()
+  const loadApproved =
+    opts.loadApprovedFn ??
+    (async (platform: string): Promise<ApprovedHint[]> => {
+      if (approvedCache.has(platform)) return approvedCache.get(platform)!
+      let items: ApprovedHint[] = []
+      try {
+        const { data } = await supabase
+          .from('official_ads_knowledge_items')
+          .select('normalized_key, title, summary')
+          .eq('platform', platform)
+          .in('review_status', ['approved', 'auto_approved'])
+          .is('effective_to', null)
+        if (Array.isArray(data)) items = data as ApprovedHint[]
+      } catch {
+        /* tablo yoksa boş ipucu — parser yine çalışır */
+      }
+      approvedCache.set(platform, items)
+      return items
+    })
 
   const { data: sources, error: sourcesError } = await supabase
     .from('official_ads_sources')
@@ -302,6 +345,25 @@ export async function runOfficialAdsDocsRefresh(
 
     const diffSummary = summarizeOfficialAdsDiff(oldText, fetchResult.normalizedText)
 
+    // AI PARSER KÖPRÜSÜ (flag-gated): değişen içeriği review_required taslaklara çevir.
+    // Hata job'ı patlatmaz — parser_status='failed' yazılır, akış devam eder.
+    let parserStatus: 'success' | 'failed' = 'success'
+    let createdItemsCount = 0
+    if (parserEnabled) {
+      try {
+        const existingApproved = await loadApproved(source.platform)
+        const items = await parseFn({
+          normalizedText: fetchResult.normalizedText,
+          source,
+          existingApproved,
+        })
+        createdItemsCount = await persistFn(supabase, source, fetchResult.contentHash, items)
+        result.createdDrafts += createdItemsCount
+      } catch {
+        parserStatus = 'failed'
+      }
+    }
+
     await supabase
       .from('official_ads_doc_snapshots')
       .insert({
@@ -311,7 +373,8 @@ export async function runOfficialAdsDocsRefresh(
         raw_text: fetchResult.rawText,
         normalized_text: fetchResult.normalizedText,
         diff_summary: diffSummary,
-        parser_status: 'success',
+        parser_status: parserStatus,
+        created_items_count: createdItemsCount,
         created_at: now,
       })
       .catch(() => {})
