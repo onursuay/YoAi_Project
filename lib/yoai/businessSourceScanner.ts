@@ -1,4 +1,6 @@
 import { scanSocialSource } from './socialSourceScanner'
+import { isFirecrawlReady } from '../firecrawl/client'
+import { scrapeSite } from '../firecrawl/scrapeSite'
 
 /* ──────────────────────────────────────────────────────────
    YoAi — Business Source Scanner
@@ -51,11 +53,14 @@ export interface SourceScanOutput {
   confidence: number
   error_message: string | null
   scanned_at: string
+  /** Teşhis: içerik hangi yolla geldi. DB'ye yazılmaz (route mapping açık alan-alan). */
+  scanProvider?: 'firecrawl' | 'http'
 }
 
 const FETCH_TIMEOUT_MS = 8_000
 const RAW_EXCERPT_CHARS = 1_500
 const BODY_TEXT_CHARS = 4_000
+const FIRECRAWL_CORPUS_CHARS = 12_000
 
 /* ── HTML helpers ─────────────────────────────────────────── */
 
@@ -215,6 +220,90 @@ function computeConfidence(parts: {
   return Math.min(100, conf)
 }
 
+/* ── Ortak içerik analizi (HTTP + Firecrawl paylaşır) ─────────── */
+
+function analyzeContent(
+  input: SourceScanInput,
+  parts: {
+    url: string
+    title: string | null
+    description: string | null
+    corpus: string
+    body: string
+    now: string
+    scanProvider: 'firecrawl' | 'http'
+  },
+): SourceScanOutput {
+  const { corpus, body } = parts
+  const keywords = extractKeywords(corpus)
+  const services = findHints(corpus, SERVICE_HINTS, 5)
+  const products = findHints(corpus, PRODUCT_HINTS, 5)
+  const ctas = findHints(corpus, CTA_HINTS, 5)
+  const offers = findHints(corpus, OFFER_HINTS, 5)
+  const proof = findHints(corpus, SOCIAL_PROOF_HINTS, 1)[0] || null
+  const tone = detectBrandTone(corpus)
+  const locations = extractLocations(corpus)
+
+  const confidence = computeConfidence({
+    hasTitle: !!parts.title,
+    hasDescription: !!parts.description,
+    bodyChars: body.length,
+    ctaCount: ctas.length,
+    keywordCount: keywords.length,
+  })
+
+  return {
+    source_type: input.source_type,
+    source_url: parts.url,
+    scan_status: 'completed',
+    raw_excerpt: body.slice(0, RAW_EXCERPT_CHARS),
+    extracted_title: parts.title,
+    extracted_description: parts.description,
+    extracted_services: services,
+    extracted_products: products,
+    extracted_keywords: keywords,
+    extracted_audience: null,
+    extracted_locations: locations,
+    extracted_ctas: ctas,
+    extracted_brand_tone: tone,
+    extracted_offers: offers,
+    extracted_social_proof: proof,
+    confidence,
+    error_message: null,
+    scanned_at: parts.now,
+    scanProvider: parts.scanProvider,
+  }
+}
+
+/* ── Firecrawl scanner (website / marketplace / google_business) ──
+   Derin (JS-render, çok sayfa) tarama. Başarısızsa null → çağıran HTTP fetch'e düşer. */
+
+async function scanFirecrawl(input: SourceScanInput): Promise<SourceScanOutput | null> {
+  const url = (input.source_url || '').trim()
+  if (!url) return null
+  let result
+  try {
+    result = await scrapeSite(url)
+  } catch {
+    return null
+  }
+  if (!result || !result.markdown) return null
+
+  const now = new Date().toISOString()
+  const body = result.markdown
+  const corpus = [result.title, result.description, body].filter(Boolean).join(' ').slice(0, FIRECRAWL_CORPUS_CHARS)
+
+  return analyzeContent(input, {
+    url,
+    title: result.title,
+    description: result.description,
+    corpus,
+    body,
+    now,
+    scanProvider: 'firecrawl',
+  })
+}
+
 /* ── HTTP scanner (website / marketplace / google_business) ── */
 
 async function scanHttp(input: SourceScanInput): Promise<SourceScanOutput> {
@@ -273,43 +362,15 @@ async function scanHttp(input: SourceScanInput): Promise<SourceScanOutput> {
     const body = extractBodyText(html)
     const corpus = [title, description, headings.join(' '), body].filter(Boolean).join(' ').slice(0, BODY_TEXT_CHARS)
 
-    const keywords = extractKeywords(corpus)
-    const services = findHints(corpus, SERVICE_HINTS, 5)
-    const products = findHints(corpus, PRODUCT_HINTS, 5)
-    const ctas = findHints(corpus, CTA_HINTS, 5)
-    const offers = findHints(corpus, OFFER_HINTS, 5)
-    const proof = findHints(corpus, SOCIAL_PROOF_HINTS, 1)[0] || null
-    const tone = detectBrandTone(corpus)
-    const locations = extractLocations(corpus)
-
-    const confidence = computeConfidence({
-      hasTitle: !!title,
-      hasDescription: !!description,
-      bodyChars: body.length,
-      ctaCount: ctas.length,
-      keywordCount: keywords.length,
+    return analyzeContent(input, {
+      url,
+      title,
+      description,
+      corpus,
+      body,
+      now,
+      scanProvider: 'http',
     })
-
-    return {
-      source_type: input.source_type,
-      source_url: url,
-      scan_status: 'completed',
-      raw_excerpt: body.slice(0, RAW_EXCERPT_CHARS),
-      extracted_title: title,
-      extracted_description: description,
-      extracted_services: services,
-      extracted_products: products,
-      extracted_keywords: keywords,
-      extracted_audience: null,
-      extracted_locations: locations,
-      extracted_ctas: ctas,
-      extracted_brand_tone: tone,
-      extracted_offers: offers,
-      extracted_social_proof: proof,
-      confidence,
-      error_message: null,
-      scanned_at: now,
-    }
   } catch (e) {
     clearTimeout(timeout)
     const msg = e instanceof Error ? e.message : 'unknown_error'
@@ -380,7 +441,12 @@ export async function scanBusinessSource(input: SourceScanInput): Promise<Source
   if (SOCIAL_TYPES.includes(input.source_type)) {
     return scanSocial(input)
   }
-  // website / marketplace / google_business / extra → HTTP
+  // website / marketplace / google_business / extra
+  // → Firecrawl hazırsa derin tara; başarısızsa HTTP fetch'e düş (asla crash yok)
+  if (isFirecrawlReady()) {
+    const fc = await scanFirecrawl(input)
+    if (fc) return fc
+  }
   return scanHttp(input)
 }
 

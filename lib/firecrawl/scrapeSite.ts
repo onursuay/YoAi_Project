@@ -3,7 +3,7 @@
    Hiçbir sayfa taranamazsa null döner (çağıran HTTP fetch'e düşer). */
 import { firecrawlMap, firecrawlScrape } from './client'
 import { selectKeyPages } from './pageSelector'
-import type { SiteScrapeResult } from './types'
+import type { FirecrawlPage, MapLink, SiteScrapeResult } from './types'
 
 const DEFAULT_MAX_PAGES = 6
 const OVERALL_BUDGET_MS = 45_000 // Vercel 60sn limitine güvenli pay
@@ -18,7 +18,7 @@ export async function scrapeSite(
   rootUrl: string,
   deadline: number = Date.now() + OVERALL_BUDGET_MS,
 ): Promise<SiteScrapeResult | null> {
-  let links
+  let links: MapLink[]
   try {
     links = await firecrawlMap(rootUrl)
   } catch {
@@ -38,7 +38,7 @@ export async function scrapeSite(
       truncated = true
       break
     }
-    let page
+    let page: FirecrawlPage | null
     try {
       page = await firecrawlScrape(pageUrl)
     } catch {
