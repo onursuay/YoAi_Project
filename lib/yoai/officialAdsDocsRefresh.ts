@@ -10,6 +10,8 @@
    ────────────────────────────────────────────────────────── */
 
 import { createHash } from 'crypto'
+import { isFirecrawlReady } from '../firecrawl/client'
+import { scrapeSite } from '../firecrawl/scrapeSite'
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -159,6 +161,24 @@ export async function fetchOfficialAdsSource(source: OfficialAdsSource): Promise
       rawText: normalized,
       normalizedText: normalized,
       contentHash: hashOfficialAdsContent(normalized),
+    }
+  }
+
+  // Firecrawl: html/markdown stratejilerinde derin (JS-render) tarama.
+  // Başarısız/boş → aşağıdaki düz fetch'e düşer (asla crash yok). rss/manual_review dokunulmaz.
+  if (
+    (source.fetch_strategy === 'html' || source.fetch_strategy === 'markdown') &&
+    isFirecrawlReady()
+  ) {
+    try {
+      const site = await scrapeSite(source.url)
+      if (site && site.markdown && site.markdown.trim().length > 0) {
+        const rawText = site.markdown.slice(0, MAX_RAW_TEXT_LENGTH)
+        const normalizedText = normalizeOfficialAdsContent(rawText, 'markdown')
+        return { success: true, rawText, normalizedText, contentHash: hashOfficialAdsContent(normalizedText) }
+      }
+    } catch {
+      // Firecrawl hatası → düz fetch fallback
     }
   }
 
