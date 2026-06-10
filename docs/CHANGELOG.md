@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Uzman metin kalitesi YoAlgoritma'ya taşındı (alt-proje A, faz A2)
+- **Sorun:** A1'in ikna edici metin/CTA kalitesi yalnız Strateji'deydi; YoAlgoritma'nın ad_spec önerileri aynı uzman kaliteden faydalanmıyordu.
+- **Çözüm:** İkna edici metin ilkeleri TEK paylaşılan rehbere çıkarıldı (`lib/yoai/ai/docs/copyQualityGuide.ts`). Strateji (expertPlan) bu rehberi her zaman kullanır (DRY tek kaynak); YoAlgoritma (perCampaignPrompt) rehberi system bloğu olarak enjekte eder — flag `YOALGORITHM_EXPERT_COPY_ENABLED` default-off (kapalıyken prompt birebir aynı, sıfır regresyon). ad_spec şeması/validator, batch yapısı, AdCreationWizard, publish dokunulmadı; migration yok.
+- **Dosyalar:** `lib/yoai/ai/docs/copyQualityGuide.ts`, `lib/yoai/ai/perCampaignPrompt.ts`, `lib/strategy/expertPlan.ts`, `.env.example`, `src/tests/copyQualityGuide.test.ts`
+
 ## 2026-06-10 — Uzman Kampanya Planı (alt-proje A, faz A1)
 - **Sorun:** Strateji yapısal blueprint üretiyordu ama "uzman reklamcı" katmanı eksikti: lokasyon akıl yürütme, demografi çıkarımı, günlük bütçe önerisi, amaç→CTA eşleme, ikna edici çoklu-varyant metin ve her kararın gerekçesi yoktu. Ayrıca `extractLocations` büyük "İstanbul"u (toLowerCase İ tuzağı) yakalamıyordu.
 - **Çözüm:** (1) `lib/strategy/expertPlan.ts` — markadan gerekçeli `ExpertCampaignPlan` (hedef kitle/lokasyon/demografi/amaç/bütçe/CTA/metin) üretir: AI (Claude) + deterministik korkuluklar (amaç deterministik, bütçe min'in altına inmez, CTA `allowed_values`'a göre doğrulanır, AI hazır değilse sahte veri yok). (2) `lib/yoai/turkishText.ts` Türkçe-bilinçli şehir eşleme → İstanbul bug fix. (3) `POST /api/strategy/instances/[id]/expert-plan` (flag `EXPERT_PLAN_ENABLED` default-off, platform başına paralel). (4) Strateji'ye "Uzman Plan" sekmesi (gerekçe kartları + metin varyantları). Advisory — publish/wizard/Apify dokunulmadı.

@@ -13,6 +13,7 @@
 
 import { claudeJson, isClaudeReady, type ClaudeTextArgs } from '../anthropic/text'
 import type { InputPayload, GoalType } from './types'
+import { COPY_QUALITY_GUIDE } from '../yoai/ai/docs/copyQualityGuide'
 
 export type PlatformKey = 'meta' | 'google'
 
@@ -195,8 +196,10 @@ export function buildExpertPlanPrompt(
     '- Yalnız verilen bilgilerden çıkarım yap; uydurma rakam/iddia YOK.',
     '- Tüm "reasoning" alanları sade, ikna edici Türkçe olmalı. Ham teknik enum (OUTCOME_SALES, MAXIMIZE_CONVERSIONS vb.) reasoning metninde GÖSTERME.',
     '- "Bu ürünü/hizmeti kimler, nerede alır?" sorusunu mantık yürüterek yanıtla (lokasyon + demografi gerekçeli).',
-    '- copy.variants: 3-5 farklı tonda, ikna edici reklam metni (headline + primaryText + description). Hook güçlü, fayda net, eylem çağrısı açık.',
+    '- copy.variants için aşağıdaki "İKNA EDİCİ REKLAM METNİ KALİTE İLKELERİ"ne birebir uy (3-5 varyant).',
     '- Kampanya amacı zaten belirlendi; sen yalnız amacın NEDEN uygun olduğunu (reasoning) yaz.',
+    '',
+    COPY_QUALITY_GUIDE,
     '',
     'Çıktı YALNIZ şu JSON:',
     '{ "audience":{"summary","pains":[],"motivations":[],"reasoning"}, "location":{"countries":[],"cities":[],"reasoning"}, "demographics":{"ageMin","ageMax","genders":"all|male|female","reasoning"}, "objective":{"reasoning"}, "conversionGoal":{"value","label","reasoning"}, "budget":{"dailyRecommended","reasoning"}, "cta":{"value","label","reasoning"}, "copy":{"variants":[{"headline","primaryText","description"}],"voiceNote","reasoning"} }',

@@ -16,6 +16,7 @@
 import { META_AD_RULES_CURATED } from './docs/meta_ad_rules_curated'
 import { GOOGLE_ADS_RULES_CURATED } from './docs/google_ads_rules_curated'
 import { metaAnalysisBlock } from './docs/meta_analysis_knowledge'
+import { copyQualityBlock, isExpertCopyEnabledForYoAlgoritma } from './docs/copyQualityGuide'
 import { BENCHMARKS } from './accountSerializer'
 import { translateEnum } from '@/lib/yoai/translations'
 import type { AiPlatform } from './types'
@@ -179,6 +180,11 @@ export function buildPerCampaignSystemBlocks(
   }
   if (competitorContext) {
     blocks.push({ type: 'text', text: competitorContext, cache_control: { type: 'ephemeral' } })
+  }
+  // Uzman metin kalite rehberi (alt-proje A2) — flag açıkken ad_spec metnini A kalitesine taşır.
+  // Default-off → kapalıyken bu blok eklenmez (YoAlgoritma prompt'u birebir aynı, sıfır regresyon).
+  if (isExpertCopyEnabledForYoAlgoritma()) {
+    blocks.push(copyQualityBlock())
   }
   // Onaylı resmi bilgi (alt-proje B) — caller async fetch edip geçirir; yoksa eklenmez.
   if (extraBlocks && extraBlocks.length) blocks.push(...extraBlocks)
