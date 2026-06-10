@@ -53,3 +53,7 @@ node_modules/
 
 # Öğrenen Beyin — kendi git repo'su (yoai-brain, private). Ana repo onu izlemez.
 _learnings/
+
+# YoAi Sağlık otomasyonu — sırlar asla commit edilmez
+_automation/smtp_config.json
+_automation/*.local.json
