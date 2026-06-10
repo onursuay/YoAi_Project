@@ -15,6 +15,7 @@ import StatusBadge from '@/components/strateji/StatusBadge'
 import PhaseIndicator from '@/components/strateji/PhaseIndicator'
 import WizardPhase1 from '@/components/strateji/WizardPhase1'
 import BlueprintView from '@/components/strateji/BlueprintView'
+import ExpertPlanView from '@/components/strateji/ExpertPlanView'
 import TaskPanel from '@/components/strateji/TaskPanel'
 import JobPanel from '@/components/strateji/JobPanel'
 import ErrorPanel from '@/components/strateji/ErrorPanel'
@@ -22,6 +23,7 @@ import ErrorPanel from '@/components/strateji/ErrorPanel'
 const TABS = [
   { id: 'wizard', label: 'Keşif' },
   { id: 'plan', label: 'Strateji Planı' },
+  { id: 'uzman-plan', label: 'Uzman Plan' },
   { id: 'tasks', label: 'Görevler' },
   { id: 'jobs', label: 'İş Geçmişi' },
 ]
@@ -420,6 +422,8 @@ export default function StratejiDetailPage() {
                 </div>
               )
             )}
+
+            {activeTab === 'uzman-plan' && instance && <ExpertPlanView instanceId={instance.id} />}
 
             {activeTab === 'tasks' && (
               <TaskPanel
