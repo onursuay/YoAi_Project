@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Resmi doküman tarama prod TypeError fix + migration apply script
+- **Sorun:** Aylık resmi doküman tarama cron'u canlıda `TypeError: e.from(...).insert(...).catch is not a function` ile patlıyordu. Supabase PostgrestBuilder PromiseLike ama `.catch()` metodu yok; testlerde mock `.catch` taşıdığı için yakalanmamıştı (tablolar omddq'da oluşunca ilk kez tetiklendi).
+- **Çözüm:** `officialAdsDocsRefresh`'teki 4 best-effort `.insert/.update(...).catch(() => {})` → `try/await/catch`'e taşındı (non-fatal davranış korunur). Ayrıca `official_ads_*` 4 tablo için tek-komutluk migration apply script eklendi (`npm run db:migrate:official-ads`, omddq guard + doğrulama). Migration omddq'ya uygulandı (10 kaynak + 12 onaylı bilgi seed doğrulandı).
+- **Dosyalar:** `lib/yoai/officialAdsDocsRefresh.ts`, `scripts/apply-official-ads-migration.mjs`, `package.json`
+
 ## 2026-06-10 — Uzman metin kalitesi YoAlgoritma'ya taşındı (alt-proje A, faz A2)
 - **Sorun:** A1'in ikna edici metin/CTA kalitesi yalnız Strateji'deydi; YoAlgoritma'nın ad_spec önerileri aynı uzman kaliteden faydalanmıyordu.
 - **Çözüm:** İkna edici metin ilkeleri TEK paylaşılan rehbere çıkarıldı (`lib/yoai/ai/docs/copyQualityGuide.ts`). Strateji (expertPlan) bu rehberi her zaman kullanır (DRY tek kaynak); YoAlgoritma (perCampaignPrompt) rehberi system bloğu olarak enjekte eder — flag `YOALGORITHM_EXPERT_COPY_ENABLED` default-off (kapalıyken prompt birebir aynı, sıfır regresyon). ad_spec şeması/validator, batch yapısı, AdCreationWizard, publish dokunulmadı; migration yok.
