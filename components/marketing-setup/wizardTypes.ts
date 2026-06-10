@@ -23,6 +23,8 @@ export interface WizardState {
   gtmMode: 'create' | 'existing'
   gtmContainerId: string
   googleAdsCustomerId: string
+  /** Kullanıcı "Hesap Seçilmedi" dedi → bu kurulumda Google Ads adımı atlanır. */
+  googleAdsOptOut: boolean
   metaAdAccountId: string
   deploySteps: Partial<Record<SetupStepName, DeployStepResult>>
 }

@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { useTranslations } from 'next-intl'
 import { CheckCircle2, ShieldCheck, ExternalLink, Building2, BarChart3, Search, Megaphone } from 'lucide-react'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
@@ -12,7 +12,10 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
   const [cloudOpen, setCloudOpen] = useState(false)
   const [containers, setContainers] = useState<{ publicId: string; name: string }[]>([])
   const [metaAccounts, setMetaAccounts] = useState<{ id: string; name: string }[]>([])
-  const [adsAccounts, setAdsAccounts] = useState<{ customerId: string; name: string }[]>([])
+  // Google Ads dropdown seçenekleri (MCC manager'ları alt hesaplarıyla düzleştirilmiş).
+  const [adsOptions, setAdsOptions] = useState<{ value: string; label: string; disabled?: boolean }[]>([])
+  // customerId → loginCustomerId (alt hesap işlemleri MCC üzerinden yetkilenir).
+  const adsLoginMap = useRef<Record<string, string>>({})
   const [switching, setSwitching] = useState<'meta' | 'ads' | null>(null)
 
   const conn = state.connections
@@ -53,7 +56,8 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
       update({ metaAdAccountId: metaAcct })
       patch.meta_ad_account_id = metaAcct
     }
-    if (adsCust && adsCust !== state.googleAdsCustomerId) {
+    // "Hesap Seçilmedi" seçildiyse global hesabı setup'a geri yazma (opt-out korunur).
+    if (!state.googleAdsOptOut && adsCust && adsCust !== state.googleAdsCustomerId) {
       update({ googleAdsCustomerId: adsCust })
       patch.google_ads_customer_id = adsCust
     }
@@ -81,21 +85,50 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [metaConnected])
 
-  // Multi-account: Google Ads müşterilerini (ListAccessibleCustomers) listele.
+  // Multi-account: Google Ads müşterilerini listele; MCC (manager) hesaplarını
+  // alt hesaplarıyla DÜZLEŞTİR — kullanıcı spesifik bir işlem hesabı seçebilsin.
   useEffect(() => {
     if (!conn?.googleAds.connected) return
     let cancelled = false
-    fetch('/api/integrations/google-ads/accounts', { cache: 'no-store' })
+    fetch('/api/marketing-setup/google-ads-accounts', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
       .then((d) => {
-        if (cancelled || !d?.customers) return
-        const list = (d.customers as { customerId: string; name?: string }[]).map((c) => ({
-          customerId: c.customerId,
-          name: c.name || `Account ${c.customerId}`,
-        }))
-        setAdsAccounts(list)
+        if (cancelled || !d?.accounts) return
+        type Node = {
+          customerId: string
+          name: string
+          isManager: boolean
+          loginCustomerId: string
+          children?: { customerId: string; name: string; loginCustomerId: string; isManager?: boolean }[]
+        }
+        const map: Record<string, string> = {}
+        const opts: { value: string; label: string; disabled?: boolean }[] = [
+          // Her zaman ilk seçenek — hesap zorunlu değil; aktif hesap seçili kalmaz.
+          { value: '', label: t('connect.noAccountSelected') },
+        ]
+        for (const acc of d.accounts as Node[]) {
+          const fmt = (name: string, id: string) => (name && name !== id ? `${name} (${id})` : id)
+          if (acc.isManager) {
+            // Manager kendisi işlem hesabı olamaz → başlık (disabled), altında çocuklar.
+            opts.push({ value: `mgr:${acc.customerId}`, label: `${fmt(acc.name, acc.customerId)} — ${t('connect.managerAccount')}`, disabled: true })
+            if (acc.children && acc.children.length) {
+              for (const ch of acc.children) {
+                if (ch.isManager) continue // alt-manager'lar işlem hesabı değil
+                map[ch.customerId] = ch.loginCustomerId || acc.customerId
+                opts.push({ value: ch.customerId, label: `   ${fmt(ch.name, ch.customerId)}` })
+              }
+            } else {
+              opts.push({ value: `none:${acc.customerId}`, label: `   ${t('connect.noSubAccounts')}`, disabled: true })
+            }
+          } else {
+            map[acc.customerId] = acc.loginCustomerId || acc.customerId
+            opts.push({ value: acc.customerId, label: fmt(acc.name, acc.customerId) })
+          }
+        }
+        adsLoginMap.current = map
+        setAdsOptions(opts)
       })
-      .catch(() => { /* listelenemezse dropdown gösterilmez */ })
+      .catch(() => { /* listelenemezse salt-okunur mevcut hesap kalır */ })
     return () => { cancelled = true }
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [conn?.googleAds.connected])
@@ -120,16 +153,32 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
     }
   }
 
-  // Aktif Google Ads müşterisini değiştir + connections refresh.
+  // Google Ads müşterisini değiştir. Boş değer = "Hesap Seçilmedi" (opt-out):
+  // global seçime (Reklam Yöneticisi) DOKUNMADAN bu kurulumdan Google Ads'i çıkar.
   async function switchAdsAccount(customerId: string) {
-    if (switching || !customerId || customerId === adsCust) return
+    if (switching) return
+    // "Hesap Seçilmedi" — global seçimi değiştirme, yalnız setup'tan kaldır.
+    if (!customerId) {
+      if (state.googleAdsOptOut) return
+      setSwitching('ads')
+      try {
+        update({ googleAdsOptOut: true, googleAdsCustomerId: '' })
+        await persist({ google_ads_customer_id: null })
+      } finally {
+        setSwitching(null)
+      }
+      return
+    }
+    if (customerId === adsCust && !state.googleAdsOptOut) return
     setSwitching('ads')
     try {
+      const loginCustomerId = adsLoginMap.current[customerId] || customerId
       await fetch('/api/integrations/google-ads/select-account', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ customerId, loginCustomerId: customerId }),
+        body: JSON.stringify({ customerId, loginCustomerId }),
       })
+      update({ googleAdsOptOut: false })
       const r = await fetch('/api/marketing-setup/connections', { cache: 'no-store' })
       if (r.ok) {
         const data = await r.json()
@@ -299,46 +348,55 @@ export default function PlatformConnect({ state, update, goNext, goBack }: StepP
           )}
         </div>
 
-        {/* Google Ads customer id — auto-fed from the Google Ads integration */}
+        {/* Google Ads customer id — entegrasyondan beslenir; MCC alt hesabı seçilebilir,
+            "Hesap Seçilmedi" ile bu kuruluma dahil edilmeyebilir (opsiyonel) */}
         <div>
           <label className="block text-sm font-medium text-gray-700 mb-2">
             {t('connect.googleAdsCustomerId')}
             <span className="ml-2 text-sm font-normal text-gray-400">{t('common.optional')}</span>
           </label>
-          {adsCust && adsAccounts.length > 1 ? (
-            <div>
-              <p className="mb-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
-                <CheckCircle2 className="w-4 h-4" />
-                {t('connect.multipleAccountsDetected', { count: adsAccounts.length })}
-              </p>
-              <WizardSelect
-                value={adsCust}
-                onChange={(v) => void switchAdsAccount(v)}
-                disabled={switching === 'ads'}
-                options={adsAccounts.map((a) => ({
-                  value: a.customerId,
-                  label: a.name === a.customerId ? a.customerId : `${a.name} (${a.customerId})`,
-                }))}
-              />
-              {switching === 'ads' && (
-                <p className="mt-1 text-xs text-gray-500">{t('connect.switchingAccount')}</p>
-              )}
-            </div>
-          ) : adsCust ? (
-            <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
-              <span className="min-w-0">
-                <span className="block text-sm font-medium text-emerald-800 truncate">
-                  {adsName || adsCust}
-                </span>
-                {adsName && (
-                  <span className="block font-mono text-xs text-emerald-600/70 truncate">{adsCust}</span>
+          {conn?.googleAds.connected ? (
+            adsOptions.length > 0 ? (
+              <div>
+                <WizardSelect
+                  value={state.googleAdsOptOut ? '' : adsCust}
+                  onChange={(v) => void switchAdsAccount(v)}
+                  disabled={switching === 'ads'}
+                  options={adsOptions}
+                />
+                {!state.googleAdsOptOut && adsCust ? (
+                  <p className="mt-2 inline-flex items-center gap-1.5 text-sm font-medium text-emerald-700">
+                    <CheckCircle2 className="w-4 h-4" />
+                    {adsName ? `${adsName} (${adsCust})` : adsCust}
+                  </p>
+                ) : state.googleAdsOptOut ? (
+                  <p className="mt-2 text-sm text-gray-500">{t('connect.googleAdsExcluded')}</p>
+                ) : null}
+                {switching === 'ads' && (
+                  <p className="mt-1 text-xs text-gray-500">{t('connect.switchingAccount')}</p>
                 )}
-              </span>
-              <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 flex-shrink-0">
-                <CheckCircle2 className="w-4 h-4" />
-                {t('connect.autoFromIntegration')}
-              </span>
-            </div>
+              </div>
+            ) : adsCust ? (
+              // Seçenekler henüz yüklenmedi — mevcut hesabı salt-okunur göster
+              <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-emerald-200 bg-emerald-50">
+                <span className="min-w-0">
+                  <span className="block text-sm font-medium text-emerald-800 truncate">
+                    {adsName || adsCust}
+                  </span>
+                  {adsName && (
+                    <span className="block font-mono text-xs text-emerald-600/70 truncate">{adsCust}</span>
+                  )}
+                </span>
+                <span className="inline-flex items-center gap-1 text-sm font-medium text-emerald-700 flex-shrink-0">
+                  <CheckCircle2 className="w-4 h-4" />
+                  {t('connect.autoFromIntegration')}
+                </span>
+              </div>
+            ) : (
+              <p className="px-4 py-3 rounded-xl border border-gray-200 bg-gray-50 text-sm text-gray-500">
+                {t('connect.loadingAccounts')}
+              </p>
+            )
           ) : (
             <div className="flex items-center justify-between gap-2 px-4 py-3 rounded-xl border border-gray-200 bg-gray-50">
               <span className="text-sm text-gray-500 truncate">{t('connect.connectFromIntegration')}</span>

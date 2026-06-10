@@ -22,6 +22,7 @@ const INITIAL_STATE: WizardState = {
   gtmMode: 'create',
   gtmContainerId: '',
   googleAdsCustomerId: '',
+  googleAdsOptOut: false,
   metaAdAccountId: '',
   deploySteps: {},
 }

@@ -3,7 +3,8 @@
 import type { StandardEventKey, SetupStepName } from './constants'
 
 export type MarketingSetupStatus = 'pending' | 'running' | 'done' | 'error'
-export type StepStatus = 'pending' | 'running' | 'done' | 'error'
+// 'skipped' — kullanıcı bu platformu kuruluma dahil etmedi (ör. "Hesap Seçilmedi").
+export type StepStatus = 'pending' | 'running' | 'done' | 'error' | 'skipped'
 
 // ─── Site scan ───────────────────────────────────────────────────────────────
 export interface DetectedAction {

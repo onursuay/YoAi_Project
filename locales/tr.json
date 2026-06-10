@@ -3578,6 +3578,11 @@
       "goToIntegrations": "Entegrasyon'a git",
       "multipleAccountsDetected": "{count} hesap bulundu — birini seç",
       "switchingAccount": "Hesap değiştiriliyor…",
+      "noAccountSelected": "Hesap Seçilmedi",
+      "managerAccount": "Yönetici Hesabı (MCC)",
+      "noSubAccounts": "Alt hesap bulunamadı",
+      "googleAdsExcluded": "Google Ads bu kuruluma dahil edilmeyecek.",
+      "loadingAccounts": "Hesaplar yükleniyor…",
       "slotsTitle": "Reklam Hesaplarınız",
       "slotsSubtitle": "Slot 1 aktif hesabınızdır; planınıza göre ek slot'lar açıktır.",
       "slotLabel": "Slot {n}",
@@ -3623,6 +3628,7 @@
       "done": "Tamamlandı",
       "error": "Hata",
       "pending": "Bekliyor",
+      "skipped": "Atlandı (hesap seçilmedi)",
       "retryStep": "Bu adımı tekrar dene",
       "partial": "Kısmi kurulum tamamlandı",
       "stepGtm": "Google Tag Manager kurulumu",
@@ -3688,7 +3694,22 @@
       "missingSiteUrl": "Site adresi eksik. Önce site tarama adımını tamamlayın.",
       "scanFailed": "Site taraması başarısız oldu.",
       "deployFailed": "Bu adım tamamlanamadı. Lütfen tekrar deneyin.",
-      "notAvailable": "Bu özellik henüz kullanımınıza açık değil."
+      "developerTokenMissing": "Google Ads geliştirici anahtarı yapılandırılmamış.",
+      "tokenExpired": "Bağlantı oturumu süresi doldu.",
+      "permissionDenied": "Yetki reddedildi. Yazma izinleri eksik.",
+      "quota": "Geçici hizmet sınırına ulaşıldı.",
+      "notAdsUser": "Bu Google hesabında erişilebilir bir Google Ads hesabı bulunamadı.",
+      "notAvailable": "Bu özellik henüz kullanımınıza açık değil.",
+      "hint": {
+        "connectSetup": "Yukarıdaki “Yazma İzni Ver” düğmesiyle kurulum iznini bağlayın, sonra tekrar deneyin.",
+        "connectGoogle": "Entegrasyon sayfasından Google Ads hesabınızı bağlayıp tekrar deneyin.",
+        "connectMeta": "Entegrasyon sayfasından Meta hesabınızı bağlayıp tekrar deneyin.",
+        "createPixel": "Meta Reklam Yöneticisi'nde bir Pixel oluşturun, sonra tekrar deneyin.",
+        "developerToken": "Bu ayar sistem yöneticisi tarafından yapılandırılır.",
+        "reauthorize": "İlgili hesabın bağlantısını Entegrasyon'dan yenileyin.",
+        "retryLater": "Birkaç dakika bekleyip bu adımı tekrar çalıştırın.",
+        "scanFirst": "Önce ilk adımda site taramasını tamamlayın."
+      }
     }
   },
   "account": {

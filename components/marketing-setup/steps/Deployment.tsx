@@ -1,21 +1,21 @@
 'use client'
 
-import { useState, useCallback, useRef } from 'react'
+import { useState, useCallback, useRef, useEffect } from 'react'
 import { useTranslations } from 'next-intl'
 import {
   CheckCircle2,
   XCircle,
   Loader2,
   Circle,
+  MinusCircle,
   RefreshCw,
   Copy,
   Check,
-  Play,
 } from 'lucide-react'
 import type { SetupStepName } from '@/lib/marketing-setup/constants'
 import type { DeployStepResult } from '@/lib/marketing-setup/types'
 import type { StepProps } from '@/components/marketing-setup/wizardTypes'
-import { stepErrorKey } from '@/components/marketing-setup/stepError'
+import { stepErrorKey, stepErrorHintKey } from '@/components/marketing-setup/stepError'
 
 // Sequence of deploy steps: API route (hyphenated) → SetupStepName (underscored).
 // Order matters: GA4 provisions ga4_measurement_id and Meta sets meta_pixel_id
@@ -40,7 +40,6 @@ const PLATFORM_TABS = [
 export default function Deployment({ state, update, goNext, goBack }: StepProps) {
   const t = useTranslations('marketingSetup')
   const [running, setRunning] = useState(false)
-  const [started, setStarted] = useState(false)
   const [activeStep, setActiveStep] = useState<SetupStepName | null>(null)
   const [finished, setFinished] = useState(false)
   const [copied, setCopied] = useState<'head' | 'body' | null>(null)
@@ -92,7 +91,6 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
   const runAll = useCallback(async () => {
     if (running) return
     setRunning(true)
-    setStarted(true)
     setFinished(false)
     // Sequential — partial success allowed (errors do not stop the chain).
     for (const { route, step } of SEQUENCE) {
@@ -104,10 +102,20 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
     setFinished(true)
   }, [running, runStep])
 
-  // Kurulum kullanıcı "Başlat"a basınca çalışır — mount'ta OTOMATİK gerçek API'lere
-  // POST atılmaz (yarım/eksik state ile canlı dağıtım riskini önler).
   // Daha önce bir deploy çalıştıysa (geri/ileri gezinme) tekrar tetiklenmez.
   const alreadyRan = Object.values(deploySteps || {}).some((s) => s && s.status !== 'pending')
+
+  // Adım 3'teki "Onayla ve Kuruluma Başla" sonrası buraya gelince kurulum
+  // OTOMATİK başlar — ayrı bir "Başlat" butonu YOK (tek tık akışı).
+  // Bu adıma yalnız önizleme onayından geçilir; deploy route'ları kendi ön
+  // koşullarını ayrıca doğruladığı için otomatik başlatmak güvenli.
+  const autoStartedRef = useRef(false)
+  useEffect(() => {
+    if (autoStartedRef.current || running || alreadyRan) return
+    autoStartedRef.current = true
+    void runAll()
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [])
 
   async function retryStep(route: string, step: SetupStepName) {
     if (running) return
@@ -120,6 +128,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
   function statusIcon(status?: DeployStepResult['status']) {
     if (status === 'done') return <CheckCircle2 className="w-5 h-5 text-emerald-500" />
     if (status === 'error') return <XCircle className="w-5 h-5 text-red-500" />
+    if (status === 'skipped') return <MinusCircle className="w-5 h-5 text-gray-400" />
     if (status === 'running') return <Loader2 className="w-5 h-5 text-primary animate-spin" />
     return <Circle className="w-5 h-5 text-gray-300" />
   }
@@ -127,6 +136,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
   function statusLabel(status?: DeployStepResult['status']) {
     if (status === 'done') return t('deploy.done')
     if (status === 'error') return t('deploy.error')
+    if (status === 'skipped') return t('deploy.skipped')
     if (status === 'running') return t('deploy.running')
     return t('deploy.pending')
   }
@@ -161,21 +171,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
         <p className="mt-2 text-sm text-gray-500">{t('deploy.description')}</p>
       </div>
 
-      {/* Start button — yalnız bu oturumda başlamadıysa ve önceden çalışmadıysa */}
-      {!started && !alreadyRan && (
-        <div className="flex justify-center mb-6">
-          <button
-            type="button"
-            onClick={runAll}
-            className="inline-flex items-center gap-2 px-6 py-3 rounded-xl bg-primary text-white text-sm font-medium shadow-sm hover:bg-primary/90 transition-colors"
-          >
-            <Play className="w-4 h-4" />
-            {t('deploy.start')}
-          </button>
-        </div>
-      )}
-
-      {/* Step rows */}
+      {/* Step rows — kurulum bu adıma girince otomatik başlar (ayrı buton yok) */}
       <div className="bg-white border border-gray-200 rounded-2xl divide-y divide-gray-100 shadow-sm overflow-hidden">
         {SEQUENCE.map(({ route, step, labelKey }) => {
           const result = deploySteps[step]
@@ -201,6 +197,9 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
                     ? t(stepErrorKey(result.error))
                     : statusLabel(result?.status)}
                 </p>
+                {result?.status === 'error' && stepErrorHintKey(result.error) && (
+                  <p className="mt-0.5 text-xs text-gray-500">{t(stepErrorHintKey(result.error) as string)}</p>
+                )}
               </div>
               {result?.status === 'error' && (
                 <button

@@ -31,7 +31,8 @@ export default function ConfigPreview({ state, goNext, goBack }: StepProps) {
   //  Google Ads → Google Ads connection.
   const setupReady = !!conn?.setupConsent.connected
   const metaReady = !!conn?.meta.connected
-  const adsReady = !!conn?.googleAds.connected
+  // "Hesap Seçilmedi" dendiyse Google Ads bu kuruluma dahil edilmez.
+  const adsReady = !!conn?.googleAds.connected && !state.googleAdsOptOut
   // Kurulum (deploy) yalnızca en az bir platform bağlıyken anlamlı — aksi halde
   // "Onayla" otomatik dağıtımı tetikler ama hiçbir adım çalışmaz.
   const anyReady = setupReady || metaReady || adsReady

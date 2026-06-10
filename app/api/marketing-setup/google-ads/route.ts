@@ -27,6 +27,16 @@ export async function POST() {
   if (!access.ok) return step({ status: 'error', error: access.error })
   const user = access.user
 
+  // Kullanıcı önizleme öncesi "Hesap Seçilmedi" dediyse (setup'ta hesap yok) →
+  // bu adımı ATLA. Global Google Ads seçimine (Reklam Yöneticisi) dokunmadan,
+  // yalnız bu kurulumun kapsamı dışında bırakılır.
+  const presetup = await getSetup(user.id)
+  const chosenCustomer = (presetup?.google_ads_customer_id ?? '').toString().trim()
+  if (!chosenCustomer) {
+    if (presetup?.id) await logStep(presetup.id, STEP, 'skipped', { skipped: true })
+    return step({ status: 'skipped', result: { skipped: true, reason: 'no_account_selected' } })
+  }
+
   // Resolve the EXISTING Google Ads context (cookie/DB). Throws with { code } when not connected.
   let ctxHeaders: Record<string, string>
   let customerId: string
@@ -41,8 +51,8 @@ export async function POST() {
     return step({ status: 'error', error: msg })
   }
 
-  // Selected events come from the persisted setup row.
-  const setup = await getSetup(user.id)
+  // Selected events come from the persisted setup row (reuse the row read above).
+  const setup = presetup
   const events = (setup?.selected_events ?? []) as StandardEventKey[]
   const siteName = deriveSiteName(setup?.site_url ?? '')
 

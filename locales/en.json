@@ -3578,6 +3578,11 @@
       "goToIntegrations": "Go to Integrations",
       "multipleAccountsDetected": "{count} accounts found — pick one",
       "switchingAccount": "Switching account…",
+      "noAccountSelected": "No Account Selected",
+      "managerAccount": "Manager Account (MCC)",
+      "noSubAccounts": "No sub-accounts found",
+      "googleAdsExcluded": "Google Ads will not be included in this setup.",
+      "loadingAccounts": "Loading accounts…",
       "slotsTitle": "Your Ad Accounts",
       "slotsSubtitle": "Slot 1 is your active account; additional slots are available based on your plan.",
       "slotLabel": "Slot {n}",
@@ -3623,6 +3628,7 @@
       "done": "Done",
       "error": "Error",
       "pending": "Pending",
+      "skipped": "Skipped (no account selected)",
       "retryStep": "Retry this step",
       "partial": "Partial setup completed",
       "stepGtm": "Google Tag Manager setup",
@@ -3688,7 +3694,22 @@
       "missingSiteUrl": "Site URL is missing. Complete the site scan step first.",
       "scanFailed": "Site scan failed.",
       "deployFailed": "This step couldn't be completed. Please try again.",
-      "notAvailable": "This feature isn't available to you yet."
+      "developerTokenMissing": "Google Ads developer token is not configured.",
+      "tokenExpired": "The connection session has expired.",
+      "permissionDenied": "Permission denied. Write access is missing.",
+      "quota": "A temporary service limit was reached.",
+      "notAdsUser": "No accessible Google Ads account was found for this Google account.",
+      "notAvailable": "This feature isn't available to you yet.",
+      "hint": {
+        "connectSetup": "Use the “Grant Write Access” button above to connect setup permission, then retry.",
+        "connectGoogle": "Connect your Google Ads account from the Integrations page, then retry.",
+        "connectMeta": "Connect your Meta account from the Integrations page, then retry.",
+        "createPixel": "Create a Pixel in Meta Ads Manager, then retry.",
+        "developerToken": "This must be configured by a system administrator.",
+        "reauthorize": "Refresh the account connection from Integrations.",
+        "retryLater": "Wait a few minutes and run this step again.",
+        "scanFirst": "Complete the site scan in the first step first."
+      }
     }
   },
   "account": {

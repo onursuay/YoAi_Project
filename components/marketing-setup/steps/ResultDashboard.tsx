@@ -5,6 +5,7 @@ import {
   CheckCircle2,
   XCircle,
   Loader2,
+  MinusCircle,
   Tags,
   BarChart3,
   Building2,
@@ -34,6 +35,7 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
   function statusIcon(status?: DeployStepResult['status']) {
     if (status === 'done') return <CheckCircle2 className="w-4 h-4 text-emerald-500" />
     if (status === 'error') return <XCircle className="w-4 h-4 text-red-500" />
+    if (status === 'skipped') return <MinusCircle className="w-4 h-4 text-gray-400" />
     if (status === 'running') return <Loader2 className="w-4 h-4 text-primary animate-spin" />
     return null
   }
@@ -69,7 +71,13 @@ export default function ResultDashboard({ state, goBack }: StepProps) {
             ok ? 'text-emerald-700' : r?.status === 'error' ? 'text-red-600' : 'text-gray-400'
           }`}
         >
-          {r?.status === 'error' ? t(stepErrorKey(r.error)) : ok ? statusLabel : t('deploy.pending')}
+          {r?.status === 'error'
+            ? t(stepErrorKey(r.error))
+            : ok
+              ? statusLabel
+              : r?.status === 'skipped'
+                ? t('deploy.skipped')
+                : t('deploy.pending')}
         </p>
         {ok && <div className="mt-3 flex-1">{children}</div>}
       </div>
