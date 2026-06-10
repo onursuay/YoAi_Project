@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Dönüşüm Sihirbazı: "Neler Kurulacak"ta gerçek mevcut-kaynak tespiti (Group C-2)
+- **Sorun:** Önizleme adımında her kaynak statik olarak "Oluşturulacak" gösteriliyordu — hâlihazırda var olan pixel/dönüşüm/kitle olup olmadığı belli değildi (default, dinamik değil).
+- **Çözüm:** Yeni salt-okunur `/api/marketing-setup/preview-status` endpoint'i bağlı platformlarda DEPLOY'un oluşturacağı isimli kaynakların canlı API ile var olup olmadığını yoklar (Meta custom conversions + website/benzer kitle, Google Ads conversion actions + remarketing — isim kalıpları deploy ile birebir). Çekirdek altyapı (Meta Pixel, GSC doğrulama) `connections`'tan okunur. ConfigPreview artık her öğeyi "Mevcut" (gri) veya "Oluşturulacak" (yeşil) olarak dinamik işaretler; kartın tüm öğeleri varsa rozet "Mevcut" olur. Deploy zaten idempotent — bu yalnız dürüst önizleme; probe best-effort (tespit edilemezse "Oluşturulacak").
+- **Dosyalar:** `app/api/marketing-setup/preview-status/route.ts`, `components/marketing-setup/steps/ConfigPreview.tsx`, `lib/marketing-setup/types.ts`, `locales/{tr,en}.json`
+
 ## 2026-06-10 — Dönüşüm Sihirbazı: 'Rezervasyon Yap' event'i + video önerisini kaldırma (Group C-1)
 - **Sorun:** Otel/randevu/booking işlerinde site taraması rezervasyon aksiyonunu yalnız `begin_checkout` olarak yakalıyordu; "Rezervasyon Yap" diye bir event yoktu. Ayrıca düşük değerli `video_play` (yalnız sitede video olması) önerilenlere düşebiliyordu.
 - **Çözüm:** Yeni `reservation` standart event'i — Meta `Schedule` (standart) + GA4 `reservation`, dönüşüm olarak işaretlenir (`metaCustomEventType` zaten `Schedule`'ı tanıyor → deploy tam uyumlu). siteScanner'a rezervasyon/randevu CTA tespit kuralı (book now / rezervasyon yap / müsaitlik sorgula / randevu al / `/rezervasyon` linki) + HotelRunner/Booking/OpenTable/Calendly eklentilerine `reservation` eklendi. AI prompt'u rezervasyon=Schedule vs purchase ayrımını ve online ödeme varsa ikisini birlikte önermeyi öğrendi; `video_play` artık otomatik önerilmez (deterministik `buildRecommended`'tan çıkarıldı + AI'a "merkezde video yoksa önerme" direktifi). Manuel seçim hâlâ mümkün.

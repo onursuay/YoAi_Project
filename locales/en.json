@@ -3620,6 +3620,7 @@
       "googleAdsGa4Import": "GA4 import link",
       "gscVerify": "Property verification",
       "willCreate": "Will be created",
+      "exists": "Already set up",
       "nothingToSetup": "Connect at least one platform to start the setup.",
       "confirm": "Confirm and Start Setup"
     },

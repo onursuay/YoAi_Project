@@ -83,6 +83,24 @@ export interface DeployStepResult {
   error?: string | null
 }
 
+// ─── Preview existing-resource probe (Step 3 — "Neler Kurulacak") ────────────
+// "Neler Kurulacak" önizlemesinde her şeyi "Oluşturulacak" göstermemek için
+// bağlı platformlarda hâlihazırda var olan (deploy'un oluşturacağı isimli)
+// kaynakların canlı tespiti. Çekirdek altyapı (pixel/GA4/GTM/GSC) bağlantı
+// durumundan; türetilenler (custom conversion/audience/conversion action/
+// remarketing) bu probe'dan gelir.
+export interface PreviewStatus {
+  meta: {
+    existingConversionEvents: StandardEventKey[]
+    websiteAudienceExists: boolean
+    lookalikeExists: boolean
+  }
+  googleAds: {
+    existingConversionEvents: StandardEventKey[]
+    remarketingExists: boolean
+  }
+}
+
 // ─── Connection status (Step 2) ──────────────────────────────────────────────
 export interface ConnectionStatus {
   meta: { connected: boolean; adAccountId: string | null; adAccountName: string | null; pixelId: string | null }

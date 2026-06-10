@@ -3620,6 +3620,7 @@
       "googleAdsGa4Import": "GA4 içe aktarma bağlantısı",
       "gscVerify": "Property doğrulama",
       "willCreate": "Oluşturulacak",
+      "exists": "Mevcut",
       "nothingToSetup": "Kuruluma başlamak için en az bir platform bağlamalısınız.",
       "confirm": "Onayla ve Kuruluma Başla"
     },
