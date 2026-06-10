@@ -120,6 +120,7 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
       if (d.ok) { flash('ok', t('campaigns.sent', { count: d.sent }), 5000); setComposing(false); load() }
       else if (d.reason === 'no_recipients') flash('err', t('campaigns.noRecipients'))
       else if (d.reason === 'resend_not_configured') flash('err', t('campaigns.noResend'))
+      else if (d.reason === 'send_failed') { flash('err', t('campaigns.sendFailed', { error: d.error || t('campaigns.sendFailedUnknown') }), 8000); load() }
       else flash('err', t('contacts.error'))
     } finally { setSending(false) }
   }, [saveDraft, subject, html, flash, t, load])

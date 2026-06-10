@@ -170,6 +170,13 @@ const KNOWN_PLUGINS: KnownPlugin[] = [
   { name: 'Sejour', pattern: /sejour\.com\.tr/i, events: ['reservation', 'begin_checkout'], description: 'Sejour otel rezervasyon motoru (TR)' },
   { name: 'Odamax', pattern: /odamax\.com/i, events: ['reservation', 'begin_checkout'], description: 'Odamax otel rezervasyon motoru (TR)' },
   { name: 'Hotech', pattern: /hotech\.systems/i, events: ['reservation', 'begin_checkout'], description: 'Hotech otel sistemleri (TR)' },
+  { name: 'Reseliva', pattern: /reseliva/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Reseliva otel rezervasyon motoru' },
+  { name: 'Protel / Barboon', pattern: /protel\.(net|com|io)|protelhotel|barboon/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Protel / Barboon otel rezervasyon motoru' },
+  { name: 'HMS Otel', pattern: /hmsotel|hms[\s-]?otel|hmsyazilim|hms\.com\.tr/i, events: ['reservation', 'begin_checkout'], description: 'HMS Otel yönetim/rezervasyon sistemi (TR)' },
+  { name: 'Sistem Otel', pattern: /sistemotel|sistem[\s-]?otel/i, events: ['reservation', 'begin_checkout'], description: 'Sistem Otel rezervasyon sistemi (TR)' },
+  { name: 'Exely', pattern: /exely\.com|exely|travelline/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Exely (TravelLine) otel rezervasyon motoru' },
+  { name: 'BookLogic', pattern: /booklogic/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'BookLogic otel rezervasyon motoru' },
+  { name: 'Webius Digital', pattern: /webius/i, events: ['reservation', 'begin_checkout'], description: 'Webius Digital otel rezervasyon/dijital altyapısı (TR)' },
   // ── E-ticaret platformları ──
   {
     name: 'Shopify',

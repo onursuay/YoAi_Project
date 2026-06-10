@@ -3228,6 +3228,8 @@
       "needContent": "Subject and content are required.",
       "noRecipients": "No recipients in this segment.",
       "noResend": "Email sending is not configured.",
+      "sendFailed": "Email could not be sent: {error}",
+      "sendFailedUnknown": "unknown error",
       "preview": "Preview",
       "previewFrom": "From: your business email",
       "noSubject": "(no subject)",

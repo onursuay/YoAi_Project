@@ -3228,6 +3228,8 @@
       "needContent": "Konu ve içerik zorunlu.",
       "noRecipients": "Bu segmentte alıcı yok.",
       "noResend": "E-posta gönderimi yapılandırılmamış.",
+      "sendFailed": "E-posta gönderilemedi: {error}",
+      "sendFailedUnknown": "bilinmeyen hata",
       "preview": "Önizleme",
       "previewFrom": "Gönderen: işletme e-postanız",
       "noSubject": "(konu yok)",

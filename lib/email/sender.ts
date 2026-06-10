@@ -6,7 +6,8 @@ import { getCampaign, markCampaign } from './campaignStore'
 import { resolveRecipients, type Segment } from './segments'
 import { unsubscribeUrl } from './unsubscribe'
 import { getDefaultAccount, decryptSmtpPass, decryptRefreshToken, type SmtpConfig } from './sendingAccountStore'
-import { smtpTransport, gmailOAuthTransport } from './smtpSender'
+import { smtpTransport } from './smtpSender'
+import { sendViaGmailApi } from './gmailApiSender'
 
 const FROM_EMAIL = process.env.FROM_EMAIL || 'YO Dijital Medya Anonim Şirketi <info@yodijital.com>'
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
@@ -50,10 +51,18 @@ ${pixel}
 
 export interface SendResult {
   ok: boolean
-  reason?: 'not_found' | 'resend_not_configured' | 'already' | 'no_recipients'
+  reason?: 'not_found' | 'resend_not_configured' | 'already' | 'no_recipients' | 'send_failed'
+  error?: string
   sent: number
   total: number
   via?: SendVia
+}
+
+export interface BuiltDispatch {
+  dispatch: Dispatch
+  via: SendVia
+  /** Son başarısız gönderimin gerçek hata mesajı (boş catch yerine — teşhis için). */
+  getLastError: () => string | null
 }
 
 /**
@@ -61,26 +70,40 @@ export interface SendResult {
  * smtp/gmail için resend gerekmez; domain/platform/shared için resend gerekir —
  * resend yoksa null döner (çağıran 'resend_not_configured' olarak yorumlar).
  */
-export async function buildDispatch(userId: string): Promise<{ dispatch: Dispatch; via: SendVia } | null> {
+export async function buildDispatch(userId: string): Promise<BuiltDispatch | null> {
   const account = await getDefaultAccount(userId)
+
+  // Her dispatch başarısızlığında gerçek hata buraya yazılır (eskiden boş catch'te
+  // sessizce yutuluyordu → kampanya "Gönderildi" görünüp hiç mail gitmiyordu).
+  let lastError: string | null = null
+  const fail = (e: unknown, fallback: string): null => {
+    lastError = e instanceof Error ? e.message : fallback
+    console.error('[EmailSend] DISPATCH_FAIL', lastError)
+    return null
+  }
 
   if (account && account.type === 'smtp') {
     const transport = smtpTransport(account.config as unknown as SmtpConfig, decryptSmtpPass(account))
     const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
     return {
       via: 'smtp',
+      getLastError: () => lastError,
       dispatch: async (to, subject, html) => {
-        try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'smtp' } catch { return null }
+        try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'smtp' }
+        catch (e) { return fail(e, 'smtp_send_failed') }
       },
     }
   }
   if (account && account.type === 'gmail') {
-    const transport = gmailOAuthTransport(account.from_email, decryptRefreshToken(account))
-    const from = account.from_name ? `${account.from_name} <${account.from_email}>` : account.from_email
+    // SMTP yerine Gmail API (HTTPS) — Vercel serverless giden SMTP portunu engeller.
+    const refreshToken = decryptRefreshToken(account)
+    const { from_name: fromName, from_email: fromEmail } = account
     return {
       via: 'smtp',
+      getLastError: () => lastError,
       dispatch: async (to, subject, html) => {
-        try { const info = await transport.sendMail({ from, to, subject, html }); return info.messageId ?? 'gmail' } catch { return null }
+        try { return await sendViaGmailApi(refreshToken, fromName, fromEmail, to, subject, html) }
+        catch (e) { return fail(e, 'gmail_send_failed') }
       },
     }
   }
@@ -90,8 +113,10 @@ export async function buildDispatch(userId: string): Promise<{ dispatch: Dispatc
     const replyTo = account.reply_to || undefined
     return {
       via: 'domain',
+      getLastError: () => lastError,
       dispatch: async (to, subject, html) => {
-        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
+        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); if (r.error) throw new Error(r.error.message); return r.data?.id ?? null }
+        catch (e) { return fail(e, 'resend_send_failed') }
       },
     }
   }
@@ -102,8 +127,10 @@ export async function buildDispatch(userId: string): Promise<{ dispatch: Dispatc
     const replyTo = account.reply_to || undefined
     return {
       via: 'shared',
+      getLastError: () => lastError,
       dispatch: async (to, subject, html) => {
-        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); return r.data?.id ?? null } catch { return null }
+        try { const r = await resend.emails.send({ from, to, subject, html, replyTo }); if (r.error) throw new Error(r.error.message); return r.data?.id ?? null }
+        catch (e) { return fail(e, 'resend_send_failed') }
       },
     }
   }
@@ -111,8 +138,10 @@ export async function buildDispatch(userId: string): Promise<{ dispatch: Dispatc
   if (!resend) return null
   return {
     via: 'shared',
+    getLastError: () => lastError,
     dispatch: async (to, subject, html) => {
-      try { const r = await resend.emails.send({ from: FROM_EMAIL, to, subject, html }); return r.data?.id ?? null } catch { return null }
+      try { const r = await resend.emails.send({ from: FROM_EMAIL, to, subject, html }); if (r.error) throw new Error(r.error.message); return r.data?.id ?? null }
+      catch (e) { return fail(e, 'resend_send_failed') }
     },
   }
 }
@@ -131,7 +160,7 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
 
   const built = await buildDispatch(userId)
   if (!built) return { ok: false, reason: 'resend_not_configured', sent: 0, total: 0 }
-  const { dispatch, via } = built
+  const { dispatch, via, getLastError } = built
 
   await markCampaign(campaignId, { status: 'sending' })
 
@@ -161,6 +190,15 @@ export async function sendCampaign(userId: string, campaignId: string): Promise<
     for (let i = 0; i < sendRows.length; i += 500) {
       await supabase.from('email_sends').upsert(sendRows.slice(i, i + 500), { onConflict: 'campaign_id,email' })
     }
+  }
+
+  // Hiç mail gitmediyse kampanyayı "Gönderildi" işaretleme — gerçek hatayı yüzeye çıkar.
+  if (sent === 0) {
+    await markCampaign(campaignId, {
+      status: 'failed',
+      stats: { recipients: recipients.length, sent },
+    })
+    return { ok: false, reason: 'send_failed', error: getLastError() ?? undefined, sent, total: recipients.length, via }
   }
 
   await markCampaign(campaignId, {
