@@ -1,14 +1,17 @@
 import { NextResponse } from 'next/server'
-import { runOfficialAdsDocsRefresh } from '@/lib/yoai/officialAdsDocsRefresh'
-import { notifyOwnerOfficialAdsChanges } from '@/lib/yoai/officialAdsChangeNotifier'
+import { isInngestReady, inngest } from '@/inngest/client'
+import { runAndRecordOfficialAdsRefresh } from '@/lib/yoai/officialAdsRefreshRunner'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 120
 
 /* ────────────────────────────────────────────────────────────
    GET /api/cron/official-ads-refresh
-   Called by Vercel Cron (schedule: "0 6 1 * *" = her ayın 1'i 06:00 UTC / ~09:00 Türkiye).
-   Manuel test: GET ile Authorization: Bearer <CRON_SECRET> veya ?secret=...
+   Vercel Cron (schedule: "0 6 1 * *" = her ayın 1'i 06:00 UTC) veya manuel.
+   Manuel test: ?secret=<CRON_SECRET> veya Authorization: Bearer <CRON_SECRET>
+
+   Ağır iş (Firecrawl + AI parser × N kaynak) Inngest'e taşınır — her kaynak
+   ayrı step (ayrı invocation), serverless 60/120s timeout'a takılmaz.
    ──────────────────────────────────────────────────────────── */
 export async function GET(request: Request) {
   const authHeader = request.headers.get('authorization')
@@ -21,95 +24,43 @@ export async function GET(request: Request) {
     return NextResponse.json({ ok: false, error: 'Cron not configured' }, { status: 503 })
   }
   if (cronSecret) {
-    const authorized =
-      authHeader === `Bearer ${cronSecret}` || urlSecret === cronSecret
+    const authorized = authHeader === `Bearer ${cronSecret}` || urlSecret === cronSecret
     if (!authorized) {
       return NextResponse.json({ ok: false, error: 'Unauthorized' }, { status: 401 })
     }
   }
 
   try {
+    // Üretim yolu: Inngest hazırsa arka plana gönder ve hemen dön (timeout yok).
+    if (isInngestReady()) {
+      await inngest.send({ name: 'official-ads/refresh', data: {} })
+      return NextResponse.json({
+        ok: true,
+        mode: 'inngest',
+        message:
+          'Resmi doküman taraması arka planda başlatıldı. Sonuçlar: Gözetim Merkezi → Resmi Döküman Güncellemeleri.',
+      })
+    }
+
+    // Dev/inline fallback (Inngest yoksa) — küçük hacimde senkron çalışır.
     const { supabase } = await import('@/lib/supabase/client')
     if (!supabase) {
       return NextResponse.json({ ok: false, error: 'Database not configured' }, { status: 500 })
     }
-
-    const startedAt = new Date().toISOString()
-
-    // Open refresh run record
-    const { data: runData } = await supabase
-      .from('official_ads_refresh_runs')
-      .insert({ started_at: startedAt, status: 'running', created_at: startedAt })
-      .select('id')
-      .single()
-
-    const runId: string | null = runData?.id ?? null
-
-    try {
-      const result = await runOfficialAdsDocsRefresh(supabase)
-      const completedAt = new Date().toISOString()
-
-      let runStatus: 'success' | 'partial' | 'failed' = 'success'
-      if (result.failedSources > 0 && result.checkedSources > 0) {
-        runStatus =
-          result.failedSources === result.checkedSources ? 'failed' : 'partial'
-      }
-
-      if (runId) {
-        await supabase
-          .from('official_ads_refresh_runs')
-          .update({
-            completed_at: completedAt,
-            status: runStatus,
-            checked_sources: result.checkedSources,
-            changed_sources: result.changedSources,
-            failed_sources: result.failedSources,
-            review_required_count: result.reviewRequiredCount,
-            summary_json: {
-              changed: result.changed,
-              failed: result.failed,
-              createdDrafts: result.createdDrafts,
-            },
-          })
-          .eq('id', runId)
-      }
-
-      // Best-effort owner bildirim (SMTP yoksa sessizce atlar, job patlamaz)
-      let notify: { sent: boolean; reason?: string } = { sent: false, reason: 'skipped' }
-      try {
-        notify = await notifyOwnerOfficialAdsChanges(result)
-      } catch (e) {
-        console.warn('[OfficialAdsRefresh] bildirim hatası:', e)
-      }
-
-      return NextResponse.json({
-        ok: true,
-        runId,
-        checkedSources: result.checkedSources,
-        changedSources: result.changedSources,
-        failedSources: result.failedSources,
-        reviewRequiredCount: result.reviewRequiredCount,
-        createdDrafts: result.createdDrafts,
-        notified: notify.sent,
-        changed: result.changed,
-        failed: result.failed,
-      })
-    } catch (innerErr) {
-      const completedAt = new Date().toISOString()
-      if (runId) {
-        try {
-          await supabase
-            .from('official_ads_refresh_runs')
-            .update({
-              completed_at: completedAt,
-              status: 'failed',
-              summary_json: { error: String(innerErr) },
-            })
-            .eq('id', runId)
-        } catch {}
-      }
-      throw innerErr
-    }
+    const outcome = await runAndRecordOfficialAdsRefresh(supabase)
+    return NextResponse.json({
+      ok: true,
+      mode: 'inline',
+      runId: outcome.runId,
+      checkedSources: outcome.result.checkedSources,
+      changedSources: outcome.result.changedSources,
+      failedSources: outcome.result.failedSources,
+      reviewRequiredCount: outcome.result.reviewRequiredCount,
+      createdDrafts: outcome.result.createdDrafts,
+      notified: outcome.notified,
+      changed: outcome.result.changed,
+      failed: outcome.result.failed,
+    })
   } catch (error) {
     console.error('[OfficialAdsRefresh] Hata:', error)
     return NextResponse.json({ ok: false, error: String(error) }, { status: 500 })

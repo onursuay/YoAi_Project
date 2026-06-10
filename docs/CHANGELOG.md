@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Resmi doküman tarama 504 timeout fix (Inngest arka plan + tek-sayfa Firecrawl)
+- **Sorun:** Manuel/cron tarama `504 GATEWAY_TIMEOUT` (FUNCTION_INVOCATION_TIMEOUT) veriyordu. İki kök neden: (1) resmi doküman çekerken `scrapeSite` tüm domaini (developers.google.com vb.) map+crawl ediyordu — yavaş + yanlış; (2) 10 kaynak × (Firecrawl + AI parser) senkron HTTP'de serverless süre limitini aşıyordu.
+- **Çözüm:** (1) `fetchOfficialAdsSource` artık tek-sayfa `firecrawlScrape(url)` kullanıyor (doküman tek sayfa — map yok, çok daha hızlı/doğru). (2) Tarama Inngest'e taşındı (`official-ads/refresh`): her KAYNAK ayrı `step.run` (ayrı invocation → timeout yok), Inngest durability + retry. Cron route artık event fire edip anında döner; Inngest yoksa (dev) inline fallback. Loop gövdesi `refreshSingleSource` + `resolveRefreshDeps` + `loadRefreshSources` + `applySourceOutcome`'a çıkarıldı (davranış birebir korunur, 12+3 test yeşil).
+- **Dosyalar:** `lib/yoai/officialAdsDocsRefresh.ts`, `lib/yoai/officialAdsRefreshRunner.ts`, `inngest/functions/officialAdsRefresh.ts`, `app/api/inngest/route.ts`, `app/api/cron/official-ads-refresh/route.ts`
+
 ## 2026-06-10 — Optimizasyon Sihirli Tarama AI fallback'i: timeout + sebep teşhisi
 - **Sorun:** "AI ile Tara" sık sık "AI talep edildi ancak yanıt alınamadı — sonuçlar kural tabanlı analizden üretildi" gösterip kural motoruna düşüyordu. Kök neden: senkron Claude çağrısının **10s timeout'u** çok agresifti (Strateji aynı tür çağrıda 30s kullanıyor) ve gerçek hata `catch` içinde sessizce yutuluyordu (sebebi görmek imkânsızdı).
 - **Çözüm:** (1) AI timeout 10s → **30s** (Meta + Google/TikTok), route'lara `maxDuration = 60`. (2) Yeni paylaşılan `describeAiFallback(err)` ([lib/anthropic/client.ts]) fallback sebebini kısa koda indirger (`timeout` / `api_4xx` / `parse_error` / `rate_limit`…); recommender'lar `fallbackReason` döndürür, route'lar response'a `aiFallbackReason` olarak ekler (UI'da ham gösterilmez — Network/log üzerinden teşhis). Meta/Google publish & API akışına dokunulmadı; yalnız advisory AI katmanı.

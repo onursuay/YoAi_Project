@@ -10,8 +10,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { createHash } from 'crypto'
-import { isFirecrawlReady } from '../firecrawl/client'
-import { scrapeSite } from '../firecrawl/scrapeSite'
+import { isFirecrawlReady, firecrawlScrape } from '../firecrawl/client'
 import { parseSnapshotToKnowledge, persistKnowledgeDrafts } from './officialAdsKnowledgeParser'
 import type { OfficialAdsKnowledgeItem } from './officialAdsKnowledgeStore'
 
@@ -179,16 +178,17 @@ export async function fetchOfficialAdsSource(source: OfficialAdsSource): Promise
     }
   }
 
-  // Firecrawl: html/markdown stratejilerinde derin (JS-render) tarama.
+  // Firecrawl: html/markdown stratejilerinde TEK SAYFA (JS-render) tarama.
+  // Resmi doküman tek bir sayfadır — domain map etme (yavaş + yanlış); doğrudan o sayfayı çek.
   // Başarısız/boş → aşağıdaki düz fetch'e düşer (asla crash yok). rss/manual_review dokunulmaz.
   if (
     (source.fetch_strategy === 'html' || source.fetch_strategy === 'markdown') &&
     isFirecrawlReady()
   ) {
     try {
-      const site = await scrapeSite(source.url)
-      if (site && site.markdown && site.markdown.trim().length > 0) {
-        const rawText = site.markdown.slice(0, MAX_RAW_TEXT_LENGTH)
+      const page = await firecrawlScrape(source.url)
+      if (page && page.markdown && page.markdown.trim().length > 0) {
+        const rawText = page.markdown.slice(0, MAX_RAW_TEXT_LENGTH)
         const normalizedText = normalizeOfficialAdsContent(rawText, 'markdown')
         return { success: true, rawText, normalizedText, contentHash: hashOfficialAdsContent(normalizedText) }
       }
@@ -256,159 +256,177 @@ export async function runOfficialAdsDocsRefresh(
     failed: [],
   }
 
-  const parserEnabled = opts.parserEnabled ?? process.env.OFFICIAL_ADS_AI_PARSER === 'true'
-  const parseFn = opts.parseFn ?? parseSnapshotToKnowledge
-  const persistFn = opts.persistFn ?? persistKnowledgeDrafts
+  const deps = resolveRefreshDeps(supabase, opts)
 
-  // Onaylı bilgi ipuçları platform başına bir kez yüklenir (parser delta için kullanır)
-  const approvedCache = new Map<string, ApprovedHint[]>()
-  const loadApproved =
-    opts.loadApprovedFn ??
-    (async (platform: string): Promise<ApprovedHint[]> => {
-      if (approvedCache.has(platform)) return approvedCache.get(platform)!
-      let items: ApprovedHint[] = []
-      try {
-        const { data } = await supabase
-          .from('official_ads_knowledge_items')
-          .select('normalized_key, title, summary')
-          .eq('platform', platform)
-          .in('review_status', ['approved', 'auto_approved'])
-          .is('effective_to', null)
-        if (Array.isArray(data)) items = data as ApprovedHint[]
-      } catch {
-        /* tablo yoksa boş ipucu — parser yine çalışır */
-      }
-      approvedCache.set(platform, items)
-      return items
-    })
+  const sources = await loadRefreshSources(supabase)
 
-  const { data: sources, error: sourcesError } = await supabase
-    .from('official_ads_sources')
-    .select(
-      'id, platform, source_type, title, url, fetch_strategy, content_hash, status, importance, notes',
-    )
-    .in('status', ['active', 'review_required'])
-
-  if (sourcesError || !sources) {
-    throw new Error(
-      `official_ads_sources okuma hatası: ${sourcesError?.message ?? 'veri yok'}`,
-    )
+  for (const source of sources) {
+    result.checkedSources++
+    const outcome = await refreshSingleSource(supabase, source, deps)
+    applySourceOutcome(result, outcome)
   }
 
+  return result
+}
+
+// ── Per-source işleme (Inngest kaynak-başına step + inline loop paylaşır) ──────
+
+export interface ResolvedRefreshDeps {
+  parserEnabled: boolean
+  parseFn: typeof parseSnapshotToKnowledge
+  persistFn: typeof persistKnowledgeDrafts
+  loadApproved: (platform: string) => Promise<ApprovedHint[]>
+}
+
+/** opts → çözümlenmiş bağımlılıklar (parser flag + DI + onaylı bilgi yükleyici). */
+export function resolveRefreshDeps(supabase: any, opts: RefreshOptions = {}): ResolvedRefreshDeps {
+  const approvedCache = new Map<string, ApprovedHint[]>()
+  return {
+    parserEnabled: opts.parserEnabled ?? process.env.OFFICIAL_ADS_AI_PARSER === 'true',
+    parseFn: opts.parseFn ?? parseSnapshotToKnowledge,
+    persistFn: opts.persistFn ?? persistKnowledgeDrafts,
+    loadApproved:
+      opts.loadApprovedFn ??
+      (async (platform: string): Promise<ApprovedHint[]> => {
+        if (approvedCache.has(platform)) return approvedCache.get(platform)!
+        let items: ApprovedHint[] = []
+        try {
+          const { data } = await supabase
+            .from('official_ads_knowledge_items')
+            .select('normalized_key, title, summary')
+            .eq('platform', platform)
+            .in('review_status', ['approved', 'auto_approved'])
+            .is('effective_to', null)
+          if (Array.isArray(data)) items = data as ApprovedHint[]
+        } catch {
+          /* tablo yoksa boş ipucu — parser yine çalışır */
+        }
+        approvedCache.set(platform, items)
+        return items
+      }),
+  }
+}
+
+/** Taranacak kaynakları yükler (active + review_required). */
+export async function loadRefreshSources(supabase: any): Promise<OfficialAdsSource[]> {
+  const { data: sources, error } = await supabase
+    .from('official_ads_sources')
+    .select('id, platform, source_type, title, url, fetch_strategy, content_hash, status, importance, notes')
+    .in('status', ['active', 'review_required'])
+  if (error || !sources) {
+    throw new Error(`official_ads_sources okuma hatası: ${error?.message ?? 'veri yok'}`)
+  }
+  return sources as OfficialAdsSource[]
+}
+
+export interface SingleSourceOutcome {
+  status: 'changed' | 'unchanged' | 'failed'
+  change?: SourceChangeResult
+  fail?: SourceFailResult
+  createdDrafts: number
+}
+
+/** Tek bir kaynağı işler: fetch → hash → (değiştiyse) parser + snapshot + source update.
+   Inngest'te kaynak-başına step olarak çağrılır; inline loop da aynısını kullanır. */
+export async function refreshSingleSource(
+  supabase: any,
+  source: OfficialAdsSource,
+  deps: ResolvedRefreshDeps,
+): Promise<SingleSourceOutcome> {
   const now = new Date().toISOString()
+  const fetchResult = await fetchOfficialAdsSource(source)
 
-  for (const source of sources as OfficialAdsSource[]) {
-    result.checkedSources++
-
-    const fetchResult = await fetchOfficialAdsSource(source)
-
-    if (!fetchResult.success) {
-      try {
-        await supabase
-          .from('official_ads_sources')
-          .update({ status: 'failed', last_checked_at: now, updated_at: now })
-          .eq('id', source.id)
-      } catch {
-        /* best-effort — job'ı patlatma */
-      }
-
-      result.failedSources++
-      result.failed.push({
-        sourceId: source.id,
-        title: source.title,
-        url: source.url,
-        error: fetchResult.error ?? 'unknown',
-      })
-      continue
-    }
-
-    const hashChanged = source.content_hash !== fetchResult.contentHash
-
-    if (!hashChanged) {
-      try {
-        await supabase
-          .from('official_ads_sources')
-          .update({ last_checked_at: now, updated_at: now })
-          .eq('id', source.id)
-      } catch {
-        /* best-effort */
-      }
-      continue
-    }
-
-    // Fetch previous snapshot text for diff if available
-    let oldText = `[prev_hash: ${source.content_hash ?? 'none'}]`
-    try {
-      const { data: prevSnap } = await supabase
-        .from('official_ads_doc_snapshots')
-        .select('normalized_text')
-        .eq('source_id', source.id)
-        .order('fetched_at', { ascending: false })
-        .limit(1)
-        .single()
-      if (prevSnap?.normalized_text) oldText = prevSnap.normalized_text
-    } catch {}
-
-    const diffSummary = summarizeOfficialAdsDiff(oldText, fetchResult.normalizedText)
-
-    // AI PARSER KÖPRÜSÜ (flag-gated): değişen içeriği review_required taslaklara çevir.
-    // Hata job'ı patlatmaz — parser_status='failed' yazılır, akış devam eder.
-    let parserStatus: 'success' | 'failed' = 'success'
-    let createdItemsCount = 0
-    if (parserEnabled) {
-      try {
-        const existingApproved = await loadApproved(source.platform)
-        const items = await parseFn({
-          normalizedText: fetchResult.normalizedText,
-          source,
-          existingApproved,
-        })
-        createdItemsCount = await persistFn(supabase, source, fetchResult.contentHash, items)
-        result.createdDrafts += createdItemsCount
-      } catch {
-        parserStatus = 'failed'
-      }
-    }
-
-    try {
-      await supabase
-        .from('official_ads_doc_snapshots')
-        .insert({
-          source_id: source.id,
-          fetched_at: now,
-          content_hash: fetchResult.contentHash,
-          raw_text: fetchResult.rawText,
-          normalized_text: fetchResult.normalizedText,
-          diff_summary: diffSummary,
-          parser_status: parserStatus,
-          created_items_count: createdItemsCount,
-          created_at: now,
-        })
-    } catch {
-      /* best-effort — snapshot kaydı başarısızsa job devam eder */
-    }
-
-    const newStatus = classifyOfficialAdsChange(source)
-
+  if (!fetchResult.success) {
     try {
       await supabase
         .from('official_ads_sources')
-        .update({
-          content_hash: fetchResult.contentHash,
-          last_checked_at: now,
-          last_changed_at: now,
-          status: newStatus,
-          updated_at: now,
-        })
+        .update({ status: 'failed', last_checked_at: now, updated_at: now })
         .eq('id', source.id)
     } catch {
       /* best-effort */
     }
+    return {
+      status: 'failed',
+      fail: { sourceId: source.id, title: source.title, url: source.url, error: fetchResult.error ?? 'unknown' },
+      createdDrafts: 0,
+    }
+  }
 
-    result.changedSources++
-    if (newStatus === 'review_required') result.reviewRequiredCount++
+  if (source.content_hash === fetchResult.contentHash) {
+    try {
+      await supabase
+        .from('official_ads_sources')
+        .update({ last_checked_at: now, updated_at: now })
+        .eq('id', source.id)
+    } catch {
+      /* best-effort */
+    }
+    return { status: 'unchanged', createdDrafts: 0 }
+  }
 
-    result.changed.push({
+  // Önceki snapshot metni (diff için)
+  let oldText = `[prev_hash: ${source.content_hash ?? 'none'}]`
+  try {
+    const { data: prevSnap } = await supabase
+      .from('official_ads_doc_snapshots')
+      .select('normalized_text')
+      .eq('source_id', source.id)
+      .order('fetched_at', { ascending: false })
+      .limit(1)
+      .single()
+    if (prevSnap?.normalized_text) oldText = prevSnap.normalized_text
+  } catch {}
+
+  const diffSummary = summarizeOfficialAdsDiff(oldText, fetchResult.normalizedText)
+
+  // AI PARSER KÖPRÜSÜ (flag-gated) — hata job'ı patlatmaz, parser_status='failed'.
+  let parserStatus: 'success' | 'failed' = 'success'
+  let createdItemsCount = 0
+  if (deps.parserEnabled) {
+    try {
+      const existingApproved = await deps.loadApproved(source.platform)
+      const items = await deps.parseFn({ normalizedText: fetchResult.normalizedText, source, existingApproved })
+      createdItemsCount = await deps.persistFn(supabase, source, fetchResult.contentHash, items)
+    } catch {
+      parserStatus = 'failed'
+    }
+  }
+
+  try {
+    await supabase.from('official_ads_doc_snapshots').insert({
+      source_id: source.id,
+      fetched_at: now,
+      content_hash: fetchResult.contentHash,
+      raw_text: fetchResult.rawText,
+      normalized_text: fetchResult.normalizedText,
+      diff_summary: diffSummary,
+      parser_status: parserStatus,
+      created_items_count: createdItemsCount,
+      created_at: now,
+    })
+  } catch {
+    /* best-effort */
+  }
+
+  const newStatus = classifyOfficialAdsChange(source)
+  try {
+    await supabase
+      .from('official_ads_sources')
+      .update({
+        content_hash: fetchResult.contentHash,
+        last_checked_at: now,
+        last_changed_at: now,
+        status: newStatus,
+        updated_at: now,
+      })
+      .eq('id', source.id)
+  } catch {
+    /* best-effort */
+  }
+
+  return {
+    status: 'changed',
+    change: {
       sourceId: source.id,
       platform: source.platform,
       title: source.title,
@@ -417,8 +435,20 @@ export async function runOfficialAdsDocsRefresh(
       newHash: fetchResult.contentHash,
       status: newStatus,
       diffSummary,
-    })
+    },
+    createdDrafts: createdItemsCount,
   }
+}
 
-  return result
+/** Bir kaynağın çıktısını toplu sonuca işler (inline + Inngest paylaşır). */
+export function applySourceOutcome(result: RefreshResult, outcome: SingleSourceOutcome): void {
+  if (outcome.status === 'failed' && outcome.fail) {
+    result.failedSources++
+    result.failed.push(outcome.fail)
+  } else if (outcome.status === 'changed' && outcome.change) {
+    result.changedSources++
+    result.createdDrafts += outcome.createdDrafts
+    if (outcome.change.status === 'review_required') result.reviewRequiredCount++
+    result.changed.push(outcome.change)
+  }
 }
