@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Rezervasyon/randevu tespitini derinleştirme (eklenti listesine bağımlı değil)
+- **Sorun:** Rezervasyon tespiti yüzeysel görünüyordu — yalnız birkaç tanıdık eklenti (HotelRunner/Booking/OpenTable/Calendly). Onlarca 2. parti randevu sistemi + sitelerin kendi özel rezervasyon formları var; gerçekçi sonuç için site taranarak genel algılama şart.
+- **Çözüm:** Tespit 3 katmanlı ve içerik-güdümlü: (1) Genişletilmiş deterministik kural — CTA metinleri (TR+EN: Randevu Al/Oluştur, Rezervasyon Yap, Müsaitlik Sorgula, Online Randevu, Book Now/Make an Appointment…), URL hedefleri (/rezervasyon /randevu /booking…) ve **yapısal booking widget imzaları** (check-in/check-out, giriş/çıkış tarihi, date-range alanları) — sitenin KENDİ özel formunu da yakalar. (2) ~25 yeni 2. parti sistem (Setmore/SimplyBook/Acuity/Fresha/Booksy/Mindbody/Cal.com/Amelia/Bookly + restoran: TheFork/Resy/SevenRooms/Quandoo + otel motorları: SiteMinder/SynXis/Cloudbeds/TravelClick/Lodgify + TR: Elektra Web/Sejour/Odamax/Hotech). (3) Claude AI prompt'u: "tanıdık eklenti olmasa bile içerik/butonlardan rezervasyon mekanizmasını algıla" direktifi → uzun kuyruğu (özel/bilinmeyen sistemler) yakalar. Regex'ler gerçek örneklerle test edildi (yanlış-pozitif yok).
+- **Dosyalar:** `lib/marketing-setup/siteScanner.ts`
+
 ## 2026-06-10 — Dönüşüm Sihirbazı: "Neler Kurulacak"ta gerçek mevcut-kaynak tespiti (Group C-2)
 - **Sorun:** Önizleme adımında her kaynak statik olarak "Oluşturulacak" gösteriliyordu — hâlihazırda var olan pixel/dönüşüm/kitle olup olmadığı belli değildi (default, dinamik değil).
 - **Çözüm:** Yeni salt-okunur `/api/marketing-setup/preview-status` endpoint'i bağlı platformlarda DEPLOY'un oluşturacağı isimli kaynakların canlı API ile var olup olmadığını yoklar (Meta custom conversions + website/benzer kitle, Google Ads conversion actions + remarketing — isim kalıpları deploy ile birebir). Çekirdek altyapı (Meta Pixel, GSC doğrulama) `connections`'tan okunur. ConfigPreview artık her öğeyi "Mevcut" (gri) veya "Oluşturulacak" (yeşil) olarak dinamik işaretler; kartın tüm öğeleri varsa rozet "Mevcut" olur. Deploy zaten idempotent — bu yalnız dürüst önizleme; probe best-effort (tespit edilemezse "Oluşturulacak").

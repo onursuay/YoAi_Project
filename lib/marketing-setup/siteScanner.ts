@@ -138,6 +138,38 @@ const KNOWN_PLUGINS: KnownPlugin[] = [
     events: ['reservation', 'lead'],
     description: 'Calendly randevu/toplantı planlayıcı (randevu = rezervasyon)',
   },
+  // ── Randevu platformları (2. parti — temsili; uzun kuyruk AI + genel kural ile) ──
+  { name: 'Setmore', pattern: /setmore\.com/i, events: ['reservation'], description: 'Setmore randevu sistemi' },
+  { name: 'SimplyBook.me', pattern: /simplybook\.(me|it)/i, events: ['reservation'], description: 'SimplyBook randevu sistemi' },
+  { name: 'Acuity Scheduling', pattern: /acuityscheduling\.com|squarespace-scheduling/i, events: ['reservation'], description: 'Acuity Scheduling randevu' },
+  { name: 'Fresha', pattern: /fresha\.com/i, events: ['reservation'], description: 'Fresha randevu/booking (kuaför/güzellik)' },
+  { name: 'Booksy', pattern: /booksy\.com/i, events: ['reservation'], description: 'Booksy randevu sistemi' },
+  { name: 'Mindbody', pattern: /mindbodyonline\.com|mindbody\.io/i, events: ['reservation'], description: 'Mindbody rezervasyon/randevu (spor/wellness)' },
+  { name: 'Reservio', pattern: /reservio\.com/i, events: ['reservation'], description: 'Reservio randevu sistemi' },
+  { name: 'YouCanBook.me', pattern: /youcanbook\.me/i, events: ['reservation'], description: 'YouCanBook.me randevu' },
+  { name: 'Cal.com', pattern: /\bcal\.com\/|app\.cal\.com/i, events: ['reservation'], description: 'Cal.com randevu planlayıcı' },
+  { name: 'Bookeo', pattern: /bookeo\.com/i, events: ['reservation'], description: 'Bookeo rezervasyon sistemi' },
+  { name: 'Amelia Booking', pattern: /ameliabooking|wpamelia/i, events: ['reservation'], description: 'Amelia (WordPress randevu eklentisi)' },
+  { name: 'Bookly', pattern: /booklyplugin|bookly-/i, events: ['reservation'], description: 'Bookly (WordPress randevu eklentisi)' },
+  { name: 'Timify', pattern: /timify\.com/i, events: ['reservation'], description: 'Timify randevu sistemi' },
+  // ── Restoran rezervasyon platformları ──
+  { name: 'TheFork', pattern: /thefork\.com|lafourchette/i, events: ['reservation', 'lead'], description: 'TheFork restoran rezervasyonu' },
+  { name: 'Resy', pattern: /resy\.com/i, events: ['reservation'], description: 'Resy restoran rezervasyonu' },
+  { name: 'SevenRooms', pattern: /sevenrooms\.com/i, events: ['reservation'], description: 'SevenRooms restoran rezervasyonu' },
+  { name: 'Quandoo', pattern: /quandoo\./i, events: ['reservation'], description: 'Quandoo restoran rezervasyonu' },
+  // ── Otel/konaklama rezervasyon motorları (booking engines) ──
+  { name: 'SiteMinder', pattern: /siteminder\.com|thebookingbutton/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'SiteMinder otel rezervasyon motoru' },
+  { name: 'SynXis', pattern: /synxis\.com/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'SynXis (Sabre) otel rezervasyon motoru' },
+  { name: 'Cloudbeds', pattern: /cloudbeds\.com|hotels\.cloudbeds/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Cloudbeds otel rezervasyon motoru' },
+  { name: 'TravelClick', pattern: /travelclick\.com|ibe\.travelclick/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'TravelClick (Amadeus) otel motoru' },
+  { name: 'Lodgify', pattern: /lodgify\.com/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Lodgify konaklama rezervasyon motoru' },
+  { name: 'Smoobu', pattern: /smoobu\.com/i, events: ['reservation', 'begin_checkout'], description: 'Smoobu konaklama rezervasyonu' },
+  { name: 'Beds24', pattern: /beds24\.com/i, events: ['reservation', 'begin_checkout'], description: 'Beds24 rezervasyon motoru' },
+  // ── Türkiye otel rezervasyon motorları ──
+  { name: 'Elektra Web', pattern: /elektraweb\.com|elektraweb/i, events: ['reservation', 'begin_checkout', 'purchase'], description: 'Elektra Web otel rezervasyon motoru (TR)' },
+  { name: 'Sejour', pattern: /sejour\.com\.tr/i, events: ['reservation', 'begin_checkout'], description: 'Sejour otel rezervasyon motoru (TR)' },
+  { name: 'Odamax', pattern: /odamax\.com/i, events: ['reservation', 'begin_checkout'], description: 'Odamax otel rezervasyon motoru (TR)' },
+  { name: 'Hotech', pattern: /hotech\.systems/i, events: ['reservation', 'begin_checkout'], description: 'Hotech otel sistemleri (TR)' },
   // ── E-ticaret platformları ──
   {
     name: 'Shopify',
@@ -258,16 +290,26 @@ const RULES: Rule[] = [
       /(?:sign\s*up|sign-up|signup|create\s+(?:an\s+)?account|register(?:\s+now)?|join\s+(?:us|now))/.test(h) ||
       /(?:[üu]ye\s+ol|kay[ıi]t\s+ol|hesap\s+olu[sş]tur|yeni\s+[üu]yelik)/.test(h),
   },
-  // Rezervasyon / randevu — booking intent (otel, klinik, restoran, hizmet randevusu).
-  // Meta 'Schedule' event'ine map'lenir; ödemeden bağımsız bir dönüşümdür.
+  // Rezervasyon / randevu — booking/appointment intent (otel, klinik, restoran,
+  // hizmet/danışmanlık randevusu). Meta 'Schedule' event'ine map'lenir.
+  // GENEL içerik taramasıyla yakalanır: sitenin KENDİ özel formu, tarih seçici,
+  // CTA metni veya HERHANGİ bir 2. parti randevu/booking sistemi — tanıdık eklenti
+  // ŞART DEĞİL (uzun kuyruk ayrıca Claude AI analiziyle yakalanır).
   {
     event: 'reservation',
     via: 'cta',
     confidence: 0.85,
     test: (h) =>
-      /(?:book\s+(?:now|a\s+(?:room|table|stay|appointment))|make\s+a\s+(?:reservation|booking)|reserve\s+(?:now|a\s+(?:room|table))|check\s+availability|request\s+(?:a\s+)?(?:booking|appointment))/.test(h) ||
-      /(?:rezervasyon\s+(?:yap|olu[sş]tur)|(?:oda|masa|online)\s+rezervasyon|m[üu]sait(?:lik)?\s+sorgula|randevu\s+(?:al|olu[sş]tur)|hemen\s+rezervasyon|yer\s+ay[ıi]rt)/.test(h) ||
-      /href=["'][^"']*\/(rezervasyon|reservation|booking|randevu|book)/.test(h),
+      // EN — booking/appointment CTA'ları
+      /(?:book\s+(?:now|online|today|your\s+(?:stay|room|table|appointment|visit|spot)|a\s+(?:room|table|stay|appointment|visit|tour|consultation|class|session))|make\s+(?:an?\s+)?(?:reservation|booking|appointment)|reserve\s+(?:now|today|your\s+(?:spot|seat|table|room|stay)|a\s+(?:room|table|seat|spot))|schedule\s+(?:an?\s+)?(?:visit|appointment|consultation|call|tour|viewing|demo|meeting)|request\s+(?:an?\s+)?(?:booking|appointment|reservation)|check\s+availability|book\s+an\s+appointment)/.test(h) ||
+      // TR — randevu/rezervasyon CTA'ları
+      /(?:rezervasyon\s+(?:yap|olu[sş]tur|talebi|iste|formu)|(?:oda|masa|online|otel|u[cç]ak|tur|villa)\s+rezervasyon|m[üu]sait(?:lik)?\s+(?:sorgula|kontrol|durumu)|randevu\s+(?:al|olu[sş]tur|talebi?|iste|sistemi|formu)|online\s+randevu|hemen\s+(?:rezervasyon|randevu)|g[öo]r[üu][sş]me\s+(?:planla|ayarla|talebi)|yer\s+ay[ıi]rt|masa\s+(?:ay[ıi]rt|rezerve)|konaklama\s+tarih)/.test(h) ||
+      // URL hedefleri (sayfa/buton)
+      /href=["'][^"']*\/(rezervasyon|reservation|booking|book|randevu|appointment|reserve|musaitlik|availability|book-?now|book-?a)/.test(h) ||
+      // Yapısal booking widget sinyalleri — tarih aralığı / giriş-çıkış alanları
+      // (özel rezervasyon formları ve otel motorlarının ortak imzası).
+      /(?:name|id|class)=["'][^"']*(?:check[\s_-]?in|check[\s_-]?out|checkin|checkout|arrival|departure|date-?range|daterange|giris[_-]?tarih|cikis[_-]?tarih|rezervasyon|randevu|booking|datepicker[^"']*book)/.test(h) ||
+      /(?:giri[sş]\s+tarihi|[cç][ıi]k[ıi][sş]\s+tarihi|geli[sş]\s+tarihi|ayr[ıi]l[ıi][sş]\s+tarihi|check[\s-]?in\s+date|check[\s-]?out\s+date|arrival\s+date|departure\s+date)/.test(h),
   },
   // Video player presence.
   {
@@ -469,10 +511,16 @@ function buildAnalysisPrompt(args: AnalyzeArgs): { system: string; user: string;
     "üzerinden iletişim event'leri MUHTEMELEN mevcuttur; 'HotelRunner/Booking/OpenTable/Calendly " +
     "varsa' rezervasyon/randevu vardır; 'WooCommerce varsa' sepet/checkout/satın alma. " +
     'Bu sinyalleri reason\'a yansıt.\n' +
-    "6) REZERVASYON vs SATIN ALMA: Otel, klinik, restoran, randevu/booking işlerinde " +
-    "rezervasyon/randevu aksiyonu = 'reservation' (Meta Schedule). Sitede online ÖDEME de " +
-    "varsa (ödeme formu/checkout) AYRICA 'purchase' öner — ikisi birlikte olabilir. " +
-    "Yalnız ürün satan e-ticarette 'purchase' yeterli; rezervasyon önerme.\n" +
+    "6) REZERVASYON/RANDEVU TESPİTİ (ÖNEMLİ): Site içeriğinde randevu/rezervasyon " +
+    "mekanizması varsa 'reservation' (Meta Schedule) öner — TANIDIK bir eklenti/widget " +
+    "OLMASA BİLE. Bu kararı sitenin GERÇEK içeriğinden ve butonlarından ver. Sinyaller: " +
+    "'Randevu Al/Oluştur', 'Rezervasyon Yap', 'Müsaitlik Sorgula', 'Online Randevu', " +
+    "'Book Now/Make an Appointment', tarih seçici veya giriş-çıkış (check-in/check-out) " +
+    "alanları, /rezervasyon /randevu /booking sayfaları, sitenin KENDİ ÖZEL rezervasyon " +
+    "formu ya da HERHANGİ bir 2. parti randevu/booking sistemi. Otel, klinik, güzellik/" +
+    "kuaför, restoran, danışmanlık, kiralama gibi işlerde bu güçlü bir dönüşüm sinyalidir. " +
+    "Sitede online ÖDEME de varsa (ödeme formu/checkout) AYRICA 'purchase' öner — ikisi " +
+    "birlikte olabilir. Yalnız fiziksel ürün satan e-ticarette rezervasyon önerme.\n" +
     "7) 'video_play' DÜŞÜK DEĞERLİDİR — yalnız sitede gömülü video VARLIĞI dönüşüm değildir. " +
     "İşin merkezinde video yoksa (ör. video kurs/yayın platformu) ÖNERME.\n" +
     "8) Her öneriye reason: gerçek kanıt TR cümle (örn. 'HotelRunner rezervasyon motoru entegre', " +
