@@ -13,8 +13,10 @@ export const dynamic = 'force-dynamic'
 interface PersistPayload {
   campaignId?: string
   campaignName?: string
-  /** Aktif/seçili Meta reklam hesabı (act_xxxxx) — hesap-scope için metadata'ya yazılır. */
+  /** Aktif/seçili reklam hesabı (Meta act_xxxxx / Google müşteri kimliği) — hesap-scope için metadata'ya yazılır. */
   accountId?: string
+  /** Platform — meta (default) | google | tiktok. by_account kırılımı platform bazlı. */
+  platform?: string
   currency?: string
   timestamp?: number
   problemTags?: unknown[]
@@ -77,11 +79,15 @@ export async function POST(request: Request) {
 
   const proposalId = `magicscan_${body.campaignId}_${body.timestamp ?? Date.now()}`
 
+  // Platform: meta (default, geriye dönük uyumlu) | google | tiktok. Bilinmeyen değer → meta.
+  const platform =
+    body.platform === 'google' || body.platform === 'tiktok' ? body.platform : 'meta'
+
   const row = await recordBeforeSnapshot(gate.user.id, {
     proposalId,
     sourceCampaignId: body.campaignId,
     accountId: body.accountId ?? null,
-    platform: 'meta',
+    platform,
     recommendationType: 'optimization',
     proposalSnapshot: {
       campaignName: body.campaignName ?? null,

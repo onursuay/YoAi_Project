@@ -5,7 +5,7 @@
    onayla canlıya uygulanır; uygulanınca "Geri Al" ile rollback edilir.
    changeSet'siz öneriler advisory kalır. Renk paleti proje kuralına uyar. */
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { X, Sparkles, Zap, Loader2, Check, Undo2 } from 'lucide-react'
 import type { MagicScanResult, Recommendation } from '@/lib/meta/optimization/types'
 
@@ -16,6 +16,10 @@ interface Props {
   onError?: (message: string) => void
   /** Canlı apply endpoint'i (platforma göre). Verilmezse öneriler advisory kalır (apply butonu yok). */
   applyEndpoint?: string
+  /** Aktif/seçili reklam hesabı (Google müşteri kimliği) — hesap-scope persist için. */
+  accountId?: string | null
+  /** Platform etiketi (google | tiktok) — outcome kaydında by_account kırılımı için. */
+  platform?: string
 }
 
 const RISK_LABEL: Record<Recommendation['risk'], string> = {
@@ -36,10 +40,37 @@ function changeLabel(rec: Recommendation): string | null {
   return null
 }
 
-export default function GoogleScanResults({ result, onClose, onSuccess, onError, applyEndpoint }: Props) {
+export default function GoogleScanResults({ result, onClose, onSuccess, onError, applyEndpoint, accountId, platform }: Props) {
   const recs = result.recommendations ?? []
   const [busyId, setBusyId] = useState<string | null>(null)
   const [applied, setApplied] = useState<Record<string, boolean>>({})
+  const persistedRef = useRef<number | null>(null)
+
+  // ── Tarama sonucunu DB'ye kaydet (fire-and-forget; bloklamaz) ──────────
+  // Meta tarafıyla (MagicScanResults) aynı kalıp; hesap-scope için accountId + platform taşır.
+  useEffect(() => {
+    if (!result?.timestamp || persistedRef.current === result.timestamp) return
+    persistedRef.current = result.timestamp
+    void fetch('/api/yoai/optimization/recommendations', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        campaignId: result.campaignId,
+        campaignName: result.campaignName,
+        accountId: accountId ?? undefined,
+        platform: platform ?? 'google',
+        currency: result.currency,
+        timestamp: result.timestamp,
+        problemTags: result.problemTags,
+        recommendations: result.recommendations,
+        aiGenerated: result.aiGenerated,
+        aiRequested: result.aiRequested ?? false,
+        aiFallbackUsed: result.aiFallbackUsed ?? false,
+      }),
+    }).catch(() => {
+      // Kayıt bloklamaz; hatalar sunucu tarafında loglanır.
+    })
+  }, [result, accountId, platform])
 
   async function callApply(rec: Recommendation, newValue: string | number): Promise<boolean> {
     const cs = rec.changeSet

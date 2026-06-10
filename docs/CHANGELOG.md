@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Google Sihirli Tara: outcome persist + account_id atfı (hesap-scope Google)
+- **Sorun:** Google Sihirli Tara sonuçları `yoai_recommendation_results`'a **hiç kaydedilmiyordu** (yalnız Meta kaydediyordu) → Google öğrenmesi ve hesap-scope atfı yoktu. Persist route da `platform:'meta'` sabitti.
+- **Çözüm:** `GoogleScanResults` artık Meta'daki `MagicScanResults` ile aynı fire-and-forget persist'i yapar; `accountId` (Google müşteri kimliği, `/api/integrations/google-ads/selected`'den optimizasyon sayfasında yakalanır) + `platform:'google'` taşır. Persist route `platform`'ı parametreledi (meta|google|tiktok; bilinmeyen→meta). Gate platform-agnostik. Google apply/fetcher (`app/api/google/*`) ve canlı uygulama akışı **dokunulmadı** — yalnız outcome snapshot persist'i eklendi.
+- **Dosyalar:** `components/optimization/GoogleScanResults.tsx`, `app/api/yoai/optimization/recommendations/route.ts`, `app/optimizasyon/[[...segments]]/page.tsx`, `_learnings/global/account-scope.md` (yoai-brain)
+
 ## 2026-06-10 — Optimizasyon: "Sihirli Tara" dropdown'u alt kartın altında kalıyordu (fix)
 - **Sorun:** Optimizasyon listesinde "Sihirli Tara" açılır menüsü, bir alttaki kampanya kartının altında kalıyordu (görünmez/tıklanamaz).
 - **Çözüm:** Kök neden — `.animate-card-enter` `forwards` ile her karta kalıcı `transform` bırakıp ayrı stacking context yaratıyor; iç `z-30` dropdown o context'te hapsoluyor, sonraki kardeş kart üstüne boyanıyor. Global mandated animasyona dokunmadan yerel fix: liste kapsayıcılarına `isolate` + kartlara azalan `z-index` (üst kart üstte). Hem Meta hem Google listesi. Mantık/veri akışı değişmedi, yalnız stacking.

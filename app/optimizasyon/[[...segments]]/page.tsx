@@ -59,7 +59,10 @@ export default function OptimizasyonPage() {
   useEffect(() => {
     fetch('/api/integrations/google-ads/selected', { cache: 'no-store' })
       .then(r => (r.ok ? r.json() : null))
-      .then(d => { if (d?.selected?.customerName) setGoogleName(d.selected.customerName) })
+      .then(d => {
+        if (d?.selected?.customerName) setGoogleName(d.selected.customerName)
+        if (d?.selected?.customerId) setGoogleAccountId(d.selected.customerId)
+      })
       .catch(() => {})
   }, [])
   const [extCampaigns, setExtCampaigns] = useState<GoogleOptimizationCampaign[]>([])
@@ -75,6 +78,7 @@ export default function OptimizasyonPage() {
   const [adAccountName, setAdAccountName] = useState<string | null>(null)
   const [adAccountId, setAdAccountId] = useState<string | null>(null)
   const [googleName, setGoogleName] = useState<string | null>(null)
+  const [googleAccountId, setGoogleAccountId] = useState<string | null>(null)
   const [tokenExpired, setTokenExpired] = useState(false)
   // True when the score endpoint returns 403 (no plan / no subscription).
   // Triggers the global CreditRequiredModal instead of inline error text.
@@ -552,6 +556,8 @@ export default function OptimizasyonPage() {
                     {extScanResults[c.id] ? (
                       <GoogleScanResults
                         result={extScanResults[c.id]}
+                        accountId={googleAccountId}
+                        platform={source === 'tiktok' ? 'tiktok' : 'google'}
                         applyEndpoint={source === 'tiktok' ? '/api/tiktok/optimization/apply' : '/api/google/optimization/apply'}
                         onSuccess={(msg) => { addToast(msg, 'success'); setTimeout(() => fetchExtCampaigns(source === 'tiktok' ? 'tiktok' : 'google'), 1500) }}
                         onError={(msg) => addToast(msg, 'error')}
