@@ -31,6 +31,10 @@ export const GTM_MAX_RPS = 5
 // i18n (marketingSetup.events.<i18nKey>) — never render these raw codes.
 export type StandardEventKey =
   | 'purchase'
+  // Rezervasyon / randevu (otel, klinik, restoran, hizmet randevusu). Meta'da
+  // 'Schedule' standart event'i; ödemeden bağımsız bir dönüşüm. Online ödeme de
+  // varsa AI ayrıca 'purchase' önerir (ikisi birlikte olabilir).
+  | 'reservation'
   | 'add_to_cart'
   | 'begin_checkout'
   | 'add_payment_info'
@@ -64,6 +68,8 @@ export interface StandardEventDef {
 
 export const STANDARD_EVENTS: StandardEventDef[] = [
   { key: 'purchase', ga4Event: 'purchase', metaEvent: 'Purchase', metaStandard: true, isConversion: true, hasValue: true, i18nKey: 'purchase' },
+  // Rezervasyon/randevu → Meta 'Schedule' (standart), GA4 'reservation' (custom). Dönüşüm, değer taşımaz.
+  { key: 'reservation', ga4Event: 'reservation', metaEvent: 'Schedule', metaStandard: true, isConversion: true, hasValue: false, i18nKey: 'reservation' },
   { key: 'add_to_cart', ga4Event: 'add_to_cart', metaEvent: 'AddToCart', metaStandard: true, isConversion: false, hasValue: true, i18nKey: 'addToCart' },
   { key: 'begin_checkout', ga4Event: 'begin_checkout', metaEvent: 'InitiateCheckout', metaStandard: true, isConversion: true, hasValue: true, i18nKey: 'beginCheckout' },
   { key: 'add_payment_info', ga4Event: 'add_payment_info', metaEvent: 'AddPaymentInfo', metaStandard: true, isConversion: true, hasValue: true, i18nKey: 'addPaymentInfo' },

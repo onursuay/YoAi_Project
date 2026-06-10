@@ -3514,6 +3514,7 @@
     },
     "events": {
       "purchase": "Satın Alma",
+      "reservation": "Rezervasyon Yap",
       "addToCart": "Sepete Ekleme",
       "beginCheckout": "Ödeme Başlatma",
       "addPaymentInfo": "Ödeme Bilgisi Ekleme",

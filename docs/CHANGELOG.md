@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Dönüşüm Sihirbazı: 'Rezervasyon Yap' event'i + video önerisini kaldırma (Group C-1)
+- **Sorun:** Otel/randevu/booking işlerinde site taraması rezervasyon aksiyonunu yalnız `begin_checkout` olarak yakalıyordu; "Rezervasyon Yap" diye bir event yoktu. Ayrıca düşük değerli `video_play` (yalnız sitede video olması) önerilenlere düşebiliyordu.
+- **Çözüm:** Yeni `reservation` standart event'i — Meta `Schedule` (standart) + GA4 `reservation`, dönüşüm olarak işaretlenir (`metaCustomEventType` zaten `Schedule`'ı tanıyor → deploy tam uyumlu). siteScanner'a rezervasyon/randevu CTA tespit kuralı (book now / rezervasyon yap / müsaitlik sorgula / randevu al / `/rezervasyon` linki) + HotelRunner/Booking/OpenTable/Calendly eklentilerine `reservation` eklendi. AI prompt'u rezervasyon=Schedule vs purchase ayrımını ve online ödeme varsa ikisini birlikte önermeyi öğrendi; `video_play` artık otomatik önerilmez (deterministik `buildRecommended`'tan çıkarıldı + AI'a "merkezde video yoksa önerme" direktifi). Manuel seçim hâlâ mümkün.
+- **Dosyalar:** `lib/marketing-setup/constants.ts`, `lib/marketing-setup/siteScanner.ts`, `locales/{tr,en}.json`
+
 ## 2026-06-10 — Email Marketing: hesap filtresi + reklamdan otomatik kişi + Başvuru tarihi (Group B)
 - **Sorun:** (1) Kişiler tüm kullanıcı geneli gösteriliyordu — hesap (Meta sayfa) bazlı filtre yoktu. (2) Reklamdan (Meta Lead Ads) düşen lead'ler yalnız elle "CRM'den Aktar" ile email'e geliyordu, otomatik akış yoktu. (3) Tabloda yalnız "Eklendi" (kişi havuzuna ekleme) tarihi vardı; reklam formuna gerçek "Başvuru" tarihi (`crm_leads.lead_created_time`) email tarafına taşınmıyordu.
 - **Çözüm:** `email_contacts`'a additive `submitted_at` (başvuru) + `page_id` (hesap) kolonları (migration + omddq apply script). (2) Webhook (`metaLeadIngest`) ve cron/manuel pull (`metaLeadPull`) artık her lead'i otomatik `email_contacts`'a senkronlar (e-postası varsa, idempotent, non-fatal). (1) Yeni `/api/email/accounts` + Kişiler sekmesinde "Tüm Hesaplar" dropdown'u (Meta tarzı WizardSelect); `?pageId` filtresi liste+sayaç. (3) "Başvuru" sütunu eklendi; `importFromCrm` artık page_id + lead_created_time taşır. Migration uygulanmamışsa `upsertContacts` bu alanlar olmadan tekrar dener (geriye dönük uyumlu). Meta/Google API ve publish akışına dokunulmadı.

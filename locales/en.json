@@ -3514,6 +3514,7 @@
     },
     "events": {
       "purchase": "Purchase",
+      "reservation": "Make a Reservation",
       "addToCart": "Add to Cart",
       "beginCheckout": "Begin Checkout",
       "addPaymentInfo": "Add Payment Info",

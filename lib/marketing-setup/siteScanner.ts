@@ -117,26 +117,26 @@ const KNOWN_PLUGINS: KnownPlugin[] = [
   {
     name: 'HotelRunner',
     pattern: /hotelrunner\.com/i,
-    events: ['purchase', 'begin_checkout', 'add_payment_info'],
-    description: 'HotelRunner rezervasyon motoru (otel/konaklama; rezervasyon = purchase)',
+    events: ['reservation', 'begin_checkout', 'add_payment_info', 'purchase'],
+    description: 'HotelRunner rezervasyon motoru (otel/konaklama; rezervasyon + online ödeme)',
   },
   {
     name: 'Booking.com Widget',
     pattern: /booking\.com\/widget/i,
-    events: ['purchase', 'begin_checkout'],
+    events: ['reservation', 'begin_checkout'],
     description: 'Booking.com rezervasyon widget\'ı',
   },
   {
     name: 'OpenTable',
     pattern: /opentable\.com\/widget/i,
-    events: ['lead', 'purchase'],
+    events: ['reservation', 'lead'],
     description: 'OpenTable restoran rezervasyon widget\'ı',
   },
   {
     name: 'Calendly',
     pattern: /calendly\.com\/embed|assets\.calendly\.com/i,
-    events: ['lead'],
-    description: 'Calendly randevu/toplantı planlayıcı',
+    events: ['reservation', 'lead'],
+    description: 'Calendly randevu/toplantı planlayıcı (randevu = rezervasyon)',
   },
   // ── E-ticaret platformları ──
   {
@@ -257,6 +257,17 @@ const RULES: Rule[] = [
     test: (h) =>
       /(?:sign\s*up|sign-up|signup|create\s+(?:an\s+)?account|register(?:\s+now)?|join\s+(?:us|now))/.test(h) ||
       /(?:[üu]ye\s+ol|kay[ıi]t\s+ol|hesap\s+olu[sş]tur|yeni\s+[üu]yelik)/.test(h),
+  },
+  // Rezervasyon / randevu — booking intent (otel, klinik, restoran, hizmet randevusu).
+  // Meta 'Schedule' event'ine map'lenir; ödemeden bağımsız bir dönüşümdür.
+  {
+    event: 'reservation',
+    via: 'cta',
+    confidence: 0.85,
+    test: (h) =>
+      /(?:book\s+(?:now|a\s+(?:room|table|stay|appointment))|make\s+a\s+(?:reservation|booking)|reserve\s+(?:now|a\s+(?:room|table))|check\s+availability|request\s+(?:a\s+)?(?:booking|appointment))/.test(h) ||
+      /(?:rezervasyon\s+(?:yap|olu[sş]tur)|(?:oda|masa|online)\s+rezervasyon|m[üu]sait(?:lik)?\s+sorgula|randevu\s+(?:al|olu[sş]tur)|hemen\s+rezervasyon|yer\s+ay[ıi]rt)/.test(h) ||
+      /href=["'][^"']*\/(rezervasyon|reservation|booking|randevu|book)/.test(h),
   },
   // Video player presence.
   {
@@ -455,13 +466,18 @@ function buildAnalysisPrompt(args: AnalyzeArgs): { system: string; user: string;
     'önerme. Sepet/checkout yoksa add_to_cart/begin_checkout/add_payment_info önerme. ' +
     'wa.me/m.me/ig.me/tel: yoksa ilgili iletişim event\'ini önerme.\n' +
     "5) Eklenti tespiti güçlü kanıttır — örn. 'JivoChat varsa' WhatsApp/telefon/e-posta " +
-    "üzerinden iletişim event'leri MUHTEMELEN mevcuttur; 'HotelRunner varsa' rezervasyon " +
-    "= purchase, ödeme adımları begin_checkout/add_payment_info; 'WooCommerce varsa' " +
-    'sepet/checkout/satın alma. Bu sinyalleri reason\'a yansıt.\n' +
-    "6) Her öneriye reason: gerçek kanıt TR cümle (örn. 'JivoChat eklentisi sitede yüklü; " +
-    "WhatsApp, telefon ve e-posta kanallarını sunuyor', 'Footer'da wa.me linki var', " +
-    "'HotelRunner rezervasyon motoru entegre').\n" +
-    '7) Maksimum 6 öneri; confidence 0-1 arası gerçekçi.'
+    "üzerinden iletişim event'leri MUHTEMELEN mevcuttur; 'HotelRunner/Booking/OpenTable/Calendly " +
+    "varsa' rezervasyon/randevu vardır; 'WooCommerce varsa' sepet/checkout/satın alma. " +
+    'Bu sinyalleri reason\'a yansıt.\n' +
+    "6) REZERVASYON vs SATIN ALMA: Otel, klinik, restoran, randevu/booking işlerinde " +
+    "rezervasyon/randevu aksiyonu = 'reservation' (Meta Schedule). Sitede online ÖDEME de " +
+    "varsa (ödeme formu/checkout) AYRICA 'purchase' öner — ikisi birlikte olabilir. " +
+    "Yalnız ürün satan e-ticarette 'purchase' yeterli; rezervasyon önerme.\n" +
+    "7) 'video_play' DÜŞÜK DEĞERLİDİR — yalnız sitede gömülü video VARLIĞI dönüşüm değildir. " +
+    "İşin merkezinde video yoksa (ör. video kurs/yayın platformu) ÖNERME.\n" +
+    "8) Her öneriye reason: gerçek kanıt TR cümle (örn. 'HotelRunner rezervasyon motoru entegre', " +
+    "'Footer'da wa.me linki var', 'Rezervasyon Yap butonu /rezervasyon adresine yönlendiriyor').\n" +
+    '9) Maksimum 6 öneri; confidence 0-1 arası gerçekçi.'
 
   const user =
     `Site: ${args.siteUrl}\n` +
@@ -592,6 +608,8 @@ async function aiAnalyzeSite(args: AnalyzeArgs): Promise<AnalyzeResult | null> {
 function buildRecommended(actions: DetectedAction[]): RecommendedEvent[] {
   const byEvent = new Map<StandardEventKey, { hits: number; maxConfidence: number }>()
   for (const a of actions) {
+    // video_play düşük değerli pasif sinyal — otomatik ÖNERME (manuel seçilebilir).
+    if (a.event === 'video_play') continue
     const cur = byEvent.get(a.event)
     if (cur) {
       cur.hits += 1
