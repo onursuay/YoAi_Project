@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-10 — Uzman Kampanya Planı (alt-proje A, faz A1)
+- **Sorun:** Strateji yapısal blueprint üretiyordu ama "uzman reklamcı" katmanı eksikti: lokasyon akıl yürütme, demografi çıkarımı, günlük bütçe önerisi, amaç→CTA eşleme, ikna edici çoklu-varyant metin ve her kararın gerekçesi yoktu. Ayrıca `extractLocations` büyük "İstanbul"u (toLowerCase İ tuzağı) yakalamıyordu.
+- **Çözüm:** (1) `lib/strategy/expertPlan.ts` — markadan gerekçeli `ExpertCampaignPlan` (hedef kitle/lokasyon/demografi/amaç/bütçe/CTA/metin) üretir: AI (Claude) + deterministik korkuluklar (amaç deterministik, bütçe min'in altına inmez, CTA `allowed_values`'a göre doğrulanır, AI hazır değilse sahte veri yok). (2) `lib/yoai/turkishText.ts` Türkçe-bilinçli şehir eşleme → İstanbul bug fix. (3) `POST /api/strategy/instances/[id]/expert-plan` (flag `EXPERT_PLAN_ENABLED` default-off, platform başına paralel). (4) Strateji'ye "Uzman Plan" sekmesi (gerekçe kartları + metin varyantları). Advisory — publish/wizard/Apify dokunulmadı.
+- **Dosyalar:** `lib/strategy/expertPlan.ts`, `lib/yoai/turkishText.ts`, `lib/yoai/businessSourceScanner.ts`, `app/api/strategy/instances/[id]/expert-plan/route.ts`, `components/strateji/ExpertPlanView.tsx`, `app/strateji/[id]/[[...tab]]/page.tsx`, `.env.example`, ilgili testler
+
 ## 2026-06-10 — Google Sihirli Tara: outcome persist + account_id atfı (hesap-scope Google)
 - **Sorun:** Google Sihirli Tara sonuçları `yoai_recommendation_results`'a **hiç kaydedilmiyordu** (yalnız Meta kaydediyordu) → Google öğrenmesi ve hesap-scope atfı yoktu. Persist route da `platform:'meta'` sabitti.
 - **Çözüm:** `GoogleScanResults` artık Meta'daki `MagicScanResults` ile aynı fire-and-forget persist'i yapar; `accountId` (Google müşteri kimliği, `/api/integrations/google-ads/selected`'den optimizasyon sayfasında yakalanır) + `platform:'google'` taşır. Persist route `platform`'ı parametreledi (meta|google|tiktok; bilinmeyen→meta). Gate platform-agnostik. Google apply/fetcher (`app/api/google/*`) ve canlı uygulama akışı **dokunulmadı** — yalnız outcome snapshot persist'i eklendi.
