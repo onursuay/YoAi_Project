@@ -17,7 +17,7 @@ export default async function FiyatlandirmaPage() {
   const isEn = locale === 'en'
   const t = await getTranslations({ locale, namespace: 'pricing' })
 
-  const ctaTrial = isEn ? '7-Day Free Trial' : '7 Gün Ücretsiz Dene'
+  const ctaTrial = isEn ? '14-Day Free Trial' : '14 Gün Ücretsiz Dene'
   const ctaSchedule = isEn ? 'Book a Call' : 'Görüşme Planla'
   const footerText = isEn ? '2025 YO Dijital. All rights reserved.' : '2025 YO Dijital. Tüm hakları saklıdır.'
 

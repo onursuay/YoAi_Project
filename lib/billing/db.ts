@@ -6,6 +6,7 @@
 import 'server-only'
 import { supabase } from '@/lib/supabase/client'
 import type { PricedCreditPack, PricedSubscription } from './catalog'
+import { SUBSCRIPTION_PLANS } from '@/lib/subscription/plans'
 
 function requireClient() {
   if (!supabase) throw new Error('SUPABASE_NOT_CONFIGURED')
@@ -77,6 +78,48 @@ export async function getCreditBalance(userId: string): Promise<CreditRow> {
     throw error
   }
   return inserted as CreditRow
+}
+
+/**
+ * Yeni kullanıcıya 14 günlük Premium DENEME başlatır (kredi kartı GEREKMEZ).
+ * Idempotent: kullanıcının zaten bir aboneliği (trial/active/expired/cancelled)
+ * varsa hiçbir şey yapmaz — ücretli aboneliği ezmez, biten trial'ı tekrar açmaz.
+ * Otomatik tahsilat (yenileme) YOK; trial bitince getSubscription 'expired' yapar
+ * ve kullanıcı ödemeye yönlendirilir. (Recurring iyzico kart-saklamaya bağlı, ayrı.)
+ */
+export async function startTrial(userId: string): Promise<boolean> {
+  const db = requireClient()
+  const { data: existing } = await db
+    .from('subscriptions')
+    .select('user_id')
+    .eq('user_id', userId)
+    .maybeSingle()
+  if (existing) return false
+
+  const plan = SUBSCRIPTION_PLANS.find((p) => p.id === 'premium')
+  const trialDays = plan?.trialDays || 14
+  const now = new Date()
+  const end = new Date(now.getTime() + trialDays * 86_400_000).toISOString()
+
+  const { error } = await db.from('subscriptions').insert({
+    user_id: userId,
+    plan_id: 'premium',
+    status: 'trial',
+    billing_cycle: 'monthly',
+    ad_accounts: plan?.adAccountLimit ?? 2,
+    trial_end_date: end,
+    current_period_end: end,
+    started_at: now.toISOString(),
+    updated_at: now.toISOString(),
+  })
+  if (error) {
+    // Race (eşzamanlı ilk istek): satır oluştuysa sorun değil.
+    if (!String(error.message || '').includes('duplicate')) {
+      console.error('[startTrial] insert failed:', error.message)
+    }
+    return false
+  }
+  return true
 }
 
 export async function applySubscriptionPurchase(userId: string, priced: PricedSubscription): Promise<void> {

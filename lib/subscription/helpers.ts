@@ -21,7 +21,8 @@ export function getTrialDaysRemaining(sub: SubscriptionState): number {
 }
 
 export function canUseOptimization(sub: SubscriptionState): boolean {
-  if (sub.status !== 'active') return false
+  // Trial da erişim sağlar (Premium trial → optimizasyon dahil).
+  if (sub.status !== 'active' && !isTrialActive(sub)) return false
   const plan = getPlanById(sub.planId)
   return !!plan?.includesOptimization
 }

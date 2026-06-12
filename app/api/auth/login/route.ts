@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 import { signUserId } from '@/lib/auth/userCookie'
+import { startTrial } from '@/lib/billing/db'
 import bcrypt from 'bcryptjs'
 import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
 import { checkBlocklist, extractDomain } from '@/lib/admin/blocklist'
@@ -98,6 +99,16 @@ export async function POST(request: NextRequest) {
     // durumunu görebilsin ve ön görüşmesini planlayabilsin.
     const approvalStatus = ((user as any).approval_status as string | null) ?? 'pending'
     const isApprovedForPanel = isOwner || approvalStatus === 'approved'
+
+    // Onaylı kullanıcıya ilk girişte 14 günlük Premium deneme (idempotent, kredi
+    // kartı gerekmez). Owner enterprise-stub kullandığı için hariç. Hata fatal değil.
+    if (isApprovedForPanel && !isOwner) {
+      try {
+        await startTrial(user.id)
+      } catch (e) {
+        console.error('[login] startTrial failed (non-fatal):', e instanceof Error ? e.message : e)
+      }
+    }
 
     // Blocked/manual_review kullanıcı oturum açabilir ama panele gidemez
     if (!isOwner && (approvalStatus === 'blocked' || approvalStatus === 'manual_review')) {
