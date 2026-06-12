@@ -135,7 +135,7 @@ export default function MarketingSetupWizard() {
     }
 
     // Strip the query param so a refresh doesn't re-trigger the toast.
-    router.replace('/marketing-kurulumu')
+    router.replace('/donusum-sihirbazi')
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [searchParams])
 

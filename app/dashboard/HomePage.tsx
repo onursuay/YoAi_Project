@@ -297,7 +297,7 @@ export default function HomePage() {
     { id: 'hedefKitle', label: isEn ? 'Target Audience' : 'Hedef Kitle', href: '/hedef-kitle', icon: Users, badge: 'AI' },
     { id: 'tasarim', label: isEn ? 'Design' : 'Tasarım', href: '/tasarim', icon: ImageIcon, badge: 'AI' },
     { id: 'raporlar', label: isEn ? 'Reports' : 'Raporlar', href: '/raporlar', icon: FileText },
-    { id: 'seo', label: 'SEO', href: '/seo', icon: Search },
+    { id: 'seo', label: 'SEO', href: '/seo-plus', icon: Search },
     { id: 'entegrasyon', label: isEn ? 'Integration' : 'Entegrasyon', href: '/entegrasyon', icon: Puzzle },
   ]
 

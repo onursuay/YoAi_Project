@@ -18,6 +18,10 @@ const EN_TO_TR: Record<string, string> = {
   'invoices': 'faturalarim',
   'terms-of-service': 'terms',
   'pricing': 'fiyatlandirma',
+  'conversion-wizard': 'donusum-sihirbazi',
+  'crm-system': 'crm-sistemi',
+  'business-profile': 'isletme-profili',
+  'help-center': 'yardim-merkezi',
 }
 
 /** TR slug → EN slug (for redirect when locale=en on TR URL) */
@@ -37,13 +41,17 @@ const TR_TO_EN: Record<string, string> = {
   'kullanim-kosullari': 'terms-of-service',
   'veri-silme': 'data-deletion',
   'fiyatlandirma': 'pricing',
+  'donusum-sihirbazi': 'conversion-wizard',
+  'crm-sistemi': 'crm-system',
+  'isletme-profili': 'business-profile',
+  'yardim-merkezi': 'help-center',
 }
 
 /** All app slugs that need /en/ prefix when locale=en (includes same-slug routes) */
 const APP_SLUGS = new Set([
   ...Object.keys(TR_TO_EN),
-  'meta-ads', 'google-ads', 'tiktok-ads', 'seo', 'dashboard',
-  'crm', 'email-marketing',
+  'meta-ads', 'google-ads', 'tiktok-ads', 'seo-plus', 'dashboard',
+  'email-marketing',
 ])
 
 /**

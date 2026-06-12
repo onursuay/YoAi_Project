@@ -3170,6 +3170,7 @@
     "hesabim": "My Account",
     "faturalarim": "My Invoices",
     "abonelik": "Subscription",
+    "isletmeProfili": "Business Profile",
     "yardimMerkezi": "Help Center",
     "cikisYap": "Log Out",
     "dil": "English",
@@ -3301,10 +3302,22 @@
       "gmailNoRefresh": "Could not obtain authorization. Please try again and approve the permissions.",
       "gmailError": "Could not connect Gmail. Please try again.",
       "cards": {
-        "platform": { "title": "Send via platform (sub-mail)", "desc": "No setup — send instantly from our address with your sender name. Replies go to you." },
-        "smtp": { "title": "Corporate / custom SMTP", "desc": "Connect with your own mail server's SMTP details (corporate/custom)." },
-        "domain": { "title": "Verify your domain", "desc": "Send from your branded address via DNS records; highest volume and deliverability." },
-        "oauth": { "title": "Gmail (one-click)", "desc": "Connect your Gmail with one click (OAuth), no password. Outlook soon." }
+        "platform": {
+          "title": "Send via platform (sub-mail)",
+          "desc": "No setup — send instantly from our address with your sender name. Replies go to you."
+        },
+        "smtp": {
+          "title": "Corporate / custom SMTP",
+          "desc": "Connect with your own mail server's SMTP details (corporate/custom)."
+        },
+        "domain": {
+          "title": "Verify your domain",
+          "desc": "Send from your branded address via DNS records; highest volume and deliverability."
+        },
+        "oauth": {
+          "title": "Gmail (one-click)",
+          "desc": "Connect your Gmail with one click (OAuth), no password. Outlook soon."
+        }
       },
       "platform": {
         "title": "Send via platform (sub-mail)",
@@ -4056,5 +4069,43 @@
   },
   "errors": {
     "noAdAccount": "No ad account selected. Please select an ad account."
+  },
+  "helpCenter": {
+    "title": "Help Center",
+    "subtitle": "Frequently asked questions and support channels",
+    "faqTitle": "Frequently Asked Questions",
+    "contactTitle": "Contact Us",
+    "contactDesc": "If you couldn't find an answer, reach our support team by email. We'll get back to you as soon as possible.",
+    "contactCta": "Send Email",
+    "faq": {
+      "platform": {
+        "q": "What is YoAi and what can I do with it?",
+        "a": "YoAi is an AI-powered marketing platform that lets you manage your Meta and Google ads from a single panel. It includes ad management, strategy planning, optimization recommendations, audience building, design generation, reporting, SEO analysis, CRM and email marketing modules."
+      },
+      "connectAccounts": {
+        "q": "How do I connect my ad accounts?",
+        "a": "You can securely connect your Meta and Google accounts from the Integration page using official authorization (OAuth). YoAi never sees your password; authorization happens directly on the platform itself."
+      },
+      "recommendations": {
+        "q": "Do YoAlgorithm recommendations change my account automatically?",
+        "a": "No. YoAlgorithm analyzes your ad account and offers improvement recommendations; nothing is applied to your ad account until you approve it."
+      },
+      "creditsVsSubscription": {
+        "q": "What is the difference between a subscription and AI credits?",
+        "a": "A subscription gives access to modules such as Strategy, Optimization, YoAlgorithm and SEO. AI credits are spent on usage-based AI operations such as design generation. You can manage both from the Subscription page."
+      },
+      "language": {
+        "q": "How do I change the interface language?",
+        "a": "Open the profile menu at the bottom left and choose Türkçe or English from the language option."
+      },
+      "dataSecurity": {
+        "q": "Are my data and connection permissions safe?",
+        "a": "Your platform connection keys are stored encrypted and used only for the operations you have authorized. See the Privacy Policy page for details."
+      },
+      "subscriptionManage": {
+        "q": "How do I manage my subscription?",
+        "a": "You can view, upgrade or change your plan from the Subscription page. Your invoices are available on the My Invoices page."
+      }
+    }
   }
 }

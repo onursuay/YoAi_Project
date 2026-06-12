@@ -117,8 +117,8 @@ export const TAB_ROUTES = {
       { slug: 'search-console', id: 'google_search_console' },
     ],
   },
-  'seo': {
-    base: '/seo',
+  'seo-plus': {
+    base: '/seo-plus',
     kind: 'simple',
     defaultTab: 'analysis',
     tabs: [

@@ -20,7 +20,7 @@ export async function GET(request: Request) {
     return res
   }
   const redirectTo = (q: string) =>
-    NextResponse.redirect(new URL(`/marketing-kurulumu?setup=${q}`, origin), { status: 302 })
+    NextResponse.redirect(new URL(`/donusum-sihirbazi?setup=${q}`, origin), { status: 302 })
 
   if (error || !code || !state) {
     return clearState(redirectTo('error'))

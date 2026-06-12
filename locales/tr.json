@@ -3170,6 +3170,7 @@
     "hesabim": "Hesabım",
     "faturalarim": "Faturalarım",
     "abonelik": "Abonelik",
+    "isletmeProfili": "İşletme Profili",
     "yardimMerkezi": "Yardım Merkezi",
     "cikisYap": "Çıkış Yap",
     "dil": "Türkçe",
@@ -3301,10 +3302,22 @@
       "gmailNoRefresh": "Yetki alınamadı. Lütfen tekrar deneyin ve izinleri onaylayın.",
       "gmailError": "Gmail bağlanamadı. Tekrar deneyin.",
       "cards": {
-        "platform": { "title": "Platform üzerinden (alt mail)", "desc": "Kurulum yok — bizim adresimizden, senin gönderen adınla anında gönder. Yanıtlar sana gelir." },
-        "smtp": { "title": "Kurumsal / özel SMTP", "desc": "Kendi mail sunucunun SMTP bilgileriyle bağla (kurumsal/özel)." },
-        "domain": { "title": "Kendi domainini doğrula", "desc": "DNS kayıtlarıyla markalı adresinden gönder; en yüksek hacim ve teslim." },
-        "oauth": { "title": "Gmail (tek tık)", "desc": "Gmail hesabını tek tıkla bağla (OAuth), şifre girmeden. Outlook yakında." }
+        "platform": {
+          "title": "Platform üzerinden (alt mail)",
+          "desc": "Kurulum yok — bizim adresimizden, senin gönderen adınla anında gönder. Yanıtlar sana gelir."
+        },
+        "smtp": {
+          "title": "Kurumsal / özel SMTP",
+          "desc": "Kendi mail sunucunun SMTP bilgileriyle bağla (kurumsal/özel)."
+        },
+        "domain": {
+          "title": "Kendi domainini doğrula",
+          "desc": "DNS kayıtlarıyla markalı adresinden gönder; en yüksek hacim ve teslim."
+        },
+        "oauth": {
+          "title": "Gmail (tek tık)",
+          "desc": "Gmail hesabını tek tıkla bağla (OAuth), şifre girmeden. Outlook yakında."
+        }
       },
       "platform": {
         "title": "Platform üzerinden (alt mail)",
@@ -4056,5 +4069,43 @@
   },
   "errors": {
     "noAdAccount": "Reklam hesabı bulunamadı. Lütfen hesap seçin."
+  },
+  "helpCenter": {
+    "title": "Yardım Merkezi",
+    "subtitle": "Sık sorulan sorular ve destek kanalları",
+    "faqTitle": "Sık Sorulan Sorular",
+    "contactTitle": "Bize Ulaşın",
+    "contactDesc": "Sorunuza yanıt bulamadıysanız destek ekibimize e-posta ile ulaşabilirsiniz. En kısa sürede dönüş yaparız.",
+    "contactCta": "E-posta Gönder",
+    "faq": {
+      "platform": {
+        "q": "YoAi nedir ve neler yapabilirim?",
+        "a": "YoAi; Meta ve Google reklamlarınızı tek panelden yönetmenizi sağlayan yapay zekâ destekli bir pazarlama platformudur. Reklam yönetimi, strateji planlama, optimizasyon önerileri, hedef kitle oluşturma, tasarım üretimi, raporlama, SEO analizi, CRM ve e-posta pazarlama modüllerini içerir."
+      },
+      "connectAccounts": {
+        "q": "Reklam hesaplarımı nasıl bağlarım?",
+        "a": "Entegrasyon sayfasından Meta ve Google hesaplarınızı resmî yetkilendirme (OAuth) ile güvenle bağlayabilirsiniz. Şifreniz YoAi tarafından görülmez; yetkilendirme doğrudan ilgili platform üzerinde yapılır."
+      },
+      "recommendations": {
+        "q": "YoAlgoritma önerileri hesabımda otomatik değişiklik yapar mı?",
+        "a": "Hayır. YoAlgoritma reklam hesabınızı analiz ederek geliştirme önerileri sunar; siz onaylamadan hiçbir öneri reklam hesabınıza uygulanmaz."
+      },
+      "creditsVsSubscription": {
+        "q": "Abonelik ile AI kredisi arasındaki fark nedir?",
+        "a": "Abonelik; Strateji, Optimizasyon, YoAlgoritma ve SEO gibi modüllere erişim sağlar. AI kredileri ise tasarım üretimi gibi kullanım bazlı yapay zekâ işlemlerinde harcanır. İkisini de Abonelik sayfasından yönetebilirsiniz."
+      },
+      "language": {
+        "q": "Arayüz dilini nasıl değiştiririm?",
+        "a": "Sol alttaki profil menüsünü açıp dil seçeneğinden Türkçe veya English seçebilirsiniz."
+      },
+      "dataSecurity": {
+        "q": "Verilerim ve bağlantı izinlerim güvende mi?",
+        "a": "Platform bağlantı anahtarlarınız şifrelenerek saklanır ve yalnızca yetkilendirdiğiniz işlemler için kullanılır. Ayrıntılar için Gizlilik Politikası sayfasını inceleyebilirsiniz."
+      },
+      "subscriptionManage": {
+        "q": "Aboneliğimi nasıl yönetirim?",
+        "a": "Abonelik sayfasından planınızı görüntüleyebilir, yükseltebilir veya değiştirebilirsiniz. Faturalarınıza Faturalarım sayfasından ulaşabilirsiniz."
+      }
+    }
   }
 }

@@ -15,13 +15,13 @@ export async function GET(request: Request) {
   // yalnız yetkili (flag/owner) kullanıcı başlatabilir; aksi halde sızdırmadan geri yönlendir.
   const access = await checkMarketingSetupAccess()
   if (!access.ok) {
-    const dest = access.status === 401 ? '/login' : '/marketing-kurulumu?setup=error'
+    const dest = access.status === 401 ? '/login' : '/donusum-sihirbazi?setup=error'
     return NextResponse.redirect(new URL(dest, origin), { status: 302 })
   }
 
   const clientId = process.env.GOOGLE_CLIENT_ID
   if (!clientId || !process.env.GOOGLE_CLIENT_SECRET) {
-    return NextResponse.redirect(new URL('/marketing-kurulumu?setup=error', origin), { status: 302 })
+    return NextResponse.redirect(new URL('/donusum-sihirbazi?setup=error', origin), { status: 302 })
   }
 
   const cookieStore = await cookies()

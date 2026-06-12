@@ -97,7 +97,7 @@ export const navItems: NavItem[] = [
   {
     id: 'seo',
     label: 'SEO Plus',
-    href: '/seo',
+    href: '/seo-plus',
     icon: Search,
   },
   {
@@ -133,12 +133,12 @@ export const gozetimMerkeziNavItem: NavItem = {
 }
 
 /**
- * Dönüşüm Sihirbazı (route: marketing-kurulumu) — rollout sırasında gizli. `navItems` içine konmaz;
+ * Dönüşüm Sihirbazı (route: donusum-sihirbazi) — rollout sırasında gizli. `navItems` içine konmaz;
  * yalnız owner veya `MARKETING_SETUP_ENABLED` açıkken client tarafında dinamik
  * enjekte edilir (Gözetim Merkezi ile aynı desen). UI etiketi sidebar.marketingkurulumu.
  */
 export const marketingSetupNavItem: NavItem = {
-  id: 'marketing-kurulumu',
+  id: 'donusum-sihirbazi',
   label: 'Dönüşüm Sihirbazı',
   href: ROUTES.MARKETING_SETUP,
   icon: WandSparkles,
