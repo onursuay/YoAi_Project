@@ -8,6 +8,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { GitBranch, ChevronDown, ChevronUp } from 'lucide-react'
 
 interface VersionRecord {
@@ -19,16 +20,9 @@ interface VersionRecord {
   created_by: string | null
 }
 
-const SOURCE_LABELS: Record<string, string> = {
-  original: 'Orijinal',
-  edited: 'Düzenlendi',
-  regenerated: 'Yeniden Üretildi',
-  manual: 'Manuel',
-}
-
-function formatTime(iso: string): string {
+function formatTime(iso: string, locale: string): string {
   try {
-    return new Date(iso).toLocaleString('tr-TR', {
+    return new Date(iso).toLocaleString(locale === 'en' ? 'en-US' : 'tr-TR', {
       day: '2-digit',
       month: 'short',
       hour: '2-digit',
@@ -44,6 +38,14 @@ interface Props {
 }
 
 export default function ApprovalVersionPanel({ approvalId }: Props) {
+  const t = useTranslations('dashboard.yoai.approvalVersions')
+  const locale = useLocale()
+  const sourceLabels: Record<string, string> = {
+    original: t('source.original'),
+    edited: t('source.edited'),
+    regenerated: t('source.regenerated'),
+    manual: t('source.manual'),
+  }
   const [versions, setVersions] = useState<VersionRecord[] | null>(null)
   const [expanded, setExpanded] = useState(false)
 
@@ -75,7 +77,7 @@ export default function ApprovalVersionPanel({ approvalId }: Props) {
         className="flex items-center gap-1.5 text-[12px] text-gray-500 hover:text-gray-700 transition-colors"
       >
         <GitBranch className="w-3.5 h-3.5" />
-        <span>{versions.length} versiyon</span>
+        <span>{t('versionCount', { count: versions.length })}</span>
         {expanded ? (
           <ChevronUp className="w-3 h-3" />
         ) : (
@@ -89,8 +91,8 @@ export default function ApprovalVersionPanel({ approvalId }: Props) {
             <div key={v.id} className="text-[11px]">
               <div className="flex items-center gap-2 text-gray-600">
                 <span className="font-mono text-gray-400 shrink-0">v{v.version_number}</span>
-                <span className="font-medium">{SOURCE_LABELS[v.source] ?? v.source}</span>
-                <span className="text-gray-400">{formatTime(v.created_at)}</span>
+                <span className="font-medium">{sourceLabels[v.source] ?? v.source}</span>
+                <span className="text-gray-400">{formatTime(v.created_at, locale)}</span>
                 {v.created_by && (
                   <span className="text-gray-400">· {v.created_by}</span>
                 )}

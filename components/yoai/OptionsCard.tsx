@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Sparkles } from 'lucide-react'
 import type { CategoryConfig } from '@/lib/yoai/types'
 
@@ -11,6 +12,7 @@ interface OptionsCardProps {
 }
 
 export default function OptionsCard({ config, onSubmit, disabled }: OptionsCardProps) {
+  const t = useTranslations('dashboard.yoai.optionsCard')
   // Initialize state with defaults
   const [values, setValues] = useState<Record<string, string>>(() => {
     const initial: Record<string, string> = {}
@@ -91,7 +93,7 @@ export default function OptionsCard({ config, onSubmit, disabled }: OptionsCardP
         className="mt-5 w-full inline-flex items-center justify-center gap-2 px-4 py-2.5 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm font-medium disabled:opacity-50 disabled:cursor-not-allowed"
       >
         <Sparkles className="w-4 h-4" />
-        Oluştur
+        {t('create')}
       </button>
     </div>
   )

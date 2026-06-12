@@ -1,27 +1,26 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useLocale, useTranslations } from 'next-intl'
 import { DollarSign, MousePointerClick, TrendingUp, Wallet, PiggyBank } from 'lucide-react'
 import type { KPIData } from '@/lib/strategy/types'
 import WizardSelect from '@/components/meta/wizard/WizardSelect'
 
-const RANGE_OPTIONS = [
-  { value: 7, label: '7 gün' },
-  { value: 14, label: '14 gün' },
-  { value: 30, label: '30 gün' },
-]
+const RANGE_VALUES = [7, 14, 30]
 
-function formatCurrency(val: number): string {
+function formatCurrency(val: number, locale: string): string {
   if (val === 0) return '—'
-  return new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val)
+  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(val)
 }
 
-function formatNumber(val: number): string {
+function formatNumber(val: number, locale: string): string {
   if (val === 0) return '—'
-  return new Intl.NumberFormat('tr-TR').format(val)
+  return new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'tr-TR').format(val)
 }
 
 export default function KPIBar() {
+  const t = useTranslations('dashboard.strateji.kpi')
+  const locale = useLocale()
   const [range, setRange] = useState(7)
   const [kpi, setKpi] = useState<KPIData | null>(null)
   const [loading, setLoading] = useState(true)
@@ -42,23 +41,23 @@ export default function KPIBar() {
 
   useEffect(() => { fetchKPI() }, [fetchKPI])
 
-  const rangeLabel = RANGE_OPTIONS.find((o) => o.value === range)?.label ?? `${range} gün`
+  const rangeLabel = t('days', { count: range })
   const cards = [
-    { label: 'Aylık Bütçe', value: formatCurrency(kpi?.total_budget ?? 0), icon: Wallet, color: 'text-blue-600' },
-    { label: 'Kalan (Bu Ay)', value: formatCurrency(kpi?.remaining_budget ?? 0), icon: PiggyBank, color: 'text-emerald-600' },
-    { label: `Harcanan (${rangeLabel})`, value: formatCurrency(kpi?.spend ?? 0), icon: DollarSign, color: 'text-primary', hasFilter: true },
-    { label: `Tıklama (${rangeLabel})`, value: formatNumber(kpi?.clicks ?? 0), icon: MousePointerClick, color: 'text-primary', hasFilter: true },
-    { label: `ROAS (${rangeLabel})`, value: kpi?.roas ? `${kpi.roas}x` : '—', icon: TrendingUp, color: 'text-emerald-600' },
+    { label: t('monthlyBudget'), value: formatCurrency(kpi?.total_budget ?? 0, locale), icon: Wallet, color: 'text-blue-600' },
+    { label: t('remaining'), value: formatCurrency(kpi?.remaining_budget ?? 0, locale), icon: PiggyBank, color: 'text-emerald-600' },
+    { label: t('spent', { range: rangeLabel }), value: formatCurrency(kpi?.spend ?? 0, locale), icon: DollarSign, color: 'text-primary', hasFilter: true },
+    { label: t('clicks', { range: rangeLabel }), value: formatNumber(kpi?.clicks ?? 0, locale), icon: MousePointerClick, color: 'text-primary', hasFilter: true },
+    { label: t('roas', { range: rangeLabel }), value: kpi?.roas ? `${kpi.roas}x` : '—', icon: TrendingUp, color: 'text-emerald-600' },
   ]
 
   return (
     <div className="space-y-2">
       <div className="flex items-center justify-between">
-        <h3 className="text-sm font-medium text-gray-500">Genel Bakış</h3>
+        <h3 className="text-sm font-medium text-gray-500">{t('overview')}</h3>
         <WizardSelect
           value={String(range)}
           onChange={(v) => setRange(Number(v))}
-          options={RANGE_OPTIONS.map((o) => ({ value: String(o.value), label: o.label }))}
+          options={RANGE_VALUES.map((v) => ({ value: String(v), label: t('days', { count: v }) }))}
           className="w-28"
         />
       </div>

@@ -2204,7 +2204,9 @@
           "rejected": "Reddedildi",
           "cancelled": "İptal Edildi",
           "superseded": "Güncellendi"
-        }
+        },
+        "headlinePlaceholder": "Her satır bir başlık",
+        "descriptionPlaceholder": "Her satır bir açıklama"
       },
       "commandCenter": {
         "title": "YoAlgoritma Merkezi",
@@ -2270,11 +2272,711 @@
         "publishGenericDone": "İşlem tamamlandı",
         "statusPaused": "taslak",
         "statusEnabled": "aktif"
+      },
+      "preflight": {
+        "requestFailed": "Ön kontrol isteği başarısız.",
+        "running": "Ön kontrol yapılıyor…",
+        "statusOk": "Ön kontrol başarılı. Taslak oluşturulabilir.",
+        "statusRequiresSelection": "Sayfa seçimi gerekli.",
+        "statusMissingAssets": "Bazı varlıklar eksik.",
+        "statusUnsupported": "Bu öneri mevcut Meta yayın akışıyla uyumlu değil.",
+        "unsupportedHint": "Lütfen farklı bir kampanya hedefiyle yeniden öneri oluşturun.",
+        "facebookPage": "Facebook Sayfası",
+        "noPageConnected": "Bağlı sayfa yok. Meta hesabınıza sayfa bağlayın.",
+        "multiplePages": "Birden fazla sayfa var. Kullanmak istediğinizi seçin.",
+        "noPixel": "Pixel bulunamadı. Meta Events Manager'dan bir pixel oluşturun.",
+        "selectPixel": "— Pixel seçin —",
+        "conversionEvent": "Dönüşüm Olayı",
+        "selectEvent": "— Olay seçin —",
+        "eventPurchase": "Satın Alma",
+        "eventLead": "Potansiyel Müşteri",
+        "eventCompleteRegistration": "Kayıt Tamamlama",
+        "eventAddToCart": "Sepete Ekle",
+        "eventInitiateCheckout": "Ödeme Başlatma",
+        "eventContact": "İletişim",
+        "eventSubmitApplication": "Başvuru Gönder",
+        "eventSubscribe": "Abone Ol",
+        "conversionEventHint": "Seçtiğiniz olayın pixel'inizde aktif olarak tetiklendiğinden emin olun.",
+        "websiteUrl": "Web Sitesi URL",
+        "noLeadForm": "Seçili sayfada Instant Form yok. Meta'da önce form oluşturun.",
+        "selectPageFirst": "Önce sayfa seçin.",
+        "selectForm": "— Form seçin —",
+        "creativeNotReady": "Reklam Görseli Hazır Değil",
+        "creativeNotReadyDesc": "Kampanya ve reklam seti oluşturulur; reklam görselini Meta Ads Manager'dan eklemeniz gerekir.",
+        "creativeAckLater": "Görseli Ads Manager'dan ekleyeceğim, devam et.",
+        "missingAssets": "Eksik Varlıklar",
+        "assetPage": "Facebook Sayfası",
+        "assetPixel": "Meta Pixel",
+        "assetLeadForm": "Instant Form",
+        "assetConversionEvent": "Dönüşüm Olayı",
+        "assetWebsiteUrl": "Web Sitesi URL",
+        "assetCreative": "Reklam Görseli",
+        "completeMissing": "Eksikleri Tamamlayın",
+        "createDraft": "Taslağı Oluştur"
+      },
+      "actionConfirm": {
+        "successTitle": "Başarılı",
+        "errorTitle": "Hata",
+        "connectionError": "Bağlantı hatası",
+        "platform": "Platform",
+        "type": "Tür",
+        "entityCampaign": "Kampanya",
+        "entityAdset": "Reklam Seti",
+        "entityAd": "Reklam",
+        "target": "Hedef",
+        "campaign": "Kampanya",
+        "newBudget": "Yeni Bütçe",
+        "riskyWarning": "Bu aksiyon kampanya performansını etkileyebilir. Devam etmek istediğinizden emin misiniz?",
+        "executing": "Uygulanıyor...",
+        "confirmAndApply": "Onayla ve Uygula"
+      },
+      "oneClickApprove": {
+        "title": "Tek Tıkla Onayla",
+        "subtitle": "YoAlgoritma hazır taslağı oluşturur — onay sende",
+        "publishDisabled": "Canlı yayın özelliği şu anda kapalı. Reklamı yayına almak için yayın ayarlarının etkinleştirilmesi gerekiyor.",
+        "draftWord": "taslak",
+        "preparingDraft": "Taslak hazırlanıyor — görsel üretiliyor, Meta'ya yükleniyor, kampanya kuruluyor…",
+        "campaignReady": "Kampanya hazır.",
+        "needsSelection": "Bazı seçimler yapmanız gerekiyor.",
+        "genericError": "Hata.",
+        "connectionError": "Bağlantı hatası.",
+        "platform": "Platform",
+        "campaignName": "Kampanya Adı",
+        "objective": "Hedef",
+        "dailyBudget": "Günlük Bütçe",
+        "adSummary": "Reklam Özeti",
+        "whatHappens": "Bu işlem ne yapacak:",
+        "whatHappens1": "Meta hesabınızda yeni bir kampanya, reklam seti ve reklam oluşturur.",
+        "whatHappens2": "Kampanya <strong>taslak</strong> olarak hazırlanır — hiçbir şey otomatik yayına girmez.",
+        "whatHappens3": "Yayına almak için Meta Ads Manager üzerinden <strong>manuel olarak aktif</strong> etmeniz gerekir.",
+        "safetyChecksTitle": "Otomatik güvenlik kontrolleri:",
+        "safetyCheck1": "Feature flags — doğrudan yayın iznini doğrular",
+        "safetyCheck2": "Bütçe limiti — günlük bütçe üst sınırı kontrol edilir",
+        "safetyCheck3": "Payload doğrulama — zorunlu reklam alanları kontrol edilir",
+        "safetyCheck4": "İçerik politikası — yasaklı ifadeler ve garanti iddiaları taranır",
+        "acknowledge": "Bu reklamın Meta hesabımda <strong>taslak</strong> olarak oluşturulacağını, bütçesini ve detaylarını kontrol ettiğimi onaylıyorum.",
+        "approveAndCreate": "Onayla ve Kampanya Oluştur",
+        "runningHint": "Bu işlem 20-40 saniye sürebilir (görsel üretimi dahil).",
+        "facebookPage": "Facebook Sayfası",
+        "selectPixel": "— Pixel seçin —",
+        "selectForm": "— Form seçin —",
+        "draftReady": "Taslak Hazır",
+        "campaignLabel": "Kampanya",
+        "adsetLabel": "Reklam Seti",
+        "adLabel": "Reklam",
+        "draftReadyFooter": "Kampanya taslak olarak oluşturuldu. Yayına almak için Meta Ads Manager'dan aktif edebilirsiniz.",
+        "errorTitle": "Hata"
+      },
+      "healthScore": {
+        "accountStatus": "Hesap Durumu",
+        "title": "Sağlık Skoru",
+        "level_platinum": "Platin",
+        "level_gold": "Altın",
+        "level_silver": "Gümüş",
+        "level_bronze": "Bronz",
+        "level_beginner": "Başlangıç",
+        "pointsToNext": "Sonraki seviyeye {points} puan",
+        "strongAreas": "{count} güçlü alan",
+        "weakAreas": "{count} zayıf alan",
+        "category_performance": "Kampanya Performansı",
+        "category_risk": "Risk Durumu",
+        "category_coverage": "Platform Çeşitliliği",
+        "category_efficiency": "Verimlilik",
+        "rateGood": "İyi",
+        "rateMedium": "Orta",
+        "rateWeak": "Zayıf",
+        "improvementOpportunities": "İyileştirme Fırsatları",
+        "pointsImpact": "+{impact} puan",
+        "tipOptimizeLowPerformers": "Düşük performanslı kampanyaları optimize edin",
+        "tipFixCritical": "{count} kritik kampanyayı düzeltin",
+        "tipImproveAdCopy": "Reklam metinlerini iyileştirin",
+        "commentaryExcellent": "Hesap mükemmel durumda. Tüm metrikler hedef aralığında.",
+        "commentaryStableLowEff": "Hesap genel olarak stabil, ancak verimlilik tarafında iyileştirme alanı var.",
+        "commentaryGoodHighRisk": "Performans iyi, ancak bazı kampanyalarda risk seviyesi yüksek.",
+        "commentaryHealthy": "Hesap sağlıklı görünüyor. Küçük optimizasyonlarla daha yukarı çıkabilir.",
+        "commentaryLowPerf": "Kampanya performansı beklentinin altında. Optimizasyon önerileri değerlendirilmeli.",
+        "commentaryMedium": "Hesap orta düzeyde. Birkaç kritik alan iyileştirme gerektiriyor.",
+        "commentaryUrgent": "Hesap acil müdahale gerektiriyor. Kritik alanlar önceliklendirilmeli."
+      },
+      "dailyBriefing": {
+        "title": "Günlük Brifing",
+        "executiveSummary": "Son 7 günde <b>₺{spend}</b> harcanarak <b>{conversions}</b> dönüşüm elde edildi. <b>{impressions}</b> görüntüleme ve <b>{clicks}</b> tıklama gerçekleşti.",
+        "summaryNeedsAttention": "{count} kampanya dikkat gerektiriyor.",
+        "summaryStable": "Genel durum stabil.",
+        "kpiSpend": "Harcama",
+        "kpiImpressions": "Gösterim",
+        "kpiCtr": "TO",
+        "prioCritical": "{count} kampanya kritik durumda, acil müdahale önerilir.",
+        "prioLowRoas": "{count} kampanyada ROAS 1x altında, harcama geri dönmüyor.",
+        "prioHighPerformers": "{count} kampanya yüksek performans gösteriyor.",
+        "prioConvRate": "Dönüşüm oranı %{rate}, landing page optimizasyonu değerlendirin.",
+        "prioImpressions": "Toplam {impressions} görüntüleme, CPM: ₺{cpm}",
+        "prioReach": "{reach} kişiye ulaşıldı, ort. sıklık: {frequency}x",
+        "prioFrequency": "Frekans {frequency}x — reklam yorgunluğu riski, hedef kitle genişletmeyi düşünün.",
+        "prioCpc": "Ortalama tıklama maliyeti ₺{cpc}, reklam metinleri ve hedefleme gözden geçirilmeli.",
+        "prioActions": "{count} aksiyon önerisi mevcut.",
+        "platformComparison": "Platform Karşılaştırma",
+        "colPlatform": "Platform",
+        "colSpend": "Harcama",
+        "colClicks": "Tıklama",
+        "colConversions": "Dönüşüm",
+        "riskDistribution": "Risk Dağılımı",
+        "riskCritical": "Kritik",
+        "riskHigh": "Yüksek",
+        "riskMedium": "Orta",
+        "riskLow": "Düşük",
+        "topActions": "Öncelikli Aksiyonlar",
+        "prioBadgeHigh": "ACİL",
+        "prioBadgeMedium": "ORTA",
+        "prioBadgeLow": "DÜŞÜK",
+        "structuralIssues": "Yapısal Sorunlar"
+      },
+      "weeklyReport": {
+        "title": "Haftalık Özet",
+        "subtitle": "Son 7 günlük performans",
+        "objectiveOther": "Diğer",
+        "kpiSpend": "Harcama",
+        "campaignsCount": "{count} kampanya",
+        "kpiConversions": "Dönüşüm",
+        "roasValue": "ROAS: {value}x",
+        "cpcValue": "CPC: ₺{value}",
+        "kpiClicks": "Tıklama",
+        "ctrValue": "TO: %{value}",
+        "kpiImpressions": "Görüntüleme",
+        "cpmValue": "CPM: ₺{value}",
+        "kpiReach": "Erişim",
+        "frequencyValue": "Sıklık: {value}x",
+        "avgClickCost": "ort. tıklama maliyeti",
+        "kpiAvgScore": "Ort. Puan",
+        "colPlatform": "Platform",
+        "colCtr": "TO",
+        "colScore": "Puan",
+        "scoreDistribution": "Kampanya Skor Dağılımı",
+        "spendByObjective": "Hedef Bazlı Harcama",
+        "topCampaigns": "En İyi Kampanyalar",
+        "best": "En İyi",
+        "worst": "En Düşük"
+      },
+      "page": {
+        "fetchFailed": "Veri alınamadı",
+        "connectionError": "Bağlantı hatası",
+        "errorRetry": "Bir hata oluştu. Lütfen tekrar deneyin.",
+        "genericError": "Bir hata oluştu.",
+        "seoArticleFallback": "SEO Makale",
+        "bootstrapRunning": "İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.",
+        "bootstrapIdle": "Henüz haftalık analiz yok. Pazar gece otomatik çalışır; şimdi başlatmak için:",
+        "startNow": "Şimdi Başlat",
+        "reconnect": "Yeniden Bağla",
+        "thinking": "Düşünüyorum...",
+        "analyzing": "Analiz ediliyor...",
+        "generating": "YoAi içerik üretiyor...",
+        "newConversation": "Yeni Konuşma Başlat"
+      },
+      "insightStream": {
+        "eyebrow": "Kampanya İzleme",
+        "title": "AI Kampanya Analizi",
+        "monitoring": "{count} aktif kampanya izleniyor",
+        "criticalCount": "{count} kritik",
+        "highRiskCount": "{count} yüksek risk",
+        "empty": "Aktif kampanya bulunamadı.",
+        "setsAndAds": "{sets} set · {ads} reklam",
+        "clicksShort": "tık",
+        "ctrShort": "TO",
+        "spend": "Harcama",
+        "clicks": "Tıklama",
+        "aiRecommendation": "AI Öneri",
+        "recommendation": "Öneri",
+        "status": {
+          "monitoring": "İzleniyor",
+          "review_needed": "İnceleme Gerekli",
+          "ready_for_approval": "Onaya Hazır"
+        },
+        "risk": {
+          "low": "Düşük",
+          "medium": "Orta",
+          "high": "Yüksek",
+          "critical": "Kritik"
+        }
+      },
+      "recommendedActions": {
+        "title": "Önerilen Aksiyonlar",
+        "subtitle": "AI tarafından tespit edilen iyileştirme fırsatları",
+        "empty": "Şu anda önerilen aksiyon yok.",
+        "apply": "Uygula",
+        "manualRequired": "Manuel uygulama gerekli",
+        "approvalRequired": "Onay gerekli",
+        "reviewRequired": "İnceleme gerekli",
+        "priority": {
+          "high": "Yüksek",
+          "medium": "Orta",
+          "low": "Düşük"
+        },
+        "category": {
+          "objective": "Kampanya Amacı",
+          "destination": "Dönüşüm Hedefi",
+          "optimization_goal": "Optimizasyon",
+          "bidding": "Teklif Stratejisi",
+          "targeting": "Hedefleme",
+          "budget": "Bütçe",
+          "conversion": "Dönüşüm Takibi",
+          "refresh_creative": "Kreatif",
+          "duplicate": "Kopyalama",
+          "pause": "Durum",
+          "increase_budget": "Bütçe",
+          "decrease_budget": "Bütçe"
+        }
+      },
+      "smartBudget": {
+        "title": "Bütçe Dağılımı",
+        "subtitle": "Performansa dayalı bütçe optimizasyonu",
+        "dailyDiff": "günlük fark",
+        "increaseCount": "{count} artış önerisi",
+        "decreaseCount": "{count} azalma önerisi",
+        "campaignCount": "{count} kampanya",
+        "reason": {
+          "highPerformance": "Yüksek performans ({score}/100)",
+          "lowPerformance": "Düşük performans ({score}/100)",
+          "lossRisk": "ROAS {roas}x, zarar riski"
+        }
+      },
+      "kpiDashboard": {
+        "totalSpend": "Toplam Harcama",
+        "impressions": "Gösterim",
+        "clicks": "Tıklama",
+        "totalConversions": "Toplam Dönüşüm",
+        "activeCampaigns": "Aktif Kampanya",
+        "platformSpend": "{platform} Harcama",
+        "platformImpressions": "{platform} Gösterim",
+        "platformClicks": "{platform} Tıklama",
+        "platformCtr": "{platform} CTR",
+        "platformCpc": "{platform} CPC",
+        "platformConversions": "{platform} Dönüşüm",
+        "noMetaData": "Meta kampanya verisi bulunamadı.",
+        "noGoogleData": "Google kampanya verisi bulunamadı."
+      },
+      "diagnosis": {
+        "loading": "Teşhis hazırlanıyor…",
+        "errorFetch": "Teşhis alınamadı.",
+        "errorGeneric": "Teşhis sırasında hata.",
+        "noMetaCampaigns": "Teşhis edilecek Meta kampanyası bulunamadı.",
+        "summary": "<strong>{total}</strong> kampanya teşhis edildi — <ok>{healthy} sağlıklı</ok>, <bad>{issues} sorunlu</bad>.",
+        "confidenceLabel": "güven",
+        "sideFindings": "Yan bulgular:",
+        "recommendedAction": "Önerilen Aksiyon",
+        "startApply": "Uygulamayı başlat (onay gerekli)",
+        "rootCause": {
+          "hook_problem": "Hook Sorunu",
+          "landing_page_problem": "Açılış Sayfası Sorunu",
+          "creative_fatigue": "Kreatif Yorgunluğu",
+          "audience_mismatch": "Hedefleme Uyumsuzluğu",
+          "event_quality_problem": "Olay Kalitesi",
+          "insufficient_data": "Veri Yetersiz",
+          "budget_starvation": "Bütçe Kısıtı",
+          "wrong_optimization_goal": "Yanlış Optimizasyon Hedefi",
+          "pixel_misfire": "Piksel / Takip Sorunu",
+          "healthy": "Sağlıklı"
+        },
+        "action": {
+          "monitor": "İzle",
+          "tweak": "Küçük Düzelt",
+          "revise": "Revize Et",
+          "recreate": "Yeniden Kur",
+          "change_objective": "Amaç Değiştir"
+        },
+        "priority": {
+          "high": "Yüksek",
+          "medium": "Orta",
+          "low": "Düşük"
+        }
+      },
+      "optionsCard": {
+        "create": "Oluştur"
+      },
+      "competitor": {
+        "title": "Rakip Analizi",
+        "loadingTitle": "Reklamlarınız analiz ediliyor ve rakipler aranıyor...",
+        "loadingSubtitle": "Meta Ad Library'den veriler çekiliyor",
+        "needActiveCampaign": "Analiz için aktif kampanya gereklidir.",
+        "flow": "Reklamlarınız analiz edildi → Rakipler bulundu → Boşluklar tespit edildi",
+        "googleKeyMissing": "Google (anahtar yok)",
+        "googleKeyMissingTooltip": "SERPAPI_API_KEY tanımlı değil",
+        "googleUnavailableTooltip": "Google Ads Transparency bağlı değil",
+        "persisted": {
+          "title": "Kalıcı analiz kaydı:",
+          "newCompetitors": "{count} yeni rakip",
+          "updatedCompetitors": "{count} mevcut rakip güncellendi",
+          "type": "tip",
+          "query": "sorgu",
+          "insightSaved": "içgörü kaydedildi"
+        },
+        "tabs": {
+          "gaps": "Boşluklar & Fırsatlar ({count})",
+          "competitors": "Rakip Reklamlar ({count})",
+          "profile": "Sizin Profiliniz"
+        },
+        "noGaps": "Belirgin boşluk tespit edilmedi.",
+        "priority": {
+          "high": "Yüksek",
+          "medium": "Orta",
+          "advantage": "Avantaj"
+        },
+        "noCompetitorAds": "Rakip reklam bulunamadı.",
+        "noCompetitorAdsHint": "Meta Ad Library erişim izni gerekiyor olabilir.",
+        "adActive": "Aktif",
+        "adEnded": "Sona erdi",
+        "profile": {
+          "heading": "Reklam Profiliniz",
+          "avgCtr": "Ort. CTR",
+          "avgCpc": "Ort. CPC",
+          "totalSpend": "Toplam Harcama",
+          "platforms": "Platformlar",
+          "objectives": "Kampanya Amaçları",
+          "destinations": "Dönüşüm Hedefleri",
+          "optimizationGoals": "Optimizasyon Hedefleri",
+          "biddingStrategies": "Teklif Stratejileri",
+          "channelTypes": "Kanal Tipleri",
+          "keywords": "Anahtar Kelimeler",
+          "themes": "Mesaj Temaları",
+          "noThemes": "Belirgin tema tespit edilmedi",
+          "topAds": "En İyi Reklamlar"
+        }
+      },
+      "approvalVersions": {
+        "versionCount": "{count} versiyon",
+        "source": {
+          "original": "Orijinal",
+          "edited": "Düzenlendi",
+          "regenerated": "Yeniden Üretildi",
+          "manual": "Manuel"
+        }
       }
     },
     "strateji": {
       "title": "Strateji",
-      "description": "Pazarlama stratejilerinizi yönetin"
+      "description": "Pazarlama stratejilerinizi yönetin",
+      "pageDescription": "Pazarlama stratejilerinizi oluşturun, yönetin ve optimize edin",
+      "newStrategy": "Yeni Strateji",
+      "creating": "Oluşturuluyor...",
+      "newStrategyTitle": "Yeni Strateji — {date}",
+      "engineTitle": "Strateji Motoru",
+      "aiStrategyLimit": "AI Strateji: {limit}",
+      "creditsPerPlan": " · {count} kredi/plan",
+      "unlimited": "Sınırsız",
+      "usedCount": "{used}/{limit} kullanıldı",
+      "benefit1": "Markanız için AI destekli reklam stratejisi oluşturun. Hedef kitle, bütçe dağılımı ve kampanya planı otomatik hazırlanır.",
+      "benefit2": "İşletme bilgilerinizi girin > AI strateji planı üretsin > Uygulayın, AI optimize etsin.",
+      "benefit3": "Plan aktifken haftalık metrik analizi ve AI optimizasyon önerileri otomatik gelir.",
+      "plansTitle": "Strateji Planları",
+      "recordCount": "{count} kayıt",
+      "confirmDelete": "Bu strateji planını silmek istediğinize emin misiniz?",
+      "loading": "Yükleniyor...",
+      "planGenerating": "Plan üretiliyor... Lütfen bekleyin.",
+      "planEmpty": "Henüz plan üretilmedi. Önce Aşama 1 verilerini tamamlayıp analiz başlatın.",
+      "status": {
+        "DRAFT": "Taslak",
+        "COLLECTING": "Veri toplanıyor",
+        "ANALYZING": "Analiz ediliyor",
+        "GENERATING_PLAN": "Plan oluşturuluyor",
+        "READY_FOR_REVIEW": "İncelemeye hazır",
+        "APPLYING": "Uygulanıyor",
+        "RUNNING": "Çalışıyor",
+        "NEEDS_ACTION": "Aksiyon gerekli",
+        "FAILED": "Hata oluştu"
+      },
+      "phases": {
+        "discovery": "Keşif & Veri",
+        "plan": "Strateji Planı",
+        "apply": "Uygulama"
+      },
+      "error": {
+        "title": "Hata Oluştu",
+        "code": "Kod: {code}",
+        "technicalDetail": "Teknik Detay"
+      },
+      "list": {
+        "emptyTitle": "Henüz strateji yok",
+        "emptyDesc": "Yeni bir strateji oluşturarak pazarlama planınızı otomatik üretin."
+      },
+      "row": {
+        "days": "{count} gün",
+        "perMonth": "{amount} / ay",
+        "retry": "Tekrar dene",
+        "errorDetail": "Hata detayı",
+        "viewPlan": "Planı gör",
+        "dataQuality": "Veri Kalitesi"
+      },
+      "job": {
+        "historyTitle": "İş Geçmişi",
+        "empty": "Henüz iş kaydı yok.",
+        "timeout": "Zaman aşımı",
+        "progress": "%{value}",
+        "templateFallback": "Şablon öneri kullanıldı — AI önerisi alınamadı",
+        "errorAvailable": "Hata detayı mevcut",
+        "attempts": "Deneme: {attempts}/{max}",
+        "type": {
+          "analyze": "Analiz",
+          "generatePlan": "Plan Üretimi",
+          "apply": "Uygulama",
+          "pullMetrics": "Metrik Çekme",
+          "optimize": "Optimizasyon"
+        },
+        "jobStatus": {
+          "queued": "Kuyrukta",
+          "running": "Çalışıyor",
+          "success": "Başarılı",
+          "failed": "Hata"
+        }
+      },
+      "tasks": {
+        "phaseTitle": "Aşama 3: Uygulama & Görevler",
+        "phaseDesc": "Stratejinin hayata geçmesi için görevleri takip edin.",
+        "completedCount": "{done}/{total} tamamlandı",
+        "blockedCount": "{count} engelli",
+        "allFilter": "Tümü ({count})",
+        "filterWithCount": "{label} ({count})",
+        "empty": "Henüz görev yok. Plan onaylandığında görevler oluşturulacak.",
+        "statusHint": "Durum: {status} — tıklayın",
+        "taskStatus": {
+          "todo": "Yapılacak",
+          "inProgress": "Devam ediyor",
+          "done": "Tamamlandı",
+          "blocked": "Engelli"
+        },
+        "category": {
+          "setup": "Kurulum",
+          "creative": "Kreatif",
+          "audience": "Hedef Kitle",
+          "campaign": "Kampanya",
+          "measurement": "Ölçümleme",
+          "optimization": "Optimizasyon"
+        }
+      },
+      "kpi": {
+        "overview": "Genel Bakış",
+        "days": "{count} gün",
+        "monthlyBudget": "Aylık Bütçe",
+        "remaining": "Kalan (Bu Ay)",
+        "spent": "Harcanan ({range})",
+        "clicks": "Tıklama ({range})",
+        "roas": "ROAS ({range})"
+      },
+      "expertPlan": {
+        "title": "Uzman Kampanya Planı",
+        "intro": "Markandan yüksek ROI hedefleyen, her kararı gerekçeli bir kampanya planı: hedef kitle, lokasyon, demografi, bütçe, eylem çağrısı ve ikna edici reklam metinleri. Plan önericidir; uygulamayı kampanya oluşturma sihirbazından yaparsın.",
+        "generate": "Uzman Planı Üret",
+        "regenerate": "Yeniden Üret",
+        "disabled": "Uzman Plan özelliği şu anda kapalı. Etkinleştirmek için yöneticinize başvurun.",
+        "preparing": "Uzman plan hazırlanıyor…",
+        "noActiveChannel": "Aktif kanal bulunamadı.",
+        "errorWithStatus": "Hata ({status})",
+        "errorUnknown": "Bilinmeyen hata",
+        "notes": "Notlar",
+        "reason": "Neden:",
+        "genderMale": "Erkek",
+        "genderFemale": "Kadın",
+        "genderAll": "Tümü",
+        "audience": "Hedef Kitle",
+        "pains": "Sorunlar:",
+        "motivations": "Motivasyonlar:",
+        "location": "Lokasyon",
+        "country": "Ülke:",
+        "cities": "Şehirler:",
+        "demographics": "Demografi",
+        "ageRange": "{min}–{max} yaş",
+        "objective": "Kampanya Amacı",
+        "conversionGoal": "Dönüşüm hedefi:",
+        "budget": "Bütçe",
+        "dailyRecommended": "Önerilen günlük:",
+        "minimum": "Minimum: {amount}",
+        "cta": "Eylem Çağrısı (CTA)",
+        "copyVariants": "Reklam Metni Varyantları",
+        "tone": "Ton: {note}",
+        "copyEmpty": "Metin üretilemedi."
+      },
+      "wizard": {
+        "phaseTitle": "Aşama 1: Keşif & Veri Toplama",
+        "phaseDesc": "İşletme bilgilerinizi girin. Bu veriler strateji planının kalitesini belirler.",
+        "goalLabel": "İş Hedefi *",
+        "goalHint": "Meta kampanya hedeflerine göre strateji oluşturulur",
+        "productLabel": "Ürün / Hizmet *",
+        "productPlaceholder": "Örn: Organik cilt bakım ürünleri",
+        "industryLabel": "Sektör *",
+        "industryPlaceholder": "Sektör seçin",
+        "industryCustomPlaceholder": "Sektörünüzü yazın",
+        "avgBasketLabel": "Ortalama Sepet (TRY)",
+        "marginLabel": "Marj (%)",
+        "ltvLabel": "LTV (TRY)",
+        "optional": "Opsiyonel",
+        "geographyLabel": "Coğrafya *",
+        "budgetLabel": "Aylık Bütçe (TRY) *",
+        "budgetPlaceholder": "Örn: 15000",
+        "timeHorizonLabel": "Zaman Ufku *",
+        "days": "{count} gün",
+        "channelLabel": "Kanal Seçimi *",
+        "comingSoon": "(Yakında)",
+        "integrationStatusLabel": "Entegrasyon Durumu",
+        "processing": "İşleniyor...",
+        "saveAndAnalyze": "Kaydet ve Analiz Başlat",
+        "integration": {
+          "connected": "Bağlı",
+          "partial": "Kısmen",
+          "notConnected": "Bağlı değil",
+          "pixelTag": "Pixel / Tag",
+          "analytics": "Analytics",
+          "crm": "CRM",
+          "installPixel": "Meta Pixel kurun",
+          "verifyEvents": "Olayları doğrulayın",
+          "installGa4": "GA4 kurun",
+          "setGoals": "Hedefleri ayarlayın",
+          "addCrm": "CRM entegrasyonu ekleyin",
+          "checkDataFlow": "Veri akışını kontrol edin"
+        },
+        "industries": {
+          "ecommerce": "E-Ticaret",
+          "saas": "SaaS / Yazılım",
+          "education": "Eğitim",
+          "health": "Sağlık",
+          "finance": "Finans",
+          "realEstate": "Gayrimenkul",
+          "restaurant": "Restoran / Yeme-İçme",
+          "fashion": "Moda / Giyim",
+          "automotive": "Otomotiv",
+          "tourism": "Turizm / Otelcilik",
+          "fitness": "Spor / Fitness",
+          "beauty": "Güzellik / Kozmetik",
+          "law": "Hukuk",
+          "consulting": "Danışmanlık",
+          "other": "Diğer"
+        },
+        "geographies": {
+          "turkey": "Türkiye",
+          "usa": "ABD",
+          "europe": "Avrupa",
+          "uk": "İngiltere",
+          "germany": "Almanya",
+          "france": "Fransa",
+          "netherlands": "Hollanda",
+          "uae": "BAE",
+          "saudiArabia": "Suudi Arabistan",
+          "global": "Küresel"
+        }
+      },
+      "blueprint": {
+        "title": "Strateji Blueprint",
+        "clickCards": "Kartlara tıklayarak detayları görüntüleyin.",
+        "aiGenerated": "AI ile üretildi",
+        "templateBased": "Şablon bazlı",
+        "aiUnavailable": "AI motoru şu an kullanılamadı — şablon tabanlı strateji üretildi. Birazdan tekrar deneyebilirsiniz.",
+        "diagnosis": "Teşhis: {reason}",
+        "kpiSummary": "CPA: {min}-{max} TL",
+        "highPriorityCount": "{count} yüksek öncelikli",
+        "risksDetected": "{count} risk tespit edildi",
+        "cards": {
+          "kpi": "KPI Hedefleri",
+          "funnel": "Funnel Dağılımı",
+          "channel": "Kanal Karması",
+          "personas": "Personalar",
+          "creatives": "Kreatif Temalar",
+          "experiments": "Deney Backlog",
+          "risks": "Riskler",
+          "tasks": "Planlanan Görevler"
+        },
+        "kpiRangesTitle": "KPI Hedef Aralıkları",
+        "funnel": {
+          "awareness": "Farkındalık",
+          "consideration": "Değerlendirme",
+          "conversion": "Dönüşüm"
+        },
+        "searchDisplay": "Arama ve Görüntülü Reklam",
+        "personaSetTitle": "Persona Seti ({count})",
+        "persona": {
+          "pain": "Acı:",
+          "promise": "Vaat:",
+          "proof": "Kanıt:"
+        },
+        "creativeThemesTitle": "Kreatif Temalar ({count})",
+        "creative": {
+          "hook": "Hook:",
+          "offer": "Teklif:"
+        },
+        "experimentBacklogTitle": "Deney Backlog ({count})",
+        "experimentMeta": "Test: {test} | Metrik: {metric}",
+        "risksTitle": "Riskler ({count})",
+        "action": "Aksiyon: {mitigation}",
+        "plannedTasksTitle": "Planlanan Görevler ({count})",
+        "regenerate": "Blueprint'i Yenile",
+        "suggestOnly": "Sadece Öneri Üret",
+        "applying": "Uygulanıyor...",
+        "approveAndApply": "Onayla ve Uygula",
+        "priority": {
+          "high": "Yüksek",
+          "med": "Orta",
+          "low": "Düşük"
+        },
+        "format": {
+          "video": "Video",
+          "ugc": "Kullanıcı İçeriği",
+          "image": "Görsel",
+          "carousel": "Karusel"
+        },
+        "taskCategory": {
+          "measurement": "Ölçümleme",
+          "campaign": "Kampanya",
+          "creative": "Kreatif",
+          "audience": "Hedef Kitle",
+          "setup": "Kurulum",
+          "budget": "Bütçe",
+          "targeting": "Hedefleme",
+          "bid": "Teklif",
+          "status": "Durum"
+        }
+      },
+      "tabs": {
+        "wizard": "Keşif",
+        "plan": "Strateji Planı",
+        "expertPlan": "Uzman Plan",
+        "tasks": "Görevler",
+        "jobs": "İş Geçmişi"
+      },
+      "metrics": {
+        "summaryTitle": "Performans Özeti",
+        "updating": "Güncelleniyor...",
+        "refreshAndOptimize": "Metrikleri Güncelle & Optimize Et",
+        "spend": "Harcama",
+        "lastDays": "Son {count} gün",
+        "adReturn": "Reklam getirisi",
+        "costPerConversion": "Dönüşüm başı maliyet",
+        "conversion": "Dönüşüm",
+        "clicksCount": "{count} tıklama",
+        "empty": "Henüz metrik verisi yok. \"Metrikleri Güncelle\" butonuna tıklayarak ilk verileri çekin."
+      },
+      "processing": {
+        "analyzing": "Veriler analiz ediliyor...",
+        "generatingPlan": "Strateji planı üretiliyor...",
+        "applying": "Plan uygulanıyor...",
+        "hint": "Bu işlem birkaç saniye sürebilir. Sayfa otomatik güncellenecek."
+      },
+      "toast": {
+        "creditUsed": "{count} kredi kullanıldı",
+        "createFailed": "Strateji oluşturulamadı",
+        "genericError": "Bir hata oluştu",
+        "deleted": "Strateji silindi",
+        "deleteFailed": "Silinemedi",
+        "retrying": "Tekrar deneniyor",
+        "retryFailed": "Tekrar denenemedi",
+        "dataSaved": "Veriler kaydedildi",
+        "saveError": "Kaydetme hatası",
+        "analysisStarted": "Analiz başlatıldı",
+        "analysisFailed": "Analiz başlatılamadı",
+        "regenerating": "Plan yeniden üretiliyor",
+        "regenerateError": "Yeniden üretim hatası",
+        "applyStarted": "Uygulama başlatıldı",
+        "suggestModeActive": "Öneri modu aktif",
+        "approveError": "Onay hatası",
+        "metricsUpdating": "Metrikler güncelleniyor, optimizasyon önerileri hazırlanıyor...",
+        "metricsError": "Metrik güncelleme hatası",
+        "taskUpdateFailed": "Görev güncellenemedi"
+      }
     },
     "optimizasyon": {
       "title": "Optimizasyon",
@@ -2662,7 +3364,13 @@
         "custom": "Retargeting"
       },
       "aiEmptyTitle": "AI Tabanlı Hedef Kitle",
-      "aiEmptyDesc": "Strateji modülünden bir plan oluşturup onayladığınızda, işletme profilinizdeki sektör, hedef kitle ve rakip verilerine göre AI persona analiziyle hedef kitleler otomatik olarak burada oluşturulur."
+      "aiEmptyDesc": "Strateji modülünden bir plan oluşturup onayladığınızda, işletme profilinizdeki sektör, hedef kitle ve rakip verilerine göre AI persona analiziyle hedef kitleler otomatik olarak burada oluşturulur.",
+      "newAudience": "Yeni Kitle",
+      "card": {
+        "field": {
+          "source": "Kaynak"
+        }
+      }
     },
     "tasarim": {
       "title": "Tasarım",
@@ -4366,5 +5074,275 @@
       "reschedule": "Saati Değiştir"
     },
     "supportPrefix": "Sorularınız için"
+  },
+  "gozetim": {
+    "dashboard": {
+      "title": "Gözetim Merkezi",
+      "subtitle": "Kullanıcı, firma ve tarama durumlarının operasyonel görünümü.",
+      "errorLoad": "Veri alınamadı",
+      "kpi": {
+        "totalUsers": "Toplam Kullanıcı",
+        "onboardingDone": "Kurulum Tamam",
+        "onboardingMissing": "Kurulum Eksik",
+        "totalProfiles": "Toplam Firma Profili",
+        "usersWithoutProfile": "Profilsiz Kullanıcı",
+        "completedScans": "Tamamlanan Tarama",
+        "runningScans": "Çalışan Tarama",
+        "intelligenceMissing": "Analiz Eksik",
+        "avgConfidence": "Ort. Güven",
+        "signups24h": "Son 24s Kayıt"
+      },
+      "partialDataWarning": "Kısmi veri uyarısı",
+      "userCompanyList": "Kullanıcı & Firma Listesi",
+      "filterOnboarding": {
+        "all": "Kurulum · Tümü",
+        "complete": "Kurulum tamam",
+        "incomplete": "Kurulum eksik",
+        "noProfile": "Profilsiz"
+      },
+      "filterScan": {
+        "all": "Tarama · Tümü",
+        "completed": "Tamamlandı",
+        "failed": "Hatalı",
+        "running": "Çalışıyor / Bekliyor",
+        "none": "Tarama yok"
+      },
+      "filterIntel": {
+        "all": "Analiz · Tümü",
+        "present": "Var",
+        "missing": "Eksik"
+      },
+      "searchPlaceholder": "E-posta, firma, sektör, lokasyon ara",
+      "table": {
+        "email": "E-posta",
+        "company": "Firma",
+        "sector": "Sektör",
+        "location": "Lokasyon",
+        "onboarding": "Kurulum",
+        "source": "Kaynak",
+        "competitor": "Rakip",
+        "conf": "Güven",
+        "lastScan": "Son Tarama"
+      },
+      "noRecords": "Kayıt bulunamadı.",
+      "noProfile": "Profilsiz",
+      "badgeDone": "Tamam",
+      "badgeMissing": "Eksik",
+      "detail": "Detay",
+      "modalEyebrow": "Gözetim Merkezi · Detay",
+      "companyFallback": "Firma",
+      "detailModal": {
+        "companyInfo": "Firma Bilgileri",
+        "businessName": "İşletme Adı",
+        "user": "Kullanıcı",
+        "website": "Web Sitesi",
+        "sector": "Sektör",
+        "location": "Lokasyon",
+        "onboarding": "Kurulum",
+        "completed": "Tamamlandı",
+        "brandTone": "Marka Tonu",
+        "description": "Açıklama",
+        "keywords": "Anahtar Kelimeler",
+        "prohibitedClaims": "Yasaklı İddialar",
+        "socialAccounts": "Sosyal Hesaplar",
+        "competitorsCount": "Rakipler ({count})",
+        "noRecord": "Kayıt yok.",
+        "sourceScanCount": "Kaynak Taraması ({count})",
+        "noScanRecord": "Tarama kaydı yok.",
+        "dateLabel": "Tarih",
+        "confidenceLabel": "Güven",
+        "errorLabel": "Hata",
+        "businessIntelligence": "İş Analizi",
+        "notCreatedYet": "Henüz oluşturulmadı.",
+        "status": "Durum",
+        "updated": "Güncelleme",
+        "companySummary": "Şirket Özeti",
+        "businessModel": "İş Modeli",
+        "sectorSummary": "Sektör Özeti",
+        "localMarket": "Yerel Pazar",
+        "targetAudience": "Hedef Kitle",
+        "competitorSummary": "Rakip Özeti",
+        "keywordThemes": "Anahtar Kelime Temaları",
+        "missingData": "Eksik Veri"
+      }
+    },
+    "officialAds": {
+      "title": "Resmi Döküman Güncellemeleri",
+      "pendingCount": "{count} onay bekliyor",
+      "description": "Aylık tarama, resmi Meta/Google dokümanlarındaki değişiklikleri yapay zekâ ile özetleyip taslak olarak getirir. Onaylanan bilgi reklam üretimi, politika ve analiz motorlarına canlı geçer.",
+      "emptyState": "Onay bekleyen güncelleme yok. Tüm resmi bilgiler güncel.",
+      "confidenceBadge": "Güven: %{percent}",
+      "currentVersion": "Yürürlükteki (v{version}):",
+      "source": "Kaynak",
+      "errorListFailed": "Liste alınamadı ({status})",
+      "errorUnknown": "Bilinmeyen hata",
+      "errorActionFailed": "İşlem başarısız ({status})",
+      "errorAction": "İşlem hatası"
+    },
+    "signups": {
+      "title": "Başvurular",
+      "newSignupToast": "Yeni başvuru alındı",
+      "searchPlaceholder": "E-posta, isim, firma ara",
+      "soundOn": "Ses açık",
+      "soundOff": "Ses kapalı",
+      "soundOnTitle": "Sesli uyarıyı aç",
+      "soundOffTitle": "Sesli uyarıyı kapat",
+      "noRecords": "Kayıt bulunamadı.",
+      "block": "Engelle",
+      "blockReview": "Engelle / İnceleme",
+      "detail": "Detay",
+      "kpi": {
+        "total": "Toplam",
+        "pending": "Bekleyen",
+        "callScheduled": "Görüşme planlı",
+        "callDeclined": "Görüşme reddedildi",
+        "manualReview": "Manuel İnceleme",
+        "approved": "Onaylanan",
+        "rejected": "Reddedilen",
+        "blocked": "Engellenen"
+      },
+      "filter": {
+        "all": "Onay · Tümü"
+      },
+      "badge": {
+        "approved": "Onaylandı",
+        "rejected": "Reddedildi",
+        "blocked": "Engellendi",
+        "manualReview": "Manuel İnceleme",
+        "callScheduled": "Görüşme planlı",
+        "callDeclined": "Görüşme reddedildi",
+        "needsCall": "Görüşme bekleniyor",
+        "pending": "Bekliyor"
+      },
+      "premeeting": {
+        "scheduled": "Planlandı",
+        "declined": "Reddedildi",
+        "waiting": "Bekliyor"
+      },
+      "table": {
+        "email": "E-posta",
+        "name": "İsim",
+        "company": "Firma",
+        "approval": "Onay",
+        "premeeting": "Ön Görüşme",
+        "meetingTime": "Görüşme Saati",
+        "signup": "Kayıt",
+        "action": "Aksiyon"
+      },
+      "detailModal": {
+        "eyebrow": "Başvuru Detayı",
+        "fallback": "Başvuru"
+      },
+      "field": {
+        "email": "E-posta",
+        "name": "İsim",
+        "company": "Firma",
+        "phone": "Telefon",
+        "signupDate": "Kayıt Tarihi",
+        "emailVerification": "E-posta Doğrulama",
+        "source": "Kaynak",
+        "approvalStatus": "Onay Durumu",
+        "premeeting": "Ön Görüşme",
+        "meetingTime": "Görüşme Saati",
+        "approvedBy": "Onaylayan",
+        "approvedAt": "Onay Zamanı",
+        "rejectedBy": "Reddeden",
+        "rejectedAt": "Red Zamanı",
+        "meetingDeclined": "Görüşme Reddi"
+      },
+      "blockInfo": {
+        "title": "Engel Bilgisi",
+        "blockedBy": "Engelleyen",
+        "blockedAt": "Engel Zamanı",
+        "reason": "Neden"
+      },
+      "manualReviewInfo": {
+        "reviewedBy": "İnceleyen",
+        "date": "Tarih",
+        "note": "Not"
+      },
+      "manualNote": {
+        "label": "Manuel Not",
+        "placeholder": "Bu başvuruya dair not…",
+        "save": "Notu Kaydet"
+      },
+      "blockModal": {
+        "selectAction": "İşlem seçin",
+        "ipAddress": "IP Adresi",
+        "ipPlaceholder": "örn. 192.168.1.1",
+        "ipHint": "IP bilgisi sağlanmazsa IP engeli atlanır.",
+        "noteOptional": "Not (opsiyonel)",
+        "notePlaceholder": "Engel nedeni…",
+        "confirmManualReview": "Manuel İncelemeye Al"
+      },
+      "blockOptions": {
+        "user": {
+          "label": "Kullanıcıyı Engelle",
+          "desc": "Yalnızca bu hesabı engeller."
+        },
+        "email": {
+          "label": "E-posta Adresini Engelle",
+          "desc": "Bu e-posta ile yeni kayıt/giriş yapılamaz."
+        },
+        "domain": {
+          "label": "E-posta Alan Adını Engelle",
+          "desc": "Aynı alan adıyla yeni kayıtlar engellenir."
+        },
+        "ip": {
+          "label": "IP Adresini Engelle",
+          "desc": "Sağlanan IP'den yeni kayıtlar engellenir."
+        },
+        "all": {
+          "label": "Hepsini Engelle",
+          "desc": "Kullanıcı + e-posta + alan adı + IP birlikte engellenir."
+        },
+        "manualReview": {
+          "label": "Manuel İnceleme",
+          "desc": "Engellemez; sistem erişimini askıya alır, owner kararı bekler."
+        }
+      }
+    }
+  },
+  "review": {
+    "title": "Meta Uygulama İncelemesi — Video Senaryosu",
+    "subtitle": "Adımları sırayla tamamlayarak ekran kaydı alabilirsiniz.",
+    "loading": "Yükleniyor…",
+    "step1": {
+      "title": "Adım 1: Meta'ya Bağlan",
+      "desc": "Aşağıdaki düğmeyle Meta OAuth akışını başlatın ve gerekli izinleri verin.",
+      "connectBtn": "Meta ile Bağlan"
+    },
+    "step2": {
+      "title": "Adım 2: Capabilities Snapshot",
+      "desc": "Bağlandıktan ve reklam hesabı seçildikten sonra capabilities sonucunu alın.",
+      "fetchBtn": "Capabilities Al"
+    },
+    "step3": {
+      "title": "Adım 3: CTWA (Click-to-WhatsApp) Demo",
+      "desc": "Kampanya sihirbazını açıp Traffic + WhatsApp hedefi ile minimal bir kampanya oluşturun.",
+      "linkBtn": "Meta Reklam Sayfasına Git → Yeni Kampanya"
+    },
+    "step4": {
+      "title": "Adım 4: Lead Form + Lead Retrieval",
+      "desc": "Form ID girin (capabilities sonucundaki leadForms[].id), has-lead-access ve lead listesini çekin.",
+      "formIdPlaceholder": "Form ID",
+      "fetchLeadsBtn": "Lead'leri Çek",
+      "formLabel": "Form"
+    },
+    "step5": {
+      "title": "Adım 5: İstek Günlüğü (requestId, fbtrace_id, endpoint, status — token/PII yok)",
+      "empty": "Henüz istek yok."
+    }
+  },
+  "unsubscribe": {
+    "title": "Abonelikten çık",
+    "button": "Abonelikten çık",
+    "processing": "İşleniyor…",
+    "prompt": "<email></email> bundan sonra e-posta almak istemiyor musunuz?",
+    "fallbackEmail": "Bu e-posta adresi",
+    "doneTitle": "Abonelikten çıkıldı",
+    "doneDesc": "<email></email> adresine artık e-posta gönderilmeyecek.",
+    "errorTitle": "Bağlantı geçersiz",
+    "errorDesc": "İşlem tamamlanamadı. Lütfen e-postadaki bağlantıyı tekrar kullanın."
   }
 }

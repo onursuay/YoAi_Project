@@ -14,6 +14,7 @@
  * - Sesli uyarı: toggle + polling + toast
  */
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   CheckCircle2,
   XCircle,
@@ -90,24 +91,24 @@ function fmt(value: string | null): string {
   }
 }
 
-function approvalBadge(status: string | null): { label: string; className: string } {
+function approvalBadge(status: string | null): { labelKey: string; className: string } {
   switch ((status || '').toLowerCase()) {
     case 'approved':
-      return { label: 'Onaylandı', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
+      return { labelKey: 'badge.approved', className: 'bg-emerald-50 text-emerald-700 border-emerald-200' }
     case 'rejected':
-      return { label: 'Reddedildi', className: 'bg-red-50 text-red-700 border-red-200' }
+      return { labelKey: 'badge.rejected', className: 'bg-red-50 text-red-700 border-red-200' }
     case 'blocked':
-      return { label: 'Engellendi', className: 'bg-red-50 text-red-800 border-red-300' }
+      return { labelKey: 'badge.blocked', className: 'bg-red-50 text-red-800 border-red-300' }
     case 'manual_review':
-      return { label: 'Manuel İnceleme', className: 'bg-primary/5 text-primary border-primary/20' }
+      return { labelKey: 'badge.manualReview', className: 'bg-primary/5 text-primary border-primary/20' }
     case 'call_scheduled':
-      return { label: 'Görüşme planlı', className: 'bg-primary/5 text-primary border-primary/20' }
+      return { labelKey: 'badge.callScheduled', className: 'bg-primary/5 text-primary border-primary/20' }
     case 'call_declined':
-      return { label: 'Görüşme reddedildi', className: 'bg-gray-50 text-gray-700 border-gray-200' }
+      return { labelKey: 'badge.callDeclined', className: 'bg-gray-50 text-gray-700 border-gray-200' }
     case 'needs_call':
-      return { label: 'Görüşme bekleniyor', className: 'bg-primary/5 text-primary border-primary/20' }
+      return { labelKey: 'badge.needsCall', className: 'bg-primary/5 text-primary border-primary/20' }
     default:
-      return { label: 'Bekliyor', className: 'bg-gray-50 text-gray-700 border-gray-200' }
+      return { labelKey: 'badge.pending', className: 'bg-gray-50 text-gray-700 border-gray-200' }
   }
 }
 
@@ -168,6 +169,8 @@ function playBeep() {
 }
 
 export default function SignupApprovalsPanel() {
+  const t = useTranslations('gozetim.signups')
+  const tc = useTranslations('common')
   const [rows, setRows] = useState<SignupRow[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -207,7 +210,7 @@ export default function SignupApprovalsPanel() {
         ).length
         if (prevPendingCount.current !== null && newPendingCount > prevPendingCount.current) {
           playBeep()
-          setToastMsg('Yeni başvuru alındı')
+          setToastMsg(t('newSignupToast'))
           if (toastTimerRef.current) clearTimeout(toastTimerRef.current)
           toastTimerRef.current = setTimeout(() => setToastMsg(null), 4000)
         }
@@ -218,7 +221,7 @@ export default function SignupApprovalsPanel() {
     } finally {
       setLoading(false)
     }
-  }, [soundEnabled])
+  }, [soundEnabled, t])
 
   useEffect(() => {
     load()
@@ -374,31 +377,31 @@ export default function SignupApprovalsPanel() {
 
       {/* KPI chips */}
       <div className="mb-4 flex flex-wrap gap-2">
-        <KpiChip label="Toplam" value={kpis.total} tone="gray" onClick={() => setFilter('all')} active={filter === 'all'} />
-        <KpiChip label="Bekleyen" value={kpis.pending} tone="primary" onClick={() => setFilter('pending')} active={filter === 'pending'} />
-        <KpiChip label="Görüşme planlı" value={kpis.callScheduled} tone="emerald" onClick={() => setFilter('call_scheduled')} active={filter === 'call_scheduled'} />
-        <KpiChip label="Görüşme reddedildi" value={kpis.callDeclined} tone="gray" onClick={() => setFilter('call_declined')} active={filter === 'call_declined'} />
-        <KpiChip label="Manuel İnceleme" value={kpis.manualReview} tone="primary" onClick={() => setFilter('manual_review')} active={filter === 'manual_review'} />
-        <KpiChip label="Onaylanan" value={kpis.approved} tone="emerald" onClick={() => setFilter('approved')} active={filter === 'approved'} />
-        <KpiChip label="Reddedilen" value={kpis.rejected} tone="red" onClick={() => setFilter('rejected')} active={filter === 'rejected'} />
-        <KpiChip label="Engellenen" value={kpis.blocked} tone="red" onClick={() => setFilter('blocked')} active={filter === 'blocked'} />
+        <KpiChip label={t('kpi.total')} value={kpis.total} tone="gray" onClick={() => setFilter('all')} active={filter === 'all'} />
+        <KpiChip label={t('kpi.pending')} value={kpis.pending} tone="primary" onClick={() => setFilter('pending')} active={filter === 'pending'} />
+        <KpiChip label={t('kpi.callScheduled')} value={kpis.callScheduled} tone="emerald" onClick={() => setFilter('call_scheduled')} active={filter === 'call_scheduled'} />
+        <KpiChip label={t('kpi.callDeclined')} value={kpis.callDeclined} tone="gray" onClick={() => setFilter('call_declined')} active={filter === 'call_declined'} />
+        <KpiChip label={t('kpi.manualReview')} value={kpis.manualReview} tone="primary" onClick={() => setFilter('manual_review')} active={filter === 'manual_review'} />
+        <KpiChip label={t('kpi.approved')} value={kpis.approved} tone="emerald" onClick={() => setFilter('approved')} active={filter === 'approved'} />
+        <KpiChip label={t('kpi.rejected')} value={kpis.rejected} tone="red" onClick={() => setFilter('rejected')} active={filter === 'rejected'} />
+        <KpiChip label={t('kpi.blocked')} value={kpis.blocked} tone="red" onClick={() => setFilter('blocked')} active={filter === 'blocked'} />
       </div>
 
       <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-        <h2 className="text-base font-semibold text-gray-900">Başvurular</h2>
+        <h2 className="text-base font-semibold text-gray-900">{t('title')}</h2>
         <div className="flex flex-wrap items-center gap-2">
           <WizardSelect
             value={filter}
             onChange={(v) => setFilter(v as ApprovalFilter)}
             options={[
-              { value: 'all', label: 'Onay · Tümü' },
-              { value: 'pending', label: 'Bekliyor' },
-              { value: 'call_scheduled', label: 'Görüşme planlı' },
-              { value: 'call_declined', label: 'Görüşme reddedildi' },
-              { value: 'manual_review', label: 'Manuel İnceleme' },
-              { value: 'approved', label: 'Onaylandı' },
-              { value: 'rejected', label: 'Reddedildi' },
-              { value: 'blocked', label: 'Engellendi' },
+              { value: 'all', label: t('filter.all') },
+              { value: 'pending', label: t('badge.pending') },
+              { value: 'call_scheduled', label: t('badge.callScheduled') },
+              { value: 'call_declined', label: t('badge.callDeclined') },
+              { value: 'manual_review', label: t('badge.manualReview') },
+              { value: 'approved', label: t('badge.approved') },
+              { value: 'rejected', label: t('badge.rejected') },
+              { value: 'blocked', label: t('badge.blocked') },
             ]}
             className="w-48"
           />
@@ -408,7 +411,7 @@ export default function SignupApprovalsPanel() {
               type="text"
               value={search}
               onChange={(e) => setSearch(e.target.value)}
-              placeholder="E-posta, isim, firma ara"
+              placeholder={t('searchPlaceholder')}
               className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
             />
           </div>
@@ -416,7 +419,7 @@ export default function SignupApprovalsPanel() {
           <button
             type="button"
             onClick={toggleSound}
-            title={soundEnabled ? 'Sesli uyarıyı kapat' : 'Sesli uyarıyı aç'}
+            title={soundEnabled ? t('soundOffTitle') : t('soundOnTitle')}
             data-testid="sound-toggle"
             className={`inline-flex items-center gap-1.5 rounded-lg border px-3 py-2 text-xs font-medium transition ${
               soundEnabled
@@ -425,14 +428,14 @@ export default function SignupApprovalsPanel() {
             }`}
           >
             {soundEnabled ? <Bell className="h-3.5 w-3.5" /> : <BellOff className="h-3.5 w-3.5" />}
-            {soundEnabled ? 'Ses açık' : 'Ses kapalı'}
+            {soundEnabled ? t('soundOn') : t('soundOff')}
           </button>
           <button
             onClick={load}
             className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-xs font-medium text-gray-700 hover:bg-gray-50"
           >
             <RefreshCw className={`h-3.5 w-3.5 ${loading ? 'animate-spin' : ''}`} />
-            Yenile
+            {tc('refresh')}
           </button>
         </div>
       </div>
@@ -447,14 +450,14 @@ export default function SignupApprovalsPanel() {
         <table className="w-full text-sm">
           <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
             <tr>
-              <th className="px-3 py-2">E-posta</th>
-              <th className="px-3 py-2">İsim</th>
-              <th className="px-3 py-2">Firma</th>
-              <th className="px-3 py-2">Onay</th>
-              <th className="px-3 py-2">Ön Görüşme</th>
-              <th className="px-3 py-2">Görüşme Saati</th>
-              <th className="px-3 py-2">Kayıt</th>
-              <th className="px-3 py-2 text-right">Aksiyon</th>
+              <th className="px-3 py-2">{t('table.email')}</th>
+              <th className="px-3 py-2">{t('table.name')}</th>
+              <th className="px-3 py-2">{t('table.company')}</th>
+              <th className="px-3 py-2">{t('table.approval')}</th>
+              <th className="px-3 py-2">{t('table.premeeting')}</th>
+              <th className="px-3 py-2">{t('table.meetingTime')}</th>
+              <th className="px-3 py-2">{t('table.signup')}</th>
+              <th className="px-3 py-2 text-right">{t('table.action')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-100">
@@ -468,7 +471,7 @@ export default function SignupApprovalsPanel() {
             {!loading && filtered.length === 0 && (
               <tr>
                 <td colSpan={8} className="px-3 py-6 text-center text-gray-400">
-                  Kayıt bulunamadı.
+                  {t('noRecords')}
                 </td>
               </tr>
             )}
@@ -483,17 +486,17 @@ export default function SignupApprovalsPanel() {
                     <td className="px-3 py-2 text-gray-600">{r.company || '—'}</td>
                     <td className="px-3 py-2">
                       <span className={`inline-flex items-center rounded border px-2 py-0.5 text-xs ${badge.className}`}>
-                        {badge.label}
+                        {t(badge.labelKey)}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-gray-600">
                       <span className="inline-flex items-center gap-1.5 text-xs">
                         {premeetingIcon(r.premeeting_status)}
                         {r.premeeting_status === 'scheduled'
-                          ? 'Planlandı'
+                          ? t('premeeting.scheduled')
                           : r.premeeting_status === 'declined'
-                          ? 'Reddedildi'
-                          : 'Bekliyor'}
+                          ? t('premeeting.declined')
+                          : t('premeeting.waiting')}
                       </span>
                     </td>
                     <td className="px-3 py-2 text-gray-600 text-xs">{fmt(r.premeeting_scheduled_at)}</td>
@@ -507,7 +510,7 @@ export default function SignupApprovalsPanel() {
                           data-testid={`approve-${r.id}`}
                         >
                           <CheckCircle2 className="h-3.5 w-3.5" />
-                          Onayla
+                          {tc('approve')}
                         </button>
                         <button
                           onClick={() => performAction(r.id, 'reject')}
@@ -516,7 +519,7 @@ export default function SignupApprovalsPanel() {
                           data-testid={`reject-${r.id}`}
                         >
                           <XCircle className="h-3.5 w-3.5" />
-                          Reddet
+                          {tc('reject')}
                         </button>
                         <button
                           onClick={() => setBlockTarget(r)}
@@ -525,7 +528,7 @@ export default function SignupApprovalsPanel() {
                           data-testid={`block-btn-${r.id}`}
                         >
                           <Shield className="h-3.5 w-3.5" />
-                          Engelle
+                          {t('block')}
                         </button>
                         <button
                           onClick={() => setSelected(r)}
@@ -533,7 +536,7 @@ export default function SignupApprovalsPanel() {
                           data-testid={`detail-btn-${r.id}`}
                         >
                           <Eye className="h-3.5 w-3.5" />
-                          Detay
+                          {t('detail')}
                         </button>
                       </div>
                     </td>
@@ -598,6 +601,8 @@ function SignupDetailModal({
   onBlock: () => void
   onAddNote: (note: string) => Promise<boolean>
 }) {
+  const t = useTranslations('gozetim.signups')
+  const tc = useTranslations('common')
   const [noteDraft, setNoteDraft] = useState(row.approval_note || '')
   const [saving, setSaving] = useState(false)
 
@@ -625,13 +630,13 @@ function SignupDetailModal({
         {/* Header */}
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <div>
-            <div className="text-xs uppercase tracking-wide text-gray-500">Başvuru Detayı</div>
-            <div className="text-base font-semibold text-gray-900">{row.name || row.email || 'Başvuru'}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">{t('detailModal.eyebrow')}</div>
+            <div className="text-base font-semibold text-gray-900">{row.name || row.email || t('detailModal.fallback')}</div>
           </div>
           <button
             onClick={onClose}
             className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-            aria-label="Kapat"
+            aria-label={tc('close')}
           >
             <X className="h-5 w-5" />
           </button>
@@ -640,31 +645,31 @@ function SignupDetailModal({
         <div className="space-y-5 px-6 py-5 text-sm">
           {/* Temel bilgiler grid */}
           <div className="grid grid-cols-2 gap-4 sm:grid-cols-3">
-            <Field k="E-posta" v={row.email} />
-            <Field k="İsim" v={row.name} />
-            <Field k="Firma" v={row.company} />
-            <Field k="Telefon" v={row.phone} />
-            <Field k="Kayıt Tarihi" v={fmt(row.created_at)} />
-            <Field k="Email Doğrulama" v={fmt(row.verified_at)} />
-            <Field k="Kaynak" v={row.signup_source} />
-            <Field k="Onay Durumu" v={approvalBadge(row.approval_status).label} />
-            <Field k="Ön Görüşme" v={row.premeeting_status} />
-            <Field k="Görüşme Saati" v={fmt(row.premeeting_scheduled_at)} />
-            <Field k="Onaylayan" v={row.approved_by} />
-            <Field k="Onay Zamanı" v={fmt(row.approved_at)} />
-            <Field k="Reddeden" v={row.rejected_by} />
-            <Field k="Red Zamanı" v={fmt(row.rejected_at)} />
-            <Field k="Görüşme Reddi" v={fmt(row.premeeting_declined_at)} />
+            <Field k={t('field.email')} v={row.email} />
+            <Field k={t('field.name')} v={row.name} />
+            <Field k={t('field.company')} v={row.company} />
+            <Field k={t('field.phone')} v={row.phone} />
+            <Field k={t('field.signupDate')} v={fmt(row.created_at)} />
+            <Field k={t('field.emailVerification')} v={fmt(row.verified_at)} />
+            <Field k={t('field.source')} v={row.signup_source} />
+            <Field k={t('field.approvalStatus')} v={t(approvalBadge(row.approval_status).labelKey)} />
+            <Field k={t('field.premeeting')} v={row.premeeting_status} />
+            <Field k={t('field.meetingTime')} v={fmt(row.premeeting_scheduled_at)} />
+            <Field k={t('field.approvedBy')} v={row.approved_by} />
+            <Field k={t('field.approvedAt')} v={fmt(row.approved_at)} />
+            <Field k={t('field.rejectedBy')} v={row.rejected_by} />
+            <Field k={t('field.rejectedAt')} v={fmt(row.rejected_at)} />
+            <Field k={t('field.meetingDeclined')} v={fmt(row.premeeting_declined_at)} />
           </div>
 
           {/* Engel bilgileri */}
           {row.approval_status === 'blocked' && (
             <div className="rounded-lg border border-red-200 bg-red-50 px-4 py-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-700">Engel Bilgisi</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-red-700">{t('blockInfo.title')}</div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <Field k="Engelleyen" v={row.blocked_by} />
-                <Field k="Engel Zamanı" v={fmt(row.blocked_at)} />
-                <Field k="Neden" v={row.block_reason} />
+                <Field k={t('blockInfo.blockedBy')} v={row.blocked_by} />
+                <Field k={t('blockInfo.blockedAt')} v={fmt(row.blocked_at)} />
+                <Field k={t('blockInfo.reason')} v={row.block_reason} />
               </div>
             </div>
           )}
@@ -672,31 +677,31 @@ function SignupDetailModal({
           {/* Manuel inceleme bilgileri */}
           {row.approval_status === 'manual_review' && (
             <div className="rounded-lg border border-primary/20 bg-primary/5 px-4 py-3">
-              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary">Manuel İnceleme</div>
+              <div className="mb-2 text-xs font-semibold uppercase tracking-wide text-primary">{t('badge.manualReview')}</div>
               <div className="grid grid-cols-2 gap-3 sm:grid-cols-3">
-                <Field k="İnceleyen" v={row.manual_review_by} />
-                <Field k="Tarih" v={fmt(row.manual_review_at)} />
-                <Field k="Not" v={row.manual_review_note} />
+                <Field k={t('manualReviewInfo.reviewedBy')} v={row.manual_review_by} />
+                <Field k={t('manualReviewInfo.date')} v={fmt(row.manual_review_at)} />
+                <Field k={t('manualReviewInfo.note')} v={row.manual_review_note} />
               </div>
             </div>
           )}
 
           {/* Manuel not */}
           <div>
-            <div className="mb-1 text-xs font-medium text-gray-500">Manuel Not</div>
+            <div className="mb-1 text-xs font-medium text-gray-500">{t('manualNote.label')}</div>
             <textarea
               value={noteDraft}
               onChange={(e) => setNoteDraft(e.target.value)}
               rows={3}
               className="w-full rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm text-gray-800 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
-              placeholder="Bu başvuruya dair not…"
+              placeholder={t('manualNote.placeholder')}
             />
             <button
               onClick={save}
               disabled={saving || !noteDraft.trim()}
               className="mt-2 inline-flex items-center gap-1.5 rounded-md border border-gray-200 bg-white px-3 py-1.5 text-xs font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
-              Notu Kaydet
+              {t('manualNote.save')}
             </button>
           </div>
 
@@ -708,7 +713,7 @@ function SignupDetailModal({
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-semibold text-emerald-700 hover:bg-emerald-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <CheckCircle2 className="h-4 w-4" />
-              Onayla
+              {tc('approve')}
             </button>
             <button
               onClick={onReject}
@@ -716,7 +721,7 @@ function SignupDetailModal({
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-4 py-2 text-sm font-semibold text-red-700 hover:bg-red-100 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <XCircle className="h-4 w-4" />
-              Reddet
+              {tc('reject')}
             </button>
             <button
               onClick={onBlock}
@@ -724,7 +729,7 @@ function SignupDetailModal({
               className="inline-flex items-center justify-center gap-1.5 rounded-lg border border-gray-300 bg-white px-4 py-2 text-sm font-semibold text-gray-700 hover:bg-gray-50 disabled:opacity-50 disabled:cursor-not-allowed"
             >
               <Shield className="h-4 w-4" />
-              Engelle / İnceleme
+              {t('blockReview')}
             </button>
           </div>
         </div>
@@ -735,13 +740,13 @@ function SignupDetailModal({
 
 // ─── Engelle Modal ────────────────────────────────────────────────────────────
 
-const BLOCK_OPTIONS: Array<{ value: BlockOption; label: string; description: string }> = [
-  { value: 'user', label: 'Kullanıcıyı Engelle', description: 'Yalnızca bu hesabı engeller.' },
-  { value: 'email', label: 'Email Adresini Engelle', description: 'Bu e-posta ile yeni kayıt/giriş yapılamaz.' },
-  { value: 'domain', label: 'Email Domainini Engelle', description: 'Aynı domain ile yeni kayıtlar engellenir.' },
-  { value: 'ip', label: 'IP Adresini Engelle', description: 'Sağlanan IP\'den yeni kayıtlar engellenir.' },
-  { value: 'all', label: 'Hepsini Engelle', description: 'Kullanıcı + email + domain + IP birlikte engellenir.' },
-  { value: 'manual_review', label: 'Manuel İnceleme', description: 'Engellemez; sistem erişimini askıya alır, owner kararı bekler.' },
+const BLOCK_OPTIONS: Array<{ value: BlockOption; labelKey: string; descKey: string }> = [
+  { value: 'user', labelKey: 'blockOptions.user.label', descKey: 'blockOptions.user.desc' },
+  { value: 'email', labelKey: 'blockOptions.email.label', descKey: 'blockOptions.email.desc' },
+  { value: 'domain', labelKey: 'blockOptions.domain.label', descKey: 'blockOptions.domain.desc' },
+  { value: 'ip', labelKey: 'blockOptions.ip.label', descKey: 'blockOptions.ip.desc' },
+  { value: 'all', labelKey: 'blockOptions.all.label', descKey: 'blockOptions.all.desc' },
+  { value: 'manual_review', labelKey: 'blockOptions.manualReview.label', descKey: 'blockOptions.manualReview.desc' },
 ]
 
 function BlockModal({
@@ -755,6 +760,8 @@ function BlockModal({
   onConfirm: (option: BlockOption, note?: string, sourceIp?: string) => Promise<void>
   pending: boolean
 }) {
+  const t = useTranslations('gozetim.signups')
+  const tc = useTranslations('common')
   const [selected, setSelected] = useState<BlockOption>('user')
   const [note, setNote] = useState('')
   const [sourceIp, setSourceIp] = useState('')
@@ -774,16 +781,16 @@ function BlockModal({
       >
         <div className="flex items-center justify-between border-b border-gray-200 px-6 py-4">
           <div>
-            <div className="text-xs uppercase tracking-wide text-gray-500">Engelle / İnceleme</div>
-            <div className="text-base font-semibold text-gray-900">{row.email || row.name || 'Başvuru'}</div>
+            <div className="text-xs uppercase tracking-wide text-gray-500">{t('blockReview')}</div>
+            <div className="text-base font-semibold text-gray-900">{row.email || row.name || t('detailModal.fallback')}</div>
           </div>
-          <button onClick={onClose} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100">
+          <button onClick={onClose} className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100" aria-label={tc('close')}>
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-3 px-6 py-5">
-          <div className="text-xs font-medium text-gray-500 mb-1">İşlem seçin</div>
+          <div className="text-xs font-medium text-gray-500 mb-1">{t('blockModal.selectAction')}</div>
           {BLOCK_OPTIONS.map((opt) => (
             <label
               key={opt.value}
@@ -803,8 +810,8 @@ function BlockModal({
                 className="mt-0.5 accent-primary"
               />
               <div>
-                <div className="text-sm font-medium text-gray-900">{opt.label}</div>
-                <div className="text-xs text-gray-500">{opt.description}</div>
+                <div className="text-sm font-medium text-gray-900">{t(opt.labelKey)}</div>
+                <div className="text-xs text-gray-500">{t(opt.descKey)}</div>
               </div>
             </label>
           ))}
@@ -812,27 +819,27 @@ function BlockModal({
           {/* IP input sadece ip veya all seçiliyken */}
           {(selected === 'ip' || selected === 'all') && (
             <div>
-              <label className="text-xs font-medium text-gray-500">IP Adresi</label>
+              <label className="text-xs font-medium text-gray-500">{t('blockModal.ipAddress')}</label>
               <input
                 type="text"
                 value={sourceIp}
                 onChange={(e) => setSourceIp(e.target.value)}
-                placeholder="örn. 192.168.1.1"
+                placeholder={t('blockModal.ipPlaceholder')}
                 className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
               />
               {selected === 'ip' && !sourceIp.trim() && (
-                <p className="mt-1 text-xs text-gray-500">IP bilgisi sağlanmazsa IP block atlanır.</p>
+                <p className="mt-1 text-xs text-gray-500">{t('blockModal.ipHint')}</p>
               )}
             </div>
           )}
 
           <div>
-            <label className="text-xs font-medium text-gray-500">Not (opsiyonel)</label>
+            <label className="text-xs font-medium text-gray-500">{t('blockModal.noteOptional')}</label>
             <input
               type="text"
               value={note}
               onChange={(e) => setNote(e.target.value)}
-              placeholder="Engel nedeni…"
+              placeholder={t('blockModal.notePlaceholder')}
               className="mt-1 w-full rounded-lg border border-gray-200 px-3 py-2 text-sm focus:border-primary focus:outline-none"
             />
           </div>
@@ -845,7 +852,7 @@ function BlockModal({
             disabled={pending}
             className="rounded-lg border border-gray-200 bg-white px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50 disabled:opacity-50"
           >
-            İptal
+            {tc('cancel')}
           </button>
           <button
             type="button"
@@ -859,7 +866,7 @@ function BlockModal({
             data-testid="block-confirm-btn"
           >
             {pending && <Loader2 className="h-4 w-4 animate-spin" />}
-            {selected === 'manual_review' ? 'Manuel İncelemeye Al' : 'Engelle'}
+            {selected === 'manual_review' ? t('blockModal.confirmManualReview') : t('block')}
           </button>
         </div>
       </div>

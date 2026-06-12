@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from 'react'
 import Link from 'next/link'
+import { useTranslations } from 'next-intl'
 
 interface CapabilitiesSnapshot {
   ok?: boolean
@@ -32,6 +33,7 @@ interface LogEntry {
 }
 
 export default function ReviewPage() {
+  const t = useTranslations('review')
   const [mounted, setMounted] = useState(false)
   const [capabilities, setCapabilities] = useState<CapabilitiesSnapshot | null>(null)
   const [capLoading, setCapLoading] = useState(false)
@@ -108,35 +110,35 @@ export default function ReviewPage() {
 
   return (
     <div className="min-h-screen bg-gray-50 p-6 max-w-4xl mx-auto">
-      <h1 className="text-2xl font-bold text-gray-900 mb-2">Meta App Review — Video Senaryosu</h1>
+      <h1 className="text-2xl font-bold text-gray-900 mb-2">{t('title')}</h1>
       <p className="text-sm text-gray-600 mb-6">
-        Adımları sırayla tamamlayarak ekran kaydı alabilirsiniz.
+        {t('subtitle')}
       </p>
 
       {/* Step 1: Connect */}
       <section className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Adım 1: Meta&apos;ya Bağlan
+          {t('step1.title')}
         </h2>
         <p className="text-sm text-gray-600 mb-3">
-          Aşağıdaki düğmeyle Meta OAuth akışını başlatın ve gerekli izinleri verin.
+          {t('step1.desc')}
         </p>
         <button
           type="button"
           onClick={handleConnect}
           className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
         >
-          Meta ile Bağlan
+          {t('step1.connectBtn')}
         </button>
       </section>
 
       {/* Step 2: Capabilities */}
       <section className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Adım 2: Capabilities Snapshot
+          {t('step2.title')}
         </h2>
         <p className="text-sm text-gray-600 mb-3">
-          Bağlandıktan ve reklam hesabı seçildikten sonra capabilities sonucunu alın.
+          {t('step2.desc')}
         </p>
         <button
           type="button"
@@ -144,7 +146,7 @@ export default function ReviewPage() {
           disabled={capLoading}
           className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700 disabled:opacity-50 mb-3"
         >
-          {capLoading ? 'Yükleniyor…' : 'Capabilities Al'}
+          {capLoading ? t('loading') : t('step2.fetchBtn')}
         </button>
         {capabilities && (
           <pre className="mt-2 p-3 bg-gray-100 rounded text-caption overflow-auto max-h-64">
@@ -172,33 +174,33 @@ export default function ReviewPage() {
       {/* Step 3: CTWA demo */}
       <section className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Adım 3: CTWA (Click-to-WhatsApp) Demo
+          {t('step3.title')}
         </h2>
         <p className="text-sm text-gray-600 mb-3">
-          Kampanya sihirbazını açıp Traffic + WhatsApp hedefi ile minimal bir kampanya oluşturun.
+          {t('step3.desc')}
         </p>
         <Link
           href="/meta-ads/kampanyalar"
           className="inline-block px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
         >
-          Meta Reklam Sayfasına Git → Yeni Kampanya
+          {t('step3.linkBtn')}
         </Link>
       </section>
 
       {/* Step 4: Lead demo */}
       <section className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Adım 4: Lead Form + Lead Retrieval
+          {t('step4.title')}
         </h2>
         <p className="text-sm text-gray-600 mb-3">
-          Form ID girin (capabilities sonucundaki leadForms[].id), has-lead-access ve lead listesini çekin.
+          {t('step4.desc')}
         </p>
         <div className="flex flex-wrap gap-2 items-center mb-3">
           <input
             type="text"
             value={leadFormId}
             onChange={(e) => setLeadFormId(e.target.value)}
-            placeholder="Form ID"
+            placeholder={t('step4.formIdPlaceholder')}
             className="px-3 py-2 border border-gray-300 rounded-lg text-sm w-64"
           />
           <button
@@ -213,12 +215,12 @@ export default function ReviewPage() {
             onClick={handleFetchLeads}
             className="px-4 py-2 bg-violet-600 text-white rounded-lg text-sm font-medium hover:bg-violet-700"
           >
-            Lead&apos;leri Çek
+            {t('step4.fetchLeadsBtn')}
           </button>
         </div>
         {hasLeadAccess !== null && (
           <p className="text-sm text-gray-700 mb-2">
-            Form <code className="bg-gray-100 px-1">{hasLeadAccess.formId}</code>: hasAccess ={' '}
+            {t('step4.formLabel')} <code className="bg-gray-100 px-1">{hasLeadAccess.formId}</code>: hasAccess ={' '}
             {String(hasLeadAccess.hasAccess)}
           </p>
         )}
@@ -234,10 +236,10 @@ export default function ReviewPage() {
       {/* Step 5: Log panel */}
       <section className="mb-8 p-4 bg-white rounded-lg border border-gray-200">
         <h2 className="text-lg font-semibold text-gray-900 mb-2">
-          Adım 5: İstek Günlüğü (requestId, fbtrace_id, endpoint, status — token/PII yok)
+          {t('step5.title')}
         </h2>
         <div className="space-y-1 max-h-48 overflow-auto font-mono text-caption">
-          {logEntries.length === 0 && <p className="text-gray-500">Henüz istek yok.</p>}
+          {logEntries.length === 0 && <p className="text-gray-500">{t('step5.empty')}</p>}
           {logEntries.map((e, i) => (
             <div key={i} className="flex gap-2 text-gray-700">
               <span>{e.endpoint}</span>

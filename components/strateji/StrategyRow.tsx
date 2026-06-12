@@ -1,7 +1,7 @@
 'use client'
 
 import { useRouter } from 'next/navigation'
-import { useLocale } from 'next-intl'
+import { useLocale, useTranslations } from 'next-intl'
 import { ChevronRight, RotateCcw, AlertTriangle, Eye, Play, Trash2 } from 'lucide-react'
 import type { StrategyInstance } from '@/lib/strategy/types'
 import { GOAL_TYPES } from '@/lib/strategy/constants'
@@ -18,9 +18,11 @@ interface StrategyRowProps {
 export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRowProps) {
   const router = useRouter()
   const locale = useLocale() as 'tr' | 'en'
+  const t = useTranslations('dashboard.strateji.row')
+  const tc = useTranslations('common')
 
   const goalLabel = GOAL_TYPES.find(g => g.value === instance.goal_type)?.label[locale] || instance.goal_type
-  const subtitle = [instance.brand, goalLabel, instance.time_horizon_days ? `${instance.time_horizon_days} gün` : null]
+  const subtitle = [instance.brand, goalLabel, instance.time_horizon_days ? t('days', { count: instance.time_horizon_days }) : null]
     .filter(Boolean)
     .join(' / ')
 
@@ -45,7 +47,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           )}
           {instance.monthly_budget_try && (
             <p className="text-sm text-gray-500 mt-0.5">
-              {new Intl.NumberFormat('tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(instance.monthly_budget_try)} / ay
+              {t('perMonth', { amount: new Intl.NumberFormat(locale === 'en' ? 'en-US' : 'tr-TR', { style: 'currency', currency: 'TRY', maximumFractionDigits: 0 }).format(instance.monthly_budget_try) })}
             </p>
           )}
         </div>
@@ -61,7 +63,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
             <button
               onClick={(e) => { e.stopPropagation(); onRetry(instance.id) }}
               className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-              title="Tekrar dene"
+              title={t('retry')}
             >
               <RotateCcw className="w-4 h-4" />
             </button>
@@ -70,7 +72,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
             <button
               onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, 'jobs')) }}
               className="p-1.5 text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Hata detayı"
+              title={t('errorDetail')}
             >
               <AlertTriangle className="w-4 h-4" />
             </button>
@@ -79,7 +81,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
             <button
               onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance, 'plan')) }}
               className="p-1.5 text-blue-600 hover:bg-blue-50 rounded-lg transition-colors"
-              title="Planı gör"
+              title={t('viewPlan')}
             >
               <Eye className="w-4 h-4" />
             </button>
@@ -88,7 +90,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
             <button
               onClick={(e) => { e.stopPropagation(); router.push(strategyPath(instance)) }}
               className="p-1.5 text-primary hover:bg-primary/10 rounded-lg transition-colors"
-              title="Devam et"
+              title={tc('continue')}
             >
               <Play className="w-4 h-4" />
             </button>
@@ -96,7 +98,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
           <button
               onClick={(e) => { e.stopPropagation(); onDelete(instance.id) }}
               className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors"
-              title="Sil"
+              title={tc('delete')}
             >
               <Trash2 className="w-4 h-4" />
             </button>
@@ -108,7 +110,7 @@ export default function StrategyRow({ instance, onRetry, onDelete }: StrategyRow
       {instance.data_quality_score > 0 && (
         <div className="mt-3 pt-3 border-t border-gray-100">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-            <span>Veri Kalitesi</span>
+            <span>{t('dataQuality')}</span>
             <span>{instance.data_quality_score}/100</span>
           </div>
           <div className="w-full h-1.5 bg-gray-100 rounded-full overflow-hidden">

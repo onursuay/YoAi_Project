@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { DollarSign, Eye, MousePointer, Target, TrendingUp, BarChart3, Layers } from 'lucide-react'
 import type { AggregatedKpis } from '@/lib/yoai/analysisTypes'
 
@@ -24,10 +25,12 @@ function derivePlatformMetrics(kpis: AggregatedKpis, platformKey: 'Meta' | 'Goog
 }
 
 export default function KpiDashboard({ kpis }: Props) {
+  const t = useTranslations('dashboard.yoai.kpiDashboard')
+  const tc = useTranslations('common')
   const [tab, setTab] = useState<PlatformTab>('all')
 
   const tabs: { key: PlatformTab; label: string }[] = [
-    { key: 'all', label: 'Tümü' },
+    { key: 'all', label: tc('all') },
     { key: 'meta', label: 'Meta' },
     { key: 'google', label: 'Google' },
   ]
@@ -35,35 +38,35 @@ export default function KpiDashboard({ kpis }: Props) {
   const allMetrics = kpis
     ? [
         {
-          label: 'Toplam Harcama',
+          label: t('totalSpend'),
           value: `₺${fmt(kpis.totalSpend)}`,
           icon: DollarSign,
           iconColor: 'text-emerald-600',
           iconBg: 'bg-emerald-50',
         },
         {
-          label: 'Gösterim',
+          label: t('impressions'),
           value: fmt(kpis.totalImpressions),
           icon: Eye,
           iconColor: 'text-blue-600',
           iconBg: 'bg-blue-50',
         },
         {
-          label: 'Tıklama',
+          label: t('clicks'),
           value: fmt(kpis.totalClicks),
           icon: MousePointer,
           iconColor: 'text-violet-600',
           iconBg: 'bg-violet-50',
         },
         {
-          label: 'Toplam Dönüşüm',
+          label: t('totalConversions'),
           value: fmt(kpis.totalConversions),
           icon: Target,
           iconColor: 'text-primary',
           iconBg: 'bg-emerald-50',
         },
         {
-          label: 'Aktif Kampanya',
+          label: t('activeCampaigns'),
           value: fmt(kpis.activeCampaigns),
           icon: Layers,
           iconColor: 'text-gray-600',
@@ -78,42 +81,42 @@ export default function KpiDashboard({ kpis }: Props) {
     if (!pd) return []
     return [
       {
-        label: `${label} Harcama`,
+        label: t('platformSpend', { platform: label }),
         value: `₺${fmt(pd.spend)}`,
         icon: DollarSign,
         iconColor: 'text-emerald-600',
         iconBg: 'bg-emerald-50',
       },
       {
-        label: `${label} Gösterim`,
+        label: t('platformImpressions', { platform: label }),
         value: fmt(pd.impressions),
         icon: Eye,
         iconColor: 'text-blue-600',
         iconBg: 'bg-blue-50',
       },
       {
-        label: `${label} Tıklama`,
+        label: t('platformClicks', { platform: label }),
         value: fmt(pd.clicks),
         icon: MousePointer,
         iconColor: 'text-violet-600',
         iconBg: 'bg-violet-50',
       },
       {
-        label: `${label} CTR`,
+        label: t('platformCtr', { platform: label }),
         value: `%${fmt(pd.ctr, 2)}`,
         icon: TrendingUp,
         iconColor: 'text-gray-600',
         iconBg: 'bg-gray-50',
       },
       {
-        label: `${label} CPC`,
+        label: t('platformCpc', { platform: label }),
         value: `₺${fmt(pd.cpc, 2)}`,
         icon: BarChart3,
         iconColor: 'text-red-600',
         iconBg: 'bg-red-50',
       },
       {
-        label: `${label} Dönüşüm`,
+        label: t('platformConversions', { platform: label }),
         value: fmt(pd.conversions),
         icon: Target,
         iconColor: 'text-primary',
@@ -160,7 +163,7 @@ export default function KpiDashboard({ kpis }: Props) {
       <div className="flex-1 min-w-0">
         {metrics.length === 0 ? (
           <div className="bg-white rounded-2xl border border-gray-100 p-5 text-center text-[13px] text-gray-400">
-            {tab === 'meta' ? 'Meta kampanya verisi bulunamadı.' : 'Google kampanya verisi bulunamadı.'}
+            {tab === 'meta' ? t('noMetaData') : t('noGoogleData')}
           </div>
         ) : (
           <div className={`grid ${colClass} gap-3`}>

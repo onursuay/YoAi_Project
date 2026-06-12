@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { TrendingUp, TrendingDown, CalendarDays, Award, Target } from 'lucide-react'
 import type { DeepCampaignInsight, AggregatedKpis } from '@/lib/yoai/analysisTypes'
 
@@ -20,6 +21,7 @@ function fmtCompact(n: number): string {
 }
 
 export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
+  const t = useTranslations('dashboard.yoai.weeklyReport')
   if (loading || !kpis || campaigns.length === 0) return null
 
   const activeCampaigns = campaigns.filter(c => c.status === 'ACTIVE' || c.status === 'ENABLED')
@@ -55,7 +57,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
   // Objective dağılımı
   const objectiveMap = new Map<string, { spend: number; count: number }>()
   for (const c of activeCampaigns) {
-    const obj = c.objective || 'Diğer'
+    const obj = c.objective || t('objectiveOther')
     const prev = objectiveMap.get(obj) || { spend: 0, count: 0 }
     objectiveMap.set(obj, { spend: prev.spend + c.metrics.spend, count: prev.count + 1 })
   }
@@ -81,49 +83,49 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
       <div className="p-6 flex-1 overflow-y-auto">
       {/* Header */}
       <div className="mb-4">
-        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><CalendarDays className="w-4 h-4 text-primary" />Haftalık Özet</h2>
-        <p className="text-[11px] text-gray-400 mt-0.5">Son 7 günlük performans</p>
+        <h2 className="text-base font-semibold text-gray-900 flex items-center gap-1.5"><CalendarDays className="w-4 h-4 text-primary" />{t('title')}</h2>
+        <p className="text-[11px] text-gray-400 mt-0.5">{t('subtitle')}</p>
       </div>
 
       {/* KPIs — 3x2 grid */}
       <div className="grid grid-cols-3 gap-2.5 mb-4">
         <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] text-gray-400">Harcama</p>
+          <p className="text-[10px] text-gray-400">{t('kpiSpend')}</p>
           <p className="text-base font-bold text-gray-900">₺{fmt(kpis.totalSpend)}</p>
-          <p className="text-[10px] text-gray-400">{activeCampaigns.length} kampanya</p>
+          <p className="text-[10px] text-gray-400">{t('campaignsCount', { count: activeCampaigns.length })}</p>
         </div>
         <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] text-gray-400">Dönüşüm</p>
+          <p className="text-[10px] text-gray-400">{t('kpiConversions')}</p>
           <p className="text-base font-bold text-gray-900">{fmt(kpis.totalConversions)}</p>
-          <p className="text-[10px] text-gray-400">{kpis.avgRoas != null ? `ROAS: ${kpis.avgRoas.toFixed(1)}x` : 'CPC: ₺' + fmt(kpis.weightedCpc, 2)}</p>
+          <p className="text-[10px] text-gray-400">{kpis.avgRoas != null ? t('roasValue', { value: kpis.avgRoas.toFixed(1) }) : t('cpcValue', { value: fmt(kpis.weightedCpc, 2) })}</p>
         </div>
         <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] text-gray-400">Tıklama</p>
+          <p className="text-[10px] text-gray-400">{t('kpiClicks')}</p>
           <p className="text-base font-bold text-gray-900">{fmt(kpis.totalClicks)}</p>
-          <p className="text-[10px] text-gray-400">TO: %{fmt(kpis.weightedCtr, 2)}</p>
+          <p className="text-[10px] text-gray-400">{t('ctrValue', { value: fmt(kpis.weightedCtr, 2) })}</p>
         </div>
         <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] text-gray-400">Görüntüleme</p>
+          <p className="text-[10px] text-gray-400">{t('kpiImpressions')}</p>
           <p className="text-base font-bold text-gray-900">{fmtCompact(totalImpressions)}</p>
-          <p className="text-[10px] text-gray-400">CPM: ₺{fmt(avgCpm, 2)}</p>
+          <p className="text-[10px] text-gray-400">{t('cpmValue', { value: fmt(avgCpm, 2) })}</p>
         </div>
         {totalReach > 0 ? (
           <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-            <p className="text-[10px] text-gray-400">Erişim</p>
+            <p className="text-[10px] text-gray-400">{t('kpiReach')}</p>
             <p className="text-base font-bold text-gray-900">{fmtCompact(totalReach)}</p>
-            <p className="text-[10px] text-gray-400">Sıklık: {avgFrequency.toFixed(1)}x</p>
+            <p className="text-[10px] text-gray-400">{t('frequencyValue', { value: avgFrequency.toFixed(1) })}</p>
           </div>
         ) : (
           <div className="bg-gray-50 rounded-xl px-3 py-2.5">
             <p className="text-[10px] text-gray-400">CPC</p>
             <p className="text-base font-bold text-gray-900">₺{fmt(kpis.weightedCpc, 2)}</p>
-            <p className="text-[10px] text-gray-400">ort. tıklama maliyeti</p>
+            <p className="text-[10px] text-gray-400">{t('avgClickCost')}</p>
           </div>
         )}
         <div className="bg-gray-50 rounded-xl px-3 py-2.5">
-          <p className="text-[10px] text-gray-400">Ort. Puan</p>
+          <p className="text-[10px] text-gray-400">{t('kpiAvgScore')}</p>
           <p className="text-base font-bold text-gray-900">{avgScore.toFixed(0)}/100</p>
-          <p className="text-[10px] text-gray-400">CPC: ₺{fmt(kpis.weightedCpc, 2)}</p>
+          <p className="text-[10px] text-gray-400">{t('cpcValue', { value: fmt(kpis.weightedCpc, 2) })}</p>
         </div>
       </div>
 
@@ -148,10 +150,10 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
             <table className="w-full text-[11px]">
               <thead>
                 <tr className="bg-gray-50/80">
-                  <th className="text-left px-3 py-2 font-medium text-gray-500">Platform</th>
-                  <th className="text-right px-2 py-2 font-medium text-gray-500">TO</th>
+                  <th className="text-left px-3 py-2 font-medium text-gray-500">{t('colPlatform')}</th>
+                  <th className="text-right px-2 py-2 font-medium text-gray-500">{t('colCtr')}</th>
                   <th className="text-right px-2 py-2 font-medium text-gray-500">CPC</th>
-                  <th className="text-right px-3 py-2 font-medium text-gray-500">Puan</th>
+                  <th className="text-right px-3 py-2 font-medium text-gray-500">{t('colScore')}</th>
                 </tr>
               </thead>
               <tbody>
@@ -175,7 +177,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
 
       {/* Skor Dağılımı — mini histogram */}
       <div className="mb-4">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2">Kampanya Skor Dağılımı</p>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2">{t('scoreDistribution')}</p>
         <div className="space-y-1.5">
           {scoreRanges.map(range => (
             <div key={range.label} className="flex items-center gap-2">
@@ -196,7 +198,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
       {objectiveEntries.length > 1 && (
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2 flex items-center gap-1.5">
-            <Target className="w-3 h-3" />Hedef Bazlı Harcama
+            <Target className="w-3 h-3" />{t('spendByObjective')}
           </p>
           <div className="space-y-1.5">
             {objectiveEntries.map(([obj, val]) => {
@@ -219,7 +221,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
       {top3.length > 1 && (
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2 flex items-center gap-1.5">
-            <Award className="w-3 h-3" />En İyi Kampanyalar
+            <Award className="w-3 h-3" />{t('topCampaigns')}
           </p>
           <div className="space-y-1.5">
             {top3.map((c, i) => (
@@ -244,7 +246,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
           <div className="flex items-center gap-2 bg-emerald-50/50 rounded-lg px-3 py-2">
             <TrendingUp className="w-3.5 h-3.5 text-emerald-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[9px] text-emerald-600 font-medium">En İyi</p>
+              <p className="text-[9px] text-emerald-600 font-medium">{t('best')}</p>
               <p className="text-[11px] text-gray-900 font-medium truncate">{best.campaignName}</p>
               <p className="text-[9px] text-gray-500">{best.score}/100</p>
             </div>
@@ -254,7 +256,7 @@ export default function WeeklyReport({ campaigns, kpis, loading }: Props) {
           <div className="flex items-center gap-2 bg-red-50/50 rounded-lg px-3 py-2">
             <TrendingDown className="w-3.5 h-3.5 text-red-500 shrink-0" />
             <div className="min-w-0">
-              <p className="text-[9px] text-red-600 font-medium">En Düşük</p>
+              <p className="text-[9px] text-red-600 font-medium">{t('worst')}</p>
               <p className="text-[11px] text-gray-900 font-medium truncate">{worst.campaignName}</p>
               <p className="text-[9px] text-gray-500">{worst.score}/100</p>
             </div>

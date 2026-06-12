@@ -130,10 +130,10 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
           {editing ? (
             <div className="space-y-2.5">
               <EditField label={t('headlines')}>
-                <textarea rows={3} className={inputCls} value={draft.headlines} onChange={(e) => setDraft((d) => ({ ...d, headlines: e.target.value }))} placeholder="Her satır bir başlık" />
+                <textarea rows={3} className={inputCls} value={draft.headlines} onChange={(e) => setDraft((d) => ({ ...d, headlines: e.target.value }))} placeholder={t('headlinePlaceholder')} />
               </EditField>
               <EditField label={t('descriptions')}>
-                <textarea rows={2} className={inputCls} value={draft.descriptions} onChange={(e) => setDraft((d) => ({ ...d, descriptions: e.target.value }))} placeholder="Her satır bir açıklama" />
+                <textarea rows={2} className={inputCls} value={draft.descriptions} onChange={(e) => setDraft((d) => ({ ...d, descriptions: e.target.value }))} placeholder={t('descriptionPlaceholder')} />
               </EditField>
               <EditField label={t('primaryText')}>
                 <textarea rows={2} className={inputCls} value={draft.primaryText} onChange={(e) => setDraft((d) => ({ ...d, primaryText: e.target.value }))} />

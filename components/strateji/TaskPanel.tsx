@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { CheckCircle, Circle, Clock, AlertCircle, Sparkles } from 'lucide-react'
 import type { StrategyTask, TaskStatus } from '@/lib/strategy/types'
 import { TASK_CATEGORIES } from '@/lib/strategy/constants'
@@ -17,17 +18,18 @@ const STATUS_ICONS: Record<TaskStatus, React.ReactNode> = {
   blocked: <AlertCircle className="w-4 h-4 text-red-500" />,
 }
 
-const STATUS_LABELS: Record<TaskStatus, string> = {
-  todo: 'Yapılacak',
-  in_progress: 'Devam ediyor',
-  done: 'Tamamlandı',
-  blocked: 'Engelli',
-}
-
 export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
+  const t = useTranslations('dashboard.strateji.tasks')
   const [filter, setFilter] = useState<string>('all')
 
-  const categoryMap = new Map(TASK_CATEGORIES.map((c) => [c.value, c.label]))
+  const STATUS_LABELS: Record<TaskStatus, string> = {
+    todo: t('taskStatus.todo'),
+    in_progress: t('taskStatus.inProgress'),
+    done: t('taskStatus.done'),
+    blocked: t('taskStatus.blocked'),
+  }
+
+  const categoryMap = new Map(TASK_CATEGORIES.map((c) => [c.value, t(`category.${c.value}`)]))
   const filtered = filter === 'all' ? tasks : tasks.filter((t) => t.category === filter)
 
   const stats = {
@@ -45,16 +47,16 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
   return (
     <div className="space-y-4">
       <div className="bg-primary/5 border border-primary/20 rounded-xl p-4">
-        <h3 className="text-sm font-semibold text-primary mb-1">Aşama 3: Uygulama & Görevler</h3>
-        <p className="text-xs text-gray-600">Stratejinin hayata geçmesi için görevleri takip edin.</p>
+        <h3 className="text-sm font-semibold text-primary mb-1">{t('phaseTitle')}</h3>
+        <p className="text-xs text-gray-600">{t('phaseDesc')}</p>
       </div>
 
       {/* İlerleme */}
       <div className="flex items-center gap-4">
         <div className="flex-1">
           <div className="flex items-center justify-between text-xs text-gray-500 mb-1">
-            <span>{stats.done}/{stats.total} tamamlandı</span>
-            {stats.blocked > 0 && <span className="text-red-500">{stats.blocked} engelli</span>}
+            <span>{t('completedCount', { done: stats.done, total: stats.total })}</span>
+            {stats.blocked > 0 && <span className="text-red-500">{t('blockedCount', { count: stats.blocked })}</span>}
           </div>
           <div className="w-full h-2 bg-gray-100 rounded-full overflow-hidden">
             <div
@@ -73,10 +75,10 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
             filter === 'all' ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
           }`}
         >
-          Tümü ({tasks.length})
+          {t('allFilter', { count: tasks.length })}
         </button>
         {TASK_CATEGORIES.map((cat) => {
-          const count = tasks.filter((t) => t.category === cat.value).length
+          const count = tasks.filter((task) => task.category === cat.value).length
           if (count === 0) return null
           return (
             <button
@@ -86,7 +88,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
                 filter === cat.value ? 'bg-gray-900 text-white border-gray-900' : 'bg-white text-gray-600 border-gray-200 hover:border-gray-300'
               }`}
             >
-              {cat.label} ({count})
+              {t('filterWithCount', { label: t(`category.${cat.value}`), count })}
             </button>
           )
         })}
@@ -96,7 +98,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
       <div className="space-y-1.5">
         {filtered.length === 0 ? (
           <div className="text-center py-8 text-sm text-gray-400">
-            Henüz görev yok. Plan onaylandığında görevler oluşturulacak.
+            {t('empty')}
           </div>
         ) : (
           filtered.map((task) => (
@@ -115,7 +117,7 @@ export default function TaskPanel({ tasks, onUpdateStatus }: TaskPanelProps) {
               <button
                 onClick={() => onUpdateStatus(task.id, nextStatus(task.status))}
                 className="flex-shrink-0 hover:scale-110 transition-transform"
-                title={`Durum: ${STATUS_LABELS[task.status]} — tıklayın`}
+                title={t('statusHint', { status: STATUS_LABELS[task.status] })}
               >
                 {/* Optimizasyon görevinde Sparkles yalnız "Yapılacak"ta (AI önerisi rozeti);
                     tıklandıkça normal 3 durum görünür: ⭕→🕐 saat→✅ tik. */}

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { ArrowRight, TrendingUp, Wallet } from 'lucide-react'
 import type { DeepCampaignInsight } from '@/lib/yoai/analysisTypes'
 
@@ -18,7 +19,9 @@ interface BudgetSuggestion {
   direction: 'increase' | 'decrease'
 }
 
-function computeBudgetSuggestions(campaigns: DeepCampaignInsight[]): BudgetSuggestion[] {
+type ReasonFn = (key: 'highPerformance' | 'lowPerformance' | 'lossRisk', values?: Record<string, string | number>) => string
+
+function computeBudgetSuggestions(campaigns: DeepCampaignInsight[], reason: ReasonFn): BudgetSuggestion[] {
   const active = campaigns.filter(c =>
     (c.status === 'ACTIVE' || c.status === 'ENABLED') && c.dailyBudget != null && c.dailyBudget > 0
   )
@@ -34,14 +37,14 @@ function computeBudgetSuggestions(campaigns: DeepCampaignInsight[]): BudgetSugge
     if (score >= 75 && (roas == null || roas >= 2)) {
       const increase = Math.round(budget * 1.2)
       if (increase !== budget) {
-        suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: increase, reason: `Yüksek performans (${score}/100)`, direction: 'increase' })
+        suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: increase, reason: reason('highPerformance', { score }), direction: 'increase' })
       }
     }
     if (score < 40 && c.metrics.spend > 200) {
-      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.7), reason: `Düşük performans (${score}/100)`, direction: 'decrease' })
+      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.7), reason: reason('lowPerformance', { score }), direction: 'decrease' })
     }
     if (roas != null && roas < 1 && c.metrics.spend > 100) {
-      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.6), reason: `ROAS ${roas.toFixed(1)}x, zarar riski`, direction: 'decrease' })
+      suggestions.push({ campaignId: c.id, campaignName: c.campaignName, platform: c.platform, currentBudget: budget, suggestedBudget: Math.round(budget * 0.6), reason: reason('lossRisk', { roas: roas.toFixed(1) }), direction: 'decrease' })
     }
   }
 
@@ -50,9 +53,12 @@ function computeBudgetSuggestions(campaigns: DeepCampaignInsight[]): BudgetSugge
 }
 
 export default function SmartBudgetPanel({ campaigns, loading }: Props) {
+  const t = useTranslations('dashboard.yoai.smartBudget')
+  const reasonFn: ReasonFn = (key, values) => t(`reason.${key}`, values)
+
   if (loading) return null
 
-  const suggestions = computeBudgetSuggestions(campaigns)
+  const suggestions = computeBudgetSuggestions(campaigns, reasonFn)
   if (suggestions.length === 0) return null
 
   const totalCurrent = suggestions.reduce((s, sg) => s + sg.currentBudget, 0)
@@ -71,9 +77,9 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
               <span className="flex items-center justify-center w-7 h-7 rounded-lg bg-primary/8">
                 <Wallet className="w-4 h-4 text-primary" />
               </span>
-              Bütçe Dağılımı
+              {t('title')}
             </h2>
-            <p className="text-[11px] text-gray-400 mt-1 ml-9 tracking-wide">Performansa dayalı bütçe optimizasyonu</p>
+            <p className="text-[11px] text-gray-400 mt-1 ml-9 tracking-wide">{t('subtitle')}</p>
           </div>
           <div className="text-right">
             <div className={`inline-flex items-center gap-1 px-3 py-1.5 rounded-lg text-sm font-bold ${
@@ -81,7 +87,7 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
             }`}>
               {diff > 0 ? '+' : ''}₺{diff.toFixed(0)}
             </div>
-            <p className="text-[10px] text-gray-400 mt-1">günlük fark</p>
+            <p className="text-[10px] text-gray-400 mt-1">{t('dailyDiff')}</p>
           </div>
         </div>
 
@@ -90,16 +96,16 @@ export default function SmartBudgetPanel({ campaigns, loading }: Props) {
           {increases.length > 0 && (
             <span className="flex items-center gap-1.5 text-[12px] font-medium text-emerald-700">
               <span className="w-1.5 h-1.5 rounded-full bg-emerald-500" />
-              {increases.length} artış önerisi
+              {t('increaseCount', { count: increases.length })}
             </span>
           )}
           {decreases.length > 0 && (
             <span className="flex items-center gap-1.5 text-[12px] font-medium text-rose-700">
               <span className="w-1.5 h-1.5 rounded-full bg-rose-400" />
-              {decreases.length} azalma önerisi
+              {t('decreaseCount', { count: decreases.length })}
             </span>
           )}
-          <span className="ml-auto text-[11px] text-gray-400">{suggestions.length} kampanya</span>
+          <span className="ml-auto text-[11px] text-gray-400">{t('campaignCount', { count: suggestions.length })}</span>
         </div>
 
         {/* Suggestion rows */}

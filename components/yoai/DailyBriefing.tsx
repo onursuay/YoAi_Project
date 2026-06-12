@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations, useLocale } from 'next-intl'
 import { AlertTriangle, TrendingUp, TrendingDown, Target, Zap, Newspaper, Eye, Users, BarChart3, DollarSign, Shield, Layers, ArrowRight } from 'lucide-react'
 import type { DeepAnalysisResult } from '@/lib/yoai/analysisTypes'
 
@@ -15,6 +16,8 @@ function fmtCompact(n: number): string {
 }
 
 export default function DailyBriefing({ data, loading }: Props) {
+  const t = useTranslations('dashboard.yoai.dailyBriefing')
+  const locale = useLocale()
   if (loading || !data) return null
 
   const { campaigns, kpis } = data
@@ -23,7 +26,7 @@ export default function DailyBriefing({ data, loading }: Props) {
   const lowRoasCampaigns = campaigns.filter(c => c.metrics.roas != null && c.metrics.roas < 1 && c.metrics.spend > 100)
   const highPerformers = campaigns.filter(c => c.score >= 80).length
   const actionCount = data.actions.length
-  const today = new Date().toLocaleDateString('tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
+  const today = new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR', { weekday: 'long', day: 'numeric', month: 'long' })
 
   // Ek metrikler
   const totalReach = activeCampaigns.reduce((s, c) => s + (c.metrics.reach ?? 0), 0)
@@ -65,34 +68,34 @@ export default function DailyBriefing({ data, loading }: Props) {
   const priorities: { icon: React.ElementType; text: string; type: 'critical' | 'warning' | 'success' | 'info' }[] = []
 
   if (criticalCampaigns.length > 0) {
-    priorities.push({ icon: AlertTriangle, text: `${criticalCampaigns.length} kampanya kritik durumda, acil müdahale önerilir.`, type: 'critical' })
+    priorities.push({ icon: AlertTriangle, text: t('prioCritical', { count: criticalCampaigns.length }), type: 'critical' })
   }
   if (lowRoasCampaigns.length > 0) {
-    priorities.push({ icon: TrendingDown, text: `${lowRoasCampaigns.length} kampanyada ROAS 1x altında, harcama geri dönmüyor.`, type: 'warning' })
+    priorities.push({ icon: TrendingDown, text: t('prioLowRoas', { count: lowRoasCampaigns.length }), type: 'warning' })
   }
   if (highPerformers > 0) {
-    priorities.push({ icon: TrendingUp, text: `${highPerformers} kampanya yüksek performans gösteriyor.`, type: 'success' })
+    priorities.push({ icon: TrendingUp, text: t('prioHighPerformers', { count: highPerformers }), type: 'success' })
   }
   if (kpis.totalClicks > 0) {
     const convRate = (kpis.totalConversions / kpis.totalClicks) * 100
     if (convRate < 1) {
-      priorities.push({ icon: Target, text: `Dönüşüm oranı %${convRate.toFixed(2)}, landing page optimizasyonu değerlendirin.`, type: 'warning' })
+      priorities.push({ icon: Target, text: t('prioConvRate', { rate: convRate.toFixed(2) }), type: 'warning' })
     }
   }
   if (kpis.totalImpressions > 0) {
-    priorities.push({ icon: Eye, text: `Toplam ${kpis.totalImpressions.toLocaleString('tr-TR')} görüntüleme, CPM: ₺${avgCpm.toFixed(2)}`, type: 'info' })
+    priorities.push({ icon: Eye, text: t('prioImpressions', { impressions: kpis.totalImpressions.toLocaleString('tr-TR'), cpm: avgCpm.toFixed(2) }), type: 'info' })
   }
   if (totalReach > 0) {
-    priorities.push({ icon: Users, text: `${totalReach.toLocaleString('tr-TR')} kişiye ulaşıldı, ort. sıklık: ${avgFrequency.toFixed(1)}x`, type: 'info' })
+    priorities.push({ icon: Users, text: t('prioReach', { reach: totalReach.toLocaleString('tr-TR'), frequency: avgFrequency.toFixed(1) }), type: 'info' })
   }
   if (avgFrequency > 3) {
-    priorities.push({ icon: BarChart3, text: `Frekans ${avgFrequency.toFixed(1)}x — reklam yorgunluğu riski, hedef kitle genişletmeyi düşünün.`, type: 'warning' })
+    priorities.push({ icon: BarChart3, text: t('prioFrequency', { frequency: avgFrequency.toFixed(1) }), type: 'warning' })
   }
   if (avgCpc > 10) {
-    priorities.push({ icon: DollarSign, text: `Ortalama tıklama maliyeti ₺${avgCpc.toFixed(2)}, reklam metinleri ve hedefleme gözden geçirilmeli.`, type: 'warning' })
+    priorities.push({ icon: DollarSign, text: t('prioCpc', { cpc: avgCpc.toFixed(2) }), type: 'warning' })
   }
   if (actionCount > 0) {
-    priorities.push({ icon: Zap, text: `${actionCount} aksiyon önerisi mevcut.`, type: 'info' })
+    priorities.push({ icon: Zap, text: t('prioActions', { count: actionCount }), type: 'info' })
   }
 
   if (priorities.length === 0) return null
@@ -119,18 +122,21 @@ export default function DailyBriefing({ data, loading }: Props) {
         <div className="mb-4">
           <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{today}</p>
           <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5">
-            <Newspaper className="w-4 h-4 text-primary" />Günlük Brifing
+            <Newspaper className="w-4 h-4 text-primary" />{t('title')}
           </h2>
         </div>
 
         {/* Executive summary */}
         <div className="bg-gray-50 rounded-xl px-4 py-3 mb-4">
           <p className="text-sm text-gray-700 leading-relaxed">
-            Son 7 günde <strong className="text-gray-900">₺{kpis.totalSpend.toFixed(0)}</strong> harcanarak{' '}
-            <strong className="text-gray-900">{kpis.totalConversions}</strong> dönüşüm elde edildi.{' '}
-            <strong className="text-gray-900">{kpis.totalImpressions.toLocaleString('tr-TR')}</strong> görüntüleme{' '}
-            ve <strong className="text-gray-900">{kpis.totalClicks.toLocaleString('tr-TR')}</strong> tıklama gerçekleşti.{' '}
-            {criticalCampaigns.length > 0 ? `${criticalCampaigns.length} kampanya dikkat gerektiriyor.` : 'Genel durum stabil.'}
+            {t.rich('executiveSummary', {
+              spend: kpis.totalSpend.toFixed(0),
+              conversions: kpis.totalConversions,
+              impressions: kpis.totalImpressions.toLocaleString('tr-TR'),
+              clicks: kpis.totalClicks.toLocaleString('tr-TR'),
+              b: (chunks) => <strong className="text-gray-900">{chunks}</strong>,
+            })}{' '}
+            {criticalCampaigns.length > 0 ? t('summaryNeedsAttention', { count: criticalCampaigns.length }) : t('summaryStable')}
           </p>
         </div>
 
@@ -138,15 +144,15 @@ export default function DailyBriefing({ data, loading }: Props) {
         <div className="grid grid-cols-4 gap-2 mb-4">
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
             <p className="text-xs font-bold text-gray-900">₺{fmtCompact(kpis.totalSpend)}</p>
-            <p className="text-[9px] text-gray-400">Harcama</p>
+            <p className="text-[9px] text-gray-400">{t('kpiSpend')}</p>
           </div>
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
             <p className="text-xs font-bold text-gray-900">{fmtCompact(kpis.totalImpressions)}</p>
-            <p className="text-[9px] text-gray-400">Gösterim</p>
+            <p className="text-[9px] text-gray-400">{t('kpiImpressions')}</p>
           </div>
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
             <p className="text-xs font-bold text-gray-900">%{kpis.weightedCtr.toFixed(1)}</p>
-            <p className="text-[9px] text-gray-400">TO</p>
+            <p className="text-[9px] text-gray-400">{t('kpiCtr')}</p>
           </div>
           <div className="text-center bg-gray-50/80 rounded-lg py-2 px-1">
             <p className="text-xs font-bold text-gray-900">₺{avgCpm.toFixed(1)}</p>
@@ -171,16 +177,16 @@ export default function DailyBriefing({ data, loading }: Props) {
         {(metaCampaigns.length > 0 || googleCampaigns.length > 0) && (
           <div className="mb-4">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
-              <Layers className="w-3 h-3" />Platform Karşılaştırma
+              <Layers className="w-3 h-3" />{t('platformComparison')}
             </p>
             <div className="border border-gray-100 rounded-xl overflow-hidden">
               <table className="w-full text-[11px]">
                 <thead>
                   <tr className="bg-gray-50/80">
-                    <th className="text-left px-3 py-2 font-medium text-gray-500">Platform</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-500">Harcama</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-500">Tıklama</th>
-                    <th className="text-right px-3 py-2 font-medium text-gray-500">Dönüşüm</th>
+                    <th className="text-left px-3 py-2 font-medium text-gray-500">{t('colPlatform')}</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">{t('colSpend')}</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">{t('colClicks')}</th>
+                    <th className="text-right px-3 py-2 font-medium text-gray-500">{t('colConversions')}</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -210,7 +216,7 @@ export default function DailyBriefing({ data, loading }: Props) {
         {totalRiskCampaigns > 0 && (
           <div className="mb-4">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
-              <Shield className="w-3 h-3" />Risk Dağılımı
+              <Shield className="w-3 h-3" />{t('riskDistribution')}
             </p>
             <div className="flex h-3 rounded-full overflow-hidden bg-gray-100">
               {riskCounts.critical > 0 && <div className="bg-red-500 transition-all" style={{ width: `${(riskCounts.critical / totalRiskCampaigns) * 100}%` }} />}
@@ -219,10 +225,10 @@ export default function DailyBriefing({ data, loading }: Props) {
               {riskCounts.low > 0 && <div className="bg-emerald-400 transition-all" style={{ width: `${(riskCounts.low / totalRiskCampaigns) * 100}%` }} />}
             </div>
             <div className="flex items-center gap-3 mt-1.5 flex-wrap">
-              {riskCounts.critical > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />Kritik: {riskCounts.critical}</span>}
-              {riskCounts.high > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-orange-400" />Yüksek: {riskCounts.high}</span>}
-              {riskCounts.medium > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" />Orta: {riskCounts.medium}</span>}
-              {riskCounts.low > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />Düşük: {riskCounts.low}</span>}
+              {riskCounts.critical > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-red-500" />{t('riskCritical')}: {riskCounts.critical}</span>}
+              {riskCounts.high > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-orange-400" />{t('riskHigh')}: {riskCounts.high}</span>}
+              {riskCounts.medium > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-gray-300" />{t('riskMedium')}: {riskCounts.medium}</span>}
+              {riskCounts.low > 0 && <span className="flex items-center gap-1 text-[9px] text-gray-500"><span className="w-1.5 h-1.5 rounded-full bg-emerald-400" />{t('riskLow')}: {riskCounts.low}</span>}
             </div>
           </div>
         )}
@@ -231,13 +237,13 @@ export default function DailyBriefing({ data, loading }: Props) {
         {topActions.length > 0 && (
           <div className="mb-4">
             <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5 flex items-center gap-1.5">
-              <Zap className="w-3 h-3" />Öncelikli Aksiyonlar
+              <Zap className="w-3 h-3" />{t('topActions')}
             </p>
             <div className="space-y-1.5">
               {topActions.map((action, i) => (
                 <div key={action.id} className="flex items-center gap-2.5 rounded-lg px-3 py-2 bg-gray-50/60 border border-gray-100/60">
                   <span className={`text-[9px] font-bold px-1.5 py-0.5 rounded ${priorityColors[action.priority]}`}>
-                    {action.priority === 'high' ? 'ACİL' : action.priority === 'medium' ? 'ORTA' : 'DÜŞÜK'}
+                    {action.priority === 'high' ? t('prioBadgeHigh') : action.priority === 'medium' ? t('prioBadgeMedium') : t('prioBadgeLow')}
                   </span>
                   <div className="flex-1 min-w-0">
                     <p className="text-[11px] text-gray-800 font-medium truncate">{action.title}</p>
@@ -253,7 +259,7 @@ export default function DailyBriefing({ data, loading }: Props) {
         {/* Yapısal Sorunlar */}
         {structuralIssues.length > 0 && (
           <div>
-            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5">Yapısal Sorunlar</p>
+            <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium mb-2.5">{t('structuralIssues')}</p>
             <div className="space-y-1.5">
               {structuralIssues.slice(0, 3).map((issue) => (
                 <div key={issue.id} className={`flex items-start gap-2 rounded-lg px-3 py-2 ${issue.severity === 'critical' ? 'bg-red-50/50 border border-red-100/50' : 'bg-gray-50/50 border border-gray-100/50'}`}>

@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { Check } from 'lucide-react'
 import type { InstanceStatus } from '@/lib/strategy/types'
 import { STATUS_PHASE_MAP } from '@/lib/strategy/constants'
@@ -8,13 +9,13 @@ interface PhaseIndicatorProps {
   status: InstanceStatus
 }
 
-const PHASES = [
-  { num: 1, label: 'Keşif & Veri' },
-  { num: 2, label: 'Strateji Planı' },
-  { num: 3, label: 'Uygulama' },
-]
-
 export default function PhaseIndicator({ status }: PhaseIndicatorProps) {
+  const t = useTranslations('dashboard.strateji.phases')
+  const PHASES = [
+    { num: 1, label: t('discovery') },
+    { num: 2, label: t('plan') },
+    { num: 3, label: t('apply') },
+  ]
   const currentPhase = STATUS_PHASE_MAP[status]
 
   return (

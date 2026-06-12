@@ -1,5 +1,6 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import type { StrategyInstance } from '@/lib/strategy/types'
 import StrategyRow from './StrategyRow'
 import ScanAnimation from './ScanAnimation'
@@ -13,6 +14,7 @@ interface StrategyListProps {
 }
 
 export default function StrategyList({ instances, loading, scanning, onRetry, onDelete }: StrategyListProps) {
+  const t = useTranslations('dashboard.strateji.list')
   if (loading) {
     return (
       <div className="space-y-3">
@@ -33,9 +35,9 @@ export default function StrategyList({ instances, loading, scanning, onRetry, on
     return (
       <div className="bg-white rounded-xl border border-gray-200 p-12 text-center">
         <div className="text-4xl mb-3">🎯</div>
-        <h3 className="text-lg font-semibold text-gray-900 mb-1">Henüz strateji yok</h3>
+        <h3 className="text-lg font-semibold text-gray-900 mb-1">{t('emptyTitle')}</h3>
         <p className="text-sm text-gray-500">
-          Yeni bir strateji oluşturarak pazarlama planınızı otomatik üretin.
+          {t('emptyDesc')}
         </p>
       </div>
     )

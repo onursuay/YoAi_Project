@@ -23,6 +23,7 @@ interface Props {
 
 export default function DrilldownModal({ campaign, busyId, onDecide, onEditAd, onClose }: Props) {
   const t = useTranslations('dashboard.yoai.hierarchy')
+  const tc = useTranslations('common')
   const locale = useLocale() as 'tr' | 'en'
   const [adsetId, setAdsetId] = useState<string | null>(null)
   const adset = adsetId ? campaign.adsets.find((a) => a.id === adsetId) : undefined
@@ -56,7 +57,7 @@ export default function DrilldownModal({ campaign, busyId, onDecide, onEditAd, o
             <h3 className="text-[17px] font-semibold text-slate-50 leading-snug mt-1.5 truncate">{titleCaseTr(campaign.campaign_name)}</h3>
             <p className="text-[12px] text-slate-400 mt-0.5">{t('currentType')}: <span className="text-slate-200">{curType}</span></p>
           </div>
-          <button onClick={onClose} className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors" aria-label="Kapat">
+          <button onClick={onClose} className="shrink-0 p-1.5 rounded-lg text-slate-400 hover:text-slate-100 hover:bg-slate-800 transition-colors" aria-label={tc('closeAria')}>
             <X className="w-5 h-5" />
           </button>
         </div>

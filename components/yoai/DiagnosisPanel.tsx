@@ -15,6 +15,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   Loader2,
   AlertTriangle,
@@ -41,27 +42,6 @@ interface DiagnoseResponse {
   summary: { total: number; byRootCause: Record<string, number> }
 }
 
-const ROOT_CAUSE_LABEL: Record<RootCauseId, string> = {
-  hook_problem: 'Hook Sorunu',
-  landing_page_problem: 'Landing Page Sorunu',
-  creative_fatigue: 'Kreatif Yorgunluğu',
-  audience_mismatch: 'Hedefleme Uyumsuzluğu',
-  event_quality_problem: 'Event Kalitesi',
-  insufficient_data: 'Veri Yetersiz',
-  budget_starvation: 'Bütçe Kısıtı',
-  wrong_optimization_goal: 'Yanlış Optimizasyon Hedefi',
-  pixel_misfire: 'Pixel / Tracking Sorunu',
-  healthy: 'Sağlıklı',
-}
-
-const ACTION_LABEL: Record<DecisionActionType, string> = {
-  monitor: 'İzle',
-  tweak: 'Küçük Düzelt',
-  revise: 'Revize Et',
-  recreate: 'Yeniden Kur',
-  change_objective: 'Objective Değiştir',
-}
-
 function rootCauseColor(id: RootCauseId): string {
   if (id === 'healthy') return 'bg-emerald-50 border-emerald-200 text-emerald-800'
   if (id === 'insufficient_data') return 'bg-gray-50 border-gray-200 text-gray-700'
@@ -72,6 +52,11 @@ function rootCauseColor(id: RootCauseId): string {
 }
 
 export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
+  const t = useTranslations('dashboard.yoai.diagnosis')
+  const rootCauseLabel = (id: RootCauseId) => t(`rootCause.${id}`)
+  const actionLabel = (a: DecisionActionType) => t(`action.${a}`)
+  const priorityLabel = (p: string) =>
+    p === 'high' || p === 'medium' || p === 'low' ? t(`priority.${p}`) : p
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [data, setData] = useState<DiagnoseResponse | null>(null)
@@ -94,10 +79,10 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
           body: JSON.stringify({ campaigns: metaCampaigns }),
         })
         const json = (await res.json()) as DiagnoseResponse
-        if (!json.ok) throw new Error('Teşhis alınamadı.')
+        if (!json.ok) throw new Error(t('errorFetch'))
         setData(json)
       } catch (e) {
-        setErr(e instanceof Error ? e.message : 'Teşhis sırasında hata.')
+        setErr(e instanceof Error ? e.message : t('errorGeneric'))
       } finally {
         setLoading(false)
       }
@@ -107,7 +92,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
   if (loading) {
     return (
       <div className="flex items-center gap-2 text-sm text-gray-500 py-6">
-        <Loader2 className="w-4 h-4 animate-spin" /> Teşhis hazırlanıyor…
+        <Loader2 className="w-4 h-4 animate-spin" /> {t('loading')}
       </div>
     )
   }
@@ -123,7 +108,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
   if (!data || data.diagnoses.length === 0) {
     return (
       <div className="text-sm text-gray-500 py-4">
-        Teşhis edilecek Meta kampanyası bulunamadı.
+        {t('noMetaCampaigns')}
       </div>
     )
   }
@@ -138,9 +123,14 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
       <div className="flex items-center gap-3 bg-gray-50 rounded-xl px-4 py-3">
         <Activity className="w-4 h-4 text-gray-500" />
         <div className="text-xs text-gray-600">
-          <strong className="text-gray-900">{total}</strong> kampanya teşhis edildi —{' '}
-          <span className="text-emerald-700">{healthy} sağlıklı</span>,{' '}
-          <span className="text-gray-700">{issueCount} sorunlu</span>.
+          {t.rich('summary', {
+            total,
+            healthy,
+            issues: issueCount,
+            strong: (chunks) => <strong className="text-gray-900">{chunks}</strong>,
+            ok: (chunks) => <span className="text-emerald-700">{chunks}</span>,
+            bad: (chunks) => <span className="text-gray-700">{chunks}</span>,
+          })}
         </div>
       </div>
 
@@ -167,7 +157,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                   <div>
                     <p className="text-sm font-medium text-gray-900">{d.campaignName}</p>
                     <p className="text-[11px] text-gray-500">
-                      {ROOT_CAUSE_LABEL[d.primary.id]} · güven: {d.primary.confidence}
+                      {rootCauseLabel(d.primary.id)} · {t('confidenceLabel')}: {d.primary.confidence}
                     </p>
                   </div>
                 </div>
@@ -183,7 +173,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                   {/* Primary root cause */}
                   <div className={`rounded-lg border px-3 py-2 ${color}`}>
                     <p className="text-xs font-semibold mb-1">
-                      {ROOT_CAUSE_LABEL[d.primary.id]}
+                      {rootCauseLabel(d.primary.id)}
                     </p>
                     <p className="text-xs">{d.primary.summary}</p>
                     <div className="flex flex-wrap gap-1 mt-2">
@@ -201,11 +191,11 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                   {/* Ek teşhisler */}
                   {d.rootCauses.length > 1 && (
                     <div className="text-[11px] text-gray-600">
-                      <p className="font-semibold mb-1">Yan bulgular:</p>
+                      <p className="font-semibold mb-1">{t('sideFindings')}</p>
                       <ul className="space-y-0.5">
                         {d.rootCauses.slice(1).map((rc) => (
                           <li key={rc.id}>
-                            • <strong>{ROOT_CAUSE_LABEL[rc.id]}</strong> ({rc.confidence}) — {rc.summary}
+                            • <strong>{rootCauseLabel(rc.id)}</strong> ({rc.confidence}) — {rc.summary}
                           </li>
                         ))}
                       </ul>
@@ -216,7 +206,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                   {decision && decision.actions.length > 0 && (
                     <div className="border-t border-gray-200 pt-3">
                       <p className="text-xs font-semibold text-gray-700 mb-2">
-                        Önerilen Aksiyon
+                        {t('recommendedAction')}
                       </p>
                       {decision.actions.map((action, i) => (
                         <div
@@ -226,7 +216,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                           <div className="flex items-center justify-between">
                             <p className="text-sm font-medium text-gray-900">{action.title}</p>
                             <span className="text-[10px] uppercase tracking-wider text-gray-400">
-                              {ACTION_LABEL[action.actionType]} · {action.priority}
+                              {actionLabel(action.actionType)} · {priorityLabel(action.priority)}
                             </span>
                           </div>
                           <p className="text-xs text-gray-600">{action.rationale}</p>
@@ -235,7 +225,7 @@ export default function DiagnosisPanel({ campaigns, onApplyAction }: Props) {
                               onClick={() => onApplyAction(decision, i)}
                               className="mt-1 text-xs px-3 py-1.5 bg-primary text-white rounded-lg hover:bg-primary/90"
                             >
-                              Uygulamayı başlat (onay gerekli)
+                              {t('startApply')}
                             </button>
                           )}
                         </div>

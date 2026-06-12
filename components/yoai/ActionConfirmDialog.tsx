@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { X, AlertTriangle, Loader2, CheckCircle, XCircle } from 'lucide-react'
 import type { ExecutableAction, ActionResult } from '@/lib/yoai/actionTypes'
 import { ACTION_LABELS } from '@/lib/yoai/actionTypes'
@@ -12,6 +13,8 @@ interface Props {
 }
 
 export default function ActionConfirmDialog({ action, onClose, onSuccess }: Props) {
+  const t = useTranslations('dashboard.yoai.actionConfirm')
+  const tc = useTranslations('common')
   const [executing, setExecuting] = useState(false)
   const [result, setResult] = useState<ActionResult | null>(null)
 
@@ -27,13 +30,13 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
         body: JSON.stringify({ action }),
       })
       const json = await res.json()
-      const actionResult: ActionResult = json.data || { ok: false, actionType: action.actionType, entityId: action.entityId, message: json.message || 'Hata', error: json.error }
+      const actionResult: ActionResult = json.data || { ok: false, actionType: action.actionType, entityId: action.entityId, message: json.message || t('errorTitle'), error: json.error }
       setResult(actionResult)
       if (actionResult.ok) {
         onSuccess(actionResult)
       }
     } catch {
-      setResult({ ok: false, actionType: action.actionType, entityId: action.entityId, message: 'Bağlantı hatası', error: 'network_error' })
+      setResult({ ok: false, actionType: action.actionType, entityId: action.entityId, message: t('connectionError'), error: 'network_error' })
     } finally {
       setExecuting(false)
     }
@@ -56,19 +59,19 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
             {result.ok ? (
               <>
                 <CheckCircle className="w-12 h-12 text-primary mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Başarılı</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('successTitle')}</h3>
                 <p className="text-sm text-gray-600">{result.message}</p>
               </>
             ) : (
               <>
                 <XCircle className="w-12 h-12 text-red-500 mx-auto mb-3" />
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">Hata</h3>
+                <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('errorTitle')}</h3>
                 <p className="text-sm text-gray-600">{result.message}</p>
                 {result.error && <p className="text-xs text-gray-400 mt-1">{result.error}</p>}
               </>
             )}
             <button onClick={onClose} className="mt-4 px-4 py-2 bg-gray-100 text-gray-700 rounded-lg text-sm hover:bg-gray-200 transition-colors">
-              Kapat
+              {tc('close')}
             </button>
           </div>
         ) : (
@@ -81,28 +84,28 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
 
             <div className="bg-gray-50 rounded-xl p-4 mb-4 space-y-2">
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Platform</span>
+                <span className="text-gray-500">{t('platform')}</span>
                 <span className="font-medium text-gray-900">{action.platform}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Tür</span>
+                <span className="text-gray-500">{t('type')}</span>
                 <span className="font-medium text-gray-900">
-                  {action.entityType === 'campaign' ? 'Kampanya' : action.entityType === 'adset' || action.entityType === 'ad_group' ? 'Reklam Seti' : 'Reklam'}
+                  {action.entityType === 'campaign' ? t('entityCampaign') : action.entityType === 'adset' || action.entityType === 'ad_group' ? t('entityAdset') : t('entityAd')}
                 </span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-gray-500">Hedef</span>
+                <span className="text-gray-500">{t('target')}</span>
                 <span className="font-medium text-gray-900 truncate max-w-[60%] text-right">{action.entityName}</span>
               </div>
               {action.campaignName && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Kampanya</span>
+                  <span className="text-gray-500">{t('campaign')}</span>
                   <span className="font-medium text-gray-900 truncate max-w-[60%] text-right">{action.campaignName}</span>
                 </div>
               )}
               {action.params?.newBudget && (
                 <div className="flex justify-between text-sm">
-                  <span className="text-gray-500">Yeni Bütçe</span>
+                  <span className="text-gray-500">{t('newBudget')}</span>
                   <span className="font-medium text-primary">₺{action.params.newBudget.toFixed(2)}</span>
                 </div>
               )}
@@ -110,13 +113,13 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
 
             {isRisky && (
               <p className="text-xs text-gray-600 bg-gray-50 rounded-lg px-3 py-2 mb-4">
-                Bu aksiyon kampanya performansını etkileyebilir. Devam etmek istediğinizden emin misiniz?
+                {t('riskyWarning')}
               </p>
             )}
 
             <div className="flex items-center gap-3">
               <button onClick={onClose} className="flex-1 px-4 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200 transition-colors">
-                Vazgeç
+                {tc('cancel')}
               </button>
               <button
                 onClick={handleExecute}
@@ -124,9 +127,9 @@ export default function ActionConfirmDialog({ action, onClose, onSuccess }: Prop
                 className="flex-1 px-4 py-2.5 bg-primary text-white rounded-xl text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed inline-flex items-center justify-center gap-2"
               >
                 {executing ? (
-                  <><Loader2 className="w-4 h-4 animate-spin" />Uygulanıyor...</>
+                  <><Loader2 className="w-4 h-4 animate-spin" />{t('executing')}</>
                 ) : (
-                  'Onayla ve Uygula'
+                  t('confirmAndApply')
                 )}
               </button>
             </div>

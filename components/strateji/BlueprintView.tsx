@@ -1,37 +1,9 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { RefreshCw, CheckCircle, BookOpen, Users, Palette, Beaker, AlertTriangle, ListTodo, Sparkles, FileText, ChevronDown, BarChart3, Layers } from 'lucide-react'
 import type { Blueprint } from '@/lib/strategy/types'
-
-// Ham teknik etiketleri kullanıcı dostu Türkçe'ye çevir (UI'da ham enum YASAK)
-const TASK_CATEGORY_LABELS: Record<string, string> = {
-  measurement: 'Ölçümleme',
-  campaign: 'Kampanya',
-  creative: 'Kreatif',
-  audience: 'Hedef Kitle',
-  setup: 'Kurulum',
-  budget: 'Bütçe',
-  targeting: 'Hedefleme',
-  bid: 'Teklif',
-  status: 'Durum',
-}
-const PRIORITY_LABELS: Record<string, string> = {
-  high: 'Yüksek',
-  med: 'Orta',
-  medium: 'Orta',
-  low: 'Düşük',
-}
-const FORMAT_LABELS: Record<string, string> = {
-  video: 'Video',
-  ugc: 'Kullanıcı İçeriği',
-  image: 'Görsel',
-  carousel: 'Karusel',
-  static: 'Görsel',
-}
-const catLabel = (c?: string) => (c ? TASK_CATEGORY_LABELS[c.toLowerCase()] ?? c : '')
-const prioLabel = (p?: string) => (p ? PRIORITY_LABELS[p.toLowerCase()] ?? p : '')
-const fmtLabel = (f?: string) => (f ? FORMAT_LABELS[f.toLowerCase()] ?? f : '')
 
 interface BlueprintViewProps {
   blueprint: Blueprint
@@ -46,54 +18,63 @@ interface BlueprintViewProps {
 type CardId = 'kpi' | 'funnel' | 'channel' | 'personas' | 'creatives' | 'experiments' | 'risks' | 'tasks'
 
 export default function BlueprintView({ blueprint, onRegenerate, onApprove, regenerating, approving, aiGenerated, aiFallbackReason }: BlueprintViewProps) {
+  const t = useTranslations('dashboard.strateji.blueprint')
+  const tc = useTranslations('common')
   const [openCard, setOpenCard] = useState<CardId | null>(null)
 
   const toggle = (id: CardId) => setOpenCard(prev => prev === id ? null : id)
 
+  // Ham teknik etiketleri kullanıcı dostu çeviriye dönüştür (UI'da ham enum YASAK)
+  const PRIORITY_KEY: Record<string, string> = { high: 'high', med: 'med', medium: 'med', low: 'low' }
+  const FORMAT_KEY: Record<string, string> = { video: 'video', ugc: 'ugc', image: 'image', carousel: 'carousel', static: 'image' }
+  const catLabel = (c?: string) => (c ? (t.has(`taskCategory.${c.toLowerCase()}`) ? t(`taskCategory.${c.toLowerCase()}`) : c) : '')
+  const prioLabel = (p?: string) => (p ? (PRIORITY_KEY[p.toLowerCase()] ? t(`priority.${PRIORITY_KEY[p.toLowerCase()]}`) : p) : '')
+  const fmtLabel = (f?: string) => (f ? (FORMAT_KEY[f.toLowerCase()] ? t(`format.${FORMAT_KEY[f.toLowerCase()]}`) : f) : '')
+
   // Kart özet bilgileri
   const cards: { id: CardId; icon: React.ComponentType<{ className?: string }>; title: string; summary: string; count?: number; color: string; borderColor: string; iconColor: string }[] = [
     {
-      id: 'kpi', icon: BarChart3, title: 'KPI Hedefleri',
-      summary: `CPA: ${blueprint.kpi_targets.cpa_range[0]}-${blueprint.kpi_targets.cpa_range[1]} TL`,
+      id: 'kpi', icon: BarChart3, title: t('cards.kpi'),
+      summary: t('kpiSummary', { min: blueprint.kpi_targets.cpa_range[0], max: blueprint.kpi_targets.cpa_range[1] }),
       color: 'bg-emerald-50', borderColor: 'border-emerald-200 hover:border-emerald-300', iconColor: 'text-emerald-600',
     },
     {
-      id: 'funnel', icon: Layers, title: 'Funnel Dağılımı',
+      id: 'funnel', icon: Layers, title: t('cards.funnel'),
       summary: `TOFU %${blueprint.funnel_split.tofu} / MOFU %${blueprint.funnel_split.mofu} / BOFU %${blueprint.funnel_split.bofu}`,
       color: 'bg-blue-50', borderColor: 'border-blue-200 hover:border-blue-300', iconColor: 'text-blue-600',
     },
     {
-      id: 'channel', icon: BookOpen, title: 'Kanal Karması',
+      id: 'channel', icon: BookOpen, title: t('cards.channel'),
       summary: [blueprint.channel_mix.meta > 0 && `Meta %${blueprint.channel_mix.meta}`, blueprint.channel_mix.google > 0 && `Google %${blueprint.channel_mix.google}`].filter(Boolean).join(' / '),
       color: 'bg-indigo-50', borderColor: 'border-indigo-200 hover:border-indigo-300', iconColor: 'text-indigo-600',
     },
     {
-      id: 'personas', icon: Users, title: 'Personalar',
+      id: 'personas', icon: Users, title: t('cards.personas'),
       summary: blueprint.personas.map(p => p.name).join(', '),
       count: blueprint.personas.length,
       color: 'bg-violet-50', borderColor: 'border-violet-200 hover:border-violet-300', iconColor: 'text-violet-600',
     },
     {
-      id: 'creatives', icon: Palette, title: 'Kreatif Temalar',
+      id: 'creatives', icon: Palette, title: t('cards.creatives'),
       summary: blueprint.creative_themes.map(ct => ct.theme).join(', '),
       count: blueprint.creative_themes.length,
       color: 'bg-pink-50', borderColor: 'border-pink-200 hover:border-pink-300', iconColor: 'text-pink-600',
     },
     {
-      id: 'experiments', icon: Beaker, title: 'Deney Backlog',
-      summary: `${blueprint.experiment_backlog.filter(e => e.priority === 'high').length} yüksek öncelikli`,
+      id: 'experiments', icon: Beaker, title: t('cards.experiments'),
+      summary: t('highPriorityCount', { count: blueprint.experiment_backlog.filter(e => e.priority === 'high').length }),
       count: blueprint.experiment_backlog.length,
       color: 'bg-primary/5', borderColor: 'border-primary/20 hover:border-primary/40', iconColor: 'text-primary',
     },
     ...(blueprint.risks?.length > 0 ? [{
-      id: 'risks' as CardId, icon: AlertTriangle, title: 'Riskler',
-      summary: `${blueprint.risks.length} risk tespit edildi`,
+      id: 'risks' as CardId, icon: AlertTriangle, title: t('cards.risks'),
+      summary: t('risksDetected', { count: blueprint.risks.length }),
       count: blueprint.risks.length,
       color: 'bg-red-50', borderColor: 'border-red-200 hover:border-red-300', iconColor: 'text-red-600',
     }] : []),
     ...(blueprint.tasks_seed?.length > 0 ? [{
-      id: 'tasks' as CardId, icon: ListTodo, title: 'Planlanan Görevler',
-      summary: `${blueprint.tasks_seed.filter(t => t.priority === 'high').length} yüksek öncelikli`,
+      id: 'tasks' as CardId, icon: ListTodo, title: t('cards.tasks'),
+      summary: t('highPriorityCount', { count: blueprint.tasks_seed.filter(tk => tk.priority === 'high').length }),
       count: blueprint.tasks_seed.length,
       color: 'bg-teal-50', borderColor: 'border-teal-200 hover:border-teal-300', iconColor: 'text-teal-600',
     }] : []),
@@ -105,23 +86,23 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
       <div className="bg-primary/5 border border-primary/20 rounded-xl shadow-sm p-4">
         <div className="flex items-center justify-between">
           <div>
-            <h3 className="text-sm font-semibold text-primary mb-1">Strateji Blueprint</h3>
-            <p className="text-sm text-gray-600">Kartlara tıklayarak detayları görüntüleyin.</p>
+            <h3 className="text-sm font-semibold text-primary mb-1">{t('title')}</h3>
+            <p className="text-sm text-gray-600">{t('clickCards')}</p>
           </div>
           {aiGenerated !== undefined && (
             <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-sm font-medium shrink-0 ${
               aiGenerated ? 'bg-primary/10 text-primary' : 'bg-gray-100 text-gray-600'
             }`}>
               {aiGenerated ? <Sparkles className="w-3 h-3" /> : <FileText className="w-3 h-3" />}
-              {aiGenerated ? 'AI ile üretildi' : 'Şablon bazlı'}
+              {aiGenerated ? t('aiGenerated') : t('templateBased')}
             </span>
           )}
         </div>
         {!aiGenerated && aiGenerated !== undefined && (
           <p className="text-xs text-gray-600 mt-2 bg-gray-100 rounded-lg px-2 py-1">
-            AI motoru şu an kullanılamadı — şablon tabanlı strateji üretildi. Birazdan tekrar deneyebilirsiniz.
+            {t('aiUnavailable')}
             {aiFallbackReason && (
-              <span className="block mt-1 font-mono text-gray-500">Teşhis: {aiFallbackReason}</span>
+              <span className="block mt-1 font-mono text-gray-500">{t('diagnosis', { reason: aiFallbackReason })}</span>
             )}
           </p>
         )}
@@ -164,7 +145,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* KPI */}
           {openCard === 'kpi' && (
             <>
-              <CardHeader icon={BarChart3} title="KPI Hedef Aralıkları" color="text-emerald-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={BarChart3} title={t('kpiRangesTitle')} color="text-emerald-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 grid grid-cols-2 md:grid-cols-4 gap-3">
                 {[
                   { label: 'CPA (TRY)', range: blueprint.kpi_targets.cpa_range, color: 'bg-emerald-50 border-emerald-100' },
@@ -184,12 +165,12 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Funnel */}
           {openCard === 'funnel' && (
             <>
-              <CardHeader icon={Layers} title="Funnel Dağılımı" color="text-blue-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={Layers} title={t('cards.funnel')} color="text-blue-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 space-y-3">
                 {[
-                  { label: 'TOFU', desc: 'Farkındalık', pct: blueprint.funnel_split.tofu, color: 'bg-blue-500', bg: 'bg-blue-50 text-blue-700' },
-                  { label: 'MOFU', desc: 'Değerlendirme', pct: blueprint.funnel_split.mofu, color: 'bg-primary', bg: 'bg-primary/10 text-primary' },
-                  { label: 'BOFU', desc: 'Dönüşüm', pct: blueprint.funnel_split.bofu, color: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
+                  { label: 'TOFU', desc: t('funnel.awareness'), pct: blueprint.funnel_split.tofu, color: 'bg-blue-500', bg: 'bg-blue-50 text-blue-700' },
+                  { label: 'MOFU', desc: t('funnel.consideration'), pct: blueprint.funnel_split.mofu, color: 'bg-primary', bg: 'bg-primary/10 text-primary' },
+                  { label: 'BOFU', desc: t('funnel.conversion'), pct: blueprint.funnel_split.bofu, color: 'bg-emerald-500', bg: 'bg-emerald-50 text-emerald-700' },
                 ].map((f) => (
                   <div key={f.label} className="flex items-center gap-3">
                     <div className={`text-sm font-bold w-12 text-center py-1 rounded-md ${f.bg}`}>{f.label}</div>
@@ -211,7 +192,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Kanal Karması */}
           {openCard === 'channel' && (
             <>
-              <CardHeader icon={BookOpen} title="Kanal Karması" color="text-indigo-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={BookOpen} title={t('cards.channel')} color="text-indigo-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 flex gap-4">
                 {blueprint.channel_mix.meta > 0 && (
                   <div className="flex-1 bg-blue-50 border border-blue-100 rounded-xl p-5 text-center">
@@ -224,7 +205,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                   <div className="flex-1 bg-emerald-50 border border-emerald-100 rounded-xl p-5 text-center">
                     <div className="text-sm font-medium text-emerald-600 mb-1">Google</div>
                     <div className="text-3xl font-bold text-emerald-700">%{blueprint.channel_mix.google}</div>
-                    <div className="text-xs text-emerald-500 mt-1">Search & Display</div>
+                    <div className="text-xs text-emerald-500 mt-1">{t('searchDisplay')}</div>
                   </div>
                 )}
               </div>
@@ -234,15 +215,15 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Personalar */}
           {openCard === 'personas' && (
             <>
-              <CardHeader icon={Users} title={`Persona Seti (${blueprint.personas.length})`} color="text-violet-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={Users} title={t('personaSetTitle', { count: blueprint.personas.length })} color="text-violet-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 grid grid-cols-1 md:grid-cols-3 gap-3">
                 {blueprint.personas.map((p, i) => (
                   <div key={i} className="bg-violet-50/50 border border-violet-100 rounded-lg p-3">
                     <div className="text-sm font-semibold text-gray-900 mb-2">{p.name}</div>
                     <div className="space-y-1.5 text-sm">
-                      <div><span className="text-violet-400 font-medium">Acı:</span> <span className="text-gray-700">{p.pain}</span></div>
-                      <div><span className="text-violet-400 font-medium">Vaat:</span> <span className="text-gray-700">{p.promise}</span></div>
-                      <div><span className="text-violet-400 font-medium">Kanıt:</span> <span className="text-gray-700">{p.proof}</span></div>
+                      <div><span className="text-violet-400 font-medium">{t('persona.pain')}</span> <span className="text-gray-700">{p.pain}</span></div>
+                      <div><span className="text-violet-400 font-medium">{t('persona.promise')}</span> <span className="text-gray-700">{p.promise}</span></div>
+                      <div><span className="text-violet-400 font-medium">{t('persona.proof')}</span> <span className="text-gray-700">{p.proof}</span></div>
                     </div>
                   </div>
                 ))}
@@ -253,7 +234,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Kreatif Temalar */}
           {openCard === 'creatives' && (
             <>
-              <CardHeader icon={Palette} title={`Kreatif Temalar (${blueprint.creative_themes.length})`} color="text-pink-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={Palette} title={t('creativeThemesTitle', { count: blueprint.creative_themes.length })} color="text-pink-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-3">
                 {blueprint.creative_themes.map((ct, i) => (
                   <div key={i} className="bg-pink-50/50 border border-pink-100 rounded-lg p-3">
@@ -265,8 +246,8 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                         'bg-gray-200 text-gray-600'
                       }`}>{fmtLabel(ct.format)}</span>
                     </div>
-                    <p className="text-sm text-gray-600"><span className="text-pink-400">Hook:</span> {ct.hook}</p>
-                    <p className="text-sm text-gray-600 mt-1"><span className="text-pink-400">Teklif:</span> {ct.offer}</p>
+                    <p className="text-sm text-gray-600"><span className="text-pink-400">{t('creative.hook')}</span> {ct.hook}</p>
+                    <p className="text-sm text-gray-600 mt-1"><span className="text-pink-400">{t('creative.offer')}</span> {ct.offer}</p>
                   </div>
                 ))}
               </div>
@@ -276,7 +257,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Deneyler */}
           {openCard === 'experiments' && (
             <>
-              <CardHeader icon={Beaker} title={`Deney Backlog (${blueprint.experiment_backlog.length})`} color="text-primary" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={Beaker} title={t('experimentBacklogTitle', { count: blueprint.experiment_backlog.length })} color="text-primary" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 space-y-2">
                 {blueprint.experiment_backlog.map((exp, i) => (
                   <div key={i} className="flex items-start gap-2 bg-primary/5 border border-primary/20 rounded-lg p-3">
@@ -287,7 +268,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
                     </span>
                     <div className="flex-1 min-w-0">
                       <p className="text-sm font-medium text-gray-900">{exp.hypothesis}</p>
-                      <p className="text-xs text-gray-500 mt-0.5">Test: {exp.test} | Metrik: {exp.metric}</p>
+                      <p className="text-xs text-gray-500 mt-0.5">{t('experimentMeta', { test: exp.test, metric: exp.metric })}</p>
                     </div>
                   </div>
                 ))}
@@ -298,12 +279,12 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Riskler */}
           {openCard === 'risks' && (
             <>
-              <CardHeader icon={AlertTriangle} title={`Riskler (${blueprint.risks.length})`} color="text-red-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={AlertTriangle} title={t('risksTitle', { count: blueprint.risks.length })} color="text-red-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 space-y-2">
                 {blueprint.risks.map((r, i) => (
                   <div key={i} className="bg-red-50 border border-red-100 rounded-lg p-3">
                     <p className="text-sm font-medium text-red-800">{r.risk}</p>
-                    <p className="text-xs text-red-600 mt-1">Aksiyon: {r.mitigation}</p>
+                    <p className="text-xs text-red-600 mt-1">{t('action', { mitigation: r.mitigation })}</p>
                   </div>
                 ))}
               </div>
@@ -313,7 +294,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           {/* Görevler */}
           {openCard === 'tasks' && (
             <>
-              <CardHeader icon={ListTodo} title={`Planlanan Görevler (${blueprint.tasks_seed.length})`} color="text-teal-600" onClose={() => setOpenCard(null)} />
+              <CardHeader icon={ListTodo} title={t('plannedTasksTitle', { count: blueprint.tasks_seed.length })} color="text-teal-600" onClose={() => setOpenCard(null)} closeLabel={tc('close')} />
               <div className="p-4 space-y-1">
                 {blueprint.tasks_seed.map((t, i) => (
                   <div key={i} className="flex items-center gap-2 py-1.5 px-2 rounded-lg hover:bg-teal-50/50 transition-colors">
@@ -346,14 +327,14 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-gray-200 text-gray-700 rounded-lg text-sm font-medium hover:bg-gray-50 transition-colors disabled:opacity-50"
         >
           <RefreshCw className={`w-4 h-4 ${regenerating ? 'animate-spin' : ''}`} />
-          Blueprint&apos;i Yenile
+          {t('regenerate')}
         </button>
         <button
           onClick={() => onApprove('suggest_only')}
           disabled={approving}
           className="inline-flex items-center gap-2 px-4 py-2.5 bg-white border border-primary/30 text-primary rounded-lg text-sm font-medium hover:bg-primary/5 transition-colors disabled:opacity-50"
         >
-          Sadece Öneri Üret
+          {t('suggestOnly')}
         </button>
         <button
           onClick={() => onApprove('apply')}
@@ -361,7 +342,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
           className="inline-flex items-center gap-2 px-5 py-2.5 bg-primary text-white rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50"
         >
           <CheckCircle className="w-4 h-4" />
-          {approving ? 'Uygulanıyor...' : 'Onayla ve Uygula'}
+          {approving ? t('applying') : t('approveAndApply')}
         </button>
       </div>
     </div>
@@ -369,7 +350,7 @@ export default function BlueprintView({ blueprint, onRegenerate, onApprove, rege
 }
 
 // Detay paneli başlık bileşeni
-function CardHeader({ icon: Icon, title, color, onClose }: { icon: React.ComponentType<{ className?: string }>; title: string; color: string; onClose: () => void }) {
+function CardHeader({ icon: Icon, title, color, onClose, closeLabel }: { icon: React.ComponentType<{ className?: string }>; title: string; color: string; onClose: () => void; closeLabel: string }) {
   return (
     <div className="flex items-center justify-between px-4 py-3 border-b border-gray-100 bg-gray-50/60">
       <div className="flex items-center gap-2">
@@ -377,7 +358,7 @@ function CardHeader({ icon: Icon, title, color, onClose }: { icon: React.Compone
         <span className="text-sm font-medium text-gray-900">{title}</span>
       </div>
       <button onClick={onClose} className="text-gray-400 hover:text-gray-600 transition-colors text-sm">
-        Kapat
+        {closeLabel}
       </button>
     </div>
   )

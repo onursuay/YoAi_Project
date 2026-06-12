@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback } from 'react'
 import { useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import Topbar from '@/components/Topbar'
 import { ToastContainer } from '@/components/Toast'
 import type { Toast } from '@/components/Toast'
@@ -16,6 +17,8 @@ import StrategyList from '@/components/strateji/StrategyList'
 
 export default function StratejiPage() {
   const router = useRouter()
+  const t = useTranslations('dashboard.strateji')
+  const locale = useLocale()
   const [instances, setInstances] = useState<StrategyInstance[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
@@ -82,7 +85,7 @@ export default function StratejiPage() {
       const res = await fetch('/api/strategy/instances', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ title: `Yeni Strateji — ${new Date().toLocaleDateString('tr-TR')}` }),
+        body: JSON.stringify({ title: t('newStrategyTitle', { date: new Date().toLocaleDateString(locale === 'en' ? 'en-US' : 'tr-TR') }) }),
       })
       const json = await res.json()
       if (json.ok && json.instance) {
@@ -90,32 +93,32 @@ export default function StratejiPage() {
         // Backend RPC'sinin düştüğü gerçek kredi bakiyesini UI'a yansıt
         await refreshCredits()
         if (needsCreditsForStrategy) {
-          addToast(`${COST_PER_STRATEGY} kredi kullanıldı`, 'info')
+          addToast(t('toast.creditUsed', { count: COST_PER_STRATEGY }), 'info')
         }
         router.push(strategyPath(json.instance))
       } else {
-        addToast(json.message || 'Strateji oluşturulamadı', 'error')
+        addToast(json.message || t('toast.createFailed'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setCreating(false)
     }
   }
 
   const handleDelete = async (instanceId: string) => {
-    if (!confirm('Bu strateji planını silmek istediğinize emin misiniz?')) return
+    if (!confirm(t('confirmDelete'))) return
     try {
       const res = await fetch(`/api/strategy/instances/${instanceId}`, { method: 'DELETE' })
       const json = await res.json()
       if (json.ok) {
-        addToast('Strateji silindi', 'success')
+        addToast(t('toast.deleted'), 'success')
         fetchInstances()
       } else {
-        addToast(json.message || 'Silinemedi', 'error')
+        addToast(json.message || t('toast.deleteFailed'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     }
   }
 
@@ -124,29 +127,29 @@ export default function StratejiPage() {
       const res = await fetch(`/api/strategy/instances/${instanceId}/retry`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
-        addToast('Tekrar deneniyor', 'info')
+        addToast(t('toast.retrying'), 'info')
         fetchInstances()
       } else {
-        addToast(json.message || 'Tekrar denenemedi', 'error')
+        addToast(json.message || t('toast.retryFailed'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     }
   }
 
   // Limit bilgisi metni
   const limitText = strategyMonthlyLimit === -1
-    ? 'Sınırsız'
-    : `${strategyUsedThisMonth}/${strategyMonthlyLimit} kullanıldı`
+    ? t('unlimited')
+    : t('usedCount', { used: strategyUsedThisMonth, limit: strategyMonthlyLimit })
 
   return (
     <>
       <Topbar
-        title="Strateji"
-        description="Pazarlama stratejilerinizi oluşturun, yönetin ve optimize edin"
+        title={t('title')}
+        description={t('pageDescription')}
         adAccountName={adAccountName || undefined}
         actionButton={{
-          label: creating ? 'Oluşturuluyor...' : 'Yeni Strateji',
+          label: creating ? t('creating') : t('newStrategy'),
           onClick: handleCreate,
           disabled: creating,
         }}
@@ -164,28 +167,28 @@ export default function StratejiPage() {
               </div>
               <div className="flex-1">
                 <div className="flex items-center justify-between">
-                  <h3 className="text-base font-semibold text-gray-900">Strateji Motoru</h3>
+                  <h3 className="text-base font-semibold text-gray-900">{t('engineTitle')}</h3>
                   <span className={`text-xs px-2 py-0.5 rounded-full ${
                     needsCreditsForStrategy
                       ? 'bg-primary/10 text-primary'
                       : 'bg-emerald-50 text-emerald-700'
                   }`}>
-                    AI Strateji: {limitText}
-                    {needsCreditsForStrategy && ` · ${COST_PER_STRATEGY} kredi/plan`}
+                    {t('aiStrategyLimit', { limit: limitText })}
+                    {needsCreditsForStrategy && t('creditsPerPlan', { count: COST_PER_STRATEGY })}
                   </span>
                 </div>
                 <ul className="mt-2 space-y-1.5">
                   <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
-                    Markanız için AI destekli reklam stratejisi oluşturun. Hedef kitle, bütçe dağılımı ve kampanya planı otomatik hazırlanır.
+                    {t('benefit1')}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
-                    İşletme bilgilerinizi girin &gt; AI strateji planı üretsin &gt; Uygulayın, AI optimize etsin.
+                    {t('benefit2')}
                   </li>
                   <li className="flex items-start gap-2 text-sm text-gray-600">
                     <span className="mt-0.5 flex-shrink-0">💡</span>
-                    Plan aktifken haftalık metrik analizi ve AI optimizasyon önerileri otomatik gelir.
+                    {t('benefit3')}
                   </li>
                 </ul>
               </div>
@@ -195,8 +198,8 @@ export default function StratejiPage() {
           {/* Strateji Listesi */}
           <div className="animate-card-enter" style={{ ['--card-index' as string]: 1 }}>
             <div className="flex items-center justify-between mb-3">
-              <h3 className="text-base font-medium text-gray-700">Strateji Planları</h3>
-              <span className="text-xs text-gray-500">{instances.length} kayıt</span>
+              <h3 className="text-base font-medium text-gray-700">{t('plansTitle')}</h3>
+              <span className="text-xs text-gray-500">{t('recordCount', { count: instances.length })}</span>
             </div>
             <StrategyList
               instances={instances}

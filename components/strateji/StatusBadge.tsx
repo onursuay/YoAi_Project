@@ -1,7 +1,8 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import type { InstanceStatus } from '@/lib/strategy/types'
-import { STATUS_LABELS, STATUS_COLORS } from '@/lib/strategy/constants'
+import { STATUS_COLORS } from '@/lib/strategy/constants'
 
 interface StatusBadgeProps {
   status: InstanceStatus
@@ -9,8 +10,9 @@ interface StatusBadgeProps {
 }
 
 export default function StatusBadge({ status, size = 'md' }: StatusBadgeProps) {
+  const t = useTranslations('dashboard.strateji.status')
   const colors = STATUS_COLORS[status]
-  const label = STATUS_LABELS[status]
+  const label = t(status)
   const isAnimated = ['COLLECTING', 'ANALYZING', 'GENERATING_PLAN', 'APPLYING'].includes(status)
 
   return (

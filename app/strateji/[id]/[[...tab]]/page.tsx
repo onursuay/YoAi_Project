@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef } from 'react'
 import { useParams, useRouter } from 'next/navigation'
+import { useLocale, useTranslations } from 'next-intl'
 import { ArrowLeft, RefreshCw } from 'lucide-react'
 import Topbar from '@/components/Topbar'
 import Tabs from '@/components/Tabs'
@@ -20,15 +21,18 @@ import TaskPanel from '@/components/strateji/TaskPanel'
 import JobPanel from '@/components/strateji/JobPanel'
 import ErrorPanel from '@/components/strateji/ErrorPanel'
 
-const TABS = [
-  { id: 'wizard', label: 'Keşif' },
-  { id: 'plan', label: 'Strateji Planı' },
-  { id: 'uzman-plan', label: 'Uzman Plan' },
-  { id: 'tasks', label: 'Görevler' },
-  { id: 'jobs', label: 'İş Geçmişi' },
-]
-
 export default function StratejiDetailPage() {
+  const t = useTranslations('dashboard.strateji')
+  const tc = useTranslations('common')
+  const locale = useLocale()
+  const TABS = [
+    { id: 'wizard', label: t('tabs.wizard') },
+    { id: 'plan', label: t('tabs.plan') },
+    { id: 'uzman-plan', label: t('tabs.expertPlan') },
+    { id: 'tasks', label: t('tabs.tasks') },
+    { id: 'jobs', label: t('tabs.jobs') },
+  ]
+
   const { id: idParam } = useParams<{ id: string }>()
   // Okunabilir URL: param '<slug>--<id8>' veya eski tam UUID olabilir.
   // GET route bu kısa kimliği tam UUID'ye çözer; çözülen tam id (instance.id)
@@ -139,13 +143,13 @@ export default function StratejiDetailPage() {
       })
       const json = await res.json()
       if (json.ok) {
-        addToast('Veriler kaydedildi', 'success')
+        addToast(t('toast.dataSaved'), 'success')
         fetchDetail()
       } else {
-        addToast(json.message || 'Kaydetme hatası', 'error')
+        addToast(json.message || t('toast.saveError'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setSaving(false)
     }
@@ -162,7 +166,7 @@ export default function StratejiDetailPage() {
       })
       const saveJson = await saveRes.json()
       if (!saveJson.ok) {
-        addToast(saveJson.message || 'Kaydetme hatası', 'error')
+        addToast(saveJson.message || t('toast.saveError'), 'error')
         return
       }
 
@@ -170,14 +174,14 @@ export default function StratejiDetailPage() {
       const analyzeRes = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/analyze`, { method: 'POST' })
       const analyzeJson = await analyzeRes.json()
       if (analyzeJson.ok) {
-        addToast('Analiz başlatıldı', 'success')
+        addToast(t('toast.analysisStarted'), 'success')
         setTab('plan')
         fetchDetail()
       } else {
-        addToast(analyzeJson.message || 'Analiz başlatılamadı', 'error')
+        addToast(analyzeJson.message || t('toast.analysisFailed'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setSaving(false)
     }
@@ -189,13 +193,13 @@ export default function StratejiDetailPage() {
       const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/generate-plan`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
-        addToast('Plan yeniden üretiliyor', 'info')
+        addToast(t('toast.regenerating'), 'info')
         fetchDetail()
       } else {
-        addToast(json.message || 'Yeniden üretim hatası', 'error')
+        addToast(json.message || t('toast.regenerateError'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setRegenerating(false)
     }
@@ -211,14 +215,14 @@ export default function StratejiDetailPage() {
       })
       const json = await res.json()
       if (json.ok) {
-        addToast(mode === 'apply' ? 'Uygulama başlatıldı' : 'Öneri modu aktif', 'success')
+        addToast(mode === 'apply' ? t('toast.applyStarted') : t('toast.suggestModeActive'), 'success')
         setTab('tasks')
         fetchDetail()
       } else {
-        addToast(json.message || 'Onay hatası', 'error')
+        addToast(json.message || t('toast.approveError'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setApproving(false)
     }
@@ -230,13 +234,13 @@ export default function StratejiDetailPage() {
       const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/retry`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
-        addToast('Tekrar deneniyor', 'info')
+        addToast(t('toast.retrying'), 'info')
         fetchDetail()
       } else {
-        addToast(json.message || 'Tekrar denenemedi', 'error')
+        addToast(json.message || t('toast.retryFailed'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setRetrying(false)
     }
@@ -248,14 +252,14 @@ export default function StratejiDetailPage() {
       const res = await fetch(`/api/strategy/instances/${instance?.id ?? lookupId}/metrics`, { method: 'POST' })
       const json = await res.json()
       if (json.ok) {
-        addToast('Metrikler güncelleniyor, optimizasyon önerileri hazırlanıyor...', 'info')
+        addToast(t('toast.metricsUpdating'), 'info')
         // Kısa gecikme sonrası veriyi yeniden çek (job çalışması için)
         setTimeout(fetchDetail, 2000)
       } else {
-        addToast(json.message || 'Metrik güncelleme hatası', 'error')
+        addToast(json.message || t('toast.metricsError'), 'error')
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
     } finally {
       setRefreshingMetrics(false)
     }
@@ -273,11 +277,11 @@ export default function StratejiDetailPage() {
       })
       const json = await res.json()
       if (!json.ok) {
-        addToast('Görev güncellenemedi', 'error')
+        addToast(t('toast.taskUpdateFailed'), 'error')
         fetchDetail() // Geri al
       }
     } catch {
-      addToast('Bir hata oluştu', 'error')
+      addToast(t('toast.genericError'), 'error')
       fetchDetail() // Geri al
     }
   }
@@ -285,7 +289,7 @@ export default function StratejiDetailPage() {
   if (loading) {
     return (
       <>
-        <Topbar title="Yükleniyor..." description="" />
+        <Topbar title={t('loading')} description="" />
         <div className="flex-1 overflow-y-auto bg-gray-50 p-6">
           <div className="max-w-5xl mx-auto">
             <div className="bg-white rounded-xl border border-gray-200 p-8 animate-pulse">
@@ -311,7 +315,7 @@ export default function StratejiDetailPage() {
               className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-700 transition-colors"
             >
               <ArrowLeft className="w-4 h-4" />
-              Geri
+              {tc('back')}
             </button>
             <div className="flex items-center gap-3">
               <PhaseIndicator status={instance.status} />
@@ -332,42 +336,42 @@ export default function StratejiDetailPage() {
           {instance.status === 'RUNNING' && (
             <div className="bg-white border border-gray-200 rounded-xl p-4">
               <div className="flex items-center justify-between mb-3">
-                <h3 className="text-sm font-semibold text-gray-900">Performans Özeti</h3>
+                <h3 className="text-sm font-semibold text-gray-900">{t('metrics.summaryTitle')}</h3>
                 <button
                   onClick={handleRefreshMetrics}
                   disabled={refreshingMetrics}
                   className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-primary bg-primary/5 border border-primary/20 rounded-lg hover:bg-primary/10 transition-colors disabled:opacity-50"
                 >
                   <RefreshCw className={`w-3.5 h-3.5 ${refreshingMetrics ? 'animate-spin' : ''}`} />
-                  {refreshingMetrics ? 'Güncelleniyor...' : 'Metrikleri Güncelle & Optimize Et'}
+                  {refreshingMetrics ? t('metrics.updating') : t('metrics.refreshAndOptimize')}
                 </button>
               </div>
               {metrics.length > 0 ? (
                 <div className="grid grid-cols-2 sm:grid-cols-4 gap-3">
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">Harcama</p>
-                    <p className="text-lg font-bold text-gray-900">{metrics[0].spend_try.toLocaleString('tr-TR')}₺</p>
-                    <p className="text-[10px] text-gray-400">Son {metrics[0].range_days} gün</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t('metrics.spend')}</p>
+                    <p className="text-lg font-bold text-gray-900">{metrics[0].spend_try.toLocaleString(locale === 'en' ? 'en-US' : 'tr-TR')}₺</p>
+                    <p className="text-[10px] text-gray-400">{t('metrics.lastDays', { count: metrics[0].range_days })}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-[10px] text-gray-400 uppercase tracking-wider">ROAS</p>
                     <p className={`text-lg font-bold ${(metrics[0].roas ?? 0) >= 2 ? 'text-emerald-600' : 'text-red-600'}`}>{metrics[0].roas}x</p>
-                    <p className="text-[10px] text-gray-400">Reklam getirisi</p>
+                    <p className="text-[10px] text-gray-400">{t('metrics.adReturn')}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
                     <p className="text-[10px] text-gray-400 uppercase tracking-wider">CPA</p>
                     <p className="text-lg font-bold text-gray-900">{metrics[0].cpa_try}₺</p>
-                    <p className="text-[10px] text-gray-400">Dönüşüm başı maliyet</p>
+                    <p className="text-[10px] text-gray-400">{t('metrics.costPerConversion')}</p>
                   </div>
                   <div className="bg-gray-50 rounded-lg p-3">
-                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">Dönüşüm</p>
+                    <p className="text-[10px] text-gray-400 uppercase tracking-wider">{t('metrics.conversion')}</p>
                     <p className="text-lg font-bold text-gray-900">{metrics[0].conversions}</p>
-                    <p className="text-[10px] text-gray-400">{metrics[0].clicks?.toLocaleString('tr-TR')} tıklama</p>
+                    <p className="text-[10px] text-gray-400">{t('metrics.clicksCount', { count: metrics[0].clicks ?? 0 })}</p>
                   </div>
                 </div>
               ) : (
                 <p className="text-xs text-gray-400 text-center py-4">
-                  Henüz metrik verisi yok. &quot;Metrikleri Güncelle&quot; butonuna tıklayarak ilk verileri çekin.
+                  {t('metrics.empty')}
                 </p>
               )}
             </div>
@@ -379,11 +383,11 @@ export default function StratejiDetailPage() {
               <div className="w-5 h-5 border-2 border-blue-400 border-t-transparent rounded-full animate-spin" />
               <div>
                 <p className="text-sm font-medium text-blue-800">
-                  {instance.status === 'ANALYZING' && 'Veriler analiz ediliyor...'}
-                  {instance.status === 'GENERATING_PLAN' && 'Strateji planı üretiliyor...'}
-                  {instance.status === 'APPLYING' && 'Plan uygulanıyor...'}
+                  {instance.status === 'ANALYZING' && t('processing.analyzing')}
+                  {instance.status === 'GENERATING_PLAN' && t('processing.generatingPlan')}
+                  {instance.status === 'APPLYING' && t('processing.applying')}
                 </p>
-                <p className="text-xs text-blue-600 mt-0.5">Bu işlem birkaç saniye sürebilir. Sayfa otomatik güncellenecek.</p>
+                <p className="text-xs text-blue-600 mt-0.5">{t('processing.hint')}</p>
               </div>
             </div>
           )}
@@ -417,8 +421,8 @@ export default function StratejiDetailPage() {
               ) : (
                 <div className="text-center py-12 text-sm text-gray-400">
                   {['ANALYZING', 'GENERATING_PLAN'].includes(instance.status)
-                    ? 'Plan üretiliyor... Lütfen bekleyin.'
-                    : 'Henüz plan üretilmedi. Önce Aşama 1 verilerini tamamlayıp analiz başlatın.'}
+                    ? t('planGenerating')
+                    : t('planEmpty')}
                 </div>
               )
             )}

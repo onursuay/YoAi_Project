@@ -1,13 +1,14 @@
 'use client'
 
+import { useTranslations } from 'next-intl'
 import { ImagePlus, RefreshCcw, DollarSign, Target, ExternalLink, ArrowRight, ShieldCheck, Inbox, Zap, Pause, Play } from 'lucide-react'
 import type { DeepAction } from '@/lib/yoai/analysisTypes'
 import type { ExecutableAction, ActionType } from '@/lib/yoai/actionTypes'
 
-const PRIORITY_MAP: Record<string, { label: string; color: string; bg: string }> = {
-  high: { label: 'Yüksek', color: 'text-red-700', bg: 'bg-red-50' },
-  medium: { label: 'Orta', color: 'text-gray-700', bg: 'bg-gray-50' },
-  low: { label: 'Düşük', color: 'text-gray-600', bg: 'bg-gray-100' },
+const PRIORITY_STYLE: Record<string, { color: string; bg: string }> = {
+  high: { color: 'text-red-700', bg: 'bg-red-50' },
+  medium: { color: 'text-gray-700', bg: 'bg-gray-50' },
+  low: { color: 'text-gray-600', bg: 'bg-gray-100' },
 }
 
 function getActionIcon(title: string, actionType?: string) {
@@ -27,21 +28,11 @@ const PLATFORM_STYLE: Record<string, { bg: string; text: string }> = {
   Google: { bg: 'bg-red-50', text: 'text-red-700' },
 }
 
-// Turkish labels for action categories
-const CATEGORY_TR: Record<string, string> = {
-  objective: 'Kampanya Amacı',
-  destination: 'Dönüşüm Hedefi',
-  optimization_goal: 'Optimizasyon',
-  bidding: 'Teklif Stratejisi',
-  targeting: 'Hedefleme',
-  budget: 'Bütçe',
-  conversion: 'Dönüşüm Takibi',
-  refresh_creative: 'Kreatif',
-  duplicate: 'Kopyalama',
-  pause: 'Durum',
-  increase_budget: 'Bütçe',
-  decrease_budget: 'Bütçe',
-}
+// Action category keys (translated at render time via dashboard.yoai.recommendedActions.category.*)
+const CATEGORY_KEYS = new Set([
+  'objective', 'destination', 'optimization_goal', 'bidding', 'targeting', 'budget',
+  'conversion', 'refresh_creative', 'duplicate', 'pause', 'increase_budget', 'decrease_budget',
+])
 
 // Map AI action types to executable action types
 function toExecutableActionType(actionType: string): ActionType | null {
@@ -69,12 +60,17 @@ interface Props {
 }
 
 export default function RecommendedActions({ actions, loading, onExecuteAction }: Props) {
+  const t = useTranslations('dashboard.yoai.recommendedActions')
+  const priorityLabel = (p: string) =>
+    p === 'high' || p === 'medium' || p === 'low' ? t(`priority.${p}`) : t('priority.medium')
+  const categoryLabel = (key: string) => (CATEGORY_KEYS.has(key) ? t(`category.${key}`) : key)
+
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Önerilen Aksiyonlar</h2>
-          <p className="text-xs text-gray-400 mt-0.5">AI tarafından tespit edilen iyileştirme fırsatları</p>
+          <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
+          <p className="text-xs text-gray-400 mt-0.5">{t('subtitle')}</p>
         </div>
       </div>
 
@@ -85,13 +81,13 @@ export default function RecommendedActions({ actions, loading, onExecuteAction }
       ) : actions.length === 0 ? (
         <div className="bg-white rounded-2xl border border-gray-100 p-6 text-center">
           <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Şu anda önerilen aksiyon yok.</p>
+          <p className="text-sm text-gray-500">{t('empty')}</p>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {actions.map(action => {
             const Icon = getActionIcon(action.title, action.actionType)
-            const priority = PRIORITY_MAP[action.priority] || PRIORITY_MAP.medium
+            const priority = PRIORITY_STYLE[action.priority] || PRIORITY_STYLE.medium
             const platform = PLATFORM_STYLE[action.platform] || { bg: 'bg-gray-50', text: 'text-gray-700' }
             const execType = toExecutableActionType(action.actionType)
             const canExecute = !!execType && !!onExecuteAction
@@ -119,8 +115,8 @@ export default function RecommendedActions({ actions, loading, onExecuteAction }
                   </div>
                   <div className="flex items-center gap-1.5">
                     <span className={`text-[10px] font-semibold px-1.5 py-0.5 rounded ${platform.bg} ${platform.text}`}>{action.platform}</span>
-                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${priority.bg} ${priority.color}`}>{priority.label}</span>
-                    <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{CATEGORY_TR[action.actionType] || action.actionType}</span>
+                    <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded ${priority.bg} ${priority.color}`}>{priorityLabel(action.priority)}</span>
+                    <span className="text-[9px] text-gray-400 bg-gray-50 px-1.5 py-0.5 rounded">{categoryLabel(action.actionType)}</span>
                   </div>
                 </div>
 
@@ -141,19 +137,19 @@ export default function RecommendedActions({ actions, loading, onExecuteAction }
                       className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors"
                     >
                       <Zap className="w-3 h-3" />
-                      Uygula
+                      {t('apply')}
                     </button>
                   ) : (
-                    <span className="text-[10px] text-gray-400">Manuel uygulama gerekli</span>
+                    <span className="text-[10px] text-gray-400">{t('manualRequired')}</span>
                   )}
                   {action.requiresApproval && (
                     <span className="inline-flex items-center text-[10px] text-gray-400 gap-0.5 ml-auto">
                       <ShieldCheck className="w-3 h-3" />
-                      Onay gerekli
+                      {t('approvalRequired')}
                     </span>
                   )}
                   {!canExecute && !action.requiresApproval && (
-                    <span className="text-[10px] text-gray-400 ml-auto">İnceleme gerekli</span>
+                    <span className="text-[10px] text-gray-400 ml-auto">{t('reviewRequired')}</span>
                   )}
                 </div>
               </div>

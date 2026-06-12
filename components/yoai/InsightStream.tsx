@@ -2,6 +2,8 @@
 
 import { AlertTriangle, Eye, CheckCircle2, Inbox, ChevronDown, ChevronUp, ScanSearch } from 'lucide-react'
 import { useState } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
+import { translateEnum } from '@/lib/yoai/translations'
 import type { DeepCampaignInsight, InsightStatus, RiskLevel } from '@/lib/yoai/analysisTypes'
 
 type CampaignWithAI = DeepCampaignInsight & {
@@ -9,12 +11,6 @@ type CampaignWithAI = DeepCampaignInsight & {
   recommendation: string
   confidence: number
   insightStatus: InsightStatus
-}
-
-const STATUS_LABEL: Record<InsightStatus, string> = {
-  monitoring: 'İzleniyor',
-  review_needed: 'İnceleme Gerekli',
-  ready_for_approval: 'Onaya Hazır',
 }
 
 const STATUS_COLOR: Record<InsightStatus, string> = {
@@ -30,25 +26,16 @@ const RISK_DOT: Record<RiskLevel, string> = {
   critical: 'bg-red-500',
 }
 
-const RISK_LABEL: Record<RiskLevel, string> = {
-  low: 'Düşük',
-  medium: 'Orta',
-  high: 'Yüksek',
-  critical: 'Kritik',
-}
-
-const OBJECTIVE_TR: Record<string, string> = {
-  OUTCOME_TRAFFIC: 'Trafik', OUTCOME_AWARENESS: 'Bilinirlik', OUTCOME_ENGAGEMENT: 'Etkileşim',
-  OUTCOME_LEADS: 'Potansiyel Müşteri', OUTCOME_SALES: 'Satış', OUTCOME_APP_PROMOTION: 'Uygulama',
-  SEARCH: 'Arama', DISPLAY: 'Görüntülü', VIDEO: 'Video', PERFORMANCE_MAX: 'Performans Max', SHOPPING: 'Alışveriş',
-}
-
 interface Props {
   insights: CampaignWithAI[]
   loading: boolean
 }
 
 export default function InsightStream({ insights, loading }: Props) {
+  const t = useTranslations('dashboard.yoai.insightStream')
+  const locale = useLocale() as 'tr' | 'en'
+  const statusLabel = (s: InsightStatus) => t(`status.${s}`)
+  const riskLabel = (r: RiskLevel) => t(`risk.${r}`)
   const [expandedId, setExpandedId] = useState<string | null>(null)
 
   const activeCampaigns = insights.filter(c => c.status === 'ACTIVE' || c.status === 'ENABLED')
@@ -60,12 +47,12 @@ export default function InsightStream({ insights, loading }: Props) {
     <div className="bg-white rounded-2xl border border-gray-100 p-6">
       {/* Header — matches DailyBriefing language */}
       <div className="mb-5">
-        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">Kampanya İzleme</p>
-        <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5"><ScanSearch className="w-4 h-4 text-primary" />AI Kampanya Analizi</h2>
+        <p className="text-[10px] text-gray-400 uppercase tracking-wider font-medium">{t('eyebrow')}</p>
+        <h2 className="text-base font-semibold text-gray-900 mt-0.5 flex items-center gap-1.5"><ScanSearch className="w-4 h-4 text-primary" />{t('title')}</h2>
         <p className="text-[11px] text-gray-400 mt-1">
-          {activeCampaigns.length} aktif kampanya izleniyor
-          {criticalCount > 0 && <span className="text-red-500 font-medium"> · {criticalCount} kritik</span>}
-          {highCount > 0 && <span className="text-orange-500 font-medium"> · {highCount} yüksek risk</span>}
+          {t('monitoring', { count: activeCampaigns.length })}
+          {criticalCount > 0 && <span className="text-red-500 font-medium"> · {t('criticalCount', { count: criticalCount })}</span>}
+          {highCount > 0 && <span className="text-orange-500 font-medium"> · {t('highRiskCount', { count: highCount })}</span>}
         </p>
       </div>
 
@@ -76,7 +63,7 @@ export default function InsightStream({ insights, loading }: Props) {
       ) : activeCampaigns.length === 0 ? (
         <div className="bg-gray-50 rounded-xl p-8 text-center">
           <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Aktif kampanya bulunamadı.</p>
+          <p className="text-sm text-gray-500">{t('empty')}</p>
         </div>
       ) : (
         <div className="space-y-3">
@@ -107,14 +94,14 @@ export default function InsightStream({ insights, loading }: Props) {
                         {status === 'monitoring' && <Eye className="w-2.5 h-2.5" />}
                         {status === 'review_needed' && <AlertTriangle className="w-2.5 h-2.5" />}
                         {status === 'ready_for_approval' && <CheckCircle2 className="w-2.5 h-2.5" />}
-                        {STATUS_LABEL[status]}
+                        {statusLabel(status)}
                       </span>
                       {isExpanded ? <ChevronUp className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" />}
                     </div>
 
                     {/* Middle line: Objective + Score + Risk */}
                     <div className="flex items-center gap-3 mb-2">
-                      <span className="text-[10px] text-gray-400">{OBJECTIVE_TR[c.objective] || c.objective}</span>
+                      <span className="text-[10px] text-gray-400">{translateEnum(c.objective, locale, c.platform.toLowerCase() as 'meta' | 'google')}</span>
                       <span className="text-[10px] text-gray-300">·</span>
                       <span className={`text-[10px] font-semibold ${c.score >= 70 ? 'text-emerald-600' : c.score >= 50 ? 'text-gray-600' : 'text-red-600'}`}>
                         {c.score}/100
@@ -123,18 +110,18 @@ export default function InsightStream({ insights, loading }: Props) {
                       <div className="flex items-center gap-1">
                         <span className={`w-1.5 h-1.5 rounded-full ${RISK_DOT[c.riskLevel]}`} />
                         <span className={`text-[10px] font-medium ${c.riskLevel === 'critical' ? 'text-red-600' : c.riskLevel === 'high' ? 'text-orange-600' : 'text-gray-500'}`}>
-                          {RISK_LABEL[c.riskLevel]}
+                          {riskLabel(c.riskLevel)}
                         </span>
                       </div>
                       <span className="text-[10px] text-gray-300 hidden lg:inline">·</span>
-                      <span className="text-[10px] text-gray-400 hidden lg:inline">{activeAdsets.length} set · {activeAds} reklam</span>
+                      <span className="text-[10px] text-gray-400 hidden lg:inline">{t('setsAndAds', { sets: activeAdsets.length, ads: activeAds })}</span>
                     </div>
 
                     {/* Bottom line: Metrics row */}
                     <div className="flex items-center gap-2 flex-wrap">
                       <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md font-medium">₺{c.metrics.spend.toFixed(0)}</span>
-                      <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">{c.metrics.clicks} tık</span>
-                      <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">%{(c.metrics.ctr * 100).toFixed(1)} TO</span>
+                      <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">{c.metrics.clicks} {t('clicksShort')}</span>
+                      <span className="text-[10px] bg-gray-100/80 text-gray-600 px-2 py-0.5 rounded-md">%{(c.metrics.ctr * 100).toFixed(1)} {t('ctrShort')}</span>
                       {c.metrics.roas != null && (
                         <span className={`text-[10px] px-2 py-0.5 rounded-md font-medium ${c.metrics.roas >= 2 ? 'bg-emerald-50 text-emerald-700' : c.metrics.roas >= 1 ? 'bg-gray-50 text-gray-700' : 'bg-red-50 text-red-600'}`}>
                           {c.metrics.roas.toFixed(1)}x ROAS
@@ -148,7 +135,7 @@ export default function InsightStream({ insights, loading }: Props) {
                     <div className="px-4 pb-3 -mt-1">
                       <div className="bg-primary/[0.04] rounded-lg px-3 py-2">
                         <p className="text-[11px] text-gray-600 leading-relaxed truncate">
-                          <span className="text-primary font-medium">AI Öneri:</span> {c.recommendation}
+                          <span className="text-primary font-medium">{t('aiRecommendation')}:</span> {c.recommendation}
                         </p>
                       </div>
                     </div>
@@ -165,7 +152,7 @@ export default function InsightStream({ insights, loading }: Props) {
                         {c.recommendation && (
                           <div className="bg-primary/[0.04] rounded-lg px-3 py-2">
                             <p className="text-[12px] text-gray-700 leading-relaxed">
-                              <span className="text-primary font-semibold">Öneri:</span> {c.recommendation}
+                              <span className="text-primary font-semibold">{t('recommendation')}:</span> {c.recommendation}
                             </p>
                           </div>
                         )}
@@ -174,9 +161,9 @@ export default function InsightStream({ insights, loading }: Props) {
 
                     {/* Mobile metrics */}
                     <div className="flex gap-2 flex-wrap text-[11px] text-gray-500 md:hidden">
-                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">Harcama: ₺{c.metrics.spend.toFixed(0)}</span>
-                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">Tıklama: {c.metrics.clicks}</span>
-                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">TO: %{(c.metrics.ctr * 100).toFixed(1)}</span>
+                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">{t('spend')}: ₺{c.metrics.spend.toFixed(0)}</span>
+                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">{t('clicks')}: {c.metrics.clicks}</span>
+                      <span className="bg-white rounded-md px-2.5 py-1 border border-gray-100">{t('ctrShort')}: %{(c.metrics.ctr * 100).toFixed(1)}</span>
                     </div>
 
                     {/* Adsets */}
@@ -188,7 +175,7 @@ export default function InsightStream({ insights, loading }: Props) {
                             <span className="text-[12px] font-medium text-gray-800 truncate">{as.name}</span>
                             <div className="flex gap-2 shrink-0">
                               <span className="text-[10px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">₺{as.metrics.spend.toFixed(0)}</span>
-                              <span className="text-[10px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{as.metrics.clicks} tık</span>
+                              <span className="text-[10px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">{as.metrics.clicks} {t('clicksShort')}</span>
                               <span className="text-[10px] bg-gray-50 text-gray-500 px-2 py-0.5 rounded-md">%{(as.metrics.ctr * 100).toFixed(1)}</span>
                             </div>
                           </div>

@@ -15,6 +15,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader2, CheckCircle2, XCircle, AlertTriangle, Info } from 'lucide-react'
 
 export interface PreflightConfirmPayload {
@@ -64,13 +65,13 @@ interface Props {
   onBack: () => void
 }
 
-const ASSET_LABELS: Record<string, string> = {
-  page: 'Facebook Sayfası',
-  pixel: 'Meta Pixel',
-  lead_form: 'Instant Form',
-  conversion_event: 'Dönüşüm Olayı',
-  website_url: 'Web Sitesi URL',
-  creative: 'Reklam Görseli',
+const ASSET_LABEL_KEYS: Record<string, string> = {
+  page: 'assetPage',
+  pixel: 'assetPixel',
+  lead_form: 'assetLeadForm',
+  conversion_event: 'assetConversionEvent',
+  website_url: 'assetWebsiteUrl',
+  creative: 'assetCreative',
 }
 
 export default function MetaPreflightPanel({
@@ -81,6 +82,8 @@ export default function MetaPreflightPanel({
   onConfirm,
   onBack,
 }: Props) {
+  const t = useTranslations('dashboard.yoai.preflight')
+  const tc = useTranslations('common')
   const [loading, setLoading] = useState(true)
   const [err, setErr] = useState<string | null>(null)
   const [resp, setResp] = useState<PreflightResponse | null>(null)
@@ -120,7 +123,7 @@ export default function MetaPreflightPanel({
         setPixelId(json.assets.pixels[0].id)
       }
     } catch (e) {
-      setErr(e instanceof Error ? e.message : 'Ön kontrol isteği başarısız.')
+      setErr(e instanceof Error ? e.message : t('requestFailed'))
     } finally {
       setLoading(false)
     }
@@ -142,7 +145,7 @@ export default function MetaPreflightPanel({
     return (
       <div className="flex flex-col items-center justify-center py-12">
         <Loader2 className="w-8 h-8 text-emerald-400 animate-spin mb-3" />
-        <p className="text-sm text-slate-400">Ön kontrol yapılıyor…</p>
+        <p className="text-sm text-slate-400">{t('running')}</p>
       </div>
     )
   }
@@ -220,15 +223,15 @@ export default function MetaPreflightPanel({
         <StatusIcon className="w-5 h-5 shrink-0 mt-0.5" />
         <div className="flex-1">
           <p className="text-sm font-medium">
-            {resp.status === 'ok' && 'Ön kontrol başarılı. Taslak oluşturulabilir.'}
-            {resp.status === 'requires_selection' && 'Sayfa seçimi gerekli.'}
-            {resp.status === 'missing_assets' && 'Bazı varlıklar eksik.'}
-            {resp.status === 'unsupported' && 'Bu öneri mevcut Meta yayın akışıyla uyumlu değil.'}
+            {resp.status === 'ok' && t('statusOk')}
+            {resp.status === 'requires_selection' && t('statusRequiresSelection')}
+            {resp.status === 'missing_assets' && t('statusMissingAssets')}
+            {resp.status === 'unsupported' && t('statusUnsupported')}
           </p>
           {cap.note && <p className="text-xs mt-1 opacity-80">{cap.note}</p>}
           {resp.status === 'unsupported' && (
             <p className="text-xs mt-1 opacity-70">
-              Lütfen farklı bir kampanya hedefiyle yeniden öneri oluşturun.
+              {t('unsupportedHint')}
             </p>
           )}
         </div>
@@ -238,13 +241,13 @@ export default function MetaPreflightPanel({
         <>
           {/* Facebook Page */}
           <div className={cardCls}>
-            <p className="text-sm font-semibold text-white mb-2">Facebook Sayfası</p>
+            <p className="text-sm font-semibold text-white mb-2">{t('facebookPage')}</p>
             {pagesForForm.length === 0 ? (
-              <p className="text-sm text-red-300">Bağlı sayfa yok. Meta hesabınıza sayfa bağlayın.</p>
+              <p className="text-sm text-red-300">{t('noPageConnected')}</p>
             ) : ambiguous ? (
               <div className="space-y-2">
                 <p className="text-xs text-slate-400 mb-1">
-                  Birden fazla sayfa var. Kullanmak istediğinizi seçin.
+                  {t('multiplePages')}
                 </p>
                 {pagesForForm.map((p) => (
                   <label
@@ -277,7 +280,7 @@ export default function MetaPreflightPanel({
               <p className="text-sm font-semibold text-white mb-2">Meta Pixel</p>
               {resp.assets.pixels.length === 0 ? (
                 <p className="text-sm text-red-300">
-                  Pixel bulunamadı. Meta Events Manager'dan bir pixel oluşturun.
+                  {t('noPixel')}
                 </p>
               ) : (
                 <select
@@ -285,7 +288,7 @@ export default function MetaPreflightPanel({
                   onChange={(e) => setPixelId(e.target.value || null)}
                   className={inputCls}
                 >
-                  <option value="">— Pixel seçin —</option>
+                  <option value="">{t('selectPixel')}</option>
                   {resp.assets.pixels.map((px) => (
                     <option key={px.id} value={px.id}>
                       {px.name} ({px.id})
@@ -299,25 +302,25 @@ export default function MetaPreflightPanel({
           {/* Conversion event */}
           {requiresConversionEvent && (
             <div className={cardCls}>
-              <p className="text-sm font-semibold text-white mb-2">Dönüşüm Olayı</p>
+              <p className="text-sm font-semibold text-white mb-2">{t('conversionEvent')}</p>
               <select
                 value={conversionEvent}
                 onChange={(e) => setConversionEvent(e.target.value)}
                 className={inputCls}
               >
-                <option value="">— Event seçin —</option>
-                <option value="PURCHASE">Satın Alma</option>
-                <option value="LEAD">Potansiyel Müşteri</option>
-                <option value="COMPLETE_REGISTRATION">Kayıt Tamamlama</option>
-                <option value="ADD_TO_CART">Sepete Ekle</option>
-                <option value="INITIATE_CHECKOUT">Ödeme Başlatma</option>
-                <option value="CONTACT">İletişim</option>
-                <option value="SUBMIT_APPLICATION">Başvuru Gönder</option>
-                <option value="SUBSCRIBE">Abone Ol</option>
+                <option value="">{t('selectEvent')}</option>
+                <option value="PURCHASE">{t('eventPurchase')}</option>
+                <option value="LEAD">{t('eventLead')}</option>
+                <option value="COMPLETE_REGISTRATION">{t('eventCompleteRegistration')}</option>
+                <option value="ADD_TO_CART">{t('eventAddToCart')}</option>
+                <option value="INITIATE_CHECKOUT">{t('eventInitiateCheckout')}</option>
+                <option value="CONTACT">{t('eventContact')}</option>
+                <option value="SUBMIT_APPLICATION">{t('eventSubmitApplication')}</option>
+                <option value="SUBSCRIBE">{t('eventSubscribe')}</option>
               </select>
               <p className="text-[11px] text-slate-500 mt-2 flex items-start gap-1">
                 <Info className="w-3 h-3 mt-0.5 shrink-0" />
-                Seçtiğiniz olayın pixel'inizde aktif olarak tetiklendiğinden emin olun.
+                {t('conversionEventHint')}
               </p>
             </div>
           )}
@@ -325,7 +328,7 @@ export default function MetaPreflightPanel({
           {/* Website URL */}
           {requiresWebsiteUrl && (
             <div className={cardCls}>
-              <p className="text-sm font-semibold text-white mb-2">Web Sitesi URL</p>
+              <p className="text-sm font-semibold text-white mb-2">{t('websiteUrl')}</p>
               <input
                 type="url"
                 placeholder="https://..."
@@ -343,8 +346,8 @@ export default function MetaPreflightPanel({
               {formsForPage.length === 0 ? (
                 <p className="text-sm text-red-300">
                   {pageId
-                    ? "Seçili sayfada Instant Form yok. Meta'da önce form oluşturun."
-                    : 'Önce sayfa seçin.'}
+                    ? t('noLeadForm')
+                    : t('selectPageFirst')}
                 </p>
               ) : (
                 <select
@@ -352,7 +355,7 @@ export default function MetaPreflightPanel({
                   onChange={(e) => setLeadFormId(e.target.value || null)}
                   className={inputCls}
                 >
-                  <option value="">— Form seçin —</option>
+                  <option value="">{t('selectForm')}</option>
                   {formsForPage.map((f) => (
                     <option key={f.id} value={f.id}>
                       {f.name}
@@ -366,9 +369,9 @@ export default function MetaPreflightPanel({
           {/* Creative acknowledgement */}
           {requiresCreative && !creativeAvailable && (
             <div className="border border-[#1e2d45] bg-slate-800/30 rounded-xl p-4">
-              <p className="text-sm font-semibold text-white mb-1">Reklam Görseli Hazır Değil</p>
+              <p className="text-sm font-semibold text-white mb-1">{t('creativeNotReady')}</p>
               <p className="text-xs text-slate-400 mb-3">
-                Kampanya ve reklam seti oluşturulur; reklam görselini Meta Ads Manager'dan eklemeniz gerekir.
+                {t('creativeNotReadyDesc')}
               </p>
               <label className="flex items-center gap-2 text-sm text-slate-300 cursor-pointer">
                 <input
@@ -377,7 +380,7 @@ export default function MetaPreflightPanel({
                   onChange={(e) => setAckCreativeLater(e.target.checked)}
                   className="accent-emerald-500"
                 />
-                Görseli Ads Manager'dan ekleyeceğim, devam et.
+                {t('creativeAckLater')}
               </label>
             </div>
           )}
@@ -386,7 +389,7 @@ export default function MetaPreflightPanel({
           {missing.length > 0 && (
             <div className="border border-[#1e2d45] rounded-xl p-4 bg-slate-800/20">
               <p className="text-xs font-semibold text-slate-400 mb-2 uppercase tracking-wider">
-                Eksik Varlıklar
+                {t('missingAssets')}
               </p>
               <ul className="space-y-1">
                 {missing.map((m) => (
@@ -397,7 +400,7 @@ export default function MetaPreflightPanel({
                       }`}
                     />
                     <span>
-                      <strong className="text-slate-300">{ASSET_LABELS[m.asset] || m.asset}:</strong>{' '}
+                      <strong className="text-slate-300">{ASSET_LABEL_KEYS[m.asset] ? t(ASSET_LABEL_KEYS[m.asset]) : m.asset}:</strong>{' '}
                       {m.reason}
                     </span>
                   </li>
@@ -414,7 +417,7 @@ export default function MetaPreflightPanel({
           onClick={onBack}
           className="px-4 py-2 text-sm text-slate-400 hover:bg-white/5 rounded-lg transition-colors"
         >
-          Geri
+          {tc('back')}
         </button>
         <button
           onClick={handleConfirm}
@@ -425,7 +428,7 @@ export default function MetaPreflightPanel({
               : 'bg-emerald-600 hover:bg-emerald-500 text-white'
           }`}
         >
-          {blocking ? 'Eksikleri Tamamlayın' : 'Taslağı Oluştur'}
+          {blocking ? t('completeMissing') : t('createDraft')}
         </button>
       </div>
     </div>

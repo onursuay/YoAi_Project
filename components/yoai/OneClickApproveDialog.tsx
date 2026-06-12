@@ -11,6 +11,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   X,
   Loader2,
@@ -44,7 +45,10 @@ interface SuccessResult {
   adId?: string
 }
 
-function humanizeErrorMsg(msg: string): string {
+function humanizeErrorMsg(
+  msg: string,
+  t: (key: string) => string,
+): string {
   const lower = msg.toLowerCase()
   if (
     lower.includes('yoai_direct_publish_enabled') ||
@@ -52,12 +56,14 @@ function humanizeErrorMsg(msg: string): string {
     lower.includes('feature flag') ||
     lower.includes('publish_enabled')
   ) {
-    return 'Canlı yayın özelliği şu anda kapalı. Reklamı yayına almak için yayın ayarlarının etkinleştirilmesi gerekiyor.'
+    return t('publishDisabled')
   }
-  return msg.replace(/\bPAUSED\b/g, 'taslak')
+  return msg.replace(/\bPAUSED\b/g, t('draftWord'))
 }
 
 export default function OneClickApproveDialog({ proposal, onClose, approvalId, onPublished }: Props) {
+  const t = useTranslations('dashboard.yoai.oneClickApprove')
+  const tc = useTranslations('common')
   const [phase, setPhase] = useState<Phase>('idle')
   const [message, setMessage] = useState<string>('')
   const [needs, setNeeds] = useState<NeedsInput>({})
@@ -72,7 +78,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
 
   async function submit(overrideChoices?: typeof choices) {
     setPhase('running')
-    setMessage('Taslak hazırlanıyor — görsel üretiliyor, Meta\'ya yükleniyor, kampanya kuruluyor…')
+    setMessage(t('preparingDraft'))
     try {
       const res = await fetch('/api/yoai/one-click-approve', {
         method: 'POST',
@@ -87,7 +93,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
 
       if (json.ok) {
         setResult(json.created || {})
-        setMessage(json.message || 'Kampanya hazır.')
+        setMessage(json.message || t('campaignReady'))
         setPhase('success')
         if (onPublished) onPublished(approvalId ?? null)
         return
@@ -95,16 +101,16 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
 
       if (json.code === 'NEEDS_INPUT') {
         setNeeds((json.needs || {}) as NeedsInput)
-        setMessage(json.message || 'Bazı seçimler yapmanız gerekiyor.')
+        setMessage(json.message || t('needsSelection'))
         setPhase('needs_input')
         return
       }
 
-      const rawMsg = json.message || json.error || 'Hata.'
-      setMessage(humanizeErrorMsg(rawMsg))
+      const rawMsg = json.message || json.error || t('genericError')
+      setMessage(humanizeErrorMsg(rawMsg, t))
       setPhase('error')
     } catch (e) {
-      setMessage(e instanceof Error ? e.message : 'Bağlantı hatası.')
+      setMessage(e instanceof Error ? e.message : t('connectionError'))
       setPhase('error')
     }
   }
@@ -129,9 +135,9 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
               <Sparkles className="w-5 h-5 text-primary" />
             </div>
             <div>
-              <h2 className="text-lg font-semibold text-gray-900">Tek Tıkla Onayla</h2>
+              <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
               <p className="text-xs text-gray-400">
-                YoAlgoritma hazır taslağı oluşturur — onay sende
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -146,13 +152,13 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
               <div className="bg-gray-50 rounded-xl p-4 space-y-2">
                 <div className="flex items-center justify-between">
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider">
-                    Platform
+                    {t('platform')}
                   </p>
                   <span className="text-xs font-medium text-gray-900">Meta</span>
                 </div>
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Kampanya Adı
+                    {t('campaignName')}
                   </p>
                   <p className="text-sm font-medium text-gray-900 leading-snug">
                     {proposal.campaignName || '—'}
@@ -161,14 +167,14 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                 {proposal.objectiveLabel && (
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                      Hedef
+                      {t('objective')}
                     </p>
                     <p className="text-sm text-gray-700">{proposal.objectiveLabel}</p>
                   </div>
                 )}
                 <div>
                   <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                    Günlük Bütçe
+                    {t('dailyBudget')}
                   </p>
                   <p className="text-sm font-semibold text-gray-900">
                     ₺{proposal.dailyBudget ?? '—'}
@@ -177,7 +183,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                 {(proposal.headline || proposal.callToAction) && (
                   <div>
                     <p className="text-xs font-semibold text-gray-500 uppercase tracking-wider mb-1">
-                      Reklam Özeti
+                      {t('adSummary')}
                     </p>
                     {proposal.headline && (
                       <p className="text-sm text-gray-700 leading-snug">{proposal.headline}</p>
@@ -190,37 +196,35 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
               </div>
 
               <div className="bg-primary/5 border border-primary/20 rounded-xl px-4 py-3 text-xs text-primary leading-relaxed">
-                <p className="font-semibold mb-1">Bu işlem ne yapacak:</p>
+                <p className="font-semibold mb-1">{t('whatHappens')}</p>
                 <ul className="list-disc list-inside space-y-0.5">
-                  <li>Meta hesabınızda yeni bir kampanya, reklam seti ve reklam oluşturur.</li>
+                  <li>{t('whatHappens1')}</li>
                   <li>
-                    Kampanya <strong>taslak</strong> olarak hazırlanır — hiçbir şey otomatik
-                    yayına girmez.
+                    {t.rich('whatHappens2', { strong: (chunks) => <strong>{chunks}</strong> })}
                   </li>
                   <li>
-                    Yayına almak için Meta Ads Manager üzerinden <strong>manuel olarak aktif</strong>
-                    {' '}etmeniz gerekir.
+                    {t.rich('whatHappens3', { strong: (chunks) => <strong>{chunks}</strong> })}
                   </li>
                 </ul>
               </div>
 
               <div className="bg-gray-50 border border-gray-200 rounded-xl px-4 py-3 text-xs text-gray-700 space-y-1.5">
-                <p className="font-semibold text-gray-800 mb-1">Otomatik güvenlik kontrolleri:</p>
+                <p className="font-semibold text-gray-800 mb-1">{t('safetyChecksTitle')}</p>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Feature flags — doğrudan yayın iznini doğrular</span>
+                  <span>{t('safetyCheck1')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Bütçe limiti — günlük bütçe üst sınırı kontrol edilir</span>
+                  <span>{t('safetyCheck2')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>Payload doğrulama — zorunlu reklam alanları kontrol edilir</span>
+                  <span>{t('safetyCheck3')}</span>
                 </div>
                 <div className="flex items-center gap-2">
                   <span className="w-1.5 h-1.5 rounded-full bg-emerald-500 shrink-0" />
-                  <span>İçerik politikası — yasaklı ifadeler ve garanti iddiaları taranır</span>
+                  <span>{t('safetyCheck4')}</span>
                 </div>
               </div>
 
@@ -232,8 +236,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                   className="mt-0.5 w-4 h-4 accent-primary"
                 />
                 <span className="text-xs text-gray-700 leading-relaxed">
-                  Bu reklamın Meta hesabımda <strong>taslak</strong> olarak oluşturulacağını,
-                  bütçesini ve detaylarını kontrol ettiğimi onaylıyorum.
+                  {t.rich('acknowledge', { strong: (chunks) => <strong>{chunks}</strong> })}
                 </span>
               </label>
 
@@ -246,7 +249,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                     : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                 }`}
               >
-                Onayla ve Kampanya Oluştur
+                {t('approveAndCreate')}
               </button>
             </div>
           )}
@@ -256,7 +259,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
               <Loader2 className="w-10 h-10 text-primary animate-spin mb-4" />
               <p className="text-sm text-gray-600 max-w-sm">{message}</p>
               <p className="text-[11px] text-gray-400 mt-2">
-                Bu işlem 20-40 saniye sürebilir (görsel üretimi dahil).
+                {t('runningHint')}
               </p>
             </div>
           )}
@@ -269,7 +272,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
 
               {needs.pages && (
                 <div>
-                  <p className="text-xs font-semibold text-gray-700 mb-2">Facebook Sayfası</p>
+                  <p className="text-xs font-semibold text-gray-700 mb-2">{t('facebookPage')}</p>
                   <div className="space-y-2">
                     {needs.pages.map((p) => (
                       <label
@@ -301,7 +304,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                     onChange={(e) => setChoices((c) => ({ ...c, pixelId: e.target.value }))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
                   >
-                    <option value="">— Pixel seçin —</option>
+                    <option value="">{t('selectPixel')}</option>
                     {needs.pixels.map((px) => (
                       <option key={px.id} value={px.id}>
                         {px.name}
@@ -319,7 +322,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                     onChange={(e) => setChoices((c) => ({ ...c, leadFormId: e.target.value }))}
                     className="w-full border border-gray-200 rounded-lg px-3 py-2 text-sm"
                   >
-                    <option value="">— Form seçin —</option>
+                    <option value="">{t('selectForm')}</option>
                     {needs.leadForms.map((f) => (
                       <option key={f.id} value={f.id}>
                         {f.name}
@@ -334,7 +337,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                   onClick={onClose}
                   className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
-                  İptal
+                  {tc('cancel')}
                 </button>
                 <button
                   onClick={retryWithChoices}
@@ -345,7 +348,7 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
                       : 'bg-gray-200 text-gray-400 cursor-not-allowed'
                   }`}
                 >
-                  Devam Et
+                  {tc('continue')}
                 </button>
               </div>
             </div>
@@ -354,35 +357,35 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
           {phase === 'success' && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <CheckCircle2 className="w-14 h-14 text-emerald-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Taslak Hazır</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('draftReady')}</h3>
               <p className="text-sm text-gray-600 max-w-sm mb-4">{message}</p>
               {result && (
                 <div className="bg-gray-50 rounded-xl p-3 w-full text-xs text-gray-600 space-y-1">
                   {result.campaignId && (
                     <p>
-                      Kampanya: <code>{result.campaignId}</code>
+                      {t('campaignLabel')}: <code>{result.campaignId}</code>
                     </p>
                   )}
                   {result.adsetId && (
                     <p>
-                      Reklam Seti: <code>{result.adsetId}</code>
+                      {t('adsetLabel')}: <code>{result.adsetId}</code>
                     </p>
                   )}
                   {result.adId && (
                     <p>
-                      Reklam: <code>{result.adId}</code>
+                      {t('adLabel')}: <code>{result.adId}</code>
                     </p>
                   )}
                 </div>
               )}
               <p className="text-[11px] text-gray-400 mt-3">
-                Kampanya taslak olarak oluşturuldu. Yayına almak için Meta Ads Manager'dan aktif edebilirsiniz.
+                {t('draftReadyFooter')}
               </p>
               <button
                 onClick={onClose}
                 className="mt-4 px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200"
               >
-                Kapat
+                {tc('close')}
               </button>
             </div>
           )}
@@ -390,20 +393,20 @@ export default function OneClickApproveDialog({ proposal, onClose, approvalId, o
           {phase === 'error' && (
             <div className="flex flex-col items-center justify-center py-8 text-center">
               <AlertTriangle className="w-14 h-14 text-gray-500 mb-4" />
-              <h3 className="text-lg font-semibold text-gray-900 mb-2">Hata</h3>
+              <h3 className="text-lg font-semibold text-gray-900 mb-2">{t('errorTitle')}</h3>
               <p className="text-sm text-gray-600 max-w-sm">{message}</p>
               <div className="flex gap-2 mt-4">
                 <button
                   onClick={() => setPhase('idle')}
                   className="px-4 py-2 text-sm text-gray-600 hover:bg-gray-100 rounded-lg"
                 >
-                  Tekrar dene
+                  {tc('retry')}
                 </button>
                 <button
                   onClick={onClose}
                   className="px-6 py-2.5 bg-gray-100 text-gray-700 rounded-xl text-sm font-medium hover:bg-gray-200"
                 >
-                  Kapat
+                  {tc('close')}
                 </button>
               </div>
             </div>

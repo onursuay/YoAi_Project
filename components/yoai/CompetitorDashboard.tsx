@@ -1,7 +1,9 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Loader2, AlertTriangle, TrendingUp, Info, Inbox, Target, Eye, CheckCircle2, XCircle } from 'lucide-react'
+import { translateEnum } from '@/lib/yoai/translations'
 import type { UserAdProfile, CompetitorAd, CompetitorGap, CompetitorComparison } from '@/lib/yoai/competitorAnalyzer'
 
 interface AnalysisResult {
@@ -23,6 +25,8 @@ interface PersistedSummary {
 type GoogleTransparencyStatus = 'unknown' | 'connected' | 'missing_key' | 'unavailable'
 
 export default function CompetitorDashboard() {
+  const t = useTranslations('dashboard.yoai.competitor')
+  const locale = useLocale() as 'tr' | 'en'
   const [data, setData] = useState<AnalysisResult | null>(null)
   const [persisted, setPersisted] = useState<PersistedSummary | null>(null)
   const [loading, setLoading] = useState(true)
@@ -79,11 +83,11 @@ export default function CompetitorDashboard() {
   if (loading) {
     return (
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Rakip Analizi</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('title')}</h2>
         <div className="bg-white rounded-2xl border border-gray-100 p-12 text-center">
           <Loader2 className="w-8 h-8 text-primary animate-spin mx-auto mb-3" />
-          <p className="text-sm text-gray-500">Reklamlarınız analiz ediliyor ve rakipler aranıyor...</p>
-          <p className="text-xs text-gray-400 mt-1">Meta Ad Library&apos;den veriler çekiliyor</p>
+          <p className="text-sm text-gray-500">{t('loadingTitle')}</p>
+          <p className="text-xs text-gray-400 mt-1">{t('loadingSubtitle')}</p>
         </div>
       </div>
     )
@@ -92,10 +96,10 @@ export default function CompetitorDashboard() {
   if (!data || !data.userProfile) {
     return (
       <div>
-        <h2 className="text-lg font-semibold text-gray-900 mb-2">Rakip Analizi</h2>
+        <h2 className="text-lg font-semibold text-gray-900 mb-2">{t('title')}</h2>
         <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
           <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-          <p className="text-sm text-gray-500">Analiz için aktif kampanya gereklidir.</p>
+          <p className="text-sm text-gray-500">{t('needActiveCampaign')}</p>
         </div>
       </div>
     )
@@ -105,18 +109,18 @@ export default function CompetitorDashboard() {
   const gaps = comparison?.gaps || []
 
   const tabs = [
-    { id: 'gaps' as const, label: `Boşluklar & Fırsatlar (${gaps.length})` },
-    { id: 'competitors' as const, label: `Rakip Reklamlar (${competitorAds.length})` },
-    { id: 'profile' as const, label: 'Sizin Profiliniz' },
+    { id: 'gaps' as const, label: t('tabs.gaps', { count: gaps.length }) },
+    { id: 'competitors' as const, label: t('tabs.competitors', { count: competitorAds.length }) },
+    { id: 'profile' as const, label: t('tabs.profile') },
   ]
 
   return (
     <div>
       <div className="flex items-center justify-between mb-4">
         <div>
-          <h2 className="text-lg font-semibold text-gray-900">Rakip Analizi</h2>
+          <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
           <p className="text-xs text-gray-400 mt-0.5">
-            Reklamlarınız analiz edildi → Rakipler bulundu → Boşluklar tespit edildi
+            {t('flow')}
           </p>
         </div>
         <div className="flex items-center gap-2 text-[11px]">
@@ -133,13 +137,13 @@ export default function CompetitorDashboard() {
             </span>
           )}
           {googleStatus === 'missing_key' && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title="SERPAPI_API_KEY tanımlı değil">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title={t('googleKeyMissingTooltip')}>
               <XCircle className="w-3 h-3" />
-              Google (key yok)
+              {t('googleKeyMissing')}
             </span>
           )}
           {googleStatus === 'unavailable' && (
-            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title="Google Ads Transparency bağlı değil">
+            <span className="inline-flex items-center gap-1 px-2 py-1 rounded-lg bg-gray-50 border border-gray-200 text-gray-500 font-medium" title={t('googleUnavailableTooltip')}>
               <XCircle className="w-3 h-3" />
               Google
             </span>
@@ -150,17 +154,17 @@ export default function CompetitorDashboard() {
       {/* Persisted-record bilgisi (Faz 2) — sadece veri varsa göster, mock yok */}
       {persisted && (persisted.inserted + persisted.updated > 0) && (
         <div className="mb-4 rounded-xl border border-gray-200 bg-gray-50 px-4 py-3 text-xs text-gray-700 flex flex-wrap items-center gap-x-3 gap-y-1">
-          <span className="font-medium text-gray-900">Kalıcı analiz kaydı:</span>
-          <span>{persisted.inserted} yeni rakip</span>
-          <span>{persisted.updated} mevcut rakip güncellendi</span>
+          <span className="font-medium text-gray-900">{t('persisted.title')}</span>
+          <span>{t('persisted.newCompetitors', { count: persisted.inserted })}</span>
+          <span>{t('persisted.updatedCompetitors', { count: persisted.updated })}</span>
           {persisted.campaignTypeContext && (
-            <span className="text-gray-500">tip: {persisted.campaignTypeContext}</span>
+            <span className="text-gray-500">{t('persisted.type')}: {persisted.campaignTypeContext}</span>
           )}
           {persisted.queryKeyword && (
-            <span className="text-gray-500">sorgu: {persisted.queryKeyword}</span>
+            <span className="text-gray-500">{t('persisted.query')}: {persisted.queryKeyword}</span>
           )}
           {persisted.insightId && (
-            <span className="text-gray-500">içgörü kaydedildi</span>
+            <span className="text-gray-500">{t('persisted.insightSaved')}</span>
           )}
         </div>
       )}
@@ -180,7 +184,7 @@ export default function CompetitorDashboard() {
           {gaps.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
               <Target className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Belirgin boşluk tespit edilmedi.</p>
+              <p className="text-sm text-gray-500">{t('noGaps')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
@@ -197,7 +201,7 @@ export default function CompetitorDashboard() {
                     <div>
                       <div className="flex items-center gap-2 mb-1">
                         <p className="text-sm font-medium text-gray-900">{gap.title}</p>
-                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${gap.priority === 'high' ? 'bg-red-100 text-red-700' : gap.priority === 'medium' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-600'}`}>{gap.priority === 'high' ? 'Yüksek' : gap.priority === 'medium' ? 'Orta' : 'Avantaj'}</span>
+                        <span className={`text-[9px] px-1.5 py-0.5 rounded ${gap.priority === 'high' ? 'bg-red-100 text-red-700' : gap.priority === 'medium' ? 'bg-gray-100 text-gray-700' : 'bg-gray-100 text-gray-600'}`}>{gap.priority === 'high' ? t('priority.high') : gap.priority === 'medium' ? t('priority.medium') : t('priority.advantage')}</span>
                       </div>
                       <p className="text-xs text-gray-600 mb-1">{gap.description}</p>
                       <p className="text-xs text-primary font-medium">{gap.recommendation}</p>
@@ -216,8 +220,8 @@ export default function CompetitorDashboard() {
           {competitorAds.length === 0 ? (
             <div className="bg-white rounded-2xl border border-gray-100 p-8 text-center">
               <Inbox className="w-8 h-8 text-gray-300 mx-auto mb-2" />
-              <p className="text-sm text-gray-500">Rakip reklam bulunamadı.</p>
-              <p className="text-xs text-gray-400 mt-1">Meta Ad Library erişim izni gerekiyor olabilir.</p>
+              <p className="text-sm text-gray-500">{t('noCompetitorAds')}</p>
+              <p className="text-xs text-gray-400 mt-1">{t('noCompetitorAdsHint')}</p>
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -229,7 +233,7 @@ export default function CompetitorDashboard() {
                     </div>
                     <div className="min-w-0">
                       <p className="text-xs font-semibold text-gray-900 truncate">{ad.pageName}</p>
-                      <p className="text-[9px] text-gray-400">{ad.isActive ? 'Aktif' : 'Sona erdi'}</p>
+                      <p className="text-[9px] text-gray-400">{ad.isActive ? t('adActive') : t('adEnded')}</p>
                     </div>
                   </div>
                   {ad.body && <p className="text-xs text-gray-700 mb-2 line-clamp-3">{ad.body}</p>}
@@ -250,22 +254,22 @@ export default function CompetitorDashboard() {
       {activeTab === 'profile' && userProfile && (
         <div className="space-y-4">
           <div className="bg-white rounded-2xl border border-gray-100 p-5">
-            <h3 className="text-sm font-semibold text-gray-900 mb-3">Reklam Profiliniz</h3>
+            <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('profile.heading')}</h3>
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm mb-4">
               <div>
-                <p className="text-[10px] text-gray-400">Ort. CTR</p>
+                <p className="text-[10px] text-gray-400">{t('profile.avgCtr')}</p>
                 <p className="font-bold text-gray-900">%{userProfile.avgCtr.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">Ort. CPC</p>
+                <p className="text-[10px] text-gray-400">{t('profile.avgCpc')}</p>
                 <p className="font-bold text-gray-900">₺{userProfile.avgCpc.toFixed(2)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">Toplam Harcama</p>
+                <p className="text-[10px] text-gray-400">{t('profile.totalSpend')}</p>
                 <p className="font-bold text-gray-900">₺{userProfile.totalSpend.toFixed(0)}</p>
               </div>
               <div>
-                <p className="text-[10px] text-gray-400">Platformlar</p>
+                <p className="text-[10px] text-gray-400">{t('profile.platforms')}</p>
                 <p className="font-bold text-gray-900">{userProfile.platforms.join(', ')}</p>
               </div>
             </div>
@@ -273,32 +277,32 @@ export default function CompetitorDashboard() {
             <div className="grid grid-cols-2 md:grid-cols-3 gap-3 pt-3 border-t border-gray-100">
               {userProfile.objectives.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-400 mb-1">Kampanya Amaçları</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.objectives.map(o => <span key={o} className="text-[9px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded">{o.replace('OUTCOME_', '')}</span>)}</div>
+                  <p className="text-[10px] text-gray-400 mb-1">{t('profile.objectives')}</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.objectives.map(o => <span key={o} className="text-[9px] bg-violet-50 text-violet-700 px-1.5 py-0.5 rounded">{translateEnum(o, locale, 'meta')}</span>)}</div>
                 </div>
               )}
               {userProfile.destinations.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-400 mb-1">Dönüşüm Hedefleri</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.destinations.map(d => <span key={d} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{d}</span>)}</div>
+                  <p className="text-[10px] text-gray-400 mb-1">{t('profile.destinations')}</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.destinations.map(d => <span key={d} className="text-[9px] bg-blue-50 text-blue-700 px-1.5 py-0.5 rounded">{translateEnum(d, locale)}</span>)}</div>
                 </div>
               )}
               {userProfile.optimizationGoals.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-400 mb-1">Optimizasyon Hedefleri</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.optimizationGoals.map(g => <span key={g} className="text-[9px] bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded">{g}</span>)}</div>
+                  <p className="text-[10px] text-gray-400 mb-1">{t('profile.optimizationGoals')}</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.optimizationGoals.map(g => <span key={g} className="text-[9px] bg-gray-50 text-gray-700 px-1.5 py-0.5 rounded">{translateEnum(g, locale)}</span>)}</div>
                 </div>
               )}
               {userProfile.biddingStrategies.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-400 mb-1">Teklif Stratejileri</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.biddingStrategies.map(b => <span key={b} className="text-[9px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded">{b}</span>)}</div>
+                  <p className="text-[10px] text-gray-400 mb-1">{t('profile.biddingStrategies')}</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.biddingStrategies.map(b => <span key={b} className="text-[9px] bg-red-50 text-red-700 px-1.5 py-0.5 rounded">{translateEnum(b, locale)}</span>)}</div>
                 </div>
               )}
               {userProfile.channelTypes.length > 0 && (
                 <div>
-                  <p className="text-[10px] text-gray-400 mb-1">Kanal Tipleri</p>
-                  <div className="flex flex-wrap gap-1">{userProfile.channelTypes.map(c => <span key={c} className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">{c}</span>)}</div>
+                  <p className="text-[10px] text-gray-400 mb-1">{t('profile.channelTypes')}</p>
+                  <div className="flex flex-wrap gap-1">{userProfile.channelTypes.map(c => <span key={c} className="text-[9px] bg-emerald-50 text-emerald-700 px-1.5 py-0.5 rounded">{translateEnum(c, locale, 'google')}</span>)}</div>
                 </div>
               )}
             </div>
@@ -306,24 +310,24 @@ export default function CompetitorDashboard() {
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h4 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-primary" />Anahtar Kelimeler</h4>
+              <h4 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Eye className="w-3.5 h-3.5 text-primary" />{t('profile.keywords')}</h4>
               <div className="flex flex-wrap gap-1.5">
                 {userProfile.keywords.map(k => <span key={k} className="text-[11px] bg-primary/10 text-primary px-2 py-0.5 rounded-full">{k}</span>)}
               </div>
             </div>
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h4 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-primary" />Mesaj Temaları</h4>
+              <h4 className="text-xs font-semibold text-gray-900 mb-2 flex items-center gap-1.5"><Target className="w-3.5 h-3.5 text-primary" />{t('profile.themes')}</h4>
               <div className="flex flex-wrap gap-1.5">
                 {userProfile.themes.length > 0
-                  ? userProfile.themes.map(t => <span key={t} className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{t.replace(/_/g, ' ')}</span>)
-                  : <span className="text-xs text-gray-400">Belirgin tema tespit edilmedi</span>}
+                  ? userProfile.themes.map(theme => <span key={theme} className="text-[11px] bg-blue-50 text-blue-700 px-2 py-0.5 rounded-full">{theme.replace(/_/g, ' ')}</span>)
+                  : <span className="text-xs text-gray-400">{t('profile.noThemes')}</span>}
               </div>
             </div>
           </div>
 
           {userProfile.topPerformingAds.length > 0 && (
             <div className="bg-white rounded-2xl border border-gray-100 p-5">
-              <h4 className="text-xs font-semibold text-gray-900 mb-2">En İyi Reklamlar</h4>
+              <h4 className="text-xs font-semibold text-gray-900 mb-2">{t('profile.topAds')}</h4>
               <div className="space-y-2">
                 {userProfile.topPerformingAds.map((ad, i) => (
                   <div key={i} className="flex items-center justify-between text-xs bg-gray-50 rounded-lg px-3 py-2">

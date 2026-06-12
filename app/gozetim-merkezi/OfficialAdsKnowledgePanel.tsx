@@ -10,6 +10,7 @@
  * İç admin aracı — çevre koduyla uyumlu Türkçe (i18n kapsamı dışı).
  */
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { FileText, Check, X, ExternalLink, RefreshCw } from 'lucide-react'
 
 interface KnowledgeItem {
@@ -47,6 +48,8 @@ function safeHttpUrl(raw: string | null | undefined): string | null {
 }
 
 export default function OfficialAdsKnowledgePanel() {
+  const t = useTranslations('gozetim.officialAds')
+  const tc = useTranslations('common')
   const [entries, setEntries] = useState<PendingEntry[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -57,11 +60,11 @@ export default function OfficialAdsKnowledgePanel() {
     setError(null)
     try {
       const res = await fetch('/api/admin/gozetim-merkezi/official-ads/pending', { cache: 'no-store' })
-      if (!res.ok) throw new Error(`Liste alınamadı (${res.status})`)
+      if (!res.ok) throw new Error(t('errorListFailed', { status: res.status }))
       const json = await res.json()
       setEntries(Array.isArray(json.entries) ? json.entries : [])
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'Bilinmeyen hata')
+      setError(e instanceof Error ? e.message : t('errorUnknown'))
     } finally {
       setLoading(false)
     }
@@ -79,10 +82,10 @@ export default function OfficialAdsKnowledgePanel() {
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ itemId, decision }),
       })
-      if (!res.ok) throw new Error(`İşlem başarısız (${res.status})`)
+      if (!res.ok) throw new Error(t('errorActionFailed', { status: res.status }))
       setEntries((prev) => prev.filter((e) => e.item.id !== itemId))
     } catch (e) {
-      setError(e instanceof Error ? e.message : 'İşlem hatası')
+      setError(e instanceof Error ? e.message : t('errorAction'))
     } finally {
       setActingId(null)
     }
@@ -93,10 +96,10 @@ export default function OfficialAdsKnowledgePanel() {
       <div className="mb-3 flex items-center justify-between">
         <div className="flex items-center gap-2">
           <FileText className="h-5 w-5 text-primary" />
-          <h2 className="text-base font-semibold text-gray-900">Resmi Döküman Güncellemeleri</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t('title')}</h2>
           {entries.length > 0 && (
             <span className="rounded-full bg-primary/10 px-2 py-0.5 text-xs font-medium text-primary">
-              {entries.length} onay bekliyor
+              {t('pendingCount', { count: entries.length })}
             </span>
           )}
         </div>
@@ -105,13 +108,12 @@ export default function OfficialAdsKnowledgePanel() {
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Yenile
+          {tc('refresh')}
         </button>
       </div>
 
       <p className="mb-4 text-sm leading-relaxed text-gray-500">
-        Aylık tarama, resmi Meta/Google dokümanlarındaki değişiklikleri yapay zekâ ile özetleyip taslak
-        olarak getirir. Onaylanan bilgi reklam üretimi, politika ve analiz motorlarına canlı geçer.
+        {t('description')}
       </p>
 
       {error && (
@@ -122,7 +124,7 @@ export default function OfficialAdsKnowledgePanel() {
 
       {!loading && !error && entries.length === 0 && (
         <div className="rounded-xl border border-gray-200 bg-gray-50 px-4 py-8 text-center text-sm text-gray-500">
-          Onay bekleyen güncelleme yok. Tüm resmi bilgiler güncel.
+          {t('emptyState')}
         </div>
       )}
 
@@ -148,7 +150,7 @@ export default function OfficialAdsKnowledgePanel() {
                   v{it.version}
                 </span>
                 <span className="rounded-md border border-gray-200 bg-gray-50 px-2 py-0.5 text-xs font-medium text-gray-600">
-                  Güven: %{Math.round((it.confidence ?? 0) * 100)}
+                  {t('confidenceBadge', { percent: Math.round((it.confidence ?? 0) * 100) })}
                 </span>
               </div>
 
@@ -157,7 +159,7 @@ export default function OfficialAdsKnowledgePanel() {
 
               {entry.current && entry.current.summary && entry.current.summary !== it.summary && (
                 <div className="mt-3 rounded-lg border border-gray-200 bg-gray-50 p-3 text-sm">
-                  <div className="mb-1 text-xs font-medium text-gray-500">Yürürlükteki (v{entry.current.version}):</div>
+                  <div className="mb-1 text-xs font-medium text-gray-500">{t('currentVersion', { version: entry.current.version })}</div>
                   <div className="text-gray-600 line-through decoration-gray-300">{entry.current.summary}</div>
                 </div>
               )}
@@ -169,7 +171,7 @@ export default function OfficialAdsKnowledgePanel() {
                   className="inline-flex items-center gap-1.5 rounded-lg bg-emerald-600 px-3 py-2 text-sm font-medium text-white transition-all hover:bg-emerald-700 active:scale-[0.97] disabled:opacity-50"
                 >
                   <Check className="h-4 w-4" />
-                  Onayla
+                  {tc('approve')}
                 </button>
                 <button
                   disabled={acting}
@@ -177,7 +179,7 @@ export default function OfficialAdsKnowledgePanel() {
                   className="inline-flex items-center gap-1.5 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm font-medium text-red-700 transition-all hover:bg-red-100 active:scale-[0.97] disabled:opacity-50"
                 >
                   <X className="h-4 w-4" />
-                  Reddet
+                  {tc('reject')}
                 </button>
                 {safeSource && (
                   <a
@@ -187,7 +189,7 @@ export default function OfficialAdsKnowledgePanel() {
                     className="inline-flex items-center gap-1.5 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 transition-colors hover:bg-gray-50"
                   >
                     <ExternalLink className="h-4 w-4" />
-                    Kaynak
+                    {t('source')}
                   </a>
                 )}
               </div>

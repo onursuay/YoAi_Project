@@ -5,6 +5,7 @@
  * Sadeleştirilmiş görünüm: KPI + Kullanıcı&Firma listesi + Başvurular paneli.
  */
 import { useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import {
   ShieldCheck,
   Users,
@@ -155,6 +156,8 @@ function KpiCard({
 }
 
 export default function GozetimMerkeziClient() {
+  const t = useTranslations('gozetim.dashboard')
+  const tc = useTranslations('common')
   const [loading, setLoading] = useState<boolean>(true)
   const [error, setError] = useState<string | null>(null)
   const [data, setData] = useState<OverviewPayload | null>(null)
@@ -186,14 +189,14 @@ export default function GozetimMerkeziClient() {
       .then((json: OverviewPayload) => {
         if (cancelled) return
         if (!json.ok) {
-          setError('Veri alınamadı')
+          setError(t('errorLoad'))
           return
         }
         setData(json)
       })
       .catch((e) => {
         if (cancelled) return
-        setError(e instanceof Error ? e.message : 'Veri alınamadı')
+        setError(e instanceof Error ? e.message : t('errorLoad'))
       })
       .finally(() => {
         if (cancelled) return
@@ -257,9 +260,9 @@ export default function GozetimMerkeziClient() {
             <ShieldCheck className="h-5 w-5" />
           </div>
           <div>
-            <h1 className="text-xl font-semibold text-gray-900">Gözetim Merkezi</h1>
+            <h1 className="text-xl font-semibold text-gray-900">{t('title')}</h1>
             <p className="text-sm text-gray-500">
-              Kullanıcı, firma ve tarama durumlarının operasyonel görünümü.
+              {t('subtitle')}
             </p>
           </div>
         </div>
@@ -268,7 +271,7 @@ export default function GozetimMerkeziClient() {
           className="inline-flex items-center gap-2 rounded-lg border border-gray-200 bg-white px-3 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50"
         >
           <RefreshCw className={`h-4 w-4 ${loading ? 'animate-spin' : ''}`} />
-          Yenile
+          {tc('refresh')}
         </button>
       </header>
 
@@ -284,55 +287,55 @@ export default function GozetimMerkeziClient() {
       {/* KPI Kartları — Kullanıcı & Firma */}
       <section className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-5" data-testid="kpi-section">
         <KpiCard
-          label="Toplam Kullanıcı"
+          label={t('kpi.totalUsers')}
           value={data?.kpis.totalUsers ?? (loading ? '…' : 0)}
           icon={Users}
           tone="gray"
         />
         <KpiCard
-          label="Onboarding Tamam"
+          label={t('kpi.onboardingDone')}
           value={data?.kpis.onboardingCompleted ?? (loading ? '…' : 0)}
           icon={CheckCircle2}
           tone="emerald"
         />
         <KpiCard
-          label="Onboarding Eksik"
+          label={t('kpi.onboardingMissing')}
           value={data?.kpis.onboardingPending ?? (loading ? '…' : 0)}
           icon={AlertTriangle}
           tone="primary"
         />
         <KpiCard
-          label="Toplam Firma Profili"
+          label={t('kpi.totalProfiles')}
           value={data?.kpis.totalProfiles ?? (loading ? '…' : 0)}
           icon={Database}
           tone="gray"
         />
         <KpiCard
-          label="Profilsiz Kullanıcı"
+          label={t('kpi.usersWithoutProfile')}
           value={data?.kpis.usersWithoutProfile ?? (loading ? '…' : 0)}
           icon={Users}
           tone="gray"
         />
         <KpiCard
-          label="Tamamlanan Tarama"
+          label={t('kpi.completedScans')}
           value={data?.kpis.completedScans ?? (loading ? '…' : 0)}
           icon={CheckCircle2}
           tone="emerald"
         />
         <KpiCard
-          label="Çalışan Tarama"
+          label={t('kpi.runningScans')}
           value={data?.kpis.runningScans ?? (loading ? '…' : 0)}
           icon={Activity}
           tone="primary"
         />
         <KpiCard
-          label="Intelligence Eksik"
+          label={t('kpi.intelligenceMissing')}
           value={data?.kpis.intelligenceMissing ?? (loading ? '…' : 0)}
           icon={AlertTriangle}
           tone="primary"
         />
         <KpiCard
-          label="Ort. Confidence"
+          label={t('kpi.avgConfidence')}
           value={
             data?.kpis.avgIntelConfidence == null
               ? loading ? '…' : '—'
@@ -342,7 +345,7 @@ export default function GozetimMerkeziClient() {
           tone="gray"
         />
         <KpiCard
-          label="Son 24s Kayıt"
+          label={t('kpi.signups24h')}
           value={data?.kpis.signups24h ?? (loading ? '…' : 0)}
           icon={Users}
           tone="emerald"
@@ -352,7 +355,7 @@ export default function GozetimMerkeziClient() {
       {/* Diagnostic banner */}
       {data && data.diagnostics && data.diagnostics.length > 0 && (
         <div className="mt-4 rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-xs text-red-700">
-          <div className="font-semibold mb-1">Kısmi veri uyarısı</div>
+          <div className="font-semibold mb-1">{t('partialDataWarning')}</div>
           <ul className="list-disc pl-5 space-y-0.5">
             {data.diagnostics.map((d, i) => (
               <li key={i} className="break-all">{d}</li>
@@ -364,16 +367,16 @@ export default function GozetimMerkeziClient() {
       {/* Kullanıcı & Firma Listesi */}
       <section className="mt-8">
         <div className="mb-3 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-          <h2 className="text-base font-semibold text-gray-900">Kullanıcı & Firma Listesi</h2>
+          <h2 className="text-base font-semibold text-gray-900">{t('userCompanyList')}</h2>
           <div className="flex flex-wrap items-center gap-2">
             <WizardSelect
               value={filterOnboarding}
               onChange={(v) => setFilterOnboarding(v as any)}
               options={[
-                { value: 'all', label: 'Onboarding · Tümü' },
-                { value: 'complete', label: 'Onboarding tamam' },
-                { value: 'incomplete', label: 'Onboarding eksik' },
-                { value: 'no_profile', label: 'Profilsiz' },
+                { value: 'all', label: t('filterOnboarding.all') },
+                { value: 'complete', label: t('filterOnboarding.complete') },
+                { value: 'incomplete', label: t('filterOnboarding.incomplete') },
+                { value: 'no_profile', label: t('filterOnboarding.noProfile') },
               ]}
               className="w-48"
             />
@@ -381,11 +384,11 @@ export default function GozetimMerkeziClient() {
               value={filterScan}
               onChange={(v) => setFilterScan(v as any)}
               options={[
-                { value: 'all', label: 'Tarama · Tümü' },
-                { value: 'completed', label: 'Tamamlandı' },
-                { value: 'failed', label: 'Hatalı' },
-                { value: 'running', label: 'Çalışıyor / Bekliyor' },
-                { value: 'none', label: 'Tarama yok' },
+                { value: 'all', label: t('filterScan.all') },
+                { value: 'completed', label: t('filterScan.completed') },
+                { value: 'failed', label: t('filterScan.failed') },
+                { value: 'running', label: t('filterScan.running') },
+                { value: 'none', label: t('filterScan.none') },
               ]}
               className="w-48"
             />
@@ -393,9 +396,9 @@ export default function GozetimMerkeziClient() {
               value={filterIntel}
               onChange={(v) => setFilterIntel(v as any)}
               options={[
-                { value: 'all', label: 'Intelligence · Tümü' },
-                { value: 'present', label: 'Var' },
-                { value: 'missing', label: 'Eksik' },
+                { value: 'all', label: t('filterIntel.all') },
+                { value: 'present', label: t('filterIntel.present') },
+                { value: 'missing', label: t('filterIntel.missing') },
               ]}
               className="w-48"
             />
@@ -405,7 +408,7 @@ export default function GozetimMerkeziClient() {
                 type="text"
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="E-posta, firma, sektör, lokasyon ara"
+                placeholder={t('searchPlaceholder')}
                 className="w-full rounded-lg border border-gray-200 bg-white py-2 pl-9 pr-3 text-sm placeholder:text-gray-400 focus:border-primary focus:outline-none focus:ring-1 focus:ring-primary"
               />
             </div>
@@ -416,15 +419,15 @@ export default function GozetimMerkeziClient() {
           <table className="w-full text-sm">
             <thead className="border-b border-gray-200 bg-gray-50 text-left text-xs uppercase tracking-wide text-gray-500">
               <tr>
-                <th className="px-3 py-2">E-posta</th>
-                <th className="px-3 py-2">Firma</th>
-                <th className="px-3 py-2">Sektör</th>
-                <th className="px-3 py-2">Lokasyon</th>
-                <th className="px-3 py-2">Onboarding</th>
-                <th className="px-3 py-2 text-right">Kaynak</th>
-                <th className="px-3 py-2 text-right">Rakip</th>
-                <th className="px-3 py-2 text-right">Conf.</th>
-                <th className="px-3 py-2">Son Tarama</th>
+                <th className="px-3 py-2">{t('table.email')}</th>
+                <th className="px-3 py-2">{t('table.company')}</th>
+                <th className="px-3 py-2">{t('table.sector')}</th>
+                <th className="px-3 py-2">{t('table.location')}</th>
+                <th className="px-3 py-2">{t('table.onboarding')}</th>
+                <th className="px-3 py-2 text-right">{t('table.source')}</th>
+                <th className="px-3 py-2 text-right">{t('table.competitor')}</th>
+                <th className="px-3 py-2 text-right">{t('table.conf')}</th>
+                <th className="px-3 py-2">{t('table.lastScan')}</th>
                 <th className="px-3 py-2"></th>
               </tr>
             </thead>
@@ -432,14 +435,14 @@ export default function GozetimMerkeziClient() {
               {loading && (
                 <tr>
                   <td colSpan={10} className="px-3 py-6 text-center text-gray-400">
-                    Yükleniyor…
+                    {tc('loading')}
                   </td>
                 </tr>
               )}
               {!loading && filteredProfiles.length === 0 && (
                 <tr>
                   <td colSpan={10} className="px-3 py-6 text-center text-gray-400">
-                    Kayıt bulunamadı.
+                    {t('noRecords')}
                   </td>
                 </tr>
               )}
@@ -465,7 +468,7 @@ export default function GozetimMerkeziClient() {
                       </td>
                       <td className="px-3 py-2 text-gray-700">
                         {hasProfile ? (profile.business_name || profile.company_name || '—') : (
-                          <span className="text-gray-400 italic">Profilsiz</span>
+                          <span className="text-gray-400 italic">{t('noProfile')}</span>
                         )}
                       </td>
                       <td className="px-3 py-2 text-gray-600">
@@ -480,7 +483,7 @@ export default function GozetimMerkeziClient() {
                       <td className="px-3 py-2">
                         {!hasProfile ? (
                           <span className="inline-flex items-center rounded border px-2 py-0.5 text-xs bg-gray-50 text-gray-700 border-gray-200">
-                            Profilsiz
+                            {t('noProfile')}
                           </span>
                         ) : (
                           <span
@@ -490,7 +493,7 @@ export default function GozetimMerkeziClient() {
                                 : 'bg-primary/5 text-primary border-primary/20'
                             }`}
                           >
-                            {onboardingDone ? 'Tamam' : 'Eksik'}
+                            {onboardingDone ? t('badgeDone') : t('badgeMissing')}
                           </span>
                         )}
                       </td>
@@ -509,7 +512,7 @@ export default function GozetimMerkeziClient() {
                           onClick={() => setSelectedKey(key)}
                           className="rounded-md border border-gray-200 bg-white px-2 py-1 text-xs font-medium text-gray-700 hover:bg-gray-50"
                         >
-                          Detay
+                          {t('detail')}
                         </button>
                       </td>
                     </tr>
@@ -538,6 +541,8 @@ function DetailModal({
   entry: ProfileEntry
   onClose: () => void
 }) {
+  const t = useTranslations('gozetim.dashboard')
+  const tc = useTranslations('common')
   const profile = entry.profile || {}
   const intel = entry.intelligenceSummary
   const scans = entry.sourceScansSummary
@@ -560,10 +565,10 @@ function DetailModal({
         <div className="sticky top-0 z-10 flex items-center justify-between border-b border-gray-200 bg-white px-6 py-4">
           <div>
             <div className="text-xs uppercase tracking-wide text-gray-500">
-              Gözetim Merkezi · Detay
+              {t('modalEyebrow')}
             </div>
             <div className="text-base font-semibold text-gray-900">
-              {profile.business_name || 'Firma'}
+              {profile.business_name || t('companyFallback')}
               <span className="ml-2 text-sm font-normal text-gray-500">
                 {entry.user?.email || ''}
               </span>
@@ -572,30 +577,30 @@ function DetailModal({
           <button
             onClick={onClose}
             className="rounded-md p-1.5 text-gray-500 hover:bg-gray-100"
-            aria-label="Kapat"
+            aria-label={tc('close')}
           >
             <X className="h-5 w-5" />
           </button>
         </div>
 
         <div className="space-y-6 px-6 py-5">
-          <Section title="Firma Bilgileri">
-            <KeyValue k="İşletme Adı" v={profile.business_name} />
-            <KeyValue k="Kullanıcı" v={entry.user?.email} />
-            <KeyValue k="Web Sitesi" v={profile.website} />
-            <KeyValue k="Sektör" v={[profile.sector_main, profile.sector_sub].filter(Boolean).join(' / ')} />
-            <KeyValue k="Lokasyon" v={profile.target_location} />
-            <KeyValue k="Onboarding" v={profile.onboarding_completed ? 'Tamamlandı' : 'Eksik'} />
-            <KeyValue k="Marka Tonu" v={profile.brand_tone} />
-            <KeyValue k="Açıklama" v={profile.business_description} wide />
-            <KeyValue k="Anahtar Kelimeler" vList={toArray(profile.keywords)} />
-            <KeyValue k="Yasaklı İddialar" vList={toArray(profile.prohibited_claims)} />
-            <KeyValue k="Sosyal Hesaplar" vList={socialList(profile.social_handles)} />
+          <Section title={t('detailModal.companyInfo')}>
+            <KeyValue k={t('detailModal.businessName')} v={profile.business_name} />
+            <KeyValue k={t('detailModal.user')} v={entry.user?.email} />
+            <KeyValue k={t('detailModal.website')} v={profile.website} />
+            <KeyValue k={t('detailModal.sector')} v={[profile.sector_main, profile.sector_sub].filter(Boolean).join(' / ')} />
+            <KeyValue k={t('detailModal.location')} v={profile.target_location} />
+            <KeyValue k={t('detailModal.onboarding')} v={profile.onboarding_completed ? t('detailModal.completed') : t('badgeMissing')} />
+            <KeyValue k={t('detailModal.brandTone')} v={profile.brand_tone} />
+            <KeyValue k={t('detailModal.description')} v={profile.business_description} wide />
+            <KeyValue k={t('detailModal.keywords')} vList={toArray(profile.keywords)} />
+            <KeyValue k={t('detailModal.prohibitedClaims')} vList={toArray(profile.prohibited_claims)} />
+            <KeyValue k={t('detailModal.socialAccounts')} vList={socialList(profile.social_handles)} />
           </Section>
 
-          <Section title={`Rakipler (${entry.competitors.length})`}>
+          <Section title={t('detailModal.competitorsCount', { count: entry.competitors.length })}>
             {entry.competitors.length === 0 ? (
-              <div className="text-sm text-gray-500">Kayıt yok.</div>
+              <div className="text-sm text-gray-500">{t('detailModal.noRecord')}</div>
             ) : (
               <ul className="space-y-2">
                 {entry.competitors.map((c: any) => (
@@ -608,9 +613,9 @@ function DetailModal({
             )}
           </Section>
 
-          <Section title={`Source Scan (${scans.length})`}>
+          <Section title={t('detailModal.sourceScanCount', { count: scans.length })}>
             {scans.length === 0 ? (
-              <div className="text-sm text-gray-500">Tarama kaydı yok.</div>
+              <div className="text-sm text-gray-500">{t('detailModal.noScanRecord')}</div>
             ) : (
               <div className="space-y-3">
                 {scans.map((s) => (
@@ -631,12 +636,12 @@ function DetailModal({
                       </span>
                     </div>
                     <div className="mt-2 grid grid-cols-2 gap-2 text-xs text-gray-600">
-                      <div>Tarih: <span className="text-gray-800">{formatDate(s.scanned_at)}</span></div>
-                      <div>Confidence: <span className="text-gray-800">{s.confidence == null ? '—' : `${Math.round(Number(s.confidence) * 100)}%`}</span></div>
+                      <div>{t('detailModal.dateLabel')}: <span className="text-gray-800">{formatDate(s.scanned_at)}</span></div>
+                      <div>{t('detailModal.confidenceLabel')}: <span className="text-gray-800">{s.confidence == null ? '—' : `${Math.round(Number(s.confidence) * 100)}%`}</span></div>
                     </div>
                     {s.error_message && (
                       <div className="mt-2 rounded border border-red-200 bg-red-50 px-2 py-1.5 text-xs text-red-700">
-                        Hata: {s.error_message}
+                        {t('detailModal.errorLabel')}: {s.error_message}
                       </div>
                     )}
                   </div>
@@ -645,22 +650,22 @@ function DetailModal({
             )}
           </Section>
 
-          <Section title="Business Intelligence">
+          <Section title={t('detailModal.businessIntelligence')}>
             {!intel ? (
-              <div className="text-sm text-gray-500">Henüz oluşturulmadı.</div>
+              <div className="text-sm text-gray-500">{t('detailModal.notCreatedYet')}</div>
             ) : (
               <div className="space-y-2">
-                <KeyValue k="Durum" v={intel.status} />
-                <KeyValue k="Confidence" v={intel.confidence == null ? '—' : `${Math.round(Number(intel.confidence) * 100)}%`} />
-                <KeyValue k="Güncelleme" v={formatDate(intel.updated_at)} />
-                <KeyValue k="Şirket Özeti" v={intel.company_summary} wide />
-                <KeyValue k="İş Modeli" v={intel.business_model} wide />
-                <KeyValue k="Sektör Özeti" v={intel.sector_summary} wide />
-                <KeyValue k="Yerel Pazar" v={intel.local_market_summary} wide />
-                <KeyValue k="Hedef Kitle" v={intel.target_audience_summary} wide />
-                <KeyValue k="Rakip Özeti" v={intel.competitor_summary} wide />
-                <KeyValue k="Keyword Temaları" vList={toArray(intel.keyword_themes)} />
-                <KeyValue k="Eksik Veri" vList={toArray(intel.missing_data)} />
+                <KeyValue k={t('detailModal.status')} v={intel.status} />
+                <KeyValue k={t('detailModal.confidenceLabel')} v={intel.confidence == null ? '—' : `${Math.round(Number(intel.confidence) * 100)}%`} />
+                <KeyValue k={t('detailModal.updated')} v={formatDate(intel.updated_at)} />
+                <KeyValue k={t('detailModal.companySummary')} v={intel.company_summary} wide />
+                <KeyValue k={t('detailModal.businessModel')} v={intel.business_model} wide />
+                <KeyValue k={t('detailModal.sectorSummary')} v={intel.sector_summary} wide />
+                <KeyValue k={t('detailModal.localMarket')} v={intel.local_market_summary} wide />
+                <KeyValue k={t('detailModal.targetAudience')} v={intel.target_audience_summary} wide />
+                <KeyValue k={t('detailModal.competitorSummary')} v={intel.competitor_summary} wide />
+                <KeyValue k={t('detailModal.keywordThemes')} vList={toArray(intel.keyword_themes)} />
+                <KeyValue k={t('detailModal.missingData')} vList={toArray(intel.missing_data)} />
               </div>
             )}
           </Section>

@@ -33,6 +33,7 @@ import ReactMarkdown from 'react-markdown'
 
 export default function YoAiPage() {
   const t = useTranslations('dashboard.yoai')
+  const tc = useTranslations('common')
   const { credits, hasEnoughCredits, refresh } = useCredits()
   const { hasSubscription } = useSubscription()
 
@@ -203,12 +204,12 @@ export default function YoAiPage() {
         }
         return 'empty'
       } else {
-        if (!hasCache) setCcError('Veri alınamadı')
+        if (!hasCache) setCcError(t('page.fetchFailed'))
         return 'error'
       }
     } catch (err) {
       console.error('[YoAi] Command center fetch error:', err)
-      if (!hasCache) setCcError('Bağlantı hatası')
+      if (!hasCache) setCcError(t('page.connectionError'))
       return 'error'
     } finally {
       if (!hasCache) setCcLoading(false)
@@ -243,11 +244,11 @@ export default function YoAiPage() {
           setPhase('options')
         }
       } catch {
-        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: 'Bir hata oluştu. Lütfen tekrar deneyin.', timestamp: new Date().toISOString() }])
+        setMessages(prev => [...prev, { id: (Date.now() + 1).toString(), role: 'assistant', content: t('page.errorRetry'), timestamp: new Date().toISOString() }])
         setPhase('error')
       }
     },
-    [phase]
+    [phase, t]
   )
 
   // ── Phase 2: Content Generation ──
@@ -300,13 +301,13 @@ export default function YoAiPage() {
         }
         setPhase('done')
       } catch {
-        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: 'Bir hata oluştu.' } : m))
+        setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: t('page.genericError') } : m))
         setPhase('error')
       } finally {
         refresh() // sunucudaki gerçek bakiyeyi senkronla (düşüm/iade serverda)
       }
     },
-    [detectedIntent, hasSubscription, hasEnoughCredits, refresh]
+    [detectedIntent, hasSubscription, hasEnoughCredits, refresh, t]
   )
 
   // ── Auto-save SEO articles ──
@@ -318,10 +319,10 @@ export default function YoAiPage() {
     if (!assistantMsg) return
     const content = assistantMsg.content
     const titleMatch = content.match(/^#{1,3}\s+(.+)$/m)
-    const title = titleMatch?.[1]?.trim() || lastParamsRef.current.keyword || 'SEO Makale'
+    const title = titleMatch?.[1]?.trim() || lastParamsRef.current.keyword || t('page.seoArticleFallback')
     setArticleSaved(true)
     fetch('/api/yoai/articles', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ title, content, category: 'seo_article', params: lastParamsRef.current, word_count: content.split(/\s+/).filter(Boolean).length }) }).catch(() => {})
-  }, [phase, detectedIntent, messages, articleSaved])
+  }, [phase, detectedIntent, messages, articleSaved, t])
 
   const handleNewConversation = () => {
     setArticleSaved(false)
@@ -472,7 +473,7 @@ export default function YoAiPage() {
                 <p className="text-sm text-red-700">{ccError}</p>
                 <button onClick={() => fetchCommandCenter()} className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-red-100 text-red-700 rounded-lg text-xs font-medium hover:bg-red-200 transition-colors">
                   <RefreshCcw className="w-3 h-3" />
-                  Tekrar Dene
+                  {tc('retry')}
                 </button>
               </div>
             )}
@@ -487,15 +488,15 @@ export default function YoAiPage() {
                 )}
                 <p className="text-sm text-gray-700 flex-1">
                   {bootstrapping
-                    ? 'İlk analiz arka planda hazırlanıyor (1-2 dakika sürebilir). Hazır olunca burada otomatik görünecek.'
-                    : 'Henüz haftalık analiz yok. Pazar gece otomatik çalışır; şimdi başlatmak için:'}
+                    ? t('page.bootstrapRunning')
+                    : t('page.bootstrapIdle')}
                 </p>
                 {!bootstrapping && (
                   <button
                     onClick={triggerBackgroundBootstrap}
                     className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
                   >
-                    Şimdi Başlat
+                    {t('page.startNow')}
                   </button>
                 )}
               </div>
@@ -521,7 +522,7 @@ export default function YoAiPage() {
                           href={hintedIntegration}
                           className="inline-flex items-center gap-1.5 px-3 py-1.5 bg-primary text-white rounded-lg text-xs font-medium hover:bg-primary/90 transition-colors shrink-0"
                         >
-                          Yeniden Bağla
+                          {t('page.reconnect')}
                         </a>
                       )}
                     </div>
@@ -563,7 +564,7 @@ export default function YoAiPage() {
                     {message.role === 'assistant' ? (
                       <div className="prose prose-sm max-w-none text-gray-900">
                         {message.content ? <ReactMarkdown>{message.content}</ReactMarkdown> : (
-                          <span className="inline-flex items-center gap-2 text-gray-400"><Loader2 className="w-4 h-4 animate-spin" />Düşünüyorum...</span>
+                          <span className="inline-flex items-center gap-2 text-gray-400"><Loader2 className="w-4 h-4 animate-spin" />{t('page.thinking')}</span>
                         )}
                       </div>
                     ) : (
@@ -575,7 +576,7 @@ export default function YoAiPage() {
               {phase === 'detecting' && (
                 <div className="flex items-center gap-3 ml-11">
                   <div className="w-8 h-8 bg-primary/10 rounded-full flex items-center justify-center flex-shrink-0"><Sparkles className="w-4 h-4 text-primary" /></div>
-                  <div className="inline-flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded-2xl px-4 py-3"><Loader2 className="w-4 h-4 animate-spin" />Analiz ediliyor...</div>
+                  <div className="inline-flex items-center gap-2 text-sm text-gray-500 bg-white border border-gray-200 rounded-2xl px-4 py-3"><Loader2 className="w-4 h-4 animate-spin" />{t('page.analyzing')}</div>
                 </div>
               )}
               {phase === 'options' && detectedIntent && detectedIntent !== 'off_topic' && (
@@ -585,11 +586,11 @@ export default function YoAiPage() {
                 </div>
               )}
               {phase === 'generating' && (
-                <div className="flex items-center gap-2 text-sm text-gray-500 ml-11"><Loader2 className="w-3 h-3 animate-spin" />YoAi içerik üretiyor...</div>
+                <div className="flex items-center gap-2 text-sm text-gray-500 ml-11"><Loader2 className="w-3 h-3 animate-spin" />{t('page.generating')}</div>
               )}
               {(phase === 'done' || phase === 'error') && (
                 <div className="flex justify-center pt-6 border-t border-gray-200 mt-6">
-                  <button onClick={handleNewConversation} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"><RotateCcw className="w-4 h-4" />Yeni Konuşma Başlat</button>
+                  <button onClick={handleNewConversation} className="inline-flex items-center gap-2 px-4 py-2 bg-primary text-white rounded-lg hover:bg-primary/90 transition-colors text-sm"><RotateCcw className="w-4 h-4" />{t('page.newConversation')}</button>
                 </div>
               )}
             </div>
