@@ -1,4 +1,11 @@
 {
+  "cookieConsent": {
+    "title": "Cookie Preferences",
+    "description": "We use cookies to improve your experience and understand platform usage. Essential cookies are always active; you can reject analytics cookies.",
+    "policyLink": "Cookie Policy",
+    "accept": "Accept",
+    "reject": "Reject"
+  },
   "billing": {
     "accessRequired": {
       "closeAria": "Close",

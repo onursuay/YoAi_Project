@@ -1,4 +1,11 @@
 {
+  "cookieConsent": {
+    "title": "Çerez Tercihleri",
+    "description": "Deneyiminizi iyileştirmek ve platform kullanımını anlamak için çerezler kullanıyoruz. Zorunlu çerezler her zaman aktiftir; analitik çerezleri reddedebilirsiniz.",
+    "policyLink": "Çerez Politikası",
+    "accept": "Kabul Et",
+    "reject": "Reddet"
+  },
   "billing": {
     "accessRequired": {
       "closeAria": "Kapat",

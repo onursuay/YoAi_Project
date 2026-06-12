@@ -7,6 +7,7 @@ import { CreditProvider } from '@/components/providers/CreditProvider'
 import { SubscriptionProvider } from '@/components/providers/SubscriptionProvider'
 import RouteTracker from '@/components/analytics/RouteTracker'
 import AnalyticsScripts from '@/components/analytics/AnalyticsScripts'
+import CookieConsent from '@/components/consent/CookieConsent'
 import './globals.css'
 
 const inter = Inter({
@@ -42,6 +43,7 @@ export default async function RootLayout({
               {children}
             </CreditProvider>
           </SubscriptionProvider>
+          <CookieConsent />
         </NextIntlClientProvider>
       </body>
     </html>
