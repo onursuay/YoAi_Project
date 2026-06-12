@@ -9,6 +9,7 @@
  * zaten oturumlu, isim/email zorunlu değil.
  */
 import { useCallback, useEffect, useMemo, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader2, CalendarCheck } from 'lucide-react'
 
 interface Slot {
@@ -25,32 +26,32 @@ export interface PreMeetingScheduleModalProps {
   onScheduled: (scheduledAtIso: string) => void
 }
 
-const MONTH_NAMES_TR = [
-  'Ocak',
-  'Şubat',
-  'Mart',
-  'Nisan',
-  'Mayıs',
-  'Haziran',
-  'Temmuz',
-  'Ağustos',
-  'Eylül',
-  'Ekim',
-  'Kasım',
-  'Aralık',
-]
-const DAY_SHORT_TR = ['Paz', 'Pzt', 'Sal', 'Çar', 'Per', 'Cum', 'Cmt']
-
-function formatDayHeader(date: string): string {
-  const [y, m, d] = date.split('-').map(Number)
-  const dt = new Date(y, m - 1, d)
-  return `${d} ${MONTH_NAMES_TR[m - 1]} ${y}, ${DAY_SHORT_TR[dt.getDay()]}`
-}
-
 export default function PreMeetingScheduleModal({
   onClose,
   onScheduled,
 }: PreMeetingScheduleModalProps) {
+  const t = useTranslations('landing.premeeting.schedule')
+  const tc = useTranslations('common')
+
+  const monthNames = useMemo(
+    () => Array.from({ length: 12 }, (_, i) => tc(`monthNames.${i}`)),
+    [tc],
+  )
+  const dayShort = useMemo(
+    () => Array.from({ length: 7 }, (_, i) => tc(`dayNamesShort.${i}`)),
+    [tc],
+  )
+
+  const formatDayHeader = useCallback(
+    (date: string): string => {
+      const [y, m, d] = date.split('-').map(Number)
+      const dt = new Date(y, m - 1, d)
+      // common.dayNamesShort is Monday-first; getDay() is Sunday=0 → convert.
+      const dowIdx = (dt.getDay() + 6) % 7
+      return `${d} ${monthNames[m - 1]} ${y}, ${dayShort[dowIdx]}`
+    },
+    [monthNames, dayShort],
+  )
   const [days, setDays] = useState<DaySlots[]>([])
   const [loading, setLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
@@ -122,18 +123,18 @@ export default function PreMeetingScheduleModal({
       const data = await res.json()
       if (!res.ok || !data?.ok) {
         if (data?.error === 'slot_taken') {
-          setError('Bu saat az önce başkası tarafından alındı. Lütfen başka bir slot seçin.')
+          setError(t('errors.slotTaken'))
           setSelectedIso(null)
           await loadAvailability()
         } else {
-          setError('Randevu kaydedilemedi. Lütfen tekrar deneyin.')
+          setError(t('errors.saveFailed'))
         }
         setSubmitting(false)
         return
       }
       onScheduled(data.scheduledAt as string)
     } catch {
-      setError('Randevu kaydedilemedi. Lütfen tekrar deneyin.')
+      setError(t('errors.saveFailed'))
       setSubmitting(false)
     }
   }
@@ -168,10 +169,10 @@ export default function PreMeetingScheduleModal({
                 id="premeeting-schedule-title"
                 className="text-lg font-bold text-gray-900 truncate"
               >
-                30 Dakikalık Ön Görüşme
+                {t('title')}
               </h2>
               <p className="text-xs text-gray-500">
-                İstanbul (GMT+3) · Hafta içi 10:00 – 18:00
+                {t('subtitle')}
               </p>
             </div>
           </div>
@@ -188,8 +189,7 @@ export default function PreMeetingScheduleModal({
             </div>
           ) : days.length === 0 ? (
             <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
-              Şu an uygun bir saat görünmüyor. Lütfen daha sonra tekrar deneyin
-              veya destek ekibimizle iletişime geçin.
+              {t('noAvailability')}
             </div>
           ) : (
             <div className="grid grid-cols-1 md:grid-cols-[180px_1fr] gap-4">
@@ -212,7 +212,7 @@ export default function PreMeetingScheduleModal({
                     >
                       {formatDayHeader(d.date)}
                       <span className="block text-[11px] font-normal text-gray-500 mt-0.5">
-                        {d.slots.length} uygun saat
+                        {t('availableSlots', { count: d.slots.length })}
                       </span>
                     </button>
                   )
@@ -223,7 +223,7 @@ export default function PreMeetingScheduleModal({
               <div>
                 {slotsForSelectedDay.length === 0 ? (
                   <div className="rounded-lg border border-gray-200 bg-gray-50 px-4 py-6 text-center text-sm text-gray-600">
-                    Bu gün için boş saat kalmadı. Başka bir gün seçin.
+                    {t('noSlotsForDay')}
                   </div>
                 ) : (
                   <div className="grid grid-cols-3 sm:grid-cols-4 gap-2 max-h-[360px] overflow-y-auto pr-1">
@@ -257,7 +257,7 @@ export default function PreMeetingScheduleModal({
               className="rounded-xl border border-gray-200 bg-white px-4 py-2.5 text-sm font-semibold text-gray-700 transition hover:bg-gray-50 disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="premeeting-schedule-cancel"
             >
-              Geri
+              {tc('back')}
             </button>
             <button
               type="button"
@@ -266,7 +266,7 @@ export default function PreMeetingScheduleModal({
               className="rounded-xl bg-primary px-5 py-2.5 text-sm font-semibold text-white shadow-sm transition hover:bg-primary/90 disabled:opacity-60 disabled:cursor-not-allowed"
               data-testid="premeeting-schedule-confirm"
             >
-              {submitting ? 'Kaydediliyor…' : 'Randevuyu Onayla'}
+              {submitting ? tc('saving') : t('confirmCta')}
             </button>
           </div>
         </div>

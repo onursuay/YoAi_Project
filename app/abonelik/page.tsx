@@ -89,10 +89,8 @@ export default function AbonelikPage() {
     if (planId === 'enterprise') {
       // Contact-sales: no self-serve checkout. Open a pre-filled mail to the sales inbox.
       const count = accountCounts.enterprise ?? ENTERPRISE_MIN_AD_ACCOUNTS
-      const subject = encodeURIComponent('Enterprise Plan — Reklam Ajansı Talebi')
-      const body = encodeURIComponent(
-        `Merhaba,\n\nEnterprise plan ile ilgileniyorum. İhtiyacım olan reklam hesabı sayısı: ${count}.\n\nTeşekkürler.`,
-      )
+      const subject = encodeURIComponent(t('enterpriseMail.subject'))
+      const body = encodeURIComponent(t('enterpriseMail.body', { count }))
       window.location.href = `mailto:${SALES_EMAIL}?subject=${subject}&body=${body}`
       return
     }
@@ -113,13 +111,13 @@ export default function AbonelikPage() {
       const data = await res.json()
       if (!res.ok || !data?.ok || !data.paymentPageUrl) {
         alert(data?.error === 'iyzico_not_configured'
-          ? 'Ödeme sistemi henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.'
-          : 'Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+          ? t('checkout.notConfigured')
+          : t('checkout.startError'))
         return
       }
       window.location.href = data.paymentPageUrl
     } catch {
-      alert('Ödeme başlatılamadı. Lütfen tekrar deneyin.')
+      alert(t('checkout.startError'))
     } finally {
       setStarting(false)
     }
@@ -140,12 +138,12 @@ export default function AbonelikPage() {
       <div className="flex-1 overflow-y-auto">
         {paymentBanner === 'success' && (
           <div className="mx-8 mt-4 px-4 py-3 rounded-xl bg-emerald-50 border border-emerald-200 text-sm text-emerald-800">
-            Ödemeniz alındı. Aboneliğiniz güncelleniyor.
+            {t('paymentSuccessBanner')}
           </div>
         )}
         {paymentBanner === 'failed' && (
           <div className="mx-8 mt-4 px-4 py-3 rounded-xl bg-rose-50 border border-rose-200 text-sm text-rose-800">
-            Ödeme tamamlanamadı. Lütfen tekrar deneyin.
+            {t('paymentFailedBanner')}
           </div>
         )}
 
@@ -198,7 +196,7 @@ export default function AbonelikPage() {
 
             {/* Notes */}
             <div className="mt-5 space-y-1">
-              <p className="text-sm text-gray-500">* {t('trialBadge')} — Premium plan için geçerlidir.</p>
+              <p className="text-sm text-gray-500">* {t('trialBadge')} — {t('trialPremiumNote')}</p>
               <p className="text-sm text-primary font-medium">* {t('optimizationNote')}</p>
             </div>
           </div>

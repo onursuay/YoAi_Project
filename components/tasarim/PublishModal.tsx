@@ -45,6 +45,7 @@ type PreviewFormat = 'fb_feed' | 'ig_feed' | 'ig_stories' | 'ig_reels'
 
 export default function PublishModal({ isOpen, onClose, item, onToast }: Props) {
   const t = useTranslations('dashboard.tasarim.publishModal')
+  const tc = useTranslations('common')
 
   const [targets, setTargets] = useState<PublishTarget[]>([])
   const [isLoadingTargets, setIsLoadingTargets] = useState(true)
@@ -644,8 +645,8 @@ export default function PublishModal({ isOpen, onClose, item, onToast }: Props) 
                     const firstDay = new Date(year, month, 1).getDay()
                     const startOffset = firstDay === 0 ? 6 : firstDay - 1
                     const daysInMonth = new Date(year, month + 1, 0).getDate()
-                    const monthNames = ['January','February','March','April','May','June','July','August','September','October','November','December']
-                    const dayNames = ['Mo','Tu','We','Th','Fr','Sa','Su']
+                    const monthNames = tc.raw('monthNames') as string[]
+                    const dayNames = tc.raw('dayNamesShort') as string[]
 
                     return (
                       <div className="border border-gray-200 rounded-xl overflow-hidden bg-white">

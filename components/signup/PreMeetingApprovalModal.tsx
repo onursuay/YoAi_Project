@@ -14,6 +14,7 @@
  * Tasarım `AccessRequiredModal` ailesinden alınmıştır.
  */
 import { useEffect, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { CalendarCheck, Sparkles } from 'lucide-react'
 
 export interface PreMeetingApprovalModalProps {
@@ -27,6 +28,7 @@ export default function PreMeetingApprovalModal({
   onDecline,
   busy,
 }: PreMeetingApprovalModalProps) {
+  const t = useTranslations('landing.premeeting.approval')
   const [mounted, setMounted] = useState(false)
 
   useEffect(() => {
@@ -87,25 +89,25 @@ export default function PreMeetingApprovalModal({
           </div>
 
           <span className="mb-4 inline-flex items-center gap-1.5 rounded-full bg-primary/5 px-4 py-1.5 text-[11px] font-semibold uppercase tracking-wider text-primary ring-1 ring-primary/15">
-            ÖN GÖRÜŞME
+            {t('badge')}
           </span>
 
           <h2
             id="premeeting-approval-title"
             className="text-2xl font-bold tracking-tight text-gray-900"
           >
-            Başvurunuz Alındı
+            {t('title')}
           </h2>
 
           <p className="mt-4 text-[15px] leading-relaxed text-gray-500">
-            YoAi hesabınızı aktif kullanıma açmadan önce, işletmenizi ve
-            ihtiyaçlarınızı daha doğru anlayabilmemiz için{' '}
-            <span className="font-semibold text-gray-700">30 dakikalık</span> kısa bir
-            ön görüşme planlıyoruz.
+            {t.rich('body1', {
+              strong: (chunks) => (
+                <span className="font-semibold text-gray-700">{chunks}</span>
+              ),
+            })}
           </p>
           <p className="mt-2.5 text-[15px] leading-relaxed text-gray-500">
-            Uygun olduğunuz günü ve saati takvim üzerinden seçerek başvurunuzu
-            tamamlayabilirsiniz.
+            {t('body2')}
           </p>
 
           <button
@@ -115,7 +117,7 @@ export default function PreMeetingApprovalModal({
             className="mt-8 w-full rounded-xl bg-primary py-3.5 text-[15px] font-semibold text-white shadow-md shadow-primary/20 transition hover:bg-primary/90 hover:shadow-lg hover:shadow-primary/25 focus:outline-none focus:ring-2 focus:ring-primary/40 disabled:opacity-60 disabled:cursor-not-allowed"
             data-testid="premeeting-schedule-cta"
           >
-            Görüşme Planla
+            {t('scheduleCta')}
           </button>
           <button
             type="button"
@@ -124,7 +126,7 @@ export default function PreMeetingApprovalModal({
             className="mt-3 w-full rounded-xl border border-gray-200 bg-white py-3.5 text-[15px] font-semibold text-gray-600 transition hover:bg-gray-50 hover:text-gray-800 focus:outline-none focus:ring-2 focus:ring-gray-200 disabled:opacity-60 disabled:cursor-not-allowed"
             data-testid="premeeting-decline-cta"
           >
-            Şimdilik Planlamak İstemiyorum
+            {t('declineCta')}
           </button>
         </div>
       </div>

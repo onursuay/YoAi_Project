@@ -6,7 +6,7 @@
    Renk paleti proje kuralına uyar (amber/sarı YOK). */
 
 import { useState, useRef, useEffect } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { ChevronDown, Loader2, Sparkles, Zap, AlertTriangle } from 'lucide-react'
 import ScoreBadge from './ScoreBadge'
 import ScanOverlay from './ScanOverlay'
@@ -41,6 +41,8 @@ function fmtNum(v: number): string {
 
 export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMagicScan, scanning, scanPhase = 0 }: Props) {
   const t = useTranslations('dashboard.optimizasyon')
+  const td = useTranslations('dashboard.optimizasyon.googleDetail')
+  const locale = useLocale() as 'tr' | 'en'
   const [showScanMenu, setShowScanMenu] = useState(false)
   const menuRef = useRef<HTMLDivElement>(null)
 
@@ -56,7 +58,7 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   const m = campaign.metrics
   const hasData = m.impressions > 0
   const status = statusFromScore(campaign.score, hasData)
-  const channel = campaign.channelType ? translateEnum(campaign.channelType, 'tr', 'google') : '—'
+  const channel = campaign.channelType ? translateEnum(campaign.channelType, locale, 'google') : '—'
   const problemCount = campaign.problemTags.length
   const isActive = (campaign.effectiveStatus || campaign.status).toUpperCase() === 'ENABLED'
 
@@ -66,10 +68,10 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
   }
 
   const metrics = [
-    { label: 'Harcama', value: fmtCurrency(m.spend, campaign.currency) },
-    { label: 'Tıklama', value: fmtNum(m.clicks) },
+    { label: td('metrics.spend'), value: fmtCurrency(m.spend, campaign.currency) },
+    { label: td('metrics.clicks'), value: fmtNum(m.clicks) },
     { label: 'CTR', value: `${m.ctr.toFixed(2)}%` },
-    { label: 'Dönüşüm', value: fmtNum(m.conversions) },
+    { label: td('metrics.conversions'), value: fmtNum(m.conversions) },
     { label: 'ROAS', value: m.roas ? `${m.roas.toFixed(2)}x` : '—' },
   ]
 
@@ -83,14 +85,14 @@ export default function GoogleCampaignCard({ campaign, expanded, onToggle, onMag
           <div className="flex items-center gap-2">
             <p className="font-semibold text-gray-900 truncate">{campaign.name}</p>
             <span className={`shrink-0 text-[10px] px-2 py-0.5 rounded-full font-medium ${isActive ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-600'}`}>
-              {isActive ? 'Aktif' : 'Duraklatıldı'}
+              {isActive ? td('active') : td('paused')}
             </span>
           </div>
           <div className="flex items-center gap-2 mt-0.5">
             <span className="text-xs text-gray-500">{channel}</span>
             {problemCount > 0 && (
               <span className="inline-flex items-center gap-1 text-[11px] text-red-600">
-                <AlertTriangle className="w-3 h-3" /> {problemCount} sorun
+                <AlertTriangle className="w-3 h-3" /> {td('issueCount', { count: problemCount })}
               </span>
             )}
           </div>

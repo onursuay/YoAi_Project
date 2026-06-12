@@ -11,6 +11,7 @@
  */
 import { useCallback, useEffect, useRef, useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { useTranslations, useLocale } from 'next-intl'
 import Image from 'next/image'
 import Link from 'next/link'
 import { Loader2, CalendarClock, CheckCircle2, ShieldCheck, XCircle } from 'lucide-react'
@@ -44,12 +45,12 @@ interface ApprovalPayload {
   approvalNote?: string | null
 }
 
-function fmtIstanbul(iso: string | null | undefined): string {
+function fmtIstanbul(iso: string | null | undefined, locale: string): string {
   if (!iso) return '—'
   try {
     const d = new Date(iso)
     if (Number.isNaN(d.getTime())) return '—'
-    return d.toLocaleString('tr-TR', {
+    return d.toLocaleString(locale === 'en' ? 'en-US' : 'tr-TR', {
       year: 'numeric',
       month: 'long',
       day: 'numeric',
@@ -64,6 +65,9 @@ function fmtIstanbul(iso: string | null | undefined): string {
 
 export default function BasvuruDurumuPage() {
   const router = useRouter()
+  const t = useTranslations('approvalStatus')
+  const tc = useTranslations('common')
+  const locale = useLocale()
   const [data, setData] = useState<ApprovalPayload | null>(null)
   const [loading, setLoading] = useState(true)
   const [showApprovalPopup, setShowApprovalPopup] = useState(false)
@@ -141,51 +145,47 @@ export default function BasvuruDurumuPage() {
   let icon = <CalendarClock className="h-10 w-10 text-emerald-300" />
   let iconBg = 'bg-emerald-400/10 border-emerald-400/20'
   let iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
-  let title = 'Başvurunuz değerlendirme aşamasında'
-  let description =
-    'Hesabınızı incelemeye aldık. Ön görüşme tamamlandıktan sonra ekibimiz başvurunuzu nihai olarak onaylayacaktır.'
-  let badgeText = 'BAŞVURU ALINDI'
+  let title = t('pending.title')
+  let description = t('pending.description')
+  let badgeText = t('pending.badge')
 
   if (status === 'blocked') {
     icon = <ShieldCheck className="h-10 w-10 text-gray-400" />
     iconBg = 'bg-gray-500/10 border-gray-500/20'
     iconGlow = 'shadow-[0_0_28px_0px_rgba(156,163,175,0.2)]'
-    title = 'Başvurunuz işleme alınamıyor'
-    description = 'Başvurunuz şu anda işleme alınamıyor.'
-    badgeText = 'BAŞVURU'
+    title = t('blocked.title')
+    description = t('blocked.description')
+    badgeText = t('blocked.badge')
   } else if (status === 'manual_review') {
     icon = <CalendarClock className="h-10 w-10 text-emerald-300" />
     iconBg = 'bg-emerald-400/10 border-emerald-400/20'
     iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
-    title = 'Başvurunuz manuel inceleme aşamasında'
-    description =
-      'Başvurunuz ekibimiz tarafından detaylı olarak incelenmektedir. En kısa sürede sizinle iletişime geçeceğiz.'
-    badgeText = 'MANUEL İNCELEME'
+    title = t('manualReview.title')
+    description = t('manualReview.description')
+    badgeText = t('manualReview.badge')
   } else if (status === 'rejected') {
     icon = <XCircle className="h-10 w-10 text-red-400" />
     iconBg = 'bg-red-500/10 border-red-500/20'
     iconGlow = 'shadow-[0_0_28px_0px_rgba(248,113,113,0.2)]'
-    title = 'Başvurunuz şu anda onaylanmadı'
-    description =
-      'Başvurunuzu inceledik ve şu anda onaylayamadık. Sorularınız için destek ekibimizle iletişime geçebilirsiniz.'
-    badgeText = 'BAŞVURU REDDEDİLDİ'
+    title = t('rejected.title')
+    description = t('rejected.description')
+    badgeText = t('rejected.badge')
   } else if (premeeting === 'scheduled') {
     icon = <CheckCircle2 className="h-10 w-10 text-emerald-300" />
     iconBg = 'bg-emerald-400/10 border-emerald-400/20'
     iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
-    title = 'Ön görüşmeniz planlandı'
-    description = `Ön görüşmeniz ${fmtIstanbul(
-      data?.premeetingScheduledAt,
-    )} (Europe/Istanbul) olarak planlandı. Görüşme sonrası ekibimiz başvurunuzu nihai olarak değerlendirecek.`
-    badgeText = 'GÖRÜŞME PLANLANDI'
+    title = t('premeetingScheduled.title')
+    description = t('premeetingScheduled.description', {
+      datetime: fmtIstanbul(data?.premeetingScheduledAt, locale),
+    })
+    badgeText = t('premeetingScheduled.badge')
   } else if (premeeting === 'declined') {
     icon = <ShieldCheck className="h-10 w-10 text-emerald-300" />
     iconBg = 'bg-emerald-400/10 border-emerald-400/20'
     iconGlow = 'shadow-[0_0_28px_0px_rgba(52,211,153,0.25)]'
-    title = 'Geri bildiriminiz iletildi'
-    description =
-      'Geri bildiriminiz destek ekibimize iletildi. Sizinle en kısa sürede iletişime geçeceğiz.'
-    badgeText = 'TAKİP'
+    title = t('premeetingDeclined.title')
+    description = t('premeetingDeclined.description')
+    badgeText = t('premeetingDeclined.badge')
   }
 
   if (loading) {
@@ -244,32 +244,32 @@ export default function BasvuruDurumuPage() {
           {/* Account summary */}
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.03] divide-y divide-white/[0.06]">
             <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
-              <div className="text-gray-400 font-medium">Ad Soyad</div>
+              <div className="text-gray-400 font-medium">{t('summary.fullName')}</div>
               <div className="col-span-2 text-white">{name || '—'}</div>
             </div>
             <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
-              <div className="text-gray-400 font-medium">E-posta</div>
+              <div className="text-gray-400 font-medium">{t('summary.email')}</div>
               <div className="col-span-2 text-white break-all">{email || '—'}</div>
             </div>
             <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
-              <div className="text-gray-400 font-medium">Durum</div>
+              <div className="text-gray-400 font-medium">{t('summary.status')}</div>
               <div className="col-span-2 text-white">
                 {status === 'approved'
-                  ? 'Onaylandı'
+                  ? t('summary.statusApproved')
                   : status === 'rejected'
-                  ? 'Reddedildi'
+                  ? t('summary.statusRejected')
                   : premeeting === 'scheduled'
-                  ? 'Görüşme planlandı'
+                  ? t('summary.statusScheduled')
                   : premeeting === 'declined'
-                  ? 'Manuel takip'
-                  : 'Değerlendirme bekleniyor'}
+                  ? t('summary.statusManualFollow')
+                  : t('summary.statusPending')}
               </div>
             </div>
             {premeeting === 'scheduled' && data?.premeetingScheduledAt && (
               <div className="grid grid-cols-3 gap-4 px-5 py-4 text-sm">
-                <div className="text-gray-400 font-medium">Görüşme Saati</div>
+                <div className="text-gray-400 font-medium">{t('summary.meetingTime')}</div>
                 <div className="col-span-2 text-white">
-                  {fmtIstanbul(data.premeetingScheduledAt)}
+                  {fmtIstanbul(data.premeetingScheduledAt, locale)}
                 </div>
               </div>
             )}
@@ -283,7 +283,7 @@ export default function BasvuruDurumuPage() {
                 onClick={() => setShowScheduleModal(true)}
                 className="inline-flex items-center justify-center rounded-xl bg-emerald-500 px-7 py-3.5 text-[15px] font-semibold text-black shadow-md shadow-emerald-500/20 hover:bg-emerald-400 hover:shadow-lg hover:shadow-emerald-400/25 transition"
               >
-                Görüşme Planla
+                {t('actions.schedule')}
               </button>
             )}
             {premeeting === 'scheduled' && status !== 'rejected' && status !== 'blocked' && status !== 'manual_review' && (
@@ -292,14 +292,14 @@ export default function BasvuruDurumuPage() {
                 onClick={() => setShowScheduleModal(true)}
                 className="inline-flex items-center justify-center rounded-xl border border-white/10 bg-white/[0.04] px-7 py-3.5 text-[15px] font-semibold text-white hover:bg-white/[0.08] transition"
               >
-                Saati Değiştir
+                {t('actions.reschedule')}
               </button>
             )}
             <Link
               href="/"
               className="inline-flex items-center justify-center rounded-xl border border-white/10 px-7 py-3.5 text-[15px] font-semibold text-gray-300 hover:bg-white/[0.04] transition"
             >
-              Ana Sayfaya Dön
+              {tc('backToHome')}
             </Link>
           </div>
         </div>
@@ -310,7 +310,7 @@ export default function BasvuruDurumuPage() {
             cardVisible ? 'opacity-100' : 'opacity-0',
           ].join(' ')}
         >
-          Sorularınız için <a className="text-emerald-400 hover:underline" href="mailto:info@yodijital.com">info@yodijital.com</a>
+          {t('supportPrefix')} <a className="text-emerald-400 hover:underline" href="mailto:info@yodijital.com">info@yodijital.com</a>
         </p>
       </div>
 

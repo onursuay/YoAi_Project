@@ -268,7 +268,7 @@ function RaporlarContent() {
       const normalized = normalizeReportData(provider, data)
       setReportData((prev) => ({ ...prev, [cacheKey]: normalized }))
     } catch (err) {
-      setReportError(err instanceof Error ? err.message : 'Failed to load report')
+      setReportError(err instanceof Error ? err.message : t('loadError'))
     } finally {
       setReportLoading(false)
     }

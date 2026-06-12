@@ -288,7 +288,7 @@ export default function CampaignsTab({ flash, onManageSending }: { flash: (k: 'o
                   <button
                     onClick={() => setDetailId(c.id)}
                     className="p-2 text-gray-400 hover:text-primary transition"
-                    title="İstatistikleri Görüntüle"
+                    title={t('campaigns.viewStats')}
                   >
                     <BarChart2 className="w-4 h-4" />
                   </button>

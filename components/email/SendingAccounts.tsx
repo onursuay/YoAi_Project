@@ -110,7 +110,7 @@ export default function SendingAccounts({ flash, onClose, isOwner }: { flash: (k
           <h3 className="text-base font-semibold text-gray-900">{t('sending.platform.title')}</h3>
           <p className="text-xs text-gray-500">{t('sending.platform.hint')}</p>
           <div><label className={label}>{t('sending.platform.fromName')}</label>
-            <input value={pFromName} onChange={(e) => setPFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+            <input value={pFromName} onChange={(e) => setPFromName(e.target.value)} placeholder={t('sending.placeholderCompanyName')} className={input} /></div>
           <div><label className={label}>{t('sending.platform.replyTo')}</label>
             <input value={pReplyTo} onChange={(e) => setPReplyTo(e.target.value)} placeholder="siz@firma.com" className={input} />
             <p className="text-xs text-gray-400 mt-1">{t('sending.platform.replyHint')}</p></div>
@@ -138,7 +138,7 @@ export default function SendingAccounts({ flash, onClose, isOwner }: { flash: (k
                 <div><label className={label}>{t('sending.domain.fromEmail')}</label>
                   <input value={dFromEmail} onChange={(e) => setDFromEmail(e.target.value)} placeholder="info@mail.firma.com" className={input} /></div>
                 <div><label className={label}>{t('sending.domain.fromName')}</label>
-                  <input value={dFromName} onChange={(e) => setDFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+                  <input value={dFromName} onChange={(e) => setDFromName(e.target.value)} placeholder={t('sending.placeholderCompanyName')} className={input} /></div>
               </div>
               <p className="text-xs text-gray-400">{t('sending.domain.emailHint')}</p>
               <div className="flex justify-end pt-2 border-t border-gray-100">
@@ -152,7 +152,7 @@ export default function SendingAccounts({ flash, onClose, isOwner }: { flash: (k
               <p className="text-sm text-gray-600">{t('sending.domain.recordsHint')}</p>
               <div className="rounded-xl border border-gray-200 overflow-hidden">
                 <table className="w-full text-xs">
-                  <thead className="bg-gray-50 text-gray-500"><tr><th className="text-left px-3 py-2">Tür</th><th className="text-left px-3 py-2">Ad / Host</th><th className="text-left px-3 py-2">Değer</th></tr></thead>
+                  <thead className="bg-gray-50 text-gray-500"><tr><th className="text-left px-3 py-2">{t('sending.domain.colType')}</th><th className="text-left px-3 py-2">{t('sending.domain.colName')}</th><th className="text-left px-3 py-2">{t('sending.domain.colValue')}</th></tr></thead>
                   <tbody className="divide-y divide-gray-100">
                     {dRecords.map((r, i) => (
                       <tr key={i}>
@@ -192,7 +192,7 @@ export default function SendingAccounts({ flash, onClose, isOwner }: { flash: (k
             <div><label className={label}>{t('sending.smtp.fromEmail')}</label>
               <input value={sFromEmail} onChange={(e) => { setSFromEmail(e.target.value); if (!sUser) setSUser(e.target.value) }} placeholder="siz@firma.com" className={input} /></div>
             <div><label className={label}>{t('sending.smtp.fromName')}</label>
-              <input value={sFromName} onChange={(e) => setSFromName(e.target.value)} placeholder="Firma Adı" className={input} /></div>
+              <input value={sFromName} onChange={(e) => setSFromName(e.target.value)} placeholder={t('sending.placeholderCompanyName')} className={input} /></div>
           </div>
           <div><label className={label}>{t('sending.smtp.user')}</label><input value={sUser} onChange={(e) => setSUser(e.target.value)} className={input} /></div>
           <div><label className={label}>{t('sending.smtp.pass')}</label><input type="password" value={sPass} onChange={(e) => setSPass(e.target.value)} className={input} /></div>

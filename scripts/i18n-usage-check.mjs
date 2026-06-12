@@ -39,11 +39,10 @@ for (const file of files) {
   const src = readFileSync(file, 'utf8')
   // useTranslations('NS') / getTranslations('NS') → değişken adı
   // Desen: const X = useTranslations('NS')  |  const X = await getTranslations('NS')
-  const nsMap = {} // varName -> namespace
+  const nsMap = {} // varName -> namespace[] (aynı dosyada farklı scope'larda birden çok olabilir)
   const hookRe = /(?:const|let)\s+([A-Za-z_$][\w$]*)\s*=\s*(?:await\s+)?(?:useTranslations|getTranslations)\(\s*['"]([^'"]+)['"]\s*\)/g
   let m
-  while ((m = hookRe.exec(src))) nsMap[m[1]] = m[2]
-  // Namespace'siz useTranslations() → root erişim (atla, nadir)
+  while ((m = hookRe.exec(src))) (nsMap[m[1]] = nsMap[m[1]] || []).push(m[2])
   const vars = Object.keys(nsMap)
   if (!vars.length) continue
   for (const v of vars) {
@@ -51,8 +50,9 @@ for (const file of files) {
     let c
     while ((c = callRe.exec(src))) {
       checked++
-      const full = nsMap[v] + '.' + c[2]
-      if (!hasKey(full)) missing.push({ file: file.replace(ROOT, ''), key: full })
+      // Anahtar, bu değişkenin atandığı namespace'lerden HERHANGİ birinde varsa OK.
+      const ok = nsMap[v].some(ns => hasKey(ns + '.' + c[2]))
+      if (!ok) missing.push({ file: file.replace(ROOT, ''), key: nsMap[v][0] + '.' + c[2] })
     }
   }
 }

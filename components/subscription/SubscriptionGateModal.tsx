@@ -19,9 +19,9 @@ export default function SubscriptionGateModal({ type, onClose }: Props) {
 
   let title: string, description: string, ctaLabel: string
   if (isStrategy) {
-    title = 'Strateji Limiti Doldu'
-    description = 'Bu ay için ücretsiz AI strateji hakkınız doldu. Devam etmek için kredi yükleyin veya planınızı yükseltin.'
-    ctaLabel = 'Kredi Yükle / Plan Yükselt'
+    title = t('strategyLimitTitle')
+    description = t('strategyLimitDesc')
+    ctaLabel = t('strategyLimitCta')
   } else if (isLimit) {
     title = t('aiLimitTitle')
     description = t('aiLimitDesc')

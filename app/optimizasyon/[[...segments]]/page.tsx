@@ -21,6 +21,7 @@ import { useSubscription } from '@/components/providers/SubscriptionProvider'
 
 export default function OptimizasyonPage() {
   const t = useTranslations('dashboard.optimizasyon')
+  const tc = useTranslations('common')
   const { canUseOptimizationAI, canDoAiScan, recordAiScan, aiScanDailyLimit, aiScanUsedToday } = useSubscription()
 
   // Access gate state — credit (Pro AI scan) vs subscription (modül erişimi)
@@ -239,16 +240,16 @@ export default function OptimizasyonPage() {
         setGateFeatureKey('optimization_ai_scan_pro')
         setShowGateModal(true)
       } else {
-        addToast(data.message || 'Scan failed', 'error')
+        addToast(data.message || t('scanFailed'), 'error')
       }
     } catch {
-      addToast('Scan failed', 'error')
+      addToast(t('scanFailed'), 'error')
     } finally {
       clearInterval(phaseInterval)
       setScanningId(null)
       setScanPhase(0)
     }
-  }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan])
+  }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan, t])
 
   // ── Harici (Google / TikTok): skorlu kampanyaları çek ───────────────────
   const fetchExtCampaigns = useCallback(async (src: 'google' | 'tiktok') => {
@@ -259,24 +260,24 @@ export default function OptimizasyonPage() {
       const res = await fetch(`/api/${src}/optimization/score`)
       const data = await res.json()
       if (res.status === 401) {
-        setExtError(`${label} bağlantısı bulunamadı. Entegrasyon sayfasından bağlayın.`)
+        setExtError(t('extNotConnected', { platform: label }))
         setExtCampaigns([])
         return
       }
       if (!res.ok || !data.ok) {
-        setExtError(data.message || `${label} verileri alınamadı`)
+        setExtError(data.message || t('extFetchFailed', { platform: label }))
         setExtCampaigns([])
         return
       }
       setExtCampaigns(data.data?.campaigns ?? [])
     } catch {
-      setExtError(`${label} verileri alınamadı`)
+      setExtError(t('extFetchFailed', { platform: label }))
       setExtCampaigns([])
     } finally {
       setExtLoading(false)
       setExtLoadedFor(src)
     }
-  }, [])
+  }, [t])
 
   // Kaynak değişince (Meta dışı) ilgili veriyi yükle
   useEffect(() => {
@@ -318,16 +319,16 @@ export default function OptimizasyonPage() {
       } else if (res.status === 402 || data.code === 'AI_SCAN_LIMIT') {
         setGateAccessType('credit'); setGateFeatureKey('optimization_ai_scan_pro'); setShowGateModal(true)
       } else {
-        addToast(data.message || 'Tarama başarısız', 'error')
+        addToast(data.message || t('scanFailed'), 'error')
       }
     } catch {
-      addToast('Tarama başarısız', 'error')
+      addToast(t('scanFailed'), 'error')
     } finally {
       clearInterval(phaseInterval)
       setExtScanningId(null)
       setExtScanPhase(0)
     }
-  }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan, source])
+  }, [addToast, canUseOptimizationAI, canDoAiScan, recordAiScan, source, t])
 
   // ── Filter campaigns by search ─────────────────────────────────────────
   const filteredCampaigns = searchQuery
@@ -343,7 +344,7 @@ export default function OptimizasyonPage() {
           <div className="text-center">
             <p className="text-gray-500 text-sm">{t('connectPrompt')}</p>
             <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-              Entegrasyon
+              {t('integrationAction')}
             </a>
           </div>
         </div>
@@ -358,9 +359,9 @@ export default function OptimizasyonPage() {
         <Topbar title={t('title')} description={t('description')} />
         <div className="flex-1 flex items-center justify-center">
           <div className="text-center">
-            <p className="text-red-600 text-sm font-medium">Token expired</p>
+            <p className="text-red-600 text-sm font-medium">{t('tokenExpired')}</p>
             <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-              Yeniden Bağlan
+              {t('reconnect')}
             </a>
           </div>
         </div>
@@ -394,7 +395,7 @@ export default function OptimizasyonPage() {
                 key={s}
                 onClick={() => !comingSoon && setSource(s)}
                 disabled={comingSoon}
-                title={comingSoon ? 'Yakında' : undefined}
+                title={comingSoon ? t('comingSoon') : undefined}
                 className={`inline-flex items-center gap-1.5 px-4 py-1.5 rounded-md text-sm font-medium transition-colors ${
                   comingSoon
                     ? 'text-gray-400 cursor-not-allowed'
@@ -405,7 +406,7 @@ export default function OptimizasyonPage() {
               >
                 {s === 'meta' ? 'Meta' : s === 'google' ? 'Google' : 'TikTok'}
                 {comingSoon && (
-                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500">Yakında</span>
+                  <span className="text-[9px] font-semibold px-1.5 py-0.5 rounded-full bg-gray-200 text-gray-500">{t('comingSoon')}</span>
                 )}
               </button>
             )
@@ -449,7 +450,7 @@ export default function OptimizasyonPage() {
                 onClick={() => fetchCampaigns()}
                 className="mt-3 px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition"
               >
-                Tekrar Dene
+                {tc('retry')}
               </button>
             </div>
           )}
@@ -528,13 +529,13 @@ export default function OptimizasyonPage() {
               <div className="text-center py-12">
                 <p className="text-gray-500 text-sm">{extError}</p>
                 <a href="/entegrasyon" className="mt-3 inline-block px-4 py-2 bg-green-600 text-white rounded-lg text-sm font-medium hover:bg-green-700 transition">
-                  Entegrasyon
+                  {t('integrationAction')}
                 </a>
               </div>
             )}
             {!extLoading && !extError && extCampaigns.length === 0 && (
               <div className="text-center py-12">
-                <p className="text-gray-400 text-sm">Aktif {source === 'tiktok' ? 'TikTok' : 'Google'} kampanyası bulunamadı.</p>
+                <p className="text-gray-400 text-sm">{t('extNoActiveCampaigns', { platform: source === 'tiktok' ? 'TikTok' : 'Google' })}</p>
               </div>
             )}
             {!extLoading && !extError && extCampaigns.length > 0 && (

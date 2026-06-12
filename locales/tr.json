@@ -45,8 +45,29 @@
       "expired": "Süresi Doldu",
       "active": "Aktif"
     },
-    "monthNames": ["Ocak", "Şubat", "Mart", "Nisan", "Mayıs", "Haziran", "Temmuz", "Ağustos", "Eylül", "Ekim", "Kasım", "Aralık"],
-    "dayNamesShort": ["Pzt", "Sal", "Çar", "Per", "Cum", "Cmt", "Paz"]
+    "monthNames": [
+      "Ocak",
+      "Şubat",
+      "Mart",
+      "Nisan",
+      "Mayıs",
+      "Haziran",
+      "Temmuz",
+      "Ağustos",
+      "Eylül",
+      "Ekim",
+      "Kasım",
+      "Aralık"
+    ],
+    "dayNamesShort": [
+      "Pzt",
+      "Sal",
+      "Çar",
+      "Per",
+      "Cum",
+      "Cmt",
+      "Paz"
+    ]
   },
   "billing": {
     "accessRequired": {
@@ -2029,6 +2050,22 @@
         "selecting": "Seçiliyor...",
         "loading": "Yükleniyor...",
         "lastSync": "Son senkron"
+      },
+      "errors": {
+        "networkError": "Ağ hatası",
+        "gaNoUserSession": "Google Analytics bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.",
+        "gscNoUserSession": "Search Console bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.",
+        "noRefreshToken": "Google, refresh token göndermedi. https://myaccount.google.com/permissions sayfasından YoAi iznini kaldırıp tekrar deneyin.",
+        "dbSaveFailed": "Bağlantı veritabanına kaydedilemedi. Lütfen tekrar deneyin.",
+        "gaConnectFailed": "Google Analytics bağlantı hatası: {reason}",
+        "gscConnectFailed": "Search Console bağlantı hatası: {reason}",
+        "loadAccountsFailed": "Hesaplar yüklenemedi",
+        "selectAccountFailed": "Hesap seçilemedi",
+        "loadChildAccountsFailed": "Alt hesaplar yüklenemedi",
+        "loadPropertiesFailed": "Mülkler yüklenemedi",
+        "selectPropertyFailed": "Mülk seçilemedi",
+        "loadSitesFailed": "Siteler yüklenemedi",
+        "selectSiteFailed": "Site seçilemedi"
       }
     },
     "yoai": {
@@ -2568,6 +2605,51 @@
           "estimatedAdRecallers": "Tahmini Reklam Hatırlama",
           "costPerEstimatedAdRecaller": "Hatırlama Başına Maliyet"
         }
+      },
+      "extNotConnected": "{platform} bağlantısı bulunamadı. Entegrasyon sayfasından bağlayın.",
+      "extFetchFailed": "{platform} verileri alınamadı",
+      "extNoActiveCampaigns": "Aktif {platform} kampanyası bulunamadı.",
+      "scanFailed": "Tarama başarısız",
+      "integrationAction": "Entegrasyon",
+      "tokenExpired": "Oturum süresi doldu",
+      "reconnect": "Yeniden Bağlan",
+      "comingSoon": "Yakında",
+      "googleScan": {
+        "aiRecommendations": "AI önerileri",
+        "recommendations": "Öneriler",
+        "fallbackEngine": "AI yerine kural motoru",
+        "noRecommendations": "Bu kampanya için öneri üretilmedi — belirgin bir sorun yok.",
+        "pauseCampaign": "Kampanyayı Duraklat",
+        "resumeCampaign": "Kampanyayı Aç",
+        "dailyBudgetChange": "Günlük bütçe: {from}₺ → {to}₺",
+        "appliedToGoogle": "Değişiklik Google Ads hesabına uygulandı.",
+        "applyFailed": "Uygulama başarısız oldu.",
+        "changeRolledBack": "Değişiklik geri alındı.",
+        "rollbackFailed": "Geri alma başarısız oldu."
+      },
+      "googleDetail": {
+        "metrics": {
+          "spend": "Harcama",
+          "impressions": "Gösterim",
+          "clicks": "Tıklama",
+          "cpc": "TBM (CPC)",
+          "conversions": "Dönüşüm",
+          "reach": "Erişim"
+        },
+        "scoreBreakdown": "Skor Kırılımı",
+        "metricsLast7Days": "Metrikler (son 7 gün)",
+        "channel": "Kanal",
+        "bidding": "Teklif",
+        "dailyBudget": "Günlük bütçe",
+        "optimizationScore": "Optimizasyon skoru",
+        "detectedIssues": "Tespit Edilen Sorunlar",
+        "noIssuesDetected": "Belirgin bir sorun tespit edilmedi.",
+        "scanHint": "Çözüm önerileri için yukarıdan “Tara” veya “AI ile Tara”yı kullanın.",
+        "adGroups": "Reklam Grupları ({count})",
+        "clicksShort": "{count} tık",
+        "active": "Aktif",
+        "paused": "Duraklatıldı",
+        "issueCount": "{count} sorun"
       }
     },
     "hedefKitle": {
@@ -2766,7 +2848,8 @@
         "link clicks": "Bağlantı Tıklamaları",
         "post engagement": "Gönderi Etkileşimi",
         "page likes": "Sayfa Beğenileri"
-      }
+      },
+      "loadError": "Rapor yüklenemedi"
     },
     "katalog": {
       "title": "Katalog",
@@ -3128,7 +3211,11 @@
         "title": "Kırık Linkler"
       },
       "recommendations": {
-        "title": "AI Önerileri"
+        "title": "AI Önerileri",
+        "howTo": "Nasıl Yapılır?",
+        "hide": "Gizle",
+        "copy": "Kopyala",
+        "copied": "Kopyalandı"
       },
       "history": {
         "title": "Analiz Geçmişi",
@@ -3324,8 +3411,13 @@
         "yes": "Evet",
         "no": "Hayır",
         "loading": "İstatistikler yükleniyor…",
-        "noData": "Veri yok"
-      }
+        "noData": "Veri yok",
+        "subRecipients": "{count} alıcı",
+        "subPeople": "{count} kişi",
+        "subClicks": "{count} tıklama",
+        "tooltipOpens": "Açılma"
+      },
+      "viewStats": "İstatistikleri Görüntüle"
     },
     "sending": {
       "bannerTitle": "Gönderim hesabı",
@@ -3389,7 +3481,10 @@
         "mismatch": "Gönderen e-posta, alan adıyla eşleşmiyor.",
         "copied": "Kopyalandı.",
         "active": "doğrulandı",
-        "pendingShort": "bekliyor"
+        "pendingShort": "bekliyor",
+        "colType": "Tür",
+        "colName": "Ad / Host",
+        "colValue": "Değer"
       },
       "smtp": {
         "title": "Kurumsal / özel SMTP",
@@ -3403,7 +3498,8 @@
         "host": "SMTP sunucu",
         "port": "Port",
         "testSave": "Test Et ve Kaydet"
-      }
+      },
+      "placeholderCompanyName": "Firma Adı"
     },
     "setup": {
       "title": "Gönderim domainini doğrula",
@@ -3944,7 +4040,9 @@
       "and": "ve",
       "consentSuffix": "'nu okudum ve onaylıyorum.",
       "cancel": "Vazgeç",
-      "proceed": "Ödemeye Geç"
+      "proceed": "Ödemeye Geç",
+      "notConfigured": "Ödeme sistemi henüz yapılandırılmadı. Lütfen daha sonra tekrar deneyin.",
+      "startError": "Ödeme başlatılamadı. Lütfen tekrar deneyin."
     },
     "credits": {
       "title": "Kredi Yükle",
@@ -3970,13 +4068,23 @@
       "cta": "Planları İncele",
       "aiLimitTitle": "Günlük AI tarama limitinize ulaştınız",
       "aiLimitDesc": "Bugünlük AI ile tarama hakkınız doldu. Daha fazla tarama için planınızı yükseltin.",
-      "aiLimitCta": "Planı Yükselt"
+      "aiLimitCta": "Planı Yükselt",
+      "strategyLimitTitle": "Strateji Limiti Doldu",
+      "strategyLimitDesc": "Bu ay için ücretsiz AI strateji hakkınız doldu. Devam etmek için kredi yükleyin veya planınızı yükseltin.",
+      "strategyLimitCta": "Kredi Yükle / Plan Yükselt"
     },
     "planDescriptions": {
       "basic": "Reklam yönetiminde temel ihtiyaçlarınız için tüm araçlar.",
       "starter": "Büyümek için gereken optimizasyon çözümleri.",
       "premium": "AI Strateji, YoAlgoritma, CRM ve Email Marketing dahil tam pazarlama suite'i.",
       "enterprise": "Reklam veren ajanslar için sınırsız reklam gücü."
+    },
+    "paymentSuccessBanner": "Ödemeniz alındı. Aboneliğiniz güncelleniyor.",
+    "paymentFailedBanner": "Ödeme tamamlanamadı. Lütfen tekrar deneyin.",
+    "trialPremiumNote": "Premium plan için geçerlidir.",
+    "enterpriseMail": {
+      "subject": "Enterprise Plan — Reklam Ajansı Talebi",
+      "body": "Merhaba,\n\nEnterprise plan ile ilgileniyorum. İhtiyacım olan reklam hesabı sayısı: {count}.\n\nTeşekkürler."
     }
   },
   "pricing": {
@@ -4186,5 +4294,77 @@
         "a": "Abonelik sayfasından planınızı görüntüleyebilir, yükseltebilir veya değiştirebilirsiniz. Faturalarınıza Faturalarım sayfasından ulaşabilirsiniz."
       }
     }
+  },
+  "landing": {
+    "premeeting": {
+      "approval": {
+        "badge": "ÖN GÖRÜŞME",
+        "title": "Başvurunuz Alındı",
+        "body1": "YoAi hesabınızı aktif kullanıma açmadan önce, işletmenizi ve ihtiyaçlarınızı daha doğru anlayabilmemiz için <strong>30 dakikalık</strong> kısa bir ön görüşme planlıyoruz.",
+        "body2": "Uygun olduğunuz günü ve saati takvim üzerinden seçerek başvurunuzu tamamlayabilirsiniz.",
+        "scheduleCta": "Görüşme Planla",
+        "declineCta": "Şimdilik Planlamak İstemiyorum"
+      },
+      "schedule": {
+        "title": "30 Dakikalık Ön Görüşme",
+        "subtitle": "İstanbul (GMT+3) · Hafta içi 10:00 – 18:00",
+        "noAvailability": "Şu an uygun bir saat görünmüyor. Lütfen daha sonra tekrar deneyin veya destek ekibimizle iletişime geçin.",
+        "noSlotsForDay": "Bu gün için boş saat kalmadı. Başka bir gün seçin.",
+        "availableSlots": "{count} uygun saat",
+        "confirmCta": "Randevuyu Onayla",
+        "errors": {
+          "slotTaken": "Bu saat az önce başkası tarafından alındı. Lütfen başka bir slot seçin.",
+          "saveFailed": "Randevu kaydedilemedi. Lütfen tekrar deneyin."
+        }
+      }
+    }
+  },
+  "approvalStatus": {
+    "pending": {
+      "title": "Başvurunuz değerlendirme aşamasında",
+      "description": "Hesabınızı incelemeye aldık. Ön görüşme tamamlandıktan sonra ekibimiz başvurunuzu nihai olarak onaylayacaktır.",
+      "badge": "BAŞVURU ALINDI"
+    },
+    "blocked": {
+      "title": "Başvurunuz işleme alınamıyor",
+      "description": "Başvurunuz şu anda işleme alınamıyor.",
+      "badge": "BAŞVURU"
+    },
+    "manualReview": {
+      "title": "Başvurunuz manuel inceleme aşamasında",
+      "description": "Başvurunuz ekibimiz tarafından detaylı olarak incelenmektedir. En kısa sürede sizinle iletişime geçeceğiz.",
+      "badge": "MANUEL İNCELEME"
+    },
+    "rejected": {
+      "title": "Başvurunuz şu anda onaylanmadı",
+      "description": "Başvurunuzu inceledik ve şu anda onaylayamadık. Sorularınız için destek ekibimizle iletişime geçebilirsiniz.",
+      "badge": "BAŞVURU REDDEDİLDİ"
+    },
+    "premeetingScheduled": {
+      "title": "Ön görüşmeniz planlandı",
+      "description": "Ön görüşmeniz {datetime} (Europe/Istanbul) olarak planlandı. Görüşme sonrası ekibimiz başvurunuzu nihai olarak değerlendirecek.",
+      "badge": "GÖRÜŞME PLANLANDI"
+    },
+    "premeetingDeclined": {
+      "title": "Geri bildiriminiz iletildi",
+      "description": "Geri bildiriminiz destek ekibimize iletildi. Sizinle en kısa sürede iletişime geçeceğiz.",
+      "badge": "TAKİP"
+    },
+    "summary": {
+      "fullName": "Ad Soyad",
+      "email": "E-posta",
+      "status": "Durum",
+      "statusApproved": "Onaylandı",
+      "statusRejected": "Reddedildi",
+      "statusScheduled": "Görüşme planlandı",
+      "statusManualFollow": "Manuel takip",
+      "statusPending": "Değerlendirme bekleniyor",
+      "meetingTime": "Görüşme Saati"
+    },
+    "actions": {
+      "schedule": "Görüşme Planla",
+      "reschedule": "Saati Değiştir"
+    },
+    "supportPrefix": "Sorularınız için"
   }
 }

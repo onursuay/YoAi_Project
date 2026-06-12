@@ -52,6 +52,7 @@ interface GoogleManagerOrAccount {
 
 function EntegrasyonContent() {
   const t = useTranslations('dashboard.entegrasyon')
+  const tc = useTranslations('common')
   const searchParams = useSearchParams()
   const router = useRouter()
   const [metaStatus, setMetaStatus] = useState<PlatformStatus>({ connected: false })
@@ -104,12 +105,12 @@ function EntegrasyonContent() {
       if (gaParam === 'error') {
         const reason = searchParams.get('reason') || 'unknown'
         const msg = reason === 'no_user_session'
-          ? 'Google Analytics bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.'
+          ? t('errors.gaNoUserSession')
           : reason === 'no_refresh_token'
-          ? 'Google, refresh token göndermedi. https://myaccount.google.com/permissions sayfasından YoAi iznini kaldırıp tekrar deneyin.'
+          ? t('errors.noRefreshToken')
           : reason === 'db_save_failed'
-          ? 'Bağlantı veritabanına kaydedilemedi. Lütfen tekrar deneyin.'
-          : `Google Analytics bağlantı hatası: ${reason}`
+          ? t('errors.dbSaveFailed')
+          : t('errors.gaConnectFailed', { reason })
         alert(msg)
       }
       window.history.replaceState({}, '', '/entegrasyon')
@@ -118,12 +119,12 @@ function EntegrasyonContent() {
       if (gscParam === 'error') {
         const reason = searchParams.get('reason') || 'unknown'
         const msg = reason === 'no_user_session'
-          ? 'Search Console bağlantısı için önce uygulamaya giriş yapmalısınız. Çıkış yapıp tekrar giriş yapın.'
+          ? t('errors.gscNoUserSession')
           : reason === 'no_refresh_token'
-          ? 'Google, refresh token göndermedi. https://myaccount.google.com/permissions sayfasından YoAi iznini kaldırıp tekrar deneyin.'
+          ? t('errors.noRefreshToken')
           : reason === 'db_save_failed'
-          ? 'Bağlantı veritabanına kaydedilemedi. Lütfen tekrar deneyin.'
-          : `Search Console bağlantı hatası: ${reason}`
+          ? t('errors.dbSaveFailed')
+          : t('errors.gscConnectFailed', { reason })
         alert(msg)
       }
       window.history.replaceState({}, '', '/entegrasyon')
@@ -233,7 +234,7 @@ function EntegrasyonContent() {
       const res = await fetch('/api/integrations/google-ads/accounts')
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setGoogleAccountsError(data?.message || data?.error || 'Failed to load accounts')
+        setGoogleAccountsError(data?.message || data?.error || t('errors.loadAccountsFailed'))
         if (res.status === 401) {
           setGoogleStatus({ connected: false })
           setGoogleAccountModalOpen(false)
@@ -245,7 +246,7 @@ function EntegrasyonContent() {
         setGoogleAccountsError(t('google.noAccounts'))
       }
     } catch (e) {
-      setGoogleAccountsError(e instanceof Error ? e.message : 'Network error')
+      setGoogleAccountsError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setGoogleManagersLoading(false)
     }
@@ -262,7 +263,7 @@ function EntegrasyonContent() {
       })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setGoogleAccountsError(data?.message || data?.error || 'Failed to select account')
+        setGoogleAccountsError(data?.message || data?.error || t('errors.selectAccountFailed'))
         return
       }
       setGoogleStatus({
@@ -275,7 +276,7 @@ function EntegrasyonContent() {
       setGoogleAccountStep('managers')
       setSelectedGoogleManagerId(null)
     } catch (e) {
-      setGoogleAccountsError(e instanceof Error ? e.message : 'Network error')
+      setGoogleAccountsError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setSelectingAccountId(null)
     }
@@ -293,14 +294,14 @@ function EntegrasyonContent() {
         )
         const data = await res.json().catch(() => ({}))
         if (!res.ok) {
-          setGoogleAccountsError(data?.message || data?.error || 'Failed to load child accounts')
+          setGoogleAccountsError(data?.message || data?.error || t('errors.loadChildAccountsFailed'))
           return
         }
         setGoogleChildren(data.children || [])
         if (!(data.children?.length > 0)) setGoogleAccountsError(t('google.noChildren'))
         setGoogleAccountStep('children')
       } catch (e) {
-        setGoogleAccountsError(e instanceof Error ? e.message : 'Network error')
+        setGoogleAccountsError(e instanceof Error ? e.message : t('errors.networkError'))
       } finally {
         setGoogleChildrenLoading(false)
       }
@@ -341,7 +342,7 @@ function EntegrasyonContent() {
       const res = await fetch('/api/integrations/google-analytics/properties', { credentials: 'include' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setGaPropertiesError(data?.error || 'Failed to load properties')
+        setGaPropertiesError(data?.error || t('errors.loadPropertiesFailed'))
         if (res.status === 401) {
           setGaStatus({ connected: false })
           setGaPropertyModalOpen(false)
@@ -351,7 +352,7 @@ function EntegrasyonContent() {
       setGaProperties(data.properties || [])
       if (!(data.properties?.length > 0)) setGaPropertiesError(t('googleAnalytics.noProperties'))
     } catch (e) {
-      setGaPropertiesError(e instanceof Error ? e.message : 'Network error')
+      setGaPropertiesError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setGaPropertiesLoading(false)
     }
@@ -369,13 +370,13 @@ function EntegrasyonContent() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setGaPropertiesError(data?.error || 'Failed to select property')
+        setGaPropertiesError(data?.error || t('errors.selectPropertyFailed'))
         return
       }
       setGaStatus({ connected: true, propertyId, propertyName: displayName, hasSelectedProperty: true })
       setGaPropertyModalOpen(false)
     } catch (e) {
-      setGaPropertiesError(e instanceof Error ? e.message : 'Network error')
+      setGaPropertiesError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setGaSelectingId(null)
     }
@@ -402,7 +403,7 @@ function EntegrasyonContent() {
       const res = await fetch('/api/integrations/google-search-console/sites', { credentials: 'include' })
       const data = await res.json().catch(() => ({}))
       if (!res.ok) {
-        setGscSitesError(data?.error || 'Failed to load sites')
+        setGscSitesError(data?.error || t('errors.loadSitesFailed'))
         if (res.status === 401) {
           setGscStatus({ connected: false })
           setGscSiteModalOpen(false)
@@ -412,7 +413,7 @@ function EntegrasyonContent() {
       setGscSites(data.sites || [])
       if (!(data.sites?.length > 0)) setGscSitesError(t('googleSearchConsole.noSites'))
     } catch (e) {
-      setGscSitesError(e instanceof Error ? e.message : 'Network error')
+      setGscSitesError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setGscSitesLoading(false)
     }
@@ -430,13 +431,13 @@ function EntegrasyonContent() {
       })
       if (!res.ok) {
         const data = await res.json().catch(() => ({}))
-        setGscSitesError(data?.error || 'Failed to select site')
+        setGscSitesError(data?.error || t('errors.selectSiteFailed'))
         return
       }
       setGscStatus({ connected: true, siteUrl, siteName: siteUrl, hasSelectedSite: true })
       setGscSiteModalOpen(false)
     } catch (e) {
-      setGscSitesError(e instanceof Error ? e.message : 'Network error')
+      setGscSitesError(e instanceof Error ? e.message : t('errors.networkError'))
     } finally {
       setGscSelectingUrl(null)
     }
@@ -651,7 +652,7 @@ function EntegrasyonContent() {
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">{t('googleAnalytics.selectPropertyTitle')}</h3>
                   <button type="button" onClick={() => !gaSelectingId && setGaPropertyModalOpen(false)} className="p-2 text-gray-500 hover:text-gray-700 rounded-lg" disabled={!!gaSelectingId}>
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{tc('close')}</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
@@ -690,7 +691,7 @@ function EntegrasyonContent() {
                 <div className="p-4 border-b border-gray-200 flex items-center justify-between">
                   <h3 className="text-lg font-semibold text-gray-900">{t('googleSearchConsole.selectSiteTitle')}</h3>
                   <button type="button" onClick={() => !gscSelectingUrl && setGscSiteModalOpen(false)} className="p-2 text-gray-500 hover:text-gray-700 rounded-lg" disabled={!!gscSelectingUrl}>
-                    <span className="sr-only">Close</span>
+                    <span className="sr-only">{tc('close')}</span>
                     <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
                   </button>
                 </div>
@@ -903,17 +904,19 @@ function EntegrasyonContent() {
 }
 
 export default function EntegrasyonPage() {
+  const t = useTranslations('dashboard.entegrasyon')
+  const tc = useTranslations('common')
   return (
     <Suspense fallback={
       <>
-        <Topbar 
-          title="Entegrasyon" 
-          description="Reklam ve raporlama platformlarınızı bağlayın"
+        <Topbar
+          title={t('title')}
+          description={t('description')}
         />
         <div className="flex-1 overflow-y-auto app-content-surface p-6">
           <div className="max-w-7xl mx-auto">
             <div className="text-center py-12">
-              <p className="text-gray-600">Yükleniyor...</p>
+              <p className="text-gray-600">{tc('loading')}</p>
             </div>
           </div>
         </div>

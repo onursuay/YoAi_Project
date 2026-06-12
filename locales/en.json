@@ -45,8 +45,29 @@
       "expired": "Expired",
       "active": "Active"
     },
-    "monthNames": ["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"],
-    "dayNamesShort": ["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"]
+    "monthNames": [
+      "January",
+      "February",
+      "March",
+      "April",
+      "May",
+      "June",
+      "July",
+      "August",
+      "September",
+      "October",
+      "November",
+      "December"
+    ],
+    "dayNamesShort": [
+      "Mo",
+      "Tu",
+      "We",
+      "Th",
+      "Fr",
+      "Sa",
+      "Su"
+    ]
   },
   "billing": {
     "accessRequired": {
@@ -2029,6 +2050,22 @@
         "selecting": "Selecting...",
         "loading": "Loading...",
         "lastSync": "Last sync"
+      },
+      "errors": {
+        "networkError": "Network error",
+        "gaNoUserSession": "You must sign in to the app first to connect Google Analytics. Please sign out and sign in again.",
+        "gscNoUserSession": "You must sign in to the app first to connect Search Console. Please sign out and sign in again.",
+        "noRefreshToken": "Google did not send a refresh token. Remove YoAi's permission from https://myaccount.google.com/permissions and try again.",
+        "dbSaveFailed": "The connection could not be saved to the database. Please try again.",
+        "gaConnectFailed": "Google Analytics connection error: {reason}",
+        "gscConnectFailed": "Search Console connection error: {reason}",
+        "loadAccountsFailed": "Failed to load accounts",
+        "selectAccountFailed": "Failed to select account",
+        "loadChildAccountsFailed": "Failed to load child accounts",
+        "loadPropertiesFailed": "Failed to load properties",
+        "selectPropertyFailed": "Failed to select property",
+        "loadSitesFailed": "Failed to load sites",
+        "selectSiteFailed": "Failed to select site"
       }
     },
     "yoai": {
@@ -2568,6 +2605,51 @@
           "estimatedAdRecallers": "Est. Ad Recall",
           "costPerEstimatedAdRecaller": "Cost per Ad Recall"
         }
+      },
+      "extNotConnected": "{platform} connection not found. Connect from the Integrations page.",
+      "extFetchFailed": "Could not load {platform} data",
+      "extNoActiveCampaigns": "No active {platform} campaigns found.",
+      "scanFailed": "Scan failed",
+      "integrationAction": "Integrations",
+      "tokenExpired": "Session expired",
+      "reconnect": "Reconnect",
+      "comingSoon": "Coming soon",
+      "googleScan": {
+        "aiRecommendations": "AI recommendations",
+        "recommendations": "Recommendations",
+        "fallbackEngine": "Rule engine instead of AI",
+        "noRecommendations": "No recommendations generated for this campaign — no notable issues.",
+        "pauseCampaign": "Pause Campaign",
+        "resumeCampaign": "Resume Campaign",
+        "dailyBudgetChange": "Daily budget: {from}₺ → {to}₺",
+        "appliedToGoogle": "The change was applied to your Google Ads account.",
+        "applyFailed": "The change could not be applied.",
+        "changeRolledBack": "The change was rolled back.",
+        "rollbackFailed": "The rollback failed."
+      },
+      "googleDetail": {
+        "metrics": {
+          "spend": "Spend",
+          "impressions": "Impressions",
+          "clicks": "Clicks",
+          "cpc": "CPC",
+          "conversions": "Conversions",
+          "reach": "Reach"
+        },
+        "scoreBreakdown": "Score Breakdown",
+        "metricsLast7Days": "Metrics (last 7 days)",
+        "channel": "Channel",
+        "bidding": "Bidding",
+        "dailyBudget": "Daily budget",
+        "optimizationScore": "Optimization score",
+        "detectedIssues": "Detected Issues",
+        "noIssuesDetected": "No notable issues detected.",
+        "scanHint": "Use “Scan” or “Scan with AI” above to get fix recommendations.",
+        "adGroups": "Ad Groups ({count})",
+        "clicksShort": "{count} clicks",
+        "active": "Active",
+        "paused": "Paused",
+        "issueCount": "{count} issues"
       }
     },
     "hedefKitle": {
@@ -2766,7 +2848,8 @@
         "link clicks": "Link Clicks",
         "post engagement": "Post Engagement",
         "page likes": "Page Likes"
-      }
+      },
+      "loadError": "Failed to load report"
     },
     "katalog": {
       "title": "Catalog",
@@ -3128,7 +3211,11 @@
         "title": "Broken Links"
       },
       "recommendations": {
-        "title": "AI Recommendations"
+        "title": "AI Recommendations",
+        "howTo": "How To?",
+        "hide": "Hide",
+        "copy": "Copy",
+        "copied": "Copied"
       },
       "history": {
         "title": "Analysis History",
@@ -3324,8 +3411,13 @@
         "yes": "Yes",
         "no": "No",
         "loading": "Loading stats…",
-        "noData": "No data"
-      }
+        "noData": "No data",
+        "subRecipients": "{count} recipients",
+        "subPeople": "{count} people",
+        "subClicks": "{count} clicks",
+        "tooltipOpens": "Opens"
+      },
+      "viewStats": "View statistics"
     },
     "sending": {
       "bannerTitle": "Sending account",
@@ -3389,7 +3481,10 @@
         "mismatch": "From email does not match the domain.",
         "copied": "Copied.",
         "active": "verified",
-        "pendingShort": "pending"
+        "pendingShort": "pending",
+        "colType": "Type",
+        "colName": "Name / Host",
+        "colValue": "Value"
       },
       "smtp": {
         "title": "Corporate / custom SMTP",
@@ -3403,7 +3498,8 @@
         "host": "SMTP host",
         "port": "Port",
         "testSave": "Test & Save"
-      }
+      },
+      "placeholderCompanyName": "Company Name"
     },
     "setup": {
       "title": "Verify your sending domain",
@@ -3944,7 +4040,9 @@
       "and": "and",
       "consentSuffix": ".",
       "cancel": "Cancel",
-      "proceed": "Proceed to Payment"
+      "proceed": "Proceed to Payment",
+      "notConfigured": "The payment system is not configured yet. Please try again later.",
+      "startError": "Payment could not be started. Please try again."
     },
     "credits": {
       "title": "Load Credits",
@@ -3970,13 +4068,23 @@
       "cta": "View Plans",
       "aiLimitTitle": "Daily AI scan limit reached",
       "aiLimitDesc": "You have used all your AI scan quota for today. Upgrade your plan for more scans.",
-      "aiLimitCta": "Upgrade Plan"
+      "aiLimitCta": "Upgrade Plan",
+      "strategyLimitTitle": "Strategy Limit Reached",
+      "strategyLimitDesc": "You've used up your free AI strategy quota for this month. Load credits or upgrade your plan to continue.",
+      "strategyLimitCta": "Load Credits / Upgrade Plan"
     },
     "planDescriptions": {
       "basic": "All the tools you need for basic ad management.",
       "starter": "Optimization solutions for growth.",
       "premium": "The full marketing suite — AI Strategy, YoAlgorithm, CRM and Email Marketing included.",
       "enterprise": "Unlimited ad power for agencies."
+    },
+    "paymentSuccessBanner": "Your payment was received. Your subscription is being updated.",
+    "paymentFailedBanner": "Payment could not be completed. Please try again.",
+    "trialPremiumNote": "Applies to the Premium plan.",
+    "enterpriseMail": {
+      "subject": "Enterprise Plan — Ad Agency Request",
+      "body": "Hello,\n\nI'm interested in the Enterprise plan. The number of ad accounts I need: {count}.\n\nThank you."
     }
   },
   "pricing": {
@@ -4186,5 +4294,77 @@
         "a": "You can view, upgrade or change your plan from the Subscription page. Your invoices are available on the My Invoices page."
       }
     }
+  },
+  "landing": {
+    "premeeting": {
+      "approval": {
+        "badge": "PRE-MEETING",
+        "title": "Your Application Has Been Received",
+        "body1": "Before activating your YoAi account, we schedule a short <strong>30-minute</strong> pre-meeting so we can better understand your business and needs.",
+        "body2": "You can complete your application by selecting a convenient day and time from the calendar.",
+        "scheduleCta": "Schedule a Meeting",
+        "declineCta": "I Don't Want to Schedule for Now"
+      },
+      "schedule": {
+        "title": "30-Minute Pre-Meeting",
+        "subtitle": "Istanbul (GMT+3) · Weekdays 10:00 – 18:00",
+        "noAvailability": "No available times right now. Please try again later or contact our support team.",
+        "noSlotsForDay": "No open slots left for this day. Please choose another day.",
+        "availableSlots": "{count} available times",
+        "confirmCta": "Confirm Appointment",
+        "errors": {
+          "slotTaken": "This time was just taken by someone else. Please choose another slot.",
+          "saveFailed": "Could not save the appointment. Please try again."
+        }
+      }
+    }
+  },
+  "approvalStatus": {
+    "pending": {
+      "title": "Your application is under review",
+      "description": "We've taken your account into review. After the pre-meeting is completed, our team will finalize the approval of your application.",
+      "badge": "APPLICATION RECEIVED"
+    },
+    "blocked": {
+      "title": "Your application cannot be processed",
+      "description": "Your application cannot be processed at this time.",
+      "badge": "APPLICATION"
+    },
+    "manualReview": {
+      "title": "Your application is under manual review",
+      "description": "Your application is being reviewed in detail by our team. We'll get in touch with you as soon as possible.",
+      "badge": "MANUAL REVIEW"
+    },
+    "rejected": {
+      "title": "Your application was not approved at this time",
+      "description": "We reviewed your application and were unable to approve it at this time. You can contact our support team with any questions.",
+      "badge": "APPLICATION REJECTED"
+    },
+    "premeetingScheduled": {
+      "title": "Your pre-meeting is scheduled",
+      "description": "Your pre-meeting is scheduled for {datetime} (Europe/Istanbul). After the meeting, our team will make the final assessment of your application.",
+      "badge": "MEETING SCHEDULED"
+    },
+    "premeetingDeclined": {
+      "title": "Your response has been received",
+      "description": "Your response has been sent to our support team. We'll get in touch with you as soon as possible.",
+      "badge": "FOLLOW-UP"
+    },
+    "summary": {
+      "fullName": "Full Name",
+      "email": "Email",
+      "status": "Status",
+      "statusApproved": "Approved",
+      "statusRejected": "Rejected",
+      "statusScheduled": "Meeting scheduled",
+      "statusManualFollow": "Manual follow-up",
+      "statusPending": "Awaiting review",
+      "meetingTime": "Meeting Time"
+    },
+    "actions": {
+      "schedule": "Schedule Meeting",
+      "reschedule": "Change Time"
+    },
+    "supportPrefix": "For your questions"
   }
 }

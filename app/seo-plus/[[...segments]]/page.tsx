@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
-import { useTranslations } from 'next-intl'
+import { useTranslations, useLocale } from 'next-intl'
 import { usePathTab } from '@/hooks/usePathTab'
 import Topbar from '@/components/Topbar'
 import CircularProgress from '@/components/CircularProgress'
@@ -267,8 +267,10 @@ function CheckItem({ check }: { check: Check }) {
 
 function CategoryCard({ categoryKey, category, index = 0 }: { categoryKey: string; category: Category; index?: number }) {
   const [expanded, setExpanded] = useState(true)
+  const locale = useLocale()
   const config = categoryConfig[categoryKey]
   if (!config) return null
+  const configLabel = locale === 'en' ? config.labelEn : config.label
 
   const Icon = config.icon
   const passCount = category.checks.filter(c => c.status === 'pass').length
@@ -289,7 +291,7 @@ function CategoryCard({ categoryKey, category, index = 0 }: { categoryKey: strin
             <Icon className={`w-5 h-5 ${getScoreText(category.score)}`} />
           </div>
           <div className="text-left">
-            <div className="text-base font-semibold text-gray-900">{config.label}</div>
+            <div className="text-base font-semibold text-gray-900">{configLabel}</div>
             <div className="flex items-center gap-3 mt-0.5">
               {passCount > 0 && (
                 <span className="flex items-center gap-1 text-caption text-green-600">
@@ -358,6 +360,7 @@ function LighthouseAuditItem({ audit }: { audit: LighthouseAudit }) {
 }
 
 function RecommendationCard({ rec, index }: { rec: Recommendation; index: number }) {
+  const t = useTranslations('dashboard.seo.recommendations')
   const [showCode, setShowCode] = useState(false)
   const [copied, setCopied] = useState(false)
 
@@ -384,7 +387,7 @@ function RecommendationCard({ rec, index }: { rec: Recommendation; index: number
               className="mt-2 flex items-center gap-1.5 text-sm font-medium text-primary hover:text-primary/80 transition-colors"
             >
               <Code className="w-3.5 h-3.5" />
-              {showCode ? 'Gizle' : 'Nasıl Yapılır?'}
+              {showCode ? t('hide') : t('howTo')}
             </button>
           )}
         </div>
@@ -406,7 +409,7 @@ function RecommendationCard({ rec, index }: { rec: Recommendation; index: number
                   onClick={handleCopy}
                   className="absolute top-2 right-2 flex items-center gap-1 px-2 py-1 rounded bg-gray-700 hover:bg-gray-600 text-gray-300 text-caption transition-colors"
                 >
-                  {copied ? <><CheckIcon className="w-3 h-3 text-green-400" />Kopyalandı</> : <><Copy className="w-3 h-3" />Kopyala</>}
+                  {copied ? <><CheckIcon className="w-3 h-3 text-green-400" />{t('copied')}</> : <><Copy className="w-3 h-3" />{t('copy')}</>}
                 </button>
                 <pre className="text-caption text-gray-100 whitespace-pre-wrap font-mono leading-relaxed">{rec.code}</pre>
               </div>
@@ -447,6 +450,7 @@ function AnalysisSkeleton() {
 
 export default function SEOPage() {
   const t = useTranslations('dashboard.seo')
+  const locale = useLocale()
   const [url, setUrl] = useState('')
   const [competitorUrl, setCompetitorUrl] = useState('')
   const [showCompetitor, setShowCompetitor] = useState(false)
@@ -807,7 +811,7 @@ export default function SEOPage() {
                           if (!config) return null
                           return (
                             <div key={key} className="flex items-center justify-between bg-gray-50 rounded-lg px-3 py-2">
-                              <span className="text-caption text-gray-600">{config.label}</span>
+                              <span className="text-caption text-gray-600">{locale === 'en' ? config.labelEn : config.label}</span>
                               <div className="flex items-center gap-2">
                                 <span className={`text-sm font-bold ${getScoreText(cat.score)}`}>{cat.score}</span>
                                 <span className="text-caption text-gray-400">vs</span>

@@ -170,21 +170,21 @@ export default function CampaignDetail({
           icon={<Send className="w-5 h-5 text-primary" />}
           label={td('statSent')}
           value={String(summary.sent)}
-          sub={`${summary.total} alıcı`}
+          sub={td('subRecipients', { count: summary.total })}
           color="bg-primary/10"
         />
         <StatCard
           icon={<Eye className="w-5 h-5 text-emerald-600" />}
           label={td('statOpened')}
           value={`%${openRate}`}
-          sub={`${summary.opens} kişi`}
+          sub={td('subPeople', { count: summary.opens })}
           color="bg-emerald-50"
         />
         <StatCard
           icon={<MousePointerClick className="w-5 h-5 text-primary" />}
           label={td('statClicked')}
           value={`%${clickRate}`}
-          sub={`${summary.clicks} tıklama`}
+          sub={td('subClicks', { count: summary.clicks })}
           color="bg-primary/10"
         />
         <StatCard
@@ -220,7 +220,7 @@ export default function CampaignDetail({
               <YAxis tick={{ fontSize: 11, fill: '#9ca3af' }} allowDecimals={false} />
               <Tooltip
                 contentStyle={{ borderRadius: '12px', border: '1px solid #e5e7eb', fontSize: 12 }}
-                formatter={(v) => [v, 'Açılma']}
+                formatter={(v) => [v, td('tooltipOpens')]}
               />
               <Area
                 type="monotone"
