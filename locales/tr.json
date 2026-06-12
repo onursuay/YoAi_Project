@@ -3216,7 +3216,12 @@
     "yardimMerkezi": "Yardım Merkezi",
     "cikisYap": "Çıkış Yap",
     "dil": "Türkçe",
-    "marketingkurulumu": "Dönüşüm Sihirbazı"
+    "marketingkurulumu": "Dönüşüm Sihirbazı",
+    "expandSidebar": "Menüyü genişlet",
+    "collapseSidebar": "Menüyü daralt",
+    "gozetimMerkezi": "Gözetim Merkezi",
+    "close": "Kapat",
+    "infoCardAria": "Kart {n}"
   },
   "email": {
     "title": "Email Marketing",

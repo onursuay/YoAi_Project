@@ -230,7 +230,7 @@ export default function MultiAccountDropdown({
                 {active && <div className="w-2 h-2 bg-green-500 rounded-full" />}
                 {busyId === a.id && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
                 {!active && busyId !== a.id && (
-                  <span onClick={e => handleRemoveMeta(e, a)} title="Çıkar" className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 cursor-pointer">
+                  <span onClick={e => handleRemoveMeta(e, a)} title={t('remove')} className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 cursor-pointer">
                     <Trash2 className="w-3.5 h-3.5" />
                   </span>
                 )}
@@ -264,7 +264,7 @@ export default function MultiAccountDropdown({
                     {active && <div className="w-2 h-2 bg-green-500 rounded-full" />}
                     {busyId === acc.account_id && <Loader2 className="w-3.5 h-3.5 animate-spin text-primary" />}
                     {!active && busyId !== acc.account_id && (
-                      <span onClick={e => handleRemoveGoogle(e, acc)} title="Çıkar" className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 cursor-pointer">
+                      <span onClick={e => handleRemoveGoogle(e, acc)} title={t('remove')} className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50 cursor-pointer">
                         <Trash2 className="w-3.5 h-3.5" />
                       </span>
                     )}

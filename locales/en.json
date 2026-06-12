@@ -3216,7 +3216,12 @@
     "yardimMerkezi": "Help Center",
     "cikisYap": "Log Out",
     "dil": "English",
-    "marketingkurulumu": "Conversion Wizard"
+    "marketingkurulumu": "Conversion Wizard",
+    "expandSidebar": "Expand sidebar",
+    "collapseSidebar": "Collapse sidebar",
+    "gozetimMerkezi": "Oversight Center",
+    "close": "Close",
+    "infoCardAria": "Card {n}"
   },
   "email": {
     "title": "Email Marketing",

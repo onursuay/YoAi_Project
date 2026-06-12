@@ -118,7 +118,7 @@ export default function UserProfileDropdown({ collapsed, hasGozetimAccess = fals
                 className="flex items-center gap-3 px-4 py-2.5 text-sm text-emerald-400 hover:bg-white/10 transition-colors"
               >
                 <ShieldCheck className="w-4 h-4" />
-                <span>Gözetim Merkezi</span>
+                <span>{t('gozetimMerkezi')}</span>
               </Link>
             </div>
           )}

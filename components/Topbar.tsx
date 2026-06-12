@@ -335,7 +335,7 @@ export default function Topbar({
                       type="text"
                       value={accountSearch}
                       onChange={e => setAccountSearch(e.target.value)}
-                      placeholder="Hesap ara..."
+                      placeholder={t('searchAccounts')}
                       className="w-full px-2 py-1.5 border border-gray-300 rounded text-sm focus:outline-none focus:ring-1 focus:ring-primary"
                       onClick={e => e.stopPropagation()}
                       autoFocus

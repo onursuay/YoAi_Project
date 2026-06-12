@@ -298,7 +298,7 @@ export default function SidebarInfoCards({ collapsed }: { collapsed: boolean }) 
         <button
           onClick={(e) => { e.stopPropagation(); setDismissed(true) }}
           className="absolute top-1.5 right-1.5 p-0.5 rounded-full hover:bg-black/5 transition-colors z-10"
-          aria-label="Kapat"
+          aria-label={lang === 'en' ? 'Close' : 'Kapat'}
         >
           <X className="w-3 h-3 text-gray-400 hover:text-gray-600" />
         </button>
@@ -342,7 +342,7 @@ export default function SidebarInfoCards({ collapsed }: { collapsed: boolean }) 
                       ? `w-2.5 h-1.5 ${card.iconBg}`
                       : 'w-1.5 h-1.5 bg-gray-200 hover:bg-gray-300'
                   }`}
-                  aria-label={`Kart ${i + 1}`}
+                  aria-label={lang === 'en' ? `Card ${i + 1}` : `Kart ${i + 1}`}
                 />
               ))}
             </div>

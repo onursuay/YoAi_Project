@@ -165,7 +165,7 @@ export default function SidebarNav() {
             <button
               onClick={toggleCollapse}
               className={`absolute inset-0 flex items-center justify-center transition-opacity duration-300 group-hover:opacity-100 rounded-lg ${showHintButton ? 'opacity-100' : 'opacity-0'}`}
-              aria-label="Expand sidebar"
+              aria-label={t('expandSidebar')}
             >
               <PanelLeftOpen className="w-6 h-6 text-emerald-500" />
             </button>
@@ -185,7 +185,7 @@ export default function SidebarNav() {
             <button
               onClick={toggleCollapse}
               className="p-2 hover:bg-gray-100 rounded-lg transition-colors ml-auto"
-              aria-label="Collapse sidebar"
+              aria-label={t('collapseSidebar')}
             >
               <PanelLeftClose className="w-5 h-5 text-gray-600" />
             </button>
