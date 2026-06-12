@@ -3673,7 +3673,39 @@
       "platformWordpress": "WordPress",
       "platformShopify": "Shopify",
       "platformWebflow": "Webflow",
-      "platformOther": "Diğer"
+      "platformOther": "Diğer",
+      "guide": {
+        "nextjs": {
+          "step1": "Projenizde app/layout.tsx (App Router) veya pages/_document.tsx (Pages Router) dosyasını açın.",
+          "step2": "HEAD kodunu <head> etiketinin içine, olabildiğince üste yapıştırın. Dilerseniz @next/third-parties paketinin GoogleTagManager bileşenini de kullanabilirsiniz.",
+          "step3": "BODY kodunu <body> etiketinin açılışından hemen sonra yapıştırın.",
+          "step4": "Siteyi yayınlayın ve Google Tag Manager'daki Önizleme (Preview) modu ile etiketlerin tetiklendiğini doğrulayın."
+        },
+        "wordpress": {
+          "step1": "WordPress yönetim panelinde Eklentiler > Yeni Ekle bölümünden WPCode (Insert Headers and Footers) gibi bir kod ekleme eklentisi kurup etkinleştirin.",
+          "step2": "Eklentinin Header (üst bilgi) alanına HEAD kodunu yapıştırın.",
+          "step3": "Body (açılış) alanına BODY kodunu yapıştırın; eklentide bu alan yoksa Footer alanı da kullanılabilir.",
+          "step4": "Kaydedin, varsa önbellek eklentinizin önbelleğini temizleyin ve GTM Önizleme modu ile doğrulayın."
+        },
+        "shopify": {
+          "step1": "Shopify yönetim panelinde Online Store > Themes > ⋯ > Edit code bölümünü açın.",
+          "step2": "layout/theme.liquid dosyasında HEAD kodunu <head> etiketinin hemen altına yapıştırın.",
+          "step3": "BODY kodunu <body> etiketinin açılışından hemen sonra yapıştırıp kaydedin.",
+          "step4": "Ödeme (checkout) sayfaları Shopify kısıtına tabidir; satın alma event'i için Settings > Customer events (Pixels) bölümünü kullanın. GTM Önizleme ile doğrulayın."
+        },
+        "webflow": {
+          "step1": "Webflow'da Site Settings > Custom Code sekmesini açın (özel kod için ücretli site planı gerekir).",
+          "step2": "Head Code alanına HEAD kodunu yapıştırın.",
+          "step3": "Footer Code alanına BODY kodunu yapıştırın (Webflow body sonuna ekler; izleme için yeterlidir).",
+          "step4": "Save Changes deyip siteyi Publish edin; GTM Önizleme modu ile doğrulayın."
+        },
+        "other": {
+          "step1": "Bu iki kodu web sitenizi yöneten kişiye veya ajansa iletin.",
+          "step2": "HEAD kodu tüm sayfalarda <head> etiketinin içine, olabildiğince üste eklenmelidir.",
+          "step3": "BODY kodu tüm sayfalarda <body> etiketinin açılışından hemen sonra eklenmelidir.",
+          "step4": "Kurulumdan sonra Google Tag Manager'daki Önizleme (Preview) modu ile etiketlerin çalıştığını doğrulayın."
+        }
+      }
     },
     "result": {
       "title": "Kurulum Tamamlandı",

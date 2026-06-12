@@ -270,7 +270,12 @@ async function upsertTrigger(
   const found = existing.find((t) => t.name === trigger.name)
   const base = wsBase(accountId, containerId, workspaceId)
   if (found?.triggerId) {
-    return found
+    // Tag'lerle simetrik: mevcut trigger yeni tanımla güncellenir (event filtresi
+    // değişirse eski tanım kalmasın). fingerprint = optimistic concurrency.
+    return gtmFetch<GtmTrigger>(accessToken, `${base}/triggers/${found.triggerId}`, {
+      method: 'PUT',
+      body: JSON.stringify({ ...trigger, fingerprint: found.fingerprint }),
+    })
   }
   const created = await gtmFetch<GtmTrigger>(accessToken, `${base}/triggers`, {
     method: 'POST',
@@ -495,22 +500,37 @@ export async function deployGtm(
 
   tagsCreated = Math.max(0, existingTags.length - tagCountBefore)
 
-  // 4) Create a version from the workspace and publish it.
-  const versionRes = await gtmFetch<{ containerVersion?: { containerVersionId?: string } }>(
-    accessToken,
-    `${wsBase(accountId, containerId, workspaceId)}:create_version`,
-    {
-      method: 'POST',
-      body: JSON.stringify({ name: `YoAi Setup ${new Date().toISOString()}` }),
-    },
-  )
-  const versionId = versionRes.containerVersion?.containerVersionId
+  // 4) Versiyon oluştur ve yayınla. Kullanıcı Adım 3'te ("Onayla ve Kuruluma
+  // Başla") açık onay verdiği için yayın burada DOĞRUDAN yapılır — bilinçli
+  // ürün kararı: tek-tık kurulum akışında ikinci bir yayın onayı yoktur.
+  let versionId: string | undefined
+  try {
+    const versionRes = await gtmFetch<{ containerVersion?: { containerVersionId?: string } }>(
+      accessToken,
+      `${wsBase(accountId, containerId, workspaceId)}:create_version`,
+      {
+        method: 'POST',
+        body: JSON.stringify({ name: `YoAi Setup ${new Date().toISOString()}` }),
+      },
+    )
+    versionId = versionRes.containerVersion?.containerVersionId
+  } catch (err) {
+    // Workspace'te hiç değişiklik yoksa (aynı kurulumun yeniden çalıştırılması)
+    // mevcut sürüm zaten yayında — bunu hata sayma; diğer her hatayı yüzeye çıkar.
+    const msg = err instanceof Error ? err.message : String(err)
+    if (!/no changes|no workspace changes/i.test(msg)) throw err
+  }
   if (versionId) {
+    // Publish hatası fırlar → route adımı 'error' olarak raporlar; yarım işin
+    // sessizce "done" görünmesi yasak (no-fake-success).
     await gtmFetch(
       accessToken,
       `/accounts/${accountId}/containers/${containerId}/versions/${versionId}:publish`,
       { method: 'POST' },
     )
+  } else if (tagsCreated > 0) {
+    // Yeni tag yazıldı ama sürüm oluşmadı — sessiz başarı raporlama yasak.
+    throw new Error('gtm_version_failed')
   }
 
   return {

@@ -268,7 +268,7 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
 
           {/* Install guide tabs */}
           <div className="mt-5">
-            <h4 className="text-sm font-semibold text-gray-700 mb-2">{t('deploy.guideTitle')}</h4>
+            <h4 className="text-base font-semibold text-gray-900 mb-2">{t('deploy.guideTitle')}</h4>
             <div className="flex flex-wrap gap-1.5">
               {PLATFORM_TABS.map((tab) => (
                 <button
@@ -285,6 +285,19 @@ export default function Deployment({ state, update, goNext, goBack }: StepProps)
                 </button>
               ))}
             </div>
+            {/* Seçili platform için adım adım kurulum talimatı */}
+            <ol className="mt-3 space-y-2 rounded-xl border border-gray-100 bg-gray-50/60 p-4">
+              {([1, 2, 3, 4] as const).map((n) => (
+                <li key={n} className="flex items-start gap-2.5">
+                  <span className="mt-0.5 flex h-5 w-5 shrink-0 items-center justify-center rounded-full bg-primary/8 text-[11px] font-semibold text-primary">
+                    {n}
+                  </span>
+                  <span className="text-sm leading-relaxed text-gray-600">
+                    {t(`deploy.guide.${platformTab}.step${n}`)}
+                  </span>
+                </li>
+              ))}
+            </ol>
           </div>
         </div>
       )}

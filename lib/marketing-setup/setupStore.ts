@@ -1,6 +1,7 @@
 import 'server-only'
 import { supabase } from '@/lib/supabase/client'
 import { encrypt, decrypt } from './crypto'
+import { SETUP_STEPS } from './constants'
 import type { MarketingSetupRow, StepStatus } from './types'
 
 const TABLE = 'marketing_setups'
@@ -67,7 +68,17 @@ export async function saveGoogleSetupToken(
   scopes: string,
 ): Promise<boolean> {
   if (!supabase) return false
-  const enc = encrypt(refreshToken) ?? refreshToken // plaintext fallback if ENCRYPTION_KEY missing
+  // ENCRYPTION_KEY yoksa/kısaysa token'ı düz metin (plaintext) KAYDETME — false
+  // dön ki callback kullanıcıya açıkça 'error' göstersin. Önceki sessiz
+  // plaintext fallback prod'da token'ı açıkta bırakan bir güvenlik açığıydı.
+  const enc = encrypt(refreshToken)
+  if (!enc) {
+    console.error(
+      'MARKETING_SETUP_TOKEN_SAVE_FAIL',
+      'ENCRYPTION_KEY missing or shorter than 32 chars — refusing to store the refresh token in plaintext',
+    )
+    return false
+  }
   await getOrCreateSetup(userId, '')
   const { error } = await supabase
     .from(TABLE)
@@ -124,6 +135,25 @@ export async function logStep(
     await supabase.from('setup_steps').update(payload).eq('id', (existing as { id: string }).id)
   } else {
     await supabase.from('setup_steps').insert({ ...payload, created_at: now })
+  }
+
+  // Üst kaydın genel durumunu türet — insert'te 'pending' kalıp hiç
+  // güncellenmiyordu. Tüm adımlar terminal ise done/error, değilse running.
+  try {
+    const steps = await getSteps(setupId)
+    const byName = new Map(steps.map((s) => [s.step_name, s.status]))
+    const allTerminal = SETUP_STEPS.every((name) => {
+      const st = byName.get(name)
+      return st === 'done' || st === 'error' || st === 'skipped'
+    })
+    const overall = allTerminal
+      ? SETUP_STEPS.some((name) => byName.get(name) === 'error')
+        ? 'error'
+        : 'done'
+      : 'running'
+    await supabase.from(TABLE).update({ status: overall, updated_at: now }).eq('id', setupId)
+  } catch {
+    // Genel durum güncellemesi adım kaydını asla engellemesin.
   }
 }
 

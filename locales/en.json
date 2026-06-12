@@ -3673,7 +3673,39 @@
       "platformWordpress": "WordPress",
       "platformShopify": "Shopify",
       "platformWebflow": "Webflow",
-      "platformOther": "Other"
+      "platformOther": "Other",
+      "guide": {
+        "nextjs": {
+          "step1": "Open app/layout.tsx (App Router) or pages/_document.tsx (Pages Router) in your project.",
+          "step2": "Paste the HEAD code inside the <head> tag, as high as possible. You can also use the GoogleTagManager component from the @next/third-parties package.",
+          "step3": "Paste the BODY code right after the opening <body> tag.",
+          "step4": "Deploy the site and verify the tags fire using Preview mode in Google Tag Manager."
+        },
+        "wordpress": {
+          "step1": "In the WordPress admin, go to Plugins > Add New and install a code-insertion plugin such as WPCode (Insert Headers and Footers).",
+          "step2": "Paste the HEAD code into the plugin's Header field.",
+          "step3": "Paste the BODY code into the Body (opening) field; if the plugin has no such field, the Footer field also works.",
+          "step4": "Save, clear your cache plugin's cache if you use one, and verify with GTM Preview mode."
+        },
+        "shopify": {
+          "step1": "In the Shopify admin, open Online Store > Themes > ⋯ > Edit code.",
+          "step2": "In layout/theme.liquid, paste the HEAD code right below the <head> tag.",
+          "step3": "Paste the BODY code right after the opening <body> tag and save.",
+          "step4": "Checkout pages are restricted by Shopify; use Settings > Customer events (Pixels) for the purchase event. Verify with GTM Preview."
+        },
+        "webflow": {
+          "step1": "In Webflow, open Site Settings > Custom Code (a paid site plan is required for custom code).",
+          "step2": "Paste the HEAD code into the Head Code field.",
+          "step3": "Paste the BODY code into the Footer Code field (Webflow injects it at the end of the body; sufficient for tracking).",
+          "step4": "Click Save Changes and Publish the site; verify with GTM Preview mode."
+        },
+        "other": {
+          "step1": "Send these two code snippets to the person or agency managing your website.",
+          "step2": "The HEAD code must be added inside the <head> tag on every page, as high as possible.",
+          "step3": "The BODY code must be added right after the opening <body> tag on every page.",
+          "step4": "After installation, verify the tags work using Preview mode in Google Tag Manager."
+        }
+      }
     },
     "result": {
       "title": "Setup Complete",
