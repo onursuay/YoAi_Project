@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-13 — Google Ads UploadClickConversions deprecation denetimi + Data Manager API geçiş planı
+- **Sorun:** Google'ın resmî bildirimi: 15 Haziran 2026'dan itibaren geliştirici jetonumuzla Google Ads API `UploadClickConversions` çağrıları engellenecek (180 günde hiç istek yok). Projedeki gerçek/planlı kullanımın denetlenmesi ve Data Manager API geçiş planı istendi.
+- **Çözüm:** Tüm repo tarandı — `UploadClickConversions` / `ConversionUploadService` / `offlineUserDataJobs` **hiçbir yerde kullanılmıyor**; 15 Haziran'da hiçbir akış kırılmaz. Kullanılan tüm Google Ads endpoint'leri (GAQL search, kampanya mutate'leri, `conversionActions:mutate`, `userLists:mutate`) deprecation kapsamı dışında ve aynen korunur. Gelecekteki CRM→Google dönüşüm geri beslemesi / enhanced conversions for leads / Customer Match için Data Manager API mimarisi, gerekli CRM alanları ve 8 TODO maddesi `docs/google_data_manager_migration.md`'de planlandı. Koda tek dokunuş: `googleAdsConversionsClient.ts` başlığına koruyucu TODO yorumu (davranış değişikliği yok).
+- **Dosyalar:** docs/google_data_manager_migration.md (yeni), lib/marketing-setup/googleAdsConversionsClient.ts (yalnız yorum), docs/CHANGELOG.md
+
 ## 2026-06-12 — Tüm site EN/TR uyumlu: eksiksiz i18n turu (~2800 metin, gizli/dropdown/owner dahil)
 - **Sorun:** Çekirdek shell + bazı modüller EN'de çalışıyordu ama hedef-kitle, strateji, yoalgoritma, gözetim, Meta/Google sunum katmanı ve birçok dosya hardcoded Türkçe idi — EN seçen kullanıcı "yarı İngilizce" görüyordu. Dropdown opsiyonları, "Seçin" placeholder'ları, gizli/koşullu durumlar, owner-only alanlar dahil.
 - **Çözüm:** 12 modül grubu envanterlendi, modül modül paralel ajan workflow'larıyla (Batch A–D + hedef-kitle + Meta/Google + misc) dönüştürüldü. Tek `common` namespace (ortak terimler + status + ay/gün), platform enum'ları için mevcut `translateEnum`/`problemLabel` katmanı, yasal sayfalar locale-duyarlı (TR bağlayıcı + "Türkçe esastır"). **Meta/Google korumalı bölge:** yalnız görünen etiket→t(); API enum value/fetch/publish/onChange/select-value diff satır-satır denetlenerek KORUNDU. Meta wizard'ları zaten kendi çift-dilli katmanını kullandığı için dokunulmadı.

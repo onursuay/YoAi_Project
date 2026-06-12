@@ -15,6 +15,13 @@ import { getEventDef, type StandardEventKey } from '@/lib/marketing-setup/consta
  *  - googleAds:search (GAQL)    → idempotency check (skip names that already exist)
  *
  * No mocks, no fabricated success. On API failure we throw a real error.
+ *
+ * TODO-DM (2026-06): Google blocks UploadClickConversions for our developer token
+ * after 2026-06-15. The mutate calls below (conversionActions/userLists) are NOT
+ * affected. Any FUTURE offline conversion upload / enhanced conversions for leads /
+ * Customer Match data upload must use the Data Manager API instead — see
+ * docs/google_data_manager_migration.md. Never add :uploadClickConversions or
+ * offlineUserDataJobs calls here.
  */
 
 export interface GoogleAdsWriteContext {
