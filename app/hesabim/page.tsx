@@ -40,6 +40,29 @@ export default function HesabimPage() {
   const [codeCopied, setCodeCopied] = useState(false)
   const [linkCopied, setLinkCopied] = useState(false)
 
+  // Hesap silme (KVKK)
+  const [deleting, setDeleting] = useState(false)
+  async function handleDeleteAccount() {
+    if (!confirm(t('delete.confirm1'))) return
+    const typed = window.prompt(t('delete.confirm2'))
+    if ((typed ?? '').trim().toUpperCase() !== 'SİL' && (typed ?? '').trim().toUpperCase() !== 'DELETE') return
+    setDeleting(true)
+    try {
+      const res = await fetch('/api/account/delete', { method: 'POST', credentials: 'include' })
+      const data = await res.json().catch(() => null)
+      if (data?.ok) {
+        alert(t('delete.success'))
+        window.location.href = '/'
+      } else {
+        alert(t('delete.error'))
+      }
+    } catch {
+      alert(t('delete.error'))
+    } finally {
+      setDeleting(false)
+    }
+  }
+
   useEffect(() => {
     fetch('/api/account/profile', { cache: 'no-store' })
       .then((r) => (r.ok ? r.json() : null))
@@ -379,6 +402,19 @@ export default function HesabimPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Hesap silme (KVKK) — tehlikeli bölge */}
+          <div className="mt-6 bg-white rounded-2xl border border-red-200 p-6 animate-card-enter">
+            <h3 className="text-base font-semibold text-gray-900 mb-1">{t('delete.title')}</h3>
+            <p className="text-sm leading-relaxed text-gray-600 mb-4">{t('delete.desc')}</p>
+            <button
+              onClick={handleDeleteAccount}
+              disabled={deleting}
+              className="px-5 py-2.5 text-sm font-medium text-red-700 border border-red-200 bg-red-50 rounded-lg hover:bg-red-100 transition-colors active:scale-[0.97] disabled:opacity-50"
+            >
+              {deleting ? t('delete.deleting') : t('delete.button')}
+            </button>
           </div>
 
         </div>

@@ -3730,6 +3730,16 @@
   "account": {
     "title": "Hesabım",
     "description": "Hesap detaylarınızı inceleyebilir, ayarlarınızı güncelleyebilirsiniz.",
+    "delete": {
+      "title": "Hesabımı ve Verilerimi Sil",
+      "desc": "Hesabınız kapatılır, kişisel verileriniz anonimleştirilir ve bağlı reklam hesaplarınızın (Meta, Google, TikTok) erişim yetkileri iptal edilir. Bu işlem geri alınamaz.",
+      "button": "Hesabımı Sil",
+      "deleting": "Siliniyor…",
+      "confirm1": "Hesabınızı ve tüm kişisel verilerinizi kalıcı olarak silmek istediğinize emin misiniz? Bu işlem geri alınamaz.",
+      "confirm2": "Onaylamak için SİL yazın:",
+      "success": "Hesabınız silindi. Çıkış yapılıyor.",
+      "error": "İşlem tamamlanamadı. Lütfen tekrar deneyin."
+    },
     "profileInfo": "Profil Bilgileri",
     "profilePhoto": "Profil Resmi",
     "maxFileSize": "Maksimum dosya boyutu 1MB",

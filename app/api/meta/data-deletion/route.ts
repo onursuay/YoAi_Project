@@ -1,6 +1,9 @@
 import { NextResponse } from "next/server";
 import { randomUUID } from "node:crypto";
 import { verifyMetaSignedRequest } from "@/lib/metaSignedRequest";
+import { supabase } from "@/lib/supabase/client";
+
+export const runtime = "nodejs";
 
 export async function POST(request: Request) {
   try {
@@ -51,6 +54,16 @@ export async function POST(request: Request) {
           ? "unsupported_algorithm"
           : "invalid_signed_request";
       return NextResponse.json({ error: errorCode }, { status: 200 });
+    }
+
+    // Silme talebini KAYDET (sessizce düşmesin; denetlenebilir olsun). Meta'nın
+    // signed_request payload'ı Facebook user_id'sini taşır.
+    const fbUserId = (verification.payload?.user_id ?? null) as string | null;
+    if (supabase) {
+      await supabase
+        .from("account_deletion_requests")
+        .insert({ fb_user_id: fbUserId, source: "meta_callback", status: "pending", detail: "Meta data deletion callback" })
+        .then(undefined, (e: unknown) => console.error("[meta/data-deletion] log failed:", e instanceof Error ? e.message : e));
     }
 
     // Generate confirmation code

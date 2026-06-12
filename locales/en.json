@@ -3728,6 +3728,16 @@
     }
   },
   "account": {
+    "delete": {
+      "title": "Delete My Account and Data",
+      "desc": "Your account will be closed, your personal data anonymized, and the access permissions of your connected ad accounts (Meta, Google, TikTok) revoked. This action cannot be undone.",
+      "button": "Delete My Account",
+      "deleting": "Deleting…",
+      "confirm1": "Are you sure you want to permanently delete your account and all personal data? This cannot be undone.",
+      "confirm2": "Type DELETE to confirm:",
+      "success": "Your account has been deleted. Signing out.",
+      "error": "The operation could not be completed. Please try again."
+    },
     "title": "My Account",
     "description": "View and update your account details.",
     "profileInfo": "Profile Information",
