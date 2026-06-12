@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-12 — Güvenlik: Meta/Google OAuth token'ları at-rest şifreleme (AES-256-GCM)
+- **Sorun:** Meta access_token ve Google refresh_token DB'de düz metin saklanıyordu (googleAdsConnectionStore'da TODO ile itiraf edilmişti). RLS açığı kapandı ama DB-dump senaryosuna karşı şifreleme yoktu.
+- **Çözüm:** Mevcut `lib/meta/crypto.ts` (AES-256-GCM, META_TOKEN_SECRET) connection store'a bağlandı + Google için `lib/google-ads/crypto.ts` (GOOGLE_ADS_TOKEN_SECRET) oluşturuldu. **Encrypt-on-write + decrypt-on-read, geriye uyumlu:** eski düz-metin token'lar (decrypt null döner) olduğu gibi okunmaya devam eder — mevcut bağlantılar bozulmaz. Token yalnızca kendi store'larından okunduğu için (diğer okuyucular token kolonunu select etmiyor — doğrulandı) **API/fetcher/publish akışlarına dokunulmadı** ([feedback_no_touch_meta_google](memory)). Secret yoksa düz-metne düşer (kırılmaz). Round-trip + legacy-plaintext testi + tsc geçti. TikTok zaten şifreliydi (TIKTOK_TOKEN_SECRET set).
+- **Rotasyon:** Mevcut (açıkta kalmış) token'lar reconnect ile yenilenince şifreli yazılır; in-place migration yapılmadı (risk minimizasyonu).
+- **Gerekli (sen):** META_TOKEN_SECRET ve GOOGLE_ADS_TOKEN_SECRET değerlerini **Vercel env'e aynen** ekle (bir kez set edilince DEĞİŞTİRME — şifreli token'lar okunamaz hale gelir).
+- **Dosyalar:** `lib/google-ads/crypto.ts` (yeni), `lib/metaConnectionStore.ts`, `lib/googleAdsConnectionStore.ts`, `.env.example`
+
 ## 2026-06-12 — Sahte veri: dashboard'daki uydurma TikTok kartı kaldırıldı (lansmanda TikTok gizli)
 - **Sorun:** Dashboard, her kullanıcıya TikTok'u `tiktokConnected || true` ile "bağlı" gösteriyor ve hardcoded sahte KPI'lar basıyordu (₺18.420,50 harcama, 6.284 tık, 142.680 gösterim + uydurma 30 günlük grafik). Ücretli üründe kullanıcı bunu gerçek sanıyordu — "sahte veri yasak" ilkesi ihlali. (Lansman kararı: TikTok gizlenecek.)
 - **Çözüm:** Dashboard TikTok Ads kartı tamamen kaldırıldı; sahte `tiktokPlaceholder` KPI bloğu silindi; `tiktokConnected || true` sahte-bağlı mantığı gerçek duruma (`tiktokConnected`) dürüstleştirildi. TikTok entegrasyon onayı sonrası gerçek veriyle geri eklenecek.

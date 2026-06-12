@@ -4,9 +4,13 @@
  * All DB access for access token and metadata is isolated here.
  *
  * Security: Never expose access_token to client or logs.
+ * At-rest: access_token AES-256-GCM ile şifrelenir (encrypt-on-write).
+ * Okumada decrypt; eski düz-metin token'lar (decrypt null) olduğu gibi döner
+ * (geriye uyumlu — mevcut bağlantılar bozulmaz). API/fetcher/publish DEĞİŞMEZ.
  */
 
 import { supabase } from '@/lib/supabase/client'
+import { encrypt as encryptMetaToken, decrypt as decryptMetaToken } from '@/lib/meta/crypto'
 
 /* ------------------------------------------------------------------ */
 /*  Helpers                                                            */
@@ -92,7 +96,8 @@ export async function getMetaConnection(userId: string): Promise<MetaConnectionC
   }
 
   return {
-    accessToken: data.access_token,
+    // decrypt; eski düz-metin token (decrypt null) olduğu gibi kullanılır.
+    accessToken: decryptMetaToken(data.access_token) ?? data.access_token,
     expiresAt,
     tokenType: (data.token_type as MetaConnectionContext['tokenType']) || 'unknown',
     selectedAdAccountId: data.selected_ad_account_id,
@@ -144,8 +149,10 @@ export async function upsertMetaConnection(userId: string, input: UpsertMetaConn
   }
 
   if (input.accessToken) {
-    payload.access_token = input.accessToken
+    // encrypt-on-write; secret yoksa düz-metne düşer (kırılmaz, sadece şifresiz).
+    payload.access_token = encryptMetaToken(input.accessToken) ?? input.accessToken
   } else if (existing) {
+    // Mevcut değer zaten depo formunda (şifreli/düz) — olduğu gibi korunur.
     payload.access_token = (existing as { access_token?: string }).access_token
   }
 

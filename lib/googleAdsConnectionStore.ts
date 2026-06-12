@@ -3,12 +3,14 @@
  * All DB access for refresh token and metadata is isolated here.
  *
  * Security: Never expose refresh_token to client or logs.
- * TODO: Add at-rest encryption in upsertConnection/getConnection - use GOOGLE_ADS_TOKEN_SECRET
- * with AES-256-GCM (see lib/meta/crypto.ts pattern). Until then tokens stored plain.
+ * At-rest: refresh_token AES-256-GCM ile şifrelenir (GOOGLE_ADS_TOKEN_SECRET).
+ * Okumada decrypt; eski düz-metin token'lar (decrypt null) olduğu gibi döner
+ * (geriye uyumlu — mevcut bağlantılar bozulmaz). API/fetcher/publish DEĞİŞMEZ.
  */
 
 import { supabase } from '@/lib/supabase/client'
 import { LOG_EVENTS } from '@/lib/google-ads/constants'
+import { encrypt as encryptGoogleToken, decrypt as decryptGoogleToken } from '@/lib/google-ads/crypto'
 
 /** Mask token for any log output. Never log full token. */
 export function maskToken(token: string | null): string {
@@ -70,7 +72,8 @@ export async function getConnection(userId: string): Promise<GoogleAdsConnection
   const loginCustomerId = (row.google_ads_login_customer_id || customerId).replace(/-/g, '')
 
   return {
-    refreshToken: row.google_ads_refresh_token,
+    // decrypt; eski düz-metin token (decrypt null) olduğu gibi kullanılır.
+    refreshToken: decryptGoogleToken(row.google_ads_refresh_token) ?? row.google_ads_refresh_token,
     customerId,
     loginCustomerId,
   }
@@ -117,8 +120,10 @@ export async function upsertConnection(userId: string, input: UpsertConnectionIn
   if (input.connectedEmail !== undefined) payload.connected_email = input.connectedEmail
 
   if (input.refreshToken !== undefined && input.refreshToken !== '') {
-    payload.google_ads_refresh_token = input.refreshToken
+    // encrypt-on-write; secret yoksa düz-metne düşer (kırılmaz, sadece şifresiz).
+    payload.google_ads_refresh_token = encryptGoogleToken(input.refreshToken) ?? input.refreshToken
   } else if (existing) {
+    // Mevcut değer zaten depo formunda (şifreli/düz) — olduğu gibi korunur.
     payload.google_ads_refresh_token = (existing as { google_ads_refresh_token?: string }).google_ads_refresh_token
   }
 
