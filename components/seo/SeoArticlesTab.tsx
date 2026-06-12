@@ -69,7 +69,7 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
   const t = useTranslations('dashboard.seo.articles')
   const searchParams = useSearchParams()
   const router = useRouter()
-  const { spendCredits, refundCredits, hasEnoughCredits } = useCredits()
+  const { hasEnoughCredits, refresh } = useCredits()
   const { hasSubscription, isOwner, loading: subLoading } = useSubscription()
 
   // Article list
@@ -185,12 +185,7 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
       return
     }
     setImageGenId(article.id)
-    const ok = await spendCredits()
-    if (!ok) {
-      setImageGenId(null)
-      if (!opts.silent) setShowCreditGate(true)
-      return
-    }
+    // Kredi düşümü/iadesi SUNUCUDA (generate-image guard'ı) yapılır — istemci düşmez/iade etmez.
     try {
       const prompt = `Professional blog header image about "${article.title || article.params?.keyword || ''}". Photorealistic, high quality, clean composition, no text or words in the image.`
       const res = await fetch('/api/tasarim/generate-image', {
@@ -199,6 +194,9 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
         body: JSON.stringify({ prompt, aspect_ratio: '16:9' }),
       })
       const data = await res.json()
+      if (!res.ok && !opts.silent && data?.error === 'insufficient_credits') {
+        setShowCreditGate(true)
+      }
       if (data.url) {
         await fetch(`/api/yoai/articles/${article.id}`, {
           method: 'PATCH',
@@ -206,15 +204,14 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
           body: JSON.stringify({ featured_image_url: data.url, featured_image_alt: article.title }),
         })
         setArticles((prev) => prev.map((a) => (a.id === article.id ? { ...a, featured_image_url: data.url } : a)))
-      } else {
-        await refundCredits()
       }
     } catch {
-      await refundCredits()
+      /* sunucu üretim başarısızsa krediyi zaten iade etti */
     } finally {
       setImageGenId(null)
+      refresh() // sunucudaki gerçek bakiyeyi senkronla
     }
-  }, [hasEnoughCredits, spendCredits, refundCredits])
+  }, [hasEnoughCredits, refresh])
 
   /* ═══════ Generate Article (streaming) ═══════ */
   const handleGenerate = async () => {
@@ -275,6 +272,7 @@ export default function SeoArticlesTab({ activeSiteUrl }: Props) {
     } finally {
       setGenerating(false)
       streamRef.current = null
+      refresh() // sunucudaki gerçek bakiyeyi senkronla (chat kredisi serverda düşülür)
     }
   }
 

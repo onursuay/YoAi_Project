@@ -33,7 +33,7 @@ import ReactMarkdown from 'react-markdown'
 
 export default function YoAiPage() {
   const t = useTranslations('dashboard.yoai')
-  const { credits, spendCredits, hasEnoughCredits } = useCredits()
+  const { credits, hasEnoughCredits, refresh } = useCredits()
   const { hasSubscription } = useSubscription()
 
   // YoAlgoritma erişim modalı — abonelik (modül erişimi) veya kredi (chat tüketimi)
@@ -266,7 +266,7 @@ export default function YoAiPage() {
         setPhase('done')
         return
       }
-      spendCredits(COST_PER_CHAT)
+      // Kredi düşümü artık SUNUCUDA (/api/yoai/chat guard'ı) yapılır — istemci düşmez.
       setPhase('generating')
       lastParamsRef.current = params
       const assistantId = (Date.now() + 1).toString()
@@ -302,9 +302,11 @@ export default function YoAiPage() {
       } catch {
         setMessages(prev => prev.map(m => m.id === assistantId ? { ...m, content: 'Bir hata oluştu.' } : m))
         setPhase('error')
+      } finally {
+        refresh() // sunucudaki gerçek bakiyeyi senkronla (düşüm/iade serverda)
       }
     },
-    [detectedIntent, hasSubscription, hasEnoughCredits, spendCredits]
+    [detectedIntent, hasSubscription, hasEnoughCredits, refresh]
   )
 
   // ── Auto-save SEO articles ──

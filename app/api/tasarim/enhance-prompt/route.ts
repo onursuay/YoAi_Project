@@ -1,8 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { claudeText, isClaudeReady } from '@/lib/anthropic/text'
+import { chargeFeature } from '@/lib/billing/featureGuard'
 
 export async function POST(req: NextRequest) {
   try {
+    // Yardımcı (ucuz) Claude çağrısı — kredi düşmez ama kimlik şart (bedava kullanım engeli).
+    const access = await chargeFeature({ featureKey: 'design_enhance_prompt' })
+    if (!access.ok) return NextResponse.json(access.body, { status: access.status })
+
     const { prompt, mode, hasReferenceImage, locale = 'tr' } = await req.json()
 
     if (!prompt || typeof prompt !== 'string') {

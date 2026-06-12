@@ -55,7 +55,7 @@ export default function TasarimPage() {
   const locale = useLocale()
   const sampleGallery = useMemo(() => buildSampleGallery(locale), [locale])
   const router = useRouter()
-  const { credits, spendCredits, refundCredits, hasEnoughCredits } = useCredits()
+  const { credits, hasEnoughCredits, refresh } = useCredits()
   const [mode, setMode] = useState<Mode>('gorsel')
   const [prompt, setPrompt] = useState('')
   const [title, setTitle] = useState('')
@@ -185,7 +185,7 @@ export default function TasarimPage() {
 
     setIsGenerating(true)
     setError(null)
-    spendCredits()
+    // Kredi düşümü artık SUNUCUDA (generate-image/video guard'ı) yapılır — istemci düşmez.
 
     try {
       const endpoint = mode === 'gorsel'
@@ -236,9 +236,9 @@ export default function TasarimPage() {
     } catch (err) {
       const message = err instanceof Error ? err.message : t('errorOccurred')
       setError(message)
-      refundCredits() // Refund credits on error
     } finally {
       setIsGenerating(false)
+      refresh() // sunucudaki gerçek bakiyeyi senkronla (başarıda düşülmüş, hatada iade edilmiş)
     }
   }
 

@@ -1,21 +1,34 @@
 import { buildGenerationPrompt } from '@/lib/yoai/prompts'
-import type { ContentCategory } from '@/lib/yoai/types'
+import { type ContentCategory, COST_PER_CHAT } from '@/lib/yoai/types'
 import { claudeStream, isClaudeReady } from '@/lib/anthropic/text'
+import { chargeFeature } from '@/lib/billing/featureGuard'
 
-export const runtime = 'edge'
+// nodejs runtime: kredi/abonelik guard'ı server-only Supabase istemcisini kullanır.
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
 export async function POST(req: Request) {
   try {
+    // Sunucu-taraflı kimlik + abonelik + kredi guard — istemci atlanamaz.
+    const access = await chargeFeature({
+      featureKey: 'yoalgoritma_chat',
+      creditCost: COST_PER_CHAT,
+      requireSubscription: true,
+    })
+    if (!access.ok) return Response.json(access.body, { status: access.status })
+
     const { category, params } = (await req.json()) as {
       category: Exclude<ContentCategory, 'off_topic'>
       params: Record<string, string>
     }
 
     if (!category || !params) {
+      if (access.ok) await access.refund() // erken çıkış → krediyi geri ver
       return Response.json({ error: 'Kategori ve parametreler gerekli' }, { status: 400 })
     }
 
     if (!isClaudeReady()) {
+      if (access.ok) await access.refund()
       return Response.json({ error: 'AI servisi yapılandırılmamış' }, { status: 500 })
     }
 

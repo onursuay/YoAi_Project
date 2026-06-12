@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import * as cheerio from 'cheerio'
+import { chargeFeature } from '@/lib/billing/featureGuard'
 
 interface Check {
   id: string
@@ -816,6 +817,10 @@ function generateRecommendations(
 // ─── MAIN HANDLER ───
 export async function POST(request: NextRequest) {
   try {
+    // SEO modülü abonelik gerektirir — dış API kotalarını (PageSpeed) bedava tüketime kapat.
+    const access = await chargeFeature({ featureKey: 'seo', requireSubscription: true })
+    if (!access.ok) return NextResponse.json(access.body, { status: access.status })
+
     const body = await request.json()
     const rawUrl = body.url
     if (!rawUrl || typeof rawUrl !== 'string') {

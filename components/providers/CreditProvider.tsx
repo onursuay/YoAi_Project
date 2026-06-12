@@ -69,23 +69,12 @@ export function CreditProvider({ children }: { children: ReactNode }) {
     return true
   }, [])
 
-  const refundCredits = useCallback(async (amount = COST_PER_GENERATION) => {
-    const res = await fetch('/api/credits/refund', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ amount }),
-    })
-    if (!res.ok) return
-    const data = await res.json()
-    if (data?.ok) {
-      setState((prev) => ({
-        balance: data.credits.balance,
-        totalEarned: data.credits.totalEarned,
-        totalSpent: data.credits.totalSpent,
-        isOwner: prev.isOwner,
-      }))
-    }
-  }, [])
+  // Kredi iadesi artık SUNUCUDA (üretim guard'ı başarısızlıkta otomatik iade eder).
+  // İstemci yalnız gerçek bakiyeyi yeniden çeker — public refund endpoint'i kaldırıldı
+  // (keyfi 'amount' ile sınırsız kredi basma açığını kapatmak için).
+  const refundCredits = useCallback(async (_amount = COST_PER_GENERATION) => {
+    await refresh()
+  }, [refresh])
 
   // Owner / süper admin allowlist'i kredi bakiyesinden bağımsız olarak
   // her aksiyonu geçer — UI bariyeri kullanıcı deneyimi içindir, gerçek

@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
 import sharp from 'sharp'
+import { chargeFeature } from '@/lib/billing/featureGuard'
+import { COST_PER_GENERATION } from '@/lib/subscription/types'
 
 fal.config({ credentials: process.env.FAL_KEY! })
 
@@ -30,6 +32,8 @@ async function uploadBase64ToFal(dataUrl: string): Promise<string> {
 }
 
 export async function POST(req: NextRequest) {
+  // Üretim başarısız olursa düşülen krediyi geri vermek için dış kapsamda tutulur.
+  let access: Awaited<ReturnType<typeof chargeFeature>> | null = null
   try {
     const { prompt, aspect_ratio = '16:9', duration = '5', image_url } = await req.json()
 
@@ -40,6 +44,10 @@ export async function POST(req: NextRequest) {
     if (!process.env.FAL_KEY) {
       return NextResponse.json({ error: 'FAL_KEY not configured' }, { status: 500 })
     }
+
+    // Sunucu-taraflı kimlik + kredi guard — istemci atlanamaz.
+    access = await chargeFeature({ featureKey: 'design_generation', creditCost: COST_PER_GENERATION })
+    if (!access.ok) return NextResponse.json(access.body, { status: access.status })
 
     let result
 
@@ -77,6 +85,7 @@ export async function POST(req: NextRequest) {
     const data = result.data as { video?: { url: string } }
 
     if (!data.video?.url) {
+      if (access?.ok) await access.refund() // üretim başarısız → krediyi geri ver
       return NextResponse.json({ error: 'No video generated' }, { status: 500 })
     }
 
@@ -84,6 +93,7 @@ export async function POST(req: NextRequest) {
       url: data.video.url,
     })
   } catch (err: unknown) {
+    if (access?.ok) await access.refund() // üretim hatası → düşülen krediyi geri ver
     let message = 'Video generation failed'
     let status = 500
 

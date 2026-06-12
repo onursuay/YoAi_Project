@@ -1,10 +1,15 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { fal } from '@fal-ai/client'
+import { chargeFeature } from '@/lib/billing/featureGuard'
 
 fal.config({ credentials: process.env.FAL_KEY! })
 
 export async function POST(req: NextRequest) {
   try {
+    // Referans görsel yükleme — kimlik şart (bedava fal.storage kullanımı engeli).
+    const access = await chargeFeature({ featureKey: 'design_upload' })
+    if (!access.ok) return NextResponse.json(access.body, { status: access.status })
+
     const { dataUrl } = await req.json()
 
     if (!dataUrl || typeof dataUrl !== 'string' || !dataUrl.startsWith('data:')) {
