@@ -34,6 +34,27 @@ export default function AbonelikPage() {
   )
   const [paymentBanner, setPaymentBanner] = useState<'success' | 'failed' | null>(null)
   const [starting, setStarting] = useState(false)
+  const [cancelling, setCancelling] = useState(false)
+  const cancelled = !!(subscription as { cancelAtPeriodEnd?: boolean })?.cancelAtPeriodEnd
+
+  async function handleCancel() {
+    if (!confirm(t('currentPlan.cancelConfirm'))) return
+    setCancelling(true)
+    try {
+      const res = await fetch('/api/billing/cancel', { method: 'POST', credentials: 'include' })
+      const data = await res.json().catch(() => null)
+      if (data?.ok) {
+        await refreshSubscription()
+        alert(t('currentPlan.cancelSuccess'))
+      } else {
+        alert(t('currentPlan.cancelError'))
+      }
+    } catch {
+      alert(t('currentPlan.cancelError'))
+    } finally {
+      setCancelling(false)
+    }
+  }
 
   // Scroll to #krediler if hash present
   useEffect(() => {
@@ -225,12 +246,24 @@ export default function AbonelikPage() {
                 >
                   {t('currentPlan.upgrade')}
                 </button>
-                {isPaid && (
-                  <button className="px-5 py-3 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50">
-                    {t('currentPlan.cancelPlan')}
+                {(isPaid || trial) && !cancelled && (
+                  <button
+                    onClick={handleCancel}
+                    disabled={cancelling}
+                    className="px-5 py-3 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl hover:bg-gray-50 transition-colors active:scale-[0.97] disabled:opacity-50"
+                  >
+                    {cancelling ? t('currentPlan.cancelling') : t('currentPlan.cancelPlan')}
                   </button>
                 )}
+                {cancelled && (
+                  <span className="px-5 py-3 text-sm font-medium text-gray-500 border border-gray-200 rounded-xl bg-gray-50">
+                    {t('currentPlan.cancelledBadge')}
+                  </span>
+                )}
               </div>
+              {cancelled && (
+                <p className="mt-3 text-sm leading-relaxed text-gray-500">{t('currentPlan.cancelledNote')}</p>
+              )}
             </div>
 
             {/* Credit Load Section */}

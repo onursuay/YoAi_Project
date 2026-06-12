@@ -53,6 +53,7 @@ export interface SubscriptionState {
   startDate: string
   trialEndDate: string | null
   currentPeriodEnd: string
+  cancelAtPeriodEnd?: boolean
 }
 
 export const SUBSCRIPTION_DEFAULTS: SubscriptionState = {

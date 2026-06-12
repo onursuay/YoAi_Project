@@ -55,6 +55,7 @@ export async function GET() {
             adAccounts: sub.ad_accounts,
             trialEndDate: sub.trial_end_date,
             currentPeriodEnd: sub.current_period_end,
+            cancelAtPeriodEnd: sub.cancel_at_period_end,
             startDate: sub.started_at,
           }
         : null,

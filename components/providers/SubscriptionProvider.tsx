@@ -69,6 +69,7 @@ export function SubscriptionProvider({ children }: { children: ReactNode }) {
               startDate: data.subscription.startDate,
               trialEndDate: data.subscription.trialEndDate,
               currentPeriodEnd: data.subscription.currentPeriodEnd,
+              cancelAtPeriodEnd: data.subscription.cancelAtPeriodEnd ?? false,
             })
           } else {
             // 200 + abonelik yok → gerçekten ücretsiz/expired kullanıcı.

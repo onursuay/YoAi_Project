@@ -21,6 +21,7 @@ export interface SubscriptionRow {
   ad_accounts: number
   trial_end_date: string | null
   current_period_end: string
+  cancel_at_period_end: boolean
   started_at: string
   updated_at: string
 }
@@ -122,6 +123,31 @@ export async function startTrial(userId: string): Promise<boolean> {
   return true
 }
 
+/**
+ * Aboneliği dönem sonunda iptal eder (yenileme yok). Erişim current_period_end'e
+ * kadar KORUNUR (ödenen dönem hakkı). Yalnız active/trial aboneliğe uygulanır.
+ * Döndürür: iptal başarılıysa erişimin biteceği tarih (ISO) veya null.
+ */
+export async function cancelSubscription(userId: string): Promise<{ ok: boolean; accessUntil: string | null }> {
+  const db = requireClient()
+  const { data } = await db
+    .from('subscriptions')
+    .select('status, current_period_end, trial_end_date')
+    .eq('user_id', userId)
+    .maybeSingle()
+  const sub = data as { status?: string; current_period_end?: string; trial_end_date?: string | null } | null
+  if (!sub || (sub.status !== 'active' && sub.status !== 'trial')) {
+    return { ok: false, accessUntil: null }
+  }
+  await db
+    .from('subscriptions')
+    .update({ cancel_at_period_end: true, updated_at: new Date().toISOString() })
+    .eq('user_id', userId)
+    .in('status', ['active', 'trial'])
+  const accessUntil = sub.status === 'trial' ? (sub.trial_end_date ?? sub.current_period_end ?? null) : (sub.current_period_end ?? null)
+  return { ok: true, accessUntil }
+}
+
 export async function applySubscriptionPurchase(userId: string, priced: PricedSubscription): Promise<void> {
   const db = requireClient()
   const now = new Date()
@@ -149,6 +175,7 @@ export async function applySubscriptionPurchase(userId: string, priced: PricedSu
     ad_accounts: priced.adAccounts,
     trial_end_date: null,
     current_period_end: periodEnd,
+    cancel_at_period_end: false, // yeni satın alma iptal bayrağını sıfırlar
     started_at: now.toISOString(),
     updated_at: now.toISOString(),
   }, { onConflict: 'user_id' })

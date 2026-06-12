@@ -3826,7 +3826,13 @@
       "active": "Active",
       "daysLeft": "{days} days left",
       "upgrade": "Upgrade Plan",
-      "cancelPlan": "Cancel Plan"
+      "cancelPlan": "Cancel Plan",
+      "cancelConfirm": "Are you sure you want to cancel your subscription? Your access continues until the end of the current period, after which it will not renew.",
+      "cancelSuccess": "Your subscription has been cancelled. Access continues until the end of the current period.",
+      "cancelError": "The operation could not be completed. Please try again.",
+      "cancelling": "Cancelling…",
+      "cancelledBadge": "Cancelled",
+      "cancelledNote": "Your subscription will end at the close of the current period and will not auto-renew. You keep full access until then."
     },
     "credits": {
       "title": "Load Credits",

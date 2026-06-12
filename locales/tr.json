@@ -3826,7 +3826,13 @@
       "active": "Aktif",
       "daysLeft": "{days} gün kaldı",
       "upgrade": "Planı Yükselt",
-      "cancelPlan": "Planı Sonlandır"
+      "cancelPlan": "Planı Sonlandır",
+      "cancelConfirm": "Aboneliğinizi sonlandırmak istediğinize emin misiniz? Erişiminiz mevcut dönem sonuna kadar devam eder, ardından yenilenmez.",
+      "cancelSuccess": "Aboneliğiniz sonlandırıldı. Mevcut dönem sonuna kadar erişiminiz devam edecek.",
+      "cancelError": "İşlem tamamlanamadı. Lütfen tekrar deneyin.",
+      "cancelling": "Sonlandırılıyor…",
+      "cancelledBadge": "İptal edildi",
+      "cancelledNote": "Aboneliğiniz mevcut dönem sonunda sona erecek ve otomatik yenilenmeyecek. O tarihe kadar tüm özelliklere erişiminiz devam eder."
     },
     "credits": {
       "title": "Kredi Yükle",
