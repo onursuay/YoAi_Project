@@ -376,7 +376,10 @@
         "clicks": "Clicks",
         "conversionValue": "Conversion Value",
         "roas": "ROAS",
-        "cpc": "CPC"
+        "cpc": "CPC",
+        "spend": "Spend",
+        "impressions": "Impressions",
+        "ctr": "CTR"
       },
       "dateRange": {
         "allTime": "All Time",
@@ -615,6 +618,14 @@
           "updateSuccess": "Ad updated successfully",
           "nameOnlyUpdated": "Only the ad name was updated (content changes are not supported)"
         }
+      },
+      "search": {
+        "placeholder": "Search campaigns...",
+        "noResults": "No results found"
+      },
+      "filters": {
+        "hideInactive": "Hide Inactive",
+        "showInactive": "Show Inactive"
       }
     },
     "google": {

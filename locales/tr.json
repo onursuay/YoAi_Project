@@ -376,7 +376,10 @@
         "clicks": "Tıklamalar",
         "conversionValue": "Dönüşüm Değeri",
         "roas": "Dön. Değeri / Maliyet",
-        "cpc": "TBM (Tıklama Başına Maliyet)"
+        "cpc": "TBM (Tıklama Başına Maliyet)",
+        "spend": "Harcama",
+        "impressions": "Gösterim",
+        "ctr": "TO"
       },
       "dateRange": {
         "allTime": "Tüm Zamanlar",
@@ -615,6 +618,14 @@
           "updateSuccess": "Reklam başarıyla güncellendi",
           "nameOnlyUpdated": "Sadece reklam adı güncellendi (içerik değişikliği desteklenmiyor)"
         }
+      },
+      "search": {
+        "placeholder": "Kampanya ara...",
+        "noResults": "Sonuç bulunamadı"
+      },
+      "filters": {
+        "hideInactive": "Pasifleri Gizle",
+        "showInactive": "Pasifleri Göster"
       }
     },
     "google": {
