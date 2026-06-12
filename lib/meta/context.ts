@@ -5,6 +5,7 @@
  * Never reads adAccountId or token from the request body.
  */
 import { MetaGraphClient } from './client'
+import { readUserId } from '@/lib/auth/userCookie'
 import { getMetaConnection } from '@/lib/metaConnectionStore'
 
 export interface MetaContext {
@@ -24,7 +25,7 @@ export async function resolveMetaContext(): Promise<MetaContext | null> {
   const cookieStore = await cookies()
 
   // ── Tier 1: DB-first (permanent user_id — persists across login/logout) ──
-  const sessionId = cookieStore.get('user_id')?.value
+  const sessionId = readUserId(cookieStore)
   if (sessionId) {
     try {
       const dbConn = await getMetaConnection(sessionId)

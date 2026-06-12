@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
+import { signUserId } from '@/lib/auth/userCookie'
 import bcrypt from 'bcryptjs'
 import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
 import { checkBlocklist, extractDomain } from '@/lib/admin/blocklist'
@@ -123,7 +124,7 @@ export async function POST(request: NextRequest) {
 
     // Permanent user id — used as the stable key for all DB connections (Meta, Google Ads).
     // httpOnly so JS cannot read it; used server-side only for DB lookups.
-    response.cookies.set('user_id', user.id, {
+    response.cookies.set('user_id', signUserId(user.id), {
       httpOnly: true,
       secure: process.env.NODE_ENV === 'production',
       sameSite: 'lax',

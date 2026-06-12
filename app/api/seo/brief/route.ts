@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { getBriefByConnection } from '@/lib/seo/siteContentBriefStore'
 import { getConnection } from '@/lib/seo/siteConnectionStore'
@@ -9,7 +10,7 @@ export const maxDuration = 60
 
 export async function GET(request: Request) {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) return NextResponse.json({ ok: false, error: 'no_session' }, { status: 401 })
   const siteConnectionId = new URL(request.url).searchParams.get('siteConnectionId')
   if (!siteConnectionId) return NextResponse.json({ ok: false, error: 'missing_param' }, { status: 400 })
@@ -37,7 +38,7 @@ export async function GET(request: Request) {
  */
 export async function POST(request: Request) {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) return NextResponse.json({ ok: false, error: 'no_session' }, { status: 401 })
 
   let body: Record<string, unknown>

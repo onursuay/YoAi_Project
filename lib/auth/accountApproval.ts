@@ -10,6 +10,7 @@
  * onaylı sayılır.
  */
 import 'server-only'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { isSuperAdminEmail } from '@/lib/admin/superAdmin'
@@ -50,7 +51,7 @@ export const APPROVAL_TERMINAL_OK: ApprovalStatus[] = ['approved']
 export async function resolveAccountState(): Promise<AccountState | null> {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (!userId || !supabase) return null
 
     const { data, error } = await supabase

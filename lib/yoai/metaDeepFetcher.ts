@@ -4,6 +4,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { resolveMetaContext } from '@/lib/meta/context'
+import { readUserId } from '@/lib/auth/userCookie'
 import { metaGraphFetch } from '@/lib/metaGraph'
 import { normalizeInsights } from '@/lib/meta/optimization/insightsNormalizer'
 import { runRuleEngine, type RuleContext } from '@/lib/meta/optimization/ruleEngine'
@@ -106,7 +107,7 @@ export async function fetchMetaDeep(
       const stillValid = cookieToken && (!cookieExpiresAt || Date.now() < parseInt(cookieExpiresAt, 10))
       if (stillValid && cookieAdAccountId) {
         const accountId = cookieAdAccountId.startsWith('act_') ? cookieAdAccountId : `act_${cookieAdAccountId}`
-        const cookieUserId = cookieStore.get('user_id')?.value ?? ''
+        const cookieUserId = readUserId(cookieStore) ?? ''
         ctx = {
           client: null as any,
           accountId,

@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import {
   listRecommendationResults,
@@ -25,7 +26,7 @@ export const maxDuration = 30
 
 export async function GET(request: Request) {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
   }
@@ -48,7 +49,7 @@ export async function GET(request: Request) {
 
 export async function POST(request: Request) {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'unauthorized' }, { status: 401 })
   }

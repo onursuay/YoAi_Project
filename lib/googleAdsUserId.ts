@@ -5,11 +5,12 @@
  */
 
 import type { ReadonlyRequestCookies } from 'next/dist/server/web/spec-extension/adapters/request-cookies'
+import { readUserId } from '@/lib/auth/userCookie'
 
 /**
  * Resolve current user ID for DB connection storage/lookup.
  * Returns the permanent user_id (signups.id); null if no session.
  */
 export function getGoogleAdsUserId(cookieStore: ReadonlyRequestCookies): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }

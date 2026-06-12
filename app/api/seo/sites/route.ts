@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { listConnections } from '@/lib/seo/siteConnectionStore'
@@ -6,7 +7,7 @@ import { listConnections } from '@/lib/seo/siteConnectionStore'
 export const dynamic = 'force-dynamic'
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }
 
 // GET /api/seo/sites — kullanıcının bağlı sitelerini (maskeli) listele.

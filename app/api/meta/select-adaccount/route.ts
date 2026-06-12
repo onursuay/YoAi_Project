@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { metaGraphFetchJSON } from '@/lib/metaGraph'
 import { getUserAccessToken } from '@/lib/meta/authHelpers'
@@ -105,7 +106,7 @@ export async function POST(request: Request) {
 
     // Persist selected account to DB (fire-and-forget)
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (userId) {
       updateSelectedMetaAdAccount(userId, normalizedAdAccountId).catch((err) => {
         if (DEBUG) console.warn('[Meta SelectAdAccount] DB_PERSIST_FAIL:', err instanceof Error ? err.message : 'unknown')

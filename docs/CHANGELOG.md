@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-12 — Güvenlik: oturum kimliği taklidini (impersonation) kapat — imzalı user_id çerezi
+- **Sorun:** Kimlik `user_id` çerezi = düz `signups.id` idi; sunucu tarafı doğrulama yoktu. Bir kullanıcının UUID'sini ele geçiren saldırgan çerezini değiştirip o kullanıcı olarak işlem yapabilirdi (impersonation). 70 ayrı yer çerezi ham okuyordu.
+- **Çözüm:** `lib/auth/userCookie.ts` — `user_id` çerez değeri artık HMAC-SHA256 ile imzalı (`${id}.${hmac}`, SESSION_SECRET). Tek `readUserId()` helper'ı imzayı sabit-zamanlı doğrular; geçersiz/imzasız/taklit değerleri reddeder (null → yeniden login). Login + signup/verify `signUserId()` ile yazar. **62 okuma noktası** ham `cookieStore.get('user_id')?.value` → `readUserId(cookieStore)` olarak dönüştürüldü (script + tsc + grep ile sıfır ham okuma doğrulandı). Forgery testi: imzalı kabul, taklit reddedildi.
+- **Deploy-güvenli:** SESSION_SECRET yoksa eski davranışa düşer (kilitleme yok); secret eklenince tam koruma + eski oturumlar yeniden login. Edge-runtime çakışması yok (node:crypto kullanan helper'ı hiçbir Edge route import etmiyor).
+- **Gerekli (sen):** `SESSION_SECRET` değerini Vercel env'e ekle (bir kez set edince değiştirme → tüm oturumlar geçersiz olur).
+- **Kalan (ayrı):** sunucu-taraflı oturum iptali (revocation list) — imzalama forgery'yi kapattı; uzaktan oturum sonlandırma ileride.
+- **Dosyalar:** `lib/auth/userCookie.ts` (yeni), `app/api/auth/login/route.ts`, `app/api/signup/verify/route.ts`, + 62 okuyucu route/lib, `.env.example`
+
 ## 2026-06-12 — Güvenlik: Meta/Google OAuth token'ları at-rest şifreleme (AES-256-GCM)
 - **Sorun:** Meta access_token ve Google refresh_token DB'de düz metin saklanıyordu (googleAdsConnectionStore'da TODO ile itiraf edilmişti). RLS açığı kapandı ama DB-dump senaryosuna karşı şifreleme yoktu.
 - **Çözüm:** Mevcut `lib/meta/crypto.ts` (AES-256-GCM, META_TOKEN_SECRET) connection store'a bağlandı + Google için `lib/google-ads/crypto.ts` (GOOGLE_ADS_TOKEN_SECRET) oluşturuldu. **Encrypt-on-write + decrypt-on-read, geriye uyumlu:** eski düz-metin token'lar (decrypt null döner) olduğu gibi okunmaya devam eder — mevcut bağlantılar bozulmaz. Token yalnızca kendi store'larından okunduğu için (diğer okuyucular token kolonunu select etmiyor — doğrulandı) **API/fetcher/publish akışlarına dokunulmadı** ([feedback_no_touch_meta_google](memory)). Secret yoksa düz-metne düşer (kırılmaz). Round-trip + legacy-plaintext testi + tsc geçti. TikTok zaten şifreliydi (TIKTOK_TOKEN_SECRET set).

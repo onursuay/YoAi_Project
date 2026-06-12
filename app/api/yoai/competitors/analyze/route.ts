@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { runFullCompetitorAnalysis } from '@/lib/yoai/competitorAnalyzer'
 import { fetchMetaDeep } from '@/lib/yoai/metaDeepFetcher'
@@ -64,7 +65,7 @@ export async function GET(request: Request) {
 
     try {
       const cookieStore = await cookies()
-      const userId = cookieStore.get('user_id')?.value
+      const userId = readUserId(cookieStore)
       if (userId && result.competitorAds.length > 0) {
         // Hangi campaign type baskın? → İlk Meta kampanyasının normalize tipi.
         let campaignTypeContext: string | null = null

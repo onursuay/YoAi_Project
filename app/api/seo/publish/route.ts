@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { marked } from 'marked'
 import { supabase } from '@/lib/supabase/client'
@@ -23,7 +24,7 @@ import { getConnector } from '@/lib/seo/connectors'
 export const dynamic = 'force-dynamic'
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }
 
 /**

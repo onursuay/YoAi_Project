@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { generateFullAutoProposals } from '@/lib/yoai/adCreator'
 import { runFullCompetitorAnalysis, compareWithCompetitors } from '@/lib/yoai/competitorAnalyzer'
 import type { CompetitorAd } from '@/lib/yoai/competitorAnalyzer'
@@ -52,7 +53,7 @@ export async function POST(request: Request) {
     // Resolve userId once
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
 
     // ── Helpers ──
     const cookieHeader = request.headers.get('cookie') || ''

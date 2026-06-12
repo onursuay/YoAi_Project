@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { exchangeCodeForTokens } from '@/lib/integrations/googleOAuthHelpers'
 import { upsertGAConnection } from '@/lib/google-analytics/connectionStore'
@@ -42,7 +43,7 @@ export async function GET(request: Request) {
 
   try {
     const tokens = await exchangeCodeForTokens(code, redirectUri)
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
 
     console.log('[GA_CALLBACK]', {
       hasUserId: !!userId,

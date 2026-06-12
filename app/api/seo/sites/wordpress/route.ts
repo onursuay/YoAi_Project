@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { isCryptoReady } from '@/lib/seo/crypto'
@@ -21,7 +22,7 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 30
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }
 
 function normalizeHttpsUrl(raw: string): string | null {

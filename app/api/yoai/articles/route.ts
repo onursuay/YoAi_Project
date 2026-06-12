@@ -1,11 +1,12 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 
 export const dynamic = 'force-dynamic'
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }
 
 // GET /api/yoai/articles — List all articles for current user

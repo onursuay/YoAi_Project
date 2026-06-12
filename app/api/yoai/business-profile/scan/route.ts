@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import {
   getProfileByUserId,
@@ -27,7 +28,7 @@ export const maxDuration = 60
 export async function POST() {
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
     }

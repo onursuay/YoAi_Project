@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { randomUUID } from 'node:crypto'
 import { supabase } from '@/lib/supabase/client'
 import { checkBlocklist, extractDomain } from '@/lib/admin/blocklist'
+import { signUserId } from '@/lib/auth/userCookie'
 
 const APP_URL = process.env.NEXT_PUBLIC_APP_URL || 'https://yoai.yodijital.com'
 
@@ -120,7 +121,7 @@ function createSessionAndRedirect(user: {
 
   // Permanent user id — diğer admin/billing endpoint'lerinin authentic kaynak
   // saydığı cookie. Email doğrulamasından sonra zaten kullanıcıya emanet.
-  response.cookies.set('user_id', user.id, {
+  response.cookies.set('user_id', signUserId(user.id), {
     ...cookieDefaults,
     httpOnly: true,
   })

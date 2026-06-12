@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { revokeMetaConnection } from '@/lib/metaConnectionStore'
 
@@ -6,7 +7,7 @@ export async function POST() {
   const cookieStore = await cookies()
 
   // Revoke DB connection (fire-and-forget, before cookie cleanup)
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (userId) {
     revokeMetaConnection(userId).catch(() => {})
   }

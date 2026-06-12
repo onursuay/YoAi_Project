@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
@@ -24,7 +25,7 @@ export async function POST() {
   }
 
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
 
   await inngest.send({ name: 'yoalgoritma/improvements.user', data: { userId } })

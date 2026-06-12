@@ -13,6 +13,7 @@
    ────────────────────────────────────────────────────────── */
 
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { inngest, isInngestReady } from '@/inngest/client'
 import { isAiEngineEnabled, isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
@@ -167,7 +168,7 @@ export async function POST() {
 
   const { cookies } = await import('next/headers')
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) {
     return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
   }

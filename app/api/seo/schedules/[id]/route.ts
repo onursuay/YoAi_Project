@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { upsertSchedule, deleteSchedule, type ScheduleFrequency } from '@/lib/seo/scheduleStore'
@@ -8,7 +9,7 @@ import { runSiteBriefPipeline } from '@/lib/seo/siteBriefPipeline'
 export const dynamic = 'force-dynamic'
 
 function getUserId(cookieStore: Awaited<ReturnType<typeof cookies>>): string | null {
-  return cookieStore.get('user_id')?.value ?? null
+  return readUserId(cookieStore) ?? null
 }
 
 // PATCH /api/seo/schedules/[id]

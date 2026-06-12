@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 import { resolveMetaContext } from '@/lib/meta/context'
@@ -38,7 +39,7 @@ export async function POST(_request: Request, { params }: { params: Promise<{ id
   // Business context — kullanıcı işletme bağlamını strateji input payload'una enjekte et
   try {
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (userId) {
       const businessContext = await getBusinessContextForUser(userId)
       const block = businessContext ? buildBusinessContextPromptBlock(businessContext) : null

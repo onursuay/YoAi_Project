@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import {
   getApprovalById,
@@ -28,7 +29,7 @@ export async function GET(
   try {
     const { id } = await context.params
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli.' }, { status: 401 })
     }
@@ -87,7 +88,7 @@ export async function PATCH(
   try {
     const { id } = await context.params
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli.' }, { status: 401 })
     }

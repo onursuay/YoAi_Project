@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { isAiEngineEnabled } from '@/lib/yoai/featureFlag'
 import { isAnthropicReady } from '@/lib/anthropic/client'
 import { isInngestReady, inngest } from '@/inngest/client'
@@ -229,7 +230,7 @@ export async function POST(request: Request) {
     // Auth: get user ID from session
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
 
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
@@ -387,7 +388,7 @@ export async function POST(request: Request) {
     try {
       const { cookies } = await import('next/headers')
       const cookieStore = await cookies()
-      const userId = cookieStore.get('user_id')?.value
+      const userId = readUserId(cookieStore)
       if (userId) {
         await upsertDailyRun({
           user_id: userId,

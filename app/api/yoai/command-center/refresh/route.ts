@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { runDeepAnalysis } from '@/lib/yoai/deepAnalysis'
 import { upsertDailyRun, getTurkeyDate, buildAccountScope } from '@/lib/yoai/dailyRunStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
@@ -24,7 +25,7 @@ export async function POST() {
 
     const { cookies } = await import('next/headers')
     const cookieStore = await cookies()
-    const userId = cookieStore.get('user_id')?.value
+    const userId = readUserId(cookieStore)
     if (!userId) {
       return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
     }

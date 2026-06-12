@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { isCryptoReady } from '@/lib/seo/crypto'
 import { listConnections, upsertConnection } from '@/lib/seo/siteConnectionStore'
@@ -39,7 +40,7 @@ export async function GET(request: Request) {
     return clearCookies(NextResponse.redirect(new URL(seoUrl('site=rejected'), origin), { status: 302 }))
   }
 
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (!userId) return fail('no_session')
   if (!isCryptoReady()) return fail('crypto_unavailable')
 

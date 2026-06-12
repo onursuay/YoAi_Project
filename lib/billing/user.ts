@@ -1,4 +1,5 @@
 import 'server-only'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { supabase } from '@/lib/supabase/client'
 
@@ -14,7 +15,7 @@ export interface AuthenticatedUser {
  */
 export async function getCurrentUser(): Promise<AuthenticatedUser | null> {
   const store = cookies()
-  const userId = store.get('user_id')?.value
+  const userId = readUserId(store)
   if (!userId || !supabase) return null
 
   const { data, error } = await supabase

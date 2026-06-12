@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { getGAConnection } from '@/lib/google-analytics/connectionStore'
 import { listProperties } from '@/lib/google-analytics/service'
@@ -7,7 +8,7 @@ export const dynamic = 'force-dynamic'
 
 export async function GET() {
   const cookieStore = await cookies()
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
 
   if (!userId) {
     return NextResponse.json({ error: 'Not authenticated' }, { status: 401 })

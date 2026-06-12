@@ -1,4 +1,5 @@
 import { NextResponse } from 'next/server'
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from 'next/headers'
 import { resolveMetaContext } from '@/lib/meta/context'
 import {
@@ -84,7 +85,7 @@ export async function GET(request: Request) {
 
       try {
         const cookieStore = await cookies()
-        const userId = cookieStore.get('user_id')?.value
+        const userId = readUserId(cookieStore)
 
         const scanResult = await runMetaApifyAdLibraryScan({
           query,
@@ -313,7 +314,7 @@ export async function GET(request: Request) {
 
     try {
       const cookieStore = await cookies()
-      const userId = cookieStore.get('user_id')?.value
+      const userId = readUserId(cookieStore)
       if (userId && rawAds.length > 0) {
         const adContext = {
           platform: 'meta',

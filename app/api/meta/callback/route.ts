@@ -1,4 +1,5 @@
 import { NextResponse } from "next/server"
+import { readUserId } from '@/lib/auth/userCookie'
 import { cookies } from "next/headers"
 import { META_BASE_URL } from "@/lib/metaConfig"
 import { upsertMetaConnection } from "@/lib/metaConnectionStore"
@@ -194,7 +195,7 @@ export async function GET(request: Request) {
   // Awaited to prevent dropped writes in serverless runtime.
   // Cookie persistence above is the primary store; DB is supplementary.
   // ============================================
-  const userId = cookieStore.get('user_id')?.value
+  const userId = readUserId(cookieStore)
   if (userId) {
     try {
       await upsertMetaConnection(userId, {
