@@ -568,6 +568,53 @@
         "deleting": "Deleting...",
         "confirm": "Yes, Delete",
         "cancel": "Cancel"
+      },
+      "editDrawer": {
+        "ad": {
+          "title": "Edit Ad",
+          "subtitle": "Edit your ad here.",
+          "leadGenNotEditable": "Lead Gen ad — content editing is not supported; only the ad name can be changed.",
+          "postPromotedNotEditable": "Promoted post ad — organic post content cannot be edited via the API; only the ad name can be changed.",
+          "nameHeading": "Ad Name",
+          "nameHint": "Give your ad a name.",
+          "namePlaceholder": "Ad name...",
+          "creativeHeading": "Ad Creative",
+          "creativeHint": "Text and link settings for your ad.",
+          "primaryTextLabel": "Primary Text",
+          "primaryTextPlaceholder": "Ad primary text...",
+          "headlineLabel": "Headline",
+          "headlinePlaceholder": "Attention-grabbing headline...",
+          "descriptionLabel": "Description",
+          "descriptionPlaceholder": "Additional description...",
+          "websiteLabel": "Website",
+          "ctaLabel": "Call to Action",
+          "charsRecommended": "{count}/{max} characters recommended",
+          "previewHeading": "Preview",
+          "previewMobileFeed": "Mobile Feed",
+          "previewDesktopFeed": "Desktop Feed",
+          "previewStory": "Story",
+          "previewPageName": "Page Name",
+          "previewSponsored": "Sponsored",
+          "previewMediaPlaceholder": "Media Preview"
+        },
+        "campaign": {
+          "title": "Edit Campaign",
+          "subtitle": "Edit your campaign here.",
+          "nameHeading": "Campaign Name",
+          "nameHint": "Give the campaign you created a name.",
+          "namePlaceholder": "Campaign name...",
+          "renameSuccess": "Campaign name updated successfully"
+        },
+        "sidebar": {
+          "searchPlaceholder": "Search..."
+        },
+        "toast": {
+          "fetchFailed": "Failed to fetch ad details",
+          "creativeNotEditable": "This ad type does not allow content editing.",
+          "updateFailed": "Update failed",
+          "updateSuccess": "Ad updated successfully",
+          "nameOnlyUpdated": "Only the ad name was updated (content changes are not supported)"
+        }
       }
     },
     "google": {
@@ -746,7 +793,25 @@
             "importError": "Image could not be uploaded to Google Ads.",
             "notImageCompatible": "This image's aspect ratio isn't suitable for an image asset (1.91:1, 1:1 or 4:5 required).",
             "selectKind": "Which category should this image be added as?",
-            "back": "Back"
+            "back": "Back",
+            "tooSmall": "Image is too small for all ratios. At least 300×300 px required.",
+            "dialogTitle": "Select 15 Images to Use in Your Ad...",
+            "cropBuilding": "Preparing crop options…",
+            "scanning": "Scanning page…",
+            "recEmptyTitle": "No recommended assets yet",
+            "recEmptyDesc": "No suitable images found at this URL. You can add them from the \"Upload\" or \"Website or social media\" tab.",
+            "sourceLabel": "Source:",
+            "libraryNoAccess": "This Google Ads account may not have access to the asset library. You can add images from the \"Upload\" tab.",
+            "uploadHintFull": "Upload a JPG/PNG/GIF image (min 300×300, max 5 MB). Automatic crop options are offered for images with different ratios.",
+            "uploadingCount": "Uploading {done} / {total}…",
+            "uploading": "Uploading…",
+            "uploadFormats": "JPG / PNG / GIF · max 5 MB · multiple selectable",
+            "cropSelectTitle": "Select crop ratio",
+            "cropSelectDesc": "Your image was automatically cropped to Google Ads ratio requirements. Select the ratio you want and add it.",
+            "pexelsNotConfigured": "Pexels API is not configured",
+            "pexelsNotConfiguredHintBefore": "For free stock images, your server administrator needs to define the",
+            "pexelsNotConfiguredHintAfter": "environment variable.",
+            "pexelsAlternative": "Alternative: you can add images from the \"Website\" tab or the \"Upload\" tab."
           },
           "logoSectionLabel": "Logos",
           "logoSectionHint": "Up to 5 logos — landscape (4:1) or square (1:1)",
@@ -766,7 +831,11 @@
             "ytNoResults": "No results found",
             "ytNoApiKey": "YouTube search is not configured. Admin must set YOUTUBE_API_KEY. URL/ID paste still works.",
             "searchError": "YouTube search failed.",
-            "importError": "Video asset could not be added to Google Ads."
+            "importError": "Video asset could not be added to Google Ads.",
+            "channelUrlError": "This is a channel/playlist URL. Please enter a single video URL or an 11-character video ID (e.g. youtube.com/watch?v=… or youtu.be/…).",
+            "apiKeyMissing": "YOUTUBE_API_KEY is not defined for YouTube keyword searches.",
+            "apiKeySolutionBefore": "Solution: paste a single video URL (e.g.",
+            "apiKeySolutionAfter": ") or enter the 11-character video ID. Not a channel URL."
           },
           "logoPicker": {
             "title": "Select a logo for your ad",
@@ -1128,7 +1197,17 @@
           "radius": "Radius",
           "pinMode": "Pin mode",
           "pinModeHint": "Click on the map to place a pin",
-          "saveProximity": "Save radius targeting"
+          "saveProximity": "Save radius targeting",
+          "targetTypeCountry": "Country",
+          "targetTypeCity": "City",
+          "targetTypeProvince": "Province",
+          "targetTypeDistrict": "District",
+          "targetTypePostalCode": "Postal Code",
+          "targetTypeInterest": "Area of Interest",
+          "targetTypeDefault": "Location",
+          "selectedCount": "{count} locations selected",
+          "excludedChip": "(Excluded)",
+          "mapLoading": "Loading map..."
         },
         "audience": {
           "segmentTitle": "Audience Segments",
@@ -1268,7 +1347,9 @@
           "dateRangeHint": "Edit in Campaign Settings step",
           "strategyNoteCpa": "For Target CPA, budget should be at least 10× your target CPA per day.",
           "strategyNoteRoas": "Sufficient budget helps Target ROAS complete the learning phase faster.",
-          "manualCpcNote": "With Manual CPC, budget sets your maximum daily spend."
+          "manualCpcNote": "With Manual CPC, budget sets your maximum daily spend.",
+          "recommendationLine": "{amount} {currency}/day — Google's recommendation for your selected bid strategy",
+          "recommendedForStrategy": "Recommended for this strategy: {amount} {currency}/day."
         },
         "review": {
           "title": "Publish Control",
@@ -1674,7 +1755,13 @@
           "typePostalCode": "Postal code",
           "typePresence": "Presence",
           "typeInterest": "Interest",
-          "typeDefault": "Location"
+          "typeDefault": "Location",
+          "searchPlaceholderFull": "Enter locations to target or exclude",
+          "searchHint": "For example; country, city, region or postal code",
+          "excludedChip": "(Excluded)",
+          "selectedWithCount": "Selected ({count})",
+          "radiusSearchPlaceholder": "Search city, district or region",
+          "orPinModeHint": "or select from the map using Pin mode"
         },
         "assetGroup": {
           "assetGroupName": "Asset Group Name",
@@ -1793,7 +1880,20 @@
           "searchThemePlaceholder": "E.g.: online shopping",
           "searchThemeEnterHint": "Press Enter to add. Duplicates are prevented.",
           "addSearchTheme": "Add search theme",
-          "removeTheme": "Remove"
+          "removeTheme": "Remove",
+          "loadFailed": "Could not load",
+          "loadError": "Could not load audience data",
+          "selectedCount": "{count} audience segments selected",
+          "selectSegment": "Select audience segment",
+          "sections": {
+            "userLists": "Users who visited your website",
+            "inMarket": "In-market audiences",
+            "affinity": "Affinity",
+            "detailedDemographics": "Detailed demographics",
+            "lifeEvents": "Life events",
+            "customAudiences": "Custom audiences",
+            "combinedAudiences": "Combined audiences"
+          }
         },
         "budget": {
           "dailyBudget": "Daily Budget",
@@ -1933,6 +2033,300 @@
           "tablets": "Tablets",
           "tvScreens": "TV screens"
         }
+      },
+      "detail": {
+        "technicalDetail": "Technical detail",
+        "common": {
+          "clicks": "Clicks",
+          "impressions": "Impressions",
+          "ctr": "CTR",
+          "avgCpc": "Avg. CPC",
+          "cost": "Cost",
+          "conversions": "Conversions"
+        },
+        "searchTerms": {
+          "loading": "Loading search terms...",
+          "empty": "No search term data found for this campaign.",
+          "selectedCount": "{count} terms selected",
+          "addAsKeyword": "Add as Keyword",
+          "addAsNegativeKeyword": "Add as Negative Keyword",
+          "matchTypes": {
+            "BROAD": "Broad Match",
+            "PHRASE": "Phrase Match",
+            "EXACT": "Exact Match"
+          },
+          "statusAdded": "Added",
+          "statusExcluded": "Excluded",
+          "statusAddedExcluded": "Added (Excluded)",
+          "statusAuto": "Automatic",
+          "statusUnknown": "—",
+          "excludedDone": "Excluded",
+          "colSearchTerm": "Search Term",
+          "colStatus": "Status",
+          "colAdGroup": "Ad Group",
+          "colClicks": "Clicks",
+          "colImpressions": "Impressions",
+          "colCtr": "CTR",
+          "colAvgCpc": "Avg. CPC",
+          "colCost": "Cost",
+          "colConversions": "Conversions"
+        },
+        "landingPages": {
+          "loading": "Loading landing page data...",
+          "empty": "No landing page data found for this campaign."
+        },
+        "adSchedule": {
+          "loading": "Loading ad schedule...",
+          "empty": "No custom ad schedule set — ads run 24/7.",
+          "days": {
+            "MONDAY": "Monday",
+            "TUESDAY": "Tuesday",
+            "WEDNESDAY": "Wednesday",
+            "THURSDAY": "Thursday",
+            "FRIDAY": "Friday",
+            "SATURDAY": "Saturday",
+            "SUNDAY": "Sunday"
+          }
+        },
+        "locations": {
+          "loading": "Loading locations...",
+          "empty": "No target locations added to this campaign.",
+          "targetedTitle": "Targeted Locations ({count})",
+          "noTargeted": "No targeted locations.",
+          "excludedTitle": "Excluded Locations ({count})"
+        },
+        "overview": {
+          "optimizationScore": "Optimization Score",
+          "scoreUnavailable": "Score unavailable",
+          "statusAssessment": "Status Assessment",
+          "noIssues": "No issues detected.",
+          "totalAds": "{count} total ads",
+          "disapprovedAds": "({count} disapproved)",
+          "campaignInfo": "Campaign Information",
+          "status": "Status",
+          "servingStatus": "Serving Status",
+          "biddingStrategy": "Bid Strategy",
+          "dailyBudget": "Daily Budget",
+          "statusEnabled": "Active",
+          "statusPaused": "Paused",
+          "statusRemoved": "Removed",
+          "servingServing": "Serving",
+          "servingEnded": "Ended",
+          "servingPending": "Pending",
+          "servingSuspended": "Suspended",
+          "servingNone": "—",
+          "performanceSummary": "Performance Summary",
+          "spent": "Spent",
+          "clicks": "Clicks",
+          "impressions": "Impressions",
+          "conversions": "Conversions",
+          "avgCpc": "Avg. CPC",
+          "conversionValue": "Conversion Value"
+        },
+        "assets": {
+          "loading": "Loading assets...",
+          "createError": "Could not create asset",
+          "bulkRemoved": "{count} assets removed",
+          "bulkPaused": "{count} assets paused",
+          "bulkEnabled": "{count} assets enabled",
+          "actionFailed": "Action failed",
+          "formFallback": "Form",
+          "types": {
+            "ALL": "All",
+            "SITELINK": "Sitelink",
+            "CALLOUT": "Callout",
+            "STRUCTURED_SNIPPET": "Structured Snippet",
+            "TEXT": "Text",
+            "IMAGE": "Image",
+            "LEAD_FORM": "Lead Form",
+            "CALL": "Call",
+            "PROMOTION": "Promotion",
+            "PRICE": "Price",
+            "BOOK_ON_GOOGLE": "Book on Google",
+            "HOTEL_CALLOUT": "Hotel Callout",
+            "DYNAMIC_EDUCATION": "Dynamic Education",
+            "BUSINESS_NAME": "Business Name",
+            "LOGO": "Business Logo"
+          },
+          "sources": {
+            "ADVERTISER": "Advertiser",
+            "AUTOMATICALLY_CREATED": "Automatic",
+            "UNKNOWN": "Unknown"
+          },
+          "sourceCampaign": "Campaign",
+          "sourceAdGroup": "Ad Group",
+          "statuses": {
+            "ENABLED": "Eligible",
+            "PAUSED": "Paused",
+            "REMOVED": "Removed"
+          },
+          "addAsset": "Add Asset",
+          "cancel": "Cancel",
+          "rowsSelected": "{count} rows selected",
+          "remove": "Remove",
+          "pause": "Pause",
+          "enable": "Enable",
+          "typeLabel": "Type:",
+          "sitelinkLinkText": "Link Text *",
+          "sitelinkLinkTextPlaceholder": "About Us",
+          "sitelinkDesc1": "Description 1",
+          "sitelinkDesc1Placeholder": "Short description",
+          "sitelinkDesc2": "Description 2",
+          "sitelinkDesc2Placeholder": "Second description",
+          "sitelinkUrl": "URL *",
+          "calloutText": "Callout Text *",
+          "calloutTextPlaceholder": "Free Shipping",
+          "snippetHeader": "Header *",
+          "snippetHeaderPlaceholder": "Brands",
+          "snippetValues": "Values * (comma-separated)",
+          "createAsset": "Create Asset",
+          "emptyNoAssets": "No assets found for this campaign.",
+          "emptyNoMatch": "No assets match this filter.",
+          "colAsset": "Asset",
+          "colAssetType": "Asset type",
+          "colStatus": "Status",
+          "colAddedBy": "Added by",
+          "colClicks": "Clicks",
+          "colImpr": "Impr.",
+          "colCtr": "CTR",
+          "colAvgCpc": "Avg. CPC",
+          "colCost": "Cost"
+        },
+        "demographics": {
+          "loadError": "Could not load demographic data.",
+          "updateError": "Could not update demographics",
+          "saveSuccess": "Demographic settings updated ({created} new, {updated} updates)",
+          "genericError": "An error occurred",
+          "title": "Edit Demographics",
+          "subtitleAdGroup": "Ad group-level demographic settings",
+          "subtitleCampaign": "Campaign-level demographic settings",
+          "loading": "Loading demographic data...",
+          "newCriteriaInfo": "Unchecked criteria have not been created yet. Check the criteria you want to enable and save — they will be added to Google Ads automatically.",
+          "genderTitle": "Gender",
+          "ageTitle": "Age Range",
+          "incomeTitle": "Household Income",
+          "bidLabel": "Bid:",
+          "newBadge": "NEW",
+          "values": {
+            "MALE": "Male",
+            "FEMALE": "Female",
+            "UNDETERMINED": "Unknown",
+            "AGE_RANGE_UNDETERMINED": "Unknown",
+            "INCOME_RANGE_0_50": "Lower 50%",
+            "INCOME_RANGE_90_100": "Top 10%",
+            "INCOME_RANGE_UNDETERMINED": "Unknown"
+          }
+        },
+        "audience": {
+          "unknownSegment": "Unknown Segment",
+          "loadError": "Could not load existing audience segments.",
+          "browseLoadError": "Could not load audience segments.",
+          "browseConnectionError": "A connection error occurred while loading audience segments.",
+          "removeError": "Could not remove segments",
+          "addError": "Could not add segments",
+          "saveSuccess": "Audience segments updated",
+          "genericError": "An error occurred",
+          "title": "Edit Audience Segments",
+          "subtitleAdGroup": "Ad group-level audience segments",
+          "subtitleCampaign": "Campaign-level audience segments",
+          "loading": "Loading existing audience segments...",
+          "targetingMode": "Targeting Mode",
+          "modeObservation": "Observation",
+          "modeTargeting": "Targeting",
+          "modeObservationDesc": "Adjust bids without narrowing reach",
+          "modeTargetingDesc": "Show ads only to these audiences",
+          "selectedSegments": "Selected Segments ({count})",
+          "selectedCount": "{count} audience segments selected",
+          "selectSegment": "Select audience segment",
+          "tabSearch": "Search",
+          "tabBrowse": "Browse",
+          "searchPlaceholder": "Search audience segments... (e.g. car, sports, parent)",
+          "noResults": "No results found",
+          "searchHint": "Search across in-market, affinity, demographic and your-data segments.",
+          "browseLoading": "Loading and translating audience segments...",
+          "browseLoadingHint": "Translations are prepared on the first load; subsequent loads are instant.",
+          "refreshTitle": "Refetch and re-translate data",
+          "dataNotReady": "Audience data is not ready yet. It needs to be refreshed by an administrator.",
+          "categories": {
+            "AFFINITY": "Affinity",
+            "IN_MARKET": "In-Market",
+            "DETAILED_DEMOGRAPHIC": "Detailed Demographics",
+            "LIFE_EVENT": "Life Events",
+            "USER_LIST": "Your Data",
+            "CUSTOM_AUDIENCE": "Custom Audience",
+            "COMBINED_AUDIENCE": "Combined Segment"
+          },
+          "sections": {
+            "inMarket": {
+              "label": "What They Are Actively Researching or Planning",
+              "desc": "In-market audience segments"
+            },
+            "affinity": {
+              "label": "Their Interests and Habits",
+              "desc": "Affinity segments"
+            },
+            "detailedDemographics": {
+              "label": "Who They Are",
+              "desc": "Detailed demographic segments"
+            },
+            "lifeEvents": {
+              "label": "Life Events",
+              "desc": "Life event segments"
+            },
+            "userLists": {
+              "label": "How They Interact With Your Business",
+              "desc": "Segments based on your data"
+            },
+            "customAudiences": {
+              "label": "Your Custom Audiences",
+              "desc": "Keyword/URL-based custom audiences"
+            },
+            "combinedAudiences": {
+              "label": "Your Combined Audience Segments",
+              "desc": "Combined segments"
+            }
+          }
+        },
+        "page": {
+          "tabOverview": "Overview",
+          "tabSearchTerms": "Search Terms",
+          "tabLocations": "Locations",
+          "tabAdSchedule": "Ad Schedule",
+          "tabLandingPages": "Landing Pages",
+          "tabAssets": "Assets",
+          "campaignFallback": "Campaign {id}",
+          "statusEnabled": "Active",
+          "statusPaused": "Paused",
+          "optScore": "Opt. Score",
+          "loading": "Loading..."
+        }
+      },
+      "adEdit": {
+        "loadError": "Could not load ad details",
+        "minHeadlines": "At least 3 headlines required",
+        "minDescriptions": "At least 2 descriptions required",
+        "updateSuccess": "Ad updated",
+        "updateError": "Update failed",
+        "title": "Edit Ad",
+        "unsupportedType": "This ad type ({type}) cannot be edited. Only Responsive Search Ads (RSA) can be edited.",
+        "adNameLabel": "Ad Name",
+        "adNameHint": "Ad name cannot be changed via the Google Ads API.",
+        "headlinesTitle": "Headlines ({count}/15)",
+        "headlinePlaceholder": "Headline text (max 30 characters)",
+        "headlinesHint": "Min 3, max 15 headlines. Each up to 30 characters.",
+        "descriptionsTitle": "Descriptions ({count}/4)",
+        "descriptionPlaceholder": "Description text (max 90 characters)",
+        "descriptionsHint": "Min 2, max 4 descriptions. Each up to 90 characters.",
+        "urlAndPaths": "URL and Paths",
+        "finalUrl": "Final URL",
+        "path1": "Path 1 (optional)",
+        "path1Placeholder": "example",
+        "path2": "Path 2 (optional)",
+        "path2Placeholder": "page",
+        "preview": "Preview",
+        "searchResult": "Google Search Result",
+        "headlinePreview": "Headline preview",
+        "descriptionPreview": "Description preview"
       }
     },
     "tiktok": {

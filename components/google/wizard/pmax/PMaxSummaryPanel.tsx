@@ -71,9 +71,9 @@ export default function PMaxSummaryPanel({
     ? (locParts.length > 2 ? `${locParts.slice(0, 2).join(', ')} +${locParts.length - 2}` : locParts.join(', '))
     : (() => { try { return t('summary.locationsAll') } catch { return notSpecified } })()
   const euPoliticalLabel = state.euPoliticalAdsDeclaration === 'POLITICAL'
-    ? 'Evet'
+    ? t('summary.yes')
     : state.euPoliticalAdsDeclaration === 'NOT_POLITICAL'
-      ? 'Hayır'
+      ? t('summary.no')
       : notSpecified
   const settingsComplete = state.languageIds.length > 0 && state.euPoliticalAdsDeclaration !== null
 

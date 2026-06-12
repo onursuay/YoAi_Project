@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { LandingPage } from '@/hooks/google/useGoogleCampaignDetail'
 import ViewErrorAlert, { type ViewErrorInfo } from './ViewErrorAlert'
 
@@ -16,10 +17,11 @@ interface Props {
 }
 
 export default function CampaignLandingPagesTab({ landingPages, isLoading, error, onFetch }: Props) {
+  const t = useTranslations('dashboard.google.detail')
   useEffect(() => { onFetch() }, [onFetch])
 
   if (isLoading) {
-    return <div className="p-6 text-center text-gray-500">Landing page verileri yükleniyor...</div>
+    return <div className="p-6 text-center text-gray-500">{t('landingPages.loading')}</div>
   }
 
   if (error) {
@@ -27,7 +29,7 @@ export default function CampaignLandingPagesTab({ landingPages, isLoading, error
   }
 
   if (landingPages.length === 0) {
-    return <div className="p-6 text-center text-gray-400">Bu kampanya için landing page verisi bulunamadı.</div>
+    return <div className="p-6 text-center text-gray-400">{t('landingPages.empty')}</div>
   }
 
   return (
@@ -36,12 +38,12 @@ export default function CampaignLandingPagesTab({ landingPages, isLoading, error
         <thead className="bg-gray-50">
           <tr>
             <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">URL</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tıklama</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gösterim</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CTR</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ort. TBM</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Maliyet</th>
-            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Dönüşüm</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.clicks')}</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.impressions')}</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.ctr')}</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.avgCpc')}</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.cost')}</th>
+            <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('common.conversions')}</th>
           </tr>
         </thead>
         <tbody className="divide-y divide-gray-200">

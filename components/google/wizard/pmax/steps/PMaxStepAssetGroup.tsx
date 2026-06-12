@@ -431,14 +431,14 @@ const CATEGORY_COLORS: Record<string, string> = {
   COMBINED_AUDIENCE: 'bg-emerald-50 text-emerald-700',
 }
 
-const BROWSE_SECTIONS: Array<{ key: BrowseSectionKey; label: string; icon: typeof Users }> = [
-  { key: 'userLists', label: 'Web sitesini ziyaret eden kullanıcılar', icon: UserCheck },
-  { key: 'inMarket', label: 'Pazardaki kitleler', icon: ShoppingBag },
-  { key: 'affinity', label: 'Yakınlık', icon: Heart },
-  { key: 'detailedDemographics', label: 'Ayrıntılı demografik veriler', icon: Users },
-  { key: 'lifeEvents', label: 'Yaşam olayları', icon: Users },
-  { key: 'customAudiences', label: 'Özel kitleler', icon: Layers },
-  { key: 'combinedAudiences', label: 'Birleştirilmiş kitleler', icon: Layers },
+const BROWSE_SECTIONS: Array<{ key: BrowseSectionKey; labelKey: string; icon: typeof Users }> = [
+  { key: 'userLists', labelKey: 'signals.sections.userLists', icon: UserCheck },
+  { key: 'inMarket', labelKey: 'signals.sections.inMarket', icon: ShoppingBag },
+  { key: 'affinity', labelKey: 'signals.sections.affinity', icon: Heart },
+  { key: 'detailedDemographics', labelKey: 'signals.sections.detailedDemographics', icon: Users },
+  { key: 'lifeEvents', labelKey: 'signals.sections.lifeEvents', icon: Users },
+  { key: 'customAudiences', labelKey: 'signals.sections.customAudiences', icon: Layers },
+  { key: 'combinedAudiences', labelKey: 'signals.sections.combinedAudiences', icon: Layers },
 ]
 
 function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
@@ -475,10 +475,10 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
     try {
       const res = await fetch('/api/integrations/google-ads/tools/audience-segments?mode=browse')
       const data = await res.json()
-      if (!res.ok) { setBrowseError(data.error ?? 'Yüklenemedi'); return }
+      if (!res.ok) { setBrowseError(data.error ?? t('signals.loadFailed')); return }
       setBrowseData(data)
     } catch {
-      setBrowseError('Kitle verileri yüklenemedi')
+      setBrowseError(t('signals.loadError'))
     } finally {
       setBrowseLoading(false)
     }
@@ -579,8 +579,8 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
           >
             <span className="text-gray-700 font-medium">
               {state.selectedAudienceSegments.length > 0
-                ? `${state.selectedAudienceSegments.length} kitle segmenti seçildi`
-                : 'Kitle segmenti seç'}
+                ? t('signals.selectedCount', { count: state.selectedAudienceSegments.length })
+                : t('signals.selectSegment')}
             </span>
             <ChevronDown className="w-4 h-4 text-gray-400" />
           </button>
@@ -675,7 +675,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
                   >
                     {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
                     <Icon className="w-4 h-4 text-gray-500 shrink-0" />
-                    <p className="text-sm font-medium text-gray-900 flex-1">{section.label}</p>
+                    <p className="text-sm font-medium text-gray-900 flex-1">{t(section.labelKey)}</p>
                   </button>
                   {isExpanded && (
                     <div className="border-t border-gray-100 max-h-52 overflow-y-auto">
@@ -738,10 +738,10 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
             </button>
           )}
           {browseData && (() => {
-            const interestSections: Array<{ key: BrowseSectionKey; label: string; icon: typeof Users }> = [
-              { key: 'affinity', label: 'Yakınlık', icon: Heart },
-              { key: 'detailedDemographics', label: 'Ayrıntılı demografik veriler', icon: Users },
-              { key: 'lifeEvents', label: 'Yaşam olayları', icon: Users },
+            const interestSections: Array<{ key: BrowseSectionKey; labelKey: string; icon: typeof Users }> = [
+              { key: 'affinity', labelKey: 'signals.sections.affinity', icon: Heart },
+              { key: 'detailedDemographics', labelKey: 'signals.sections.detailedDemographics', icon: Users },
+              { key: 'lifeEvents', labelKey: 'signals.sections.lifeEvents', icon: Users },
             ]
             return interestSections.map(section => {
               const items = browseData[section.key]
@@ -764,7 +764,7 @@ function AudienceSignalsPanel({ state, update, t }: PMaxStepProps) {
                   >
                     {isExp ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
                     <Icon className="w-4 h-4 text-gray-500 shrink-0" />
-                    <p className="text-sm font-medium text-gray-900 flex-1">{section.label}</p>
+                    <p className="text-sm font-medium text-gray-900 flex-1">{t(section.labelKey)}</p>
                   </button>
                   {isExp && (
                     <div className="border-t border-gray-100 max-h-52 overflow-y-auto">

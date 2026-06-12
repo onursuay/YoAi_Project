@@ -247,7 +247,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
       try {
         const options = await buildCropOptions(file)
         if (options.length === 0) {
-          setUploadErr('Görsel tüm oranlar için çok küçük. En az 300×300 px gerekli.')
+          setUploadErr(t('display.imagePicker.tooSmall'))
         } else {
           setCropSource({ file, options }); setImportErr(null)
         }
@@ -408,7 +408,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
     <div className="fixed inset-0 z-[60] flex items-center justify-center p-4 bg-black/60" onClick={onClose}>
       <div className="bg-white rounded-xl shadow-2xl w-full max-w-5xl max-h-[92vh] flex flex-col" onClick={e => e.stopPropagation()}>
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200">
-          <h3 className="text-lg font-semibold text-gray-900">Reklamınızda Kullanılacak 15 Görsel Seçin...</h3>
+          <h3 className="text-lg font-semibold text-gray-900">{t('display.imagePicker.dialogTitle')}</h3>
           <div className="flex items-center gap-2 shrink-0">
             {showCrop && (
               <button
@@ -449,7 +449,7 @@ export default function DisplayImagePicker({ isOpen, onClose, existing, onAdd, d
           {cropBuilding && !showCrop && (
             <div className="flex flex-col items-center justify-center py-16 gap-3 text-gray-500">
               <Loader2 className="w-8 h-8 animate-spin" />
-              <p className="text-sm">Kırpma seçenekleri hazırlanıyor…</p>
+              <p className="text-sm">{t('display.imagePicker.cropBuilding')}</p>
             </div>
           )}
           {/* PendingPane */}
@@ -571,7 +571,7 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
     return (
       <div className="flex flex-col items-center justify-center py-16 text-gray-400">
         <Loader2 className="w-6 h-6 animate-spin mb-3" />
-        <p className="text-sm">Sayfa taranıyor…</p>
+        <p className="text-sm">{t('display.imagePicker.scanning')}</p>
       </div>
     )
   }
@@ -588,9 +588,9 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
   if (images.length === 0) {
     return (
       <div className="flex flex-col items-center justify-center py-12 text-center">
-        <h4 className="text-[15px] font-medium text-gray-900 mb-2">Henüz önerilen öğe yok</h4>
+        <h4 className="text-[15px] font-medium text-gray-900 mb-2">{t('display.imagePicker.recEmptyTitle')}</h4>
         <p className="text-[13px] text-gray-600 leading-relaxed max-w-2xl">
-          Bu URL&apos;de uygun görsel bulunamadı. &quot;Yükle&quot; veya &quot;Web sitesi veya sosyal medya&quot; sekmesinden ekleyebilirsiniz.
+          {t('display.imagePicker.recEmptyDesc')}
         </p>
         <p className="text-xs text-gray-400 mt-2 break-all">{finalUrl}</p>
       </div>
@@ -599,7 +599,7 @@ function RecPane({ finalUrl, loading, error, images, onPick, t }: { finalUrl?: s
 
   return (
     <div className="space-y-3">
-      <p className="text-xs text-gray-500">Kaynak: {finalUrl}</p>
+      <p className="text-xs text-gray-500">{t('display.imagePicker.sourceLabel')} {finalUrl}</p>
       <ImageGrid images={images} onPick={onPick} />
     </div>
   )
@@ -616,7 +616,7 @@ function LibraryPane({ loading, error, details, assets, onPick, onRetry, t }: { 
           {details}
         </p>
       )}
-      <p className="text-xs text-gray-500">Bu Google Ads hesabında asset kitaplığına erişim yok olabilir. &quot;Yükle&quot; sekmesinden görsel ekleyebilirsiniz.</p>
+      <p className="text-xs text-gray-500">{t('display.imagePicker.libraryNoAccess')}</p>
       <button
         type="button"
         onClick={onRetry}
@@ -709,7 +709,7 @@ function UploadPane({ uploadRef, error, onPick, onPickMultiple, bulkBusy, bulkPr
 
   return (
     <div className="space-y-4">
-      <p className="text-sm text-gray-600">JPG/PNG/GIF formatında resim yükleyin (min 300×300, max 5 MB). Farklı oranlı görseller için otomatik kırpma seçenekleri sunulur.</p>
+      <p className="text-sm text-gray-600">{t('display.imagePicker.uploadHintFull')}</p>
       <div
         className={`border-2 border-dashed border-gray-300 hover:border-blue-400 rounded-lg p-12 text-center transition-colors ${bulkBusy ? 'cursor-wait opacity-60' : 'cursor-pointer'}`}
         onClick={() => { if (!bulkBusy) uploadRef.current?.click() }}
@@ -727,14 +727,14 @@ function UploadPane({ uploadRef, error, onPick, onPickMultiple, bulkBusy, bulkPr
           <>
             <Loader2 className="w-8 h-8 text-blue-500 mx-auto mb-2 animate-spin" />
             <p className="text-sm text-gray-700">
-              {bulkProgress ? `${bulkProgress.done} / ${bulkProgress.total} yükleniyor…` : 'Yükleniyor…'}
+              {bulkProgress ? t('display.imagePicker.uploadingCount', { done: bulkProgress.done, total: bulkProgress.total }) : t('display.imagePicker.uploading')}
             </p>
           </>
         ) : (
           <>
             <Upload className="w-8 h-8 text-gray-400 mx-auto mb-2" />
             <p className="text-sm text-gray-700">{t('display.logoPicker.dropHere')}</p>
-            <p className="text-xs text-gray-400 mt-1">JPG / PNG / GIF · max 5 MB · birden fazla seçilebilir</p>
+            <p className="text-xs text-gray-400 mt-1">{t('display.imagePicker.uploadFormats')}</p>
           </>
         )}
         <input
@@ -781,9 +781,9 @@ function CropSelectionPane({ options, onSelect, t }: {
       <div>
         <div className="flex items-center gap-2 mb-1">
           <Crop className="w-4 h-4 text-gray-600" />
-          <p className="text-sm font-semibold text-gray-800">Kırpma oranını seçin</p>
+          <p className="text-sm font-semibold text-gray-800">{t('display.imagePicker.cropSelectTitle')}</p>
         </div>
-        <p className="text-xs text-gray-500">Görseliniz Google Ads oran gereksinimlerine göre otomatik kırpıldı. Kullanmak istediğiniz oranı seçin ve ekleyin.</p>
+        <p className="text-xs text-gray-500">{t('display.imagePicker.cropSelectDesc')}</p>
       </div>
       <div className={`grid gap-4 ${options.length === 1 ? 'grid-cols-1 max-w-xs' : options.length === 2 ? 'grid-cols-2' : 'grid-cols-3'}`}>
         {options.map(opt => (
@@ -824,9 +824,9 @@ function StockPane({ query, setQuery, loading, error, notConfigured, photos, has
     <div className="space-y-4">
       {notConfigured ? (
         <div className="flex flex-col items-center justify-center py-12 gap-3 text-center">
-          <p className="text-sm font-medium text-gray-700">Pexels API yapılandırılmamış</p>
-          <p className="text-xs text-gray-500 max-w-xs">Ücretsiz stok görseller için sunucu yöneticinizin <code className="bg-gray-100 px-1 rounded">PEXELS_API_KEY</code> ortam değişkenini tanımlaması gerekiyor.</p>
-          <p className="text-xs text-gray-400">Alternatif: "Web sitesi" sekmesinden veya "Yükle" sekmesinden görsel ekleyebilirsiniz.</p>
+          <p className="text-sm font-medium text-gray-700">{t('display.imagePicker.pexelsNotConfigured')}</p>
+          <p className="text-xs text-gray-500 max-w-xs">{t('display.imagePicker.pexelsNotConfiguredHintBefore')} <code className="bg-gray-100 px-1 rounded">PEXELS_API_KEY</code> {t('display.imagePicker.pexelsNotConfiguredHintAfter')}</p>
+          <p className="text-xs text-gray-400">{t('display.imagePicker.pexelsAlternative')}</p>
         </div>
       ) : (
         <>

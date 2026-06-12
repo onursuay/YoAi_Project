@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { LocationTarget } from '@/lib/google-ads/locations'
 
 interface Props {
@@ -11,10 +12,11 @@ interface Props {
 }
 
 export default function CampaignLocationsTab({ locations, isLoading, error, onFetch }: Props) {
+  const t = useTranslations('dashboard.google.detail.locations')
   useEffect(() => { onFetch() }, [onFetch])
 
   if (isLoading) {
-    return <div className="p-6 text-center text-gray-500">Lokasyonlar yükleniyor...</div>
+    return <div className="p-6 text-center text-gray-500">{t('loading')}</div>
   }
 
   if (error) {
@@ -22,7 +24,7 @@ export default function CampaignLocationsTab({ locations, isLoading, error, onFe
   }
 
   if (locations.length === 0) {
-    return <div className="p-6 text-center text-gray-400">Bu kampanyaya hedef lokasyon eklenmemiş.</div>
+    return <div className="p-6 text-center text-gray-400">{t('empty')}</div>
   }
 
   const targeted = locations.filter((l) => !l.isNegative)
@@ -33,10 +35,10 @@ export default function CampaignLocationsTab({ locations, isLoading, error, onFe
       {/* Targeted Locations */}
       <div>
         <h3 className="text-sm font-medium text-gray-700 mb-3">
-          Hedeflenen Lokasyonlar ({targeted.length})
+          {t('targetedTitle', { count: targeted.length })}
         </h3>
         {targeted.length === 0 ? (
-          <p className="text-sm text-gray-400">Hedeflenen lokasyon yok.</p>
+          <p className="text-sm text-gray-400">{t('noTargeted')}</p>
         ) : (
           <div className="flex flex-wrap gap-2">
             {targeted.map((loc) => (
@@ -50,7 +52,7 @@ export default function CampaignLocationsTab({ locations, isLoading, error, onFe
       {excluded.length > 0 && (
         <div>
           <h3 className="text-sm font-medium text-gray-700 mb-3">
-            Hariç Tutulan Lokasyonlar ({excluded.length})
+            {t('excludedTitle', { count: excluded.length })}
           </h3>
           <div className="flex flex-wrap gap-2">
             {excluded.map((loc) => (

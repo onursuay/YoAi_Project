@@ -164,7 +164,7 @@ export default function GoogleAccountModal({
                           {active && <span className="w-2 h-2 bg-green-500 rounded-full" />}
                           {busyId === acc.account_id && <Loader2 className="w-4 h-4 animate-spin text-primary" />}
                           {!active && busyId !== acc.account_id && (
-                            <button type="button" onClick={() => reg.removeAccount('google', acc.account_id)} title="Çıkar" className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50">
+                            <button type="button" onClick={() => reg.removeAccount('google', acc.account_id)} title={tAcc('remove')} className="p-1 rounded text-gray-300 hover:text-red-500 hover:bg-red-50">
                               <Trash2 className="w-4 h-4" />
                             </button>
                           )}

@@ -1,17 +1,8 @@
 'use client'
 
 import { useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import type { AdScheduleEntry } from '@/lib/google-ads/adschedule'
-
-const dayLabels: Record<string, string> = {
-  MONDAY: 'Pazartesi',
-  TUESDAY: 'Salı',
-  WEDNESDAY: 'Çarşamba',
-  THURSDAY: 'Perşembe',
-  FRIDAY: 'Cuma',
-  SATURDAY: 'Cumartesi',
-  SUNDAY: 'Pazar',
-}
 
 const dayOrder = ['MONDAY', 'TUESDAY', 'WEDNESDAY', 'THURSDAY', 'FRIDAY', 'SATURDAY', 'SUNDAY']
 
@@ -34,10 +25,11 @@ interface Props {
 }
 
 export default function CampaignAdScheduleTab({ schedule, isLoading, error, onFetch }: Props) {
+  const t = useTranslations('dashboard.google.detail.adSchedule')
   useEffect(() => { onFetch() }, [onFetch])
 
   if (isLoading) {
-    return <div className="p-6 text-center text-gray-500">Reklam zamanlaması yükleniyor...</div>
+    return <div className="p-6 text-center text-gray-500">{t('loading')}</div>
   }
 
   if (error) {
@@ -47,7 +39,7 @@ export default function CampaignAdScheduleTab({ schedule, isLoading, error, onFe
   if (schedule.length === 0) {
     return (
       <div className="p-6 text-center text-gray-400">
-        Özel reklam zamanlaması ayarlanmamış — reklamlar 7/24 yayında.
+        {t('empty')}
       </div>
     )
   }
@@ -69,7 +61,7 @@ export default function CampaignAdScheduleTab({ schedule, isLoading, error, onFe
           return (
             <div key={day} className="flex items-start gap-4">
               <span className="w-24 shrink-0 text-sm font-medium text-gray-700 pt-1">
-                {dayLabels[day]}
+                {t(`days.${day}`)}
               </span>
               <div className="flex flex-wrap gap-2">
                 {entries.map((e, i) => (

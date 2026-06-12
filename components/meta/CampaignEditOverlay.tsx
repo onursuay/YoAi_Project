@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import MetaEditOverlay from './MetaEditOverlay'
 import type { TreeCampaign, TreeAdset, TreeAd } from './CampaignTreeSidebar'
 
@@ -31,6 +32,7 @@ export default function CampaignEditOverlay({
   onEntitySelect,
   highlightedIds,
 }: CampaignEditOverlayProps) {
+  const t = useTranslations('dashboard.meta.editDrawer')
   const [name, setName] = useState(campaignName)
   const [saving, setSaving] = useState(false)
 
@@ -44,12 +46,12 @@ export default function CampaignEditOverlay({
         body: JSON.stringify({ campaignId, name: name.trim() }),
       })
       const json = await res.json()
-      if (!json.ok) throw new Error(json.message || 'Güncelleme başarısız')
-      onToast('Kampanya adı başarıyla güncellendi', 'success')
+      if (!json.ok) throw new Error(json.message || t('toast.updateFailed'))
+      onToast(t('campaign.renameSuccess'), 'success')
       onSuccess()
     } catch (err) {
       console.error('Campaign rename error:', err)
-      onToast(err instanceof Error ? err.message : 'Güncelleme başarısız', 'error')
+      onToast(err instanceof Error ? err.message : t('toast.updateFailed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -62,8 +64,8 @@ export default function CampaignEditOverlay({
       onSave={handleSave}
       saving={saving}
       saveDisabled={!name.trim() || name.trim() === campaignName}
-      title="Kampanyayı Düzenle"
-      subtitle="Kampanyanızı buradan düzenleyebilirsiniz."
+      title={t('campaign.title')}
+      subtitle={t('campaign.subtitle')}
       campaigns={campaigns}
       adsets={adsets}
       ads={ads}
@@ -73,15 +75,15 @@ export default function CampaignEditOverlay({
     >
       <div className="p-8 max-w-2xl">
         <div>
-          <h3 className="text-lg font-semibold text-gray-900">Kampanya Adı</h3>
-          <p className="text-sm text-gray-500 mt-1 mb-4">Oluşturduğunuz kampanyaya bir isim verin.</p>
+          <h3 className="text-lg font-semibold text-gray-900">{t('campaign.nameHeading')}</h3>
+          <p className="text-sm text-gray-500 mt-1 mb-4">{t('campaign.nameHint')}</p>
           <input
             type="text"
             value={name}
             onChange={(e) => setName(e.target.value)}
             className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
             maxLength={256}
-            placeholder="Kampanya adı..."
+            placeholder={t('campaign.namePlaceholder')}
           />
         </div>
       </div>

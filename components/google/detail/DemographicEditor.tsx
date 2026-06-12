@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { X, Loader2, Users, Calendar, Wallet, Plus } from 'lucide-react'
 
 /* ── Types ── */
@@ -28,32 +29,22 @@ interface LocalRow {
 
 /* ── Constants ── */
 
-const GENDER_LABELS: Record<string, string> = {
-  MALE: 'Erkek',
-  FEMALE: 'Kadın',
-  UNDETERMINED: 'Bilinmiyor',
-}
+// Non-translatable numeric labels (age ranges) resolved directly; only enum keys go through t()
 const GENDER_ORDER = ['MALE', 'FEMALE', 'UNDETERMINED']
-
-const AGE_RANGE_LABELS: Record<string, string> = {
+const AGE_NUMERIC: Record<string, string> = {
   AGE_RANGE_18_24: '18-24',
   AGE_RANGE_25_34: '25-34',
   AGE_RANGE_35_44: '35-44',
   AGE_RANGE_45_54: '45-54',
   AGE_RANGE_55_64: '55-64',
   AGE_RANGE_65_UP: '65+',
-  AGE_RANGE_UNDETERMINED: 'Bilinmiyor',
 }
 const AGE_ORDER = ['AGE_RANGE_18_24', 'AGE_RANGE_25_34', 'AGE_RANGE_35_44', 'AGE_RANGE_45_54', 'AGE_RANGE_55_64', 'AGE_RANGE_65_UP', 'AGE_RANGE_UNDETERMINED']
-
-const INCOME_RANGE_LABELS: Record<string, string> = {
-  INCOME_RANGE_0_50: 'Alt 50%',
+const INCOME_NUMERIC: Record<string, string> = {
   INCOME_RANGE_50_60: '50-60%',
   INCOME_RANGE_60_70: '60-70%',
   INCOME_RANGE_70_80: '70-80%',
   INCOME_RANGE_80_90: '80-90%',
-  INCOME_RANGE_90_100: 'Üst 10%',
-  INCOME_RANGE_UNDETERMINED: 'Bilinmiyor',
 }
 const INCOME_ORDER = ['INCOME_RANGE_0_50', 'INCOME_RANGE_50_60', 'INCOME_RANGE_60_70', 'INCOME_RANGE_70_80', 'INCOME_RANGE_80_90', 'INCOME_RANGE_90_100', 'INCOME_RANGE_UNDETERMINED']
 
@@ -120,6 +111,14 @@ function buildFullRows(
 export default function DemographicEditor({
   open, onClose, entityType, entityId, campaignId, onSaved, onToast,
 }: Props) {
+  const t = useTranslations('dashboard.google.detail.demographics')
+  const tc = useTranslations('common')
+  // Resolve a criterion value to a visible label: numeric ranges stay literal, enums translate
+  const labelFor = (value: string): string => {
+    if (AGE_NUMERIC[value]) return AGE_NUMERIC[value]
+    if (INCOME_NUMERIC[value]) return INCOME_NUMERIC[value]
+    return t(`values.${value}`)
+  }
   const [genderRows, setGenderRows] = useState<LocalRow[]>([])
   const [ageRows, setAgeRows] = useState<LocalRow[]>([])
   const [incomeRows, setIncomeRows] = useState<LocalRow[]>([])
@@ -153,7 +152,7 @@ export default function DemographicEditor({
         setAgeRows(buildFullRows(demographics, 'AGE_RANGE', AGE_ORDER))
         setIncomeRows(buildFullRows(demographics, 'INCOME_RANGE', INCOME_ORDER))
       })
-      .catch(() => setError('Demografi verileri yüklenemedi.'))
+      .catch(() => setError(t('loadError')))
       .finally(() => setLoading(false))
   }, [open, entityType, entityId, campaignId])
 
@@ -233,14 +232,14 @@ export default function DemographicEditor({
       for (const res of results) {
         if (!res.ok) {
           const d = await res.json()
-          throw new Error(d.userMessage || d.error || 'Demografi güncellenemedi')
+          throw new Error(d.userMessage || d.error || t('updateError'))
         }
       }
 
-      onToast(`Demografi ayarları güncellendi (${creates.length} yeni, ${updates.length} güncelleme)`, 'success')
+      onToast(t('saveSuccess', { created: creates.length, updated: updates.length }), 'success')
       onSaved()
     } catch (e: any) {
-      onToast(e.message || 'Bir hata oluştu', 'error')
+      onToast(e.message || t('genericError'), 'error')
     } finally {
       setSaving(false)
     }
@@ -258,9 +257,9 @@ export default function DemographicEditor({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Demografiyi Düzenle</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              {entityType === 'adGroup' ? 'Reklam grubu' : 'Kampanya'} düzeyinde demografi ayarları
+              {entityType === 'adGroup' ? t('subtitleAdGroup') : t('subtitleCampaign')}
             </p>
           </div>
           <button onClick={onClose} className="p-2 text-gray-400 hover:text-gray-600 rounded-lg hover:bg-gray-100">
@@ -273,7 +272,7 @@ export default function DemographicEditor({
           {loading && (
             <div className="flex items-center justify-center py-12 gap-2 text-gray-500">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-sm">Demografi verileri yükleniyor...</span>
+              <span className="text-sm">{t('loading')}</span>
             </div>
           )}
 
@@ -286,38 +285,43 @@ export default function DemographicEditor({
                 <div className="flex items-start gap-2 p-3 bg-blue-50 border border-blue-200 rounded-lg">
                   <Plus className="w-4 h-4 text-blue-600 mt-0.5 shrink-0" />
                   <p className="text-xs text-blue-700">
-                    İşaretlenmemiş kriterler henüz oluşturulmamış. Etkinleştirmek istediğiniz kriterleri
-                    işaretleyip kaydedin — Google Ads&apos;e otomatik eklenecektir.
+                    {t('newCriteriaInfo')}
                   </p>
                 </div>
               )}
 
               {/* Gender */}
               <DemographicSection
-                title="Cinsiyet"
+                title={t('genderTitle')}
+                bidLabel={t('bidLabel')}
+                newBadge={t('newBadge')}
                 icon={<Users className="w-4 h-4" />}
                 rows={genderRows}
-                labels={GENDER_LABELS}
+                labelFor={labelFor}
                 onToggle={(i) => toggleRow(setGenderRows, i)}
                 onBidChange={(i, v) => updateBidModifier(setGenderRows, i, v)}
               />
 
               {/* Age Range */}
               <DemographicSection
-                title="Yaş Aralığı"
+                title={t('ageTitle')}
+                bidLabel={t('bidLabel')}
+                newBadge={t('newBadge')}
                 icon={<Calendar className="w-4 h-4" />}
                 rows={ageRows}
-                labels={AGE_RANGE_LABELS}
+                labelFor={labelFor}
                 onToggle={(i) => toggleRow(setAgeRows, i)}
                 onBidChange={(i, v) => updateBidModifier(setAgeRows, i, v)}
               />
 
               {/* Income Range */}
               <DemographicSection
-                title="Hane Geliri"
+                title={t('incomeTitle')}
+                bidLabel={t('bidLabel')}
+                newBadge={t('newBadge')}
                 icon={<Wallet className="w-4 h-4" />}
                 rows={incomeRows}
-                labels={INCOME_RANGE_LABELS}
+                labelFor={labelFor}
                 onToggle={(i) => toggleRow(setIncomeRows, i)}
                 onBidChange={(i, v) => updateBidModifier(setIncomeRows, i, v)}
               />
@@ -331,7 +335,7 @@ export default function DemographicEditor({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            İptal
+            {tc('cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -339,7 +343,7 @@ export default function DemographicEditor({
             className="px-5 py-2 text-sm font-medium text-white bg-purple-600 rounded-lg hover:bg-purple-700 disabled:opacity-50 flex items-center gap-1.5"
           >
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Kaydet
+            {tc('save')}
           </button>
         </div>
       </div>
@@ -350,12 +354,14 @@ export default function DemographicEditor({
 /* ── DemographicSection ── */
 
 function DemographicSection({
-  title, icon, rows, labels, onToggle, onBidChange,
+  title, bidLabel, newBadge, icon, rows, labelFor, onToggle, onBidChange,
 }: {
   title: string
+  bidLabel: string
+  newBadge: string
   icon: React.ReactNode
   rows: LocalRow[]
-  labels: Record<string, string>
+  labelFor: (value: string) => string
   onToggle: (index: number) => void
   onBidChange: (index: number, value: string) => void
 }) {
@@ -376,14 +382,14 @@ function DemographicSection({
                 className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
               />
               <span className={`text-sm ${row.enabled ? 'text-gray-900' : 'text-gray-400 line-through'}`}>
-                {labels[row.value] ?? row.value}
+                {labelFor(row.value)}
               </span>
               {row.isNew && (
-                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">YENİ</span>
+                <span className="text-[10px] px-1.5 py-0.5 rounded bg-blue-100 text-blue-600 font-medium">{newBadge}</span>
               )}
             </label>
             <div className="flex items-center gap-1.5 shrink-0">
-              <span className="text-xs text-gray-400">Teklif:</span>
+              <span className="text-xs text-gray-400">{bidLabel}</span>
               <div className="relative">
                 <input
                   type="text"

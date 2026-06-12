@@ -1,9 +1,11 @@
 'use client'
 
 import { useState, useEffect, useRef } from 'react'
+import { useTranslations, useLocale } from 'next-intl'
 import { Loader2, Eye } from 'lucide-react'
 import MetaEditOverlay from './MetaEditOverlay'
 import type { TreeCampaign, TreeAdset, TreeAd } from './CampaignTreeSidebar'
+import { translateEnum } from '@/lib/yoai/translations'
 
 interface EditCapabilities {
   canEditName: boolean
@@ -26,18 +28,24 @@ interface AdEditDrawerProps {
   highlightedIds?: string[]
 }
 
-const CTA_OPTIONS = [
-  { value: 'LEARN_MORE', label: 'Daha Fazla Bilgi' },
-  { value: 'SHOP_NOW', label: 'Hemen Alışveriş Yap' },
-  { value: 'SIGN_UP', label: 'Kaydol' },
-  { value: 'CONTACT_US', label: 'Bize Ulaşın' },
-  { value: 'APPLY_NOW', label: 'Şimdi Başvur' },
-  { value: 'SUBSCRIBE', label: 'Abone Ol' },
-  { value: 'GET_OFFER', label: 'Teklif Al' },
-  { value: 'BOOK_TRAVEL', label: 'Seyahat Rezervasyonu' },
+// Meta CTA API enum values — KUTSAL (publish'e gider, asla değiştirilmez).
+// Görünen etiketler translateEnum(value, locale, 'meta') ile üretilir.
+const CTA_VALUES = [
+  'LEARN_MORE',
+  'SHOP_NOW',
+  'SIGN_UP',
+  'CONTACT_US',
+  'APPLY_NOW',
+  'SUBSCRIBE',
+  'GET_OFFER',
+  'BOOK_TRAVEL',
 ]
 
 export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect, highlightedIds }: AdEditDrawerProps) {
+  const t = useTranslations('dashboard.meta.editDrawer')
+  const locale = useLocale()
+  const metaLocale = locale === 'en' ? 'en' : 'tr'
+  const ctaOptions = CTA_VALUES.map((value) => ({ value, label: translateEnum(value, metaLocale, 'meta') }))
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -83,7 +91,7 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
         }
       } catch (err) {
         console.error('Ad details fetch error:', err)
-        onToast('Reklam bilgileri alınamadı', 'error')
+        onToast(t('toast.fetchFailed'), 'error')
       } finally {
         if (!cancelled) setLoading(false)
       }
@@ -118,20 +126,20 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
       const json = await res.json()
       if (!json.ok) {
         if (json.error === 'creative_not_editable') {
-          onToast(json.message || 'Bu reklam tipi içerik düzenlemesine izin vermiyor.', 'error')
+          onToast(json.message || t('toast.creativeNotEditable'), 'error')
           return
         }
-        throw new Error(json.message || 'Güncelleme başarısız')
+        throw new Error(json.message || t('toast.updateFailed'))
       }
 
       const msg = json.warning === 'creative_not_editable'
-        ? 'Sadece reklam adı güncellendi (içerik değişikliği desteklenmiyor)'
-        : 'Reklam başarıyla güncellendi'
+        ? t('toast.nameOnlyUpdated')
+        : t('toast.updateSuccess')
       onToast(msg, 'success')
       onSuccess({ adId, name: name.trim(), status: json.status, effective_status: json.effective_status })
     } catch (err) {
       console.error('Ad update error:', err)
-      onToast(err instanceof Error ? err.message : 'Güncelleme başarısız', 'error')
+      onToast(err instanceof Error ? err.message : t('toast.updateFailed'), 'error')
     } finally {
       setSaving(false)
     }
@@ -146,8 +154,8 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
       onSave={handleSave}
       saving={saving}
       saveDisabled={!name.trim()}
-      title="Reklamı Düzenle"
-      subtitle="Reklamınızı buradan düzenleyebilirsiniz."
+      title={t('ad.title')}
+      subtitle={t('ad.subtitle')}
       campaigns={campaigns}
       adsets={adsets}
       ads={ads}
@@ -167,79 +175,79 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
               {!editCapabilities.canEditCreative && (
                 <div className="px-3 py-2 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-800">
                   {editCapabilities.reason === 'Lead Gen form'
-                    ? 'Lead Gen reklam — içerik düzenlemesi desteklenmiyor; sadece reklam adı değişebilir.'
-                    : 'Post promoted reklam — organik gönderi içeriği API ile düzenlenemez; sadece reklam adı değişebilir.'}
+                    ? t('ad.leadGenNotEditable')
+                    : t('ad.postPromotedNotEditable')}
                 </div>
               )}
 
               {/* Reklam Adı */}
               <div>
-                <h3 className="text-lg font-semibold text-gray-900">Reklam Adı</h3>
-                <p className="text-sm text-gray-500 mt-1 mb-3">Reklamınıza bir isim verin.</p>
+                <h3 className="text-lg font-semibold text-gray-900">{t('ad.nameHeading')}</h3>
+                <p className="text-sm text-gray-500 mt-1 mb-3">{t('ad.nameHint')}</p>
                 <input
                   type="text"
                   value={name}
                   onChange={(e) => setName(e.target.value)}
                   className="w-full px-4 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500"
                   maxLength={256}
-                  placeholder="Reklam adı..."
+                  placeholder={t('ad.namePlaceholder')}
                 />
               </div>
 
               {/* Reklam İçeriği */}
               <div className="border border-gray-200 rounded-xl bg-white">
                 <div className="px-5 pt-5 pb-4">
-                  <h3 className="text-lg font-semibold text-gray-900">Reklam İçeriği</h3>
-                  <p className="text-sm text-gray-500 mt-1">Reklamınızın metin ve bağlantı ayarları.</p>
+                  <h3 className="text-lg font-semibold text-gray-900">{t('ad.creativeHeading')}</h3>
+                  <p className="text-sm text-gray-500 mt-1">{t('ad.creativeHint')}</p>
                 </div>
                 <div className="px-5 pb-5 space-y-4">
                   {/* Ana Metin */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Ana Metin</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('ad.primaryTextLabel')}</label>
                     <textarea
                       value={primaryText}
                       onChange={(e) => setPrimaryText(e.target.value)}
                       rows={4}
                       disabled={!editCapabilities.canEditCreative}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-sm resize-none disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
-                      placeholder="Reklamın ana metni..."
+                      placeholder={t('ad.primaryTextPlaceholder')}
                     />
-                    <p className="text-xs text-gray-400 mt-0.5">{primaryText.length}/125 karakter önerilen</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t('ad.charsRecommended', { count: primaryText.length, max: 125 })}</p>
                   </div>
 
                   {/* Başlık */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Başlık</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('ad.headlineLabel')}</label>
                     <input
                       type="text"
                       value={headline}
                       onChange={(e) => setHeadline(e.target.value)}
                       disabled={!editCapabilities.canEditCreative}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
-                      placeholder="Dikkat çekici başlık..."
+                      placeholder={t('ad.headlinePlaceholder')}
                       maxLength={40}
                     />
-                    <p className="text-xs text-gray-400 mt-0.5">{headline.length}/40 karakter önerilen</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t('ad.charsRecommended', { count: headline.length, max: 40 })}</p>
                   </div>
 
                   {/* Açıklama */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Açıklama</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('ad.descriptionLabel')}</label>
                     <input
                       type="text"
                       value={description}
                       onChange={(e) => setDescription(e.target.value)}
                       disabled={!editCapabilities.canEditCreative}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
-                      placeholder="Ek açıklama..."
+                      placeholder={t('ad.descriptionPlaceholder')}
                       maxLength={30}
                     />
-                    <p className="text-xs text-gray-400 mt-0.5">{description.length}/30 karakter önerilen</p>
+                    <p className="text-xs text-gray-400 mt-0.5">{t('ad.charsRecommended', { count: description.length, max: 30 })}</p>
                   </div>
 
                   {/* İnternet Sitesi */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">İnternet Sitesi</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('ad.websiteLabel')}</label>
                     <input
                       type="url"
                       value={websiteUrl}
@@ -252,14 +260,14 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
 
                   {/* Eylem Çağrısı */}
                   <div>
-                    <label className="block text-sm font-medium text-gray-600 mb-1">Eylem Çağrısı</label>
+                    <label className="block text-sm font-medium text-gray-600 mb-1">{t('ad.ctaLabel')}</label>
                     <select
                       value={callToAction}
                       onChange={(e) => setCallToAction(e.target.value)}
                       disabled={!editCapabilities.canEditCreative}
                       className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500/20 focus:border-green-500 text-sm disabled:bg-gray-100 disabled:cursor-not-allowed disabled:text-gray-500"
                     >
-                      {CTA_OPTIONS.map(opt => (
+                      {ctaOptions.map(opt => (
                         <option key={opt.value} value={opt.value}>{opt.label}</option>
                       ))}
                     </select>
@@ -275,16 +283,16 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
                 <div className="px-5 pt-5 pb-3 flex items-center justify-between">
                   <h3 className="text-base font-semibold text-gray-900 flex items-center gap-2">
                     <Eye className="w-4 h-4 text-gray-500" />
-                    Önizleme
+                    {t('ad.previewHeading')}
                   </h3>
                   <select
                     value={previewMode}
                     onChange={(e) => setPreviewMode(e.target.value)}
                     className="px-2 py-1 border border-gray-300 rounded text-xs text-gray-600"
                   >
-                    <option value="mobile_feed">Mobil Akış</option>
-                    <option value="desktop_feed">Masaüstü Akış</option>
-                    <option value="story">Hikaye</option>
+                    <option value="mobile_feed">{t('ad.previewMobileFeed')}</option>
+                    <option value="desktop_feed">{t('ad.previewDesktopFeed')}</option>
+                    <option value="story">{t('ad.previewStory')}</option>
                     <option value="reels">Reels</option>
                   </select>
                 </div>
@@ -293,15 +301,15 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
                     <div className="flex items-center gap-2 mb-3">
                       <div className="w-8 h-8 rounded-full bg-gray-300" />
                       <div>
-                        <div className="text-xs font-medium text-gray-700">Sayfa Adı</div>
-                        <div className="text-[10px] text-gray-400">Sponsorlu</div>
+                        <div className="text-xs font-medium text-gray-700">{t('ad.previewPageName')}</div>
+                        <div className="text-[10px] text-gray-400">{t('ad.previewSponsored')}</div>
                       </div>
                     </div>
                     {primaryText && (
                       <p className="text-xs text-gray-700 mb-3 line-clamp-3">{primaryText}</p>
                     )}
                     <div className="flex-1 bg-gray-200 rounded-lg mb-3 min-h-[120px] flex items-center justify-center">
-                      <span className="text-xs text-gray-400">Medya Önizleme</span>
+                      <span className="text-xs text-gray-400">{t('ad.previewMediaPlaceholder')}</span>
                     </div>
                     {(headline || websiteUrl) && (
                       <div className="bg-gray-100 rounded-lg p-2.5">

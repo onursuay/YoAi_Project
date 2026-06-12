@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo } from 'react'
+import { useTranslations } from 'next-intl'
 import { Loader2, Ban, Plus, ChevronDown, Check } from 'lucide-react'
 import type { SearchTerm } from '@/lib/google-ads/reports'
 import ViewErrorAlert, { type ViewErrorInfo } from './ViewErrorAlert'
@@ -9,19 +10,15 @@ const localeString = 'tr-TR'
 const fmtInt = (n: number) => n.toLocaleString(localeString)
 const fmtCurrency = (n: number) => n.toLocaleString(localeString, { minimumFractionDigits: 2, maximumFractionDigits: 2 })
 
-const statusLabels: Record<string, string> = {
-  ADDED: 'Eklendi',
-  EXCLUDED: 'Hariç',
-  ADDED_EXCLUDED: 'Eklendi (Hariç)',
-  NONE: 'Otomatik',
-  UNKNOWN: '—',
+const STATUS_LABEL_KEYS: Record<string, string> = {
+  ADDED: 'statusAdded',
+  EXCLUDED: 'statusExcluded',
+  ADDED_EXCLUDED: 'statusAddedExcluded',
+  NONE: 'statusAuto',
+  UNKNOWN: 'statusUnknown',
 }
 
-const MATCH_TYPES = [
-  { value: 'BROAD' as const, label: 'Geniş Eşleşme' },
-  { value: 'PHRASE' as const, label: 'Sıralı Eşleşme' },
-  { value: 'EXACT' as const, label: 'Tam Eşleşme' },
-]
+const MATCH_TYPE_VALUES = ['BROAD', 'PHRASE', 'EXACT'] as const
 
 type MatchType = 'BROAD' | 'PHRASE' | 'EXACT'
 
@@ -40,6 +37,7 @@ export default function CampaignSearchTermsTab({
   searchTerms, isLoading, error, onFetch, campaignResourceName,
   onExclude, onAddKeyword, onAddNegativeKeyword,
 }: Props) {
+  const t = useTranslations('dashboard.google.detail.searchTerms')
   useEffect(() => { onFetch() }, [onFetch])
 
   const [selectedRows, setSelectedRows] = useState<Set<number>>(new Set())
@@ -118,7 +116,7 @@ export default function CampaignSearchTermsTab({
   }
 
   if (isLoading) {
-    return <div className="p-6 text-center text-gray-500">Arama terimleri yükleniyor...</div>
+    return <div className="p-6 text-center text-gray-500">{t('loading')}</div>
   }
 
   if (error) {
@@ -126,7 +124,7 @@ export default function CampaignSearchTermsTab({
   }
 
   if (searchTerms.length === 0) {
-    return <div className="p-6 text-center text-gray-400">Bu kampanya için arama terimi verisi bulunamadı.</div>
+    return <div className="p-6 text-center text-gray-400">{t('empty')}</div>
   }
 
   const hasSelection = selectedRows.size > 0
@@ -137,7 +135,7 @@ export default function CampaignSearchTermsTab({
       {hasSelection && (
         <div className="sticky top-0 z-10 bg-blue-50 border border-blue-200 rounded-lg px-4 py-3 mb-4 flex items-center gap-3 flex-wrap">
           <span className="text-sm font-medium text-blue-800">
-            {selectedRows.size} terim seçildi
+            {t('selectedCount', { count: selectedRows.size })}
           </span>
           <div className="h-5 w-px bg-blue-200" />
 
@@ -149,7 +147,7 @@ export default function CampaignSearchTermsTab({
                 onChange={(e) => setActionMatchType(e.target.value as MatchType)}
                 className="px-2 py-1.5 text-xs border border-blue-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-blue-400"
               >
-                {MATCH_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                {MATCH_TYPE_VALUES.map(v => <option key={v} value={v}>{t(`matchTypes.${v}`)}</option>)}
               </select>
               <button
                 onClick={handleAddKeyword}
@@ -157,7 +155,7 @@ export default function CampaignSearchTermsTab({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-green-600 rounded-md hover:bg-green-700 disabled:opacity-50 transition-colors"
               >
                 {actionLoading === 'add' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Plus className="w-3.5 h-3.5" />}
-                Anahtar Kelime Olarak Ekle
+                {t('addAsKeyword')}
               </button>
             </div>
           )}
@@ -170,7 +168,7 @@ export default function CampaignSearchTermsTab({
                 onChange={(e) => setNegMatchType(e.target.value as MatchType)}
                 className="px-2 py-1.5 text-xs border border-red-200 rounded-md bg-white text-gray-700 focus:outline-none focus:ring-1 focus:ring-red-400"
               >
-                {MATCH_TYPES.map(m => <option key={m.value} value={m.value}>{m.label}</option>)}
+                {MATCH_TYPE_VALUES.map(v => <option key={v} value={v}>{t(`matchTypes.${v}`)}</option>)}
               </select>
               <button
                 onClick={handleAddNegativeKeyword}
@@ -178,7 +176,7 @@ export default function CampaignSearchTermsTab({
                 className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-red-500 rounded-md hover:bg-red-600 disabled:opacity-50 transition-colors"
               >
                 {actionLoading === 'negative' ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <Ban className="w-3.5 h-3.5" />}
-                Negatif Anahtar Kelime Olarak Ekle
+                {t('addAsNegativeKeyword')}
               </button>
             </div>
           )}
@@ -198,15 +196,15 @@ export default function CampaignSearchTermsTab({
                   className="accent-blue-600 w-4 h-4 cursor-pointer"
                 />
               </th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Arama Terimi</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Durum</th>
-              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Reklam Grubu</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Tıklama</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Gösterim</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">CTR</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Ort. TBM</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Maliyet</th>
-              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">Dönüşüm</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('colSearchTerm')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('colStatus')}</th>
+              <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">{t('colAdGroup')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colClicks')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colImpressions')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colCtr')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colAvgCpc')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colCost')}</th>
+              <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">{t('colConversions')}</th>
             </tr>
           </thead>
           <tbody className="divide-y divide-gray-200">
@@ -231,11 +229,11 @@ export default function CampaignSearchTermsTab({
                   <td className="px-4 py-3 text-sm text-gray-900 font-medium">{st.searchTerm}</td>
                   <td className="px-4 py-3 text-sm text-gray-600">
                     {isExcluded ? (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">Hariç Tutuldu</span>
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-red-50 text-red-600">{t('excludedDone')}</span>
                     ) : isAdded ? (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">Eklendi</span>
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-green-50 text-green-700">{t('statusAdded')}</span>
                     ) : (
-                      <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100">{statusLabels[st.status] || st.status}</span>
+                      <span className="px-2 py-0.5 rounded-full text-xs bg-gray-100">{STATUS_LABEL_KEYS[st.status] ? t(STATUS_LABEL_KEYS[st.status]) : st.status}</span>
                     )}
                   </td>
                   <td className="px-4 py-3 text-sm text-gray-600">{st.adGroupName}</td>

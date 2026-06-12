@@ -100,7 +100,7 @@ export default function DisplayVideoPicker({ isOpen, onClose, existing, onAdd, t
     setYtNotConfigured(false)
     // Kanal/playlist URL'sini erken yakala — search'e gönderme, kullanıcıyı yanıltma
     if (isYoutubeNonVideoUrl(raw)) {
-      setYtError('Bu bir kanal/playlist URL\'si. Lütfen tek bir video URL\'si veya 11 karakterli video ID girin (örn. youtube.com/watch?v=… veya youtu.be/…).')
+      setYtError(t('display.videoPicker.channelUrlError'))
       setYtVideos([])
       return
     }
@@ -272,8 +272,8 @@ export default function DisplayVideoPicker({ isOpen, onClose, existing, onAdd, t
               {ytError && <p className="text-xs text-red-500">{ytError}</p>}
               {ytNotConfigured && (
                 <div className="text-xs text-red-500 space-y-1">
-                  <p className="font-medium">YouTube anahtar kelime aramaları için YOUTUBE_API_KEY tanımlı değil.</p>
-                  <p className="text-gray-500">Çözüm: tek bir video URL&apos;si yapıştırın (örn. <span className="font-mono">https://www.youtube.com/watch?v=dQw4w9WgXcQ</span>) veya 11 karakterli video ID&apos;sini girin. Kanal URL&apos;si değil.</p>
+                  <p className="font-medium">{t('display.videoPicker.apiKeyMissing')}</p>
+                  <p className="text-gray-500">{t('display.videoPicker.apiKeySolutionBefore')} <span className="font-mono">https://www.youtube.com/watch?v=dQw4w9WgXcQ</span>{t('display.videoPicker.apiKeySolutionAfter')}</p>
                 </div>
               )}
               {importErr && <p className="text-xs text-red-500">{importErr}</p>}

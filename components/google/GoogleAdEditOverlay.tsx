@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import GoogleEditOverlay from './GoogleEditOverlay'
 import { Plus, X, Loader2 } from 'lucide-react'
 
@@ -26,6 +27,8 @@ export default function GoogleAdEditOverlay({
   onSuccess,
   onToast,
 }: GoogleAdEditOverlayProps) {
+  const t = useTranslations('dashboard.google.adEdit')
+  const tc = useTranslations('common')
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [adType, setAdType] = useState('')
@@ -57,7 +60,7 @@ export default function GoogleAdEditOverlay({
         if (data.campaign) setCampaignName(data.campaign.name ?? '')
         if (data.adGroup) setAdGroupName(data.adGroup.name ?? '')
       })
-      .catch(() => onToast('Reklam detayları yüklenemedi', 'error'))
+      .catch(() => onToast(t('loadError'), 'error'))
       .finally(() => setLoading(false))
   }, [open, adId, adGroupId, onToast])
 
@@ -72,11 +75,11 @@ export default function GoogleAdEditOverlay({
         const validHeadlines = headlines.filter((h) => h.text.trim() !== '')
         const validDescriptions = descriptions.filter((d) => d.text.trim() !== '')
         if (validHeadlines.length < 3) {
-          onToast('En az 3 başlık gerekli', 'error')
+          onToast(t('minHeadlines'), 'error')
           return
         }
         if (validDescriptions.length < 2) {
-          onToast('En az 2 açıklama gerekli', 'error')
+          onToast(t('minDescriptions'), 'error')
           return
         }
         payload.headlines = validHeadlines
@@ -95,13 +98,13 @@ export default function GoogleAdEditOverlay({
       })
       const data = await res.json().catch(() => ({}))
       if (res.ok) {
-        onToast('Reklam guncellendi', 'success')
+        onToast(t('updateSuccess'), 'success')
         onSuccess()
       } else {
-        onToast(data?.message || 'Guncelleme basarisiz', 'error')
+        onToast(data?.message || t('updateError'), 'error')
       }
     } catch {
-      onToast('Guncelleme basarisiz', 'error')
+      onToast(t('updateError'), 'error')
     } finally {
       setSaving(false)
     }
@@ -148,7 +151,7 @@ export default function GoogleAdEditOverlay({
       onSave={handleSave}
       saving={saving}
       saveDisabled={loading || !isRsa}
-      title="Reklam Duzenle"
+      title={t('title')}
       subtitle={`${adName} · ${adGroupName} · ${campaignName}`}
     >
       {loading ? (
@@ -158,7 +161,7 @@ export default function GoogleAdEditOverlay({
       ) : !isRsa ? (
         <div className="p-8 max-w-2xl">
           <div className="px-4 py-3 bg-amber-50 border border-amber-200 rounded-lg text-sm text-amber-700">
-            Bu reklam tipi ({adType}) duzenlenemez. Sadece Responsive Search Ad (RSA) reklamlari duzenlenebilir.
+            {t('unsupportedType', { type: adType })}
           </div>
         </div>
       ) : (
@@ -168,23 +171,23 @@ export default function GoogleAdEditOverlay({
             <div className="col-span-2 space-y-6">
               {/* Ad name (read-only) */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Reklam Adi</label>
+                <label className="block text-sm font-medium text-gray-700 mb-1">{t('adNameLabel')}</label>
                 <input
                   type="text"
                   value={adName}
                   disabled
                   className="w-full px-3 py-2 border border-gray-200 rounded-lg bg-gray-50 text-gray-500 text-sm"
                 />
-                <p className="mt-1 text-xs text-gray-400">Google Ads API uzerinden reklam adi degistirilemez.</p>
+                <p className="mt-1 text-xs text-gray-400">{t('adNameHint')}</p>
               </div>
 
               {/* Headlines */}
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">Basliklar ({headlines.length}/15)</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{t('headlinesTitle', { count: headlines.length })}</h3>
                   {headlines.length < 15 && (
                     <button onClick={addHeadline} className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">
-                      <Plus className="w-3 h-3" /> Ekle
+                      <Plus className="w-3 h-3" /> {tc('add')}
                     </button>
                   )}
                 </div>
@@ -197,7 +200,7 @@ export default function GoogleAdEditOverlay({
                         value={h.text}
                         onChange={(e) => updateHeadline(idx, e.target.value)}
                         maxLength={30}
-                        placeholder="Baslik metni (maks 30 karakter)"
+                        placeholder={t('headlinePlaceholder')}
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                       />
                       <span className={`text-xs shrink-0 ${h.text.length > 25 ? 'text-amber-500' : 'text-gray-400'}`}>
@@ -211,16 +214,16 @@ export default function GoogleAdEditOverlay({
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-gray-400">En az 3, en fazla 15 baslik. Her biri maks 30 karakter.</p>
+                <p className="mt-2 text-xs text-gray-400">{t('headlinesHint')}</p>
               </div>
 
               {/* Descriptions */}
               <div className="border border-gray-200 rounded-lg p-4">
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-sm font-semibold text-gray-900">Aciklamalar ({descriptions.length}/4)</h3>
+                  <h3 className="text-sm font-semibold text-gray-900">{t('descriptionsTitle', { count: descriptions.length })}</h3>
                   {descriptions.length < 4 && (
                     <button onClick={addDescription} className="text-xs text-green-600 hover:text-green-700 flex items-center gap-1">
-                      <Plus className="w-3 h-3" /> Ekle
+                      <Plus className="w-3 h-3" /> {tc('add')}
                     </button>
                   )}
                 </div>
@@ -233,7 +236,7 @@ export default function GoogleAdEditOverlay({
                         value={d.text}
                         onChange={(e) => updateDescription(idx, e.target.value)}
                         maxLength={90}
-                        placeholder="Aciklama metni (maks 90 karakter)"
+                        placeholder={t('descriptionPlaceholder')}
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                       />
                       <span className={`text-xs shrink-0 ${d.text.length > 80 ? 'text-amber-500' : 'text-gray-400'}`}>
@@ -247,14 +250,14 @@ export default function GoogleAdEditOverlay({
                     </div>
                   ))}
                 </div>
-                <p className="mt-2 text-xs text-gray-400">En az 2, en fazla 4 aciklama. Her biri maks 90 karakter.</p>
+                <p className="mt-2 text-xs text-gray-400">{t('descriptionsHint')}</p>
               </div>
 
               {/* URL & Paths */}
               <div className="border border-gray-200 rounded-lg p-4 space-y-3">
-                <h3 className="text-sm font-semibold text-gray-900">URL ve Yollar</h3>
+                <h3 className="text-sm font-semibold text-gray-900">{t('urlAndPaths')}</h3>
                 <div>
-                  <label className="block text-xs font-medium text-gray-600 mb-1">Son URL</label>
+                  <label className="block text-xs font-medium text-gray-600 mb-1">{t('finalUrl')}</label>
                   <input
                     type="url"
                     value={finalUrl}
@@ -265,24 +268,24 @@ export default function GoogleAdEditOverlay({
                 </div>
                 <div className="grid grid-cols-2 gap-3">
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Yol 1 (opsiyonel)</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('path1')}</label>
                     <input
                       type="text"
                       value={path1}
                       onChange={(e) => setPath1(e.target.value)}
                       maxLength={15}
-                      placeholder="ornek"
+                      placeholder={t('path1Placeholder')}
                       className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                     />
                   </div>
                   <div>
-                    <label className="block text-xs font-medium text-gray-600 mb-1">Yol 2 (opsiyonel)</label>
+                    <label className="block text-xs font-medium text-gray-600 mb-1">{t('path2')}</label>
                     <input
                       type="text"
                       value={path2}
                       onChange={(e) => setPath2(e.target.value)}
                       maxLength={15}
-                      placeholder="sayfa"
+                      placeholder={t('path2Placeholder')}
                       className="w-full px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                     />
                   </div>
@@ -293,18 +296,18 @@ export default function GoogleAdEditOverlay({
             {/* Right: Preview */}
             <div className="col-span-1">
               <div className="sticky top-8">
-                <h3 className="text-sm font-semibold text-gray-900 mb-3">Onizleme</h3>
+                <h3 className="text-sm font-semibold text-gray-900 mb-3">{t('preview')}</h3>
                 <div className="border border-gray-200 rounded-lg p-4 bg-white">
-                  <p className="text-xs text-gray-500 mb-2">Google Arama Sonucu</p>
+                  <p className="text-xs text-gray-500 mb-2">{t('searchResult')}</p>
                   <div className="space-y-1">
                     <p className="text-xs text-green-700 truncate">
                       {previewUrl}{displayPath ? `/${displayPath}` : ''}
                     </p>
                     <p className="text-base text-blue-700 font-medium leading-snug line-clamp-2">
-                      {previewHeadline || 'Baslik onizlemesi'}
+                      {previewHeadline || t('headlinePreview')}
                     </p>
                     <p className="text-sm text-gray-600 line-clamp-2">
-                      {previewDesc || 'Aciklama onizlemesi'}
+                      {previewDesc || t('descriptionPreview')}
                     </p>
                   </div>
                 </div>

@@ -208,11 +208,11 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                 </div>
                 {state.locations.length > 0 && (
                   <div>
-                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Seçilen ({state.locations.length})</p>
+                    <p className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">{t('location.selectedWithCount', { count: state.locations.length })}</p>
                     <div className="space-y-1 max-h-36 overflow-y-auto">
                       {state.locations.map(loc => (
                         <div key={loc.id} className={`flex items-center justify-between px-3 py-1.5 rounded-lg text-xs ${loc.isNegative ? 'bg-red-50 text-red-800 border border-red-100' : 'bg-blue-50 text-blue-800 border border-blue-100'}`}>
-                          <span className="truncate flex-1">{loc.name}{loc.isNegative ? ' (Hariç)' : ''}</span>
+                          <span className="truncate flex-1">{loc.name}{loc.isNegative ? ` ${t('location.excludedChip')}` : ''}</span>
                           <button type="button" onClick={() => removeLocation(loc.id)} className="ml-1 shrink-0 hover:opacity-70">
                             <X className="w-3 h-3" />
                           </button>
@@ -225,17 +225,17 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
             ) : (
               <>
                 <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-1">Konum ara</label>
+                  <label className="block text-sm font-medium text-gray-700 mb-1">{t('location.searchLocations')}</label>
                   <div className="relative">
                     <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" />
                     <input className={`${inputCls} pl-9`} value={radQuery}
                       onChange={e => { setRadQuery(e.target.value); if (!e.target.value) { setPinCoords(null); setPinLabel('') } }}
-                      placeholder="Şehir, ilçe veya bölge arayın" />
+                      placeholder={t('location.radiusSearchPlaceholder')} />
                   </div>
                   {radResults.length > 0 && (
                     <div className="mt-1 border border-gray-200 rounded-lg divide-y divide-gray-100 max-h-40 overflow-y-auto">
                       {radLoading ? (
-                        <div className="p-3 text-sm text-gray-500">Aranıyor...</div>
+                        <div className="p-3 text-sm text-gray-500">{t('location.searching')}</div>
                       ) : radResults.map(r => (
                         <button key={r.id} type="button" onClick={() => selectRadiusLocation(r)}
                           className="w-full flex items-center px-3 py-2 text-sm hover:bg-gray-50 text-left">
@@ -245,7 +245,7 @@ export default function PMaxLocationAdvancedModal({ isOpen, onClose, state, upda
                       ))}
                     </div>
                   )}
-                  <p className="text-xs text-gray-400 mt-1">veya Sabitleme modu ile haritadan seçin</p>
+                  <p className="text-xs text-gray-400 mt-1">{t('location.orPinModeHint')}</p>
                 </div>
 
                 <div>

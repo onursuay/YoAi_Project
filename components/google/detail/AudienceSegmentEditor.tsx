@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useEffect, useCallback, useRef } from 'react'
+import { useTranslations } from 'next-intl'
 import { X, Loader2, Search, ChevronRight, ChevronDown, Users, Heart, ShoppingBag, UserCheck, Layers, Info, RefreshCw } from 'lucide-react'
 
 /* ── Types ── */
@@ -52,14 +53,14 @@ interface BrowseData {
 
 /* ── Constants ── */
 
-const CATEGORY_LABELS: Record<AudienceSegmentCategory, string> = {
-  AFFINITY: 'Yakın İlgi Alanı',
-  IN_MARKET: 'Pazardaki Kitle',
-  DETAILED_DEMOGRAPHIC: 'Ayrıntılı Demografi',
-  LIFE_EVENT: 'Yaşam Olayları',
-  USER_LIST: 'Verileriniz',
-  CUSTOM_AUDIENCE: 'Özel Kitle',
-  COMBINED_AUDIENCE: 'Birleşik Segment',
+const CATEGORY_LABEL_KEYS: Record<AudienceSegmentCategory, string> = {
+  AFFINITY: 'categories.AFFINITY',
+  IN_MARKET: 'categories.IN_MARKET',
+  DETAILED_DEMOGRAPHIC: 'categories.DETAILED_DEMOGRAPHIC',
+  LIFE_EVENT: 'categories.LIFE_EVENT',
+  USER_LIST: 'categories.USER_LIST',
+  CUSTOM_AUDIENCE: 'categories.CUSTOM_AUDIENCE',
+  COMBINED_AUDIENCE: 'categories.COMBINED_AUDIENCE',
 }
 
 // Tüm kategoriler tek tip emerald — proje rengi
@@ -76,18 +77,18 @@ const CATEGORY_COLORS: Record<AudienceSegmentCategory, string> = {
 type BrowseSectionKey = Exclude<keyof BrowseData, 'state'>
 const BROWSE_SECTIONS: Array<{
   key: BrowseSectionKey
-  label: string
-  desc: string
+  labelKey: string
+  descKey: string
   icon: typeof Users
   category: AudienceSegmentCategory
 }> = [
-  { key: 'inMarket', label: 'Etkin Şekilde Araştırdıkları veya Planladıkları Konular', desc: 'Pazardaki kitle segmentleri', icon: ShoppingBag, category: 'IN_MARKET' },
-  { key: 'affinity', label: 'İlgi Alanları ve Alışkanlıkları', desc: 'Yakın ilgi alanı segmentleri', icon: Heart, category: 'AFFINITY' },
-  { key: 'detailedDemographics', label: 'Kim Oldukları', desc: 'Ayrıntılı demografi segmentleri', icon: Users, category: 'DETAILED_DEMOGRAPHIC' },
-  { key: 'lifeEvents', label: 'Yaşam Olayları', desc: 'Yaşam olayı segmentleri', icon: Users, category: 'LIFE_EVENT' },
-  { key: 'userLists', label: 'İşletmenizle Etkileşimde Bulunma Biçimleri', desc: 'Verilerinize göre segmentler', icon: UserCheck, category: 'USER_LIST' },
-  { key: 'customAudiences', label: 'Özel Kitleleriniz', desc: 'Anahtar kelime/URL tabanlı özel kitleler', icon: Layers, category: 'CUSTOM_AUDIENCE' },
-  { key: 'combinedAudiences', label: 'Birleşik Kitle Segmentleriniz', desc: 'Birleşik segmentler', icon: Layers, category: 'COMBINED_AUDIENCE' },
+  { key: 'inMarket', labelKey: 'sections.inMarket.label', descKey: 'sections.inMarket.desc', icon: ShoppingBag, category: 'IN_MARKET' },
+  { key: 'affinity', labelKey: 'sections.affinity.label', descKey: 'sections.affinity.desc', icon: Heart, category: 'AFFINITY' },
+  { key: 'detailedDemographics', labelKey: 'sections.detailedDemographics.label', descKey: 'sections.detailedDemographics.desc', icon: Users, category: 'DETAILED_DEMOGRAPHIC' },
+  { key: 'lifeEvents', labelKey: 'sections.lifeEvents.label', descKey: 'sections.lifeEvents.desc', icon: Users, category: 'LIFE_EVENT' },
+  { key: 'userLists', labelKey: 'sections.userLists.label', descKey: 'sections.userLists.desc', icon: UserCheck, category: 'USER_LIST' },
+  { key: 'customAudiences', labelKey: 'sections.customAudiences.label', descKey: 'sections.customAudiences.desc', icon: Layers, category: 'CUSTOM_AUDIENCE' },
+  { key: 'combinedAudiences', labelKey: 'sections.combinedAudiences.label', descKey: 'sections.combinedAudiences.desc', icon: Layers, category: 'COMBINED_AUDIENCE' },
 ]
 
 /* Map existing criterion types back to categories */
@@ -118,6 +119,8 @@ interface Props {
 export default function AudienceSegmentEditor({
   open, onClose, entityType, entityId, entityResourceName, campaignId, onSaved, onToast,
 }: Props) {
+  const t = useTranslations('dashboard.google.detail.audience')
+  const tc = useTranslations('common')
   // Existing criteria from API
   const [existingCriteria, setExistingCriteria] = useState<ExistingCriterion[]>([])
   const [initialSegmentIds, setInitialSegmentIds] = useState<Set<string>>(new Set())
@@ -181,7 +184,7 @@ export default function AudienceSegmentEditor({
         const criteria: ExistingCriterion[] = data.criteria ?? []
         setExistingCriteria(criteria)
         // Map to selected segments. Use segmentId for LIFE_EVENT/EXTENDED_DEMOGRAPHIC to match browse dataset.
-        const sanitize = (n: string) => (!n || n.includes('::') || /^\d+$/.test(n)) ? 'Bilinmeyen Segment' : n
+        const sanitize = (n: string) => (!n || n.includes('::') || /^\d+$/.test(n)) ? t('unknownSegment') : n
         const segId = (c: ExistingCriterion) => c.segmentId ?? c.criterionId
         const segs: SelectedSegment[] = criteria.map(c => ({
           id: segId(c),
@@ -196,7 +199,7 @@ export default function AudienceSegmentEditor({
           setMode('OBSERVATION')
         }
       })
-      .catch(() => setError('Mevcut kitle segmentleri yüklenemedi.'))
+      .catch(() => setError(t('loadError')))
       .finally(() => setLoading(false))
   }, [open, entityType, entityId, campaignId])
 
@@ -232,10 +235,10 @@ export default function AudienceSegmentEditor({
       if (res.ok) {
         setBrowseData(data)
       } else {
-        setBrowseError(data.error || 'Kitle segmentleri yüklenemedi.')
+        setBrowseError(data.error || t('browseLoadError'))
       }
     } catch {
-      setBrowseError('Kitle segmentleri yüklenirken bir bağlantı hatası oluştu.')
+      setBrowseError(t('browseConnectionError'))
     }
     finally { setBrowseLoading(false) }
   }, [browseData])
@@ -286,7 +289,7 @@ export default function AudienceSegmentEditor({
         })
         if (!res.ok) {
           const d = await res.json()
-          throw new Error(d.userMessage || d.error || 'Segmentler kaldırılamadı')
+          throw new Error(d.userMessage || d.error || t('removeError'))
         }
       }
 
@@ -309,14 +312,14 @@ export default function AudienceSegmentEditor({
         })
         if (!res.ok) {
           const d = await res.json()
-          throw new Error(d.userMessage || d.error || 'Segmentler eklenemedi')
+          throw new Error(d.userMessage || d.error || t('addError'))
         }
       }
 
-      onToast('Kitle segmentleri güncellendi', 'success')
+      onToast(t('saveSuccess'), 'success')
       onSaved()
     } catch (e: any) {
-      onToast(e.message || 'Bir hata oluştu', 'error')
+      onToast(e.message || t('genericError'), 'error')
     } finally {
       setSaving(false)
     }
@@ -341,9 +344,9 @@ export default function AudienceSegmentEditor({
         {/* Header */}
         <div className="flex items-center justify-between px-6 py-4 border-b border-gray-200 shrink-0">
           <div>
-            <h2 className="text-lg font-semibold text-gray-900">Kitle Segmentlerini Düzenle</h2>
+            <h2 className="text-lg font-semibold text-gray-900">{t('title')}</h2>
             <p className="text-sm text-gray-500 mt-0.5">
-              {entityType === 'adGroup' ? 'Reklam grubu' : 'Kampanya'} düzeyinde kitle segmentleri
+              {entityType === 'adGroup' ? t('subtitleAdGroup') : t('subtitleCampaign')}
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -358,7 +361,7 @@ export default function AudienceSegmentEditor({
           {loading && (
             <div className="flex items-center justify-center py-12 gap-2 text-gray-500">
               <Loader2 className="w-5 h-5 animate-spin" />
-              <span className="text-sm">Mevcut kitle segmentleri yükleniyor...</span>
+              <span className="text-sm">{t('loading')}</span>
             </div>
           )}
 
@@ -368,7 +371,7 @@ export default function AudienceSegmentEditor({
             <>
               {/* Audience Mode */}
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">Hedefleme Modu</label>
+                <label className="block text-sm font-medium text-gray-700 mb-2">{t('targetingMode')}</label>
                 <div className="grid grid-cols-2 gap-3">
                   {(['OBSERVATION', 'TARGETING'] as AudienceMode[]).map(m => {
                     const active = mode === m
@@ -382,12 +385,12 @@ export default function AudienceSegmentEditor({
                         }`}
                       >
                         <p className={`text-sm font-semibold ${active ? 'text-blue-700' : 'text-gray-800'}`}>
-                          {m === 'OBSERVATION' ? 'Gözlem' : 'Hedefleme'}
+                          {m === 'OBSERVATION' ? t('modeObservation') : t('modeTargeting')}
                         </p>
                         <p className="text-xs text-gray-500 mt-0.5">
                           {m === 'OBSERVATION'
-                            ? 'Teklifleri ayarlayın ancak erişimi daraltmayın'
-                            : 'Reklamları yalnızca bu kitlelere gösterin'}
+                            ? t('modeObservationDesc')
+                            : t('modeTargetingDesc')}
                         </p>
                       </button>
                     )
@@ -399,7 +402,7 @@ export default function AudienceSegmentEditor({
               {selectedSegments.length > 0 && (
                 <div className="space-y-2">
                   <p className="text-xs font-medium text-gray-500 uppercase tracking-wide">
-                    Seçili Segmentler ({selectedSegments.length})
+                    {t('selectedSegments', { count: selectedSegments.length })}
                   </p>
                   <div className="flex flex-wrap gap-1.5">
                     {selectedSegments.map(seg => (
@@ -429,8 +432,8 @@ export default function AudienceSegmentEditor({
                 >
                   <span className="text-gray-700 font-medium">
                     {selectedSegments.length > 0
-                      ? `${selectedSegments.length} kitle segmenti seçildi`
-                      : 'Kitle segmenti seç'}
+                      ? t('selectedCount', { count: selectedSegments.length })
+                      : t('selectSegment')}
                   </span>
                   <ChevronDown className="w-4 h-4 text-gray-400" />
                 </button>
@@ -448,7 +451,7 @@ export default function AudienceSegmentEditor({
                   }`}
                 >
                   <Search className="w-3.5 h-3.5 inline mr-1.5" />
-                  Arama
+                  {t('tabSearch')}
                 </button>
                 <button
                   type="button"
@@ -458,7 +461,7 @@ export default function AudienceSegmentEditor({
                   }`}
                 >
                   <Layers className="w-3.5 h-3.5 inline mr-1.5" />
-                  Göz at
+                  {t('tabBrowse')}
                 </button>
               </div>
 
@@ -471,7 +474,7 @@ export default function AudienceSegmentEditor({
                       type="text"
                       value={searchQuery}
                       onChange={e => handleSearchInput(e.target.value)}
-                      placeholder="Kitle segmenti arayın... (ör: araba, spor, ebeveyn)"
+                      placeholder={t('searchPlaceholder')}
                       className="w-full pl-9 pr-3 py-2.5 border border-gray-300 rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                     />
                     {searching && (
@@ -482,7 +485,7 @@ export default function AudienceSegmentEditor({
                   </div>
 
                   {searchQuery.length >= 2 && !searching && searchResults.length === 0 && (
-                    <p className="text-sm text-gray-500 text-center py-4">Sonuç bulunamadı</p>
+                    <p className="text-sm text-gray-500 text-center py-4">{t('noResults')}</p>
                   )}
 
                   {searchResults.length > 0 && (
@@ -497,7 +500,7 @@ export default function AudienceSegmentEditor({
                     <div className="flex items-start gap-2 p-3 rounded-lg bg-gray-50 border border-gray-200">
                       <Info className="w-4 h-4 text-gray-400 mt-0.5 shrink-0" />
                       <p className="text-sm text-gray-600">
-                        Pazardaki kitle, yakın ilgi alanı, demografi ve verilerinize göre segmentler arasında arayın.
+                        {t('searchHint')}
                       </p>
                     </div>
                   )}
@@ -511,9 +514,9 @@ export default function AudienceSegmentEditor({
                     <div className="flex flex-col items-center justify-center py-8 gap-2 text-gray-500">
                       <div className="flex items-center gap-2">
                         <Loader2 className="w-4 h-4 animate-spin" />
-                        <span className="text-sm">Kitle segmentleri yükleniyor ve çevriliyor...</span>
+                        <span className="text-sm">{t('browseLoading')}</span>
                       </div>
-                      <span className="text-xs text-gray-400">İlk yüklemede çeviriler hazırlanır, sonraki açılışlar anlık olur.</span>
+                      <span className="text-xs text-gray-400">{t('browseLoadingHint')}</span>
                     </div>
                   )}
 
@@ -525,7 +528,7 @@ export default function AudienceSegmentEditor({
                         onClick={() => { setBrowseData(null); loadBrowse() }}
                         className="ml-2 underline hover:no-underline"
                       >
-                        Tekrar dene
+                        {tc('retry')}
                       </button>
                     </div>
                   )}
@@ -536,17 +539,17 @@ export default function AudienceSegmentEditor({
                         type="button"
                         onClick={() => { setBrowseData(null); loadBrowse(true) }}
                         className="flex items-center gap-1.5 text-xs text-gray-500 hover:text-blue-600 transition-colors"
-                        title="Verileri yeniden çek ve çevir"
+                        title={t('refreshTitle')}
                       >
                         <RefreshCw className="w-3.5 h-3.5" />
-                        Yenile
+                        {tc('refresh')}
                       </button>
                     </div>
                   )}
 
                   {browseData?.state === 'data_not_ready' && (
                     <div className="p-4 rounded-lg bg-amber-50 border border-amber-200 text-amber-800 text-sm">
-                      Kitle verileri henüz hazır değil. Yönetici tarafından yenilenmesi gerekiyor.
+                      {t('dataNotReady')}
                     </div>
                   )}
 
@@ -580,8 +583,8 @@ export default function AudienceSegmentEditor({
                           {isExpanded ? <ChevronDown className="w-4 h-4 text-gray-400 shrink-0" /> : <ChevronRight className="w-4 h-4 text-gray-400 shrink-0" />}
                           <Icon className="w-4 h-4 text-gray-500 shrink-0" />
                           <div className="flex-1 min-w-0">
-                            <p className="text-sm font-medium text-gray-900">{section.label}</p>
-                            <p className="text-xs text-gray-500">{section.desc} ({items.length})</p>
+                            <p className="text-sm font-medium text-gray-900">{t(section.labelKey)}</p>
+                            <p className="text-xs text-gray-500">{t(section.descKey)} ({items.length})</p>
                           </div>
                         </button>
 
@@ -649,7 +652,7 @@ export default function AudienceSegmentEditor({
             onClick={onClose}
             className="px-4 py-2 text-sm font-medium text-gray-700 bg-white border border-gray-300 rounded-lg hover:bg-gray-50"
           >
-            İptal
+            {tc('cancel')}
           </button>
           <button
             onClick={handleSave}
@@ -657,7 +660,7 @@ export default function AudienceSegmentEditor({
             className="px-5 py-2 text-sm font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 disabled:opacity-50 flex items-center gap-1.5"
           >
             {saving && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-            Kaydet
+            {tc('save')}
           </button>
         </div>
       </div>
@@ -668,6 +671,7 @@ export default function AudienceSegmentEditor({
 /* ── AudienceRow ── */
 
 function AudienceRow({ item, selected, onToggle }: { item: AudienceItem; selected: boolean; onToggle: () => void }) {
+  const t = useTranslations('dashboard.google.detail.audience')
   return (
     <label className="flex items-center gap-3 px-4 py-2.5 hover:bg-gray-50 cursor-pointer">
       <input
@@ -680,7 +684,7 @@ function AudienceRow({ item, selected, onToggle }: { item: AudienceItem; selecte
         <p className="text-sm text-gray-900 truncate">{item.name}</p>
         <div className="flex items-center gap-2 mt-0.5">
           <span className={`text-[10px] px-1.5 py-0.5 rounded ${CATEGORY_COLORS[item.category] ?? 'bg-gray-100 text-gray-700'}`}>
-            {CATEGORY_LABELS[item.category] ?? item.category}
+            {CATEGORY_LABEL_KEYS[item.category] ? t(CATEGORY_LABEL_KEYS[item.category]) : item.category}
           </span>
           {item.sizeRange && <span className="text-[10px] text-gray-400">{item.sizeRange}</span>}
         </div>

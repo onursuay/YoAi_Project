@@ -18,14 +18,14 @@ interface GeoSuggestion {
   reach?: string | number
 }
 
-const TARGET_TYPE_LABELS: Record<string, string> = {
-  Country: 'Ülke',
-  City: 'Şehir',
-  Province: 'İl',
-  District: 'İlçe',
-  PostalCode: 'Posta Kodu',
-  LocationOfPresence: 'Konum',
-  LocationOfInterest: 'İlgi Alanı',
+const TARGET_TYPE_LABEL_KEYS: Record<string, string> = {
+  Country: 'location.typeCountry',
+  City: 'location.typeCity',
+  Province: 'location.typeProvince',
+  District: 'location.typeDistrict',
+  PostalCode: 'location.typePostalCode',
+  LocationOfPresence: 'location.typeDefault',
+  LocationOfInterest: 'location.typeInterest',
 }
 
 export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) {
@@ -112,7 +112,10 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
     update({ proximityTargets: state.proximityTargets.filter((_, i) => i !== idx) })
   }
 
-  const typeLabel = (targetType: string) => TARGET_TYPE_LABELS[targetType] ?? targetType
+  const typeLabel = (targetType: string) => {
+    const key = TARGET_TYPE_LABEL_KEYS[targetType]
+    return key ? t(key) : targetType
+  }
 
   return (
     <div ref={containerRef} className="space-y-3">
@@ -177,12 +180,12 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
                 if (e.key === 'Escape') setShowDropdown(false)
                 if (e.key === 'Enter' && results.length > 0 && results[0]) addLocation(results[0], false)
               }}
-              placeholder="Hedeflenecek veya hariç tutulacak konumları girin"
+              placeholder={t('location.searchPlaceholderFull')}
               autoComplete="off"
             />
             <Loader2 className={`absolute right-3 w-4 h-4 text-gray-400 animate-spin transition-opacity ${loading ? 'opacity-100' : 'opacity-0'}`} style={{top: 'calc(50% - 8px)'}} />
           </div>
-          <p className="text-xs text-gray-400 mt-1">Örneğin; ülke, şehir, bölge veya posta kodu</p>
+          <p className="text-xs text-gray-400 mt-1">{t('location.searchHint')}</p>
 
           {/* Dropdown */}
           {showDropdown && (
@@ -190,10 +193,10 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
               {loading && results.length === 0 ? (
                 <div className="p-4 text-sm text-gray-500 flex items-center gap-2">
                   <Loader2 className="w-4 h-4 animate-spin" />
-                  Aranıyor...
+                  {t('location.searching')}
                 </div>
               ) : results.length === 0 ? (
-                <div className="p-4 text-sm text-gray-500">Sonuç bulunamadı</div>
+                <div className="p-4 text-sm text-gray-500">{t('location.noResults')}</div>
               ) : (
                 results.map(r => {
                   const added = state.locations.some(l => l.id === r.id)
@@ -213,7 +216,7 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
                       </div>
                       <div className="flex items-center gap-1 shrink-0 ml-2">
                         {added ? (
-                          <span className="text-xs text-blue-600">Eklendi</span>
+                          <span className="text-xs text-blue-600">{t('location.added')}</span>
                         ) : (
                           <>
                             <button
@@ -221,14 +224,14 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
                               onClick={() => addLocation(r, false)}
                               className="px-2 py-1 text-xs font-medium text-blue-600 hover:bg-blue-50 rounded"
                             >
-                              Dahil et
+                              {t('location.include')}
                             </button>
                             <button
                               type="button"
                               onClick={() => addLocation(r, true)}
                               className="px-2 py-1 text-xs font-medium text-red-600 hover:bg-red-50 rounded"
                             >
-                              Hariç Tut
+                              {t('location.exclude')}
                             </button>
                           </>
                         )}
@@ -249,14 +252,14 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
         className="inline-flex items-center gap-2 text-sm text-blue-600 hover:underline"
       >
         <MapPin className="w-4 h-4" />
-        Gelişmiş arama
+        {t('location.advancedSearch')}
       </button>
 
       {/* Selected locations + proximity */}
       {(state.locations.length > 0 || state.proximityTargets.length > 0) && (
         <div className="space-y-2">
           <p className="text-sm font-medium text-gray-700">
-            {state.locations.length + state.proximityTargets.length} konum seçildi
+            {t('location.selectedTitleWithCount', { count: state.locations.length + state.proximityTargets.length })}
           </p>
           <div className="flex flex-wrap gap-2">
             {state.locations.map(loc => (
@@ -265,13 +268,13 @@ export default function PMaxLocationPicker({ state, update, t }: PMaxStepProps) 
                 className={`inline-flex items-center gap-1 px-3 py-1 rounded-full text-xs font-medium ${loc.isNegative ? 'bg-red-100 text-red-800' : 'bg-blue-100 text-blue-800'}`}
               >
                 {loc.name}
-                {loc.isNegative && <span className="text-red-500 text-xs">(Hariç)</span>}
+                {loc.isNegative && <span className="text-red-500 text-xs">{t('location.excludedChip')}</span>}
                 <button
                   type="button"
                   onClick={() => toggleNegative(loc.id)}
                   className="ml-1 hover:opacity-70 text-xs underline"
                 >
-                  {loc.isNegative ? 'Dahil et' : 'Hariç tut'}
+                  {loc.isNegative ? t('location.include') : t('location.exclude')}
                 </button>
                 <button type="button" onClick={() => removeLocation(loc.id)} className="ml-0.5 hover:opacity-70">
                   <X className="w-3 h-3" />

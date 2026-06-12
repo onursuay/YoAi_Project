@@ -1,6 +1,7 @@
 'use client'
 
 import { useParams, useRouter } from 'next/navigation'
+import { useTranslations } from 'next-intl'
 import { ArrowLeft } from 'lucide-react'
 import Tabs from '@/components/Tabs'
 import { usePathTab } from '@/hooks/usePathTab'
@@ -12,25 +13,26 @@ import CampaignAdScheduleTab from '@/components/google/detail/CampaignAdSchedule
 import CampaignLandingPagesTab from '@/components/google/detail/CampaignLandingPagesTab'
 import CampaignAssetsTab from '@/components/google/detail/CampaignAssetsTab'
 
-const tabs = [
-  { id: 'overview', label: 'Genel Bakış' },
-  { id: 'search-terms', label: 'Arama Terimleri' },
-  { id: 'locations', label: 'Lokasyonlar' },
-  { id: 'ad-schedule', label: 'Reklam Zamanlaması' },
-  { id: 'landing-pages', label: 'Landing Pages' },
-  { id: 'assets', label: 'Öğeler' },
-]
-
 export default function CampaignDetailPage() {
   const params = useParams()
   const router = useRouter()
+  const t = useTranslations('dashboard.google.detail.page')
   const campaignId = params.campaignId as string
   // Sekme durumu URL path'inden türetilir (/google-ads/kampanya/<id>/<sekme>)
   const { activeTab, setTab } = usePathTab('google-ads-detay', { segmentParam: 'tab', idParam: 'campaignId' })
 
   const data = useGoogleCampaignDetail(campaignId)
 
-  const campaignName = data.detail?.campaign.name || `Kampanya ${campaignId}`
+  const tabs = [
+    { id: 'overview', label: t('tabOverview') },
+    { id: 'search-terms', label: t('tabSearchTerms') },
+    { id: 'locations', label: t('tabLocations') },
+    { id: 'ad-schedule', label: t('tabAdSchedule') },
+    { id: 'landing-pages', label: t('tabLandingPages') },
+    { id: 'assets', label: t('tabAssets') },
+  ]
+
+  const campaignName = data.detail?.campaign.name || t('campaignFallback', { id: campaignId })
 
   return (
     <div className="flex flex-col h-full">
@@ -48,10 +50,10 @@ export default function CampaignDetailPage() {
             <h1 className="text-xl font-bold text-gray-900">{campaignName}</h1>
             {data.detail && (
               <p className="text-sm text-gray-500 mt-0.5">
-                {data.detail.campaign.status === 'ENABLED' ? 'Aktif' : data.detail.campaign.status === 'PAUSED' ? 'Duraklatıldı' : data.detail.campaign.status}
+                {data.detail.campaign.status === 'ENABLED' ? t('statusEnabled') : data.detail.campaign.status === 'PAUSED' ? t('statusPaused') : data.detail.campaign.status}
                 {data.detail.campaign.optimizationScore != null && (
                   <span className="ml-2">
-                    · Opt. Skor: %{data.detail.campaign.optimizationScore.toFixed(0)}
+                    · {t('optScore')}: %{data.detail.campaign.optimizationScore.toFixed(0)}
                   </span>
                 )}
               </p>
@@ -64,7 +66,7 @@ export default function CampaignDetailPage() {
       <div className="flex-1 overflow-y-auto bg-gray-50">
         {data.detailLoading ? (
           <div className="flex items-center justify-center py-12">
-            <p className="text-gray-500">Yükleniyor...</p>
+            <p className="text-gray-500">{t('loading')}</p>
           </div>
         ) : data.detailError ? (
           <div className="p-6">

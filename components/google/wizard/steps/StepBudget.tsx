@@ -64,11 +64,11 @@ export default function StepBudget({ state, update, t }: StepProps) {
           <div>
             <p className="text-sm font-semibold text-primary">{t('budget.recommendationTitle')}</p>
             <p className="text-sm text-primary mt-1">
-              {recommended} {t('budget.trySuffix')}/gün — {t('budget.recommendationText')}
+              {t('budget.recommendationLine', { amount: recommended, currency: t('budget.trySuffix') })}
             </p>
             {showRecommendationWarning && (
               <p className="text-sm text-gray-800 mt-2 font-medium">
-                {t('validation.minBudget')} Bu strateji için önerilen: {recommended} {t('budget.trySuffix')}/gün.
+                {t('validation.minBudget')} {t('budget.recommendedForStrategy', { amount: recommended, currency: t('budget.trySuffix') })}
               </p>
             )}
           </div>

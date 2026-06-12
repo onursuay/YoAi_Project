@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { useTranslations } from 'next-intl'
 import { ChevronDown } from 'lucide-react'
 
 export interface ViewErrorInfo {
@@ -9,6 +10,7 @@ export interface ViewErrorInfo {
 }
 
 export default function ViewErrorAlert({ error }: { error: ViewErrorInfo }) {
+  const t = useTranslations('dashboard.google.detail')
   const [open, setOpen] = useState(false)
   return (
     <div className="p-6 space-y-3">
@@ -24,7 +26,7 @@ export default function ViewErrorAlert({ error }: { error: ViewErrorInfo }) {
               className="mt-2 flex items-center gap-1 text-xs text-red-600 hover:text-red-800"
             >
               <ChevronDown className={`w-3.5 h-3.5 transition-transform ${open ? 'rotate-180' : ''}`} />
-              Teknik detay
+              {t('technicalDetail')}
             </button>
           )}
           {open && error.technicalDetail && (

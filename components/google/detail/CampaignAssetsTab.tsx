@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useState, useMemo, useCallback } from 'react'
+import { useTranslations } from 'next-intl'
 import { Plus, Trash2, Loader2, X, Pause, Play } from 'lucide-react'
 import ViewErrorAlert, { type ViewErrorInfo } from './ViewErrorAlert'
 
@@ -35,35 +36,9 @@ export interface CampaignAsset {
 
 /* ── Constants ── */
 
-const TYPE_LABELS: Record<string, string> = {
-  ALL: 'Tümü',
-  SITELINK: 'Site bağlantısı',
-  CALLOUT: 'Açıklama metni',
-  STRUCTURED_SNIPPET: 'Ek açıklamalı snippet',
-  TEXT: 'Metin',
-  IMAGE: 'Görsel',
-  LEAD_FORM: 'Potansiyel müşteri formu',
-  CALL: 'Telefon',
-  PROMOTION: 'Promosyon',
-  PRICE: 'Fiyat',
-  BOOK_ON_GOOGLE: 'Google\'da Rezervasyon',
-  HOTEL_CALLOUT: 'Otel Açıklama Metni',
-  DYNAMIC_EDUCATION: 'Dinamik Eğitim',
-  BUSINESS_NAME: 'İşletme adı',
-  LOGO: 'İşletme logosu',
-}
-
-const SOURCE_LABELS: Record<string, string> = {
-  ADVERTISER: 'Reklamveren',
-  AUTOMATICALLY_CREATED: 'Otomatik',
-  UNKNOWN: 'Bilinmiyor',
-}
-
-const STATUS_LABELS: Record<string, string> = {
-  ENABLED: 'Uygun',
-  PAUSED: 'Duraklatıldı',
-  REMOVED: 'Kaldırıldı',
-}
+const KNOWN_TYPES = ['ALL', 'SITELINK', 'CALLOUT', 'STRUCTURED_SNIPPET', 'TEXT', 'IMAGE', 'LEAD_FORM', 'CALL', 'PROMOTION', 'PRICE', 'BOOK_ON_GOOGLE', 'HOTEL_CALLOUT', 'DYNAMIC_EDUCATION', 'BUSINESS_NAME', 'LOGO']
+const KNOWN_SOURCES = ['ADVERTISER', 'AUTOMATICALLY_CREATED', 'UNKNOWN']
+const KNOWN_STATUSES = ['ENABLED', 'PAUSED', 'REMOVED']
 
 const EDITABLE_TYPES = ['SITELINK', 'CALLOUT', 'STRUCTURED_SNIPPET']
 
@@ -105,6 +80,10 @@ export default function CampaignAssetsTab({
   assets, isLoading, error, onFetch, onAddAsset, onRemoveAsset,
   onBulkRemove, onUpdateStatus, entityType = 'campaign', onToast,
 }: Props) {
+  const tt = useTranslations('dashboard.google.detail.assets')
+  const typeLabel = (type: string) => KNOWN_TYPES.includes(type) ? tt(`types.${type}`) : type
+  const sourceLabel = (source: string) => KNOWN_SOURCES.includes(source) ? tt(`sources.${source}`) : (entityType === 'adGroup' ? tt('sourceAdGroup') : tt('sourceCampaign'))
+  const statusLabel = (status: string) => KNOWN_STATUSES.includes(status) ? tt(`statuses.${status}`) : status
   useEffect(() => { onFetch() }, [onFetch])
 
   const [filterType, setFilterType] = useState('ALL')
@@ -189,7 +168,7 @@ export default function CampaignAssetsTab({
       setShowAddForm(false)
       onFetch()
     } catch (e: any) {
-      onToast?.(e.message || 'Öğe oluşturulamadı', 'error')
+      onToast?.(e.message || tt('createError'), 'error')
     } finally {
       setAddLoading(false)
     }
@@ -209,18 +188,18 @@ export default function CampaignAssetsTab({
         } else if (onRemoveAsset) {
           for (const a of selectedAssets) await onRemoveAsset(a.id)
         }
-        onToast?.(`${rns.length} öğe kaldırıldı`, 'success')
+        onToast?.(tt('bulkRemoved', { count: rns.length }), 'success')
       } else if (action === 'pause' && onUpdateStatus) {
         await onUpdateStatus(rns, 'PAUSED')
-        onToast?.(`${rns.length} öğe duraklatıldı`, 'success')
+        onToast?.(tt('bulkPaused', { count: rns.length }), 'success')
       } else if (action === 'enable' && onUpdateStatus) {
         await onUpdateStatus(rns, 'ENABLED')
-        onToast?.(`${rns.length} öğe etkinleştirildi`, 'success')
+        onToast?.(tt('bulkEnabled', { count: rns.length }), 'success')
       }
       setSelectedIds(new Set())
       onFetch()
     } catch (e: any) {
-      onToast?.(e.message || 'İşlem başarısız', 'error')
+      onToast?.(e.message || tt('actionFailed'), 'error')
     } finally {
       setBulkLoading(false)
     }
@@ -232,10 +211,10 @@ export default function CampaignAssetsTab({
     if (asset.structuredSnippet) return `${asset.structuredSnippet.header}: ${asset.structuredSnippet.values.join(', ')}`
     if (asset.text) return asset.text
     if (asset.call) return asset.call.phoneNumber
-    if (asset.image) return asset.name || 'Görsel'
-    if (asset.promotion) return asset.promotion.target || 'Promosyon'
-    if (asset.price) return `Fiyat — ${asset.price.type || ''}`
-    if (asset.leadForm) return asset.leadForm.headline || 'Form'
+    if (asset.image) return asset.name || tt('types.IMAGE')
+    if (asset.promotion) return asset.promotion.target || tt('types.PROMOTION')
+    if (asset.price) return `${tt('types.PRICE')} — ${asset.price.type || ''}`
+    if (asset.leadForm) return asset.leadForm.headline || tt('formFallback')
     if (asset.businessName) return asset.businessName
     return asset.name || `#${asset.id}`
   }
@@ -258,7 +237,7 @@ export default function CampaignAssetsTab({
     return (
       <div className="flex items-center justify-center py-12 gap-2 text-gray-500">
         <Loader2 className="w-5 h-5 animate-spin" />
-        <span className="text-sm">Öğeler yükleniyor...</span>
+        <span className="text-sm">{tt('loading')}</span>
       </div>
     )
   }
@@ -271,16 +250,16 @@ export default function CampaignAssetsTab({
       <div className="flex items-center justify-between mb-4">
         <div className="flex items-center gap-1 overflow-x-auto pb-1">
           <FilterChip
-            label={`Tümü (${assets.length})`}
+            label={`${tt('types.ALL')} (${assets.length})`}
             active={filterType === 'ALL'}
             onClick={() => setFilterType('ALL')}
           />
-          {typeGroups.map(t => (
+          {typeGroups.map(typeKey => (
             <FilterChip
-              key={t}
-              label={`${TYPE_LABELS[t] || t} (${assets.filter(a => (a.type || 'OTHER') === t).length})`}
-              active={filterType === t}
-              onClick={() => setFilterType(t)}
+              key={typeKey}
+              label={`${typeLabel(typeKey)} (${assets.filter(a => (a.type || 'OTHER') === typeKey).length})`}
+              active={filterType === typeKey}
+              onClick={() => setFilterType(typeKey)}
             />
           ))}
         </div>
@@ -290,7 +269,7 @@ export default function CampaignAssetsTab({
             className="flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium text-white bg-blue-600 rounded-lg hover:bg-blue-700 transition-colors shadow-sm shrink-0 ml-3"
           >
             {showAddForm ? <X className="w-3.5 h-3.5" /> : <Plus className="w-3.5 h-3.5" />}
-            {showAddForm ? 'İptal' : 'Öğe Ekle'}
+            {showAddForm ? tt('cancel') : tt('addAsset')}
           </button>
         )}
       </div>
@@ -299,13 +278,13 @@ export default function CampaignAssetsTab({
       {someSelected && (
         <div className="flex items-center gap-2 px-4 py-2.5 mb-3 bg-blue-50 border border-blue-200 rounded-lg">
           <span className="text-sm font-medium text-blue-800">
-            {selectedAssets.length} satır seçildi
+            {tt('rowsSelected', { count: selectedAssets.length })}
           </span>
           <div className="h-4 w-px bg-blue-300 mx-1" />
           {(onBulkRemove || onRemoveAsset) && (
             <BulkButton
               icon={<Trash2 className="w-3.5 h-3.5" />}
-              label="Kaldır"
+              label={tt('remove')}
               loading={bulkLoading}
               onClick={() => handleBulkAction('remove')}
               danger
@@ -315,13 +294,13 @@ export default function CampaignAssetsTab({
             <>
               <BulkButton
                 icon={<Pause className="w-3.5 h-3.5" />}
-                label="Duraklar"
+                label={tt('pause')}
                 loading={bulkLoading}
                 onClick={() => handleBulkAction('pause')}
               />
               <BulkButton
                 icon={<Play className="w-3.5 h-3.5" />}
-                label="Etkinleştir"
+                label={tt('enable')}
                 loading={bulkLoading}
                 onClick={() => handleBulkAction('enable')}
               />
@@ -334,42 +313,42 @@ export default function CampaignAssetsTab({
       {showAddForm && onAddAsset && (
         <div className="bg-gray-50/80 rounded-lg border border-gray-200/60 p-4 mb-4">
           <div className="flex items-center gap-3 mb-4">
-            <label className="text-xs font-medium text-gray-500">Tür:</label>
+            <label className="text-xs font-medium text-gray-500">{tt('typeLabel')}</label>
             <select
               value={addType}
               onChange={(e) => { setAddType(e.target.value as any); resetForm() }}
               className="px-3 py-1.5 text-sm border border-gray-200 rounded-lg bg-white"
             >
-              <option value="SITELINK">Site bağlantısı</option>
-              <option value="CALLOUT">Açıklama metni</option>
-              <option value="STRUCTURED_SNIPPET">Ek açıklamalı snippet</option>
+              <option value="SITELINK">{tt('types.SITELINK')}</option>
+              <option value="CALLOUT">{tt('types.CALLOUT')}</option>
+              <option value="STRUCTURED_SNIPPET">{tt('types.STRUCTURED_SNIPPET')}</option>
             </select>
           </div>
 
           {addType === 'SITELINK' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Link Metni *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tt('sitelinkLinkText')}</label>
                 <input type="text" value={slLinkText} onChange={e => setSlLinkText(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  placeholder="Hakkımızda" maxLength={25} />
+                  placeholder={tt('sitelinkLinkTextPlaceholder')} maxLength={25} />
               </div>
               <div className="grid grid-cols-2 gap-3">
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Açıklama 1</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">{tt('sitelinkDesc1')}</label>
                   <input type="text" value={slDesc1} onChange={e => setSlDesc1(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    placeholder="Kısa açıklama" maxLength={35} />
+                    placeholder={tt('sitelinkDesc1Placeholder')} maxLength={35} />
                 </div>
                 <div>
-                  <label className="block text-xs font-medium text-gray-500 mb-1">Açıklama 2</label>
+                  <label className="block text-xs font-medium text-gray-500 mb-1">{tt('sitelinkDesc2')}</label>
                   <input type="text" value={slDesc2} onChange={e => setSlDesc2(e.target.value)}
                     className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                    placeholder="İkinci açıklama" maxLength={35} />
+                    placeholder={tt('sitelinkDesc2Placeholder')} maxLength={35} />
                 </div>
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">URL *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tt('sitelinkUrl')}</label>
                 <input type="url" value={slUrl} onChange={e => setSlUrl(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   placeholder="https://example.com/sayfa" />
@@ -379,23 +358,23 @@ export default function CampaignAssetsTab({
 
           {addType === 'CALLOUT' && (
             <div>
-              <label className="block text-xs font-medium text-gray-500 mb-1">Açıklama Metni *</label>
+              <label className="block text-xs font-medium text-gray-500 mb-1">{tt('calloutText')}</label>
               <input type="text" value={coText} onChange={e => setCoText(e.target.value)}
                 className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                placeholder="Ücretsiz Kargo" maxLength={25} />
+                placeholder={tt('calloutTextPlaceholder')} maxLength={25} />
             </div>
           )}
 
           {addType === 'STRUCTURED_SNIPPET' && (
             <div className="space-y-3">
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Başlık *</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tt('snippetHeader')}</label>
                 <input type="text" value={ssHeader} onChange={e => setSsHeader(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
-                  placeholder="Markalar" />
+                  placeholder={tt('snippetHeaderPlaceholder')} />
               </div>
               <div>
-                <label className="block text-xs font-medium text-gray-500 mb-1">Değerler * (virgülle ayırın)</label>
+                <label className="block text-xs font-medium text-gray-500 mb-1">{tt('snippetValues')}</label>
                 <input type="text" value={ssValues} onChange={e => setSsValues(e.target.value)}
                   className="w-full px-3 py-2 text-sm border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500/20 focus:border-blue-500"
                   placeholder="Nike, Adidas, Puma" />
@@ -412,7 +391,7 @@ export default function CampaignAssetsTab({
               className="px-4 py-2 text-sm font-medium text-white bg-[#2BB673] rounded-lg hover:bg-[#249E63] disabled:opacity-50 disabled:cursor-not-allowed transition-colors shadow-sm flex items-center gap-2"
             >
               {addLoading && <Loader2 className="w-3.5 h-3.5 animate-spin" />}
-              Öğe Oluştur
+              {tt('createAsset')}
             </button>
           </div>
         </div>
@@ -421,7 +400,7 @@ export default function CampaignAssetsTab({
       {/* ── Assets Table (Google Ads style) ── */}
       {filtered.length === 0 ? (
         <div className="p-6 text-center text-gray-400">
-          {assets.length === 0 ? 'Bu kampanyaya bağlı öğe bulunamadı.' : 'Bu filtreye uygun öğe yok.'}
+          {assets.length === 0 ? tt('emptyNoAssets') : tt('emptyNoMatch')}
         </div>
       ) : (
         <div className="border border-gray-200 rounded-lg overflow-x-auto">
@@ -437,15 +416,15 @@ export default function CampaignAssetsTab({
                   />
                 </th>
                 <th className="w-8 px-1 py-2.5" />
-                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Öğe</th>
-                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Öğe türü</th>
-                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Durum</th>
-                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">Ekleyen</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Tıklamalar</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Göstr.</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">TO</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">Ort. TBM</th>
-                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">Maliyet</th>
+                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colAsset')}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{tt('colAssetType')}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colStatus')}</th>
+                <th className="px-3 py-2.5 text-left text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colAddedBy')}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{tt('colClicks')}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colImpr')}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colCtr')}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide whitespace-nowrap">{tt('colAvgCpc')}</th>
+                <th className="px-3 py-2.5 text-right text-xs font-medium text-gray-500 uppercase tracking-wide">{tt('colCost')}</th>
                 <th className="w-12 px-2 py-2.5" />
               </tr>
             </thead>
@@ -482,7 +461,7 @@ export default function CampaignAssetsTab({
                     {/* Type */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <span className="text-xs text-gray-600">
-                        {TYPE_LABELS[asset.type] || asset.type}
+                        {typeLabel(asset.type)}
                       </span>
                     </td>
 
@@ -492,14 +471,14 @@ export default function CampaignAssetsTab({
                         asset.status === 'ENABLED' ? 'text-green-700' :
                         asset.status === 'PAUSED' ? 'text-yellow-600' : 'text-gray-500'
                       }`}>
-                        {STATUS_LABELS[asset.status] || asset.status}
+                        {statusLabel(asset.status)}
                       </span>
                     </td>
 
                     {/* Source */}
                     <td className="px-3 py-2.5 whitespace-nowrap">
                       <span className="text-xs text-blue-600">
-                        {SOURCE_LABELS[asset.source] || (entityType === 'adGroup' ? 'Reklam grubu' : 'Kampanya')}
+                        {sourceLabel(asset.source)}
                       </span>
                     </td>
 
@@ -526,7 +505,7 @@ export default function CampaignAssetsTab({
                         <button
                           onClick={() => { onRemoveAsset(asset.id); onFetch() }}
                           className="p-1 text-gray-400 hover:text-red-500 rounded transition-colors"
-                          title="Kaldır"
+                          title={tt('remove')}
                         >
                           <Trash2 className="w-3.5 h-3.5" />
                         </button>

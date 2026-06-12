@@ -1,6 +1,7 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
+import { useTranslations } from 'next-intl'
 import type { PMaxProximityTarget } from './shared/PMaxWizardTypes'
 
 const DEFAULT_CENTER = { lat: 39.9334, lng: 32.8597 }
@@ -27,6 +28,7 @@ export default function PMaxLocationMap({
   radiusLabel,
   pinModeActive,
 }: Props) {
+  const t = useTranslations('dashboard.google.wizard.location')
   const containerRef = useRef<HTMLDivElement>(null)
   const mapRef = useRef<{
     map: any
@@ -250,7 +252,7 @@ export default function PMaxLocationMap({
 
   if (!mounted) return (
     <div className="w-full h-full min-h-[300px] bg-gray-100 flex items-center justify-center">
-      <span className="text-sm text-gray-500">Harita yükleniyor...</span>
+      <span className="text-sm text-gray-500">{t('mapLoading')}</span>
     </div>
   )
 

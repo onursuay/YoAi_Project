@@ -568,6 +568,53 @@
         "deleting": "Siliniyor...",
         "confirm": "Evet, Sil",
         "cancel": "İptal"
+      },
+      "editDrawer": {
+        "ad": {
+          "title": "Reklamı Düzenle",
+          "subtitle": "Reklamınızı buradan düzenleyebilirsiniz.",
+          "leadGenNotEditable": "Lead Gen reklam — içerik düzenlemesi desteklenmiyor; sadece reklam adı değişebilir.",
+          "postPromotedNotEditable": "Tanıtılan gönderi reklamı — organik gönderi içeriği API ile düzenlenemez; sadece reklam adı değişebilir.",
+          "nameHeading": "Reklam Adı",
+          "nameHint": "Reklamınıza bir isim verin.",
+          "namePlaceholder": "Reklam adı...",
+          "creativeHeading": "Reklam İçeriği",
+          "creativeHint": "Reklamınızın metin ve bağlantı ayarları.",
+          "primaryTextLabel": "Ana Metin",
+          "primaryTextPlaceholder": "Reklamın ana metni...",
+          "headlineLabel": "Başlık",
+          "headlinePlaceholder": "Dikkat çekici başlık...",
+          "descriptionLabel": "Açıklama",
+          "descriptionPlaceholder": "Ek açıklama...",
+          "websiteLabel": "İnternet Sitesi",
+          "ctaLabel": "Eylem Çağrısı",
+          "charsRecommended": "{count}/{max} karakter önerilen",
+          "previewHeading": "Önizleme",
+          "previewMobileFeed": "Mobil Akış",
+          "previewDesktopFeed": "Masaüstü Akış",
+          "previewStory": "Hikaye",
+          "previewPageName": "Sayfa Adı",
+          "previewSponsored": "Sponsorlu",
+          "previewMediaPlaceholder": "Medya Önizleme"
+        },
+        "campaign": {
+          "title": "Kampanyayı Düzenle",
+          "subtitle": "Kampanyanızı buradan düzenleyebilirsiniz.",
+          "nameHeading": "Kampanya Adı",
+          "nameHint": "Oluşturduğunuz kampanyaya bir isim verin.",
+          "namePlaceholder": "Kampanya adı...",
+          "renameSuccess": "Kampanya adı başarıyla güncellendi"
+        },
+        "sidebar": {
+          "searchPlaceholder": "Arama yapınız..."
+        },
+        "toast": {
+          "fetchFailed": "Reklam bilgileri alınamadı",
+          "creativeNotEditable": "Bu reklam tipi içerik düzenlemesine izin vermiyor.",
+          "updateFailed": "Güncelleme başarısız",
+          "updateSuccess": "Reklam başarıyla güncellendi",
+          "nameOnlyUpdated": "Sadece reklam adı güncellendi (içerik değişikliği desteklenmiyor)"
+        }
       }
     },
     "google": {
@@ -746,7 +793,25 @@
             "importError": "Resim Google Ads'e yüklenemedi.",
             "notImageCompatible": "Bu görselin en boy oranı resim için uygun değil (1.91:1, 1:1 veya 4:5 gerekir).",
             "selectKind": "Bu resmi hangi kategoriye eklemek istiyorsunuz?",
-            "back": "Geri"
+            "back": "Geri",
+            "tooSmall": "Görsel tüm oranlar için çok küçük. En az 300×300 px gerekli.",
+            "dialogTitle": "Reklamınızda Kullanılacak 15 Görsel Seçin...",
+            "cropBuilding": "Kırpma seçenekleri hazırlanıyor…",
+            "scanning": "Sayfa taranıyor…",
+            "recEmptyTitle": "Henüz önerilen öğe yok",
+            "recEmptyDesc": "Bu URL'de uygun görsel bulunamadı. \"Yükle\" veya \"Web sitesi veya sosyal medya\" sekmesinden ekleyebilirsiniz.",
+            "sourceLabel": "Kaynak:",
+            "libraryNoAccess": "Bu Google Ads hesabında asset kitaplığına erişim yok olabilir. \"Yükle\" sekmesinden görsel ekleyebilirsiniz.",
+            "uploadHintFull": "JPG/PNG/GIF formatında resim yükleyin (min 300×300, max 5 MB). Farklı oranlı görseller için otomatik kırpma seçenekleri sunulur.",
+            "uploadingCount": "{done} / {total} yükleniyor…",
+            "uploading": "Yükleniyor…",
+            "uploadFormats": "JPG / PNG / GIF · max 5 MB · birden fazla seçilebilir",
+            "cropSelectTitle": "Kırpma oranını seçin",
+            "cropSelectDesc": "Görseliniz Google Ads oran gereksinimlerine göre otomatik kırpıldı. Kullanmak istediğiniz oranı seçin ve ekleyin.",
+            "pexelsNotConfigured": "Pexels API yapılandırılmamış",
+            "pexelsNotConfiguredHintBefore": "Ücretsiz stok görseller için sunucu yöneticinizin",
+            "pexelsNotConfiguredHintAfter": "ortam değişkenini tanımlaması gerekiyor.",
+            "pexelsAlternative": "Alternatif: \"Web sitesi\" sekmesinden veya \"Yükle\" sekmesinden görsel ekleyebilirsiniz."
           },
           "logoSectionLabel": "Logolar",
           "logoSectionHint": "En fazla 5 logo — yatay (4:1) veya kare (1:1)",
@@ -766,7 +831,11 @@
             "ytNoResults": "Sonuç bulunamadı",
             "ytNoApiKey": "YouTube arama özelliği yapılandırılmadı. Yönetici YOUTUBE_API_KEY eklemelidir. URL/ID yapıştırma yine çalışır.",
             "searchError": "YouTube araması başarısız oldu.",
-            "importError": "Video asset Google Ads'e eklenemedi."
+            "importError": "Video asset Google Ads'e eklenemedi.",
+            "channelUrlError": "Bu bir kanal/playlist URL'si. Lütfen tek bir video URL'si veya 11 karakterli video ID girin (örn. youtube.com/watch?v=… veya youtu.be/…).",
+            "apiKeyMissing": "YouTube anahtar kelime aramaları için YOUTUBE_API_KEY tanımlı değil.",
+            "apiKeySolutionBefore": "Çözüm: tek bir video URL'si yapıştırın (örn.",
+            "apiKeySolutionAfter": ") veya 11 karakterli video ID'sini girin. Kanal URL'si değil."
           },
           "logoPicker": {
             "title": "Reklamınızda kullanılacak logo seçin",
@@ -1128,7 +1197,17 @@
           "radius": "Yarıçap",
           "pinMode": "Sabitleme modu",
           "pinModeHint": "Haritaya tıklayarak pin bırakın",
-          "saveProximity": "Yarıçap hedeflemesini kaydet"
+          "saveProximity": "Yarıçap hedeflemesini kaydet",
+          "targetTypeCountry": "Ülke",
+          "targetTypeCity": "Şehir",
+          "targetTypeProvince": "İl",
+          "targetTypeDistrict": "İlçe",
+          "targetTypePostalCode": "Posta Kodu",
+          "targetTypeInterest": "İlgi Alanı",
+          "targetTypeDefault": "Konum",
+          "selectedCount": "{count} konum seçildi",
+          "excludedChip": "(Hariç)",
+          "mapLoading": "Harita yükleniyor..."
         },
         "audience": {
           "segmentTitle": "Kitle Segmentleri",
@@ -1268,7 +1347,9 @@
           "dateRangeHint": "Kampanya ayarları adımından düzenlenir",
           "strategyNoteCpa": "Hedef EBM stratejisi için bütçe, günlük en az 10× hedef EBM olmalıdır.",
           "strategyNoteRoas": "Hedef ROAS stratejisi için yeterli bütçe öğrenme aşamasını hızlandırır.",
-          "manualCpcNote": "Manuel TBM ile bütçe, günlük maksimum harcamanızı belirler."
+          "manualCpcNote": "Manuel TBM ile bütçe, günlük maksimum harcamanızı belirler.",
+          "recommendationLine": "{amount} {currency}/gün — Seçtiğiniz teklif stratejisi için Google önerisi",
+          "recommendedForStrategy": "Bu strateji için önerilen: {amount} {currency}/gün."
         },
         "review": {
           "title": "Yayın Kontrolü",
@@ -1674,7 +1755,13 @@
           "typePostalCode": "Posta kodu",
           "typePresence": "Varlık",
           "typeInterest": "İlgi",
-          "typeDefault": "Konum"
+          "typeDefault": "Konum",
+          "searchPlaceholderFull": "Hedeflenecek veya hariç tutulacak konumları girin",
+          "searchHint": "Örneğin; ülke, şehir, bölge veya posta kodu",
+          "excludedChip": "(Hariç)",
+          "selectedWithCount": "Seçilen ({count})",
+          "radiusSearchPlaceholder": "Şehir, ilçe veya bölge arayın",
+          "orPinModeHint": "veya Sabitleme modu ile haritadan seçin"
         },
         "assetGroup": {
           "assetGroupName": "Varlık Grubu Adı",
@@ -1793,7 +1880,20 @@
           "searchThemePlaceholder": "Örn: online alışveriş",
           "searchThemeEnterHint": "Enter tuşu ile ekleyin. Tekrarlar engellenir.",
           "addSearchTheme": "Arama teması ekle",
-          "removeTheme": "Kaldır"
+          "removeTheme": "Kaldır",
+          "loadFailed": "Yüklenemedi",
+          "loadError": "Kitle verileri yüklenemedi",
+          "selectedCount": "{count} kitle segmenti seçildi",
+          "selectSegment": "Kitle segmenti seç",
+          "sections": {
+            "userLists": "Web sitesini ziyaret eden kullanıcılar",
+            "inMarket": "Pazardaki kitleler",
+            "affinity": "Yakınlık",
+            "detailedDemographics": "Ayrıntılı demografik veriler",
+            "lifeEvents": "Yaşam olayları",
+            "customAudiences": "Özel kitleler",
+            "combinedAudiences": "Birleştirilmiş kitleler"
+          }
         },
         "budget": {
           "dailyBudget": "Günlük Bütçe",
@@ -1933,6 +2033,300 @@
           "tablets": "Tabletler",
           "tvScreens": "TV ekranları"
         }
+      },
+      "detail": {
+        "technicalDetail": "Teknik detay",
+        "common": {
+          "clicks": "Tıklama",
+          "impressions": "Gösterim",
+          "ctr": "CTR",
+          "avgCpc": "Ort. TBM",
+          "cost": "Maliyet",
+          "conversions": "Dönüşüm"
+        },
+        "searchTerms": {
+          "loading": "Arama terimleri yükleniyor...",
+          "empty": "Bu kampanya için arama terimi verisi bulunamadı.",
+          "selectedCount": "{count} terim seçildi",
+          "addAsKeyword": "Anahtar Kelime Olarak Ekle",
+          "addAsNegativeKeyword": "Negatif Anahtar Kelime Olarak Ekle",
+          "matchTypes": {
+            "BROAD": "Geniş Eşleşme",
+            "PHRASE": "Sıralı Eşleşme",
+            "EXACT": "Tam Eşleşme"
+          },
+          "statusAdded": "Eklendi",
+          "statusExcluded": "Hariç",
+          "statusAddedExcluded": "Eklendi (Hariç)",
+          "statusAuto": "Otomatik",
+          "statusUnknown": "—",
+          "excludedDone": "Hariç Tutuldu",
+          "colSearchTerm": "Arama Terimi",
+          "colStatus": "Durum",
+          "colAdGroup": "Reklam Grubu",
+          "colClicks": "Tıklama",
+          "colImpressions": "Gösterim",
+          "colCtr": "CTR",
+          "colAvgCpc": "Ort. TBM",
+          "colCost": "Maliyet",
+          "colConversions": "Dönüşüm"
+        },
+        "landingPages": {
+          "loading": "Landing page verileri yükleniyor...",
+          "empty": "Bu kampanya için landing page verisi bulunamadı."
+        },
+        "adSchedule": {
+          "loading": "Reklam zamanlaması yükleniyor...",
+          "empty": "Özel reklam zamanlaması ayarlanmamış — reklamlar 7/24 yayında.",
+          "days": {
+            "MONDAY": "Pazartesi",
+            "TUESDAY": "Salı",
+            "WEDNESDAY": "Çarşamba",
+            "THURSDAY": "Perşembe",
+            "FRIDAY": "Cuma",
+            "SATURDAY": "Cumartesi",
+            "SUNDAY": "Pazar"
+          }
+        },
+        "locations": {
+          "loading": "Lokasyonlar yükleniyor...",
+          "empty": "Bu kampanyaya hedef lokasyon eklenmemiş.",
+          "targetedTitle": "Hedeflenen Lokasyonlar ({count})",
+          "noTargeted": "Hedeflenen lokasyon yok.",
+          "excludedTitle": "Hariç Tutulan Lokasyonlar ({count})"
+        },
+        "overview": {
+          "optimizationScore": "Optimizasyon Skoru",
+          "scoreUnavailable": "Skor mevcut değil",
+          "statusAssessment": "Durum Değerlendirmesi",
+          "noIssues": "Herhangi bir sorun tespit edilmedi.",
+          "totalAds": "Toplam {count} reklam",
+          "disapprovedAds": "({count} onaylanmadı)",
+          "campaignInfo": "Kampanya Bilgileri",
+          "status": "Durum",
+          "servingStatus": "Yayın Durumu",
+          "biddingStrategy": "Teklif Stratejisi",
+          "dailyBudget": "Günlük Bütçe",
+          "statusEnabled": "Aktif",
+          "statusPaused": "Duraklatıldı",
+          "statusRemoved": "Kaldırıldı",
+          "servingServing": "Yayında",
+          "servingEnded": "Sona Erdi",
+          "servingPending": "Beklemede",
+          "servingSuspended": "Askıda",
+          "servingNone": "—",
+          "performanceSummary": "Performans Özeti",
+          "spent": "Harcanan",
+          "clicks": "Tıklamalar",
+          "impressions": "Gösterim",
+          "conversions": "Dönüşüm",
+          "avgCpc": "Ort. TBM",
+          "conversionValue": "Dönüşüm Değeri"
+        },
+        "assets": {
+          "loading": "Öğeler yükleniyor...",
+          "createError": "Öğe oluşturulamadı",
+          "bulkRemoved": "{count} öğe kaldırıldı",
+          "bulkPaused": "{count} öğe duraklatıldı",
+          "bulkEnabled": "{count} öğe etkinleştirildi",
+          "actionFailed": "İşlem başarısız",
+          "formFallback": "Form",
+          "types": {
+            "ALL": "Tümü",
+            "SITELINK": "Site bağlantısı",
+            "CALLOUT": "Açıklama metni",
+            "STRUCTURED_SNIPPET": "Ek açıklamalı snippet",
+            "TEXT": "Metin",
+            "IMAGE": "Görsel",
+            "LEAD_FORM": "Potansiyel müşteri formu",
+            "CALL": "Telefon",
+            "PROMOTION": "Promosyon",
+            "PRICE": "Fiyat",
+            "BOOK_ON_GOOGLE": "Google'da Rezervasyon",
+            "HOTEL_CALLOUT": "Otel Açıklama Metni",
+            "DYNAMIC_EDUCATION": "Dinamik Eğitim",
+            "BUSINESS_NAME": "İşletme adı",
+            "LOGO": "İşletme logosu"
+          },
+          "sources": {
+            "ADVERTISER": "Reklamveren",
+            "AUTOMATICALLY_CREATED": "Otomatik",
+            "UNKNOWN": "Bilinmiyor"
+          },
+          "sourceCampaign": "Kampanya",
+          "sourceAdGroup": "Reklam grubu",
+          "statuses": {
+            "ENABLED": "Uygun",
+            "PAUSED": "Duraklatıldı",
+            "REMOVED": "Kaldırıldı"
+          },
+          "addAsset": "Öğe Ekle",
+          "cancel": "İptal",
+          "rowsSelected": "{count} satır seçildi",
+          "remove": "Kaldır",
+          "pause": "Duraklar",
+          "enable": "Etkinleştir",
+          "typeLabel": "Tür:",
+          "sitelinkLinkText": "Link Metni *",
+          "sitelinkLinkTextPlaceholder": "Hakkımızda",
+          "sitelinkDesc1": "Açıklama 1",
+          "sitelinkDesc1Placeholder": "Kısa açıklama",
+          "sitelinkDesc2": "Açıklama 2",
+          "sitelinkDesc2Placeholder": "İkinci açıklama",
+          "sitelinkUrl": "URL *",
+          "calloutText": "Açıklama Metni *",
+          "calloutTextPlaceholder": "Ücretsiz Kargo",
+          "snippetHeader": "Başlık *",
+          "snippetHeaderPlaceholder": "Markalar",
+          "snippetValues": "Değerler * (virgülle ayırın)",
+          "createAsset": "Öğe Oluştur",
+          "emptyNoAssets": "Bu kampanyaya bağlı öğe bulunamadı.",
+          "emptyNoMatch": "Bu filtreye uygun öğe yok.",
+          "colAsset": "Öğe",
+          "colAssetType": "Öğe türü",
+          "colStatus": "Durum",
+          "colAddedBy": "Ekleyen",
+          "colClicks": "Tıklamalar",
+          "colImpr": "Göstr.",
+          "colCtr": "TO",
+          "colAvgCpc": "Ort. TBM",
+          "colCost": "Maliyet"
+        },
+        "demographics": {
+          "loadError": "Demografi verileri yüklenemedi.",
+          "updateError": "Demografi güncellenemedi",
+          "saveSuccess": "Demografi ayarları güncellendi ({created} yeni, {updated} güncelleme)",
+          "genericError": "Bir hata oluştu",
+          "title": "Demografiyi Düzenle",
+          "subtitleAdGroup": "Reklam grubu düzeyinde demografi ayarları",
+          "subtitleCampaign": "Kampanya düzeyinde demografi ayarları",
+          "loading": "Demografi verileri yükleniyor...",
+          "newCriteriaInfo": "İşaretlenmemiş kriterler henüz oluşturulmamış. Etkinleştirmek istediğiniz kriterleri işaretleyip kaydedin — Google Ads'e otomatik eklenecektir.",
+          "genderTitle": "Cinsiyet",
+          "ageTitle": "Yaş Aralığı",
+          "incomeTitle": "Hane Geliri",
+          "bidLabel": "Teklif:",
+          "newBadge": "YENİ",
+          "values": {
+            "MALE": "Erkek",
+            "FEMALE": "Kadın",
+            "UNDETERMINED": "Bilinmiyor",
+            "AGE_RANGE_UNDETERMINED": "Bilinmiyor",
+            "INCOME_RANGE_0_50": "Alt 50%",
+            "INCOME_RANGE_90_100": "Üst 10%",
+            "INCOME_RANGE_UNDETERMINED": "Bilinmiyor"
+          }
+        },
+        "audience": {
+          "unknownSegment": "Bilinmeyen Segment",
+          "loadError": "Mevcut kitle segmentleri yüklenemedi.",
+          "browseLoadError": "Kitle segmentleri yüklenemedi.",
+          "browseConnectionError": "Kitle segmentleri yüklenirken bir bağlantı hatası oluştu.",
+          "removeError": "Segmentler kaldırılamadı",
+          "addError": "Segmentler eklenemedi",
+          "saveSuccess": "Kitle segmentleri güncellendi",
+          "genericError": "Bir hata oluştu",
+          "title": "Kitle Segmentlerini Düzenle",
+          "subtitleAdGroup": "Reklam grubu düzeyinde kitle segmentleri",
+          "subtitleCampaign": "Kampanya düzeyinde kitle segmentleri",
+          "loading": "Mevcut kitle segmentleri yükleniyor...",
+          "targetingMode": "Hedefleme Modu",
+          "modeObservation": "Gözlem",
+          "modeTargeting": "Hedefleme",
+          "modeObservationDesc": "Teklifleri ayarlayın ancak erişimi daraltmayın",
+          "modeTargetingDesc": "Reklamları yalnızca bu kitlelere gösterin",
+          "selectedSegments": "Seçili Segmentler ({count})",
+          "selectedCount": "{count} kitle segmenti seçildi",
+          "selectSegment": "Kitle segmenti seç",
+          "tabSearch": "Arama",
+          "tabBrowse": "Göz at",
+          "searchPlaceholder": "Kitle segmenti arayın... (ör: araba, spor, ebeveyn)",
+          "noResults": "Sonuç bulunamadı",
+          "searchHint": "Pazardaki kitle, yakın ilgi alanı, demografi ve verilerinize göre segmentler arasında arayın.",
+          "browseLoading": "Kitle segmentleri yükleniyor ve çevriliyor...",
+          "browseLoadingHint": "İlk yüklemede çeviriler hazırlanır, sonraki açılışlar anlık olur.",
+          "refreshTitle": "Verileri yeniden çek ve çevir",
+          "dataNotReady": "Kitle verileri henüz hazır değil. Yönetici tarafından yenilenmesi gerekiyor.",
+          "categories": {
+            "AFFINITY": "Yakın İlgi Alanı",
+            "IN_MARKET": "Pazardaki Kitle",
+            "DETAILED_DEMOGRAPHIC": "Ayrıntılı Demografi",
+            "LIFE_EVENT": "Yaşam Olayları",
+            "USER_LIST": "Verileriniz",
+            "CUSTOM_AUDIENCE": "Özel Kitle",
+            "COMBINED_AUDIENCE": "Birleşik Segment"
+          },
+          "sections": {
+            "inMarket": {
+              "label": "Etkin Şekilde Araştırdıkları veya Planladıkları Konular",
+              "desc": "Pazardaki kitle segmentleri"
+            },
+            "affinity": {
+              "label": "İlgi Alanları ve Alışkanlıkları",
+              "desc": "Yakın ilgi alanı segmentleri"
+            },
+            "detailedDemographics": {
+              "label": "Kim Oldukları",
+              "desc": "Ayrıntılı demografi segmentleri"
+            },
+            "lifeEvents": {
+              "label": "Yaşam Olayları",
+              "desc": "Yaşam olayı segmentleri"
+            },
+            "userLists": {
+              "label": "İşletmenizle Etkileşimde Bulunma Biçimleri",
+              "desc": "Verilerinize göre segmentler"
+            },
+            "customAudiences": {
+              "label": "Özel Kitleleriniz",
+              "desc": "Anahtar kelime/URL tabanlı özel kitleler"
+            },
+            "combinedAudiences": {
+              "label": "Birleşik Kitle Segmentleriniz",
+              "desc": "Birleşik segmentler"
+            }
+          }
+        },
+        "page": {
+          "tabOverview": "Genel Bakış",
+          "tabSearchTerms": "Arama Terimleri",
+          "tabLocations": "Lokasyonlar",
+          "tabAdSchedule": "Reklam Zamanlaması",
+          "tabLandingPages": "Landing Pages",
+          "tabAssets": "Öğeler",
+          "campaignFallback": "Kampanya {id}",
+          "statusEnabled": "Aktif",
+          "statusPaused": "Duraklatıldı",
+          "optScore": "Opt. Skor",
+          "loading": "Yükleniyor..."
+        }
+      },
+      "adEdit": {
+        "loadError": "Reklam detayları yüklenemedi",
+        "minHeadlines": "En az 3 başlık gerekli",
+        "minDescriptions": "En az 2 açıklama gerekli",
+        "updateSuccess": "Reklam güncellendi",
+        "updateError": "Güncelleme başarısız",
+        "title": "Reklam Düzenle",
+        "unsupportedType": "Bu reklam tipi ({type}) düzenlenemez. Sadece Responsive Search Ad (RSA) reklamları düzenlenebilir.",
+        "adNameLabel": "Reklam Adı",
+        "adNameHint": "Google Ads API üzerinden reklam adı değiştirilemez.",
+        "headlinesTitle": "Başlıklar ({count}/15)",
+        "headlinePlaceholder": "Başlık metni (maks 30 karakter)",
+        "headlinesHint": "En az 3, en fazla 15 başlık. Her biri maks 30 karakter.",
+        "descriptionsTitle": "Açıklamalar ({count}/4)",
+        "descriptionPlaceholder": "Açıklama metni (maks 90 karakter)",
+        "descriptionsHint": "En az 2, en fazla 4 açıklama. Her biri maks 90 karakter.",
+        "urlAndPaths": "URL ve Yollar",
+        "finalUrl": "Son URL",
+        "path1": "Yol 1 (opsiyonel)",
+        "path1Placeholder": "ornek",
+        "path2": "Yol 2 (opsiyonel)",
+        "path2Placeholder": "sayfa",
+        "preview": "Önizleme",
+        "searchResult": "Google Arama Sonucu",
+        "headlinePreview": "Başlık önizlemesi",
+        "descriptionPreview": "Açıklama önizlemesi"
       }
     },
     "tiktok": {

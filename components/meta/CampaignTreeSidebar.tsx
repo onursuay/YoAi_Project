@@ -1,6 +1,7 @@
 'use client'
 
 import { useState, useMemo, useEffect } from 'react'
+import { useTranslations } from 'next-intl'
 import { Search, ChevronRight, ChevronDown, Megaphone, FolderOpen, FileText } from 'lucide-react'
 
 export interface TreeCampaign { id: string; name: string; status: string }
@@ -18,6 +19,7 @@ interface CampaignTreeSidebarProps {
 }
 
 export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEntity, relatedCampaignId: explicitCampaignId, onEntitySelect, highlightedIds }: CampaignTreeSidebarProps) {
+  const t = useTranslations('dashboard.meta.editDrawer')
   const [search, setSearch] = useState('')
   const [expandedCampaigns, setExpandedCampaigns] = useState<Set<string>>(new Set())
   const [expandedAdsets, setExpandedAdsets] = useState<Set<string>>(new Set())
@@ -210,7 +212,7 @@ export default function CampaignTreeSidebar({ campaigns, adsets, ads, editingEnt
           <Search className="absolute left-2.5 top-1/2 -translate-y-1/2 w-3.5 h-3.5 text-gray-400" />
           <input
             type="text"
-            placeholder="Arama yapınız..."
+            placeholder={t('sidebar.searchPlaceholder')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
             className="w-full pl-8 pr-3 py-2 text-sm border border-gray-200 rounded-lg bg-white focus:outline-none focus:ring-1 focus:ring-green-300 focus:border-green-300"
