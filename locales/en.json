@@ -2311,7 +2311,7 @@
             "UNDETERMINED": "Unknown",
             "AGE_RANGE_UNDETERMINED": "Unknown",
             "INCOME_RANGE_0_50": "Lower 50%",
-            "INCOME_RANGE_90_100": "Top 10%",
+            "INCOME_RANGE_90_UP": "Top 10%",
             "INCOME_RANGE_UNDETERMINED": "Unknown"
           }
         },

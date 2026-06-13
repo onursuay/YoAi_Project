@@ -261,8 +261,9 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
       ...(channelType === 'DISPLAY' && params.biddingStrategy === 'MANUAL_CPM' && params.viewableCpmBidMicros
         && { cpmBidMicros: String(params.viewableCpmBidMicros) }),
       // DISPLAY-only: Optimize edilmiş hedefleme — Google Ads sinyalleri genişletir
+      // NOT: AdGroup proto'sunda alan DÜZ boolean (optimized_targeting_enabled); nested obje INVALID_ARGUMENT verir
       ...(channelType === 'DISPLAY' && typeof params.optimizedTargeting === 'boolean'
-        && { optimizedTargeting: { optimizedTargetingEnabled: params.optimizedTargeting } }),
+        && { optimizedTargetingEnabled: params.optimizedTargeting }),
     },
   }])
   const adGroupResourceName: string = adGroupData.results[0].resourceName

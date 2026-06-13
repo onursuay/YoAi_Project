@@ -150,16 +150,24 @@ export async function POST(request: Request) {
 
     const normalizedObjective = normalizeObjective(String(objective))
 
-    // special_ad_categories: Meta (#100) zorunlu; boş kalırsa ["NONE"] gönder ([] kabul edilmez).
-    // Frontend'den gelen değer doğrudan kullanılır; NONE filtrelemesi payload'da yapılmaz.
-    const rawCategories: string[] = Array.isArray(specialAdCategories)
+    // special_ad_categories: Meta (#100) zorunlu alan; boş [] = kısıt yok (Meta [] kabul eder).
+    // Frontend değeri kullanılır + legacy/yanlış enum savunmacı normalize edilir.
+    const SAC_NORMALIZE: Record<string, string> = {
+      // Geçersiz legacy değer → resmi Marketing API enum'u
+      SOCIAL_ISSUES_ELECTIONS_POLITICS: 'ISSUES_ELECTIONS_POLITICS',
+    }
+    const rawCategories: string[] = (Array.isArray(specialAdCategories)
       ? specialAdCategories.filter((c: string) => typeof c === 'string' && c.trim() !== '')
       : specialAdCategory
         ? [String(specialAdCategory)]
         : []
+    ).map((c: string) => SAC_NORMALIZE[c] ?? c)
     const special_ad_categories: string[] = rawCategories  // may be empty; [] = no restrictions
 
-    const CBO_NOT_ALLOWED = ['OUTCOME_ENGAGEMENT', 'OUTCOME_AWARENESS', 'OUTCOME_APP_PROMOTION']
+    // CBO (Advantage+ campaign budget): Meta'da hedef-bazlı kısıt YOKTUR; yalnız App Promotion
+    // ayrı bütçe akışı kullandığı için hariç tutulur. Frontend ile BİREBİR aynı liste olmalı;
+    // aksi halde Engagement/Awareness'ta backend CBO'yu sessizce kapatıp bütçesiz kampanya üretir.
+    const CBO_NOT_ALLOWED = ['OUTCOME_APP_PROMOTION']
     const finalCBO = CBO_NOT_ALLOWED.includes(normalizedObjective) ? false : !!campaignBudgetOptimization
     const campaign_budget_optimization = finalCBO
 

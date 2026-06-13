@@ -33,7 +33,7 @@ export default function CampaignCreateModal({ isOpen, onClose, onSuccess, onToas
     { value: 'CREDIT', key: 'credit' },
     { value: 'EMPLOYMENT', key: 'employment' },
     { value: 'HOUSING', key: 'housing' },
-    { value: 'SOCIAL_ISSUES_ELECTIONS_POLITICS', key: 'politics' }
+    { value: 'ISSUES_ELECTIONS_POLITICS', key: 'politics' }
   ]
 
   if (!isOpen) return null

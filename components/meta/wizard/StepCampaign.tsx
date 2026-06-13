@@ -46,7 +46,7 @@ export default function StepCampaign({ state, onChange, errors = {}, minBudgetEr
     { value: 'HOUSING', label: t.HOUSING },
     { value: 'EMPLOYMENT', label: t.EMPLOYMENT },
     { value: 'CREDIT', label: t.CREDIT },
-    { value: 'SOCIAL_ISSUES_ELECTIONS_POLITICS', label: t.SOCIAL_ISSUES_ELECTIONS_POLITICS },
+    { value: 'ISSUES_ELECTIONS_POLITICS', label: t.SOCIAL_ISSUES_ELECTIONS_POLITICS },
   ]
 
   const toggleSpecialCategory = (value: string) => {

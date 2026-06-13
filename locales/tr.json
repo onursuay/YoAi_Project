@@ -2311,7 +2311,7 @@
             "UNDETERMINED": "Bilinmiyor",
             "AGE_RANGE_UNDETERMINED": "Bilinmiyor",
             "INCOME_RANGE_0_50": "Alt 50%",
-            "INCOME_RANGE_90_100": "Üst 10%",
+            "INCOME_RANGE_90_UP": "Üst 10%",
             "INCOME_RANGE_UNDETERMINED": "Bilinmiyor"
           }
         },
