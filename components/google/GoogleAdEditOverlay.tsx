@@ -119,6 +119,9 @@ export default function GoogleAdEditOverlay({
   const updateHeadline = (idx: number, text: string) => {
     setHeadlines(headlines.map((h, i) => (i === idx ? { ...h, text } : h)))
   }
+  const updateHeadlinePin = (idx: number, pin: string) => {
+    setHeadlines(headlines.map((h, i) => (i === idx ? { ...h, pinnedField: pin || null } : h)))
+  }
 
   const addDescription = () => {
     if (descriptions.length < 4) setDescriptions([...descriptions, { text: '' }])
@@ -128,6 +131,9 @@ export default function GoogleAdEditOverlay({
   }
   const updateDescription = (idx: number, text: string) => {
     setDescriptions(descriptions.map((d, i) => (i === idx ? { ...d, text } : d)))
+  }
+  const updateDescriptionPin = (idx: number, pin: string) => {
+    setDescriptions(descriptions.map((d, i) => (i === idx ? { ...d, pinnedField: pin || null } : d)))
   }
 
   // Build preview
@@ -203,9 +209,20 @@ export default function GoogleAdEditOverlay({
                         placeholder={t('headlinePlaceholder')}
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                       />
-                      <span className={`text-xs shrink-0 ${h.text.length > 25 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      <span className={`text-xs shrink-0 ${h.text.length > 25 ? 'text-gray-600' : 'text-gray-400'}`}>
                         {h.text.length}/30
                       </span>
+                      <select
+                        value={h.pinnedField ?? ''}
+                        onChange={(e) => updateHeadlinePin(idx, e.target.value)}
+                        title="Sabitleme (pin)"
+                        className="shrink-0 text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-green-300"
+                      >
+                        <option value="">Sabit yok</option>
+                        <option value="HEADLINE_1">Başlık 1</option>
+                        <option value="HEADLINE_2">Başlık 2</option>
+                        <option value="HEADLINE_3">Başlık 3</option>
+                      </select>
                       {headlines.length > 3 && (
                         <button onClick={() => removeHeadline(idx)} className="text-gray-400 hover:text-red-500 shrink-0">
                           <X className="w-3.5 h-3.5" />
@@ -239,9 +256,19 @@ export default function GoogleAdEditOverlay({
                         placeholder={t('descriptionPlaceholder')}
                         className="flex-1 px-3 py-1.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:ring-1 focus:ring-green-300"
                       />
-                      <span className={`text-xs shrink-0 ${d.text.length > 80 ? 'text-amber-500' : 'text-gray-400'}`}>
+                      <span className={`text-xs shrink-0 ${d.text.length > 80 ? 'text-gray-600' : 'text-gray-400'}`}>
                         {d.text.length}/90
                       </span>
+                      <select
+                        value={d.pinnedField ?? ''}
+                        onChange={(e) => updateDescriptionPin(idx, e.target.value)}
+                        title="Sabitleme (pin)"
+                        className="shrink-0 text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-green-300"
+                      >
+                        <option value="">Sabit yok</option>
+                        <option value="DESCRIPTION_1">Açıklama 1</option>
+                        <option value="DESCRIPTION_2">Açıklama 2</option>
+                      </select>
                       {descriptions.length > 2 && (
                         <button onClick={() => removeDescription(idx)} className="text-gray-400 hover:text-red-500 shrink-0">
                           <X className="w-3.5 h-3.5" />
