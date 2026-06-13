@@ -574,17 +574,8 @@ const SPEC: Record<ObjectiveId, ObjectiveSpec3D> = {
           ),
         },
       },
-      CATALOG: {
-        defaultOptimizationGoal: OFFSITE_CONVERSIONS,
-        optimizationGoals: {
-          [OFFSITE_CONVERSIONS]: leaf(
-            { campaign: ['name', 'objective'], adset: ['name', 'pageId', 'optimizationGoal', 'catalogId', 'productSetId'], ad: ['name', 'primaryText'] },
-            [CTA_SHOP_NOW, CTA_LEARN_MORE],
-            CTA_SHOP_NOW,
-            OFFSITE_CONVERSIONS
-          ),
-        },
-      },
+      // CATALOG (Dinamik Ürün/Katalog Reklamı) henüz uçtan uca desteklenmiyor (ad create 501).
+      // Kullanıcıyı çıkmaza sokmamak için dönüşüm konumu olarak SUNULMUYOR; katalog akışı eklenince geri açılır.
       APP: {
         defaultOptimizationGoal: OFFSITE_CONVERSIONS,
         optimizationGoals: {

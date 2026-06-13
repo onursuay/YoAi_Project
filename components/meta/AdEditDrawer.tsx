@@ -34,18 +34,25 @@ const CTA_VALUES = [
   'LEARN_MORE',
   'SHOP_NOW',
   'SIGN_UP',
+  'SUBSCRIBE',
   'CONTACT_US',
   'APPLY_NOW',
-  'SUBSCRIBE',
+  'BOOK_NOW',
+  'GET_QUOTE',
   'GET_OFFER',
-  'BOOK_TRAVEL',
+  'DOWNLOAD',
+  'SEND_MESSAGE',
+  'WHATSAPP_MESSAGE',
+  'CALL_NOW',
+  'GET_DIRECTIONS',
+  'WATCH_MORE',
+  'NO_BUTTON',
 ]
 
 export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, onClose, onSuccess, onToast, campaigns, adsets, ads, onEntitySelect, highlightedIds }: AdEditDrawerProps) {
   const t = useTranslations('dashboard.meta.editDrawer')
   const locale = useLocale()
   const metaLocale = locale === 'en' ? 'en' : 'tr'
-  const ctaOptions = CTA_VALUES.map((value) => ({ value, label: translateEnum(value, metaLocale, 'meta') }))
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
 
@@ -56,6 +63,9 @@ export default function AdEditDrawer({ adId, adName, relatedCampaignId, open, on
   const [description, setDescription] = useState('')
   const [websiteUrl, setWebsiteUrl] = useState('')
   const [callToAction, setCallToAction] = useState('LEARN_MORE')
+  // Yüklenen CTA listede yoksa başa ekle — aksi halde <select> ilk seçeneği gösterip kaydetmede sessizce ezer.
+  const ctaOptions = (CTA_VALUES.includes(callToAction) ? CTA_VALUES : [callToAction, ...CTA_VALUES])
+    .map((value) => ({ value, label: translateEnum(value, metaLocale, 'meta') }))
 
   const didInitRef = useRef(false)
   const [editCapabilities, setEditCapabilities] = useState<EditCapabilities>({ canEditName: true, canEditCreative: true })

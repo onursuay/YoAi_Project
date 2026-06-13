@@ -89,13 +89,19 @@ export async function GET(request: Request) {
     // Düzenlenemez:
     // 1. Lead gen form → karmaşık yapı
     // 2. Boosted post (hiçbir editable spec yok) → organik post içeriği değiştirilemez
+    // 3. Carousel (child_attachments) → tek-kartlı edit yolu kartları yok eder; düzenleme bloklanır (veri kaybı koruması)
+    const isCarousel = Array.isArray(ld?.child_attachments) && ld.child_attachments.length > 0
     const hasEditableSpec = !!afs || !!ld?.link || !!vd?.video_id
-    const canEditCreative = hasEditableSpec && !existingLeadGenId
+    const canEditCreative = hasEditableSpec && !existingLeadGenId && !isCarousel
     const editCapabilities = {
       canEditName: true,
       canEditCreative,
       reason: !canEditCreative
-        ? (existingLeadGenId ? 'Lead Gen form' : 'Post promoted reklam — içerik düzenlenemez')
+        ? (existingLeadGenId
+            ? 'Lead Gen form'
+            : isCarousel
+              ? 'Carousel reklam — kart içeriği bu ekrandan düzenlenemez'
+              : 'Post promoted reklam — içerik düzenlenemez')
         : undefined,
     }
 

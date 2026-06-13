@@ -47,7 +47,7 @@ export async function POST(
       if (h.pinnedField) entry.pinnedField = h.pinnedField
       return entry
     })
-    updateFields.push('ad.responsive_search_ad.headlines')
+    updateFields.push('responsive_search_ad.headlines')
   }
 
   if (body.descriptions && body.descriptions.length > 0) {
@@ -56,22 +56,22 @@ export async function POST(
       if (d.pinnedField) entry.pinnedField = d.pinnedField
       return entry
     })
-    updateFields.push('ad.responsive_search_ad.descriptions')
+    updateFields.push('responsive_search_ad.descriptions')
   }
 
   if (body.finalUrls && body.finalUrls.length > 0) {
     adUpdate.finalUrls = body.finalUrls
-    updateFields.push('ad.final_urls')
+    updateFields.push('final_urls')
   }
 
   if (body.path1 !== undefined) {
     rsaUpdate.path1 = body.path1
-    updateFields.push('ad.responsive_search_ad.path1')
+    updateFields.push('responsive_search_ad.path1')
   }
 
   if (body.path2 !== undefined) {
     rsaUpdate.path2 = body.path2
-    updateFields.push('ad.responsive_search_ad.path2')
+    updateFields.push('responsive_search_ad.path2')
   }
 
   if (updateFields.length === 0) {
@@ -84,16 +84,18 @@ export async function POST(
 
   try {
     const ctx = await getGoogleAdsContext()
-    const resourceName = `customers/${ctx.customerId}/adGroupAds/${adGroupId}~${id}`
+    // İçerik (RSA) düzenlemesi AdService üzerinden yapılır (customers/{cid}/ads:mutate).
+    // AdGroupAd.ad alanı immutable olduğundan adGroupAds:mutate ile içerik mutasyonu reddedilir.
+    const resourceName = `customers/${ctx.customerId}/ads/${id}`
 
-    const mutateRes = await fetch(`${GOOGLE_ADS_BASE}/customers/${ctx.customerId}/adGroupAds:mutate`, {
+    const mutateRes = await fetch(`${GOOGLE_ADS_BASE}/customers/${ctx.customerId}/ads:mutate`, {
       method: 'POST',
       headers: buildGoogleAdsHeaders(ctx),
       body: JSON.stringify({
         operations: [{
           update: {
             resourceName,
-            ad: { resourceName: `customers/${ctx.customerId}/ads/${id}`, ...adUpdate },
+            ...adUpdate,
           },
           updateMask: updateFields.join(','),
         }],

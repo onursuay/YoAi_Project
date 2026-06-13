@@ -98,7 +98,7 @@ export default function CarouselEditor({ cards, onChange, onCardMediaChange }: C
               <label className="relative inline-flex items-center cursor-pointer">
                 <input
                   type="file"
-                  accept="image/*,video/*"
+                  accept="image/*"
                   onChange={(e) => {
                     const f = e.target.files?.[0]
                     if (!f) return
