@@ -1829,6 +1829,8 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
       instagramActorId: state.adset.conversionLocation === 'WHATSAPP' ? undefined : igAccountForAd,
       urlParameters: state.ad.urlParameters,
       pixelId: state.ad.pixelId || undefined,
+      // App Promotion: native deep link (app_link_spec) — backend yalnız değer varsa uygular
+      deepLinkUrl: state.ad.deepLinkUrl?.trim() || undefined,
     }
 
     const adBody: Record<string, unknown> = {

@@ -21,6 +21,32 @@ function appendUtmParams(url: string, utmParams?: { utmSource?: string; utmMediu
   return `${url}${separator}${paramString}`
 }
 
+// url_tags: kanonik AdCreative alanı. Meta bunu teslimde tüm hedef URL'lere ekler ve
+// dinamik makroları ({{ad.id}}, {{placement}}...) gerçek değerle çözer. Link'e elle concat
+// edildiğinde makrolar literal kalıyordu — bu yüzden UTM'ler artık url_tags ile gönderilir.
+function buildUrlTags(utmParams?: { utmSource?: string; utmMedium?: string; utmCampaign?: string; utmContent?: string }): string {
+  if (!utmParams) return ''
+  const parts: string[] = []
+  if (utmParams.utmSource) parts.push(`utm_source=${utmParams.utmSource}`)
+  if (utmParams.utmMedium) parts.push(`utm_medium=${utmParams.utmMedium}`)
+  if (utmParams.utmCampaign) parts.push(`utm_campaign=${utmParams.utmCampaign}`)
+  if (utmParams.utmContent) parts.push(`utm_content=${utmParams.utmContent}`)
+  return parts.join('&')
+}
+
+// conversion_domain: pixel'li dönüşüm reklamlarında atıf için (yalnız 1.+2. düzey domain)
+function extractConversionDomain(url?: string): string | undefined {
+  if (!url || typeof url !== 'string') return undefined
+  try {
+    const u = new URL(url.startsWith('http') ? url : `https://${url}`)
+    const host = u.hostname.replace(/^www\./, '')
+    if (!host || host.includes('facebook.com') || host.includes('fb.me') || host.includes('ig.me') || host.includes('m.me') || host.startsWith('tel:')) return undefined
+    return host
+  } catch {
+    return undefined
+  }
+}
+
 function buildPageWelcomeMessage(greeting: unknown) {
   if (typeof greeting !== 'string') return greeting
   return {
@@ -485,10 +511,9 @@ export async function POST(request: Request) {
     if (isIgDirect && igDmLink) {
       linkUrl = creative.websiteUrl?.trim() || igDmLink
     }
-    // UTM parametrelerini URL'ye ekle (IG Direct hariç — ig.me linkleri değiştirilmemeli)
-    if (!isIgDirect && urlParameters) {
-      linkUrl = appendUtmParams(linkUrl, urlParameters)
-    }
+    // UTM parametreleri artık link'e concat EDİLMİYOR — kanonik creative.url_tags ile gönderiliyor (aşağıda).
+    // Böylece {{ad.id}}/{{placement}} gibi dinamik makrolar Meta tarafından teslimde çözülür (literal kalmaz).
+    void appendUtmParams // (geriye dönük: fonksiyon korunur, artık link'e uygulanmaz)
     const hasLink = linkUrl.length > 0
     let ctaType: string =
       (isAwareness || (isEngagement && !isEngagementMessaging && !isEngagementCall && !isEngagementIgDirect)) && !hasLink
@@ -599,6 +624,10 @@ export async function POST(request: Request) {
         name: headlineIsUrl ? '' : safeHeadline,
         description: creative.description,
         call_to_action: ctaValue ? { type: ctaType, value: ctaValue } : { type: ctaType },
+        // App Promotion native deep link (app_link_spec) — yalnız değer varsa
+        ...(objective === 'OUTCOME_APP_PROMOTION' && creative.deepLinkUrl
+          ? { app_link_spec: { ios: [{ url: creative.deepLinkUrl }], android: [{ url: creative.deepLinkUrl }] } }
+          : {}),
       }
       if (needsWelcomeMsg) linkData.page_welcome_message = buildPageWelcomeMessage(chatGreeting)
       objectStorySpec.link_data = linkData
@@ -646,6 +675,13 @@ export async function POST(request: Request) {
     }
 
     creativeFormData.append('object_story_spec', JSON.stringify(objectStorySpec))
+
+    // url_tags: UTM/izleme parametreleri creative seviyesinde (kanonik, makro-uyumlu).
+    // Yalnız web linkli reklamlarda anlamlı; IG Direct/messaging'de gönderilmez.
+    if (!isIgDirect && urlParameters) {
+      const urlTags = buildUrlTags(urlParameters)
+      if (urlTags) creativeFormData.append('url_tags', urlTags)
+    }
 
     if (process.env.META_DEBUG === 'true') {
       const spec = JSON.parse(creativeFormData.get('object_story_spec') ?? '{}')
@@ -790,6 +826,11 @@ export async function POST(request: Request) {
       ...(isLeadsOnAd && leadFormId ? { lead_gen_form_id: leadFormId } : {}),
     }))
     adFormData.append('status', status === 'ACTIVE' ? 'ACTIVE' : 'PAUSED')
+    // conversion_domain: pixel'li dönüşüm reklamlarında atıf domeni (1.+2. düzey domain).
+    const conversionDomain = extractConversionDomain(linkUrl || (creative?.websiteUrl as string | undefined))
+    if (conversionDomain && (objective === 'OUTCOME_SALES' || objective === 'OUTCOME_LEADS' || adPixelId)) {
+      adFormData.append('conversion_domain', conversionDomain)
+    }
     // Leads ON_AD: lead_gen_form_id ad seviyesinde zorunlu (subcode 1892040)
     if (isLeadsOnAd && leadFormId) {
       adFormData.append('lead_gen_form_id', leadFormId)
