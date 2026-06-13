@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-13 — Meta minimum bütçe uyarısı: mesajlaşma kampanyalarında gerçek değer
+- **Sorun:** Etkileşim + mesajlaşma (WhatsApp/Messenger/IG DM) reklamlarında uyarı "Minimum günlük bütçe: 44 TRY" diyordu ama İleri butonu ancak ~76 TRY'de aktif oluyordu. Sebep: uyarı sabit $1 tabanını (`getMinDailyBudgetTRY`=44) gösteriyor, buton ise Meta'nın gerçek per-optimization-goal min'ini (`min_daily_budget_low_freq`) kullanıyordu. Kullanıcı engelin bütçeden kaynaklandığını anlayamıyordu.
+- **Çözüm:** Uyarı metni de İleri kilidiyle **aynı gerçek değeri** kullanıyor (`/api/meta/min-daily-budget-try`, optimization goal'a göre). `bufferedMinTry` ile yalnız $1 tabanının üzerindeki yükseltilmiş min'lere (mesajlaşma → ~78) küçük güvenlik tamponu eklenir (FX/kuruş kayması); taban seviyesi (trafik/erişim → 44) **değişmez**. Gösterilen ile dayatılan eşik birebir aynı.
+- **Dosyalar:** components/meta/CampaignWizard.tsx, lib/budget/minBudget.ts (`bufferedMinTry` + 8 birim assertion)
+
 ## 2026-06-13 — Meta & Google Ads parite: ertelenen tüm işlerin tamamlanması (Faz E–G, `fix/ads-parity-bugs`)
 - **Sorun:** Faz A–D'de ertelenen (regresyon/yeni-UI riski taşıyan) parite kalemlerinin tamamının bitirilmesi istendi — geriye iş bırakılmayacak.
 - **Çözüm:** 11 commit, çalışan akış korunarak (tsc + tam `next build`, 0 hata):
