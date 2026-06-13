@@ -5,7 +5,7 @@
 import { getGoogleAdsAccessToken, searchGAds } from '@/lib/googleAdsAuth'
 import { computeDerivedMetrics } from '@/lib/google-ads/helpers'
 import { runGoogleRuleEngine, type GoogleRuleContext } from './googleRuleEngine'
-import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, GoogleProblemTag } from './analysisTypes'
+import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, GoogleProblemTag, AdsetTargetingSummary } from './analysisTypes'
 import type { ProblemTag } from '@/lib/meta/optimization/types'
 import { computeCreativeHash } from './creativeHash'
 
@@ -362,6 +362,98 @@ export async function fetchGoogleDeep(
       adsByAdGroup.get(agId)!.push(adInsight)
     }
 
+    // 3b. Hedefleme verisi — Arama Ağı'nın kalbi anahtar kelimeler + lokasyon + dil.
+    //     Hepsi defensive (try/catch): hata olursa hedefleme boş kalır, ana akış kırılmaz.
+    const keywordsByAdGroup = new Map<string, string[]>()
+    const geoIdsByCampaign = new Map<string, Set<string>>()
+    const langIdsByCampaign = new Map<string, Set<string>>()
+    const geoNameById = new Map<string, string>()
+    const langNameById = new Map<string, string>()
+    const lastSeg = (rn?: string): string => (rn ? String(rn).split('/').pop() ?? '' : '')
+
+    try {
+      const kwQuery = `
+        SELECT ad_group.id, campaign.id,
+          ad_group_criterion.keyword.text, ad_group_criterion.keyword.match_type
+        FROM ad_group_criterion
+        WHERE ad_group_criterion.type = 'KEYWORD'
+          AND ad_group_criterion.status = 'ENABLED'
+          AND ad_group_criterion.negative = FALSE
+          AND ad_group.status = 'ENABLED'
+          AND campaign.status = 'ENABLED'
+        LIMIT 1000
+      `.trim()
+      const kwRows = await searchGAds<any>(googleCtx, kwQuery)
+      for (const r of kwRows) {
+        const agId = (r.adGroup ?? r.ad_group)?.id ?? ''
+        const text = (r.adGroupCriterion ?? r.ad_group_criterion)?.keyword?.text
+        if (!agId || !text) continue
+        if (!keywordsByAdGroup.has(agId)) keywordsByAdGroup.set(agId, [])
+        const arr = keywordsByAdGroup.get(agId)!
+        if (arr.length < 50 && !arr.includes(text)) arr.push(text)
+      }
+    } catch (e) {
+      console.warn('[GoogleDeepFetcher] keyword fetch skipped:', e instanceof Error ? e.message : e)
+    }
+
+    try {
+      const critQuery = `
+        SELECT campaign.id, campaign_criterion.type, campaign_criterion.negative,
+          campaign_criterion.location.geo_target_constant,
+          campaign_criterion.language.language_constant
+        FROM campaign_criterion
+        WHERE campaign_criterion.status = 'ENABLED'
+          AND campaign.status = 'ENABLED'
+          AND campaign_criterion.type IN ('LOCATION', 'LANGUAGE')
+        LIMIT 2000
+      `.trim()
+      const critRows = await searchGAds<any>(googleCtx, critQuery)
+      for (const r of critRows) {
+        const cId = r.campaign?.id ?? ''
+        const crit = r.campaignCriterion ?? r.campaign_criterion
+        if (!cId || !crit || crit.negative === true) continue
+        const geoRn = crit.location?.geoTargetConstant ?? crit.location?.geo_target_constant
+        const langRn = crit.language?.languageConstant ?? crit.language?.language_constant
+        if (geoRn) {
+          if (!geoIdsByCampaign.has(cId)) geoIdsByCampaign.set(cId, new Set())
+          geoIdsByCampaign.get(cId)!.add(lastSeg(geoRn))
+        }
+        if (langRn) {
+          if (!langIdsByCampaign.has(cId)) langIdsByCampaign.set(cId, new Set())
+          langIdsByCampaign.get(cId)!.add(lastSeg(langRn))
+        }
+      }
+
+      // İsim çözümleme — geo_target_constant + language_constant (ham ID değil, insan-okur ad)
+      const allGeoIds = Array.from(new Set(Array.from(geoIdsByCampaign.values()).flatMap((s) => Array.from(s)))).filter(Boolean).slice(0, 200)
+      const allLangIds = Array.from(new Set(Array.from(langIdsByCampaign.values()).flatMap((s) => Array.from(s)))).filter(Boolean).slice(0, 200)
+
+      if (allGeoIds.length) {
+        const inList = allGeoIds.map((id) => `'geoTargetConstants/${id}'`).join(',')
+        const geoQuery = `SELECT geo_target_constant.id, geo_target_constant.canonical_name, geo_target_constant.name FROM geo_target_constant WHERE geo_target_constant.resource_name IN (${inList})`
+        const geoRows = await searchGAds<any>(googleCtx, geoQuery)
+        for (const r of geoRows) {
+          const g = r.geoTargetConstant ?? r.geo_target_constant
+          const id = String(g?.id ?? '')
+          const name = g?.canonicalName ?? g?.canonical_name ?? g?.name
+          if (id && name) geoNameById.set(id, name)
+        }
+      }
+      if (allLangIds.length) {
+        const inList = allLangIds.map((id) => `'languageConstants/${id}'`).join(',')
+        const langQuery = `SELECT language_constant.id, language_constant.name, language_constant.code FROM language_constant WHERE language_constant.resource_name IN (${inList})`
+        const langRows = await searchGAds<any>(googleCtx, langQuery)
+        for (const r of langRows) {
+          const l = r.languageConstant ?? r.language_constant
+          const id = String(l?.id ?? '')
+          const name = l?.name
+          if (id && name) langNameById.set(id, name)
+        }
+      }
+    } catch (e) {
+      console.warn('[GoogleDeepFetcher] location/language fetch skipped:', e instanceof Error ? e.message : e)
+    }
+
     // 4. Build campaign insights
     for (const [, agg] of campaignMap) {
       const { amountSpent, cpc, ctr, roas } = computeDerivedMetrics(agg)
@@ -376,10 +468,21 @@ export async function fetchGoogleDeep(
         roas,
       }
 
+      // Kampanya geneli lokasyon + dil (campaign_criterion'dan çözümlenmiş adlar)
+      const campaignLocations = Array.from(geoIdsByCampaign.get(agg.id) ?? []).map((id) => geoNameById.get(id) ?? `Konum #${id}`)
+      const campaignLanguages = Array.from(langIdsByCampaign.get(agg.id) ?? []).map((id) => langNameById.get(id) ?? `Dil #${id}`)
+
       // Build adset insights (ad groups)
       const agMap = adGroupsByCampaign.get(agg.id) ?? new Map()
       const adsetInsights: AdsetInsight[] = Array.from(agMap.values()).map((ag) => {
         const agDerived = computeDerivedMetrics(ag)
+        const agKeywords = keywordsByAdGroup.get(ag.id)
+        const targeting: AdsetTargetingSummary = {
+          fetched: true,
+          ...(agKeywords?.length ? { keywords: agKeywords } : {}),
+          ...(campaignLocations.length ? { locations: campaignLocations } : {}),
+          ...(campaignLanguages.length ? { languages: campaignLanguages } : {}),
+        }
         return {
           id: ag.id,
           name: ag.name || 'Unnamed Ad Group',
@@ -396,6 +499,7 @@ export async function fetchGoogleDeep(
             conversions: ag.conversions,
             roas: agDerived.roas,
           },
+          targeting,
           ads: adsByAdGroup.get(ag.id) ?? [],
         }
       })

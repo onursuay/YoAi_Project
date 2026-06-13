@@ -11,7 +11,7 @@ import { runRuleEngine, type RuleContext } from '@/lib/meta/optimization/ruleEng
 import { scoreCampaign } from '@/lib/meta/optimization/scoring'
 import { resolveKpiTemplate } from '@/lib/meta/optimization/kpiRegistry'
 import type { CampaignTriple, OptimizationAdset } from '@/lib/meta/optimization/types'
-import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics } from './analysisTypes'
+import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, AdsetTargetingSummary } from './analysisTypes'
 import { computeCreativeHash } from './creativeHash'
 
 const MAX_CAMPAIGNS = 15
@@ -51,6 +51,73 @@ function scoreToRisk(score: number): 'low' | 'medium' | 'high' | 'critical' {
   if (score >= 50) return 'medium'
   if (score >= 25) return 'high'
   return 'critical'
+}
+
+/* ── Aktiflik filtresi ──
+   "Sadece AKTİF reklamlar" kuralı: aktif kampanyanın içindeki PAUSED/silinmiş
+   ad set ve reklamlar analiz DIŞI kalır. Meta effective_status değerleri:
+   ACTIVE, PAUSED, ADSET_PAUSED, CAMPAIGN_PAUSED, DELETED, ARCHIVED, ... */
+function isMetaActive(effectiveStatus?: string, status?: string): boolean {
+  const s = (effectiveStatus || status || '').toUpperCase()
+  return s === 'ACTIVE'
+}
+
+const GENDER_LABEL: Record<number, string> = { 1: 'male', 2: 'female' }
+
+/* ── Hedefleme özeti ──
+   Ad set targeting objesini insan-okur özete çevirir (lokasyon/yaş/cinsiyet/ilgi/
+   yayın yeri/dil). Veri yoksa undefined döner → AI bu alanda VARSAYIM YAPMAMALI. */
+function parseMetaTargeting(t: any): AdsetTargetingSummary | undefined {
+  if (!t || typeof t !== 'object') return undefined
+  const summary: AdsetTargetingSummary = { fetched: true }
+
+  // Lokasyon: ülke kodları + bölge/şehir adları
+  const geo = t.geo_locations || {}
+  const locations: string[] = []
+  if (Array.isArray(geo.countries)) locations.push(...geo.countries)
+  if (Array.isArray(geo.regions)) locations.push(...geo.regions.map((r: any) => r?.name).filter(Boolean))
+  if (Array.isArray(geo.cities)) locations.push(...geo.cities.map((c: any) => c?.name).filter(Boolean))
+  if (locations.length) summary.locations = Array.from(new Set(locations))
+
+  // Yaş aralığı
+  if (t.age_min != null) summary.ageMin = Number(t.age_min)
+  if (t.age_max != null) summary.ageMax = Number(t.age_max)
+
+  // Cinsiyet (boş veya her ikisi = all)
+  if (Array.isArray(t.genders) && t.genders.length) {
+    const g = t.genders.map((n: number) => GENDER_LABEL[n]).filter(Boolean)
+    summary.genders = g.length === 1 ? g : ['all']
+  } else {
+    summary.genders = ['all']
+  }
+
+  // İlgi alanı / detaylı hedefleme (flexible_spec içindeki adlar — id değil)
+  const interests: string[] = []
+  if (Array.isArray(t.flexible_spec)) {
+    for (const spec of t.flexible_spec) {
+      for (const key of ['interests', 'behaviors', 'life_events', 'industries']) {
+        if (Array.isArray(spec?.[key])) interests.push(...spec[key].map((i: any) => i?.name).filter(Boolean))
+      }
+    }
+  }
+  if (interests.length) summary.interests = Array.from(new Set(interests))
+
+  // Yayın yerleri (publisher_platforms yoksa otomatik/Advantage+)
+  if (Array.isArray(t.publisher_platforms) && t.publisher_platforms.length) {
+    const map: Record<string, string> = {
+      facebook: 'Facebook', instagram: 'Instagram', messenger: 'Messenger', audience_network: 'Audience Network',
+    }
+    summary.placements = t.publisher_platforms.map((p: string) => map[p] || p)
+  } else {
+    summary.placements = ['Otomatik Yayın Yerleri']
+  }
+
+  // Dil (locales): Meta numerik kod döndürür — isim uydurmadan yalnız varlığını bildir
+  if (Array.isArray(t.locales) && t.locales.length) {
+    summary.languages = ['Özel dil hedeflemesi seçili']
+  }
+
+  return summary
 }
 
 /* ── Main Fetch ──
@@ -137,8 +204,10 @@ export async function fetchMetaDeep(
     const insightsFields = 'spend,impressions,clicks,ctr,cpc,reach,frequency,cpm,actions,action_values,cost_per_action_type,purchase_roas,quality_ranking,engagement_rate_ranking,conversion_rate_ranking'
     // creative{body,title,link_url,call_to_action_type,object_story_spec} — gerçek metin + CTA
     const adFields = `id,name,status,effective_status,creative{body,title,link_url,call_to_action_type,object_story_spec},insights.date_preset(last_7d){${insightsFields}}`
-    const adsetFields = `id,name,status,optimization_goal,destination_type,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},ads.limit(20){${adFields}}`
-    const campaignFields = `id,name,status,effective_status,objective,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},adsets.limit(30){${adsetFields}}`
+    // targeting{...}: lokasyon/yaş/cinsiyet/ilgi/yayın yeri/dil — derin hedefleme analizi için
+    const targetingFields = 'geo_locations,age_min,age_max,genders,locales,publisher_platforms,facebook_positions,instagram_positions,flexible_spec,targeting_automation'
+    const adsetFields = `id,name,status,effective_status,optimization_goal,destination_type,daily_budget,lifetime_budget,targeting{${targetingFields}},insights.date_preset(last_7d){${insightsFields}},ads.limit(20){${adFields}}`
+    const campaignFields = `id,name,status,effective_status,objective,bid_strategy,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},adsets.limit(30){${adsetFields}}`
 
     const params: Record<string, string> = {
       fields: campaignFields,
@@ -162,7 +231,8 @@ export async function fetchMetaDeep(
 
     // 2. Process each campaign
     for (const raw of rawCampaigns) {
-      const rawAdsets = raw.adsets?.data || []
+      // Sadece AKTİF ad set'ler: aktif kampanya içindeki PAUSED ad set'leri ele
+      const rawAdsets = (raw.adsets?.data || []).filter((as: any) => isMetaActive(as.effective_status, as.status))
       const campaignInsightRaw = raw.insights?.data?.[0]
       const normalizedCampaignInsights = normalizeInsights(campaignInsightRaw)
       const triple = resolveTriple(raw, rawAdsets)
@@ -206,7 +276,8 @@ export async function fetchMetaDeep(
       const adsetInsights: AdsetInsight[] = rawAdsets.map((as: any) => {
         const asInsightRaw = as.insights?.data?.[0]
         const asNorm = normalizeInsights(asInsightRaw)
-        const rawAds = as.ads?.data || []
+        // Sadece AKTİF reklamlar: aktif ad set içindeki PAUSED reklamları ele
+        const rawAds = (as.ads?.data || []).filter((ad: any) => isMetaActive(ad.effective_status, ad.status))
 
         const adInsights: AdInsight[] = rawAds.map((ad: any) => {
           const adInsightRaw = ad.insights?.data?.[0]
@@ -252,6 +323,7 @@ export async function fetchMetaDeep(
           dailyBudget: as.daily_budget != null ? parseFloat(as.daily_budget) / 100 : null,
           lifetimeBudget: as.lifetime_budget != null ? parseFloat(as.lifetime_budget) / 100 : null,
           metrics: toStdMetrics(asNorm),
+          targeting: parseMetaTargeting(as.targeting),
           ads: adInsights,
         }
       })
@@ -263,6 +335,7 @@ export async function fetchMetaDeep(
         status: raw.status || 'UNKNOWN',
         effectiveStatus: raw.effective_status,
         objective: raw.objective || '',
+        biddingStrategy: raw.bid_strategy || undefined,
         triple,
         normalizedInsights: normalizedCampaignInsights,
         scoreResult,

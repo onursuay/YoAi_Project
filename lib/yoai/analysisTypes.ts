@@ -60,6 +60,22 @@ export interface AdInsight {
   creativeHash?: string
 }
 
+/* ── Targeting Summary (ad set / ad group level) ──
+   Hedefleme verisi — lokasyon/dil/yaş/cinsiyet/ilgi/yayın yeri/anahtar kelime.
+   Fetch edildiyse dolu; çekilemezse undefined (AI bu durumda VARSAYIM YAPMAMALI). */
+export interface AdsetTargetingSummary {
+  locations?: string[]       // ülke/bölge/şehir adları (insan-okur)
+  languages?: string[]       // dil etiketleri (Google: çözümlenmiş ad; Meta: özel dil notu)
+  ageMin?: number
+  ageMax?: number
+  genders?: string[]         // 'all' | 'male' | 'female'
+  interests?: string[]       // ilgi alanı / detaylı hedefleme adları
+  placements?: string[]      // 'Otomatik Yayın Yerleri' | platform adları
+  keywords?: string[]        // Google Arama Ağı: mevcut anahtar kelimeler
+  /** Hedefleme verisi gerçekten çekildi mi? false → AI "hedefleme verisi okunamadı" demeli. */
+  fetched: boolean
+}
+
 /* ── Adset / Ad Group Level Insight ── */
 export interface AdsetInsight {
   id: string
@@ -71,6 +87,8 @@ export interface AdsetInsight {
   dailyBudget: number | null
   lifetimeBudget: number | null
   metrics: StandardMetrics
+  // Hedefleme özeti (lokasyon/dil/yaş/cinsiyet/ilgi/yayın yeri/keyword) — Faz: derin analiz
+  targeting?: AdsetTargetingSummary
   ads: AdInsight[]
 }
 

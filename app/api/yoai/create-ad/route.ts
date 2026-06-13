@@ -80,6 +80,9 @@ export async function POST(request: Request) {
           headlines: proposal.headlines,
           descriptions: proposal.descriptions,
           keywords: (proposal.keywords || []).map((k) => ({ text: k, matchType: 'BROAD' })),
+          // YoAlgoritma onay→yayın: Meta paritesi. Kampanya PAUSED oluşturulur;
+          // kullanıcı Google Ads'te inceleyip elle aktive edene kadar harcama olmaz.
+          status: 'PAUSED',
         }),
       })
 

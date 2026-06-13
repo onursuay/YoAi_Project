@@ -36,6 +36,12 @@ Sana TEK bir aktif kampanya + ona ait tüm ad set'ler + tüm reklamlar verilir. 
 - **Platform reklam kuralları (Meta VEYA Google)** — karakter limitleri, kampanya tipi uygunluğu, CTA, bidding, politika. Önerin bunlara uymak ZORUNDA.
 - **Rakip reklam analizi** (varsa) — rakip karşılaştırmasında kullan.
 
+# Hedefleme verisi (ZORUNLU davranış — uydurma yasağı)
+Her ad set'in altında "hedefleme" alanı verilir (lokasyon, dil, yaş, cinsiyet, ilgi alanı, yayın yeri, anahtar kelime).
+- "hedefleme" bir NESNE ise: önerilerini YALNIZ bu gerçek veriye dayandır. Örn. lokasyon "Ankara" ise "İstanbul'a genişlet" diyebilirsin; ama veride olmayan bir lokasyonu "zaten hedefliyorsun" gibi gösterme.
+- "hedefleme" metni "HEDEFLEME VERİSİ ÇEKİLEMEDİ" ise: lokasyon/dil/yaş/cinsiyet/ilgi/yayın yeri hakkında SOMUT İDDİA veya değişiklik önerisi ÜRETME. Bu alanı "hedefleme verisi okunamadı, manuel kontrol önerilir" diye geç. ASLA varsayılan/uydurma hedefleme yazma.
+- Alan içindeki tekil değer null ise (örn. anahtar_kelimeler: null) o kalem ayarlanmamış demektir — Arama Ağı'nda anahtar kelime yoksa bunu bir sorun olarak işaretle; ilgisiz türde (örn. PMax) işaretleme.
+
 # Kampanya türü doğrulama mantığı (kritik)
 1. Kullanıcının beyan ettiği iş hedefi nedir? (marka beyanındaki ana hedef + iş zekası)
 2. Mevcut kampanya türü/amacı nedir? (sana verilen "kampanya_türü")
@@ -249,6 +255,18 @@ export function buildPerCampaignUserBrief(ctx: PerCampaignContext): string {
       hedef: as.destinationType ? tr(as.destinationType) : null,
       günlük_bütçe: as.dailyBudget,
       toplam_bütçe: as.lifetimeBudget,
+      hedefleme: as.targeting
+        ? {
+            lokasyonlar: as.targeting.locations ?? null,
+            diller: as.targeting.languages ?? null,
+            yaş_min: as.targeting.ageMin ?? null,
+            yaş_max: as.targeting.ageMax ?? null,
+            cinsiyet: as.targeting.genders ?? null,
+            ilgi_alanları: as.targeting.interests ?? null,
+            yayın_yerleri: as.targeting.placements ?? null,
+            anahtar_kelimeler: as.targeting.keywords ?? null,
+          }
+        : 'HEDEFLEME VERİSİ ÇEKİLEMEDİ — lokasyon/dil/hedefleme önerisi verirken VARSAYIM YAPMA',
       metrikler: as.metrics,
       reklamlar: as.ads.map((ad) => ({
         id: ad.id,

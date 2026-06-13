@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-13 — YoAlgoritma Faz 1: yayın güvenliği + derin hedefleme verisi (3 kritik)
+- **Sorun:** YoAlgoritma derin analizinde üç kritik açık: (1) Google reklamları "PAUSED" denip aslında `ENABLED` (canlı) yayınlanıyor → anında harcama + yanlış mesaj; (2) Meta'da aktif kampanya içindeki PAUSED ad set/reklamlar da analiz ediliyordu ("sadece aktif" ihlali); (3) hedefleme/lokasyon/dil verisi fetcher'larda hiç çekilmediği halde prompt AI'dan bunları analiz etmesini istiyordu → halüsinasyon riski.
+- **Çözüm:**
+  - **Google PAUSED:** `createFullCampaign`'e opsiyonel `status` parametresi (default `ENABLED` → manuel sihirbaz davranışı korunur, sıfır regresyon); YoAlgoritma `create-ad` Google branch'ı `status:'PAUSED'` geçer. Kampanya PAUSED → alt öğeler ENABLED olsa bile yayın olmaz; "PAUSED" mesajı artık gerçek.
+  - **Meta sadece-aktif:** `metaDeepFetcher` aktif kampanya içindeki ad set ve reklamları `effective_status==='ACTIVE'` ile filtreler (`isMetaActive`). Google zaten her seviyede `ENABLED` filtreliydi → iki platform tutarlı.
+  - **Hedefleme verisi:** Meta `targeting{geo_locations,age,genders,locales,publisher_platforms,flexible_spec}` çekilip insan-okur özete (`parseMetaTargeting`) çevrilir; Google için anahtar kelimeler + lokasyon + dil (`campaign_criterion` + `geo_target_constant`/`language_constant` isim çözümlemesi, defensive). `AdsetInsight.targeting` tipi eklendi, brief'e `hedefleme` alanı yansıtıldı, prompt'a "veri yoksa VARSAYIM YAPMA" direktifi eklendi.
+  - **Bonus:** Meta `bid_strategy` artık çekiliyor (önceden hep null'dı; prompt teklif analizi istiyordu).
+- **Dosyalar:** lib/google-ads/create-campaign.ts, app/api/yoai/create-ad/route.ts, lib/yoai/metaDeepFetcher.ts, lib/yoai/googleDeepFetcher.ts, lib/yoai/analysisTypes.ts, lib/yoai/ai/perCampaignPrompt.ts
+
 ## 2026-06-13 — Sidebar: "Dönüşüm Sihirbazı" etiketi ham çeviri anahtarı gösteriyordu
 - **Sorun:** Sidebar'da Dönüşüm Sihirbazı öğesi etiket yerine ham `sidebar.donusumsihirbazi` anahtarını gösteriyordu. Sebep: `SidebarNav` etiketi nav item id'sinden türetiyor (`donusum-sihirbazi` → `donusumsihirbazi`), ancak locale'lerdeki anahtar route'un eski adından kalma `marketingkurulumu` adıyla duruyordu — eşleşmediği için anahtar çevrilemiyordu.
 - **Çözüm:** Locale anahtarı `marketingkurulumu` → `donusumsihirbazi` olarak yeniden adlandırıldı (id türetmesiyle birebir eşleşir, ölü anahtar temizlendi). Her iki dilde güncellendi; nav.ts yorumundaki eski anahtar referansı da düzeltildi.

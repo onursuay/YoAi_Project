@@ -46,6 +46,11 @@ export interface CreateCampaignParams {
   biddingStrategy: BiddingStrategy
   targetCpaMicros?: number
   targetRoas?: number
+  /** Kampanya başlangıç durumu. Verilmezse ENABLED (manuel sihirbaz davranışı korunur).
+   *  YoAlgoritma onay→yayın akışı 'PAUSED' geçer → kullanıcı Google Ads'te inceleyip
+   *  elle aktive edene kadar harcama olmaz (Meta paritesi). PAUSED kampanya, alt
+   *  öğeleri ENABLED olsa bile yayın yapmaz. */
+  status?: 'PAUSED' | 'ENABLED'
   startDate?: string // yyyy-MM-dd
   endDate?: string   // yyyy-MM-dd
   adGroupName: string
@@ -238,7 +243,7 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
       name: params.campaignName,
       advertisingChannelType: channelType,
       campaignBudget: budgetResourceName,
-      status: 'ENABLED',
+      status: params.status ?? 'ENABLED',
       containsEuPoliticalAdvertising,
       ...(geoTargetTypeSetting && { geoTargetTypeSetting }),
       ...(networkSettings && { networkSettings }),
