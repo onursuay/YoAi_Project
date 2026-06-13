@@ -19,7 +19,7 @@ export interface MetaCapabilities {
   grantedScopes?: string[]
   adAccountId?: string | null
   assets?: {
-    pages?: { id: string; name: string; picture?: unknown; instagram_business_account?: unknown }[]
+    pages?: { id: string; name: string; phone?: string; picture?: unknown; instagram_business_account?: unknown }[]
     instagramAccounts?: { id: string; username: string; profile_picture_url?: string }[]
     pixels?: { id: string; name: string }[]
     leadForms?: { id: string; name: string; page_id: string }[]

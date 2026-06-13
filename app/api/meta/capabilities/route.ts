@@ -86,7 +86,7 @@ export async function GET() {
   const hasWhatsAppMessaging = grantedScopes.includes('whatsapp_business_messaging')
 
   const assets: {
-    pages: { id: string; name: string; access_token?: string; picture?: { data?: { url?: string } }; instagram_business_account?: { id: string; username: string; profile_picture_url?: string } }[]
+    pages: { id: string; name: string; phone?: string; access_token?: string; picture?: { data?: { url?: string } }; instagram_business_account?: { id: string; username: string; profile_picture_url?: string } }[]
     instagramAccounts: { id: string; username: string; profile_picture_url?: string }[]
     pixels: { id: string; name: string }[]
     leadForms: { id: string; name: string; page_id: string }[]
@@ -125,9 +125,9 @@ export async function GET() {
   const accountId = ctx.accountId
 
   // Pages
-  const userPagesRes = await client.get<{ data?: { id: string; name: string; access_token?: string; picture?: { data?: { url?: string } }; instagram_business_account?: { id: string; username: string; profile_picture_url?: string } }[] }>(
+  const userPagesRes = await client.get<{ data?: { id: string; name: string; phone?: string; access_token?: string; picture?: { data?: { url?: string } }; instagram_business_account?: { id: string; username: string; profile_picture_url?: string } }[] }>(
     '/me/accounts',
-    { fields: 'id,name,access_token,picture{url},instagram_business_account{id,username,profile_picture_url}', limit: '100' }
+    { fields: 'id,name,phone,access_token,picture{url},instagram_business_account{id,username,profile_picture_url}', limit: '100' }
   )
   if (userPagesRes.ok && userPagesRes.data?.data?.length) {
     assets.pages = userPagesRes.data.data

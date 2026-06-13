@@ -162,7 +162,8 @@ export default function TabDetails({
   accountInventoryStatus = 'idle',
 }: TabDetailsProps) {
   const showEmptyPages = pagesInitialLoadDone && !pagesLoading && pages.length === 0 && !pagesError
-  const t = getWizardTranslations(getLocaleFromCookie())
+  const locale = getLocaleFromCookie()
+  const t = getWizardTranslations(locale)
 
   // Destination labels — UPPERCASE keys matching Meta API enum
   const DESTINATION_LABELS: Record<string, string> = {
@@ -284,6 +285,23 @@ export default function TabDetails({
 
   const selectedPage = state.pageId ? inventory?.pages?.find((p) => p.page_id === state.pageId) : undefined
   const hasIgAccountsForPage = (instagramAccounts?.length ?? 0) > 0
+
+  // Telefon Aramaları (CALL): seçili Facebook sayfasının kayıtlı telefonunu alana otomatik ön-doldur
+  // (Meta Ads Manager'daki gibi), ama DÜZENLENEBİLİR bırak. Sayfa başına yalnız bir kez doldurur;
+  // kullanıcı temizler/değiştirirse geri yazmaz. Sayfada telefon yoksa manuel giriş (mevcut davranış).
+  const callPhoneAutofilledFor = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (state.conversionLocation !== 'CALL' || !state.pageId) { callPhoneAutofilledFor.current = null; return }
+    if (callPhoneAutofilledFor.current === state.pageId) return
+    const page = capabilities?.assets?.pages?.find((p) => p.id === state.pageId)
+    if (!page) return // capabilities henüz yüklenmedi — current'i set etme, sonraki render'da tekrar dene
+    callPhoneAutofilledFor.current = state.pageId
+    if (state.destinationDetails?.calls?.phoneNumber) return // kullanıcı zaten girmiş — dokunma
+    const pagePhone = (page.phone ?? '').trim()
+    if (pagePhone) {
+      onChange({ destinationDetails: { ...state.destinationDetails, calls: { phoneNumber: pagePhone } } })
+    }
+  }, [state.conversionLocation, state.pageId, capabilities, state.destinationDetails, onChange])
 
   // WhatsApp: auto-select single page-linked number; clear selection if not in page's allowed list
   React.useEffect(() => {
@@ -508,6 +526,11 @@ export default function TabDetails({
             placeholder={t.phoneNumberPlaceholder}
             className={`w-full px-3.5 py-2.5 border rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all ${errors.phone_number ? 'border-red-400' : 'border-gray-200'}`}
           />
+          <p className="mt-1 text-xs text-gray-400">
+            {locale === 'tr'
+              ? 'Sayfanızın telefonu varsa otomatik gelir; dilediğiniz numarayla değiştirebilirsiniz.'
+              : 'Your Page phone is filled automatically when available; you can change it to any number.'}
+          </p>
           {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
         </div>
       )}

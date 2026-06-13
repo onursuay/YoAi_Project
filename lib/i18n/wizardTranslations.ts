@@ -197,7 +197,7 @@ const translations = {
     destinationMessenger: 'Messenger',
     destinationWhatsapp: 'WhatsApp',
     destinationInstagram: 'Instagram',
-    destinationCalls: 'Aramalar',
+    destinationCalls: 'Telefon Aramaları',
 
     // TabDetails extra
     performanceGoal: 'Performans Hedefi',
@@ -490,7 +490,7 @@ const translations = {
     destinationInstagramDirectTraffic: 'Instagram ve Facebook',
     destinationInstagramDirect: 'Instagram Direct',
     destinationPhoneCall: 'Telefon Aramaları',
-    destinationCall: 'Aramalar',
+    destinationCall: 'Telefon Aramaları',
     destinationOnPage: 'Sayfa beğenisi',
     destinationCatalog: 'Katalog',
 
@@ -758,7 +758,7 @@ const translations = {
     destinationMessenger: 'Messenger',
     destinationWhatsapp: 'WhatsApp',
     destinationInstagram: 'Instagram',
-    destinationCalls: 'Calls',
+    destinationCalls: 'Phone calls',
 
     // TabDetails extra
     performanceGoal: 'Performance Goal',
@@ -1051,7 +1051,7 @@ const translations = {
     destinationInstagramDirectTraffic: 'Instagram and Facebook',
     destinationInstagramDirect: 'Instagram Direct',
     destinationPhoneCall: 'Phone Calls',
-    destinationCall: 'Calls',
+    destinationCall: 'Phone calls',
     destinationOnPage: 'Page Like',
     destinationCatalog: 'Catalog',
 
