@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-13 — Sidebar: "Dönüşüm Sihirbazı" etiketi ham çeviri anahtarı gösteriyordu
+- **Sorun:** Sidebar'da Dönüşüm Sihirbazı öğesi etiket yerine ham `sidebar.donusumsihirbazi` anahtarını gösteriyordu. Sebep: `SidebarNav` etiketi nav item id'sinden türetiyor (`donusum-sihirbazi` → `donusumsihirbazi`), ancak locale'lerdeki anahtar route'un eski adından kalma `marketingkurulumu` adıyla duruyordu — eşleşmediği için anahtar çevrilemiyordu.
+- **Çözüm:** Locale anahtarı `marketingkurulumu` → `donusumsihirbazi` olarak yeniden adlandırıldı (id türetmesiyle birebir eşleşir, ölü anahtar temizlendi). Her iki dilde güncellendi; nav.ts yorumundaki eski anahtar referansı da düzeltildi.
+- **Dosyalar:** locales/tr.json, locales/en.json, lib/nav.ts
+
 ## 2026-06-13 — Meta minimum bütçe uyarısı: mesajlaşma kampanyalarında gerçek değer
 - **Sorun:** Etkileşim + mesajlaşma (WhatsApp/Messenger/IG DM) reklamlarında uyarı "Minimum günlük bütçe: 44 TRY" diyordu ama İleri butonu ancak ~76 TRY'de aktif oluyordu. Sebep: uyarı sabit $1 tabanını (`getMinDailyBudgetTRY`=44) gösteriyor, buton ise Meta'nın gerçek per-optimization-goal min'ini (`min_daily_budget_low_freq`) kullanıyordu. Kullanıcı engelin bütçeden kaynaklandığını anlayamıyordu.
 - **Çözüm:** Uyarı metni de İleri kilidiyle **aynı gerçek değeri** kullanıyor (`/api/meta/min-daily-budget-try`, optimization goal'a göre). `bufferedMinTry` ile yalnız $1 tabanının üzerindeki yükseltilmiş min'lere (mesajlaşma → ~78) küçük güvenlik tamponu eklenir (FX/kuruş kayması); taban seviyesi (trafik/erişim → 44) **değişmez**. Gösterilen ile dayatılan eşik birebir aynı.

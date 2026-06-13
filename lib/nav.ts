@@ -135,7 +135,7 @@ export const gozetimMerkeziNavItem: NavItem = {
 /**
  * Dönüşüm Sihirbazı (route: donusum-sihirbazi) — rollout sırasında gizli. `navItems` içine konmaz;
  * yalnız owner veya `MARKETING_SETUP_ENABLED` açıkken client tarafında dinamik
- * enjekte edilir (Gözetim Merkezi ile aynı desen). UI etiketi sidebar.marketingkurulumu.
+ * enjekte edilir (Gözetim Merkezi ile aynı desen). UI etiketi sidebar.donusumsihirbazi.
  */
 export const marketingSetupNavItem: NavItem = {
   id: 'donusum-sihirbazi',
