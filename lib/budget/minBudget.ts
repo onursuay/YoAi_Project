@@ -15,16 +15,18 @@ export function getMinDailyBudgetTRY(opts: { usdTryRate: number }): number {
  * Gösterilen/dayatılan minimum günlük bütçe (TRY).
  * Meta'nın GERÇEK per-optimization-goal değeri (serverVal, /minimum_budgets) baz alınır.
  * Yalnız $1 tabanının (floorTry) ÜZERİNDEKİ yükseltilmiş minimumlara (mesajlaşma/dönüşüm: ~76)
- * ufak bir güvenlik tamponu eklenir → ~78 (FX kayması + kuruş yuvarlamasına karşı).
+ * ORANSAL (%) bir güvenlik tamponu eklenir → ör. 76 → 78, 96 → 99 (FX kayması + kuruş yuvarlamasına karşı).
+ * Yüzde olduğu için her büyüklükte aynı oranda yastık verir (sabit TL değil → enflasyona dayanıklı).
  * Taban seviyesindeki minimumlar (trafik/erişim ≈ $1 ≈ 44) DEĞİŞMEZ.
  * Uyarı metni ile "İleri" kilidi bu AYNI değeri kullanmalı (tutarlılık).
  */
-export const MIN_BUDGET_SAFETY_TRY = 2
+export const MIN_BUDGET_SAFETY_PCT = 0.025 // %2.5
 export function bufferedMinTry(serverVal: number | null | undefined, floorTry: number | null): number | null {
   if (serverVal == null || !Number.isFinite(serverVal)) return null
   const ceilRaw = Math.ceil(serverVal)
   const floorCeil = floorTry != null && Number.isFinite(floorTry) ? Math.ceil(floorTry) : null
-  return floorCeil != null && ceilRaw > floorCeil ? ceilRaw + MIN_BUDGET_SAFETY_TRY : ceilRaw
+  const isElevated = floorCeil != null && ceilRaw > floorCeil
+  return isElevated ? Math.ceil(serverVal * (1 + MIN_BUDGET_SAFETY_PCT)) : ceilRaw
 }
 
 /**
