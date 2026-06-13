@@ -107,6 +107,27 @@ function buildBiddingField(params: CreatePerformanceMaxPayload): Record<string, 
   return { maximizeConversions: {} }
 }
 
+/** Seçilen PMax kitle segmentini Audience resource için AudienceSegment'e eşler.
+ *  Audience dimension'da desteklenmeyen tür (ör. COMBINED_AUDIENCE) için null döner. */
+function buildPMaxAudienceSegment(s: { category: string; id: string; resourceName: string }): Record<string, unknown> | null {
+  if (!s.resourceName) return null
+  switch (s.category) {
+    case 'USER_LIST':
+      return { userList: { userList: s.resourceName } }
+    case 'AFFINITY':
+    case 'IN_MARKET':
+      return { userInterest: { userInterestCategory: s.resourceName } }
+    case 'DETAILED_DEMOGRAPHIC':
+      return { detailedDemographic: { detailedDemographic: s.resourceName } }
+    case 'LIFE_EVENT':
+      return { lifeEvent: { lifeEvent: s.resourceName } }
+    case 'CUSTOM_AUDIENCE':
+      return { customAudience: { customAudience: s.resourceName } }
+    default:
+      return null
+  }
+}
+
 /** Create PMax campaign + BUSINESS_NAME + LOGO campaign assets in one atomic batch (googleAds:mutate).
  * Brand Guidelines requires business name linked as CampaignAsset; must be same request as campaign create.
  */
@@ -578,13 +599,37 @@ async function createAssetGroupWithAssets(
   if (!assetGroupResourceName) throw new Error('Asset group resource name not returned from googleAds:mutate')
   console.log('[PMax] asset group batch success: assetGroupRn=', assetGroupResourceName)
 
+  // Asset group sinyalleri: arama temaları + kitle sinyali (gerçek Audience resource'una bağlanır)
+  const signalOps: unknown[] = []
   if (params.signals.searchThemes?.length) {
-    const signalOps = params.signals.searchThemes.map((st) => ({
-      create: {
-        assetGroup: assetGroupResourceName,
-        searchTheme: { text: st.text },
-      },
-    }))
+    for (const st of params.signals.searchThemes) {
+      signalOps.push({ create: { assetGroup: assetGroupResourceName, searchTheme: { text: st.text } } })
+    }
+  }
+
+  // PMax kitle sinyali: seçilen segmentlerden bir Audience resource oluştur, asset group sinyaline bağla.
+  // Campaign + asset group zaten oluştu; sinyal başarısız olursa kampanyayı BOZMA (graceful — yalnız uyarı).
+  if (params.signals.selectedAudienceSegments?.length) {
+    try {
+      const segments = params.signals.selectedAudienceSegments
+        .map((s) => buildPMaxAudienceSegment(s))
+        .filter((x): x is Record<string, unknown> => x != null)
+      if (segments.length > 0) {
+        const audName = `YoAi PMax Sinyal - ${params.campaignName} ${Date.now()}`.slice(0, 250)
+        const audRes = await postMutate<{ results: Array<{ resourceName: string }> }>(ctx, 'audiences', [{
+          create: { name: audName, dimensions: [{ audienceSegments: { segments } }] },
+        }])
+        const audRn = audRes.results?.[0]?.resourceName
+        if (audRn) {
+          signalOps.push({ create: { assetGroup: assetGroupResourceName, audience: { audience: audRn } } })
+        }
+      }
+    } catch (e) {
+      console.warn('[PMax] audience signal create failed (campaign preserved):', e instanceof Error ? e.message : String(e))
+    }
+  }
+
+  if (signalOps.length > 0) {
     await postMutate(ctx, 'assetGroupSignals', signalOps)
   }
 
