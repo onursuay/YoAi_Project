@@ -45,8 +45,17 @@ export function buildCreatePayload(state: WizardState, defaultAdGroupName: strin
     keywords,
     negativeKeywords,
     finalUrl: state.finalUrl,
-    headlines: state.headlines.map(h => h.trim()).filter(Boolean),
-    descriptions: state.descriptions.map(d => d.trim()).filter(Boolean),
+    // Başlık/açıklama + pin'leri HİZALI tut: boş alanlar atılırken pin index'i kaymasın
+    ...(() => {
+      const hEntries = state.headlines.map((text, i) => ({ text: text.trim(), pin: state.headlinePins?.[i] || '' })).filter(e => e.text)
+      const dEntries = state.descriptions.map((text, i) => ({ text: text.trim(), pin: state.descriptionPins?.[i] || '' })).filter(e => e.text)
+      return {
+        headlines: hEntries.map(e => e.text),
+        descriptions: dEntries.map(e => e.text),
+        headlinePins: hEntries.map(e => e.pin),
+        descriptionPins: dEntries.map(e => e.pin),
+      }
+    })(),
     ...(state.path1 && { path1: state.path1 }),
     ...(state.path2 && { path2: state.path2 }),
     locationIds: positiveLocations.length > 0 ? positiveLocations : undefined,

@@ -249,6 +249,9 @@ export interface WizardState {
   finalUrl: string
   headlines: string[]
   descriptions: string[]
+  // RSA sabitleme (pin) — headlines/descriptions ile paralel; '' = sabit yok, 'HEADLINE_1' / 'DESCRIPTION_1' vb.
+  headlinePins: string[]
+  descriptionPins: string[]
   path1: string
   path2: string
   // Step 7: Schedule
@@ -389,6 +392,8 @@ export const defaultState: WizardState = {
   finalUrl: 'https://',
   headlines: ['', '', '', '', ''],
   descriptions: ['', '', ''],
+  headlinePins: [],
+  descriptionPins: [],
   path1: '',
   path2: '',
   adSchedule: [],

@@ -56,6 +56,8 @@ export interface CreateCampaignParams {
   finalUrl: string
   headlines: string[]    // 3-15 items
   descriptions: string[] // 2-4 items
+  headlinePins?: string[]    // RSA pin (HEADLINE_1/2/3), headlines ile paralel
+  descriptionPins?: string[] // RSA pin (DESCRIPTION_1/2), descriptions ile paralel
   path1?: string
   path2?: string
   locationIds?: string[]
@@ -338,8 +340,14 @@ export async function createFullCampaign(ctx: Ctx, params: CreateCampaignParams)
         ad: {
           finalUrls: [params.finalUrl],
           responsiveSearchAd: {
-            headlines: params.headlines.slice(0, 15).map(text => ({ text })),
-            descriptions: params.descriptions.slice(0, 4).map(text => ({ text })),
+            headlines: params.headlines.slice(0, 15).map((text, i) => {
+              const pin = params.headlinePins?.[i]
+              return pin ? { text, pinnedField: pin } : { text }
+            }),
+            descriptions: params.descriptions.slice(0, 4).map((text, i) => {
+              const pin = params.descriptionPins?.[i]
+              return pin ? { text, pinnedField: pin } : { text }
+            }),
             ...(params.path1 && { path1: params.path1 }),
             ...(params.path2 && { path2: params.path2 }),
           },

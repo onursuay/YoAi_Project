@@ -297,6 +297,22 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                   <span className={`text-xs w-8 text-right ${isOverflow ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
                     {h.length}/30
                   </span>
+                  <select
+                    value={state.headlinePins?.[i] ?? ''}
+                    onChange={e => {
+                      const pins = [...(state.headlinePins ?? [])]
+                      while (pins.length <= i) pins.push('')
+                      pins[i] = e.target.value
+                      update({ headlinePins: pins })
+                    }}
+                    title={t('ad.pinTitle')}
+                    className="shrink-0 text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  >
+                    <option value="">{t('ad.pinNone')}</option>
+                    <option value="HEADLINE_1">{t('ad.pinHeadline', { n: 1 })}</option>
+                    <option value="HEADLINE_2">{t('ad.pinHeadline', { n: 2 })}</option>
+                    <option value="HEADLINE_3">{t('ad.pinHeadline', { n: 3 })}</option>
+                  </select>
                 </div>
                 {isOverflow && (
                   <InlineWarning>{t('validation.headlineMaxLength')}</InlineWarning>
@@ -343,6 +359,21 @@ export default function StepKeywordsAndAds({ state, update, t }: StepProps) {
                   <span className={`text-xs w-8 text-right ${isOverflow ? 'text-gray-600 font-medium' : 'text-gray-400'}`}>
                     {d.length}/90
                   </span>
+                  <select
+                    value={state.descriptionPins?.[i] ?? ''}
+                    onChange={e => {
+                      const pins = [...(state.descriptionPins ?? [])]
+                      while (pins.length <= i) pins.push('')
+                      pins[i] = e.target.value
+                      update({ descriptionPins: pins })
+                    }}
+                    title={t('ad.pinTitle')}
+                    className="shrink-0 text-xs border border-gray-200 rounded-md px-1.5 py-1 bg-white focus:outline-none focus:ring-1 focus:ring-primary/30"
+                  >
+                    <option value="">{t('ad.pinNone')}</option>
+                    <option value="DESCRIPTION_1">{t('ad.pinDescription', { n: 1 })}</option>
+                    <option value="DESCRIPTION_2">{t('ad.pinDescription', { n: 2 })}</option>
+                  </select>
                 </div>
                 {isOverflow && (
                   <InlineWarning>{t('validation.descriptionMaxLength')}</InlineWarning>
