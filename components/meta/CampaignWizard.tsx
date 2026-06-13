@@ -1568,6 +1568,11 @@ export default function CampaignWizard({ isOpen, onClose, onSuccess, onToast, ca
 
     adsetPayload.advantage_audience = state.adset.advantageAudience !== false
 
+    // Pixel + dönüşüm olayı: SALES/LEADS + WEBSITE'ta backend promoted_object'e koyar (K5).
+    // ENGAGEMENT+WEBSITE'ta backend bunları temizler; diğer akışlarda yok sayılır.
+    if (state.adset.pixelId) adsetPayload.pixel_id = state.adset.pixelId
+    if (state.adset.customEventType) adsetPayload.custom_event_type = state.adset.customEventType
+
     // Dinamik Kreatif — Meta kısıtları:
     // ❌ OUTCOME_SALES (Haziran 2024'ten itibaren)
     // ❌ OUTCOME_APP_PROMOTION

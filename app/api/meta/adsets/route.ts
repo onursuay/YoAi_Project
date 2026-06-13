@@ -167,7 +167,7 @@ export async function GET(request: Request) {
     const adsetParams: Record<string, string> = {
       fields: `id,name,status,effective_status,optimization_goal,daily_budget,lifetime_budget,campaign_id,${insightsModifier}`,
       limit: '50',
-      effective_status: '["ACTIVE","PAUSED","PENDING_REVIEW","IN_PROCESS","PREAPPROVED","WITH_ISSUES","CAMPAIGN_PAUSED","ADSET_PAUSED"]',
+      effective_status: '["ACTIVE","PAUSED","PENDING_REVIEW","DISAPPROVED","PENDING_BILLING_INFO","IN_PROCESS","PREAPPROVED","WITH_ISSUES","CAMPAIGN_PAUSED","ADSET_PAUSED"]',
     }
     if (after) adsetParams.after = after
 

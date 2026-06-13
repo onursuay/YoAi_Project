@@ -71,7 +71,7 @@ function getPlacementOptions(t: ReturnType<typeof getWizardTranslations>) {
         { value: 'video_feeds', label: t.placementFbVideoFeeds },
         { value: 'story', label: t.placementFbStory },
         { value: 'search', label: t.placementFbSearch },
-        { value: 'reels', label: t.placementFbReels },
+        { value: 'facebook_reels', label: t.placementFbReels },
       ],
     },
     {
@@ -98,7 +98,7 @@ function getPlacementOptions(t: ReturnType<typeof getWizardTranslations>) {
       platform: 'messenger',
       label: 'Messenger',
       positions: [
-        { value: 'messenger_inbox', label: t.placementMsgInbox },
+        { value: 'messenger_home', label: t.placementMsgInbox },
         { value: 'story', label: t.placementMsgStory },
       ],
     },
@@ -113,10 +113,10 @@ function getPlacementOptions(t: ReturnType<typeof getWizardTranslations>) {
 }
 
 const ALL_PLACEMENT_KEYS = [
-  'facebook:feed','facebook:right_hand_column','facebook:marketplace','facebook:video_feeds','facebook:story','facebook:search','facebook:reels',
+  'facebook:feed','facebook:right_hand_column','facebook:marketplace','facebook:video_feeds','facebook:story','facebook:search','facebook:facebook_reels',
   'instagram:stream','instagram:story','instagram:reels','instagram:explore_home','instagram:profile_feed','instagram:ig_search',
   'audience_network:classic','audience_network:rewarded_video',
-  'messenger:messenger_inbox','messenger:story',
+  'messenger:messenger_home','messenger:story',
   'threads:threads_feed',
 ]
 

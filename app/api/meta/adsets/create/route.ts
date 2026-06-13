@@ -119,13 +119,23 @@ function resolveDestinationConfig(
   leadGenFormId?: string | null,
   instagramAccountId?: string,
   whatsappDisplayPhone?: string,
+  pixelId?: string,
+  customEventType?: string,
 ) {
   let promotedObject: Record<string, string> | undefined
   let needsDestinationType = true
 
   switch (destinationType) {
     case 'WEBSITE':
-      if (pageId) promotedObject = { page_id: pageId }
+      // Dönüşüm optimizasyonu (SALES/LEADS → OFFSITE_CONVERSIONS): promoted_object = { pixel_id, custom_event_type }.
+      // ENGAGEMENT+WEBSITE aşağıda ayrıca temizleniyor; diğer WEBSITE akışları page_id ile kalır.
+      if ((objective === 'OUTCOME_SALES' || objective === 'OUTCOME_LEADS') && pixelId) {
+        promotedObject = { pixel_id: pixelId }
+        const cet = normalizeCustomEventType(customEventType)
+        if (cet) promotedObject.custom_event_type = cet
+      } else if (pageId) {
+        promotedObject = { page_id: pageId }
+      }
       break
     case 'MESSENGER':
       if (pageId) promotedObject = { page_id: pageId }
@@ -606,6 +616,8 @@ export async function POST(request: Request) {
       }
     }
 
+    const pixelIdParam = (body.pixel_id ?? body.pixelId ?? '').toString().trim() || undefined
+    const customEventTypeParam = (body.custom_event_type ?? body.customEventType ?? body.conversion_event ?? '').toString().trim() || undefined
     const destConfig = resolveDestinationConfig(
       campaignObjective,
       destinationType,
@@ -613,6 +625,8 @@ export async function POST(request: Request) {
       leadGenFormId || undefined,
       instagramAccountIdParam,
       whatsappPhoneNumber,
+      pixelIdParam,
+      customEventTypeParam,
     )
 
     // 4. Form data: camelCase -> snake_case. Budget/bid ad account currency minor unit (factor 100 or 1 for zero-decimal).
@@ -636,10 +650,27 @@ export async function POST(request: Request) {
       formData.append('destination_type', resolvedDestinationType)
     }
 
+    // Saved audience: Marketing API ad set create saved_audience_id parametresini KABUL ETMEZ.
+    // Doğru entegrasyon: kaydedilmiş kitlenin targeting tanımını Meta'dan çekip inline gönder.
+    // (Aksi halde targeting null kalıp sessizce TR 18-65 fallback'i yayınlanırdı — K4.)
+    const savedAudienceId = body.saved_audience_id ?? body.savedAudienceId
+    let effectiveTargeting: unknown = targeting
+    if (savedAudienceId && (effectiveTargeting == null || typeof effectiveTargeting !== 'object')) {
+      const saRes = await ctx.client.get<{ targeting?: Record<string, unknown> }>(`/${savedAudienceId}`, { fields: 'targeting' })
+      if (saRes.ok && saRes.data?.targeting && typeof saRes.data.targeting === 'object') {
+        effectiveTargeting = saRes.data.targeting
+      } else {
+        return NextResponse.json(
+          { ok: false, error: 'saved_audience_fetch_failed', message: 'Kaydedilmiş hedef kitlenin tanımı Meta\'dan alınamadı. Lütfen kitleyi yeniden seçin veya tekrar deneyin.' },
+          { status: 400 },
+        )
+      }
+    }
+
     // Targeting: JSON.stringify; custom_locations.distance_unit mile -> kilometer
     let targetingToSend: Record<string, unknown>
-    if (targeting != null && typeof targeting === 'object') {
-      const normalized = normalizeTargetingForMeta(targeting as Record<string, unknown>) ?? targeting
+    if (effectiveTargeting != null && typeof effectiveTargeting === 'object') {
+      const normalized = normalizeTargetingForMeta(effectiveTargeting as Record<string, unknown>) ?? effectiveTargeting
       targetingToSend = normalized as Record<string, unknown>
       // Safety clamp: never send age_min < 18 to Meta (under-18 targeting is not allowed)
       if (typeof targetingToSend.age_min === 'number' && targetingToSend.age_min < 18) {
@@ -670,6 +701,14 @@ export async function POST(request: Request) {
     if (DEBUG) console.log(JSON.stringify({ meta_outbound_adset_targeting: targetingToSend }))
 
     // body.placements Meta'ya GÖNDERİLMEZ (Invalid parameter riski). İstenirse targeting içinde publisher_platforms vb. kullanılır.
+
+    // Lifetime (ömür boyu) bütçe Meta'da bitiş tarihi (end_time) ZORUNLU kılar; aksi halde publish ham hatayla reddedilir.
+    if (!campaignHasBudget && (budgetType ?? '').toString().toLowerCase() === 'lifetime' && (endTime == null || endTime === '')) {
+      return NextResponse.json(
+        { ok: false, error: 'lifetime_requires_end_time', message: 'Ömür boyu (lifetime) bütçe için bitiş tarihi zorunludur. Lütfen bir bitiş tarihi seçin.', field: 'end_time' },
+        { status: 400 },
+      )
+    }
 
     // Budget: budgetType'a göre daily_budget veya lifetime_budget; UI amount * account currency minor unit factor
     if (!campaignHasBudget) {
