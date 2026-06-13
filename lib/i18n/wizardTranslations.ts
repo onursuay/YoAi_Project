@@ -57,6 +57,10 @@ const translations = {
     OFFSITE_CONVERSIONS: 'Dönüşümler',
     VALUE: 'Değer',
     APP_INSTALLS: 'Uygulama yüklemeleri',
+    QUALITY_CALL: 'Nitelikli aramalar',
+    PAGE_LIKES: 'Sayfa beğenileri',
+    AD_RECALL_LIFT: 'Reklam hatırlanırlığı',
+    TWO_SECOND_CONTINUOUS_VIDEO_VIEWS: '2 saniyelik video izlemeleri',
 
     // StepAd
     adCreative: 'Reklam / Kreatif',
@@ -614,6 +618,10 @@ const translations = {
     OFFSITE_CONVERSIONS: 'Conversions',
     VALUE: 'Value',
     APP_INSTALLS: 'App installs',
+    QUALITY_CALL: 'Quality calls',
+    PAGE_LIKES: 'Page likes',
+    AD_RECALL_LIFT: 'Ad recall lift',
+    TWO_SECOND_CONTINUOUS_VIDEO_VIEWS: '2-second video views',
 
     // StepAd
     adCreative: 'Ad / Creative',
