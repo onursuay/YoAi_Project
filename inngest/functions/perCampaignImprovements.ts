@@ -91,6 +91,19 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     const scope = (event.data?.scope ?? undefined) as YoaiScope | undefined
     const scoped = scope?.scoped === true
 
+    // 0) Rakip cache'ini bu çalıştırma için tazele — gatherUserScanInputs okumadan ÖNCE.
+    //    Flag (YOALGORITMA_SCRAPE_COMPETITORS) kapalıysa anında no-op; açıksa beyan edilen
+    //    rakipler scrape edilir. Böylece scan.user ile yarış olmadan rakip bloğu prompt'a girer.
+    await step.run('scrape-competitors', async () => {
+      try {
+        const { scrapeDeclaredCompetitors } = await import('@/lib/yoai/ai/competitorScanStep')
+        return await scrapeDeclaredCompetitors(userId)
+      } catch (e) {
+        logger.warn(`[campaign-improvements] ${userId}: competitor scrape soft-fail: ${e instanceof Error ? e.message : e}`)
+        return { enabled: false, reason: 'error', attempted: 0, scraped: 0, cachedSkipped: 0, errors: 1 }
+      }
+    })
+
     // 1) Fetch aktif kampanya ağacı + bağlam (scope varsa yalnız o işletmenin hesabı/profili)
     const scanInputs = await step.run('fetch-user-data', async () => gatherUserScanInputs(userId, scope))
     const allCampaigns = flattenActiveCampaigns(scanInputs)

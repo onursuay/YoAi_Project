@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-13 — YoAlgoritma Faz 3.2: rakip analizi prompt yarışı giderildi
+- **Sorun:** Rakip reklam analizi (Apify scrape → cache → prompt) boru hattı kuruluydu ama per-campaign akışı scrape'i hiç tetiklemiyor, yalnız cache'i okuyordu. `scan.user` (scrape eden) ve `campaign-improvements` aynı Pazar cron'unda paralel çalıştığından, per-campaign akışı çoğu kez henüz boş cache'i okuyup rakip bloğunu prompt'a hiç eklemiyordu (flag açık olsa bile yarış).
+- **Çözüm:** `perCampaignImprovements`'a `scan.user` ile birebir aynı `scrape-competitors` step'i eklendi — `gatherUserScanInputs` cache'i okumadan ÖNCE beyan edilen rakipleri tazeler. Flag (`YOALGORITMA_SCRAPE_COMPETITORS`) kapalıysa anında no-op (sıfır regresyon); açıkken rakip bloğu artık yarışsız prompt'a girer. 7 günlük per-rakip cache çift-scrape'i önler.
+- **Dosyalar:** inngest/functions/perCampaignImprovements.ts
+
 ## 2026-06-13 — YoAlgoritma Faz 3.1: deterministik yapısal motor per-campaign akışına bağlandı
 - **Sorun:** Projede güçlü deterministik yapısal motorlar (`campaignTypeIntelligence` + `platformKnowledge` + `platformDoctrineStore`) vardı ama yeni per-campaign hiyerarşik akışa hiç bağlanmamıştı; `type_mismatch` ve yapısal öneriler %100 LLM yargısına bırakılmıştı (hazır altyapı israf + tutarsız sonuç riski).
 - **Çözüm:** `perCampaignImprovements` artık doctrine map'i bir kez çeker (fallback-güvenli), her kampanya için `buildCampaignTypeContext` (doctrine fit + failure signals) + `runStructuralAnalysis` (objective/destination/single-adset gibi StructuralIssue'lar) üretir ve bunları `PerCampaignContext.structuralSignals` ile prompt brief'ine "Deterministik Yapısal Sinyaller (GÜVENİLİR)" bloğu olarak enjekte eder. AI artık kampanya türü uyumunu kural motoru kanıtına dayandırıyor. Hata/eksik tablo → boş, akış kırılmaz.
