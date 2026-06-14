@@ -14,10 +14,11 @@ import { validateAdSpecPayload } from './adSpecPayload'
 import { buildPerCampaignSystemBlocks, buildPerCampaignUserBrief, type PerCampaignContext } from './perCampaignPrompt'
 import type { AdSpec } from './types'
 
-// Tüm reklamları + ad set'leri tek istekte → hesap-geneli (24K/8K) ile
-// per-ad (12K/4K) arası. Çok reklamlı kampanyalarda yeterli çıktı alanı.
-const PER_CAMPAIGN_MAX_TOKENS = 24000
-const PER_CAMPAIGN_THINKING_BUDGET = 6000
+// Tüm reklamları + ad set'leri tek istekte. ÇOK reklamlı kampanyalarda (3 ad set/15+ reklam,
+// her biri tam ad_spec) çıktı 18K'yı aşıp KESİLİYORDU → JSON parse fail → kampanya KARTI HİÇ
+// üretilmiyordu (büyük kampanyalar sessizce atlanıyordu). Çıktı bütçesi 32K'ya çıkarıldı.
+const PER_CAMPAIGN_MAX_TOKENS = 40000
+const PER_CAMPAIGN_THINKING_BUDGET = 8000
 
 /* ── Sonuç tipleri (hiyerarşik) ── */
 export type AlertSeverity = 'critical' | 'high' | 'medium' | 'info'
@@ -283,6 +284,14 @@ export function parsePerCampaignBatchResult(
     if (block.type === 'text' && block.text) finalText = block.text
   }
   const result = validatePerCampaignResult(extractJson(finalText), fallbackCampaignId)
+  // Görünürlük: çıktı kesildiyse (max_tokens) veya campaign kartı parse edilemediyse logla —
+  // büyük kampanyaların sessizce atlanmasını (kart hiç üretilmemesini) tespit etmek için.
+  if (message.stop_reason === 'max_tokens') {
+    console.warn(`[perCampaign] ÇIKTI KESİLDİ stop_reason=max_tokens campaign=${fallbackCampaignId} output_tokens=${message.usage.output_tokens} — ad_spec hacmi çıktı bütçesini aştı.`)
+  }
+  if (!result.campaign_improvement) {
+    console.warn(`[perCampaign] campaign_improvement ÜRETİLEMEDİ campaign=${fallbackCampaignId} stop_reason=${message.stop_reason} — JSON kesik/bozuk olabilir (kampanya kartsız kalır).`)
+  }
   const meta: PerCampaignRunMeta = {
     model,
     input_tokens: message.usage.input_tokens,
