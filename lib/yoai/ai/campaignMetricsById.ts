@@ -39,10 +39,8 @@ async function fetchMetaCampaignMetrics(campaignId: string, userId: string): Pro
     const raw = data?.data?.[0]
     if (!raw) return null
     const n = normalizeInsights(raw)
-    const conversions = (n.actions['purchase'] ?? 0) +
-      (n.actions['lead'] ?? 0) +
-      (n.actions['offsite_conversion.fb_pixel_purchase'] ?? 0) +
-      (n.actions['offsite_conversion.fb_pixel_lead'] ?? 0)
+    const { countMetaConversions } = await import('@/lib/yoai/metaConversions')
+    const conversions = countMetaConversions(n.actions)
     return {
       ctr: n.ctr,
       cpc: n.cpc,

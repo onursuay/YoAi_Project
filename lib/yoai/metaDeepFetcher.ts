@@ -13,15 +13,14 @@ import { resolveKpiTemplate } from '@/lib/meta/optimization/kpiRegistry'
 import type { CampaignTriple, OptimizationAdset } from '@/lib/meta/optimization/types'
 import type { DeepCampaignInsight, AdsetInsight, AdInsight, StandardMetrics, AdsetTargetingSummary } from './analysisTypes'
 import { computeCreativeHash } from './creativeHash'
+import { countMetaConversions } from './metaConversions'
 
 const MAX_CAMPAIGNS = 15
 
 /* ── Helpers ── */
 function toStdMetrics(n: ReturnType<typeof normalizeInsights>): StandardMetrics {
-  const conversions = (n.actions['purchase'] ?? 0) +
-    (n.actions['lead'] ?? 0) +
-    (n.actions['offsite_conversion.fb_pixel_purchase'] ?? 0) +
-    (n.actions['offsite_conversion.fb_pixel_lead'] ?? 0)
+  // Çift-sayım korumalı + geniş kapsam (satın alma/lead/kayıt/abonelik/iletişim/mesajlaşma)
+  const conversions = countMetaConversions(n.actions)
   return {
     spend: n.spend,
     impressions: n.impressions,
@@ -228,6 +227,12 @@ export async function fetchMetaDeep(
 
     const data = await response.json().catch(() => ({ data: [] }))
     const rawCampaigns = data.data || []
+
+    // Sessiz truncation'ı görünür kıl: cap dolduysa / daha fazla sayfa varsa logla
+    // (cap kasıtlı maliyet kontrolü — her kampanya 1 AI Batch isteği; ama sessiz kalmamalı).
+    if (data?.paging?.next || rawCampaigns.length >= MAX_CAMPAIGNS) {
+      console.warn(`[MetaDeepFetcher] Kısmi tarama: en yüksek harcamalı ${MAX_CAMPAIGNS} aktif kampanya analiz edildi; hesapta daha fazlası olabilir (cap=maliyet kontrolü).`)
+    }
 
     // 2. Process each campaign
     for (const raw of rawCampaigns) {

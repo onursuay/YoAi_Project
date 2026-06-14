@@ -193,6 +193,10 @@ export async function fetchGoogleDeep(
     `.trim()
 
     const campaignRows = await searchGAds<CampaignRow>(googleCtx, campaignQuery)
+    // Sessiz truncation görünürlüğü: LIMIT dolduysa daha fazla kampanya olabilir (cap=maliyet)
+    if (campaignRows.length >= MAX_CAMPAIGNS) {
+      console.warn(`[GoogleDeepFetcher] Kısmi tarama: en yüksek harcamalı ${MAX_CAMPAIGNS} aktif kampanya analiz edildi; hesapta daha fazlası olabilir.`)
+    }
 
     // Aggregate by campaign ID
     const campaignMap = new Map<string, {

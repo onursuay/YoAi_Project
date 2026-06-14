@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma denetim onarımı 3/N: Meta dönüşüm sayımı + tarama görünürlüğü
+- **Sorun:** (1) Meta dönüşüm sayımı dar (yalnız satın alma+lead) VE `purchase` ile `fb_pixel_purchase`'ı topladığı için potansiyel çift-sayım → mesaj/kayıt hedefli kampanyalarda "0 dönüşüm" yanılgısı veya şişik sayı. (2) MAX_CAMPAIGNS cap'i sessizdi (büyük hesapta fazlası analiz dışı, kullanıcı bilmiyor).
+- **Çözüm:**
+  - **Dönüşüm:** `lib/yoai/metaConversions.ts` (`countMetaConversions`) — her dönüşüm ailesinde birleşik değeri tercih eder (`??`, toplama yok → çift-sayım giderildi), aileler arası standart event'leri toplar (satın alma/lead/kayıt/abonelik/iletişim/başvuru/mesajlaşma). `metaDeepFetcher` + `campaignMetricsById` tek kaynağı kullanır.
+  - **Tarama görünürlüğü:** Meta/Google fetcher cap'e ulaşınca net `console.warn` (cap kasıtlı maliyet kontrolü — her kampanya 1 AI Batch isteği; artık sessiz değil).
+- **Dosyalar:** lib/yoai/metaConversions.ts (yeni), lib/yoai/metaDeepFetcher.ts, lib/yoai/ai/campaignMetricsById.ts, lib/yoai/googleDeepFetcher.ts
+
 ## 2026-06-14 — YoAlgoritma denetim onarımı 2/N: outcome ölçüm döngüsü + kart şeffaflığı
 - **Sorun (denetim — KRİTİK):** Öğrenen beynin "önerilerin gerçek ROAS/CTR/CPC etkisini öğren" amacı uçtan uca ÖLÜYDÜ: before yazılıyor ama after-snapshot'ı çağıran cron/mekanizma yoktu (tüm kayıtlar kalıcı 'pending'), outcome'u gösteren tek UI (ApprovalHistoryPanel) hiç render edilmiyordu. Ayrıca yayınlanan kampanyaya erişim linki ve önerinin neye dayandığı görünmüyordu.
 - **Çözüm:**
