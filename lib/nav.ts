@@ -14,6 +14,7 @@ import {
   WandSparkles,
   Contact,
   Mail,
+  Globe,
 } from 'lucide-react'
 import { ROUTES } from '@/lib/routes'
 
@@ -99,6 +100,12 @@ export const navItems: NavItem[] = [
     label: 'SEO Plus',
     href: '/seo-plus',
     icon: Search,
+  },
+  {
+    id: 'web-site-yoneticisi',
+    label: 'Web Site Yöneticisi',
+    href: ROUTES.WEBSITE_MANAGER,
+    icon: Globe,
   },
   {
     id: 'crm',

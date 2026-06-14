@@ -5732,6 +5732,21 @@
           "notVisibleDesc": "AI engines don't recognize this site yet. Content and schema improvements can increase visibility."
         }
       }
+    },
+    "webSiteYoneticisi": {
+      "title": "Website Manager",
+      "pageDescription": "Create an on-brand website with AI and publish it in one click.",
+      "newSite": "Create New Site",
+      "emptyTitle": "You don't have any websites yet",
+      "emptyDescription": "Get started by creating your first website.",
+      "statusDraft": "Draft",
+      "statusPublished": "Published",
+      "statusUnpublished": "Unpublished",
+      "open": "Open",
+      "delete": "Delete",
+      "deleteConfirm": "Are you sure you want to delete this site?",
+      "createError": "Could not create the site.",
+      "loadError": "Could not load sites."
     }
   },
   "sidebar": {
@@ -5747,6 +5762,7 @@
     "raporlar": "Reports",
     "katalog": "Catalog",
     "seo": "SEO Plus",
+    "websiteyoneticisi": "Website Manager",
     "crm": "CRM System",
     "emailmarketing": "Email Marketing",
     "entegrasyon": "Integration",

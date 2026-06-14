@@ -5732,6 +5732,21 @@
           "notVisibleDesc": "AI motorları bu siteyi henüz tanımıyor. İçerik ve schema iyileştirmeleri görünürlüğü artırabilir."
         }
       }
+    },
+    "webSiteYoneticisi": {
+      "title": "Web Site Yöneticisi",
+      "pageDescription": "Yapay zekâ ile markanıza uygun web sitesi oluşturun ve tek tuşla yayınlayın.",
+      "newSite": "Yeni Site Oluştur",
+      "emptyTitle": "Henüz web siteniz yok",
+      "emptyDescription": "İlk web sitenizi oluşturmak için başlayın.",
+      "statusDraft": "Taslak",
+      "statusPublished": "Yayında",
+      "statusUnpublished": "Yayından kaldırıldı",
+      "open": "Aç",
+      "delete": "Sil",
+      "deleteConfirm": "Bu siteyi silmek istediğinize emin misiniz?",
+      "createError": "Site oluşturulamadı.",
+      "loadError": "Siteler yüklenemedi."
     }
   },
   "sidebar": {
@@ -5747,6 +5762,7 @@
     "raporlar": "Raporlar",
     "katalog": "Katalog",
     "seo": "SEO Plus",
+    "websiteyoneticisi": "Web Site Yöneticisi",
     "crm": "CRM Sistemi",
     "emailmarketing": "Email Marketing",
     "entegrasyon": "Entegrasyon",
