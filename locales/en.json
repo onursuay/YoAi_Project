@@ -3146,7 +3146,7 @@
         "empty": "No improvement cards yet.",
         "preparing": "Preparing your first analysis… cards will appear in a few minutes.",
         "noCampaigns": "No active campaigns. Analysis starts automatically once you create a campaign.",
-        "noCardsForBusiness": "No improvement cards for this business yet. New cards are generated in the next weekly analysis; if you selected another business, its cards appear there.",
+        "noCardsForBusiness": "No improvement cards for this business yet. Cards appear here as analysis completes; if you selected another business, its cards appear there.",
         "emptyDrilldown": "No cards at this level.",
         "emptyAds": "No separate ad suggestion for this ad set — applying the ad set suggestions above is enough.",
         "status": {
