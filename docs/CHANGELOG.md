@@ -2,6 +2,12 @@
 
 ---
 
+## 2026-06-14 — 🔴 KRİTİK: ai_engine_runs CHECK constraint 'yoalgoritma_hier'i reddediyordu (R1/R8 ölü koddu)
+- **Sorun (uçtan uca doğrulamada bulundu):** `ai_engine_runs.platform` CHECK constraint'i yalnız `('Meta','Google')` kabul ediyordu (migration 20260519000000). R1'in `writeHierRunStatus` koşu-durumunu `platform='yoalgoritma_hier'` ile yazar → her yazım **23514 ile sessizce REDDEDİLİYORDU** (try/catch yutuyordu). Sonuç: R1 run-status + R8 sağlık/admin okuması fiilen ÇALIŞMIYORDU — yazılan hiçbir failed/stale satır olmadığı için gözlemlenebilirlik kördü. Tam da kullanıcının yaşadığı "sessiz hata" sınıfı + omddq migration-gap.
+- **Çözüm:** Migration `20260614000000_widen_ai_engine_runs_platform.sql` — CHECK `('Meta','Google','yoalgoritma_hier')`'e genişletildi (additive/güvenli; mevcut satırlar zaten uyumlu). **omddq'ya uygulandı + doğrulandı.**
+- **Uçtan uca doğrulama:** sentinel failed satır yazıldı → `check_yoalgoritma_runs` 🔴 KIRMIZI döndü ("son 8 günde 1 BAŞARISIZ koşu") → temizlendi → normale döndü. Upsert için gereken `idx_ai_engine_runs_unique (user_id,platform,account_id,run_date)` index'i de mevcut (doğrulandı).
+- **Dosyalar:** supabase/migrations/20260614000000_widen_ai_engine_runs_platform.sql
+
 ## 2026-06-14 — YoAlgoritma güvenilirlik R9: lifecycle/persist sağlamlık
 - **Sorun:** (a) Reconcile `listRecent` çağrıları TÜM statüleri çekiyordu (limit 300/1000); uzun-ömürlü hesapta terminal (superseded/cancelled) satırlar limit penceresini doldurursa eski pending/decided kartlar kaçırılıp yanlış freeze/cancel kararı verilebilir. (b) AI gerçek ağaçta olmayan bir `adset_id` döndürürse (halüsinasyon) orphan ad set kartı yazılıyordu. (c) campaign insert DB'de başarısız olursa (campImpId null) sessizce atlanıyor, run-status bunu görmüyordu.
 - **Çözüm:**
