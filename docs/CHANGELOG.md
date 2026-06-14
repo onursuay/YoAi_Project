@@ -7,6 +7,7 @@
 - **Çözüm:**
   - `getHierarchyCounts(userId, scope?)` artık per-account scope açıkken seçili işletmenin kampanya ID'leri + hesabına göre sayar (kart listesiyle tutarlı). command-center scope'u çalıştırma blob'undan + `resolveYoaiScope`'tan kurar.
   - HierarchicalImprovements: sonsuz spinner yerine bootstrap bitince/scope hazırken doğru boş durum — `noCardsForBusiness` ("Bu işletme için kart yok; başka işletme seçtiyseniz orada görünür"). `showPreparing` yalnız aktif bootstrap/ilk-deneme sırasında spinner gösterir.
+  - **KÖK NEDEN (sonsuz spinner):** bootstrap idempotency guard'ı `getImprovementHierarchy(userId)` ile scope'suz bakıyordu → başka işletme/legacy(scope=null) kartları "var" sayılıp seçili işletme için hiç tarama tetiklenmiyordu. Guard scope-aware yapıldı (seçili işletmenin scope'lu run kampanyaları + hesabı) → kart yoksa gerçek scoped scan tetiklenir.
 - **Dosyalar:** lib/yoai/ai/hierarchicalStore.ts, app/api/yoai/command-center/route.ts, components/yoai/hierarchy/HierarchicalImprovements.tsx, locales/{tr,en}.json
 
 ## 2026-06-14 — YoAlgoritma denetim onarımı 4/N: adversarial review bulguları (4 onaylı)
