@@ -5746,7 +5746,24 @@
       "delete": "Delete",
       "deleteConfirm": "Are you sure you want to delete this site?",
       "createError": "Could not create the site.",
-      "loadError": "Could not load sites."
+      "loadError": "Could not load sites.",
+      "build": "Build Site",
+      "rebuild": "Rebuild",
+      "building": "Building…",
+      "publish": "Publish",
+      "unpublish": "Unpublish",
+      "publishing": "Publishing…",
+      "viewLive": "View Live",
+      "preview": "Preview",
+      "noPagesTitle": "Site not built yet",
+      "noPagesDesc": "Let's build an on-brand site from your business profile.",
+      "buildError": "Could not build the site.",
+      "publishError": "Action failed.",
+      "pageHome": "Home",
+      "pageAbout": "About",
+      "pageServices": "Services",
+      "pageContact": "Contact",
+      "backToList": "Back to sites"
     }
   },
   "sidebar": {

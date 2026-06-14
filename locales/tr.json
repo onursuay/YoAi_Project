@@ -5746,7 +5746,24 @@
       "delete": "Sil",
       "deleteConfirm": "Bu siteyi silmek istediğinize emin misiniz?",
       "createError": "Site oluşturulamadı.",
-      "loadError": "Siteler yüklenemedi."
+      "loadError": "Siteler yüklenemedi.",
+      "build": "Siteyi Oluştur",
+      "rebuild": "Yeniden Oluştur",
+      "building": "Oluşturuluyor…",
+      "publish": "Yayınla",
+      "unpublish": "Yayından Kaldır",
+      "publishing": "Yayınlanıyor…",
+      "viewLive": "Canlı Görüntüle",
+      "preview": "Önizleme",
+      "noPagesTitle": "Site henüz oluşturulmadı",
+      "noPagesDesc": "İşletme profilinizden markanıza uygun bir site oluşturalım.",
+      "buildError": "Site oluşturulamadı.",
+      "publishError": "İşlem başarısız.",
+      "pageHome": "Ana Sayfa",
+      "pageAbout": "Hakkımızda",
+      "pageServices": "Hizmetler",
+      "pageContact": "İletişim",
+      "backToList": "Sitelere dön"
     }
   },
   "sidebar": {

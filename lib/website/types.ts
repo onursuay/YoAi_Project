@@ -87,6 +87,22 @@ export interface WebsitePatchInput {
   status?: WebsiteStatus
 }
 
+/** Sayfa yazarken kabul edilen alanlar (builder + ileride AI üretimi). */
+export interface WebsitePageInput {
+  locale: string
+  slug: string
+  pageRole: PageRole
+  sections: SectionBlock[]
+  seo?: PageSeo
+  orderIndex?: number
+}
+
+/** Public render için: yayınlanmış site + sayfaları. */
+export interface PublishedSite {
+  website: Website
+  pages: WebsitePage[]
+}
+
 // --- DB row tipleri (snake_case) + mapper ---
 
 export interface WebsiteRow {
@@ -120,5 +136,29 @@ export function rowToWebsite(r: WebsiteRow): Website {
     publishedVersionId: r.published_version_id,
     createdAt: r.created_at,
     updatedAt: r.updated_at,
+  }
+}
+
+export interface WebsitePageRow {
+  id: string
+  website_id: string
+  locale: string
+  slug: string
+  page_role: PageRole
+  sections: SectionBlock[] | null
+  seo: PageSeo | null
+  order_index: number
+}
+
+export function rowToPage(r: WebsitePageRow): WebsitePage {
+  return {
+    id: r.id,
+    websiteId: r.website_id,
+    locale: r.locale,
+    slug: r.slug,
+    pageRole: r.page_role,
+    sections: r.sections ?? [],
+    seo: r.seo ?? {},
+    orderIndex: r.order_index,
   }
 }

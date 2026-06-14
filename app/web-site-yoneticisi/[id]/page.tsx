@@ -1,44 +1,203 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
+import Link from 'next/link'
 import { useTranslations } from 'next-intl'
+import { Sparkles, RefreshCw, Globe, ExternalLink, ArrowLeft } from 'lucide-react'
 import Topbar from '@/components/Topbar'
-import type { Website } from '@/lib/website/types'
+import { ToastContainer, type Toast } from '@/components/Toast'
+import SiteRenderer from '@/lib/website/render/SiteRenderer'
+import type { Website, WebsitePage } from '@/lib/website/types'
 
 export default function WebSiteDetailPage() {
   const params = useParams()
   const id = String(params?.id ?? '')
   const t = useTranslations('dashboard.webSiteYoneticisi')
-  const [site, setSite] = useState<Website | null>(null)
 
-  useEffect(() => {
+  const [site, setSite] = useState<Website | null>(null)
+  const [pages, setPages] = useState<WebsitePage[]>([])
+  const [activeSlug, setActiveSlug] = useState<string>('home')
+  const [busy, setBusy] = useState<'build' | 'publish' | null>(null)
+  const [toasts, setToasts] = useState<Toast[]>([])
+
+  const addToast = useCallback((message: string, type: Toast['type']) => {
+    setToasts((prev) => [...prev, { id: crypto.randomUUID(), message, type }])
+  }, [])
+  const removeToast = useCallback((tid: string) => setToasts((p) => p.filter((x) => x.id !== tid)), [])
+
+  const load = useCallback(async () => {
     if (!id) return
-    fetch(`/api/website/${id}`)
-      .then((r) => r.json())
-      .then((j) => { if (j.ok) setSite(j.website) })
-      .catch(() => {})
+    const [sRes, pRes] = await Promise.all([
+      fetch(`/api/website/${id}`).then((r) => r.json()).catch(() => null),
+      fetch(`/api/website/${id}/pages`).then((r) => r.json()).catch(() => null),
+    ])
+    if (sRes?.ok) setSite(sRes.website)
+    if (pRes?.ok) setPages(pRes.pages ?? [])
   }, [id])
+
+  useEffect(() => { load() }, [load])
+
+  const pageLabel = (p: WebsitePage) => {
+    const map: Record<string, string> = {
+      home: t('pageHome'), about: t('pageAbout'), services: t('pageServices'), contact: t('pageContact'),
+    }
+    return map[p.pageRole] ?? p.slug
+  }
+
+  const activePage = pages.find((p) => p.slug === activeSlug) ?? pages[0] ?? null
+
+  const handleBuild = async () => {
+    setBusy('build')
+    try {
+      const res = await fetch(`/api/website/${id}/build`, { method: 'POST' })
+      const json = await res.json()
+      if (json.ok) { setPages(json.pages ?? []); setActiveSlug('home') }
+      else addToast(t('buildError'), 'error')
+    } catch {
+      addToast(t('buildError'), 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handlePublish = async (action: 'publish' | 'unpublish') => {
+    setBusy('publish')
+    try {
+      const res = await fetch(`/api/website/${id}/publish`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action }),
+      })
+      const json = await res.json()
+      if (json.ok && json.website) setSite(json.website)
+      else addToast(json.error || t('publishError'), 'error')
+    } catch {
+      addToast(t('publishError'), 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const isPublished = site?.status === 'published'
+  const hasPages = pages.length > 0
 
   return (
     <>
       <Topbar title={site?.label ?? t('title')} description={site?.subdomain ?? ''} />
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
-        <div className="max-w-7xl mx-auto space-y-6">
-          {/* Faz 1c: yönlendirilmiş intake diyaloğu + önizleme + yayın buraya gelecek */}
-          <div className="bg-white rounded-xl border border-gray-200 p-6 animate-card-enter">
-            <p className="text-sm leading-relaxed text-gray-600">
-              {site ? `${site.label} — ${t(
-                site.status === 'published'
-                  ? 'statusPublished'
-                  : site.status === 'unpublished'
-                  ? 'statusUnpublished'
-                  : 'statusDraft',
-              )}` : '…'}
-            </p>
+        <div className="max-w-7xl mx-auto space-y-5">
+          <Link
+            href="/web-site-yoneticisi"
+            className="inline-flex items-center gap-1.5 text-sm text-gray-500 hover:text-gray-800 transition-colors"
+          >
+            <ArrowLeft className="w-4 h-4" /> {t('backToList')}
+          </Link>
+
+          {/* Aksiyon çubuğu */}
+          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center gap-3 animate-card-enter">
+            <span
+              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ${
+                isPublished ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'
+              }`}
+            >
+              {isPublished ? t('statusPublished') : site?.status === 'unpublished' ? t('statusUnpublished') : t('statusDraft')}
+            </span>
+
+            <div className="flex-1" />
+
+            <button
+              onClick={handleBuild}
+              disabled={busy !== null}
+              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50/60 transition-colors disabled:opacity-50"
+            >
+              {hasPages ? <RefreshCw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+              {busy === 'build' ? t('building') : hasPages ? t('rebuild') : t('build')}
+            </button>
+
+            {hasPages && (
+              <button
+                onClick={() => handlePublish(isPublished ? 'unpublish' : 'publish')}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-4 py-2 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-50"
+              >
+                <Globe className="w-4 h-4" />
+                {busy === 'publish' ? t('publishing') : isPublished ? t('unpublish') : t('publish')}
+              </button>
+            )}
+
+            {isPublished && (
+              <a
+                href={`/s/${site?.subdomain}`}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+              >
+                <ExternalLink className="w-4 h-4" /> {t('viewLive')}
+              </a>
+            )}
           </div>
+
+          {/* İçerik */}
+          {!hasPages ? (
+            <div className="bg-white rounded-xl border border-gray-200 p-10 text-center animate-card-enter">
+              <div className="mx-auto w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center">
+                <Sparkles className="w-6 h-6 text-primary" />
+              </div>
+              <h3 className="mt-4 text-base font-semibold text-gray-900">{t('noPagesTitle')}</h3>
+              <p className="mt-1 text-sm leading-relaxed text-gray-600 max-w-md mx-auto">{t('noPagesDesc')}</p>
+              <button
+                onClick={handleBuild}
+                disabled={busy !== null}
+                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                {busy === 'build' ? t('building') : t('build')}
+              </button>
+            </div>
+          ) : (
+            <div className="space-y-3 animate-card-enter">
+              {/* Sayfa seçici (multipage) */}
+              {pages.length > 1 && (
+                <div className="flex flex-wrap gap-2">
+                  {pages.map((p) => (
+                    <button
+                      key={p.id}
+                      onClick={() => setActiveSlug(p.slug)}
+                      className={`rounded-lg px-3.5 py-1.5 text-sm transition-colors ${
+                        (activePage?.slug === p.slug)
+                          ? 'bg-primary/10 text-primary font-medium'
+                          : 'text-gray-600 hover:bg-gray-50/60'
+                      }`}
+                    >
+                      {pageLabel(p)}
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {/* Önizleme çerçevesi */}
+              <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
+                <div className="flex items-center gap-2 px-4 h-10 border-b border-gray-100 bg-gray-50/60">
+                  <span className="flex gap-1.5">
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                    <span className="w-2.5 h-2.5 rounded-full bg-gray-300" />
+                  </span>
+                  <span className="ml-2 text-xs text-gray-500 truncate">
+                    {site?.subdomain}{activePage && activePage.slug !== 'home' ? `/${activePage.slug}` : ''}
+                  </span>
+                  <span className="ml-auto text-xs text-gray-400">{t('preview')}</span>
+                </div>
+                <div className="max-h-[70vh] overflow-y-auto">
+                  {activePage && <SiteRenderer page={activePage} theme={site?.theme} />}
+                </div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
+      <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   )
 }
