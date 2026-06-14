@@ -5,13 +5,13 @@
    1) READ (her zaman açık, ücretsiz): cache'lenmiş rakip reklam
       verisini (yoai_competitor_insights + yoai_competitor_ads)
       Claude payload'ına gidecek "Rakip Reklam Analizi" bloğuna çevirir.
-   2) WRITE (flag ile, varsayılan KAPALI): kullanıcının BEYAN ETTİĞİ
-      rakipler için Apify scrape tetikler. 7 günlük per-competitor cache,
-      max 3 rakip cost cap, soft-fail.
+   2) WRITE (varsayılan AÇIK — 2026-06-14 kullanıcı kararı): kullanıcının
+      BEYAN ETTİĞİ rakipler için Apify scrape tetikler. 7 günlük per-competitor
+      cache, max 3 rakip cost cap, soft-fail.
 
-   Write yolu YOALGORITMA_SCRAPE_COMPETITORS=true olmadan çalışmaz —
-   böylece prod tarama maliyeti sessizce artmaz; Onur Vercel'de açıp
-   canlı test ettikten sonra devreye girer.
+   Write yolu varsayılan ÇALIŞIR; yalnız YOALGORITMA_SCRAPE_COMPETITORS=false
+   ile açıkça kapatılabilir. Apify token yoksa veya rakip beyanı yoksa zaten
+   güvenli no-op döner (gereksiz maliyet/crash yok).
 
    supabase'e dayanan store'lar dinamik import edilir (pure builder
    competitorBrief.ts test edilebilir kalsın diye).
@@ -86,8 +86,9 @@ export interface CompetitorScrapeSummary {
 }
 
 export async function scrapeDeclaredCompetitors(userId: string): Promise<CompetitorScrapeSummary> {
-  // Varsayılan KAPALI — prod tarama maliyetini sessizce artırma.
-  if (process.env[SCRAPE_FLAG] !== 'true') {
+  // Varsayılan AÇIK (2026-06-14 kullanıcı kararı) — yalnız açıkça =false ise kapanır.
+  // Apify token / rakip beyanı yoksa aşağıda güvenli no-op döner.
+  if (process.env[SCRAPE_FLAG] === 'false') {
     return { enabled: false, reason: 'flag_off', attempted: 0, scraped: 0, cachedSkipped: 0, errors: 0 }
   }
 

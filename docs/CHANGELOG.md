@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma: rakip taraması varsayılan açıldı
+- **Sorun:** Rakip Apify scrape yolu `YOALGORITMA_SCRAPE_COMPETITORS` flag'iyle varsayılan KAPALIydı; bu yüzden rakip verisi prod'da fiilen hiç toplanmıyor, "rakipleri araştır" vaadi devre dışıydı.
+- **Çözüm:** Kullanıcı kararıyla (2026-06-14) varsayılan AÇIK yapıldı — yalnız `YOALGORITMA_SCRAPE_COMPETITORS=false` ile kapatılabilir. Apify token yoksa veya beyan edilen rakip yoksa güvenli no-op (gereksiz maliyet/crash yok). Beyan edilen rakipler (max 3, 7 günlük cache) artık her haftalık taramada güncellenir ve prompt'a girer.
+- **Dosyalar:** lib/yoai/ai/competitorScanStep.ts
+
 ## 2026-06-13 — YoAlgoritma Faz 3.2: rakip analizi prompt yarışı giderildi
 - **Sorun:** Rakip reklam analizi (Apify scrape → cache → prompt) boru hattı kuruluydu ama per-campaign akışı scrape'i hiç tetiklemiyor, yalnız cache'i okuyordu. `scan.user` (scrape eden) ve `campaign-improvements` aynı Pazar cron'unda paralel çalıştığından, per-campaign akışı çoğu kez henüz boş cache'i okuyup rakip bloğunu prompt'a hiç eklemiyordu (flag açık olsa bile yarış).
 - **Çözüm:** `perCampaignImprovements`'a `scan.user` ile birebir aynı `scrape-competitors` step'i eklendi — `gatherUserScanInputs` cache'i okumadan ÖNCE beyan edilen rakipleri tazeler. Flag (`YOALGORITMA_SCRAPE_COMPETITORS`) kapalıysa anında no-op (sıfır regresyon); açıkken rakip bloğu artık yarışsız prompt'a girer. 7 günlük per-rakip cache çift-scrape'i önler.
