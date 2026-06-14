@@ -14,7 +14,7 @@ import Image from 'next/image'
 export default function SidebarNav() {
   const t = useTranslations('sidebar')
   const pathname = usePathname()
-  const [openGroups, setOpenGroups] = useState<string[]>(['reklam'])
+  const [openGroups, setOpenGroups] = useState<string[]>([])
   const [collapsed, setCollapsed] = useState<boolean>(false)
   const [animate, setAnimate] = useState(false)
   const [hasGozetimAccess, setHasGozetimAccess] = useState<boolean>(false)

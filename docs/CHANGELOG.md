@@ -2,6 +2,11 @@
 
 ---
 
+## 2026-06-14 — Sidebar: "Reklam" menü grubu ilk açılışta kapalı başlasın
+- **Sorun:** Sol menüde "Reklam" accordion grubu (Meta/Google/TikTok/Strateji) sayfa ilk açıldığında otomatik açık geliyordu; diğer gruplar gibi kapalı başlaması, kullanıcının istediği kategoriyi kendisinin açması isteniyordu.
+- **Çözüm:** `openGroups` başlangıç state'i `['reklam']` → `[]` yapıldı. Tüm gruplar artık kapalı başlar.
+- **Dosyalar:** components/SidebarNav.tsx
+
 ## 2026-06-14 — 🔴 KRİTİK: ai_engine_runs CHECK constraint'leri hiyerarşik run-status'u reddediyordu (R1/R8 ölü koddu)
 - **Sorun (uçtan uca doğrulamada bulundu — İKİ ayrı CHECK):**
   1. `ai_engine_runs.platform` CHECK yalnız `('Meta','Google')` kabul ediyordu; `writeHierRunStatus` `platform='yoalgoritma_hier'` yazar → **23514 ile sessizce reddediliyordu** (try/catch yutuyordu).
