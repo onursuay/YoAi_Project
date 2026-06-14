@@ -126,6 +126,7 @@ SADECE şu şemaya uyan TEK bir JSON nesnesi ver. Markdown fence YOK, açıklama
         "platform": "meta" | "google",
         "campaign_type": "Satış" | "Potansiyel Müşteri" | "Etkileşim" | "Arama Ağı" | "Performance Max" | ...,
         "conversion_goal": "<dönüşüm hedefi — düz Türkçe>",
+        "bidding_strategy": "<teklif stratejisi — düz Türkçe; Google için anlamlı: 'Dönüşümleri En Üst Düzeye Çıkar' | 'Tıklamaları En Üst Düzeye Çıkar' | 'Hedef EBM' | 'Hedef ROAS'. Meta için boş bırakılabilir.>",
         "cta": "<platform-uygun CTA — Türkçe>",
         "budget": { "daily": 250, "currency": "TRY" },
         "targeting": {

@@ -38,6 +38,48 @@ function toMetaDestination(objective: string, conversionGoal: string): string | 
   return 'WEBSITE'
 }
 
+/** AI'nın Türkçe teklif etiketini Google BiddingStrategy enum'una çevirir (yalnız Google).
+ *  Hedef değer gerektiren TARGET_CPA/TARGET_ROAS güvenli değilse (sayı yok) konservatif
+ *  MAXIMIZE_CONVERSIONS'a düşer — sahte hedef bid kurmaz. */
+function toGoogleBidding(label: string | undefined, conversionGoal: string): string | undefined {
+  const s = `${label || ''} ${conversionGoal || ''}`.toLocaleLowerCase('tr')
+  if (!label) {
+    // Etiket yoksa dönüşüm hedefli kampanyada dönüşüm-maksimize daha doğru
+    return /dönüş|satış|lead|potansiyel|conversion|sale/.test(s) ? 'MAXIMIZE_CONVERSIONS' : 'MAXIMIZE_CLICKS'
+  }
+  if (/tıklama|click|trafik|traffic/.test(s)) return 'MAXIMIZE_CLICKS'
+  if (/dönüşüm değeri|roas/.test(s)) return 'MAXIMIZE_CONVERSIONS' // değer-temelli ama hedefsiz → güvenli
+  if (/ebm|cpa/.test(s)) return 'MAXIMIZE_CONVERSIONS'            // hedef CPA sayısı yoksa güvenli alternatif
+  if (/dönüşüm|conversion|satış|sale|lead|potansiyel/.test(s)) return 'MAXIMIZE_CONVERSIONS'
+  if (/gösterim payı|impression share/.test(s)) return 'MAXIMIZE_CLICKS'
+  return 'MAXIMIZE_CLICKS'
+}
+
+/** AI'nın kampanya türü etiketinden Google kanal türünü türetir. */
+function toGoogleChannel(campaignType: string): string {
+  const s = (campaignType || '').toLocaleLowerCase('tr')
+  if (/performance max|pmax|maksimum performans/.test(s)) return 'PERFORMANCE_MAX'
+  if (/görüntülü|display/.test(s)) return 'DISPLAY'
+  if (/alışveriş|shopping/.test(s)) return 'SHOPPING'
+  if (/video|youtube/.test(s)) return 'VIDEO'
+  if (/demand gen|talep/.test(s)) return 'DEMAND_GEN'
+  return 'SEARCH'
+}
+
+/** ad_spec.targeting → FullAdProposal.targeting (yapısal, yayına taşınır). */
+function buildStructuredTargeting(t: AdSpec['targeting'] | undefined): FullAdProposal['targeting'] | undefined {
+  if (!t) return undefined
+  const out: NonNullable<FullAdProposal['targeting']> = {}
+  if (Array.isArray(t.locations) && t.locations.length) out.locations = t.locations.filter(Boolean)
+  if (t.demographics) {
+    if (typeof t.demographics.age_min === 'number') out.ageMin = t.demographics.age_min
+    if (typeof t.demographics.age_max === 'number') out.ageMax = t.demographics.age_max
+    if (Array.isArray(t.demographics.genders) && t.demographics.genders.length) out.genders = t.demographics.genders
+  }
+  if (Array.isArray(t.interests) && t.interests.length) out.interests = t.interests.filter(Boolean)
+  return Object.keys(out).length ? out : undefined
+}
+
 function buildTargetingDescription(t: AdSpec['targeting'] | undefined): string {
   if (!t) return '—'
   const parts: string[] = []
@@ -89,8 +131,14 @@ export function improvementToProposal(row: AdImprovementRow): FullAdProposal | n
     dailyBudget: spec.budget?.daily ?? 0,
     adsetName: row.source_ad_name ? `${row.source_ad_name} — iyileştirme` : 'Reklam Seti',
     targetingDescription: buildTargetingDescription(spec.targeting),
+    // Yapısal hedefleme yayına taşınır (önizleme = yayın). Meta yaş/cinsiyet/ülke
+    // doğrudan; Google lokasyonları create-ad'de geoTargetConstant'a çözülür.
+    targeting: buildStructuredTargeting(spec.targeting),
     optimizationGoal: spec.conversion_goal || undefined,
     destinationType,
+    // Google: AI teklif önerisi + kanal türü yayına taşınır (eskiden hep MAXIMIZE_CLICKS + SEARCH'e düşüyordu)
+    biddingStrategy: !isMeta ? toGoogleBidding(spec.bidding_strategy, spec.conversion_goal || '') : undefined,
+    advertisingChannelType: !isMeta ? toGoogleChannel(spec.campaign_type || '') : undefined,
     adName: row.source_ad_name ? `${row.source_ad_name} v2` : 'Yeni Reklam',
     primaryText: spec.creative?.primary_text || descriptions[0] || '',
     headline: headlines[0] || '',

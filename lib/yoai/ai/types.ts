@@ -120,6 +120,9 @@ export interface AdSpec {
   campaign_type: string
   conversion_goal: string
   cta: string
+  /** Teklif stratejisi — düz Türkçe etiket (örn. "Dönüşümleri En Üst Düzeye Çıkar",
+   *  "Tıklamaları En Üst Düzeye Çıkar"). Google yayınında biddingStrategy'ye map'lenir. */
+  bidding_strategy?: string
   budget: AdSpecBudget
   targeting: AdSpecTargeting
   creative: AdSpecCreative

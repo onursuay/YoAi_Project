@@ -77,9 +77,19 @@ export interface FullAdProposal {
   // Ad Set / Ad Group level
   adsetName: string
   targetingDescription: string
+  /** Yapısal hedefleme — yayına GERÇEKTEN taşınır (önizleme = yayın pariteleri). */
+  targeting?: {
+    locations?: string[]   // insan-okur lokasyon adları (ülke/şehir)
+    ageMin?: number
+    ageMax?: number
+    genders?: string[]     // 'all' | 'male' | 'female'
+    interests?: string[]   // ilgi alanı adları (Meta — şu an fuzzy çözüm artık)
+  }
   optimizationGoal?: string
   destinationType?: string
   biddingStrategy?: string
+  /** Google kanal türü (SEARCH/DISPLAY/PERFORMANCE_MAX/SHOPPING/VIDEO/DEMAND_GEN). */
+  advertisingChannelType?: string
   // Ad level
   adName: string
   primaryText: string

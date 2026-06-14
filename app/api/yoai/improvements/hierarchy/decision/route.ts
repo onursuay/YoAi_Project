@@ -95,12 +95,12 @@ export async function POST(request: Request) {
       return NextResponse.json({ ok })
     }
     if (action === 'applied') {
-      await markImprovementApplied(level, id, body.publishAuditId ?? null)
+      await markImprovementApplied(level, userId, id, body.publishAuditId ?? null)
       return NextResponse.json({ ok: true })
     }
     if (action === 'publish_error') {
       // Yayın başarısız → kart approved'da kalır, hata kaydedilir ("Tekrar Dene" görünür)
-      await markImprovementPublishError(level, id, body.error ?? 'Yayın başarısız')
+      await markImprovementPublishError(level, userId, id, body.error ?? 'Yayın başarısız')
       return NextResponse.json({ ok: true })
     }
     if (action === 'edit') {

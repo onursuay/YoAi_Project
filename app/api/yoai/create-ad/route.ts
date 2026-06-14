@@ -14,6 +14,28 @@ import {
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
+/** AI'nın yapısal hedeflemesini Meta targeting nesnesine çevirir (yayına taşınır).
+ *  Yaş/cinsiyet doğrudan; lokasyon ülke adı→ISO koduna (şehir çözümü = artık, ülke
+ *  geneli fallback). 'all'/iki cinsiyet → Meta default (genders gönderilmez). */
+function buildMetaTargeting(t?: FullAdProposal['targeting']): Record<string, unknown> {
+  const targeting: Record<string, unknown> = {}
+  const COUNTRY: Record<string, string> = { 'türkiye': 'TR', 'turkey': 'TR', 'tr': 'TR' }
+  const countries = new Set<string>()
+  for (const loc of (t?.locations ?? [])) {
+    const code = COUNTRY[(loc || '').toLocaleLowerCase('tr').trim()]
+    if (code) countries.add(code)
+  }
+  targeting.geo_locations = { countries: countries.size ? Array.from(countries) : ['TR'] }
+  if (typeof t?.ageMin === 'number' && t.ageMin >= 13) targeting.age_min = t.ageMin
+  if (typeof t?.ageMax === 'number' && t.ageMax <= 65) targeting.age_max = t.ageMax
+  if (Array.isArray(t?.genders)) {
+    const g: number[] = []
+    for (const x of t.genders) { if (x === 'male') g.push(1); else if (x === 'female') g.push(2) }
+    if (g.length === 1) targeting.genders = g // tek cinsiyet → uygula; 'all'/ikisi → Meta default (tümü)
+  }
+  return targeting
+}
+
 /* ────────────────────────────────────────────────────────────
    POST /api/yoai/create-ad
 
@@ -56,16 +78,51 @@ export async function POST(request: Request) {
       `${requestUrl.protocol}//${requestUrl.host}`
     console.log(`[CreateAd] baseUrl: ${baseUrl}, platform: ${proposal.platform}`)
 
-    /* ═══════════════ GOOGLE (değişmedi) ═══════════════ */
+    /* ═══════════════ GOOGLE ═══════════════ */
     if (proposal.platform === 'Google') {
-      if (!proposal.headlines?.length || !proposal.descriptions?.length) {
+      // RSA guard: <3 başlık veya <2 açıklama → kampanya reklamsız oluşur (serve etmez).
+      // Boş kampanya yaratmaktansa net hata ver.
+      if (!proposal.headlines || proposal.headlines.length < 3) {
         return NextResponse.json(
-          { ok: false, error: 'Google RSA için başlıklar ve açıklamalar gereklidir.' },
-          { status: 400 },
+          { ok: false, error: 'Google Arama reklamı için en az 3 başlık gerekir.' },
+          { status: 422 },
+        )
+      }
+      if (!proposal.descriptions || proposal.descriptions.length < 2) {
+        return NextResponse.json(
+          { ok: false, error: 'Google Arama reklamı için en az 2 açıklama gerekir.' },
+          { status: 422 },
         )
       }
 
       const budgetMicros = (proposal.dailyBudget || 50) * 1_000_000
+
+      // Kanal türü şeffaflığı: AI Arama dışı (PMax/Display/…) önerdiyse, mevcut akış
+      // yalnız Arama Ağı varlığı (başlık/açıklama/keyword) ürettiği için Arama olarak
+      // yayınlanır — ama bunu SESSİZ yapma, kullanıcıya bildir.
+      const requestedChannel = (proposal.advertisingChannelType || 'SEARCH').toUpperCase()
+      const channelNote = requestedChannel !== 'SEARCH'
+        ? ` Not: AI bu kampanya için ${requestedChannel} önerdi; ek görsel/varlık gerektirdiğinden şimdilik Arama Ağı olarak oluşturuldu.`
+        : ''
+
+      // Yapısal lokasyonu geoTargetConstant ID'lerine çöz (best-effort; hata → ülke geneli).
+      let locationIds: string[] | undefined
+      const locNames = proposal.targeting?.locations?.filter(Boolean) ?? []
+      if (locNames.length) {
+        try {
+          const { getGoogleAdsContext } = await import('@/lib/googleAdsAuth')
+          const { searchGeoTargets } = await import('@/lib/google-ads/locations')
+          const gctx = await getGoogleAdsContext()
+          const ids: string[] = []
+          for (const name of locNames.slice(0, 10)) {
+            const sugg = await searchGeoTargets(gctx, name, 'tr', 'TR').catch(() => [])
+            if (sugg[0]?.id) ids.push(sugg[0].id)
+          }
+          if (ids.length) locationIds = Array.from(new Set(ids))
+        } catch (e) {
+          console.warn('[CreateAd/Google] geo çözümleme atlandı:', e instanceof Error ? e.message : e)
+        }
+      }
 
       const res = await fetch(`${baseUrl}/api/integrations/google-ads/campaigns/create`, {
         method: 'POST',
@@ -74,12 +131,15 @@ export async function POST(request: Request) {
           campaignName: proposal.campaignName || `YoAi — ${proposal.headlines[0]}`,
           advertisingChannelType: 'SEARCH',
           dailyBudgetMicros: budgetMicros,
+          // AI teklif önerisi yayına taşınır (eskiden hep MAXIMIZE_CLICKS'e düşüyordu)
           biddingStrategy: proposal.biddingStrategy || 'MAXIMIZE_CLICKS',
           adGroupName: proposal.adsetName || `YoAi Ad Group`,
           finalUrl: proposal.finalUrl || 'https://example.com',
           headlines: proposal.headlines,
           descriptions: proposal.descriptions,
           keywords: (proposal.keywords || []).map((k) => ({ text: k, matchType: 'BROAD' })),
+          // AI'nın hedeflediği lokasyonlar yayına taşınır (çözülebildiyse)
+          ...(locationIds && { locationIds }),
           // YoAlgoritma onay→yayın: Meta paritesi. Kampanya PAUSED oluşturulur;
           // kullanıcı Google Ads'te inceleyip elle aktive edene kadar harcama olmaz.
           status: 'PAUSED',
@@ -102,7 +162,7 @@ export async function POST(request: Request) {
         platform: 'Google',
         campaignResourceName: data.campaignResourceName,
         adGroupResourceName: data.adGroupResourceName,
-        message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu (PAUSED). Kampanyayı aktif etmek için Google Ads sayfasına gidin.`,
+        message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu (PAUSED). Kampanyayı aktif etmek için Google Ads sayfasına gidin.${channelNote}`,
       })
     }
 
@@ -129,7 +189,7 @@ export async function POST(request: Request) {
           websiteUrl: websiteUrl || proposal.finalUrl,
           leadFormId,
           creative,
-          targeting: { geo_locations: { countries: ['TR'] } },
+          targeting: buildMetaTargeting(proposal.targeting),
         })
 
         if (result.status === 'ok') {
@@ -272,7 +332,7 @@ export async function POST(request: Request) {
           billingEvent: 'IMPRESSIONS',
           destination_type: destination,
           status: 'PAUSED',
-          targeting: { geo_locations: { countries: ['TR'] } },
+          targeting: buildMetaTargeting(proposal.targeting),
         }),
       })
 

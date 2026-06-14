@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma denetim onarımı 1/N: IDOR güvenlik + yayın paritesi (önizleme = yayın)
+- **Sorun (uçtan uca denetimden):** (1) **IDOR:** `applied`/`publish_error` kararları `user_id` ile izole edilmiyordu (service-role) → başka kullanıcının kart id'si bilinirse onun kartı mutasyona uğratılabilirdi. (2) **Yayın paritesi kopuk:** AI'nın ürettiği yapısal hedefleme (lokasyon/yaş/cinsiyet), teklif stratejisi ve Google kanal türü yayına HİÇ taşınmıyordu → kullanıcı "İstanbul, 25-45 kadın, Dönüşüm" onaylıyor ama reklam "tüm Türkiye + MAXIMIZE_CLICKS + SEARCH" çıkıyordu. (3) Google RSA <3 başlıkta sessizce reklamsız kampanya oluşuyordu.
+- **Çözüm:**
+  - **IDOR:** `markImprovementApplied`/`markImprovementPublishError` artık `userId` alıp `.eq('user_id', userId)` ile yazıyor (diğer 4 aksiyonla parite).
+  - **Hedefleme yayına:** `AdSpec.bidding_strategy` + `FullAdProposal.targeting`/`advertisingChannelType` eklendi; `improvementToProposal` ad_spec.targeting'i (yaş/cinsiyet/lokasyon/ilgi) yapısal taşır, Türkçe teklif etiketini Google enum'una map'ler (konservatif: hedefsiz CPA/ROAS → MAXIMIZE_CONVERSIONS), kanal türünü campaign_type'tan türetir. `create-ad` Meta path'i sabit TR yerine `buildMetaTargeting` (yaş/cinsiyet doğrudan, ülke ISO) gönderir; Google path'i lokasyonları `searchGeoTargets` ile geoTargetConstant ID'ye çözüp `locationIds` geçer, AI teklifini uygular.
+  - **RSA guard:** Google'da <3 başlık / <2 açıklama → net 422 hata (boş kampanya önlendi). Kanal türü Arama dışıysa SESSİZ düşürmek yerine yayın mesajında bildirilir.
+  - **Artık (residual):** Meta şehir/ilgi adı→ID fuzzy çözümü ve tam PMax/Display yayın akışı sonraki adıma bırakıldı (ülke+yaş+cinsiyet paritesi sağlandı).
+- **Dosyalar:** lib/yoai/ai/{hierarchicalStore,types,improvementToProposal,perCampaignPrompt}.ts, lib/yoai/adCreator.ts, app/api/yoai/improvements/hierarchy/decision/route.ts, app/api/yoai/create-ad/route.ts
+
 ## 2026-06-14 — YoAlgoritma Faz 4: ölü kod temizliği + dayanıklılık + erişilebilirlik
 - **Sorun:** (1) Eski per-ad UI bileşenleri (`ImprovementCardGrid`, `ImprovementCard`) hiçbir yerde mount edilmiyordu (ölü kod, "görünmez kart" kafa karışıklığı riski). (2) `account_alerts` insert'i `account_id`/`business_key` kolonu yoksa (migration 20260524000000 omddq'da uygulanmamışsa) sessizce kaybolurdu. (3) Hesap uyarıları flip-box kartı yalnız `:hover` ile detay gösteriyordu → dokunmatik cihazda arka yüze erişim yoktu.
 - **Çözüm:**

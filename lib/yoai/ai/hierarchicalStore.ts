@@ -522,23 +522,27 @@ export async function getImprovementRow(level: HierLevel, userId: string, id: st
   return (data as Record<string, unknown>) ?? null
 }
 
-export async function markImprovementApplied(level: HierLevel, id: string, publishAuditId?: string | null): Promise<void> {
+export async function markImprovementApplied(level: HierLevel, userId: string, id: string, publishAuditId?: string | null): Promise<void> {
   if (!supabase) return
+  // IDOR koruması: yalnız kaydın sahibi güncelleyebilir (.eq user_id).
   const { error } = await supabase
     .from(TABLE[level])
     .update({ status: 'applied', applied_at: new Date().toISOString(), publish_audit_id: publishAuditId ?? null, publish_error: null })
     .eq('id', id)
+    .eq('user_id', userId)
   if (error) console.error(`[HierStore] markApplied ${level} error:`, error)
 }
 
-export async function markImprovementPublishError(level: HierLevel, id: string, errorMsg: string): Promise<void> {
+export async function markImprovementPublishError(level: HierLevel, userId: string, id: string, errorMsg: string): Promise<void> {
   if (!supabase) return
-  const { data } = await supabase.from(TABLE[level]).select('publish_attempts').eq('id', id).maybeSingle()
+  // IDOR koruması: yalnız sahibinin kaydı (.eq user_id hem select hem update'te).
+  const { data } = await supabase.from(TABLE[level]).select('publish_attempts').eq('id', id).eq('user_id', userId).maybeSingle()
   const attempts = ((data as { publish_attempts?: number } | null)?.publish_attempts ?? 0) + 1
   const { error } = await supabase
     .from(TABLE[level])
     .update({ publish_error: errorMsg.slice(0, 2000), publish_attempts: attempts })
     .eq('id', id)
+    .eq('user_id', userId)
   if (error) console.error(`[HierStore] markPublishError ${level} error:`, error)
 }
 
