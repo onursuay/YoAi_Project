@@ -15,3 +15,11 @@ ALTER TABLE ai_engine_runs DROP CONSTRAINT IF EXISTS ai_engine_runs_platform_che
 
 ALTER TABLE ai_engine_runs ADD CONSTRAINT ai_engine_runs_platform_check
   CHECK (platform IN ('Meta', 'Google', 'yoalgoritma_hier'));
+
+-- AYNI SINIF 2. BUG: status CHECK yalnız ('pending','running','completed','failed') idi;
+-- writeHierRunStatus 'partial' da yazar (bazı kampanyalar başarısız — hata ayıklama için EN
+-- değerli durum) → 23514 ile sessizce reddediliyordu. 'partial' eklenir (additive/güvenli).
+ALTER TABLE ai_engine_runs DROP CONSTRAINT IF EXISTS ai_engine_runs_status_check;
+
+ALTER TABLE ai_engine_runs ADD CONSTRAINT ai_engine_runs_status_check
+  CHECK (status IN ('pending', 'running', 'completed', 'failed', 'partial'));
