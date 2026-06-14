@@ -286,21 +286,29 @@ export default function TabDetails({
   const selectedPage = state.pageId ? inventory?.pages?.find((p) => p.page_id === state.pageId) : undefined
   const hasIgAccountsForPage = (instagramAccounts?.length ?? 0) > 0
 
-  // Telefon Aramaları (CALL): seçili Facebook sayfasının kayıtlı telefonunu alana otomatik ön-doldur
-  // (Meta Ads Manager'daki gibi), ama DÜZENLENEBİLİR bırak. Sayfa başına yalnız bir kez doldurur;
-  // kullanıcı temizler/değiştirirse geri yazmaz. Sayfada telefon yoksa manuel giriş (mevcut davranış).
-  const callPhoneAutofilledFor = React.useRef<string | null>(null)
-  React.useEffect(() => {
-    if (state.conversionLocation !== 'CALL' || !state.pageId) { callPhoneAutofilledFor.current = null; return }
-    if (callPhoneAutofilledFor.current === state.pageId) return
-    const page = capabilities?.assets?.pages?.find((p) => p.id === state.pageId)
-    if (!page) return // capabilities henüz yüklenmedi — current'i set etme, sonraki render'da tekrar dene
-    callPhoneAutofilledFor.current = state.pageId
-    if (state.destinationDetails?.calls?.phoneNumber) return // kullanıcı zaten girmiş — dokunma
-    const pagePhone = (page.phone ?? '').trim()
-    if (pagePhone) {
-      onChange({ destinationDetails: { ...state.destinationDetails, calls: { phoneNumber: pagePhone } } })
+  // Telefon Aramaları (CALL): bağlı TÜM sayfaların kayıtlı telefonları (dedup) — dropdown kaynağı.
+  const callPhones = React.useMemo(() => {
+    const set = new Set<string>()
+    for (const p of (capabilities?.assets?.pages ?? [])) {
+      const ph = (p.phone ?? '').trim()
+      if (ph) set.add(ph)
     }
+    return Array.from(set)
+  }, [capabilities])
+  const [callPhoneManual, setCallPhoneManual] = React.useState(false)
+  // Sayfa (firma) DEĞİŞİNCE o sayfanın telefonunu otomatik seç (DİNAMİK). Aynı sayfa içinde tekrar yazmaz
+  // (kullanıcı dropdown'dan başka numara seçebilir / manuel girebilir). CALL dışına çıkınca ref korunur.
+  const callPhoneLastPage = React.useRef<string | null>(null)
+  React.useEffect(() => {
+    if (state.conversionLocation !== 'CALL') return
+    if (!state.pageId) { callPhoneLastPage.current = null; return }
+    if (callPhoneLastPage.current === state.pageId) return
+    const page = capabilities?.assets?.pages?.find((p) => p.id === state.pageId)
+    if (!page) return // capabilities henüz yüklenmedi — sonraki render'da tekrar dene
+    callPhoneLastPage.current = state.pageId
+    setCallPhoneManual(false)
+    const pagePhone = (page.phone ?? '').trim()
+    onChange({ destinationDetails: { ...state.destinationDetails, calls: { phoneNumber: pagePhone || undefined } } })
   }, [state.conversionLocation, state.pageId, capabilities, state.destinationDetails, onChange])
 
   // WhatsApp: auto-select single page-linked number; clear selection if not in page's allowed list
@@ -506,34 +514,60 @@ export default function TabDetails({
       )}
 
 
-      {/* CALL: Telefon numarası */}
-      {state.conversionLocation === 'CALL' && (isEngagement || isLeads || isTraffic) && (
-        <div>
-          <label className="block text-sm font-semibold text-gray-700 mb-1">
-            {t.phoneNumber} <span className="text-red-500">*</span>
-          </label>
-          <input
-            type="tel"
-            value={state.destinationDetails?.calls?.phoneNumber ?? ''}
-            onChange={(e) =>
-              onChange({
-                destinationDetails: {
-                  ...state.destinationDetails,
-                  calls: { phoneNumber: e.target.value || undefined },
-                },
-              })
-            }
-            placeholder={t.phoneNumberPlaceholder}
-            className={`w-full px-3.5 py-2.5 border rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all ${errors.phone_number ? 'border-red-400' : 'border-gray-200'}`}
-          />
-          <p className="mt-1 text-xs text-gray-400">
-            {locale === 'tr'
-              ? 'Sayfanızın telefonu varsa otomatik gelir; dilediğiniz numarayla değiştirebilirsiniz.'
-              : 'Your Page phone is filled automatically when available; you can change it to any number.'}
-          </p>
-          {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
-        </div>
-      )}
+      {/* Telefon Aramaları (CALL): bağlı sayfa numaraları dropdown + 'Başka numara (manuel)' */}
+      {state.conversionLocation === 'CALL' && (isEngagement || isLeads || isTraffic) && (() => {
+        const current = state.destinationDetails?.calls?.phoneNumber ?? ''
+        const isManual = callPhoneManual || (!!current && !callPhones.includes(current))
+        const setPhone = (v: string | undefined) =>
+          onChange({ destinationDetails: { ...state.destinationDetails, calls: { phoneNumber: v || undefined } } })
+        const inputCls = `w-full px-3.5 py-2.5 border rounded-xl text-sm shadow-[0_1px_3px_rgba(0,0,0,0.06),inset_0_1px_2px_rgba(0,0,0,0.04)] focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all ${errors.phone_number ? 'border-red-400' : 'border-gray-200'}`
+        return (
+          <div>
+            <label className="block text-sm font-semibold text-gray-700 mb-1">
+              {t.phoneNumber} <span className="text-red-500">*</span>
+            </label>
+            {callPhones.length > 0 ? (
+              <>
+                <WizardSelect
+                  value={isManual ? '__manual__' : current}
+                  onChange={(v) => {
+                    if (v === '__manual__') { setCallPhoneManual(true); setPhone(undefined) }
+                    else { setCallPhoneManual(false); setPhone(v) }
+                  }}
+                  options={[
+                    ...callPhones.map((p) => ({ value: p, label: p })),
+                    { value: '__manual__', label: locale === 'tr' ? 'Başka numara gir (manuel)' : 'Enter another number (manual)' },
+                  ]}
+                  placeholder={locale === 'tr' ? 'Telefon numarası seçin' : 'Select a phone number'}
+                />
+                {isManual && (
+                  <input
+                    type="tel"
+                    value={current}
+                    onChange={(e) => setPhone(e.target.value)}
+                    placeholder={t.phoneNumberPlaceholder}
+                    className={`mt-2 ${inputCls}`}
+                  />
+                )}
+              </>
+            ) : (
+              <input
+                type="tel"
+                value={current}
+                onChange={(e) => setPhone(e.target.value)}
+                placeholder={t.phoneNumberPlaceholder}
+                className={inputCls}
+              />
+            )}
+            <p className="mt-1 text-xs text-gray-400">
+              {locale === 'tr'
+                ? 'Bağlı sayfaların numaraları listelenir; firmayı değiştirince ilgili numara gelir. İstediğinizi seçebilir veya manuel girebilirsiniz.'
+                : 'Phone numbers of connected Pages are listed; switching the business updates the number. Pick one or enter manually.'}
+            </p>
+            {errors.phone_number && <p className="mt-1 text-sm text-red-600">{errors.phone_number}</p>}
+          </div>
+        )
+      })()}
 
 
       {/* WHATSAPP: Bağlı numara gösterimi / seçimi */}
