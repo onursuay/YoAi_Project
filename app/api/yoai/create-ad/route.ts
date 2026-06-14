@@ -157,9 +157,14 @@ export async function POST(request: Request) {
         )
       }
 
+      // Çıplak sayısal kampanya ID'si (outcome ölçümü + deep link için resource-name değil ID gerekir)
+      const bareCampaignId = typeof data.campaignResourceName === 'string'
+        ? data.campaignResourceName.split('/').pop()
+        : undefined
       return NextResponse.json({
         ok: true,
         platform: 'Google',
+        campaignId: bareCampaignId,
         campaignResourceName: data.campaignResourceName,
         adGroupResourceName: data.adGroupResourceName,
         message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu (PAUSED). Kampanyayı aktif etmek için Google Ads sayfasına gidin.${channelNote}`,

@@ -13,11 +13,14 @@ import { translateEnum, translateEnumList } from '@/lib/yoai/translations'
 import type { AdImprovementRow, AdImprovementOutcome } from '@/lib/yoai/ai/hierarchicalStore'
 import type { AdSpec } from '@/lib/yoai/ai/types'
 
-/** Yayınlanan kampanyayı platformun reklam yöneticisinde açan derin bağlantı (best-effort). */
+/** Yayınlanan kampanyayı platformun reklam yöneticisinde açan derin bağlantı (best-effort).
+ *  Google resource-name (customers/X/campaigns/ID) gelirse sondaki sayısal ID'yi kullan. */
 function adsManagerUrl(platform: string, campaignId: string): string {
-  return platform === 'google'
-    ? `https://ads.google.com/aw/campaigns?campaignId=${encodeURIComponent(campaignId)}`
-    : `https://business.facebook.com/adsmanager/manage/campaigns?selected_campaign_ids=${encodeURIComponent(campaignId)}`
+  if (platform === 'google') {
+    const gid = campaignId.includes('/') ? (campaignId.split('/').pop() ?? campaignId) : campaignId
+    return `https://ads.google.com/aw/campaigns?campaignId=${encodeURIComponent(gid)}`
+  }
+  return `https://business.facebook.com/adsmanager/manage/campaigns?selected_campaign_ids=${encodeURIComponent(campaignId)}`
 }
 
 interface AdPayload {

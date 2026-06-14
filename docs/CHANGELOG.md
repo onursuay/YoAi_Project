@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma denetim onarımı 4/N: adversarial review bulguları (4 onaylı)
+- **Sorun (adversarial review — bu oturumun değişikliklerinde):** (1) **HIGH** Google outcome ölçümü hiç çalışmıyordu — create-ad Google dalı `campaignResourceName` (`customers/X/campaigns/ID`) döndürüyor, bu audit ID olarak saklanıp `Number()` ile NaN'a dönüyor → her Google önerisi sessizce "yeterli veri yok". (2) **MEDIUM** aynı kök neden "Reklam Yöneticisinde Aç" Google derin linkini bozuyordu. (3) **MEDIUM** `account_alerts` Inngest retry'da duplike oluyordu (tek dedup'suz seviye → şişen "Kritik Uyarılar" sayacı). (4) **LOW** before-snapshot idempotent değildi + GET dedup en eski satırı tutuyordu.
+- **Çözüm:**
+  - **Google ID kökten:** create-ad Google dalı artık çıplak `campaignId` (resource-name'den `split('/').pop()`) döndürür → tüm zincir (outcome + deep link) düzelir. Ek savunma: `fetchGoogleCampaignMetrics` ve `adsManagerUrl` resource-name gelirse sondaki sayısal ID'yi alır (çıplak ID değişmez → sıfır regresyon).
+  - **account_alerts dedup:** `insertAccountAlert` insert öncesi aynı (user_id, source_platform, alert_type, account_id) pending kaydı varsa atlar (diğer 3 seviyeyle parite; tabloda UNIQUE yok).
+  - **Idempotency:** `recordBeforeSnapshot` aynı (user_id, proposal_id) varsa duplike yazmaz; hiyerarşi GET dedup'ı en yeni outcome'u tutar.
+- **Dosyalar:** app/api/yoai/create-ad/route.ts, lib/yoai/ai/campaignMetricsById.ts, components/yoai/hierarchy/AdCard.tsx, lib/yoai/ai/hierarchicalStore.ts, lib/yoai/resultTrackingStore.ts, app/api/yoai/improvements/hierarchy/route.ts
+
 ## 2026-06-14 — YoAlgoritma denetim onarımı 3/N: Meta dönüşüm sayımı + tarama görünürlüğü
 - **Sorun:** (1) Meta dönüşüm sayımı dar (yalnız satın alma+lead) VE `purchase` ile `fb_pixel_purchase`'ı topladığı için potansiyel çift-sayım → mesaj/kayıt hedefli kampanyalarda "0 dönüşüm" yanılgısı veya şişik sayı. (2) MAX_CAMPAIGNS cap'i sessizdi (büyük hesapta fazlası analiz dışı, kullanıcı bilmiyor).
 - **Çözüm:**

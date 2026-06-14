@@ -41,7 +41,9 @@ export async function GET(request: Request) {
       const { listRecommendationResults } = await import('@/lib/yoai/resultTrackingStore')
       const results = await listRecommendationResults(userId, { limit: 200 })
       if (results.length) {
-        const byProposal = new Map(results.map((r) => [r.proposal_id, r]))
+        // results created_at DESC → ilk görülen EN YENİ; duplike varsa en yeni outcome kazanır.
+        const byProposal = new Map<string, typeof results[number]>()
+        for (const r of results) if (!byProposal.has(r.proposal_id)) byProposal.set(r.proposal_id, r)
         for (const c of data.campaigns) {
           for (const as of c.adsets) {
             for (const ad of as.ads) {

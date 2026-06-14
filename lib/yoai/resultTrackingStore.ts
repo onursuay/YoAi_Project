@@ -197,6 +197,13 @@ export async function recordBeforeSnapshot(
     return null
   }
   try {
+    // Idempotency: aynı (user_id, proposal_id) kaydı varsa duplike yazma (tabloda UNIQUE yok).
+    // magicscan caller zaman-damgalı proposalId kullandığı için çakışmaz; hiyerarşik akış
+    // sabit ad_improvement.id kullandığı için tekrar-uygulama duplike üretmesin.
+    const { data: dup } = await supabase
+      .from(RESULTS_TABLE).select('id').eq('user_id', userId).eq('proposal_id', payload.proposalId).limit(1).maybeSingle()
+    if (dup) return dup as RecommendationResultRow
+
     const row = {
       user_id: userId,
       proposal_id: payload.proposalId,

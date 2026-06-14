@@ -71,6 +71,10 @@ async function fetchGoogleCampaignMetrics(campaignId: string, userId: string): P
       loginCustomerId: (conn.loginCustomerId || conn.customerId).replace(/-/g, ''),
       locale: 'tr',
     }
+    // Savunma: resource-name (customers/X/campaigns/ID) gelirse sondaki sayısal ID'yi al.
+    // Çıplak ID değişmez ('456'.split('/').pop()==='456'). Geçersizse null (sahte sorgu yok).
+    const numericId = Number(String(campaignId).split('/').pop())
+    if (!Number.isFinite(numericId) || numericId <= 0) return null
     const now = new Date()
     const to = now.toISOString().slice(0, 10)
     const from = new Date(now.getTime() - 14 * 86400000).toISOString().slice(0, 10)
@@ -78,7 +82,7 @@ async function fetchGoogleCampaignMetrics(campaignId: string, userId: string): P
       SELECT metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
         metrics.average_cpc, metrics.conversions, metrics.conversions_value
       FROM campaign
-      WHERE campaign.id = ${Number(campaignId)}
+      WHERE campaign.id = ${numericId}
         AND segments.date BETWEEN '${from}' AND '${to}'
     `.trim()
     const rows = await searchGAds<{ metrics?: Record<string, unknown> }>(ctx, query)

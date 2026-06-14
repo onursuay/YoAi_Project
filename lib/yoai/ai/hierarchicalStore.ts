@@ -233,6 +233,17 @@ export async function supersedePendingAccountAlerts(userId: string, accountId?: 
 
 export async function insertAccountAlert(input: InsertAccountAlertInput): Promise<{ ok: boolean }> {
   if (!supabase) return { ok: false }
+  // Idempotency (account_alerts tek dedup'suz seviyeydi; Inngest retries:2 → duplike pending
+  // uyarı → şişen "Kritik Uyarılar" sayacı). Tablo'da UNIQUE yok → insert öncesi dedup:
+  // aynı (user_id, source_platform, alert_type, account_id) pending kaydı varsa atla.
+  try {
+    let dq = supabase.from('account_alerts').select('id')
+      .eq('user_id', input.user_id).eq('status', 'pending').eq('alert_type', input.alert_type).limit(1)
+    dq = input.source_platform ? dq.eq('source_platform', input.source_platform) : dq.is('source_platform', null)
+    dq = input.account_id ? dq.eq('account_id', input.account_id) : dq.is('account_id', null)
+    const { data: existing } = await dq.maybeSingle()
+    if (existing) return { ok: true } // zaten açık aynı uyarı var → duplike yazma
+  } catch { /* dedup sorgusu başarısızsa insert'e devam (en kötü ihtimalle eski davranış) */ }
   // Çoklu işletme kolonları (account_id/business_key) ayrı migration'la geldi
   // (20260524000000). omddq'da uygulanmadıysa insert "column does not exist" ile
   // patlardı → uyarı SESSİZCE kaybolurdu. Guard: kolon hatasında bu iki alan
