@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma güvenilirlik R6: fetch paritesi (doğru kampanyalar + alt-ağaç eşleşmesi)
+- **Sorun (Google):** ad_group/ad GAQL sorguları analiz edilen top-15 kampanyaya scope'lu DEĞİLDİ — tüm hesabın en pahalı 200/300 alt-öğesi çekiliyordu; bunlar bizim 15 kampanyaya ait olmayabilir → kampanyalar yanlış/eksik alt-ağaçla eşleşir. Ayrıca campaign+adgroup+ad tek try/catch'teydi: ad sorgusu patlarsa kampanya verisi de kaybolur (tüm tarama çöker).
+- **Sorun (Meta):** Graph /campaigns edge harcamaya göre sıralama desteklemez; `limit=15` yalnız "ilk 15"i (kayıt sırası) döndürüyordu → 15'ten fazla aktif kampanyası olan hesapta en yüksek harcamalı kampanyalar sessizce atlanabilir.
+- **Çözüm:**
+  - **Google:** ad_group + ad + keyword + location sorgularına `campaign.id IN (top-15)` eklendi (sayısal-ID guard, enjeksiyon yok). ad_group ve ad çekimleri ayrı try/catch'e alındı → biri patlarsa kampanya verisi korunur, tarama çökmez.
+  - **Meta:** Önce ucuz sıralama isteği (id+spend, limit 100) ile gerçek top-15 ID belirlenir; >15 aktif kampanya varsa heavy nested veri `?ids=` ile yalnız onlar için çekilir. **≤15 aktif kampanyada eski yol birebir korunur (sıfır regresyon).**
+- **Dosyalar:** lib/yoai/googleDeepFetcher.ts, lib/yoai/metaDeepFetcher.ts
+
 ## 2026-06-14 — YoAlgoritma güvenilirlik R4: atomiklik (kart kaybını önle + retry'de duplike yok)
 - **Sorun:** Hiyerarşik akış eski pending kartları (kampanya alt-ağacı + hesap uyarıları) **batch'ten ÖNCE** supersede ediyordu. Batch errored/SLA-timeout olursa eski kartlar silinmiş, yerine yeni kart konmamış olurdu → KULLANICI KART KAYBI. Ayrıca persist tek dev step'ti: ortada hata → tüm döngü retry → omddq'da unique index garanti olmadığından duplike kart riski.
 - **Çözüm:**

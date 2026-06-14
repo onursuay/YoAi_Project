@@ -248,22 +248,35 @@ export async function fetchGoogleDeep(
     }
 
     // 2. Fetch ad groups
-    const campaignIds = Array.from(campaignMap.keys())
+    // R6 (PARİTE): yalnız sayısal kampanya ID'leri (GAQL IN sayısal değer bekler — enjeksiyon yok).
+    const campaignIds = Array.from(campaignMap.keys()).filter((id) => /^\d+$/.test(id))
     if (campaignIds.length === 0) return { campaigns, errors, connected: true }
+    // R6 (PARİTE): ad group + ad sorguları analiz edilen TOP-15 kampanyaya scope'lanır.
+    // Aksi halde tüm hesabın en pahalı 200/300 alt-öğesi çekilir; bunlar bizim 15 kampanyaya
+    // ait OLMAYABİLİR → kampanyalar yanlış/eksik alt-ağaçla eşleşir.
+    const campaignInClause = `campaign.id IN (${campaignIds.join(', ')})`
 
-    const adGroupQuery = `
-      SELECT ad_group.id, ad_group.name, ad_group.status,
-        ad_group.cpc_bid_micros, campaign.id,
-        metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
-        metrics.average_cpc, metrics.conversions, metrics.conversions_value
-      FROM ad_group
-      WHERE segments.date BETWEEN '${from}' AND '${to}'
-        AND ad_group.status = 'ENABLED'
-      ORDER BY metrics.cost_micros DESC
-      LIMIT 200
-    `.trim()
-
-    const adGroupRows = await searchGAds<AdGroupRow>(googleCtx, adGroupQuery)
+    // R6 (DAYANIKLILIK): ad group çekimi kendi try/catch'inde — patlarsa kampanya verisi
+    // KORUNUR (kart yine üretilir, alt-ağaç boş kalır), tüm tarama çökmez.
+    let adGroupRows: AdGroupRow[] = []
+    try {
+      const adGroupQuery = `
+        SELECT ad_group.id, ad_group.name, ad_group.status,
+          ad_group.cpc_bid_micros, campaign.id,
+          metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
+          metrics.average_cpc, metrics.conversions, metrics.conversions_value
+        FROM ad_group
+        WHERE segments.date BETWEEN '${from}' AND '${to}'
+          AND ad_group.status = 'ENABLED'
+          AND ${campaignInClause}
+        ORDER BY metrics.cost_micros DESC
+        LIMIT 200
+      `.trim()
+      adGroupRows = await searchGAds<AdGroupRow>(googleCtx, adGroupQuery)
+    } catch (e) {
+      console.warn('[GoogleDeepFetcher] ad group çekimi başarısız (kampanya verisi korunuyor):', e instanceof Error ? e.message : e)
+      errors.push('Google ad group verisi alınamadı')
+    }
 
     // Group ad groups by campaign
     const adGroupsByCampaign = new Map<string, Map<string, { id: string; name: string; status: string; impressions: number; clicks: number; costMicros: number; conversions: number; conversionsValue: number }>>()
@@ -299,22 +312,29 @@ export async function fetchGoogleDeep(
     }
 
     // 3. Fetch ads — per-ad improvement için RSA full creative (additive alanlar)
-    const adQuery = `
-      SELECT ad_group_ad.ad.id, ad_group_ad.ad.name, ad_group_ad.ad.type,
-        ad_group_ad.ad.final_urls,
-        ad_group_ad.ad.responsive_search_ad.headlines,
-        ad_group_ad.ad.responsive_search_ad.descriptions,
-        ad_group_ad.status, ad_group.id, campaign.id,
-        metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
-        metrics.average_cpc, metrics.conversions, metrics.conversions_value
-      FROM ad_group_ad
-      WHERE segments.date BETWEEN '${from}' AND '${to}'
-        AND ad_group_ad.status = 'ENABLED'
-      ORDER BY metrics.cost_micros DESC
-      LIMIT 300
-    `.trim()
-
-    const adRows = await searchGAds<AdRow>(googleCtx, adQuery)
+    // R6: top-15 kampanyaya scope'lu + kendi try/catch'i (patlarsa kampanya+adgroup korunur).
+    let adRows: AdRow[] = []
+    try {
+      const adQuery = `
+        SELECT ad_group_ad.ad.id, ad_group_ad.ad.name, ad_group_ad.ad.type,
+          ad_group_ad.ad.final_urls,
+          ad_group_ad.ad.responsive_search_ad.headlines,
+          ad_group_ad.ad.responsive_search_ad.descriptions,
+          ad_group_ad.status, ad_group.id, campaign.id,
+          metrics.cost_micros, metrics.impressions, metrics.clicks, metrics.ctr,
+          metrics.average_cpc, metrics.conversions, metrics.conversions_value
+        FROM ad_group_ad
+        WHERE segments.date BETWEEN '${from}' AND '${to}'
+          AND ad_group_ad.status = 'ENABLED'
+          AND ${campaignInClause}
+        ORDER BY metrics.cost_micros DESC
+        LIMIT 300
+      `.trim()
+      adRows = await searchGAds<AdRow>(googleCtx, adQuery)
+    } catch (e) {
+      console.warn('[GoogleDeepFetcher] reklam çekimi başarısız (kampanya+adgroup korunuyor):', e instanceof Error ? e.message : e)
+      errors.push('Google reklam verisi alınamadı')
+    }
 
     // Group ads by ad group
     const adsByAdGroup = new Map<string, AdInsight[]>()
@@ -387,6 +407,7 @@ export async function fetchGoogleDeep(
           AND ad_group_criterion.negative = FALSE
           AND ad_group.status = 'ENABLED'
           AND campaign.status = 'ENABLED'
+          AND ${campaignInClause}
         LIMIT 1000
       `.trim()
       const kwRows = await searchGAds<any>(googleCtx, kwQuery)
@@ -411,6 +432,7 @@ export async function fetchGoogleDeep(
         WHERE campaign_criterion.status = 'ENABLED'
           AND campaign.status = 'ENABLED'
           AND campaign_criterion.type IN ('LOCATION', 'LANGUAGE')
+          AND ${campaignInClause}
         LIMIT 2000
       `.trim()
       const critRows = await searchGAds<any>(googleCtx, critQuery)

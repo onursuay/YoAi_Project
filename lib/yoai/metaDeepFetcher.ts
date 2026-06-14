@@ -211,30 +211,66 @@ export async function fetchMetaDeep(
     const adsetFields = `id,name,status,effective_status,optimization_goal,destination_type,daily_budget,lifetime_budget,targeting{${targetingFields}},insights.date_preset(last_7d){${insightsFields}},ads.limit(20){${adFields}}`
     const campaignFields = `id,name,status,effective_status,objective,bid_strategy,daily_budget,lifetime_budget,insights.date_preset(last_7d){${insightsFields}},adsets.limit(30){${adsetFields}}`
 
-    const params: Record<string, string> = {
-      fields: campaignFields,
-      limit: String(MAX_CAMPAIGNS),
-      effective_status: '["ACTIVE"]',
+    // R6 (PARİTE — SPEND TOP-15): Graph /campaigns edge harcamaya göre SIRALAMA desteklemez;
+    // limit=15 yalnız "ilk 15"i (genelde kayıt sırası) verir → çok kampanyalı hesapta en yüksek
+    // harcamalı kampanyalar atlanabilir. Önce ucuz bir sıralama isteğiyle (id+spend) gerçek top-15
+    // ID'leri seç; >15 aktif kampanya varsa heavy nested veriyi ?ids= ile yalnız onlar için çek.
+    // ≤15 aktif kampanyada (yaygın, hâlihazırda çalışan durum) ESKİ YOL aynen korunur (sıfır regresyon).
+    let topCampaignIds: string[] | null = null
+    try {
+      const rankResp = await metaGraphFetch(`/${ctx.accountId}/campaigns`, ctx.userAccessToken, {
+        params: { fields: 'id,insights.date_preset(last_7d){spend}', effective_status: '["ACTIVE"]', limit: '100' },
+      })
+      if (rankResp.ok) {
+        const rankData = await rankResp.json().catch(() => ({ data: [] }))
+        const ranked = (rankData.data || [])
+          .map((c: any) => ({ id: String(c?.id ?? ''), spend: Number(c?.insights?.data?.[0]?.spend ?? 0) }))
+          .filter((c: { id: string }) => c.id)
+        if (ranked.length > MAX_CAMPAIGNS) {
+          ranked.sort((a: { spend: number }, b: { spend: number }) => b.spend - a.spend)
+          topCampaignIds = ranked.slice(0, MAX_CAMPAIGNS).map((c: { id: string }) => c.id)
+          console.warn(`[MetaDeepFetcher] ${ranked.length} aktif kampanya — en yüksek harcamalı ${MAX_CAMPAIGNS} seçildi (spend-sıralı parite).`)
+        }
+      }
+    } catch (e) {
+      console.warn('[MetaDeepFetcher] spend sıralaması atlandı, ilk-15 yoluna düşülüyor:', e instanceof Error ? e.message : e)
     }
 
-    const response = await metaGraphFetch(
-      `/${ctx.accountId}/campaigns`,
-      ctx.userAccessToken,
-      { params },
-    )
-
-    if (!response.ok) {
-      errors.push('Meta kampanya verisi alınamadı')
-      return { campaigns, errors, connected: true, fetchError: true }
-    }
-
-    const data = await response.json().catch(() => ({ data: [] }))
-    const rawCampaigns = data.data || []
-
-    // Sessiz truncation'ı görünür kıl: cap dolduysa / daha fazla sayfa varsa logla
-    // (cap kasıtlı maliyet kontrolü — her kampanya 1 AI Batch isteği; ama sessiz kalmamalı).
-    if (data?.paging?.next || rawCampaigns.length >= MAX_CAMPAIGNS) {
-      console.warn(`[MetaDeepFetcher] Kısmi tarama: en yüksek harcamalı ${MAX_CAMPAIGNS} aktif kampanya analiz edildi; hesapta daha fazlası olabilir (cap=maliyet kontrolü).`)
+    let rawCampaigns: any[]
+    if (topCampaignIds && topCampaignIds.length) {
+      // ?ids= kök çağrısı: yalnız seçilen top-15 kampanya, heavy nested alanlarla.
+      const resp = await metaGraphFetch('/', ctx.userAccessToken, {
+        params: { ids: topCampaignIds.join(','), fields: campaignFields },
+      })
+      if (!resp.ok) {
+        errors.push('Meta kampanya verisi alınamadı')
+        return { campaigns, errors, connected: true, fetchError: true }
+      }
+      const data = await resp.json().catch(() => ({}))
+      // ?ids= yanıtı { "<id>": {...campaign} } biçiminde anahtarlı obje döner.
+      rawCampaigns = Object.values(data as Record<string, any>).filter((v) => v && typeof v === 'object' && (v as any).id)
+    } else {
+      // ≤15 aktif kampanya: MEVCUT YOL (değişmedi).
+      const params: Record<string, string> = {
+        fields: campaignFields,
+        limit: String(MAX_CAMPAIGNS),
+        effective_status: '["ACTIVE"]',
+      }
+      const response = await metaGraphFetch(
+        `/${ctx.accountId}/campaigns`,
+        ctx.userAccessToken,
+        { params },
+      )
+      if (!response.ok) {
+        errors.push('Meta kampanya verisi alınamadı')
+        return { campaigns, errors, connected: true, fetchError: true }
+      }
+      const data = await response.json().catch(() => ({ data: [] }))
+      rawCampaigns = data.data || []
+      // Sessiz truncation'ı görünür kıl (cap kasıtlı maliyet kontrolü; her kampanya 1 AI Batch isteği).
+      if (data?.paging?.next || rawCampaigns.length >= MAX_CAMPAIGNS) {
+        console.warn(`[MetaDeepFetcher] Kısmi tarama: ${MAX_CAMPAIGNS} aktif kampanya analiz edildi; hesapta daha fazlası olabilir (cap=maliyet kontrolü).`)
+      }
     }
 
     // 2. Process each campaign
