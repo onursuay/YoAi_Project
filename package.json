@@ -20,6 +20,7 @@
     "db:migrate:site-briefs": "node scripts/apply-site-content-briefs-migration.mjs",
     "db:migrate:website": "node scripts/apply-website-tables-migration.mjs",
     "verify:website-credits": "node scripts/verify-website-credits.mjs",
+    "verify:freepik": "node scripts/verify-freepik-stock.mjs",
     "db:migrate:official-ads": "node scripts/apply-official-ads-migration.mjs",
     "verify:google-ads": "node scripts/verify-google-ads-prod.mjs",
     "verify:registered-accounts": "node scripts/verify-registered-accounts.mjs",
