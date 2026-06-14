@@ -18,8 +18,8 @@
    ────────────────────────────────────────────────────────── */
 
 import { inngest } from '../client'
-import { getAnthropicClient } from '@/lib/anthropic/client'
-import { gatherUserScanInputs, type UserScanInputs } from '@/lib/yoai/ai/scanUser'
+import { getAnthropicClient, isAnthropicReady } from '@/lib/anthropic/client'
+import { gatherUserScanInputs, writeHierRunStatus, type UserScanInputs } from '@/lib/yoai/ai/scanUser'
 import { buildPerCampaignBatchRequestParams, parsePerCampaignBatchResult } from '@/lib/yoai/ai/perCampaignAgent'
 import { officialKnowledgeBlock, type SystemBlock } from '@/lib/yoai/ai/docs/officialKnowledgeBlock'
 import type { PerCampaignContext, AccountCampaignSummary } from '@/lib/yoai/ai/perCampaignPrompt'
@@ -90,6 +90,17 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     // cookie yok). scope yoksa/scoped=false → mevcut birleşik davranış (sıfır regresyon).
     const scope = (event.data?.scope ?? undefined) as YoaiScope | undefined
     const scoped = scope?.scoped === true
+    const accountSig = scoped ? `${scope!.metaId ?? '-'}|${scope!.googleCustomerId ?? '-'}` : 'all'
+
+    // R2 (KART KAYBI KORUMASI): ANTHROPIC_API_KEY yoksa supersede/reconcile'dan ÖNCE çık.
+    // Aksi halde eski pending kartlar superseded edilip yeni üretim API key'siz patlardı → tüm kart kaybı, iz yok.
+    if (!isAnthropicReady()) {
+      logger.error(`[campaign-improvements] ${userId}: ANTHROPIC_API_KEY yok — atlandı (supersede YOK, kart kaybı yok)`)
+      await writeHierRunStatus({ userId, accountSig, status: 'failed', note: 'ANTHROPIC_API_KEY missing' })
+      return { userId, generated: 0, reason: 'no-api-key' }
+    }
+    // R1 (SESSİZLİĞİ KIR): koşu başladı — başarısızlıkta bu satır 'running'da kalır (sağlık bekçisi stale-running yakalar).
+    await step.run('run-status-running', async () => { await writeHierRunStatus({ userId, accountSig, status: 'running' }); return { ok: true } })
 
     // 0) Rakip cache'ini bu çalıştırma için tazele — gatherUserScanInputs okumadan ÖNCE.
     //    Flag (YOALGORITMA_SCRAPE_COMPETITORS) kapalıysa anında no-op; açıksa beyan edilen
@@ -109,6 +120,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     const allCampaigns = flattenActiveCampaigns(scanInputs)
 
     if (allCampaigns.length === 0) {
+      await writeHierRunStatus({ userId, accountSig, status: 'completed', note: 'no-active-campaigns' })
       return { userId, generated: 0, reason: 'no-active-campaigns' }
     }
 
@@ -163,6 +175,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     logger.info(`[campaign-improvements] ${userId}: aktif=${allCampaigns.length} üretilecek=${toGenerate.length} iptal=${plan.cancelled} superseded=${plan.superseded}`)
 
     if (toGenerate.length === 0) {
+      await writeHierRunStatus({ userId, accountSig, status: 'completed', note: 'all-frozen (karar verilmiş kampanyalar)' })
       return { userId, generated: 0, cancelled: plan.cancelled, superseded: plan.superseded, reason: 'all-frozen' }
     }
 
@@ -283,17 +296,28 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       })
       if (status === 'ended') { ended = true; break }
     }
-    if (!ended) throw new Error(`Batch ${batch.id} 24h içinde tamamlanmadı`)
+    if (!ended) {
+      await writeHierRunStatus({ userId, accountSig, status: 'failed', note: `Batch ${batch.id} 24h içinde tamamlanmadı (SLA)` })
+      throw new Error(`Batch ${batch.id} 24h içinde tamamlanmadı`)
+    }
 
     // 6) Retrieve + persist hiyerarşik (campaign → adset → ad, FK zinciri)
     const persisted = await step.run('retrieve-and-persist', async () => {
       const client = getAnthropicClient()
       const stream = await client.messages.batches.results(batch.id)
-      let alertCount = 0, campaignCount = 0, adsetCount = 0, adCount = 0, alreadyStrong = 0, failed = 0
+      let alertCount = 0, campaignCount = 0, adsetCount = 0, adCount = 0, alreadyStrong = 0, failed = 0, parseFailed = 0
       for await (const r of stream) {
         const c = customToCampaign.get(r.custom_id)
         if (!c) continue
-        if (r.result?.type !== 'succeeded') { failed++; continue }
+        // Sıra 1b: errored/expired/canceled AYIR + Anthropic hata detayını logla (sessizce yutma).
+        if (r.result?.type !== 'succeeded') {
+          failed++
+          const errType = (r.result as any)?.error?.error?.type ?? r.result?.type ?? 'unknown'
+          const errMsg = (r.result as any)?.error?.error?.message ?? ''
+          if (r.result?.type === 'errored') logger.error(`[campaign-improvements] batch ERRORED custom_id=${r.custom_id} campaign=${c.campaign.id} type=${errType} ${errMsg}`)
+          else logger.warn(`[campaign-improvements] batch ${r.result?.type} custom_id=${r.custom_id} campaign=${c.campaign.id}`)
+          continue
+        }
         const model = batchRequests.find((b) => b.custom_id === r.custom_id)?.params.model ?? 'unknown'
         const { result } = parsePerCampaignBatchResult(r.result.message as any, model, 0, c.campaign.id)
 
@@ -322,9 +346,14 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
           if (res.ok) alertCount++
         }
 
-        // campaign improvement
+        // campaign improvement — null ise (truncation/bozuk JSON) kampanya kartsız kalır:
+        // Sıra 6c: artık sessizce atlanmıyor, parseFailed sayılıp loglanıyor (run-status 'partial'e yansır).
         const ci = result.campaign_improvement
-        if (!ci) continue
+        if (!ci) {
+          parseFailed++
+          logger.error(`[campaign-improvements] campaign_improvement ÜRETİLEMEDİ custom_id=${r.custom_id} campaign=${c.campaign.id} — JSON kesik/bozuk olabilir (kart yok).`)
+          continue
+        }
         const { id: campImpId } = await insertCampaignImprovement({
           user_id: userId,
           source_platform: c.platform,
@@ -429,18 +458,30 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
           if (res.ok) adCount++
         }
       }
-      return { alertCount, campaignCount, adsetCount, adCount, alreadyStrong, failed }
+      return { alertCount, campaignCount, adsetCount, adCount, alreadyStrong, failed, parseFailed }
+    })
+
+    // R1: KOŞU DURUMU — hiç kart üretilmediyse 'failed', kısmen üretildiyse 'partial', sorunsuzsa 'completed'.
+    const hadProblems = persisted.failed > 0 || persisted.parseFailed > 0
+    const runStatus = persisted.campaignCount === 0
+      ? 'failed'
+      : hadProblems ? 'partial' : 'completed'
+    await writeHierRunStatus({
+      userId, accountSig, status: runStatus,
+      note: `üretildi=${persisted.campaignCount}/${toGenerate.length} batchFail=${persisted.failed} parseFail=${persisted.parseFailed}`,
     })
 
     return {
       userId,
       batchId: batch.id,
+      runStatus,
       accountAlerts: persisted.alertCount,
       campaigns: persisted.campaignCount,
       adsets: persisted.adsetCount,
       ads: persisted.adCount,
       alreadyStrong: persisted.alreadyStrong,
       failed: persisted.failed,
+      parseFailed: persisted.parseFailed,
       cancelled: plan.cancelled,
       superseded: plan.superseded,
     }

@@ -279,15 +279,18 @@ export function parsePerCampaignBatchResult(
   durationMs: number,
   fallbackCampaignId: string,
 ): { result: PerCampaignResult; meta: PerCampaignRunMeta } {
-  let finalText: string | null = null
-  for (const block of message.content) {
-    if (block.type === 'text' && block.text) finalText = block.text
-  }
+  // TÜM text bloklarını birleştir — yalnız sonuncuyu almak, "JSON + sonrasında cümle"
+  // veya çok-bloklu yanıtta JSON'u düşürüp kampanyayı sessizce kartsız bırakıyordu (Sıra 6).
+  const textParts = message.content.filter((b) => b.type === 'text' && b.text).map((b) => b.text as string)
+  const finalText = textParts.length ? textParts.join('\n') : null
   const result = validatePerCampaignResult(extractJson(finalText), fallbackCampaignId)
   // Görünürlük: çıktı kesildiyse (max_tokens) veya campaign kartı parse edilemediyse logla —
   // büyük kampanyaların sessizce atlanmasını (kart hiç üretilmemesini) tespit etmek için.
   if (message.stop_reason === 'max_tokens') {
     console.warn(`[perCampaign] ÇIKTI KESİLDİ stop_reason=max_tokens campaign=${fallbackCampaignId} output_tokens=${message.usage.output_tokens} — ad_spec hacmi çıktı bütçesini aştı.`)
+  }
+  if (message.stop_reason === 'refusal') {
+    console.warn(`[perCampaign] MODEL REDDETTİ stop_reason=refusal campaign=${fallbackCampaignId} — kart üretilemedi.`)
   }
   if (!result.campaign_improvement) {
     console.warn(`[perCampaign] campaign_improvement ÜRETİLEMEDİ campaign=${fallbackCampaignId} stop_reason=${message.stop_reason} — JSON kesik/bozuk olabilir (kampanya kartsız kalır).`)

@@ -144,6 +144,37 @@ export async function persistAccountAndDailyRun(args: {
   return { totalAlerts, totalOpportunities, totalSuggestions }
 }
 
+/**
+ * Hiyerarşik (per-campaign) akış için KOŞU DURUMU yazar — asıl hastalık SESSİZ HATA idi:
+ * fetch/batch/parse başarısız olunca sistem 'başarılı' görünüp iz bırakmıyordu (1 hafta fark edilmedi).
+ * Migration'sız: ai_engine_runs'a platform='yoalgoritma_hier' satırı (scan.user'ın Meta/Google
+ * satırlarıyla çakışmaz). Sağlık Merkezi + admin paneli bunu OKUR. status: running|completed|partial|failed.
+ */
+export async function writeHierRunStatus(input: {
+  userId: string
+  accountSig: string
+  status: 'running' | 'completed' | 'partial' | 'failed'
+  note?: string
+}): Promise<void> {
+  if (!supabase) return
+  try {
+    const { getTurkeyDate } = await import('@/lib/yoai/dailyRunStore')
+    await supabase.from('ai_engine_runs').upsert(
+      {
+        user_id: input.userId,
+        platform: 'yoalgoritma_hier',
+        account_id: input.accountSig || 'all',
+        run_date: getTurkeyDate(),
+        status: input.status,
+        error_message: input.note ? input.note.slice(0, 4000) : null,
+      },
+      { onConflict: 'user_id,platform,account_id,run_date' },
+    )
+  } catch (e) {
+    console.error('[campaign-improvements][writeHierRunStatus] insert error:', e)
+  }
+}
+
 /** Hata durumunda ai_engine_runs'a failed satır yazar. */
 export async function writeFailedRun(userId: string, platform: AiPlatform, accountId: string, errorMsg: string): Promise<void> {
   if (!supabase) return

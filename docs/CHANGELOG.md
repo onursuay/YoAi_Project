@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma güvenilirlik R1: sessizliği kır (run-status + failed izi)
+- **Sorun (kapsamlı denetim — asıl hastalık):** Hiyerarşik kart üretimi başarısız olunca (fetch/batch/parse/truncation/key) sistem "başarılı" görünüp İZ BIRAKMADAN kart üretmiyordu → 1 hafta fark edilmedi. Per-campaign akışı koşu-durumu yazmıyordu; errored/expired/canceled tek `failed++` kovasına gidiyordu; truncated/çok-bloklu JSON sessizce atlanıyordu; ANTHROPIC_API_KEY yoksa supersede sonrası patlayıp kart kaybı oluyordu.
+- **Çözüm (R1 + key guard + parse):**
+  - `writeHierRunStatus` (ai_engine_runs, platform='yoalgoritma_hier', migration'sız): koşu başında `running`, sonunda `completed`/`partial`/`failed` + sayım notu. Stale-`running` da başarısızlık sinyali.
+  - Batch sonucunda errored/expired/canceled AYRILIYOR; Anthropic hata detayı (`r.result.error`) loglanıyor. `campaign_improvement` üretilemezse `parseFailed` sayılıp loglanıyor (artık sessiz değil).
+  - `parsePerCampaignBatchResult` TÜM text bloklarını birleştirir ("JSON+sonra cümle" artık JSON'u düşürmez); `stop_reason` max_tokens/refusal loglanır.
+  - **Kart kaybı koruması:** `isAnthropicReady()` guard fonksiyon başında — key yoksa supersede/reconcile'a hiç girmeden çıkar (eski kartlar sağlam).
+- **Dosyalar:** inngest/functions/perCampaignImprovements.ts, lib/yoai/ai/perCampaignAgent.ts, lib/yoai/ai/scanUser.ts
+
 ## 2026-06-14 — KRİTİK: YoAlgoritma AI motoru durmuştu — 4 cache_control breakpoint limiti aşımı
 - **Sorun (kök neden):** 06-08'den beri YoAlgoritma kart üretimi (ve account-level AI) çalışmıyordu — taramalar `aiGenerated=false` ile kural-motoruna düşüyor, hiyerarşik geliştirme kartları HİÇ üretilmiyordu. Sebep: Anthropic request başına **en fazla 4 `cache_control` breakpoint** kabul eder. 06-07/08'de eklenen `metaAnalysisBlock` + onaylı resmi bilgi bloğu ile Meta yolu (prompt+rules+metaAnalysis+business+competitor+official) **5-7 cache_control bloğuna** çıktı → her Meta AI çağrısı **400 invalid_request** → tüm AI üretimi düştü. Kredi/anahtar değil, kod hatasıydı (06-07'de tam 4 blokken çalışıyordu).
 - **Teşhis:** Vercel prod env (erişimle) — `ANTHROPIC_API_KEY` var (26g, sensitive), kredi $8.35 (yeterli), `aiGenerated` bayrağı 06-07 true → 06-08 false. Antso'da 2 aktif kampanya + 21 aktif reklam (yani "duraklatılmış reklam" değil). Blok sayımı koddan doğrulandı.
