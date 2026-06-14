@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma güvenilirlik R4: atomiklik (kart kaybını önle + retry'de duplike yok)
+- **Sorun:** Hiyerarşik akış eski pending kartları (kampanya alt-ağacı + hesap uyarıları) **batch'ten ÖNCE** supersede ediyordu. Batch errored/SLA-timeout olursa eski kartlar silinmiş, yerine yeni kart konmamış olurdu → KULLANICI KART KAYBI. Ayrıca persist tek dev step'ti: ortada hata → tüm döngü retry → omddq'da unique index garanti olmadığından duplike kart riski.
+- **Çözüm:**
+  - **Yıkıcı supersede batch BAŞARISINDAN sonraya taşındı.** reconcile artık supersede etmez, yalnız `supersedeKeys` planlar. Kampanya alt-ağaç supersede'i persist adımında, yeni kart yazılmadan **hemen önce** yapılır. Hesap uyarıları supersede'i (`supersede-account-alerts`) retrieve-batch'ten sonra, yalnız batch'i başarılı + uyarı üreten platformlar için çalışır.
+  - **Persist kampanya başına ayrı Inngest step'e bölündü** (`persist-<custom_id>`): bir kampanya başarıyla yazıldıysa retry'de memoize edilir → tekrar yazılmaz (duplike yok, migration'dan bağımsız). `retrieve-batch` yan-etkisiz okuma/parse, ayrı adım.
+  - Pasif kampanya cancel'ı reconcile'da kalır (R5 şüpheli-platform koruması zaten var; o kampanyalar yeniden üretilmiyor → kart kaybı riski yok).
+- **Dosyalar:** inngest/functions/perCampaignImprovements.ts
+
 ## 2026-06-14 — YoAlgoritma güvenilirlik R8: gözlemlenebilirlik döngüsünü kapat (failed satırları BİRİ OKUSUN)
 - **Sorun:** R1 `ai_engine_runs`'a `yoalgoritma_hier` failed/stale satırları yazıyordu ama bunları okuyan/uyarı veren kimse yoktu — yazılan iz bir hafta görülmeden kalabilirdi (asıl hastalık SESSİZ HATA'nın diğer yarısı).
 - **Çözüm:**

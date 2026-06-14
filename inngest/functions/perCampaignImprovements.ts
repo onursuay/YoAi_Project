@@ -172,42 +172,31 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       }
       if (cancelSkippedSuspect) logger.warn(`[campaign-improvements] ${userId}: ${cancelSkippedSuspect} kart iptali ATLANDI (şüpheli platform — sağlıklı taramaya ertelendi)`)
 
-      // üretilecekler: aktif + dondurulmamış; varsa pending alt-ağacı supersede
+      // R4 (ATOMİKLİK): üretilecekler aktif + dondurulmamış. Pending alt-ağaç supersede'i
+      // BURADA YAPILMAZ — batch başarısız olursa (errored/SLA) eski kartları silip yerine
+      // yeni koymadan bırakırdık = KART KAYBI. supersede artık yeni kart ELDE EDİLDİKTEN
+      // sonra persist adımında kampanya-kampanya yapılır. Burada yalnız planlıyoruz.
       const generateKeys: string[] = []
-      let superseded = 0
+      const supersedeKeys: string[] = []
       for (const c of allCampaigns) {
         if (frozen.has(c.key)) continue // karar verilmiş kampanya — dokunma
-        if (seenCampaignKeys.has(c.key)) {
-          await supersedePendingCampaignSubtree(userId, c.platform, c.campaign.id)
-          superseded++
-        }
+        if (seenCampaignKeys.has(c.key)) supersedeKeys.push(c.key)
         generateKeys.push(c.key)
       }
-      return { cancelled, superseded, generateKeys }
+      return { cancelled, supersedeKeys, generateKeys }
     })
 
     const toGenerate = allCampaigns.filter((c) => plan.generateKeys.includes(c.key))
-    logger.info(`[campaign-improvements] ${userId}: aktif=${allCampaigns.length} üretilecek=${toGenerate.length} iptal=${plan.cancelled} superseded=${plan.superseded}`)
+    logger.info(`[campaign-improvements] ${userId}: aktif=${allCampaigns.length} üretilecek=${toGenerate.length} iptal=${plan.cancelled} supersedePlanned=${plan.supersedeKeys.length}`)
 
     if (toGenerate.length === 0) {
       await writeHierRunStatus({ userId, accountSig, status: 'completed', note: 'all-frozen (karar verilmiş kampanyalar)' })
-      return { userId, generated: 0, cancelled: plan.cancelled, superseded: plan.superseded, reason: 'all-frozen' }
+      return { userId, generated: 0, cancelled: plan.cancelled, superseded: 0, reason: 'all-frozen' }
     }
 
-    // Eski hesap uyarılarını supersede (yenileri ilk-kampanya isteğinde gelecek).
-    // Scoped: yalnız bu işletmenin hesap(lar)ı — başka işletmenin (örn. Belgemod)
-    // pending uyarısını silme. scoped değil → legacy (tüm pending).
-    await step.run('supersede-account-alerts', async () => {
-      if (scoped) {
-        const metaAcc = normalizeMetaAccountId(scope!.metaId)
-        const googleAcc = normalizeGoogleCustomerId(scope!.googleCustomerId)
-        if (metaAcc) await supersedePendingAccountAlerts(userId, metaAcc)
-        if (googleAcc) await supersedePendingAccountAlerts(userId, googleAcc)
-      } else {
-        await supersedePendingAccountAlerts(userId)
-      }
-      return { ok: true }
-    })
+    // NOT (R4): Eski hesap uyarılarının supersede'i de batch başarısından SONRAYA taşındı
+    // ('supersede-account-alerts' adımı retrieve-batch'ten sonra, yalnız başarılı-uyarılı
+    // platformlar için çalışır). Böylece batch patlarsa eski uyarılar da kaybolmaz.
 
     // 3) Kampanya başına 1 batch request; ilk-per-platform → account_alerts üret
     const summaryByPlatform: Record<'meta' | 'google', AccountCampaignSummary[]> = { meta: [], google: [] }
@@ -261,6 +250,8 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
 
     const customToCampaign = new Map<string, ActiveCampaign>()
     const firstPerPlatform = new Set<'meta' | 'google'>()
+    // Hangi isteğin account_alerts taşıdığı (ilk-per-platform) — persist + supersede için.
+    const alertRequestIds = new Set<string>()
     const batchRequests: Array<{ custom_id: string; params: ReturnType<typeof buildPerCampaignBatchRequestParams> }> = []
     // Onaylı resmi bilgi bloğu (alt-proje B) — platform başına bir kez fetch (empty-safe)
     const kbCache = new Map<'Meta' | 'Google', SystemBlock | null>()
@@ -274,7 +265,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       if (customToCampaign.has(customId)) continue
       customToCampaign.set(customId, c)
       const includeAccountAlerts = !firstPerPlatform.has(c.platform)
-      if (includeAccountAlerts) firstPerPlatform.add(c.platform)
+      if (includeAccountAlerts) { firstPerPlatform.add(c.platform); alertRequestIds.add(customId) }
       const ctx: PerCampaignContext = {
         platform: c.aiPlatform,
         accountId: c.accountId,
@@ -316,11 +307,14 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       throw new Error(`Batch ${batch.id} 24h içinde tamamlanmadı`)
     }
 
-    // 6) Retrieve + persist hiyerarşik (campaign → adset → ad, FK zinciri)
-    const persisted = await step.run('retrieve-and-persist', async () => {
+    // 6a) Retrieve + parse — TEK adımda batch sonuçlarını materyalize et (stream tek seferlik).
+    //     Sadece okuma/parse; DB yazımı YOK → bu adım tekrar ederse yan etki olmaz.
+    const batchData = await step.run('retrieve-batch', async () => {
       const client = getAnthropicClient()
       const stream = await client.messages.batches.results(batch.id)
-      let alertCount = 0, campaignCount = 0, adsetCount = 0, adCount = 0, alreadyStrong = 0, failed = 0, parseFailed = 0
+      const items: Array<{ custom_id: string; model: string; result: any; hasAlerts: boolean }> = []
+      let failed = 0
+      const alertPlatforms = new Set<'meta' | 'google'>()
       for await (const r of stream) {
         const c = customToCampaign.get(r.custom_id)
         if (!c) continue
@@ -335,40 +329,85 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
         }
         const model = batchRequests.find((b) => b.custom_id === r.custom_id)?.params.model ?? 'unknown'
         const { result } = parsePerCampaignBatchResult(r.result.message as any, model, 0, c.campaign.id)
+        const hasAlerts = alertRequestIds.has(r.custom_id)
+        if (hasAlerts) alertPlatforms.add(c.platform) // istek başarılı + uyarı taşıyor → eski uyarılar artık supersede edilebilir
+        items.push({ custom_id: r.custom_id, model, result, hasAlerts })
+      }
+      return { items, failed, alertPlatforms: [...alertPlatforms] }
+    })
 
-        // account_alerts (yalnızca ilk-per-platform isteğinden gelir).
-        // Hesap boyutu (çoklu işletme): Meta alert → meta hesap id, Google → google customer id;
-        // business_key işletme geneli. scope yoksa null (legacy).
-        const alertAccountId = c.platform === 'meta'
-          ? normalizeMetaAccountId(scope?.metaId)
-          : normalizeGoogleCustomerId(scope?.googleCustomerId)
-        const alertBusinessKey = buildBusinessKey(scope?.metaId, scope?.googleCustomerId)
-        for (const al of result.account_alerts) {
-          const res = await insertAccountAlert({
-            user_id: userId,
-            source_platform: c.platform,
-            account_id: alertAccountId,
-            business_key: alertBusinessKey,
-            alert_type: al.alert_type,
-            severity: al.severity,
-            title: al.title,
-            body: al.body,
-            recommended_action: al.recommended_action,
-            confidence: al.confidence,
-            model,
-            run_id: null,
-          })
-          if (res.ok) alertCount++
+    // 6b) R4: Eski hesap uyarılarını ŞİMDİ supersede et — yalnız batch BAŞARILI olan ve uyarı
+    //     üreten platformlar için. Batch patlasaydı bu adıma hiç gelinmezdi → eski uyarılar sağlam.
+    await step.run('supersede-account-alerts', async () => {
+      const platforms = batchData.alertPlatforms as Array<'meta' | 'google'>
+      if (platforms.length === 0) return { superseded: [] as string[] }
+      if (scoped) {
+        for (const p of platforms) {
+          const acc = p === 'meta' ? normalizeMetaAccountId(scope!.metaId) : normalizeGoogleCustomerId(scope!.googleCustomerId)
+          if (acc) await supersedePendingAccountAlerts(userId, acc)
+        }
+      } else {
+        // legacy (scope kapalı): platform ayrımı yok → tek sefer tüm pending uyarıları supersede.
+        await supersedePendingAccountAlerts(userId)
+      }
+      return { superseded: platforms }
+    })
+
+    // 6c) Persist — KAMPANYA BAŞINA ayrı Inngest step. Bir kampanya başarıyla yazıldıysa
+    //     retry'de o step memoize edilir → tekrar yazılmaz (duplike yok, omddq'da unique index
+    //     garanti olmasa bile). supersede (eski pending alt-ağaç) ARTIK burada, yeni kart
+    //     yazılmadan hemen önce yapılır (batch öncesi değil) — kart kaybı imkânsız.
+    const supersedeSet = new Set(plan.supersedeKeys)
+    type PersistCounts = { alertCount: number; campaignCount: number; adsetCount: number; adCount: number; alreadyStrong: number; parseFailed: number }
+    const persistOutcomes: PersistCounts[] = []
+    for (const item of batchData.items) {
+      const c = customToCampaign.get(item.custom_id)
+      if (!c) continue
+      const outcome = await step.run(`persist-${item.custom_id}`, async (): Promise<PersistCounts> => {
+        const result = item.result
+        const model = item.model
+        const counts: PersistCounts = { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0 }
+
+        // account_alerts (yalnız ilk-per-platform isteğinden; eskiler 6b'de supersede edildi).
+        if (item.hasAlerts && Array.isArray(result.account_alerts)) {
+          const alertAccountId = c.platform === 'meta'
+            ? normalizeMetaAccountId(scope?.metaId)
+            : normalizeGoogleCustomerId(scope?.googleCustomerId)
+          const alertBusinessKey = buildBusinessKey(scope?.metaId, scope?.googleCustomerId)
+          for (const al of result.account_alerts) {
+            const res = await insertAccountAlert({
+              user_id: userId,
+              source_platform: c.platform,
+              account_id: alertAccountId,
+              business_key: alertBusinessKey,
+              alert_type: al.alert_type,
+              severity: al.severity,
+              title: al.title,
+              body: al.body,
+              recommended_action: al.recommended_action,
+              confidence: al.confidence,
+              model,
+              run_id: null,
+            })
+            if (res.ok) counts.alertCount++
+          }
         }
 
         // campaign improvement — null ise (truncation/bozuk JSON) kampanya kartsız kalır:
-        // Sıra 6c: artık sessizce atlanmıyor, parseFailed sayılıp loglanıyor (run-status 'partial'e yansır).
+        // Sıra 6c: sessizce atlanmıyor, parseFailed sayılıp loglanıyor (run-status 'partial'e yansır).
         const ci = result.campaign_improvement
         if (!ci) {
-          parseFailed++
-          logger.error(`[campaign-improvements] campaign_improvement ÜRETİLEMEDİ custom_id=${r.custom_id} campaign=${c.campaign.id} — JSON kesik/bozuk olabilir (kart yok).`)
-          continue
+          counts.parseFailed++
+          logger.error(`[campaign-improvements] campaign_improvement ÜRETİLEMEDİ custom_id=${item.custom_id} campaign=${c.campaign.id} — JSON kesik/bozuk olabilir (kart yok).`)
+          return counts
         }
+
+        // R4: Yeni kart ELDE — ŞİMDİ eski pending alt-ağacı supersede et (insert'ten ÖNCE,
+        // yeni kayıtlar pending kalsın). Batch öncesi yapılsaydı patlamada kart kaybı olurdu.
+        if (supersedeSet.has(c.key)) {
+          await supersedePendingCampaignSubtree(userId, c.platform, c.campaign.id)
+        }
+
         const { id: campImpId } = await insertCampaignImprovement({
           user_id: userId,
           source_platform: c.platform,
@@ -388,8 +427,8 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
           publish_mode: 'manual_publish',
           model,
         })
-        if (!campImpId) continue
-        campaignCount++
+        if (!campImpId) return counts
+        counts.campaignCount++
 
         // ad → adset eşlemesi (AI ad_id döner; ağaçtan adset'i buluruz)
         const adToAdset = new Map<string, string>()
@@ -414,12 +453,12 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
             publish_mode: 'manual_publish',
             model,
           })
-          if (id) { adsetImpIdByAdsetId.set(ai.adset_id, id); adsetCount++ }
+          if (id) { adsetImpIdByAdsetId.set(ai.adset_id, id); counts.adsetCount++ }
         }
 
         // ad improvements (improve + ad_spec olanlar)
         for (const adi of result.ad_improvements) {
-          if (adi.keep_or_improve !== 'improve' || !adi.ad_spec) { alreadyStrong++; continue }
+          if (adi.keep_or_improve !== 'improve' || !adi.ad_spec) { counts.alreadyStrong++; continue }
           const adsetId = adToAdset.get(adi.ad_id)
           let adsetImpId = adsetId ? adsetImpIdByAdsetId.get(adsetId) : undefined
           // AI bu ad set için öneri vermediyse, FK için minimal bir adset kartı oluştur
@@ -439,7 +478,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
               publish_mode: 'manual_publish',
               model,
             })
-            if (id) { adsetImpId = id; adsetImpIdByAdsetId.set(adsetId, id); adsetCount++ }
+            if (id) { adsetImpId = id; adsetImpIdByAdsetId.set(adsetId, id); counts.adsetCount++ }
           }
           if (!adsetImpId) continue // parent yoksa bağlanamaz
 
@@ -470,20 +509,31 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
             publish_mode: c.platform === 'meta' ? 'auto' : 'manual_publish',
             model,
           })
-          if (res.ok) adCount++
+          if (res.ok) counts.adCount++
         }
-      }
-      return { alertCount, campaignCount, adsetCount, adCount, alreadyStrong, failed, parseFailed }
-    })
+        return counts
+      })
+      persistOutcomes.push(outcome)
+    }
+
+    const persisted = persistOutcomes.reduce<PersistCounts>((a, o) => ({
+      alertCount: a.alertCount + o.alertCount,
+      campaignCount: a.campaignCount + o.campaignCount,
+      adsetCount: a.adsetCount + o.adsetCount,
+      adCount: a.adCount + o.adCount,
+      alreadyStrong: a.alreadyStrong + o.alreadyStrong,
+      parseFailed: a.parseFailed + o.parseFailed,
+    }), { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0 })
+    const failedCount = batchData.failed
 
     // R1: KOŞU DURUMU — hiç kart üretilmediyse 'failed', kısmen üretildiyse 'partial', sorunsuzsa 'completed'.
-    const hadProblems = persisted.failed > 0 || persisted.parseFailed > 0
+    const hadProblems = failedCount > 0 || persisted.parseFailed > 0
     const runStatus = persisted.campaignCount === 0
       ? 'failed'
       : hadProblems ? 'partial' : 'completed'
     await writeHierRunStatus({
       userId, accountSig, status: runStatus,
-      note: `üretildi=${persisted.campaignCount}/${toGenerate.length} batchFail=${persisted.failed} parseFail=${persisted.parseFailed}`,
+      note: `üretildi=${persisted.campaignCount}/${toGenerate.length} batchFail=${failedCount} parseFail=${persisted.parseFailed}`,
     })
 
     return {
@@ -495,10 +545,10 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       adsets: persisted.adsetCount,
       ads: persisted.adCount,
       alreadyStrong: persisted.alreadyStrong,
-      failed: persisted.failed,
+      failed: failedCount,
       parseFailed: persisted.parseFailed,
       cancelled: plan.cancelled,
-      superseded: plan.superseded,
+      superseded: supersedeSet.size,
     }
   },
 )
