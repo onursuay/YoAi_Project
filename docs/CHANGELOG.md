@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma "Yayınla" = CANLI yayın (PAUSED değil) — kullanıcı gereksinimi
+- **Sorun:** YoAlgoritma'nın ürün vizyonu: kullanıcı bir reklam kartını onaylayıp "Yayınla" dediğinde reklam ilgili platformda **eş zamanlı CANLI** yayınlanır. Faz 1'de güvenlik gerekçesiyle PAUSED yapılmıştı — bu, kullanıcının açık niyetine (tek-tık canlı yayın) AYKIRIYDI.
+- **Çözüm:** YoAlgoritma onay→yayın akışı artık **ACTIVE/ENABLED** (CANLI) yayınlar:
+  - Meta: `orchestrateMetaCreate`'e `publishStatus` parametresi (varsayılan PAUSED — diğer çağıranlar etkilenmez); `create-ad` `publishStatus:'ACTIVE'` geçer → kampanya+adset+ad CANLI. Mesaj "CANLI yayına alındı".
+  - Google: `create-ad` `status:'ENABLED'` geçer → kampanya CANLI. Mesaj "CANLI yayına alındı".
+  - Mesajlar gerçeği yansıtır (artık "PAUSED" demiyor).
+- **Not:** Yayınla = anında gerçek harcama başlar. Kart bütçesi neyse o günlük bütçeyle canlıya girer.
+- **Dosyalar:** lib/yoai/meta/orchestrator.ts, app/api/yoai/create-ad/route.ts
+
 ## 2026-06-14 — YoAlgoritma: scope'lu sayaç tutarlılığı + "kart yok" boş durumu (çoklu işletme)
 - **Sorun:** Prod'da per-account scope AÇIK. (1) Komuta merkezi sayaçları (`getHierarchyCounts`) scope'suzdu → seçili işletmede kart YOK iken üstte tüm işletmelerin toplamı (ör. 3/8/13) görünüyordu (kafa karıştırıcı çelişki; bu oturumun C2 regresyonu). (2) Seçili işletmenin scope'lu analizi hazır ama hiç kartı yokken UI sonsuz "İlk analiziniz hazırlanıyor…" spinner'ında kalıyordu (legacy scope=null kartlar scope açıkken yetim kalıp hiçbir işletmede görünmüyor).
 - **Çözüm:**

@@ -140,9 +140,8 @@ export async function POST(request: Request) {
           keywords: (proposal.keywords || []).map((k) => ({ text: k, matchType: 'BROAD' })),
           // AI'nın hedeflediği lokasyonlar yayına taşınır (çözülebildiyse)
           ...(locationIds && { locationIds }),
-          // YoAlgoritma onay→yayın: Meta paritesi. Kampanya PAUSED oluşturulur;
-          // kullanıcı Google Ads'te inceleyip elle aktive edene kadar harcama olmaz.
-          status: 'PAUSED',
+          // YoAlgoritma "Yayınla" → kullanıcı onayıyla CANLI yayın (ENABLED, PAUSED değil).
+          status: 'ENABLED',
         }),
       })
 
@@ -167,7 +166,7 @@ export async function POST(request: Request) {
         campaignId: bareCampaignId,
         campaignResourceName: data.campaignResourceName,
         adGroupResourceName: data.adGroupResourceName,
-        message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu (PAUSED). Kampanyayı aktif etmek için Google Ads sayfasına gidin.${channelNote}`,
+        message: `"${proposal.campaignName}" kampanyası başarıyla oluşturuldu ve CANLI yayına alındı.${channelNote}`,
       })
     }
 
@@ -195,6 +194,8 @@ export async function POST(request: Request) {
           leadFormId,
           creative,
           targeting: buildMetaTargeting(proposal.targeting),
+          // YoAlgoritma "Yayınla" → kullanıcı onayıyla CANLI yayın (PAUSED değil).
+          publishStatus: 'ACTIVE',
         })
 
         if (result.status === 'ok') {

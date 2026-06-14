@@ -61,6 +61,10 @@ export interface OrchestratorInput {
 
   /** Hedefleme (opsiyonel — verilmezse TR default) */
   targeting?: Record<string, unknown>
+
+  /** Yayın durumu. YoAlgoritma "Yayınla" → 'ACTIVE' (kullanıcı onayıyla CANLI yayın).
+   *  Verilmezse 'PAUSED' (geriye dönük güvenli varsayılan; diğer çağıranlar etkilenmez). */
+  publishStatus?: 'ACTIVE' | 'PAUSED'
 }
 
 export type OrchestratorStatus =
@@ -97,6 +101,8 @@ export async function orchestrateMetaCreate(
   input: OrchestratorInput,
 ): Promise<OrchestratorResult> {
   const { baseUrl, cookieHeader } = input
+  // Yayın durumu: YoAlgoritma "Yayınla" CANLI ister (ACTIVE); diğer çağıranlar PAUSED (varsayılan).
+  const publishStatus: 'ACTIVE' | 'PAUSED' = input.publishStatus === 'ACTIVE' ? 'ACTIVE' : 'PAUSED'
 
   // ── 1) Capabilities snapshot ──
   let assets: {
@@ -175,7 +181,7 @@ export async function orchestrateMetaCreate(
       body: JSON.stringify({
         name: input.campaignName,
         objective,
-        status: 'PAUSED',
+        status: publishStatus,
       }),
     })
     const campData = await campRes.json().catch(() => ({}))
@@ -223,7 +229,7 @@ export async function orchestrateMetaCreate(
     optimizationGoal,
     billingEvent: 'IMPRESSIONS',
     destination_type: destination,
-    status: 'PAUSED',
+    status: publishStatus,
     targeting: input.targeting || { geo_locations: { countries: ['TR'] } },
   }
   if (preflight.resolved.pixelId) {
@@ -290,7 +296,7 @@ export async function orchestrateMetaCreate(
     adsetId,
     name: input.adName,
     pageId,
-    status: 'PAUSED',
+    status: publishStatus,
     objective,
     conversionLocation: destination,
     optimizationGoal,
@@ -354,7 +360,9 @@ export async function orchestrateMetaCreate(
 
   return {
     status: 'ok',
-    message: `Kampanya + reklam seti + reklam başarıyla oluşturuldu (tümü PAUSED). Onay verdiğinizde yayınlanır.`,
+    message: publishStatus === 'ACTIVE'
+      ? `Kampanya + reklam seti + reklam başarıyla oluşturuldu ve CANLI yayına alındı.`
+      : `Kampanya + reklam seti + reklam başarıyla oluşturuldu (tümü PAUSED). Onay verdiğinizde yayınlanır.`,
     preflight,
     created: { campaignId, adsetId, adId },
     resolvedParams: { objective, destination, optimizationGoal },
