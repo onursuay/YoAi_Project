@@ -133,8 +133,12 @@ async function createCampaignWithBrandAssets(
       params.locationTargetingMode === 'PRESENCE_ONLY' ? ('PRESENCE' as const) : ('PRESENCE_OR_INTEREST' as const),
   }
 
-  const assetAutomationSettings = [
-    { assetAutomationType: 'TEXT_ASSET_AUTOMATION', assetAutomationStatus: 'OPTED_IN' as const },
+  // v23: kaldırılan Campaign.url_expansion_opt_out yerine Final URL expansion artık
+  // asset_automation_settings ile yönetilir. PMax'te varsayılan OPTED_IN (açık);
+  // kullanıcı UI'da kapattıysa OPTED_OUT gönderilir.
+  const assetAutomationSettings: { assetAutomationType: string; assetAutomationStatus: string }[] = [
+    { assetAutomationType: 'TEXT_ASSET_AUTOMATION', assetAutomationStatus: 'OPTED_IN' },
+    { assetAutomationType: 'FINAL_URL_EXPANSION_TEXT_ASSET_AUTOMATION', assetAutomationStatus: params.finalUrlExpansionEnabled ? 'OPTED_IN' : 'OPTED_OUT' },
   ]
 
   const cid = ctx.customerId
@@ -173,8 +177,7 @@ async function createCampaignWithBrandAssets(
           status: 'ENABLED',
           containsEuPoliticalAdvertising: params.containsEuPoliticalAdvertising,
           geoTargetTypeSetting,
-          // Final URL expansion PMax'te varsayılan AÇIK; UI "kapalı" gösteriyorsa opt_out=true ile gerçekten kapat.
-          urlExpansionOptOut: !params.finalUrlExpansionEnabled,
+          // Final URL expansion artık assetAutomationSettings ile yönetiliyor (v23; yukarıda tanımlı).
           ...buildBiddingField(params),
           startDateTime,
           ...(endDateTime && { endDateTime }),
