@@ -343,12 +343,16 @@ export async function insertCampaignImprovement(input: InsertCampaignImprovement
   return { id: (data as { id?: string } | null)?.id ?? null }
 }
 
-export async function listRecentCampaignImprovements(userId: string, limit = 300): Promise<CampaignImprovementRow[]> {
+export async function listRecentCampaignImprovements(userId: string, limit = 300, statuses?: HierStatus[]): Promise<CampaignImprovementRow[]> {
   if (!supabase) return []
-  const { data, error } = await supabase
+  // R9: statuses verilince yalnız o statüler (terminal superseded/cancelled hariç) — limit
+  // penceresi terminal gürültüyle dolup eski pending/decided kartları kaçırmasın (uzun-ömürlü hesap).
+  let q = supabase
     .from('campaign_improvements')
     .select('*')
     .eq('user_id', userId)
+  if (statuses && statuses.length) q = q.in('status', statuses)
+  const { data, error } = await q
     .order('created_at', { ascending: false })
     .limit(limit)
   if (error) {
@@ -424,14 +428,11 @@ export async function insertAdImprovement(input: InsertAdImprovementInput): Prom
   return { ok: true }
 }
 
-export async function listRecentAdImprovements(userId: string, limit = 500): Promise<AdImprovementRow[]> {
+export async function listRecentAdImprovements(userId: string, limit = 500, statuses?: HierStatus[]): Promise<AdImprovementRow[]> {
   if (!supabase) return []
-  const { data, error } = await supabase
-    .from('ad_improvements')
-    .select('*')
-    .eq('user_id', userId)
-    .order('created_at', { ascending: false })
-    .limit(limit)
+  let q = supabase.from('ad_improvements').select('*').eq('user_id', userId)
+  if (statuses && statuses.length) q = q.in('status', statuses)
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(limit)
   if (error) {
     console.error('[HierStore] listRecent ad_improvements error:', error)
     return []
@@ -439,11 +440,11 @@ export async function listRecentAdImprovements(userId: string, limit = 500): Pro
   return (data ?? []) as AdImprovementRow[]
 }
 
-export async function listRecentAdsetImprovements(userId: string, limit = 1000): Promise<AdsetImprovementRow[]> {
+export async function listRecentAdsetImprovements(userId: string, limit = 1000, statuses?: HierStatus[]): Promise<AdsetImprovementRow[]> {
   if (!supabase) return []
-  const { data, error } = await supabase
-    .from('adset_improvements').select('*').eq('user_id', userId)
-    .order('created_at', { ascending: false }).limit(limit)
+  let q = supabase.from('adset_improvements').select('*').eq('user_id', userId)
+  if (statuses && statuses.length) q = q.in('status', statuses)
+  const { data, error } = await q.order('created_at', { ascending: false }).limit(limit)
   if (error) { console.error('[HierStore] listRecent adset_improvements error:', error); return [] }
   return (data ?? []) as AdsetImprovementRow[]
 }

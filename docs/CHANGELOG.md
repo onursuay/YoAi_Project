@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma güvenilirlik R9: lifecycle/persist sağlamlık
+- **Sorun:** (a) Reconcile `listRecent` çağrıları TÜM statüleri çekiyordu (limit 300/1000); uzun-ömürlü hesapta terminal (superseded/cancelled) satırlar limit penceresini doldurursa eski pending/decided kartlar kaçırılıp yanlış freeze/cancel kararı verilebilir. (b) AI gerçek ağaçta olmayan bir `adset_id` döndürürse (halüsinasyon) orphan ad set kartı yazılıyordu. (c) campaign insert DB'de başarısız olursa (campImpId null) sessizce atlanıyor, run-status bunu görmüyordu.
+- **Çözüm:**
+  - `listRecent{Campaign,Adset,Ad}Improvements`'a opsiyonel `statuses` filtresi; reconcile yalnız non-terminal (`pending/approved/applied/rejected_by_user`) çeker → limit penceresi terminal gürültüyle dolmaz.
+  - **Orphan adset guard:** `adsetMetaById`'de olmayan `adset_id` → kart yazma, atla + logla.
+  - **insert-fail sayımı:** `insertFailed` sayacı; campImpId null olunca artar, run-status `partial`e yansır (parseFail'den ayrı kök neden: note'ta `insertFail=N`).
+- **Dosyalar:** lib/yoai/ai/hierarchicalStore.ts, inngest/functions/perCampaignImprovements.ts
+
 ## 2026-06-14 — YoAlgoritma güvenilirlik R7: eşzamanlılık + izlenebilirlik + eski akışı kapat
 - **Sorun:** (a) Aynı kullanıcı için iki koşu çakışırsa (cron + on-demand) supersede/insert yarışı + ÇİFT Anthropic batch maliyeti olurdu. (b) Kartlar hangi batch'ten geldiği izlenemiyordu (run_id hep null). (c) Orphan uç `/api/yoai/improvements/scan` hâlâ eski per-ad akışını (ai_ad_improvements) tetikliyordu → açılırsa paralel eski kartlar + maliyet.
 - **Çözüm:**

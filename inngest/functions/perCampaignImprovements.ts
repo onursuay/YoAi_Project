@@ -144,10 +144,13 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
 
     // 2) Reconcile (lifecycle): freeze-on-decision, else weekly refresh
     const plan = await step.run('reconcile-lifecycle', async () => {
+      // R9: yalnız non-terminal statüler — terminal (superseded/cancelled) satırlar freeze/cancel
+      // kararını etkilemez ve limit penceresini doldurursa eski pending/decided kartları kaçırırdık.
+      const NON_TERMINAL: Array<'pending' | 'approved' | 'applied' | 'rejected_by_user'> = ['pending', 'approved', 'applied', 'rejected_by_user']
       const [recentCamp, recentAdset, recentAd] = await Promise.all([
-        listRecentCampaignImprovements(userId, 300),
-        listRecentAdsetImprovements(userId, 1000),
-        listRecentAdImprovements(userId, 1000),
+        listRecentCampaignImprovements(userId, 300, NON_TERMINAL),
+        listRecentAdsetImprovements(userId, 1000, NON_TERMINAL),
+        listRecentAdImprovements(userId, 1000, NON_TERMINAL),
       ])
       const decided = new Set(['approved', 'applied', 'rejected_by_user'])
       const frozen = new Set<string>()
@@ -364,7 +367,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
     //     garanti olmasa bile). supersede (eski pending alt-ağaç) ARTIK burada, yeni kart
     //     yazılmadan hemen önce yapılır (batch öncesi değil) — kart kaybı imkânsız.
     const supersedeSet = new Set(plan.supersedeKeys)
-    type PersistCounts = { alertCount: number; campaignCount: number; adsetCount: number; adCount: number; alreadyStrong: number; parseFailed: number }
+    type PersistCounts = { alertCount: number; campaignCount: number; adsetCount: number; adCount: number; alreadyStrong: number; parseFailed: number; insertFailed: number }
     const persistOutcomes: PersistCounts[] = []
     for (const item of batchData.items) {
       const c = customToCampaign.get(item.custom_id)
@@ -372,7 +375,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       const outcome = await step.run(`persist-${item.custom_id}`, async (): Promise<PersistCounts> => {
         const result = item.result
         const model = item.model
-        const counts: PersistCounts = { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0 }
+        const counts: PersistCounts = { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0, insertFailed: 0 }
 
         // account_alerts (yalnız ilk-per-platform isteğinden; eskiler 6b'de supersede edildi).
         if (item.hasAlerts && Array.isArray(result.account_alerts)) {
@@ -434,7 +437,9 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
           model,
           run_id: batch.id, // R7
         })
-        if (!campImpId) return counts
+        // R9: campImpId null = DB insert BAŞARISIZ (AI üretti ama yazılamadı) — sessizce
+        // atlama; say + run-status 'partial'e yansısın (parseFailed'den ayrı kök neden).
+        if (!campImpId) { counts.insertFailed++; return counts }
         counts.campaignCount++
 
         // ad → adset eşlemesi (AI ad_id döner; ağaçtan adset'i buluruz)
@@ -446,6 +451,12 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
         const adsetImpIdByAdsetId = new Map<string, string>()
         for (const ai of result.adset_improvements) {
           const asMeta = adsetMetaById.get(ai.adset_id)
+          // R9: ORPHAN guard — AI gerçek ağaçta olmayan bir adset_id döndürdüyse (halüsinasyon)
+          // orphan kart yazma; atla + logla.
+          if (!asMeta) {
+            logger.warn(`[campaign-improvements] orphan adset_id=${ai.adset_id} (kampanya ağacında yok) — atlandı, campaign=${c.campaign.id}`)
+            continue
+          }
           const { id } = await insertAdsetImprovement({
             user_id: userId,
             campaign_improvement_id: campImpId,
@@ -533,17 +544,19 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       adCount: a.adCount + o.adCount,
       alreadyStrong: a.alreadyStrong + o.alreadyStrong,
       parseFailed: a.parseFailed + o.parseFailed,
-    }), { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0 })
+      insertFailed: a.insertFailed + o.insertFailed,
+    }), { alertCount: 0, campaignCount: 0, adsetCount: 0, adCount: 0, alreadyStrong: 0, parseFailed: 0, insertFailed: 0 })
     const failedCount = batchData.failed
 
-    // R1: KOŞU DURUMU — hiç kart üretilmediyse 'failed', kısmen üretildiyse 'partial', sorunsuzsa 'completed'.
-    const hadProblems = failedCount > 0 || persisted.parseFailed > 0
+    // R1/R9: KOŞU DURUMU — hiç kart üretilmediyse 'failed', kısmen (batch/parse/insert hatası)
+    // üretildiyse 'partial', sorunsuzsa 'completed'.
+    const hadProblems = failedCount > 0 || persisted.parseFailed > 0 || persisted.insertFailed > 0
     const runStatus = persisted.campaignCount === 0
       ? 'failed'
       : hadProblems ? 'partial' : 'completed'
     await writeHierRunStatus({
       userId, accountSig, status: runStatus,
-      note: `üretildi=${persisted.campaignCount}/${toGenerate.length} batchFail=${failedCount} parseFail=${persisted.parseFailed}`,
+      note: `üretildi=${persisted.campaignCount}/${toGenerate.length} batchFail=${failedCount} parseFail=${persisted.parseFailed} insertFail=${persisted.insertFailed}`,
     })
 
     return {
@@ -557,6 +570,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
       alreadyStrong: persisted.alreadyStrong,
       failed: failedCount,
       parseFailed: persisted.parseFailed,
+      insertFailed: persisted.insertFailed,
       cancelled: plan.cancelled,
       superseded: supersedeSet.size,
     }
