@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma denetim onarımı 2/N: outcome ölçüm döngüsü + kart şeffaflığı
+- **Sorun (denetim — KRİTİK):** Öğrenen beynin "önerilerin gerçek ROAS/CTR/CPC etkisini öğren" amacı uçtan uca ÖLÜYDÜ: before yazılıyor ama after-snapshot'ı çağıran cron/mekanizma yoktu (tüm kayıtlar kalıcı 'pending'), outcome'u gösteren tek UI (ApprovalHistoryPanel) hiç render edilmiyordu. Ayrıca yayınlanan kampanyaya erişim linki ve önerinin neye dayandığı görünmüyordu.
+- **Çözüm:**
+  - **Ölçüm döngüsü:** `fetchCampaignMetricsById` (PAUSED dahil ID ile canlı metrik — Meta insights / Google GAQL). Hiyerarşik yayında (`applied`) kaynak kampanyanın "before" metrikleri kaydedilir + yeni kampanya ID'si saklanır. Yeni cron `/api/cron/yoai-outcome-snapshots` (günlük) penceresi dolan kayıtlarda yeni kampanyayı ölçüp `recordAfterSnapshot` ile delta+outcome üretir; yeni kampanya veri üretmediyse grace (pencere×2) sonra `insufficient_data` (sahte veri YOK).
+  - **Kartta gösterim:** Hiyerarşi GET'i `yoai_recommendation_results`'ı `proposal_id` ile eşleyip applied kartlara `outcome` iliştirir; AdCard "Sonuç: iyileşti/geriledi/…" rozeti gösterir.
+  - **#2 Derin link:** Applied kartlara "Reklam Yöneticisinde Aç" (publish_audit_id → Meta/Google deep link).
+  - **#5 Kaynak şeffaflığı:** AdCard'da "Dayanak: Marka profili · Platform kuralları · (varsa) Rakip analizi" rozetleri.
+- **Dosyalar:** lib/yoai/ai/campaignMetricsById.ts (yeni), lib/yoai/resultTrackingStore.ts (listDueBeforeRecorded), app/api/cron/yoai-outcome-snapshots/route.ts (yeni), vercel.json, app/api/yoai/improvements/hierarchy/{route.ts,decision/route.ts}, lib/yoai/ai/hierarchicalStore.ts, components/yoai/hierarchy/AdCard.tsx, locales/{tr,en}.json
+
 ## 2026-06-14 — YoAlgoritma denetim onarımı 1/N: IDOR güvenlik + yayın paritesi (önizleme = yayın)
 - **Sorun (uçtan uca denetimden):** (1) **IDOR:** `applied`/`publish_error` kararları `user_id` ile izole edilmiyordu (service-role) → başka kullanıcının kart id'si bilinirse onun kartı mutasyona uğratılabilirdi. (2) **Yayın paritesi kopuk:** AI'nın ürettiği yapısal hedefleme (lokasyon/yaş/cinsiyet), teklif stratejisi ve Google kanal türü yayına HİÇ taşınmıyordu → kullanıcı "İstanbul, 25-45 kadın, Dönüşüm" onaylıyor ama reklam "tüm Türkiye + MAXIMIZE_CLICKS + SEARCH" çıkıyordu. (3) Google RSA <3 başlıkta sessizce reklamsız kampanya oluşuyordu.
 - **Çözüm:**

@@ -6,12 +6,19 @@
 
 import { useState, type ReactNode } from 'react'
 import { useTranslations, useLocale } from 'next-intl'
-import { Swords, Pencil, Loader2 } from 'lucide-react'
+import { Swords, Pencil, Loader2, TrendingUp, TrendingDown, Minus, Clock, ExternalLink } from 'lucide-react'
 import HierCardActions from './HierCardActions'
 import { PlatformBadge, StatusBadge, Row, ListBlock, titleCaseTr } from './shared'
 import { translateEnum, translateEnumList } from '@/lib/yoai/translations'
-import type { AdImprovementRow } from '@/lib/yoai/ai/hierarchicalStore'
+import type { AdImprovementRow, AdImprovementOutcome } from '@/lib/yoai/ai/hierarchicalStore'
 import type { AdSpec } from '@/lib/yoai/ai/types'
+
+/** Yayınlanan kampanyayı platformun reklam yöneticisinde açan derin bağlantı (best-effort). */
+function adsManagerUrl(platform: string, campaignId: string): string {
+  return platform === 'google'
+    ? `https://ads.google.com/aw/campaigns?campaignId=${encodeURIComponent(campaignId)}`
+    : `https://business.facebook.com/adsmanager/manage/campaigns?selected_campaign_ids=${encodeURIComponent(campaignId)}`
+}
 
 interface AdPayload {
   ad_spec?: AdSpec | null
@@ -98,6 +105,26 @@ export default function AdCard({ ad, busy, horizontal, onApprove, onPublish, onR
         <p className="text-[11px] text-slate-400 uppercase tracking-wider font-semibold">{t('adLevel')}</p>
         <p className="text-[15px] text-slate-50 font-semibold leading-snug mt-0.5">{titleCaseTr(ad.ad_name)}</p>
       </div>
+
+      {/* Yayınlandıysa: öneri sonucu rozeti (öğrenen beyin) + Reklam Yöneticisi derin linki */}
+      {ad.status === 'applied' ? (
+        <div className="mx-4 mb-2 relative flex flex-wrap items-center gap-2">
+          {ad.outcome ? <OutcomeBadge outcome={ad.outcome} t={t} /> : null}
+          {ad.publish_audit_id ? (
+            <a
+              href={adsManagerUrl(plat, ad.publish_audit_id)}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="inline-flex items-center gap-1.5 text-[11px] text-emerald-300 hover:text-emerald-200 underline decoration-emerald-500/40 underline-offset-2 transition-colors"
+            >
+              <ExternalLink className="w-3.5 h-3.5" /> {t('openInAdsManager')}
+            </a>
+          ) : null}
+        </div>
+      ) : null}
+
+      {/* #5 Kaynak şeffaflığı — bu öneri neye dayandı (marka + platform her zaman; rakip koşullu) */}
+      <SourceBadges hasCompetitor={!!payload.competitor_comparison} t={t} />
 
       {payload.reasoning ? (
         <div className="mx-4 mb-2.5 relative">
@@ -231,6 +258,37 @@ function EditField({ label, children }: { label: string; children: ReactNode }) 
     <div>
       <p className="text-[11px] text-slate-400 font-semibold uppercase tracking-wider mb-1">{label}</p>
       {children}
+    </div>
+  )
+}
+
+/** Öneri sonucu rozeti — yayınlanan kampanyanın gerçek etkisi (öğrenen beyin ölçümü). */
+function OutcomeBadge({ outcome, t }: { outcome: AdImprovementOutcome; t: (k: string) => string }) {
+  const map: Record<string, { Icon: typeof TrendingUp; cls: string; label: string }> = {
+    improved: { Icon: TrendingUp, cls: 'bg-emerald-950/40 text-emerald-300 border-emerald-500/30', label: t('outcomeImproved') },
+    declined: { Icon: TrendingDown, cls: 'bg-red-950/40 text-red-300 border-red-500/30', label: t('outcomeDeclined') },
+    no_change: { Icon: Minus, cls: 'bg-slate-800 text-slate-300 border-slate-600/40', label: t('outcomeNoChange') },
+    insufficient_data: { Icon: Clock, cls: 'bg-slate-800 text-slate-400 border-slate-600/40', label: t('outcomeInsufficient') },
+    pending: { Icon: Clock, cls: 'bg-slate-800 text-slate-400 border-slate-600/40', label: t('outcomePending') },
+  }
+  const m = map[outcome.outcome] ?? map.pending
+  const Icon = m.Icon
+  return (
+    <span title={outcome.summary ?? ''} className={`inline-flex items-center gap-1.5 text-[11px] px-2 py-1 rounded border ${m.cls}`}>
+      <Icon className="w-3.5 h-3.5" />{m.label}
+    </span>
+  )
+}
+
+/** #5 — Önerinin dayandığı bağlam kaynakları (şeffaflık). */
+function SourceBadges({ hasCompetitor, t }: { hasCompetitor: boolean; t: (k: string) => string }) {
+  const base = 'text-[10px] px-1.5 py-0.5 rounded border'
+  return (
+    <div className="mx-4 mb-2.5 relative flex flex-wrap items-center gap-1.5">
+      <span className="text-[10px] text-slate-500 uppercase tracking-wider mr-0.5">{t('sourcesLabel')}</span>
+      <span className={`${base} bg-emerald-950/30 text-emerald-300/90 border-emerald-500/20`}>{t('sourceBrand')}</span>
+      <span className={`${base} bg-slate-800 text-slate-300 border-slate-600/30`}>{t('sourcePlatformRules')}</span>
+      {hasCompetitor ? <span className={`${base} bg-indigo-950/30 text-indigo-300 border-indigo-500/30`}>{t('sourceCompetitor')}</span> : null}
     </div>
   )
 }

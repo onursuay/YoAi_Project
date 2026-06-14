@@ -96,6 +96,32 @@ export async function POST(request: Request) {
     }
     if (action === 'applied') {
       await markImprovementApplied(level, userId, id, body.publishAuditId ?? null)
+      // Outcome ölçümü (öğrenen beyin): yayın anında kaynak kampanyanın "before"
+      // metriklerini kaydet + yeni kampanya ID'sini sakla → after-snapshot cron'u
+      // N gün sonra yeni kampanyayı ölçüp gerçek etkiyi (ROAS/CTR/CPC) hesaplar.
+      if (level === 'ad' && body.publishAuditId) {
+        try {
+          const row = (await getImprovementRow('ad', userId, id)) as AdImprovementRow | null
+          if (row?.campaign_id) {
+            const { fetchCampaignMetricsById } = await import('@/lib/yoai/ai/campaignMetricsById')
+            const { recordBeforeSnapshot } = await import('@/lib/yoai/resultTrackingStore')
+            const before = await fetchCampaignMetricsById(row.source_platform, row.campaign_id, userId)
+            if (before) {
+              await recordBeforeSnapshot(userId, {
+                proposalId: id,
+                sourceCampaignId: row.campaign_id,
+                platform: row.source_platform,
+                recommendationType: 'optimization',
+                beforeSnapshot: before,
+                afterWindowDays: 14,
+                proposalSnapshot: { publishAuditId: body.publishAuditId, platform: row.source_platform },
+              })
+            }
+          }
+        } catch (e) {
+          console.warn('[hierarchy decision] before-snapshot kaydı atlandı:', e instanceof Error ? e.message : e)
+        }
+      }
       return NextResponse.json({ ok: true })
     }
     if (action === 'publish_error') {

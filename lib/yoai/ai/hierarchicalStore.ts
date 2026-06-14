@@ -132,6 +132,16 @@ export interface AdImprovementRow {
   decided_at: string | null
   applied_at: string | null
   cancelled_at: string | null
+  /** UI: öneri sonucu ölçümü — DB kolonu DEĞİL; hierarchy GET yoai_recommendation_results'tan iliştirir. */
+  outcome?: AdImprovementOutcome | null
+}
+
+/** Applied karta iliştirilen outcome özeti (öğrenen beyin ölçümü). */
+export interface AdImprovementOutcome {
+  outcome: 'pending' | 'improved' | 'no_change' | 'declined' | 'insufficient_data'
+  summary: string | null
+  status: string
+  delta: Record<string, number | null | undefined> | null
 }
 
 /* ── Insert input tipleri ── */

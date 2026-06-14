@@ -35,6 +35,26 @@ export async function GET(request: Request) {
 
     const data = await getImprovementHierarchy(userId, statuses)
 
+    // ── Outcome rozetleri: applied/öneri sonucunu kartlara iliştir (öğrenen beyin ölçümü) ──
+    // yoai_recommendation_results.proposal_id === ad_improvement.id eşleşmesiyle.
+    try {
+      const { listRecommendationResults } = await import('@/lib/yoai/resultTrackingStore')
+      const results = await listRecommendationResults(userId, { limit: 200 })
+      if (results.length) {
+        const byProposal = new Map(results.map((r) => [r.proposal_id, r]))
+        for (const c of data.campaigns) {
+          for (const as of c.adsets) {
+            for (const ad of as.ads) {
+              const r = byProposal.get(ad.id)
+              if (r) ad.outcome = { outcome: r.outcome, summary: r.outcome_summary, status: r.status, delta: r.metric_delta }
+            }
+          }
+        }
+      }
+    } catch (e) {
+      console.warn('[improvements hierarchy GET] outcome iliştirme atlandı:', e instanceof Error ? e.message : e)
+    }
+
     // ── İşletme scope'u: kartları seçili işletmeye sınırla ──
     if (isPerAccountScopeEnabled()) {
       const scope = await resolveYoaiScope()

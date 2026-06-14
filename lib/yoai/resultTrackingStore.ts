@@ -292,6 +292,32 @@ export async function recordAfterSnapshot(
 }
 
 /**
+ * After-snapshot cron'u için: 'before_recorded' durumundaki tüm kullanıcı kayıtlarını
+ * (en eski önce) çeker. Pencere dolma kontrolü (before_recorded_at + after_window_days)
+ * çağıran tarafça JS'te yapılır (PostgREST kolon-aritmetiği yok). Service-role, user-filtresiz.
+ */
+export async function listDueBeforeRecorded(limit = 200): Promise<RecommendationResultRow[]> {
+  if (!supabase) return []
+  try {
+    const { data, error } = await supabase
+      .from(RESULTS_TABLE)
+      .select('*')
+      .eq('status', 'before_recorded')
+      .order('before_recorded_at', { ascending: true })
+      .limit(limit)
+    if (error) {
+      if (error.code === '42P01') return []
+      console.warn('[ResultTrackingStore] listDueBeforeRecorded error:', error.message)
+      return []
+    }
+    return (data as RecommendationResultRow[]) || []
+  } catch (e) {
+    console.warn('[ResultTrackingStore] listDueBeforeRecorded exception:', e)
+    return []
+  }
+}
+
+/**
  * Kullanıcının sonuç kayıtlarını listeler — en yeni önce.
  */
 export async function listRecommendationResults(
