@@ -10,8 +10,12 @@ export const maxDuration = 15
 
 /**
  * POST /api/yoai/improvements/scan
- * On-demand "Şimdi Tara" — tek kullanıcı için per-ad improvement
- * event'i fırlatır (yoalgoritma/improvements.user).
+ * On-demand "Şimdi Tara" — tek kullanıcı için kart üretimi tetikler.
+ *
+ * R7: ARTIK hiyerarşik akışı (campaign-improvements.user) fırlatır. Eski per-ad
+ * akışı (yoalgoritma/improvements.user → ai_ad_improvements) kapatıldı: hiçbir yol
+ * onu tetiklemiyor (function rollback için kayıtlı kalır, [perAdImprovements.ts]).
+ * Aksi halde bu uç eski paralel kartları üretip kullanıcıyı/maliyeti şişirirdi.
  */
 export async function POST() {
   if (!isAiEngineEnabled()) {
@@ -28,6 +32,6 @@ export async function POST() {
   const userId = readUserId(cookieStore)
   if (!userId) return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
 
-  await inngest.send({ name: 'yoalgoritma/improvements.user', data: { userId } })
+  await inngest.send({ name: 'yoalgoritma/campaign-improvements.user', data: { userId } })
   return NextResponse.json({ ok: true, message: 'Tarama başlatıldı. Kartlar hazır olunca burada görünecek.' })
 }

@@ -2,6 +2,14 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma güvenilirlik R7: eşzamanlılık + izlenebilirlik + eski akışı kapat
+- **Sorun:** (a) Aynı kullanıcı için iki koşu çakışırsa (cron + on-demand) supersede/insert yarışı + ÇİFT Anthropic batch maliyeti olurdu. (b) Kartlar hangi batch'ten geldiği izlenemiyordu (run_id hep null). (c) Orphan uç `/api/yoai/improvements/scan` hâlâ eski per-ad akışını (ai_ad_improvements) tetikliyordu → açılırsa paralel eski kartlar + maliyet.
+- **Çözüm:**
+  - **Per-user concurrency:** `concurrency: [{limit:5}, {key:'event.data.userId', limit:1}]` — aynı kullanıcının eşzamanlı koşuları serileştirilir (yarış + çift maliyet biter). account_alerts için ayrı DB unique index'e GEREK KALMADAN (prod-risk: migration kaçınma) mevcut app-level dedup + bu key birlikte yeterli.
+  - **run_id dolduruldu:** account_alert + campaign + adset + ad insert'lerine `run_id: batch.id` → kart→batch izlenebilirliği.
+  - **Eski per-ad akışı kapatıldı:** `/api/yoai/improvements/scan` artık hiyerarşik event (`campaign-improvements.user`) fırlatır; `yoalgoritma/improvements.user`'ı hiçbir yol tetiklemiyor (function rollback için kayıtlı kalır).
+- **Dosyalar:** inngest/functions/perCampaignImprovements.ts, app/api/yoai/improvements/scan/route.ts
+
 ## 2026-06-14 — YoAlgoritma güvenilirlik R6: fetch paritesi (doğru kampanyalar + alt-ağaç eşleşmesi)
 - **Sorun (Google):** ad_group/ad GAQL sorguları analiz edilen top-15 kampanyaya scope'lu DEĞİLDİ — tüm hesabın en pahalı 200/300 alt-öğesi çekiliyordu; bunlar bizim 15 kampanyaya ait olmayabilir → kampanyalar yanlış/eksik alt-ağaçla eşleşir. Ayrıca campaign+adgroup+ad tek try/catch'teydi: ad sorgusu patlarsa kampanya verisi de kaybolur (tüm tarama çöker).
 - **Sorun (Meta):** Graph /campaigns edge harcamaya göre sıralama desteklemez; `limit=15` yalnız "ilk 15"i (kayıt sırası) döndürüyordu → 15'ten fazla aktif kampanyası olan hesapta en yüksek harcamalı kampanyalar sessizce atlanabilir.

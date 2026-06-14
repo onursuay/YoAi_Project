@@ -79,7 +79,13 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
   {
     id: 'yoalgoritma-per-campaign-improvements',
     name: 'YoAlgoritma — Hiyerarşik Geliştirme Kartları',
-    concurrency: { limit: 5 },
+    // R7: global throughput limiti (5) + KULLANICI BAŞINA 1. Aynı kullanıcının eşzamanlı iki
+    // koşusu supersede/insert yarışına ve ÇİFT Anthropic batch maliyetine yol açardı (örn. cron
+    // ile on-demand çakışması). Per-user key=1 bunu serileştirir.
+    concurrency: [
+      { limit: 5 },
+      { key: 'event.data.userId', limit: 1 },
+    ],
     retries: 2,
     triggers: [{ event: 'yoalgoritma/campaign-improvements.user' }],
   },
@@ -387,7 +393,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
               recommended_action: al.recommended_action,
               confidence: al.confidence,
               model,
-              run_id: null,
+              run_id: batch.id, // R7: kart → üreten batch izlenebilirliği
             })
             if (res.ok) counts.alertCount++
           }
@@ -426,6 +432,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
           confidence: ci.confidence,
           publish_mode: 'manual_publish',
           model,
+          run_id: batch.id, // R7
         })
         if (!campImpId) return counts
         counts.campaignCount++
@@ -452,6 +459,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
             confidence: ai.confidence,
             publish_mode: 'manual_publish',
             model,
+            run_id: batch.id, // R7
           })
           if (id) { adsetImpIdByAdsetId.set(ai.adset_id, id); counts.adsetCount++ }
         }
@@ -477,6 +485,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
               confidence: 0,
               publish_mode: 'manual_publish',
               model,
+              run_id: batch.id, // R7
             })
             if (id) { adsetImpId = id; adsetImpIdByAdsetId.set(adsetId, id); counts.adsetCount++ }
           }
@@ -508,6 +517,7 @@ export const yoalgoritmaPerCampaignImprovements = inngest.createFunction(
             confidence: adi.confidence,
             publish_mode: c.platform === 'meta' ? 'auto' : 'manual_publish',
             model,
+            run_id: batch.id, // R7
           })
           if (res.ok) counts.adCount++
         }
