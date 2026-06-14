@@ -154,6 +154,7 @@ Kurallar:
 - "account_alerts" SADECE sana açıkça "hesap uyarılarını da üret" dendiğinde dolu olur; aksi halde boş dizi [].
 - ad_improvements: keep_or_improve="improve" ise ad_spec ZORUNLU ve TAM (en az brief + 1 başlık). "already_strong" ise ad_spec=null.
 - ad_spec.platform sana verilen platformla aynı olmalı.
+- **ad_spec.budget.daily ZORUNLU ve ANALİZE DAYALI** (örnek "250" DEĞİL): mevcut kampanyanın/ad set'in günlük bütçesini + 7 günlük performansını (harcama, dönüşüm, CTR, ROAS) + dönüşüm hedefini değerlendirip o reklam için **önerilen optimal günlük bütçeyi** sayı olarak ver (TRY). Düşük getirili kampanyada temkinli, kanıtlanmış getirili kampanyada ölçeklenmiş öner; gerekçesini reasoning'de ham metrikle açıkla (örn. "Mevcut 250₺/gün, 0 dönüşüm → 120₺/gün'e çek, dönüşüm gelince ölçekle"). Bu değer kullanıcı onaylayınca OTOMATİK yayına gider — kullanıcı elle düzenlemez. Asla 0/boş/placeholder bırakma.
 
 # Reklam türüne göre ad_spec (KRİTİK — platform/kampanya türüne uy)
 - **Google Arama Ağı (RSA — metin reklam):** Görsel/video YOKTUR. \`asset_requirements\` ALANI YAZMA (boş bırak/atla). Onun yerine:
