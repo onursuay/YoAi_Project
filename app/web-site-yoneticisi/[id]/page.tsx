@@ -152,9 +152,9 @@ export default function WebSiteDetailPage() {
               <button
                 onClick={handleAi}
                 disabled={busy !== null}
-                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-50"
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-60"
               >
-                <Sparkles className="w-4 h-4" />
+                <Sparkles className={`w-4 h-4 ${busy === 'ai' ? 'animate-pulse' : ''}`} />
                 {busy === 'ai' ? t('aiBuilding') : hasPages ? t('aiRebuild') : t('aiBuild')}
               </button>
               <button

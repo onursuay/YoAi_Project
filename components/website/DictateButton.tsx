@@ -1,12 +1,13 @@
 'use client'
 
 import { useEffect, useRef, useState } from 'react'
-import { Mic, Square } from 'lucide-react'
+import { Mic } from 'lucide-react'
 
 /**
  * Tarayıcı yerel Web Speech API ile sesle-yazma (client-side, ücretsiz, anahtarsız).
- * Desteklenmeyen tarayıcıda (örn. Firefox) hiçbir şey render etmez (graceful).
- * Yeniden kullanılabilir: onAppend ile herhangi bir alana metin ekler.
+ * Toggle: pasifken mikrofon + etiket; dinlerken kırmızı "açık" durumu + ses çalıyormuş gibi
+ * animasyonlu equalizer çubukları. Boyut kardeş butonlarla aynı (text-sm).
+ * Desteklenmeyen tarayıcıda (Firefox) hiçbir şey render etmez (graceful).
  */
 
 interface SpeechResultAlt { transcript: string }
@@ -31,6 +32,22 @@ function getRecognitionCtor(): (new () => RecognitionLike) | null {
     webkitSpeechRecognition?: new () => RecognitionLike
   }
   return w.SpeechRecognition || w.webkitSpeechRecognition || null
+}
+
+/** Ses çalıyormuş hissi veren animasyonlu equalizer (4 çubuk, kademeli). */
+function Equalizer() {
+  return (
+    <span className="inline-flex items-end gap-[2px] h-4" aria-hidden>
+      <style>{`@keyframes wsx-eq{0%,100%{transform:scaleY(.3)}50%{transform:scaleY(1)}}`}</style>
+      {[0, 0.15, 0.3, 0.45].map((d, i) => (
+        <span
+          key={i}
+          className="w-[2.5px] h-4 rounded-full bg-current origin-bottom"
+          style={{ animation: `wsx-eq .9s ease-in-out ${d}s infinite` }}
+        />
+      ))}
+    </span>
+  )
 }
 
 interface DictateButtonProps {
@@ -77,13 +94,16 @@ export default function DictateButton({ onAppend, lang = 'tr-TR', labelStart, la
     <button
       type="button"
       onClick={toggle}
+      aria-pressed={listening}
       aria-label={listening ? labelStop : labelStart}
-      className={`inline-flex items-center gap-1.5 rounded-lg px-2.5 py-1.5 text-xs font-medium transition-colors ${
-        listening ? 'bg-red-50 text-red-600' : 'text-gray-500 hover:bg-gray-50/60'
+      className={`inline-flex items-center gap-2 rounded-lg border px-4 py-2.5 text-sm font-medium transition-all ${
+        listening
+          ? 'border-red-300 bg-red-50 text-red-600 shadow-[0_0_0_3px_rgba(239,68,68,0.12)]'
+          : 'border-gray-200 text-gray-700 hover:bg-gray-50/60'
       }`}
     >
-      {listening ? <Square className="w-3.5 h-3.5" /> : <Mic className="w-3.5 h-3.5" />}
-      <span className={listening ? 'animate-pulse' : ''}>{listening ? labelStop : labelStart}</span>
+      {listening ? <Equalizer /> : <Mic className="w-4 h-4" />}
+      <span>{listening ? labelStop : labelStart}</span>
     </button>
   )
 }
