@@ -5,6 +5,8 @@ import { inngest } from '@/inngest/client'
 import { getImprovementHierarchy } from '@/lib/yoai/ai/hierarchicalStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 import { resolveYoaiScope } from '@/lib/yoai/businessScope'
+import { buildAccountScope, getBestAvailableRun } from '@/lib/yoai/dailyRunStore'
+import { normalizeMetaAccountId, normalizeGoogleCustomerId } from '@/lib/yoai/businessKey'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 15
@@ -31,14 +33,36 @@ export async function POST() {
     const userId = readUserId(cookieStore)
     if (!userId) return NextResponse.json({ ok: false, error: 'Oturum gerekli' }, { status: 401 })
 
-    // 1) Zaten veri varsa tetikleme (gereksiz Batch maliyeti önlenir)
-    const existing = await getImprovementHierarchy(userId)
-    if (existing.campaigns.length > 0 || existing.accountAlerts.length > 0) {
-      return NextResponse.json({ ok: true, triggered: false, reason: 'exists' })
-    }
-
     // 2) Çoklu işletme scope'u (flag açıksa) — seçili işletmenin hesabına göre
     const scope = isPerAccountScopeEnabled() ? await resolveYoaiScope() : undefined
+
+    // 1) Zaten veri varsa tetikleme (gereksiz Batch maliyeti önlenir).
+    //    KRİTİK: per-account scope açıkken varlık kontrolü de SCOPE'LU olmalı —
+    //    aksi halde başka işletmenin/legacy (scope=null) kartları "var" sayılıp
+    //    seçili işletme için hiç tarama tetiklenmez (sonsuz "hazırlanıyor").
+    const existing = await getImprovementHierarchy(userId)
+    if (scope?.scoped) {
+      const run = await getBestAvailableRun(userId)
+      const currentSig = buildAccountScope(scope.metaId, scope.googleCustomerId)
+      const runCampaigns = (run && run.account_scope === currentSig)
+        ? ((run.command_center_data?.campaigns ?? []) as Array<{ id?: string | number; platform?: string }>)
+        : []
+      const allowed = new Set(runCampaigns.filter((c) => c?.id != null && c.platform).map((c) => `${String(c.platform).toLowerCase()}:${String(c.id)}`))
+      const metaAcc = normalizeMetaAccountId(scope.metaId)
+      const googleAcc = normalizeGoogleCustomerId(scope.googleCustomerId)
+      const hasScopedCampaign = existing.campaigns.some((c) => allowed.has(`${String(c.source_platform)}:${String(c.campaign_id)}`))
+      const hasScopedAlert = existing.accountAlerts.some((a) => {
+        if (a.account_id == null) return false
+        if (a.source_platform === 'meta') return metaAcc != null && normalizeMetaAccountId(a.account_id) === metaAcc
+        if (a.source_platform === 'google') return googleAcc != null && normalizeGoogleCustomerId(a.account_id) === googleAcc
+        return false
+      })
+      if (hasScopedCampaign || hasScopedAlert) {
+        return NextResponse.json({ ok: true, triggered: false, reason: 'exists' })
+      }
+    } else if (existing.campaigns.length > 0 || existing.accountAlerts.length > 0) {
+      return NextResponse.json({ ok: true, triggered: false, reason: 'exists' })
+    }
 
     // 3) Hiyerarşik geliştirme kartları analizini tetikle (account_alerts dahil)
     await inngest.send({
