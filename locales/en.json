@@ -5763,7 +5763,15 @@
       "pageAbout": "About",
       "pageServices": "Services",
       "pageContact": "Contact",
-      "backToList": "Back to sites"
+      "backToList": "Back to sites",
+      "aiBuild": "Build with AI",
+      "aiRebuild": "Regenerate with AI",
+      "aiBuilding": "AI is generating…",
+      "quickBuild": "Quick Build",
+      "quickRebuild": "Quick Rebuild",
+      "intakeTitle": "Describe your site",
+      "intakeHint": "Tell us what you want; AI combines it with your business info to build the site. Leave empty to build from your profile.",
+      "instructionsPlaceholder": "e.g. Make it cleaner and more corporate, highlight booking in services…"
     }
   },
   "sidebar": {

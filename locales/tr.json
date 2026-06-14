@@ -5763,7 +5763,15 @@
       "pageAbout": "Hakkımızda",
       "pageServices": "Hizmetler",
       "pageContact": "İletişim",
-      "backToList": "Sitelere dön"
+      "backToList": "Sitelere dön",
+      "aiBuild": "AI ile Oluştur",
+      "aiRebuild": "AI ile Yenile",
+      "aiBuilding": "AI üretiyor…",
+      "quickBuild": "Hızlı Oluştur",
+      "quickRebuild": "Hızlı Yenile",
+      "intakeTitle": "Sitenizi tarif edin",
+      "intakeHint": "Ne istediğinizi yazın; AI işletme bilgilerinizle birleştirip siteyi üretir. Boş bırakırsanız profilinizden üretir.",
+      "instructionsPlaceholder": "Örn. Daha sade ve kurumsal olsun, hizmetlerden randevuyu öne çıkar…"
     }
   },
   "sidebar": {

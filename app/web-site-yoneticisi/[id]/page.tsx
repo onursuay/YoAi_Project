@@ -4,11 +4,14 @@ import { useState, useEffect, useCallback } from 'react'
 import { useParams } from 'next/navigation'
 import Link from 'next/link'
 import { useTranslations } from 'next-intl'
-import { Sparkles, RefreshCw, Globe, ExternalLink, ArrowLeft } from 'lucide-react'
+import { Sparkles, RefreshCw, Globe, ExternalLink, ArrowLeft, Wand2 } from 'lucide-react'
 import Topbar from '@/components/Topbar'
 import { ToastContainer, type Toast } from '@/components/Toast'
+import AccessRequiredModal from '@/components/billing/AccessRequiredModal'
 import SiteRenderer from '@/lib/website/render/SiteRenderer'
 import type { Website, WebsitePage } from '@/lib/website/types'
+
+type Busy = 'ai' | 'quick' | 'publish' | null
 
 export default function WebSiteDetailPage() {
   const params = useParams()
@@ -18,7 +21,9 @@ export default function WebSiteDetailPage() {
   const [site, setSite] = useState<Website | null>(null)
   const [pages, setPages] = useState<WebsitePage[]>([])
   const [activeSlug, setActiveSlug] = useState<string>('home')
-  const [busy, setBusy] = useState<'build' | 'publish' | null>(null)
+  const [instructions, setInstructions] = useState('')
+  const [busy, setBusy] = useState<Busy>(null)
+  const [showCredit, setShowCredit] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const addToast = useCallback((message: string, type: Toast['type']) => {
@@ -46,9 +51,30 @@ export default function WebSiteDetailPage() {
   }
 
   const activePage = pages.find((p) => p.slug === activeSlug) ?? pages[0] ?? null
+  const isPublished = site?.status === 'published'
+  const hasPages = pages.length > 0
 
-  const handleBuild = async () => {
-    setBusy('build')
+  const handleAi = async () => {
+    setBusy('ai')
+    try {
+      const res = await fetch(`/api/website/${id}/generate`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ instructions }),
+      })
+      if (res.status === 402) { setShowCredit(true); return }
+      const json = await res.json()
+      if (json.ok) { setPages(json.pages ?? []); setActiveSlug('home'); setInstructions('') }
+      else addToast(json.error || t('buildError'), 'error')
+    } catch {
+      addToast(t('buildError'), 'error')
+    } finally {
+      setBusy(null)
+    }
+  }
+
+  const handleQuick = async () => {
+    setBusy('quick')
     try {
       const res = await fetch(`/api/website/${id}/build`, { method: 'POST' })
       const json = await res.json()
@@ -79,9 +105,6 @@ export default function WebSiteDetailPage() {
     }
   }
 
-  const isPublished = site?.status === 'published'
-  const hasPages = pages.length > 0
-
   return (
     <>
       <Topbar title={site?.label ?? t('title')} description={site?.subdomain ?? ''} />
@@ -94,28 +117,51 @@ export default function WebSiteDetailPage() {
             <ArrowLeft className="w-4 h-4" /> {t('backToList')}
           </Link>
 
-          {/* Aksiyon çubuğu */}
-          <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center gap-3 animate-card-enter">
-            <span
-              className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ${
-                isPublished ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'
-              }`}
-            >
-              {isPublished ? t('statusPublished') : site?.status === 'unpublished' ? t('statusUnpublished') : t('statusDraft')}
-            </span>
+          {/* Yönlendirilmiş intake */}
+          <div className="bg-white rounded-xl border border-gray-200 p-5 animate-card-enter">
+            <div className="flex items-center gap-2">
+              <Wand2 className="w-4 h-4 text-primary" />
+              <h2 className="text-base font-semibold text-gray-900">{t('intakeTitle')}</h2>
+            </div>
+            <p className="mt-1 text-sm leading-relaxed text-gray-600">{t('intakeHint')}</p>
+            <textarea
+              value={instructions}
+              onChange={(e) => setInstructions(e.target.value)}
+              rows={3}
+              placeholder={t('instructionsPlaceholder')}
+              className="mt-3 w-full rounded-xl border border-gray-200 p-3 text-sm leading-relaxed focus:outline-none focus:border-primary focus:ring-2 focus:ring-primary/20 transition-all resize-none"
+            />
+            <div className="mt-3 flex flex-wrap items-center gap-2">
+              <button
+                onClick={handleAi}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-50"
+              >
+                <Sparkles className="w-4 h-4" />
+                {busy === 'ai' ? t('aiBuilding') : hasPages ? t('aiRebuild') : t('aiBuild')}
+              </button>
+              <button
+                onClick={handleQuick}
+                disabled={busy !== null}
+                className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2.5 text-sm font-medium text-gray-700 hover:bg-gray-50/60 transition-colors disabled:opacity-50"
+              >
+                {hasPages ? <RefreshCw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
+                {busy === 'quick' ? t('building') : hasPages ? t('quickRebuild') : t('quickBuild')}
+              </button>
+            </div>
+          </div>
 
-            <div className="flex-1" />
-
-            <button
-              onClick={handleBuild}
-              disabled={busy !== null}
-              className="inline-flex items-center gap-2 rounded-lg border border-gray-200 px-4 py-2 text-sm font-medium text-gray-700 hover:bg-gray-50/60 transition-colors disabled:opacity-50"
-            >
-              {hasPages ? <RefreshCw className="w-4 h-4" /> : <Sparkles className="w-4 h-4" />}
-              {busy === 'build' ? t('building') : hasPages ? t('rebuild') : t('build')}
-            </button>
-
-            {hasPages && (
+          {/* Yayın çubuğu */}
+          {hasPages && (
+            <div className="bg-white rounded-xl border border-gray-200 p-4 flex flex-wrap items-center gap-3 animate-card-enter">
+              <span
+                className={`inline-flex items-center rounded-full px-2.5 py-0.5 text-xs ${
+                  isPublished ? 'bg-emerald-50 text-emerald-700' : 'bg-gray-100 text-gray-700'
+                }`}
+              >
+                {isPublished ? t('statusPublished') : site?.status === 'unpublished' ? t('statusUnpublished') : t('statusDraft')}
+              </span>
+              <div className="flex-1" />
               <button
                 onClick={() => handlePublish(isPublished ? 'unpublish' : 'publish')}
                 disabled={busy !== null}
@@ -124,21 +170,20 @@ export default function WebSiteDetailPage() {
                 <Globe className="w-4 h-4" />
                 {busy === 'publish' ? t('publishing') : isPublished ? t('unpublish') : t('publish')}
               </button>
-            )}
+              {isPublished && (
+                <a
+                  href={`/s/${site?.subdomain}`}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
+                >
+                  <ExternalLink className="w-4 h-4" /> {t('viewLive')}
+                </a>
+              )}
+            </div>
+          )}
 
-            {isPublished && (
-              <a
-                href={`/s/${site?.subdomain}`}
-                target="_blank"
-                rel="noopener noreferrer"
-                className="inline-flex items-center gap-2 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-2 text-sm font-medium text-emerald-700 hover:bg-emerald-100 transition-colors"
-              >
-                <ExternalLink className="w-4 h-4" /> {t('viewLive')}
-              </a>
-            )}
-          </div>
-
-          {/* İçerik */}
+          {/* Önizleme / boş durum */}
           {!hasPages ? (
             <div className="bg-white rounded-xl border border-gray-200 p-10 text-center animate-card-enter">
               <div className="mx-auto w-12 h-12 rounded-xl bg-primary/5 flex items-center justify-center">
@@ -146,18 +191,9 @@ export default function WebSiteDetailPage() {
               </div>
               <h3 className="mt-4 text-base font-semibold text-gray-900">{t('noPagesTitle')}</h3>
               <p className="mt-1 text-sm leading-relaxed text-gray-600 max-w-md mx-auto">{t('noPagesDesc')}</p>
-              <button
-                onClick={handleBuild}
-                disabled={busy !== null}
-                className="mt-6 inline-flex items-center gap-2 rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-white active:scale-[0.97] transition-all disabled:opacity-50"
-              >
-                <Sparkles className="w-4 h-4" />
-                {busy === 'build' ? t('building') : t('build')}
-              </button>
             </div>
           ) : (
             <div className="space-y-3 animate-card-enter">
-              {/* Sayfa seçici (multipage) */}
               {pages.length > 1 && (
                 <div className="flex flex-wrap gap-2">
                   {pages.map((p) => (
@@ -165,7 +201,7 @@ export default function WebSiteDetailPage() {
                       key={p.id}
                       onClick={() => setActiveSlug(p.slug)}
                       className={`rounded-lg px-3.5 py-1.5 text-sm transition-colors ${
-                        (activePage?.slug === p.slug)
+                        activePage?.slug === p.slug
                           ? 'bg-primary/10 text-primary font-medium'
                           : 'text-gray-600 hover:bg-gray-50/60'
                       }`}
@@ -175,8 +211,6 @@ export default function WebSiteDetailPage() {
                   ))}
                 </div>
               )}
-
-              {/* Önizleme çerçevesi */}
               <div className="rounded-xl border border-gray-200 overflow-hidden bg-white shadow-sm">
                 <div className="flex items-center gap-2 px-4 h-10 border-b border-gray-100 bg-gray-50/60">
                   <span className="flex gap-1.5">
@@ -197,6 +231,16 @@ export default function WebSiteDetailPage() {
           )}
         </div>
       </div>
+
+      {showCredit && (
+        <AccessRequiredModal
+          type="credit"
+          featureKey="website_generation"
+          dismissible
+          onClose={() => setShowCredit(false)}
+          reason="website_generation_gate"
+        />
+      )}
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   )

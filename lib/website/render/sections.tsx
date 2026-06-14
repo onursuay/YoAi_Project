@@ -10,13 +10,42 @@ type Dict = Record<string, unknown>
 const str = (v: unknown, fallback = ''): string => (typeof v === 'string' ? v : fallback)
 const arr = (v: unknown): Dict[] => (Array.isArray(v) ? (v as Dict[]) : [])
 
+/**
+ * GÜVENLİK: href/src değerleri AI üretiminden veya kullanıcı girdisinden gelebilir ve
+ * PUBLIC sayfada render edilir → `javascript:`/`data:text` gibi şemalar stored-XSS riski taşır.
+ * Yalnız güvenli şemalara izin verilir; aksi halde fallback'e düşülür.
+ */
+const safeHref = (u: unknown, fallback = '#'): string => {
+  const s = typeof u === 'string' ? u.trim() : ''
+  if (!s) return fallback
+  if (s.startsWith('#') || s.startsWith('/')) return s
+  try {
+    const url = new URL(s)
+    return ['http:', 'https:', 'mailto:', 'tel:'].includes(url.protocol) ? url.toString() : fallback
+  } catch {
+    return fallback
+  }
+}
+const safeImg = (u: unknown): string => {
+  const s = typeof u === 'string' ? u.trim() : ''
+  if (!s) return ''
+  if (s.startsWith('/')) return s
+  if (s.startsWith('data:image/')) return s
+  try {
+    const url = new URL(s)
+    return url.protocol === 'http:' || url.protocol === 'https:' ? url.toString() : ''
+  } catch {
+    return ''
+  }
+}
+
 interface NavLink { label: string; href: string }
 const navLinks = (v: unknown): NavLink[] =>
-  arr(v).map((x) => ({ label: str(x.label), href: str(x.href, '#') })).filter((x) => x.label)
+  arr(v).map((x) => ({ label: str(x.label), href: safeHref(x.href) })).filter((x) => x.label)
 
 export function HeaderSection({ content }: { content: Dict }) {
   const brand = str(content.brand, 'Marka')
-  const logoUrl = str(content.logoUrl)
+  const logoUrl = safeImg(content.logoUrl)
   const nav = navLinks(content.nav)
   return (
     <header className="sticky top-0 z-20 backdrop-blur bg-white/80 border-b border-black/5">
@@ -53,8 +82,8 @@ export function HeroSection({ content }: { content: Dict }) {
   const title = str(content.title, 'Başlık')
   const subtitle = str(content.subtitle)
   const ctaLabel = str(content.ctaLabel)
-  const ctaHref = str(content.ctaHref, '#contact')
-  const imageUrl = str(content.imageUrl)
+  const ctaHref = safeHref(content.ctaHref, '#contact')
+  const imageUrl = safeImg(content.imageUrl)
   return (
     <section className="relative overflow-hidden">
       <div
@@ -62,6 +91,15 @@ export function HeroSection({ content }: { content: Dict }) {
         style={{
           background:
             'radial-gradient(60rem 40rem at 80% -10%, var(--site-accent), transparent 60%), radial-gradient(50rem 40rem at -10% 20%, var(--site-ink), transparent 55%)',
+        }}
+      />
+      {/* Grain/doku — derinlik için ince SVG noise (anti-jenerik) */}
+      <div
+        aria-hidden
+        className="absolute inset-0 -z-10 opacity-[0.035] pointer-events-none mix-blend-multiply"
+        style={{
+          backgroundImage:
+            "url(\"data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='120' height='120'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.85' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E\")",
         }}
       />
       <div className="max-w-6xl mx-auto px-5 sm:px-8 py-20 sm:py-28 grid lg:grid-cols-2 gap-12 items-center">
@@ -103,7 +141,7 @@ export function HeroSection({ content }: { content: Dict }) {
 export function AboutSection({ content }: { content: Dict }) {
   const heading = str(content.heading, 'Hakkımızda')
   const body = str(content.body)
-  const imageUrl = str(content.imageUrl)
+  const imageUrl = safeImg(content.imageUrl)
   return (
     <section id="about" className="py-20 sm:py-24">
       <div className="max-w-6xl mx-auto px-5 sm:px-8 grid lg:grid-cols-2 gap-12 items-center">

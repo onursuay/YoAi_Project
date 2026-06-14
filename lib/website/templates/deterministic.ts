@@ -3,8 +3,10 @@ import type { WebsitePageInput, SectionBlock, SiteType, PageRole } from '../type
 
 /**
  * Profil + intelligence verisinden DETERMİNİSTİK (AI'sız, kredisiz) bir sayfa modeli üretir.
- * Faz 1c bunun yerine Claude + stok görsel + çoklu-dil + yönlendirilmiş diyaloğu koyar.
- * Kural: uydurma iddia YOK — metin yalnız gerçek profil alanlarından gelir; alan boşsa nötr ifade.
+ * Faz 1c bunun yerine Claude + stok görsel + yönlendirilmiş diyaloğu koyar.
+ * Kurallar:
+ *  - Uydurma iddia YOK — metin yalnız gerçek profil alanlarından; alan boşsa nötr ifade.
+ *  - Site içeriği site diline göre (TR/EN) — sabit etiketler aşağıdaki sözlükten gelir.
  */
 
 interface BrandSynthesisLike {
@@ -15,6 +17,51 @@ interface BrandSynthesisLike {
   suggested_keywords?: string[]
   tone_guidance?: string | null
 }
+
+export interface SiteLabels {
+  contactCta: string
+  services: string
+  whyUs: string
+  about: string
+  contact: string
+  contactBody: string
+  web: string
+  navHome: string
+  navServices: string
+  navAbout: string
+  navContact: string
+}
+
+const LABELS: Record<string, SiteLabels> = {
+  tr: {
+    contactCta: 'İletişime Geçin',
+    services: 'Hizmetlerimiz',
+    whyUs: 'Neden Biz',
+    about: 'Hakkımızda',
+    contact: 'İletişim',
+    contactBody: 'Bizimle iletişime geçin, size en kısa sürede dönüş yapalım.',
+    web: 'Web Sitesi',
+    navHome: 'Ana Sayfa',
+    navServices: 'Hizmetler',
+    navAbout: 'Hakkımızda',
+    navContact: 'İletişim',
+  },
+  en: {
+    contactCta: 'Get in Touch',
+    services: 'Our Services',
+    whyUs: 'Why Us',
+    about: 'About',
+    contact: 'Contact',
+    contactBody: 'Get in touch and we will get back to you shortly.',
+    web: 'Website',
+    navHome: 'Home',
+    navServices: 'Services',
+    navAbout: 'About',
+    navContact: 'Contact',
+  },
+}
+
+export const labelsFor = (locale: string): SiteLabels => LABELS[locale] ?? LABELS.tr
 
 const clean = (s: string | null | undefined): string => (typeof s === 'string' ? s.trim() : '')
 const firstSentence = (s: string): string => {
@@ -39,14 +86,14 @@ function deriveBrand(input: BuildSiteInput): string {
   return clean(input.profile?.company_name) || clean(input.label) || 'Markanız'
 }
 
-function socialLinks(p: BusinessProfileRow | null): { label: string; href: string }[] {
+function socialLinks(p: BusinessProfileRow | null, L: SiteLabels): { label: string; href: string }[] {
   if (!p) return []
   const out: { label: string; href: string }[] = []
   const add = (label: string, url: string | null) => {
     const u = clean(url)
     if (u) out.push({ label, href: u })
   }
-  add('Web Sitesi', p.website_url)
+  add(L.web, p.website_url)
   add('Instagram', p.instagram_url)
   add('Facebook', p.facebook_url)
   add('LinkedIn', p.linkedin_url)
@@ -55,7 +102,7 @@ function socialLinks(p: BusinessProfileRow | null): { label: string; href: strin
   return out
 }
 
-function heroContent(input: BuildSiteInput, ai: BrandSynthesisLike): Record<string, unknown> {
+function heroContent(input: BuildSiteInput, ai: BrandSynthesisLike, L: SiteLabels): Record<string, unknown> {
   const brand = deriveBrand(input)
   const title = clean(ai.value_proposition) || brand
   const summary =
@@ -63,42 +110,42 @@ function heroContent(input: BuildSiteInput, ai: BrandSynthesisLike): Record<stri
     clean(input.intelligence?.company_summary) ||
     clean(ai.brand_voice)
   const subtitle = summary ? firstSentence(summary) : ''
-  return { title, subtitle, ctaLabel: 'İletişime Geçin', ctaHref: '#contact' }
+  return { title, subtitle, ctaLabel: L.contactCta, ctaHref: '#contact' }
 }
 
-function servicesContent(input: BuildSiteInput): Record<string, unknown> {
+function servicesContent(input: BuildSiteInput, L: SiteLabels): Record<string, unknown> {
   const list = (input.profile?.most_profitable_services?.length
     ? input.profile.most_profitable_services
     : input.profile?.products_or_services) ?? []
   const items = list.map((s) => ({ title: clean(s), description: '' })).filter((x) => x.title).slice(0, 9)
-  return { heading: 'Hizmetlerimiz', items }
+  return { heading: L.services, items }
 }
 
-function featuresContent(input: BuildSiteInput, ai: BrandSynthesisLike): Record<string, unknown> {
+function featuresContent(input: BuildSiteInput, ai: BrandSynthesisLike, L: SiteLabels): Record<string, unknown> {
   const source =
     (ai.differentiators?.length && ai.differentiators) ||
     (ai.messaging_pillars?.length && ai.messaging_pillars) ||
     (input.intelligence?.recommended_content_angles?.length && input.intelligence.recommended_content_angles) ||
     []
   const items = (source as string[]).map((t) => ({ title: clean(t), description: '' })).filter((x) => x.title).slice(0, 4)
-  return { heading: 'Neden Biz', items }
+  return { heading: L.whyUs, items }
 }
 
-function aboutContent(input: BuildSiteInput): Record<string, unknown> {
+function aboutContent(input: BuildSiteInput, L: SiteLabels): Record<string, unknown> {
   const body =
     clean(input.intelligence?.company_summary) ||
     clean(input.profile?.business_description) ||
     ''
-  return { heading: 'Hakkımızda', body }
+  return { heading: L.about, body }
 }
 
-function contactContent(input: BuildSiteInput): Record<string, unknown> {
+function contactContent(input: BuildSiteInput, L: SiteLabels): Record<string, unknown> {
   const locations = (input.profile?.target_locations ?? []).map(clean).filter(Boolean)
   return {
-    heading: 'İletişim',
-    body: 'Bizimle iletişime geçin, size en kısa sürede dönüş yapalım.',
+    heading: L.contact,
+    body: L.contactBody,
     locations,
-    links: socialLinks(input.profile),
+    links: socialLinks(input.profile, L),
   }
 }
 
@@ -113,9 +160,10 @@ function footerContent(brand: string): Record<string, unknown> {
 /** Verilen siteye göre sayfa modelini üretir (landing = tek sayfa; multipage = 4 sayfa). */
 export function buildDeterministicSite(input: BuildSiteInput): WebsitePageInput[] {
   const ai = ((input.intelligence as unknown as { ai_synthesis?: BrandSynthesisLike } | null)?.ai_synthesis) ?? {}
+  const L = labelsFor(input.locale)
   const brand = deriveBrand(input)
   const locale = input.locale
-  const features = featuresContent(input, ai)
+  const features = featuresContent(input, ai, L)
   const hasFeatures = (features.items as unknown[]).length > 0
 
   const page = (slug: string, pageRole: PageRole, sections: SectionBlock[], seoTitle: string): WebsitePageInput => ({
@@ -129,18 +177,18 @@ export function buildDeterministicSite(input: BuildSiteInput): WebsitePageInput[
 
   if (input.siteType === 'landing') {
     const anchorNav = [
-      { label: 'Hizmetler', href: '#services' },
-      { label: 'Hakkımızda', href: '#about' },
-      { label: 'İletişim', href: '#contact' },
+      { label: L.navServices, href: '#services' },
+      { label: L.navAbout, href: '#about' },
+      { label: L.navContact, href: '#contact' },
     ]
     const sections: SectionBlock[] = [
       block('header', headerContent(brand, anchorNav), 0),
-      block('hero', heroContent(input, ai), 1),
-      block('services', servicesContent(input), 2),
+      block('hero', heroContent(input, ai, L), 1),
+      block('services', servicesContent(input, L), 2),
     ]
     if (hasFeatures) sections.push(block('features', features, 3))
-    sections.push(block('about', aboutContent(input), 4))
-    sections.push(block('contact', contactContent(input), 5))
+    sections.push(block('about', aboutContent(input, L), 4))
+    sections.push(block('contact', contactContent(input, L), 5))
     sections.push(block('footer', footerContent(brand), 6))
     return [page('home', 'home', sections, brand)]
   }
@@ -148,22 +196,22 @@ export function buildDeterministicSite(input: BuildSiteInput): WebsitePageInput[
   // multipage — 4 sayfa, header path nav (path-tabanlı serving: /s/<subdomain>/<slug>)
   const base = `/s/${input.subdomain}`
   const pathNav = [
-    { label: 'Ana Sayfa', href: base },
-    { label: 'Hizmetler', href: `${base}/hizmetler` },
-    { label: 'Hakkımızda', href: `${base}/hakkimizda` },
-    { label: 'İletişim', href: `${base}/iletisim` },
+    { label: L.navHome, href: base },
+    { label: L.navServices, href: `${base}/hizmetler` },
+    { label: L.navAbout, href: `${base}/hakkimizda` },
+    { label: L.navContact, href: `${base}/iletisim` },
   ]
   const header = block('header', headerContent(brand, pathNav), 0)
   const footer = (i: number) => block('footer', footerContent(brand), i)
 
-  const homeSections: SectionBlock[] = [header, block('hero', heroContent(input, ai), 1), block('services', servicesContent(input), 2)]
+  const homeSections: SectionBlock[] = [header, block('hero', heroContent(input, ai, L), 1), block('services', servicesContent(input, L), 2)]
   if (hasFeatures) homeSections.push(block('features', features, 3))
   homeSections.push(footer(4))
 
   return [
     page('home', 'home', homeSections, brand),
-    page('hakkimizda', 'about', [header, block('about', aboutContent(input), 1), footer(2)], `Hakkımızda — ${brand}`),
-    page('hizmetler', 'services', [header, block('services', servicesContent(input), 1), footer(2)], `Hizmetler — ${brand}`),
-    page('iletisim', 'contact', [header, block('contact', contactContent(input), 1), footer(2)], `İletişim — ${brand}`),
+    page('hakkimizda', 'about', [header, block('about', aboutContent(input, L), 1), footer(2)], `${L.about} — ${brand}`),
+    page('hizmetler', 'services', [header, block('services', servicesContent(input, L), 1), footer(2)], `${L.services} — ${brand}`),
+    page('iletisim', 'contact', [header, block('contact', contactContent(input, L), 1), footer(2)], `${L.contact} — ${brand}`),
   ]
 }
