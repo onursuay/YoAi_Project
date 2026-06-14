@@ -3,6 +3,7 @@ import { readUserId } from '@/lib/auth/userCookie'
 import { getBestAvailableRun, buildAccountScope } from '@/lib/yoai/dailyRunStore'
 import { isPerAccountScopeEnabled } from '@/lib/yoai/featureFlag'
 import { resolveYoaiScope } from '@/lib/yoai/businessScope'
+import { normalizeMetaAccountId, normalizeGoogleCustomerId } from '@/lib/yoai/businessKey'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 10
@@ -31,6 +32,7 @@ export async function GET() {
       // Per-account: çalışmanın seçim imzası aktif seçimle eşleşmiyorsa gösterme
       // (yeni hesaba geçince o hesap için yeniden analiz tetiklenir). Damgasız/eski
       // çalışmalar geriye-uyum için gösterilmeye devam eder.
+      let countScope: { campaignIds: string[]; accountIds: (string | null)[] } | undefined
       if (isPerAccountScopeEnabled()) {
         // Damgasız (null) çalışmalar da aktif seçimle eşleşmez sayılır → yeniden
         // üretilip damgalanır (flag öncesi üretilmiş eski çalışmalar bu sayede güncellenir).
@@ -43,12 +45,18 @@ export async function GET() {
             { headers: { 'Cache-Control': 'no-store' } },
           )
         }
+        // Sayaçları kart listesiyle TUTARLI tut: seçili işletmenin kampanyaları + hesabına sınırla.
+        const campaigns = (run.command_center_data?.campaigns ?? []) as Array<{ id?: string | number }>
+        countScope = {
+          campaignIds: campaigns.map((c) => String(c?.id)).filter(Boolean),
+          accountIds: [normalizeMetaAccountId(sc.metaId), normalizeGoogleCustomerId(sc.googleCustomerId)],
+        }
       }
       // Sayaçları gerçek hiyerarşik tablolardan üret (eski deepAnalysis dalı yanıltıcıydı).
       let hierarchyCounts = null
       try {
         const { getHierarchyCounts } = await import('@/lib/yoai/ai/hierarchicalStore')
-        hierarchyCounts = await getHierarchyCounts(userId)
+        hierarchyCounts = await getHierarchyCounts(userId, countScope)
       } catch (e) {
         console.warn('[Command Center] hierarchyCounts atlandı:', e instanceof Error ? e.message : e)
       }

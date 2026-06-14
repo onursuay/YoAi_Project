@@ -2,6 +2,13 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma: scope'lu sayaç tutarlılığı + "kart yok" boş durumu (çoklu işletme)
+- **Sorun:** Prod'da per-account scope AÇIK. (1) Komuta merkezi sayaçları (`getHierarchyCounts`) scope'suzdu → seçili işletmede kart YOK iken üstte tüm işletmelerin toplamı (ör. 3/8/13) görünüyordu (kafa karıştırıcı çelişki; bu oturumun C2 regresyonu). (2) Seçili işletmenin scope'lu analizi hazır ama hiç kartı yokken UI sonsuz "İlk analiziniz hazırlanıyor…" spinner'ında kalıyordu (legacy scope=null kartlar scope açıkken yetim kalıp hiçbir işletmede görünmüyor).
+- **Çözüm:**
+  - `getHierarchyCounts(userId, scope?)` artık per-account scope açıkken seçili işletmenin kampanya ID'leri + hesabına göre sayar (kart listesiyle tutarlı). command-center scope'u çalıştırma blob'undan + `resolveYoaiScope`'tan kurar.
+  - HierarchicalImprovements: sonsuz spinner yerine bootstrap bitince/scope hazırken doğru boş durum — `noCardsForBusiness` ("Bu işletme için kart yok; başka işletme seçtiyseniz orada görünür"). `showPreparing` yalnız aktif bootstrap/ilk-deneme sırasında spinner gösterir.
+- **Dosyalar:** lib/yoai/ai/hierarchicalStore.ts, app/api/yoai/command-center/route.ts, components/yoai/hierarchy/HierarchicalImprovements.tsx, locales/{tr,en}.json
+
 ## 2026-06-14 — YoAlgoritma denetim onarımı 4/N: adversarial review bulguları (4 onaylı)
 - **Sorun (adversarial review — bu oturumun değişikliklerinde):** (1) **HIGH** Google outcome ölçümü hiç çalışmıyordu — create-ad Google dalı `campaignResourceName` (`customers/X/campaigns/ID`) döndürüyor, bu audit ID olarak saklanıp `Number()` ile NaN'a dönüyor → her Google önerisi sessizce "yeterli veri yok". (2) **MEDIUM** aynı kök neden "Reklam Yöneticisinde Aç" Google derin linkini bozuyordu. (3) **MEDIUM** `account_alerts` Inngest retry'da duplike oluyordu (tek dedup'suz seviye → şişen "Kritik Uyarılar" sayacı). (4) **LOW** before-snapshot idempotent değildi + GET dedup en eski satırı tutuyordu.
 - **Çözüm:**

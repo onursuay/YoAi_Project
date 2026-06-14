@@ -3146,6 +3146,7 @@
         "empty": "Henüz geliştirme kartı yok.",
         "preparing": "İlk analiziniz hazırlanıyor… birkaç dakika içinde kartlar görünecek.",
         "noCampaigns": "Aktif kampanya bulunmuyor. Kampanya oluşturduğunuzda analiz otomatik başlar.",
+        "noCardsForBusiness": "Bu işletme için şu an geliştirme kartı yok. Bir sonraki haftalık analizde yeni kartlar üretilecek; başka bir işletme seçtiyseniz onun kartları orada görünür.",
         "emptyDrilldown": "Bu seviyede kart yok.",
         "emptyAds": "Bu ad set için ayrı reklam önerisi üretilmedi — yukarıdaki ad set önerilerini uygulamanız yeterli.",
         "status": {

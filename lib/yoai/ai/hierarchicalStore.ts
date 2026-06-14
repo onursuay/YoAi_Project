@@ -612,15 +612,38 @@ const ZERO_COUNTS: HierarchyCounts = {
   criticalAlerts: 0, pendingAlerts: 0, pendingCampaigns: 0, pendingAdsets: 0, pendingAds: 0, pendingTotal: 0,
 }
 
-/** Komuta merkezi sayaçlarını gerçek hiyerarşik tablolardan üretir (eski deepAnalysis dalı değil). */
-export async function getHierarchyCounts(userId: string): Promise<HierarchyCounts> {
+/** getHierarchyCounts scope filtresi — per-account scope açıkken seçili işletmeye sınırlar.
+ *  campaignIds: seçili işletmenin scope'lu analizindeki kampanya ID'leri (kart sayımı bunlara sınırlanır).
+ *  accountIds: account_alerts'i bu hesap(lar)a sınırlamak için (Meta act_/Google customer). */
+export interface HierarchyCountScope {
+  campaignIds: string[]
+  accountIds: (string | null)[]
+}
+
+/** Komuta merkezi sayaçlarını gerçek hiyerarşik tablolardan üretir (eski deepAnalysis dalı değil).
+ *  scope verilirse (per-account scope açık) sayımlar seçili işletmeyle sınırlanır → kart listesiyle tutarlı. */
+export async function getHierarchyCounts(userId: string, scope?: HierarchyCountScope): Promise<HierarchyCounts> {
   if (!supabase) return ZERO_COUNTS
   try {
-    const pendingCount = (table: string) =>
-      supabase!.from(table).select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending')
+    const scoped = !!scope
+    // Scope açık ama bu işletmenin hiç kampanyası yoksa kart sayıları 0 (boş IN sorgusu yapma).
+    const ids = scope?.campaignIds ?? []
+    const acctIds = (scope?.accountIds ?? []).filter((a): a is string => a != null)
+
+    const pendingCount = (table: string) => {
+      let q = supabase!.from(table).select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending')
+      if (scoped) q = q.in('campaign_id', ids.length ? ids : ['__none__'])
+      return q
+    }
+    const alertBase = () => {
+      let q = supabase!.from('account_alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending')
+      // Scope açıkken yalnız bu işletmenin hesabına ait (account_id) uyarılar; account_id NULL legacy hariç.
+      if (scoped) q = acctIds.length ? q.in('account_id', acctIds) : q.eq('account_id', '__none__')
+      return q
+    }
     const [alertsAll, alertsCrit, camp, adset, ad] = await Promise.all([
-      supabase.from('account_alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending'),
-      supabase.from('account_alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending').in('severity', ['critical', 'high']),
+      alertBase(),
+      alertBase().in('severity', ['critical', 'high']),
       pendingCount('campaign_improvements'),
       pendingCount('adset_improvements'),
       pendingCount('ad_improvements'),
