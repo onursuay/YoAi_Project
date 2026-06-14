@@ -587,6 +587,50 @@ export async function updateAdImprovementSpec(
   return true
 }
 
+/* ── Komuta merkezi sayaçları (gerçek hiyerarşik veri) ── */
+export interface HierarchyCounts {
+  criticalAlerts: number  // pending account_alerts, severity critical|high
+  pendingAlerts: number   // tüm pending account_alerts
+  pendingCampaigns: number
+  pendingAdsets: number
+  pendingAds: number      // yayın onayı bekleyen reklam kartları
+  pendingTotal: number    // campaign+adset+ad pending toplamı
+}
+
+const ZERO_COUNTS: HierarchyCounts = {
+  criticalAlerts: 0, pendingAlerts: 0, pendingCampaigns: 0, pendingAdsets: 0, pendingAds: 0, pendingTotal: 0,
+}
+
+/** Komuta merkezi sayaçlarını gerçek hiyerarşik tablolardan üretir (eski deepAnalysis dalı değil). */
+export async function getHierarchyCounts(userId: string): Promise<HierarchyCounts> {
+  if (!supabase) return ZERO_COUNTS
+  try {
+    const pendingCount = (table: string) =>
+      supabase!.from(table).select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending')
+    const [alertsAll, alertsCrit, camp, adset, ad] = await Promise.all([
+      supabase.from('account_alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending'),
+      supabase.from('account_alerts').select('id', { count: 'exact', head: true }).eq('user_id', userId).eq('status', 'pending').in('severity', ['critical', 'high']),
+      pendingCount('campaign_improvements'),
+      pendingCount('adset_improvements'),
+      pendingCount('ad_improvements'),
+    ])
+    const pendingCampaigns = camp.count ?? 0
+    const pendingAdsets = adset.count ?? 0
+    const pendingAds = ad.count ?? 0
+    return {
+      criticalAlerts: alertsCrit.count ?? 0,
+      pendingAlerts: alertsAll.count ?? 0,
+      pendingCampaigns,
+      pendingAdsets,
+      pendingAds,
+      pendingTotal: pendingCampaigns + pendingAdsets + pendingAds,
+    }
+  } catch (e) {
+    console.warn('[HierStore] getHierarchyCounts error:', e instanceof Error ? e.message : e)
+    return ZERO_COUNTS
+  }
+}
+
 /* ── UI: hiyerarşik okuma ── */
 export interface AdsetWithAds extends AdsetImprovementRow {
   ads: AdImprovementRow[]

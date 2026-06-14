@@ -44,10 +44,18 @@ export async function GET() {
           )
         }
       }
+      // Sayaçları gerçek hiyerarşik tablolardan üret (eski deepAnalysis dalı yanıltıcıydı).
+      let hierarchyCounts = null
+      try {
+        const { getHierarchyCounts } = await import('@/lib/yoai/ai/hierarchicalStore')
+        hierarchyCounts = await getHierarchyCounts(userId)
+      } catch (e) {
+        console.warn('[Command Center] hierarchyCounts atlandı:', e instanceof Error ? e.message : e)
+      }
       return NextResponse.json(
         {
           ok: true,
-          data: run.command_center_data,
+          data: hierarchyCounts ? { ...run.command_center_data, hierarchyCounts } : run.command_center_data,
           persisted: true,
           run_date: run.run_date,
           run_status: run.status,

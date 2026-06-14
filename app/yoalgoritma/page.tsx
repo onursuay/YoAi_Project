@@ -340,6 +340,8 @@ export default function YoAiPage() {
     const activeAdsets = allAdsets.filter(as => as.status === 'ACTIVE' || as.status === 'ENABLED')
     const allAds = allAdsets.flatMap(as => as.ads)
     const activeAds = allAds.filter(ad => ad.status === 'ACTIVE' || ad.status === 'ENABLED')
+    // Sayaçlar artık GERÇEK hiyerarşik tablolardan (Faz 3) gelir; yoksa eski deepAnalysis'e düşülür.
+    const hc = (ccData as { hierarchyCounts?: { criticalAlerts: number; pendingTotal: number; pendingAds: number; pendingCampaigns: number; pendingAdsets: number } }).hierarchyCounts
     return {
       connectedAccounts: { count: ccData.connectedPlatforms.length, platforms: ccData.connectedPlatforms },
       activeCampaigns: activeCampaigns.length,
@@ -347,10 +349,10 @@ export default function YoAiPage() {
       totalAds: allAds.length,
       activeAdsets: activeAdsets.length,
       activeAds: activeAds.length,
-      criticalAlerts: ccData.campaigns.filter(c => c.riskLevel === 'critical' || c.riskLevel === 'high').length,
-      opportunities: ccData.actions.filter(a => a.priority === 'high').length,
-      pendingApprovals: ccData.drafts.length,
-      draftActions: ccData.actions.length,
+      criticalAlerts: hc ? hc.criticalAlerts : ccData.campaigns.filter(c => c.riskLevel === 'critical' || c.riskLevel === 'high').length,
+      opportunities: hc ? (hc.pendingCampaigns + hc.pendingAdsets) : ccData.actions.filter(a => a.priority === 'high').length,
+      pendingApprovals: hc ? hc.pendingAds : ccData.drafts.length,
+      draftActions: hc ? hc.pendingTotal : ccData.actions.length,
       kpis: ccData.kpis,
     }
   })() : null
