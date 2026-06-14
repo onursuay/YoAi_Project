@@ -2,6 +2,15 @@
 
 ---
 
+## 2026-06-14 — YoAlgoritma Faz 4: ölü kod temizliği + dayanıklılık + erişilebilirlik
+- **Sorun:** (1) Eski per-ad UI bileşenleri (`ImprovementCardGrid`, `ImprovementCard`) hiçbir yerde mount edilmiyordu (ölü kod, "görünmez kart" kafa karışıklığı riski). (2) `account_alerts` insert'i `account_id`/`business_key` kolonu yoksa (migration 20260524000000 omddq'da uygulanmamışsa) sessizce kaybolurdu. (3) Hesap uyarıları flip-box kartı yalnız `:hover` ile detay gösteriyordu → dokunmatik cihazda arka yüze erişim yoktu.
+- **Çözüm:**
+  - Orphan UI bileşenleri silindi (`ImprovementCardGrid.tsx`, `ImprovementCard.tsx`). Eski route/store/inngest rollback güvenliği için korundu (CLAUDE.md "birkaç hafta sakla" + tip bağımlılığı).
+  - `insertAccountAlert` guard: kolon eksikse (`42703`/"column does not exist") opsiyonel alanlar olmadan tekrar dener → uyarı scope'suz ama görünür kalır, sessizce kaybolmaz.
+  - `AccountAlertsBanner` artık tıkla/dokun + klavye (Enter/Space) ile çevrilir (`is-flipped` state, `role=button`, `aria-pressed`, focus-visible); hover masaüstü için korundu.
+  - **Not (çift motor):** `scan.user` (komuta merkezi blob'u) ve `campaign-improvements` (hiyerarşik kartlar) FARKLI çıktılar üretip ikisi de tüketildiği için **tasarım gereği** — kaldırılmadı. Yalnız orphan `ai_suggestions/ai_alerts/ai_opportunities` write-only tabloları rollback için bırakıldı.
+- **Dosyalar:** components/yoai/hierarchy/AccountAlertsBanner.tsx, lib/yoai/ai/hierarchicalStore.ts; silindi: components/yoai/{ImprovementCardGrid,ImprovementCard}.tsx
+
 ## 2026-06-14 — YoAlgoritma: rakip taraması varsayılan açıldı
 - **Sorun:** Rakip Apify scrape yolu `YOALGORITMA_SCRAPE_COMPETITORS` flag'iyle varsayılan KAPALIydı; bu yüzden rakip verisi prod'da fiilen hiç toplanmıyor, "rakipleri araştır" vaadi devre dışıydı.
 - **Çözüm:** Kullanıcı kararıyla (2026-06-14) varsayılan AÇIK yapıldı — yalnız `YOALGORITMA_SCRAPE_COMPETITORS=false` ile kapatılabilir. Apify token yoksa veya beyan edilen rakip yoksa güvenli no-op (gereksiz maliyet/crash yok). Beyan edilen rakipler (max 3, 7 günlük cache) artık her haftalık taramada güncellenir ve prompt'a girer.

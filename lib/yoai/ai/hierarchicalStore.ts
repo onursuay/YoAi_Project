@@ -223,11 +223,13 @@ export async function supersedePendingAccountAlerts(userId: string, accountId?: 
 
 export async function insertAccountAlert(input: InsertAccountAlertInput): Promise<{ ok: boolean }> {
   if (!supabase) return { ok: false }
-  const { error } = await supabase.from('account_alerts').insert({
+  // Çoklu işletme kolonları (account_id/business_key) ayrı migration'la geldi
+  // (20260524000000). omddq'da uygulanmadıysa insert "column does not exist" ile
+  // patlardı → uyarı SESSİZCE kaybolurdu. Guard: kolon hatasında bu iki alan
+  // olmadan tekrar dene → uyarı yine de kaydedilir (scope'suz, degrade ama görünür).
+  const base = {
     user_id: input.user_id,
     source_platform: input.source_platform ?? null,
-    account_id: input.account_id ?? null,
-    business_key: input.business_key ?? null,
     alert_type: input.alert_type,
     severity: input.severity,
     title: input.title,
@@ -235,15 +237,27 @@ export async function insertAccountAlert(input: InsertAccountAlertInput): Promis
     recommended_action: input.recommended_action ?? null,
     alert_payload: input.alert_payload ?? {},
     confidence: input.confidence ?? null,
-    status: 'pending',
+    status: 'pending' as const,
     model: input.model ?? null,
     run_id: input.run_id ?? null,
+  }
+  const { error } = await supabase.from('account_alerts').insert({
+    ...base,
+    account_id: input.account_id ?? null,
+    business_key: input.business_key ?? null,
   })
-  if (error) {
-    console.error('[HierStore] insert account_alert error:', error)
+  if (!error) return { ok: true }
+
+  const missingCol = error.code === '42703' || /column .* does not exist/i.test(error.message ?? '')
+  if (missingCol) {
+    console.warn('[HierStore] account_alerts.account_id/business_key kolonu yok — migration 20260524000000 omddq\'da uygulanmamış; uyarı scope\'suz kaydediliyor.')
+    const { error: retryErr } = await supabase.from('account_alerts').insert(base)
+    if (!retryErr) return { ok: true }
+    console.error('[HierStore] insert account_alert retry error:', retryErr)
     return { ok: false }
   }
-  return { ok: true }
+  console.error('[HierStore] insert account_alert error:', error)
+  return { ok: false }
 }
 
 export async function listAccountAlertsForUser(

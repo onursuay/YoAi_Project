@@ -6,6 +6,7 @@
    kart en uzun içeriğe göre büyür → yazı KESİLMEZ. auto-rows-fr ile satırdaki
    kartlar eşit yükseklikte. Hover → 180° döner. Etrafında shimmer ışık. */
 
+import { useState } from 'react'
 import { useTranslations } from 'next-intl'
 import { Activity, AlertOctagon, AlertTriangle, Info, Pointer } from 'lucide-react'
 import type { AccountAlertRow } from '@/lib/yoai/ai/hierarchicalStore'
@@ -26,6 +27,13 @@ function tidyTitle(s: string): string {
 
 export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRow[] }) {
   const t = useTranslations('dashboard.yoai.hierarchy')
+  // Dokunmatik erişim: hover olmayan cihazlarda kart tıklanınca/Enter ile çevrilir.
+  const [flipped, setFlipped] = useState<Set<string>>(new Set())
+  const toggle = (id: string) => setFlipped((prev) => {
+    const next = new Set(prev)
+    next.has(id) ? next.delete(id) : next.add(id)
+    return next
+  })
   if (!alerts?.length) return null
 
   const sorted = [...alerts].sort((a, b) => (SEVERITY_ORDER[a.severity] ?? 9) - (SEVERITY_ORDER[b.severity] ?? 9))
@@ -38,6 +46,9 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
         .yoai-flip { perspective: 1300px; position: relative; }
         .yoai-flip-inner { display: grid; height: 100%; transition: transform .6s cubic-bezier(.2,.7,.2,1); transform-style: preserve-3d; }
         .yoai-flip:hover .yoai-flip-inner { transform: rotateY(180deg); }
+        .yoai-flip.is-flipped .yoai-flip-inner { transform: rotateY(180deg); }
+        .yoai-flip { cursor: pointer; }
+        .yoai-flip:focus-visible { outline: 2px solid #34d399; outline-offset: 2px; border-radius: 1rem; }
         .yoai-face { grid-area: 1 / 1; backface-visibility: hidden; -webkit-backface-visibility: hidden; border-radius: 1rem; overflow: hidden; }
         .yoai-back { transform: rotateY(180deg); }
         .yoai-tap { animation: yoaiTap 1.5s ease-in-out infinite; transform-origin: center; }
@@ -67,8 +78,18 @@ export default function AccountAlertsBanner({ alerts }: { alerts: AccountAlertRo
           const isCritical = a.severity === 'critical' || a.severity === 'high'
           const Icon = isCritical ? AlertOctagon : a.severity === 'medium' ? AlertTriangle : Info
           const iconCls = isCritical ? 'text-red-400' : a.severity === 'medium' ? 'text-emerald-400' : 'text-slate-400'
+          const isFlipped = flipped.has(a.id)
           return (
-            <div key={a.id} className="yoai-flip min-h-[13rem]">
+            <div
+              key={a.id}
+              className={`yoai-flip min-h-[13rem] ${isFlipped ? 'is-flipped' : ''}`}
+              role="button"
+              tabIndex={0}
+              aria-pressed={isFlipped}
+              aria-label={tidyTitle(a.title)}
+              onClick={() => toggle(a.id)}
+              onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); toggle(a.id) } }}
+            >
               <div className="yoai-shimmer" aria-hidden="true" />
               <div className="yoai-flip-inner">
                 {/* ÖN YÜZ — ikon üst · başlık merkez · animasyonlu tap ikonu alt */}
