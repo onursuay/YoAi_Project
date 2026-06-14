@@ -47,16 +47,23 @@ export async function POST(req: NextRequest, { params }: { params: { id: string 
       getIntelligenceByUserId(user.id),
     ])
 
-    const pageInputs = await generateSitePages({
-      subdomain: site.subdomain,
-      siteType: site.siteType,
-      label: site.label,
-      profile,
-      intelligence,
-      locale: site.defaultLocale,
-      instructions,
-    })
-    if (!pageInputs) throw new Error('AI_GENERATION_FAILED')
+    // Çoklu dil — her seçili dil için paralel üret (60sn maxDuration içinde kalır; ilk 4 dil).
+    const locales = (site.locales.length ? site.locales : [site.defaultLocale]).slice(0, 4)
+    const perLocale = await Promise.all(
+      locales.map((locale) =>
+        generateSitePages({
+          subdomain: site.subdomain,
+          siteType: site.siteType,
+          label: site.label,
+          profile,
+          intelligence,
+          locale,
+          instructions,
+        }),
+      ),
+    )
+    const pageInputs = perLocale.filter((x): x is NonNullable<typeof x> => Boolean(x)).flat()
+    if (pageInputs.length === 0) throw new Error('AI_GENERATION_FAILED')
 
     const pages = await replacePages(user.id, site.id, pageInputs)
     const snapshot: WebsiteSnapshot = {

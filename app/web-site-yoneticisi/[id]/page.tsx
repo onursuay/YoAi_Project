@@ -13,6 +13,11 @@ import type { Website, WebsitePage } from '@/lib/website/types'
 
 type Busy = 'ai' | 'quick' | 'publish' | null
 
+const LOCALE_NAMES: Record<string, string> = {
+  tr: 'Türkçe', en: 'English', de: 'Deutsch', fr: 'Français', es: 'Español', ar: 'العربية', it: 'Italiano', ru: 'Русский',
+}
+const localeName = (l: string) => LOCALE_NAMES[l] ?? l.toUpperCase()
+
 export default function WebSiteDetailPage() {
   const params = useParams()
   const id = String(params?.id ?? '')
@@ -21,6 +26,7 @@ export default function WebSiteDetailPage() {
   const [site, setSite] = useState<Website | null>(null)
   const [pages, setPages] = useState<WebsitePage[]>([])
   const [activeSlug, setActiveSlug] = useState<string>('home')
+  const [previewLocale, setPreviewLocale] = useState<string>('tr')
   const [instructions, setInstructions] = useState('')
   const [busy, setBusy] = useState<Busy>(null)
   const [showCredit, setShowCredit] = useState(false)
@@ -37,7 +43,7 @@ export default function WebSiteDetailPage() {
       fetch(`/api/website/${id}`).then((r) => r.json()).catch(() => null),
       fetch(`/api/website/${id}/pages`).then((r) => r.json()).catch(() => null),
     ])
-    if (sRes?.ok) setSite(sRes.website)
+    if (sRes?.ok) { setSite(sRes.website); setPreviewLocale(sRes.website.defaultLocale || 'tr') }
     if (pRes?.ok) setPages(pRes.pages ?? [])
   }, [id])
 
@@ -50,9 +56,12 @@ export default function WebSiteDetailPage() {
     return map[p.pageRole] ?? p.slug
   }
 
-  const activePage = pages.find((p) => p.slug === activeSlug) ?? pages[0] ?? null
+  const localePages = pages.filter((p) => p.locale === previewLocale)
+  const visiblePages = localePages.length ? localePages : pages
+  const activePage = visiblePages.find((p) => p.slug === activeSlug) ?? visiblePages[0] ?? null
   const isPublished = site?.status === 'published'
   const hasPages = pages.length > 0
+  const siteLocales = site?.locales ?? []
 
   const handleAi = async () => {
     setBusy('ai')
@@ -194,9 +203,25 @@ export default function WebSiteDetailPage() {
             </div>
           ) : (
             <div className="space-y-3 animate-card-enter">
-              {pages.length > 1 && (
+              {/* Dil switcher (çoklu dil) */}
+              {siteLocales.length > 1 && (
+                <div className="inline-flex rounded-lg border border-gray-200 p-0.5 bg-white">
+                  {siteLocales.map((loc) => (
+                    <button
+                      key={loc}
+                      onClick={() => setPreviewLocale(loc)}
+                      className={`rounded-md px-3 py-1 text-xs font-medium transition-colors ${
+                        previewLocale === loc ? 'bg-primary/10 text-primary' : 'text-gray-500 hover:text-gray-800'
+                      }`}
+                    >
+                      {localeName(loc)}
+                    </button>
+                  ))}
+                </div>
+              )}
+              {visiblePages.length > 1 && (
                 <div className="flex flex-wrap gap-2">
-                  {pages.map((p) => (
+                  {visiblePages.map((p) => (
                     <button
                       key={p.id}
                       onClick={() => setActiveSlug(p.slug)}

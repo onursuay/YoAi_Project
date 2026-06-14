@@ -5771,7 +5771,17 @@
       "quickRebuild": "Hızlı Yenile",
       "intakeTitle": "Sitenizi tarif edin",
       "intakeHint": "Ne istediğinizi yazın; AI işletme bilgilerinizle birleştirip siteyi üretir. Boş bırakırsanız profilinizden üretir.",
-      "instructionsPlaceholder": "Örn. Daha sade ve kurumsal olsun, hizmetlerden randevuyu öne çıkar…"
+      "instructionsPlaceholder": "Örn. Daha sade ve kurumsal olsun, hizmetlerden randevuyu öne çıkar…",
+      "modalTitle": "Yeni Web Sitesi",
+      "nameLabel": "Site adı",
+      "namePlaceholder": "Örn. Antso Denizcilik",
+      "typeLabel": "Site türü",
+      "typeLanding": "Tek sayfa (Karşılama)",
+      "typeMultipage": "Çok sayfalı",
+      "languagesLabel": "Diller",
+      "languagesHint": "Türkçe dahildir; her ek dil üretim kredisini artırır.",
+      "create": "Oluştur",
+      "cancel": "Vazgeç"
     }
   },
   "sidebar": {

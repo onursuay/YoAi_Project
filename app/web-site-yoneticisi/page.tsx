@@ -6,7 +6,8 @@ import { useTranslations } from 'next-intl'
 import Topbar from '@/components/Topbar'
 import { ToastContainer, type Toast } from '@/components/Toast'
 import SiteList from '@/components/website/SiteList'
-import type { Website } from '@/lib/website/types'
+import NewSiteModal from '@/components/website/NewSiteModal'
+import type { Website, WebsiteDraftInput } from '@/lib/website/types'
 
 export default function WebSiteYoneticisiPage() {
   const router = useRouter()
@@ -14,6 +15,7 @@ export default function WebSiteYoneticisiPage() {
   const [sites, setSites] = useState<Website[]>([])
   const [loading, setLoading] = useState(true)
   const [creating, setCreating] = useState(false)
+  const [modalOpen, setModalOpen] = useState(false)
   const [toasts, setToasts] = useState<Toast[]>([])
 
   const addToast = useCallback((message: string, type: Toast['type']) => {
@@ -38,20 +40,19 @@ export default function WebSiteYoneticisiPage() {
 
   useEffect(() => { fetchSites() }, [fetchSites])
 
-  const handleCreate = async () => {
+  const handleCreate = async (input: WebsiteDraftInput) => {
     setCreating(true)
     try {
       const res = await fetch('/api/website', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: '{}',
+        body: JSON.stringify(input),
       })
       const json = await res.json()
       if (json.ok && json.website) router.push(`/web-site-yoneticisi/${json.website.id}`)
-      else addToast(t('createError'), 'error')
+      else { addToast(t('createError'), 'error'); setCreating(false) }
     } catch {
       addToast(t('createError'), 'error')
-    } finally {
       setCreating(false)
     }
   }
@@ -68,7 +69,7 @@ export default function WebSiteYoneticisiPage() {
       <Topbar
         title={t('title')}
         description={t('pageDescription')}
-        actionButton={{ label: t('newSite'), onClick: handleCreate, disabled: creating }}
+        actionButton={{ label: t('newSite'), onClick: () => setModalOpen(true), disabled: creating }}
       />
       <div className="flex-1 overflow-y-auto app-content-surface p-6">
         <div className="max-w-7xl mx-auto space-y-6">
@@ -88,6 +89,12 @@ export default function WebSiteYoneticisiPage() {
           )}
         </div>
       </div>
+      <NewSiteModal
+        open={modalOpen}
+        creating={creating}
+        onClose={() => setModalOpen(false)}
+        onCreate={handleCreate}
+      />
       <ToastContainer toasts={toasts} onClose={removeToast} />
     </>
   )

@@ -5771,7 +5771,17 @@
       "quickRebuild": "Quick Rebuild",
       "intakeTitle": "Describe your site",
       "intakeHint": "Tell us what you want; AI combines it with your business info to build the site. Leave empty to build from your profile.",
-      "instructionsPlaceholder": "e.g. Make it cleaner and more corporate, highlight booking in services…"
+      "instructionsPlaceholder": "e.g. Make it cleaner and more corporate, highlight booking in services…",
+      "modalTitle": "New Website",
+      "nameLabel": "Site name",
+      "namePlaceholder": "e.g. Antso Maritime",
+      "typeLabel": "Site type",
+      "typeLanding": "Single page (Landing)",
+      "typeMultipage": "Multi-page",
+      "languagesLabel": "Languages",
+      "languagesHint": "Turkish is included; each extra language increases generation credits.",
+      "create": "Create",
+      "cancel": "Cancel"
     }
   },
   "sidebar": {
