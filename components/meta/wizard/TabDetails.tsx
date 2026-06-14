@@ -286,20 +286,28 @@ export default function TabDetails({
   const selectedPage = state.pageId ? inventory?.pages?.find((p) => p.page_id === state.pageId) : undefined
   const hasIgAccountsForPage = (instagramAccounts?.length ?? 0) > 0
 
-  // Telefon Aramaları (CALL): numara yalnız SEÇİLİ FACEBOOK SAYFASINDAN gelir (Meta da öyle çeker — sayfa
-  // başına tek 'phone'). Firma/sayfa DEĞİŞİNCE o sayfanın telefonu dinamik gelir; aynı sayfa içinde
-  // kullanıcının manuel düzenlemesi korunur. Sayfada telefon yoksa alan boş → manuel giriş.
+  // Telefon Aramaları (CALL): seçili sayfanın telefonu İZOLE uçtan (/api/meta/page-phone) çekilir —
+  // kritik capabilities/pixel/sayfa yüklemesini ETKİLEMEZ. Sayfa DEĞİŞİNCE dinamik gelir; aynı sayfa içinde
+  // manuel düzenleme korunur (ref guard); alınamazsa boş → manuel giriş. destinationDetails ref ile fresh okunur.
   const callPhoneLastPage = React.useRef<string | null>(null)
+  const callDestDetailsRef = React.useRef(state.destinationDetails)
+  callDestDetailsRef.current = state.destinationDetails
   React.useEffect(() => {
     if (state.conversionLocation !== 'CALL') return
     if (!state.pageId) { callPhoneLastPage.current = null; return }
     if (callPhoneLastPage.current === state.pageId) return
-    const page = capabilities?.assets?.pages?.find((p) => p.id === state.pageId)
-    if (!page) return // capabilities henüz yüklenmedi — sonraki render'da tekrar dene
     callPhoneLastPage.current = state.pageId
-    const pagePhone = (page.phone ?? '').trim()
-    onChange({ destinationDetails: { ...state.destinationDetails, calls: { phoneNumber: pagePhone || undefined } } })
-  }, [state.conversionLocation, state.pageId, capabilities, state.destinationDetails, onChange])
+    let cancelled = false
+    fetch(`/api/meta/page-phone?pageId=${encodeURIComponent(state.pageId)}`)
+      .then((r) => r.json())
+      .then((d) => {
+        if (cancelled) return
+        const phone = typeof d?.phone === 'string' ? d.phone.trim() : ''
+        onChange({ destinationDetails: { ...callDestDetailsRef.current, calls: { phoneNumber: phone || undefined } } })
+      })
+      .catch(() => {})
+    return () => { cancelled = true }
+  }, [state.conversionLocation, state.pageId, onChange])
 
   // WhatsApp: auto-select single page-linked number; clear selection if not in page's allowed list
   React.useEffect(() => {
